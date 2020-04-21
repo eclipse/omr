@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,8 +30,8 @@ extern "C" {
 #endif
 
 /*
- * This file containes declarations that act as a C wrapper around the Tril AST
- * interface. This wrapper is mainly used by the Flex/Bison parser.
+ * This file contains declarations that act as a C wrapper around the Tril AST
+ * interface. This wrapper is mainly used by the parser.
  */
 
 /*

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 include(OmrCompilerSupport)
 
 set(COMPILERTEST_FILES
-	compile/Method.cpp
+	compile/ResolvedMethod.cpp
 	control/TestJit.cpp
 	env/FrontEnd.cpp
 	ilgen/IlInjector.cpp
@@ -46,9 +46,10 @@ elseif(OMR_ARCH_POWER)
 		${omr_SOURCE_DIR}/compiler/p/env/OMRDebugEnv.cpp
 	)
 elseif(OMR_ARCH_S390)
-	list(APPEND COMPILERTEST_FILES 
+	list(APPEND COMPILERTEST_FILES
 		z/codegen/Evaluator.cpp
 		z/codegen/TestCodeGenerator.cpp
+		${omr_SOURCE_DIR}/compiler/z/env/OMRCPU.cpp
 		${omr_SOURCE_DIR}/compiler/z/env/OMRDebugEnv.cpp
 	)
 endif()
@@ -91,7 +92,7 @@ add_executable(compilertest
 	tests/injectors/OpIlInjector.cpp
 	tests/injectors/Qux2IlInjector.cpp
 	tests/injectors/StoreOpIlInjector.cpp
-	tests/injectors/TernaryOpIlInjector.cpp
+	tests/injectors/SelectOpIlInjector.cpp
 	tests/injectors/UnaryOpIlInjector.cpp
 )
 
@@ -121,4 +122,6 @@ target_link_libraries(compilertest
 
 set_property(TARGET compilertest PROPERTY FOLDER fvtest)
 
-add_test(NAME CompilerTest COMMAND compilertest)
+if (NOT OMR_HOST_OS STREQUAL "aix")
+	add_test(NAME CompilerTest COMMAND compilertest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/compilertest-results.xml)
+endif()

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -55,7 +56,6 @@ bool OMR::ARM64::Linkage::hasToBeOnStack(TR::ParameterSymbol *parm)
 
 TR::MemoryReference *OMR::ARM64::Linkage::getOutgoingArgumentMemRef(TR::Register *argMemReg, TR::Register *argReg, TR::InstOpCode::Mnemonic opCode, TR::ARM64MemoryArgument &memArg)
    {
-   TR::Machine *machine = cg()->machine();
    const TR::ARM64LinkageProperties& properties = self()->getProperties();
 
    TR::MemoryReference *result = new (self()->trHeapMemory()) TR::MemoryReference(argMemReg, 8, cg()); // post-increment
@@ -68,22 +68,19 @@ TR::MemoryReference *OMR::ARM64::Linkage::getOutgoingArgumentMemRef(TR::Register
 
 TR::Instruction *OMR::ARM64::Linkage::saveArguments(TR::Instruction *cursor)
    {
-   TR_ASSERT(false, "Not implemented yet.");
-
+   TR_UNIMPLEMENTED();
    return cursor;
    }
 
 TR::Instruction *OMR::ARM64::Linkage::loadUpArguments(TR::Instruction *cursor)
    {
-   TR_ASSERT(false, "Not implemented yet.");
-
+   TR_UNIMPLEMENTED();
    return cursor;
    }
 
 TR::Instruction *OMR::ARM64::Linkage::flushArguments(TR::Instruction *cursor)
    {
-   TR_ASSERT(false, "Not implemented yet.");
-
+   TR_UNIMPLEMENTED();
    return cursor;
    }
 
@@ -160,16 +157,4 @@ OMR::ARM64::Linkage::numArgumentRegisters(TR_RegisterKinds kind)
       default:
          return 0;
       }
-   }
-
-TR_HeapMemory
-OMR::ARM64::Linkage::trHeapMemory()
-   {
-   return self()->trMemory();
-   }
-
-TR_StackMemory
-OMR::ARM64::Linkage::trStackMemory()
-   {
-   return self()->trMemory();
    }

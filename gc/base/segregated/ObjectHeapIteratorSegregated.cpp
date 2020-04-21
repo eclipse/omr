@@ -55,9 +55,7 @@ GC_ObjectHeapIteratorSegregated::nextObject()
 				_scanPtr = _scanPtrTop;
 			}
 			break;
-#if defined(OMR_GC_ARRAYLETS)
 		case MM_HeapRegionDescriptor::ARRAYLET_LEAF:
-#endif /* defined(OMR_GC_ARRAYLETS) */		
 		case MM_HeapRegionDescriptor::FREE:
 		case MM_HeapRegionDescriptor::RESERVED:
 			/* ARRAYLET, FREE and RESERVED do not contain any objects */
@@ -109,9 +107,7 @@ GC_ObjectHeapIteratorSegregated::nextObjectNoAdvance()
 				_scanPtr = _scanPtrTop;
 			}
 			break;
-#if defined(OMR_GC_ARRAYLETS)
 		case MM_HeapRegionDescriptor::ARRAYLET_LEAF:
-#endif /* defined(OMR_GC_ARRAYLETS) */		
 		case MM_HeapRegionDescriptor::FREE:
 		case MM_HeapRegionDescriptor::RESERVED:
 			/* ARRAYLET, FREE and RESERVED do not contain any objects */

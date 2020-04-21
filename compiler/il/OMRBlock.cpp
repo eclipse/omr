@@ -19,14 +19,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "il/OMRBlock.hpp"
+#include "il/Block.hpp"
 
 #include <limits.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
@@ -34,30 +34,31 @@
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/Block_inlines.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/Flags.hpp"
+#include "infra/ILWalk.hpp"
 #include "infra/Link.hpp"
 #include "infra/List.hpp"
 #include "infra/CfgEdge.hpp"
@@ -85,43 +86,62 @@ TR::Block *
 OMR::Block::asBlock() { return self(); }
 
 OMR::Block::Block(TR_Memory * m) :
-   TR::CFGNode(m),
-   _pEntry(NULL),
-   _pExit(NULL),
-   _pStructureOf(NULL),
-   _liveLocals(NULL),
-   _globalRegisters(0),
-   _catchBlockExtension(NULL),
-   _firstInstruction(NULL),
-   _lastInstruction(NULL),
-   _blockSize(-1),
-   _debugCounters(NULL),
-   _flags(0),
-   _moreflags(0)
+   TR::CFGNode(m)
    {
+   self()->init(NULL, NULL);
+   self()->setFrequency(-1);
+   self()->setUnrollFactor(0);
+   }
+
+OMR::Block::Block(TR::CFG &cfg) :
+   TR::CFGNode(cfg.getInternalRegion())
+   {
+   self()->init(NULL, NULL);
    self()->setFrequency(-1);
    self()->setUnrollFactor(0);
    }
 
 OMR::Block::Block(TR::TreeTop *entry, TR::TreeTop *exit, TR_Memory * m) :
-   TR::CFGNode(m),
-   _pEntry(entry),
-   _pExit(exit),
-   _pStructureOf(NULL),
-   _liveLocals(NULL),
-   _globalRegisters(0),
-   _catchBlockExtension(NULL),
-   _firstInstruction(NULL),
-   _lastInstruction(NULL),
-   _blockSize(-1),
-   _debugCounters(NULL),
-   _flags(0),
-   _moreflags(0)
+   TR::CFGNode(m)
    {
+   self()->init(entry, exit);
    self()->setFrequency(-1);
    self()->setUnrollFactor(0);
    if (entry && entry->getNode()) entry->getNode()->setBlock(self());
    if (exit && exit->getNode())   exit->getNode()->setBlock(self());
+   }
+
+OMR::Block::Block(TR::TreeTop *entry, TR::TreeTop *exit, TR::CFG &cfg) :
+   TR::CFGNode(cfg.getInternalRegion())
+   {
+   self()->init(entry, exit);
+   self()->setFrequency(-1);
+   self()->setUnrollFactor(0);
+   if (entry && entry->getNode()) entry->getNode()->setBlock(self());
+   if (exit && exit->getNode())   exit->getNode()->setBlock(self());
+   }
+
+void
+OMR::Block::init(TR::TreeTop *entry, TR::TreeTop *exit)
+   {
+   _pEntry = entry;
+   _pExit = exit;
+   _pStructureOf = NULL;
+   _liveLocals = NULL;
+   _globalRegisters = 0;
+   _catchBlockExtension = NULL;
+   _firstInstruction = NULL;
+   _lastInstruction = NULL;
+   _blockSize = -1;
+   _debugCounters = NULL;
+   _flags = 0;
+   _moreflags = 0;
+   }
+
+TR::Block*
+OMR::Block::createBlock(TR::TreeTop *entry, TR::TreeTop *exit, TR::CFG &cfg)
+   {
+   return new (cfg.getInternalRegion()) TR::Block(entry, exit, cfg);
    }
 
 /// Copy constructor
@@ -805,6 +825,730 @@ TR::Block *
 OMR::Block::splitWithGivenMethodSymbol(TR::ResolvedMethodSymbol *methodSymbol, TR::TreeTop * startOfNewBlock, TR::CFG * cfg, bool fixupCommoning, bool copyExceptionSuccessors){
    return self()->split(startOfNewBlock, cfg, fixupCommoning, copyExceptionSuccessors, methodSymbol);
 }
+
+// Required data structures for analysis in SplitPostGRA
+typedef TR::typed_allocator<std::pair<TR::Node* const, std::pair<int32_t, TR::Node *> >, TR::Region&> NodeTableAllocator; 
+typedef std::less< TR::Node *> NodeTableComparator; 
+typedef std::map<TR::Node *, std::pair<int32_t, TR::Node *>, NodeTableComparator, NodeTableAllocator> NodeTable;
+
+typedef TR::typed_allocator<std::pair <TR::Node* const, TR::Node *>, TR::Region&> StoreRegNodeTableAllocator;
+typedef std::map<TR::Node *, TR::Node *, NodeTableComparator, StoreRegNodeTableAllocator> StoreRegNodeTable;
+
+/*
+ * Recursive call to replace node with replacement node underneath a target node.
+ *
+ * @param A node to be replaced
+ * @param A table containing information about original nodes to be replaced with corresponding replacement node
+ * @param checklist Checklist of nodes that have already been searched.
+ */
+static void replaceNodesInSubtree(TR::Node *node, NodeTable *nodeInfo, TR::NodeChecklist &checklist)
+   {
+   if (checklist.contains(node))
+      return;
+
+   checklist.add(node);
+
+   for (int i = 0; i < node->getNumChildren(); ++i)
+      {
+      TR::Node *child = node->getChild(i);
+      auto entry = nodeInfo->find(child);
+      if (entry != nodeInfo->end())
+         {
+         node->setAndIncChild(i, entry->second.second);
+         child->decReferenceCount();
+         }
+      else
+         {
+         replaceNodesInSubtree(child, nodeInfo, checklist);
+         }
+      }
+   }
+
+/*
+ * Search for the nodes to be uncommoned from the split point till end of extended basic block
+ *
+ * @param Compilation object
+ * @param start tree top from where it needs to start searching
+ * @param table containing information about original nodes to be replaced with corresponding replacement node 
+ */
+static void replaceNodesInTrees(TR::Compilation * comp, TR::TreeTop *start, NodeTable *nodeInfo)
+   {
+   TR::NodeChecklist checklist(comp);
+   while (start)
+      {
+      if (start->getNode()->getOpCodeValue() == TR::BBStart && !start->getNode()->getBlock()->isExtensionOfPreviousBlock())
+         break;
+      replaceNodesInSubtree(start->getNode(), nodeInfo, checklist);
+      start = start->getNextTreeTop();
+      }
+   }
+
+/*
+ * Analyzes the node and list of unavailable registers to find a register pair which can be used to store the node
+ *
+ * @param Compilation object
+ * @param Node which requires to be uncommoned
+ * @param BitVector constaining information about the unavailable registers
+ * @return Pair of GlobalRegisterNumber which can be used to store node
+ */
+static std::pair<TR_GlobalRegisterNumber,TR_GlobalRegisterNumber> findAvailableRegister(TR::Compilation *comp, TR::Node *node, TR_BitVector &unavailableRegisters)
+   {
+   TR_GlobalRegisterNumber firstGPR = comp->cg()->getFirstGlobalGPR();
+   TR_GlobalRegisterNumber lastGPR = comp->cg()->getLastGlobalGPR();
+   TR_GlobalRegisterNumber firstFPR = comp->cg()->getFirstGlobalFPR();
+   TR_GlobalRegisterNumber lastFPR = comp->cg()->getLastGlobalFPR();
+   TR_GlobalRegisterNumber firstVRF = comp->cg()->getFirstGlobalVRF();
+   TR_GlobalRegisterNumber lastVRF = comp->cg()->getLastGlobalVRF();
+
+   std::pair<TR_GlobalRegisterNumber,TR_GlobalRegisterNumber> toReturn = std::make_pair<TR_GlobalRegisterNumber,TR_GlobalRegisterNumber>(-1,-1);
+
+   TR_GlobalRegisterNumber start, end;
+   TR::DataType dt = node->getType();
+   if (dt.isIntegral() || dt.isAddress())
+      {
+      start = firstGPR;
+      end = lastGPR;
+      }
+   else if (dt.isFloatingPoint())
+      {
+      start = firstFPR;
+      end = lastFPR;
+      }
+   else if (dt.isVector())
+      {
+      start = firstVRF;
+      end = lastVRF;
+      }
+   else
+      TR_ASSERT_FATAL(false, "Unknown data type %s encountered when trying to pick a register for postGRA block splitting!", dt.toString());
+
+   for (TR_GlobalRegisterNumber itr = start; itr < end; ++itr)
+      {
+      if (!unavailableRegisters.get(itr))
+         {
+         toReturn.first = itr;
+         unavailableRegisters.set(itr);
+         break;
+         }
+      }
+   if (node->requiresRegisterPair(comp) && toReturn.first > -1)
+      {
+      for (TR_GlobalRegisterNumber itr = start; itr < end; ++itr)
+         {
+         if (!unavailableRegisters.get(itr))
+            {
+            toReturn.second = itr;
+            unavailableRegisters.set(itr);
+            break;
+            }
+         }
+      if (toReturn.second == -1)
+         {
+         unavailableRegisters.reset(toReturn.first);
+         toReturn.first = -1;
+         }
+      }
+   return toReturn;
+   }
+
+/*
+ * Returns a boolean notifying if the registers used by given nodes are available or not
+ *
+ * @param Compilation object
+ * @param Node whose used registers are required to be checked for availability 
+ * @param BitVector constaining information about the unavailable registers
+ * @return A boolean notifying if the registers used by the RegStore can be uses for uncommoning node
+ */
+static bool checkIfRegisterIsAvailable(TR::Compilation *comp, TR::Node *node, TR_BitVector &unavailableRegisters)
+   {
+   // Following assert is to make sure that this function is called with node which have Global Registers associated with it.
+   TR_ASSERT_FATAL(node->getOpCode().isStoreReg(), "checkIfRegisterIsAvailable is used with %s while it is intended to use with RegStore nodes only", node->getName(comp->getDebug()));
+   bool registersAreAvailable = !unavailableRegisters.isSet(node->getGlobalRegisterNumber());
+   if (node->requiresRegisterPair(comp))
+      registersAreAvailable &= !unavailableRegisters.isSet(node->getHighGlobalRegisterNumber());
+   return registersAreAvailable; 
+   }
+
+/*
+ * Iterate through the list of StoreReg Node and associate the given passThroughNode with it.
+ *
+ * @param PassThrough node
+ * @param List of RegStore nodes
+ * @return A boolean notifying if registers used by passthrough node can be used for uncommoning
+ */
+static bool checkStoreRegNodeListForNode(TR::Node *passThroughNode, List<TR::Node> *storeNodeList)
+   {
+   TR::Node *value = passThroughNode->getFirstChild();
+   ListIterator<TR::Node> nodeListIter(storeNodeList);
+   for (TR::Node *storeNode = nodeListIter.getCurrent(); storeNode; storeNode=nodeListIter.getNext())
+      {
+      if (storeNode->getFirstChild() == value &&
+         storeNode->getLowGlobalRegisterNumber() == passThroughNode->getLowGlobalRegisterNumber() &&
+         storeNode->getHighGlobalRegisterNumber() == passThroughNode->getHighGlobalRegisterNumber())
+         return true;
+      }
+   return false;
+   }
+
+/*
+ * Analyze the register dependency and update the list of unavailable registers.
+ * It examines the node under passthrough children of the glRegDeps and does the following.
+ *    If node requires uncommoning and we do not have replacement yet, looks into the list
+ *    that contains regStore before split point.
+ *       a. If register is available, uses the register to create replacement.
+ *       b. If register is not available, and corresponding is before splitPoint 
+ *          then creates a regStore of the node to that register before passThrough node which uses it
+ *
+ * @param Compilation object
+ * @param GlRegDep node which will be analyzed
+ * @param TreeTop with the given GlRegDep child
+ * @param NodeTable containing information about the nodes which requires uncommoning across split point
+ * @param StoreRegNodeTable Table containing information about node which are stored into the registers before split point
+ * @param List of the RegStores post split point
+ * @param BitVector containing information about unavailable registers
+ */
+static void gatherUnavailableRegisters(TR::Compilation *comp, TR::Node *regDeps, TR::TreeTop *currentTT, 
+                                          NodeTable *nodeInfo, StoreRegNodeTable *storeNodeInfo,
+                                          List<TR::Node> *storeRegNodePostSplitPoint, TR_BitVector &unavailableRegisters)
+   {
+   TR_ASSERT_FATAL(regDeps->getOpCodeValue() == TR::GlRegDeps, "A GlRegDeps node is required to gather unavaialble registers\n");
+   for (int i = 0; i < regDeps->getNumChildren(); i++)
+      {
+      TR::Node *dep = regDeps->getChild(i);
+      if (dep->getOpCodeValue() == TR::PassThrough)
+         {
+         TR::Node *value = dep->getFirstChild();
+         auto nodeInfoEntry = nodeInfo->find(value);
+         // If a node referenced under the PassThrough node post split point requires uncommoning
+         // We need to check if the we can use the information to allocate the register for the node or not.
+         if (nodeInfoEntry != nodeInfo->end())
+            {
+            bool needToCheckStoreRegPostSplitPoint = true;
+            bool needToCreateRegStore = true;
+            if (nodeInfoEntry->second.second == NULL)
+               {
+               auto storeRegNodeInfoEntry = storeNodeInfo->find(value);
+               if (storeRegNodeInfoEntry == storeNodeInfo->end() && checkStoreRegNodeListForNode(dep, storeRegNodePostSplitPoint))
+                  {
+                  // Node under the PassThrough is not stored into register before the split point which means we must have stored it into the register after split point.
+                  // In this case we do not have to do anything as when we replace the node post split point, it will be replaced under corresponding regstore as well.
+                  needToCreateRegStore = false;
+                  }
+               else
+                  {
+                  // Node under passthrough is stored into some set of registers (Not necessarily same set of registers as we only record last regStore for the node)
+                  // and if those set of registers are available, then use them to create a replacement.
+                  TR_ASSERT_FATAL (storeRegNodeInfoEntry != storeNodeInfo->end(), "We should have a regStore pre split point that can be used to allocate register for replacement node");
+                  TR::Node *storeNode = storeRegNodeInfoEntry->second;
+                  if (checkIfRegisterIsAvailable(comp, storeNode, unavailableRegisters))
+                     {
+                     // Whether the PassThrough uses same register or not, use the last recorded regStore to assign register to the node.
+                     TR::Node *regLoad = TR::Node::create(value, comp->il.opCodeForRegisterLoad(value->getDataType()));
+                     regLoad->setRegLoadStoreSymbolReference(storeNode->getRegLoadStoreSymbolReference());
+                     regLoad->setGlobalRegisterNumber(storeNode->getGlobalRegisterNumber());
+                     unavailableRegisters.set(storeNode->getGlobalRegisterNumber());
+                     if (value->requiresRegisterPair(comp))
+                        {
+                        regLoad->setHighGlobalRegisterNumber(storeNode->getHighGlobalRegisterNumber());
+                        unavailableRegisters.set(storeNode->getHighGlobalRegisterNumber());
+                        }
+                     nodeInfoEntry->second.second = regLoad;
+                     // Course of action to analyze reg store for block splitter is to check for the registers used for the node post split point before
+                     // we check the regStore information pre split point. As regStore post split point is most likely to be used later. This will reduce number of shuffles.
+                     // So if we get the candidate from before split point, we do not need to check list of RegStores post split point.
+                     needToCheckStoreRegPostSplitPoint = false;
+                     }
+                  }
+               }
+   
+            
+            if (nodeInfoEntry->second.second != NULL && nodeInfoEntry->second.second->getOpCode().isLoadReg() && 
+               dep->getLowGlobalRegisterNumber() == nodeInfoEntry->second.second->getLowGlobalRegisterNumber() && 
+               dep->getHighGlobalRegisterNumber() == nodeInfoEntry->second.second->getHighGlobalRegisterNumber())
+               {
+               // Passthrough uses same register as the replacement, do not need to do anything
+               }
+            else if (needToCreateRegStore && (!needToCheckStoreRegPostSplitPoint || !checkStoreRegNodeListForNode(dep, storeRegNodePostSplitPoint)))
+               {
+               // We have either used different register for replacement to value node after split point or Passthrough has corresponding regStore before spilt point, but registers were unavailable.
+               // In these cases we need to create a regStore for the PassThrough.
+               // If we have replacement then need to store the replacement to register, else, value needs to be stored. 
+               TR::Node *nodeToBeStored = nodeInfoEntry->second.second != NULL ? nodeInfoEntry->second.second : value;
+               TR::Node *regStore = TR::Node::create(value, comp->il.opCodeForRegisterStore(value->getDataType()), 1, nodeToBeStored);
+               currentTT->insertBefore(TR::TreeTop::create(comp, regStore));
+               regStore->setGlobalRegisterNumber(dep->getGlobalRegisterNumber());
+               if (nodeToBeStored->requiresRegisterPair(comp))
+                  regStore->setHighGlobalRegisterNumber(dep->getHighGlobalRegisterNumber());
+               TR::SymbolReference *ref = NULL;
+               if (nodeToBeStored->getOpCode().isLoadConst() || nodeToBeStored->getOpCodeValue() == TR::loadaddr || nodeInfoEntry->second.second == NULL)
+                  {
+                  // See if we have stored constants in register before split point.
+                  auto storeRegNodeInfoEntry = storeNodeInfo->find(value);
+                  TR_ASSERT_FATAL(storeRegNodeInfoEntry != storeNodeInfo->end(),
+                     "We have a node n%dn under PassThrough node n%dn but we did not find a regStore that is using the info.", value->getGlobalIndex(), dep->getGlobalIndex());
+                  ref = storeRegNodeInfoEntry->second->getRegLoadStoreSymbolReference();
+                  }
+               else
+                  {
+                  ref = nodeToBeStored->getRegLoadStoreSymbolReference();
+                  }
+               regStore->setRegLoadStoreSymbolReference(ref);
+               dep->setAndIncChild(0, nodeToBeStored);
+               value->decReferenceCount();
+               }
+            }
+         }
+      else if (!dep->getOpCode().isLoadReg())
+         {
+         TR_ASSERT_FATAL(false, "Expected to find only PassThrough and regLoad operations under a GlRegDepNode, but got %s\n", dep->getName(comp->getDebug()));
+         }
+      }
+   }
+
+/*
+ * When a node is stored into either a register or on temp/auto slot, it needs corresponding symbol reference which
+ * is flagged properly as per the type of the node. Creates a symbol reference to be used to store the node.
+ *
+ * @param Compilation object
+ * @param MethodSymbol object
+ * @param value Node for which we need to create a symref
+ * @param insertBefore treetop before which if needed store node tree will be created
+ * @return A SymbolReference to store given node
+ */
+static TR::SymbolReference * createSymRefForNode(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, TR::Node *value, TR::TreeTop *insertBefore)
+   {
+   TR::DataType dataType = value->getDataType();
+   TR::SymbolReference *symRef = NULL;
+   if (value->isInternalPointer() && value->getPinningArrayPointer())
+      {
+      symRef = comp->getSymRefTab()->createTemporary(methodSymbol, TR::Address, true, 0);
+      TR::Symbol *symbol = symRef->getSymbol()->castToInternalPointerAutoSymbol()->setPinningArrayPointer(value->getPinningArrayPointer());
+      }
+   else
+      {
+      bool isInternalPointer = false;
+      if ((value->hasPinningArrayPointer() &&
+            value->computeIsInternalPointer()) ||
+               (value->getOpCode().isLoadVarDirect() &&
+                  value->getSymbolReference()->getSymbol()->isAuto() &&
+                  value->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer()))
+         isInternalPointer = true;
+      
+      if (value->isNotCollected() && dataType == TR::Address)
+         {
+         symRef = comp->getSymRefTab()->createTemporary(methodSymbol, dataType, false, 
+#ifdef J9_PROJECT_SPECIFIC
+                                                                                    value->getType().isBCD() ? value->getSize() : 
+#endif   
+                                                                                    0);
+         symRef->getSymbol()->setNotCollected();
+         isInternalPointer = false;
+         }
+      if (isInternalPointer)
+         {
+         symRef = comp->getSymRefTab()->createTemporary(methodSymbol, TR::Address, true, 0);
+         if (value->isNotCollected())
+            symRef->getSymbol()->setNotCollected();
+         else if (value->getOpCode().isArrayRef())
+            value->setIsInternalPointer(true);
+         
+         TR::AutomaticSymbol *pinningArray = NULL;
+         if (value->getOpCode().isArrayRef())
+            {
+            TR::Node *valueChild = value->getFirstChild();
+            if (valueChild->isInternalPointer() &&
+                  valueChild->getPinningArrayPointer())
+               {
+               pinningArray = valueChild->getPinningArrayPointer();
+               }
+            else
+               {
+               while (valueChild->getOpCode().isArrayRef())
+                  valueChild = valueChild->getFirstChild();
+               // If the node we are uncommoning is internal pointer and while iterating a child we found a node that is not 
+               // Array Reference, There are only two possibilities.
+               // 1. It is  internal poiter which was commoned means could be stored into register or on temp slot. 
+               // 2. Itself is a pointer to array object.
+               TR::SymbolReference *valueChildSymRef = valueChild->getSymbolReference();
+               if (valueChildSymRef != NULL &&
+                  (valueChild->getOpCode().isLoadVarDirect() && valueChildSymRef->getSymbol()->isAuto()) ||
+                  (valueChild->getOpCode().isLoadReg() && valueChildSymRef->getSymbol()->castToAutoSymbol()->isInternalPointer()))
+                  {
+                  if (valueChildSymRef->getSymbol()->castToAutoSymbol()->isInternalPointer())
+                     {
+                     pinningArray = valueChildSymRef->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer();
+                     }
+                  else
+                     {
+                     pinningArray = valueChildSymRef->getSymbol()->castToAutoSymbol();
+                     pinningArray->setPinningArrayPointer();
+                     }
+                  }
+               else
+                  {
+                  TR::SymbolReference *newValueArrayRef = comp->getSymRefTab()->
+                                                         createTemporary(methodSymbol, TR::Address, false, 0);
+                  TR::Node *newStore = TR::Node::createStore(newValueArrayRef, valueChild);
+                  TR::TreeTop *newStoreTree = TR::TreeTop::create(comp, newStore);
+                  insertBefore->insertBefore(newStoreTree);
+                  if (!newValueArrayRef->getSymbol()->isParm()) // newValueArrayRef could contain a parm symbol
+                     {
+                     pinningArray = newValueArrayRef->getSymbol()->castToAutoSymbol();
+                     pinningArray->setPinningArrayPointer();
+                     }
+                  }
+               }
+            }
+         else
+            {
+            pinningArray = value->getSymbolReference()->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer();
+            }
+         symRef->getSymbol()->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArray);
+         if (value->isInternalPointer() && pinningArray)
+            {
+            value->setPinningArrayPointer(pinningArray);
+            } 
+         }
+      }
+   
+   if (dataType == TR::Aggregate)
+      {
+      uint32_t size = value->getSize();
+      symRef = new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(),
+                         TR::AutomaticSymbol::create(comp->trHeapMemory(),dataType,size),
+                         methodSymbol->getResolvedMethodIndex(),
+                         methodSymbol->incTempIndex(comp->fe()));
+
+
+      if (value->isNotCollected())
+         symRef->getSymbol()->setNotCollected();
+      }
+
+   if (!symRef)
+      {
+      symRef = comp->getSymRefTab()->createTemporary(methodSymbol, value->getDataType());
+      if (value->getType() == TR::Address && value->isNotCollected())
+         symRef->getSymbol()->setNotCollected();
+      }
+   return symRef;
+   }
+
+/**
+ * Splits the blocks from the split point manually handling the GlRegDeps created by the Global Register Allocator.
+ * If there are available global registers which can be used, it will utililze them to uncommon nodes across split points.
+ * 
+ * @details
+ * It uses following simplified algorithm to split blocks and uncommon nodes. 
+ * 1. Analyze trees before the split point to gather information about nodes which are referenced in new block and needs replacement after split.
+ * 2. Now as it has information about all the nodes which are required to be uncommoned, it starts cretaing replacment nodes as per following rules.
+ *    a. If node to be uncommoned is regLoad / load of constant then replacement node will be copy of the original node and also mark the used register unavailable. 
+ *    b. If node to be uncommoned is stored into a register after split point and that register is available, then replacement node will be regLoad from that
+ *       register. It also makes sure that regStore tree is moved to before split point also marks used register unavailable.
+ *    c. If node to be uncommoned is stored into a register before split point and node does not succeeds in [b] case and register is available then replacement
+ *       node will be regLoad from that register also marks used register unavailable.
+ * 3. While checking for case-b and case-c from Step 2 it also checks regStores and PassThrough nodes after split point. 
+ *    a. If node under pass through requires to be uncommoned and uses different register then the replacement node
+ *       then it stores replacement node into a register used by passThrough before the tree containing that passthrough node.
+ *    b. If node under regStore does not need to be uncommoned, then mark the used register unavailable. 
+ * 4. For the remaining of nodes to be uncommoned, it tries to find the available register using list of unavailable registers and if it can find one, then stores node
+ *    into that register otherwise creates a auto/temp slot to uncommon them. 
+ * 5. Last step is to start walking treetops after split point and replace nodes to be uncommoned with corresponding replacement nodes.
+ * 
+ * @param startOfNewBlock TreeTop from which new block will start
+ * @param cfg TR::CFG object
+ * @param copyExceptionSuccessors Boolean stating if we need to copy the exceptionSuccessors of the original blocks to new block
+ * @param methodSymbol TR::ResolvedMethodSymbol object
+ * @return TR::Block* Returns new Block
+ */
+TR::Block *
+OMR::Block::splitPostGRA(TR::TreeTop * startOfNewBlock, TR::CFG *cfg, bool copyExceptionSuccessors, TR::ResolvedMethodSymbol *methodSymbol)
+   {
+   TR::Compilation *comp = cfg->comp();
+   TR::Block *newBlock = self()->split(startOfNewBlock, cfg, false, copyExceptionSuccessors, methodSymbol);
+   if (methodSymbol == NULL)
+      methodSymbol = comp->getMethodSymbol();
+
+
+      {
+      TR::StackMemoryRegion stackMemoryRegion(*(comp->trMemory())); 
+      NodeTable *nodeInfo = new (stackMemoryRegion) NodeTable(NodeTableComparator(), NodeTableAllocator(stackMemoryRegion));
+      StoreRegNodeTable *storeNodeInfo = new (stackMemoryRegion) StoreRegNodeTable(NodeTableComparator(), StoreRegNodeTableAllocator(stackMemoryRegion));
+      TR::Block *startOfExtendedBlock = self()->startOfExtendedBlock();
+      TR::TreeTop *start = startOfExtendedBlock->getEntry();
+      TR::TreeTop *end = self()->getExit();
+      /**
+       * Step-1 : Analyze the trees before split point to record nodes which will be referenced in new block and needs replacement after split
+       * It collects following information.
+       * a. Node which are referenced after split point in nodeInfo
+       * b. Node which are referenced after split point and stored into register in storeNodeInfo
+       */
+      for (TR::PostorderNodeOccurrenceIterator iter(start, comp, "FIX_POSTGRA_SPLIT_COMMONING"); 
+         iter != end; ++iter)
+         {
+         TR::Node *node = iter.currentNode();
+         auto entry = nodeInfo->find(node);
+         if (entry == nodeInfo->end() && node->getReferenceCount() > 1)
+            {
+            (*nodeInfo)[node] = std::make_pair<int32_t, TR::Node*>(node->getReferenceCount() - 1, NULL);
+            }
+         else if (entry != nodeInfo->end() && entry->second.first > 1)
+            {
+            entry->second.first -= 1;
+            }
+         else if (entry != nodeInfo->end())
+            {
+            nodeInfo->erase(entry);
+            auto storeNodeEntry = storeNodeInfo->find(node);
+            if (storeNodeEntry != storeNodeInfo->end())
+               storeNodeInfo->erase(storeNodeEntry);
+            }
+         // Record the last used RegStore for the node before split point
+         if (node->getOpCode().isStoreReg())
+            {
+            storeNodeInfo->insert(std::make_pair(node->getFirstChild(), node));
+            }
+         }
+
+      /** 
+       * Step - 2: Analyze nodeInfo for regLoad / load constant.
+       *    if found, create a replacement node which is copy of the original node. 
+       *    In case of regLoad mark used registers unavailable
+       */ 
+      
+      TR_BitVector unavailableRegisters(0, comp->trMemory(), stackAlloc);
+      for (auto iter = nodeInfo->begin(), end = nodeInfo->end(); iter != end; ++iter)
+         {
+         TR::Node *node = iter->first;
+         if (node->getOpCode().isLoadReg())
+            {
+            if (node->requiresRegisterPair(comp))
+               {
+               unavailableRegisters.set(node->getLowGlobalRegisterNumber());
+               unavailableRegisters.set(node->getHighGlobalRegisterNumber());
+               }
+            else
+               {
+               unavailableRegisters.set(node->getGlobalRegisterNumber());
+               }
+            iter->second.second = TR::Node::copy(node);
+            iter->second.second->setReferenceCount(0);
+            }
+         else if (node->getOpCode().isLoadConst() || node->getOpCodeValue() == TR::loadaddr)
+            {
+            // If node is constant load or loadaddr, do not waste a slot/register for that. Instead create new node.
+            iter->second.second = TR::Node::copy(node);
+            iter->second.second->setReferenceCount(0);
+            }
+         }
+      /**
+       * Step - 3 : Walk though treeTops after split point analyzing regStore/PassThrough nodes. 
+       *    a. regStore Node :
+       *       1. If it stores a node which is required to be uncommoned and the used register is available, 
+       *          then create a replacement node for that node using the register and mark used register unavailable
+       *       2. If node under regStore is not required to be uncommoned then mark the used register unavailable.
+       *    b. PassThrough Node (Analysis of these kind of nodes are done in gatherUnavailableRegisters)
+       *       1. If node under PassThrough node is stored into the same register after split point, we do not have to do anything. 
+       *       2. If node is stored into same register before split point and if register is available, then use the information to store the node. 
+       *             In other cases where register used in the PassThrough is not available, then create a Store into a register same as PassThrough before the tree containing the passThrough node.
+       */
+      List<TR::Node> storeRegNodePostSplitPoint(stackMemoryRegion);
+      TR::TreeTop *nextExtendedBlockEntry = newBlock->getNextExtendedBlock() ? newBlock->getNextExtendedBlock()->getEntry() : NULL;
+      for (TR::TreeTop *iter = newBlock->getEntry(); iter != nextExtendedBlockEntry; )
+         {
+         TR::TreeTop *nextTreeTop = iter->getNextTreeTop();
+         TR::Node *node = iter->getNode();
+
+         if (node->getOpCode().isStoreReg()) // Case - 1 : TreeTop Node is RegStore
+            {
+            TR::Node *storedNode = node->getFirstChild();
+            auto nodeInfoEntry = nodeInfo->find(storedNode);
+            // If storedNode is needed to be uncommoned and we do not have found replacement node yet and it is stored in register which is still available
+            // then use the register to store the node.
+            if (nodeInfoEntry != nodeInfo->end() && nodeInfoEntry->second.second == NULL && checkIfRegisterIsAvailable(comp, node, unavailableRegisters))
+               {
+               TR::Node *regLoad = TR::Node::create(storedNode, comp->il.opCodeForRegisterLoad(storedNode->getDataType()));
+               regLoad->setRegLoadStoreSymbolReference(node->getRegLoadStoreSymbolReference());
+               regLoad->setGlobalRegisterNumber(node->getGlobalRegisterNumber());
+               unavailableRegisters.set(regLoad->getGlobalRegisterNumber());
+               if (storedNode->requiresRegisterPair(comp))
+                  {
+                  regLoad->setHighGlobalRegisterNumber(node->getHighGlobalRegisterNumber());
+                  unavailableRegisters.set(regLoad->getHighGlobalRegisterNumber());
+                  }
+               nodeInfoEntry->second.second = regLoad;
+               // Move the regStore TreeTop before the split point. 
+               iter->unlink(false);
+               self()->getExit()->insertBefore(iter);
+               }
+            else
+               {
+               // Mark register unavailable so we do not use it.
+               unavailableRegisters.set(node->getGlobalRegisterNumber());
+               if (node->requiresRegisterPair(comp))
+                  unavailableRegisters.set(node->getHighGlobalRegisterNumber());
+               storeRegNodePostSplitPoint.add(node);
+               }
+            }
+         else if (node->getOpCode().isBranch() && node->getNumChildren() > 0) // Case - 2 : TreeTop Node is Branch
+            {
+            // Checking the exit GlRegDeps For PassThrough
+            TR::Node *regDeps = node->getChild(node->getNumChildren() - 1);
+            if (regDeps->getOpCodeValue() == TR::GlRegDeps)
+               {
+               gatherUnavailableRegisters(comp, regDeps, iter, nodeInfo, storeNodeInfo, &storeRegNodePostSplitPoint, unavailableRegisters);
+               }
+            }
+         else if (node->getOpCode().hasBranchChildren()) // Case - 3 : TreeTop Node has branch children
+            {
+            for (int32_t i = 0; i < node->getNumChildren(); ++i)
+               {
+               TR::Node *branch = node->getChild(i);
+               if (branch->getOpCode().isBranch() && branch->getNumChildren() > 0)
+                  {
+                  TR::Node *regDeps = node->getChild(node->getNumChildren() - 1);
+                  if (regDeps->getOpCodeValue() == TR::GlRegDeps)
+                     {
+                     gatherUnavailableRegisters(comp, regDeps, iter, nodeInfo, storeNodeInfo, &storeRegNodePostSplitPoint, unavailableRegisters);
+                     }
+                  }
+               }
+            }
+         if (nextTreeTop == nextExtendedBlockEntry) // TreeTop Node is BBExit and next tree top is nextExtendedBlockEntry
+            {
+            TR::Node *regDeps = iter->getNode()->getNumChildren() > 0 ? iter->getNode()->getChild(0) : NULL;
+            if (regDeps && regDeps->getOpCodeValue() == TR::GlRegDeps)
+               {
+               // If the previous tree top of BBEnd contains branch, we need to make sure any regStore we add are added before that.
+               TR::TreeTop *prevTT = iter->getPrevTreeTop();
+               if (prevTT->getNode()->getOpCode().isBranch() || prevTT->getNode()->getOpCode().hasBranchChildren())
+                  iter = prevTT;
+               gatherUnavailableRegisters(comp, regDeps, iter, nodeInfo, storeNodeInfo, &storeRegNodePostSplitPoint, unavailableRegisters);
+               }
+            }
+         iter = nextTreeTop;
+         }
+
+      /**
+       * Step - 4 : Create nodes for the entries remaining in the nodeInfo map:
+       *         if we have ar register available:
+       *             1) a PassThrough on the exit glregdeps with the register and the node and a RegStore
+       *             2) a regload of the appropriate regiser on the entry glregdeps
+       *          if no register is available
+       *             1) a store to a temp at the end of the original block
+       */
+
+      int depCount = 0;
+      List<TR::Node> exitDeps(stackMemoryRegion);
+      List<TR::Node> entryDeps(stackMemoryRegion);
+      for (auto iter = nodeInfo->begin(), end = nodeInfo->end(); iter != end; ++iter)
+         {
+         TR::Node *value = iter->first;
+         // For all the nodes in the nodeTable for which we can not find replacement yet, create replacement node using available registers.
+         if (!iter->second.second)
+            {
+            std::pair<TR_GlobalRegisterNumber,TR_GlobalRegisterNumber> regInfo = findAvailableRegister(comp, iter->first, unavailableRegisters);
+            if (regInfo.first > -1)
+               {
+               TR::SymbolReference *ref = value->getOpCode().isLoadReg() ? value->getRegLoadStoreSymbolReference() : createSymRefForNode(comp, methodSymbol, value, self()->getExit());
+               TR::Node *regLoad = TR::Node::create(value, comp->il.opCodeForRegisterLoad(value->getDataType()));
+               TR::Node *regStore = TR::Node::create(value, comp->il.opCodeForRegisterStore(value->getDataType()), 1, value);
+               self()->getExit()->insertBefore(TR::TreeTop::create(comp, regStore));
+               regStore->setRegLoadStoreSymbolReference(ref);
+               regLoad->setRegLoadStoreSymbolReference(ref);
+               if (regInfo.second > -1)
+                  {
+                  regLoad->setLowGlobalRegisterNumber(regInfo.first);
+                  regLoad->setHighGlobalRegisterNumber(regInfo.second);
+                  regStore->setLowGlobalRegisterNumber(regInfo.first);
+                  regStore->setHighGlobalRegisterNumber(regInfo.second);
+                  }
+               else
+                  {
+                  regLoad->setGlobalRegisterNumber(regInfo.first);
+                  regStore->setGlobalRegisterNumber(regInfo.first);
+                  }
+               iter->second.second = regLoad;
+               }
+            // If we can not find a register, store it into temp slot.
+            else
+               {
+               TR::DataType originalValDataType = value->getDataType();
+               TR::DataType convertedValDataType = comp->fe()->dataTypeForLoadOrStore(originalValDataType);
+               TR::Node *convertedValueNode  = value;
+               // In case for a given node, if the data type of stack load/store is not same as node's data type,
+               // then we need to convert the node to the type which can be stored onto the stack. 
+               // Also we need to make sure that replacement node is a node that is converted back to original type of the node.
+               if (convertedValDataType != originalValDataType)
+                  {
+                  TR::ILOpCodes convertOpCode = TR::ILOpCode::getProperConversion(originalValDataType, convertedValDataType, false);
+                  convertedValueNode = TR::Node::create(convertOpCode, 1, value);
+                  }
+               TR::SymbolReference *storedValueSymRef = createSymRefForNode(comp, methodSymbol, convertedValueNode, self()->getExit());
+               self()->getExit()->insertBefore(TR::TreeTop::create(comp,
+                                                                     TR::Node::createWithSymRef(value,
+                                                                        comp->il.opCodeForDirectStore(convertedValDataType),
+                                                                        1,
+                                                                        convertedValueNode,
+                                                                        storedValueSymRef)));
+               TR::Node *replacementNode = TR::Node::createLoad(value, storedValueSymRef);
+               if (convertedValDataType != originalValDataType)
+                  {
+                  TR::ILOpCodes convertOpCode = TR::ILOpCode::getProperConversion(convertedValDataType, originalValDataType, false);
+                  replacementNode = TR::Node::create(convertOpCode, 1, replacementNode);
+                  }
+               iter->second.second = replacementNode;
+               }
+            }
+         
+         // Now as we have created a node to replace all the references of value node after split point, add all nodes which are not stored into the temp slot to the list for entry and exit dependency 
+         // which will be used to create GlRegDeps for exit node of the original block and entry node of new block.
+         TR::Node *replacement = iter->second.second;
+         if (replacement->getOpCode().isLoadReg())
+            {
+            depCount++;
+            if (value->getOpCode().isLoadReg())
+               {
+               exitDeps.add(value);
+               }
+            else
+               {
+               TR::Node *passthrough = TR::Node::create(value, TR::PassThrough, 1, value);
+               passthrough->setLowGlobalRegisterNumber(replacement->getLowGlobalRegisterNumber());
+               passthrough->setHighGlobalRegisterNumber(replacement->getHighGlobalRegisterNumber());
+               exitDeps.add(passthrough);
+               }
+            entryDeps.add(replacement);
+            }
+         }
+      if (depCount > 0)
+         {
+         ListIterator<TR::Node> entryIter(&entryDeps);
+         TR::Node *entryGlRegDeps = TR::Node::create(newBlock->getEntry()->getNode(), TR::GlRegDeps, depCount);
+         int childIdx = 0;
+         for (TR::Node *dep = entryIter.getCurrent(); dep; dep=entryIter.getNext())
+            {
+            entryGlRegDeps->setAndIncChild(childIdx++, dep);
+            }
+
+         ListIterator<TR::Node> exitIter(&exitDeps);
+         TR::Node *exitGlRegDeps = TR::Node::create(self()->getExit()->getNode(), TR::GlRegDeps, depCount);
+         childIdx = 0;
+         for (TR::Node *dep = exitIter.getCurrent(); dep; dep=exitIter.getNext())
+            {
+            exitGlRegDeps->setAndIncChild(childIdx++, dep);
+            }
+   
+         newBlock->getEntry()->getNode()->addChildren(&entryGlRegDeps, 1);
+         self()->getExit()->getNode()->addChildren(&exitGlRegDeps, 1);
+         }
+
+      // Step - 5  : Now replace all the occurrences of nodes to be uncommoned with replacement nodes.
+      replaceNodesInTrees(comp, newBlock->getEntry()->getNextTreeTop(), nodeInfo);
+      }
+   return newBlock;
+   }
+
+
 
 TR::Block *
 OMR::Block::split(TR::TreeTop * startOfNewBlock, TR::CFG * cfg, bool fixupCommoning, bool copyExceptionSuccessors, TR::ResolvedMethodSymbol *methodSymbol)

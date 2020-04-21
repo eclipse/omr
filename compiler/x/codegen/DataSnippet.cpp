@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@
 #include "env/IO.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "ras/Debug.hpp"
 #include "codegen/Relocation.hpp"
 
@@ -61,7 +61,7 @@ TR::X86DataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
                                   __FILE__, __LINE__, self()->getNode());
          }
 
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          if (!needRelocation)
             cg()->jitAddPicToPatchOnClassUnload((void*)-1, (void *) cursor);
@@ -100,7 +100,7 @@ uint8_t *TR::X86DataSnippet::emitSnippetBody()
    // align to 16 bytes
    if (getDataSize() % 16 == 0)
       {
-      cursor = (uint8_t*)(((intptrj_t)(cursor + 15)) & ((-1)<<4));
+      cursor = (uint8_t*)(((intptr_t)(cursor + 15)) & ((-1)<<4));
       }
 
    getSnippetLabel()->setCodeLocation(cursor);

@@ -25,7 +25,6 @@
 #include <stdint.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/Linkage.hpp"
 #include "compile/Compilation.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"

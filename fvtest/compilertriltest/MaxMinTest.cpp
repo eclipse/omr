@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,7 @@
 
 #include "OpCodeTest.hpp"
 #include "default_compiler.hpp"
+#include "omrformatconsts.h"
 
 int32_t imax(int32_t l, int32_t r) {
   return std::max(l,r);
@@ -37,6 +38,32 @@ int64_t lmax(int64_t l, int64_t r) {
 int64_t lmin(int64_t l, int64_t r) {
   return std::min(l,r);
 }
+
+float f_max(float l, float r) {
+  return std::max(l,r);
+}
+
+float f_min(float l, float r) {
+  return std::min(l,r);
+}
+
+double dmax(double l, double r) {
+  return std::max(l,r);
+}
+
+double dmin(double l, double r) {
+  return std::min(l,r);
+}
+
+template <typename T>
+bool smallFp_filter(std::tuple<T, T> a)
+   {
+   // workaround: avoid failure caused by snprintf("%f")
+   auto a0 = std::get<0>(a);
+   auto a1 = std::get<1>(a);
+   return ((std::abs(a0) < 0.01 && a0 != 0.0) || (std::abs(a1) < 0.01 && a1 != 0.0));
+   }
+
 class Int32MaxMin : public TRTest::BinaryOpTest<int32_t> {};
 
 TEST_P(Int32MaxMin, UsingConst) {
@@ -48,8 +75,8 @@ TEST_P(Int32MaxMin, UsingConst) {
         "  (block"
         "    (ireturn"
         "      (%s"
-        "        (iconst %lld)"
-        "        (iconst %lld))"
+        "        (iconst %" OMR_PRId32 ")"
+        "        (iconst %" OMR_PRId32 "))"
         ")))",
         param.opcode.c_str(),
         param.lhs,
@@ -58,7 +85,7 @@ TEST_P(Int32MaxMin, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -83,7 +110,7 @@ TEST_P(Int32MaxMin, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -95,8 +122,8 @@ TEST_P(Int32MaxMin, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(MaxMin, Int32MaxMin, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int32_t, int32_t>()),
     ::testing::Values(
-        std::make_tuple("imax", imax),
-        std::make_tuple("imin", imin))));
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("imax", imax),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("imin", imin))));
 
 class Int64MaxMin : public TRTest::BinaryOpTest<int64_t> {};
 
@@ -109,8 +136,8 @@ TEST_P(Int64MaxMin, UsingConst) {
         "  (block"
         "    (lreturn"
         "      (%s"
-        "        (lconst %lld)"
-        "        (lconst %lld))"
+        "        (lconst %" OMR_PRId64 ")"
+        "        (lconst %" OMR_PRId64 "))"
         ")))",
         param.opcode.c_str(),
         param.lhs,
@@ -119,7 +146,7 @@ TEST_P(Int64MaxMin, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -144,7 +171,7 @@ TEST_P(Int64MaxMin, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -156,5 +183,140 @@ TEST_P(Int64MaxMin, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(MaxMin, Int64MaxMin, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int64_t, int64_t>()),
     ::testing::Values(
-        std::make_tuple("lmax", lmax),
-        std::make_tuple("lmin", lmin))));
+        std::make_tuple<const char*, int64_t(*)(int64_t, int64_t)>("lmax", lmax),
+        std::make_tuple<const char*, int64_t(*)(int64_t, int64_t)>("lmin", lmin))));
+
+class FloatMaxMin : public TRTest::BinaryOpTest<float> {};
+
+TEST_P(FloatMaxMin, UsingConst) {
+    SKIP_ON_X86(KnownBug) << "The X86 code generator currently doesn't support fmax/fmin (see issue #4276)";
+    SKIP_ON_HAMMER(KnownBug) << "The AMD64 code generator currently doesn't support fmax/fmin (see issue #4276)";
+
+    auto param = TRTest::to_struct(GetParam());
+    char inputTrees[1024] = {0};
+    std::snprintf(inputTrees, sizeof(inputTrees),
+        "(method return=Float"
+        "  (block"
+        "    (freturn"
+        "      (%s"
+        "        (fconst %f )"
+        "        (fconst %f ))"
+        ")))",
+        param.opcode.c_str(),
+        param.lhs,
+        param.rhs);
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<float (*)(void)>();
+    ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point());
+}
+
+TEST_P(FloatMaxMin, UsingLoadParam) {
+    SKIP_ON_X86(KnownBug) << "The X86 code generator currently doesn't support fmax/fmin (see issue #4276)";
+    SKIP_ON_HAMMER(KnownBug) << "The AMD64 code generator currently doesn't support fmax/fmin (see issue #4276)";
+
+    auto param = TRTest::to_struct(GetParam());
+
+    char inputTrees[1024] = {0};
+    std::snprintf(inputTrees, sizeof(inputTrees),
+        "(method return=Float args=[Float, Float]"
+        "  (block"
+        "    (freturn"
+        "      (%s"
+        "        (fload parm=0)"
+        "        (fload parm=1))"
+        ")))",
+        param.opcode.c_str());
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<float (*)(float, float)>();
+    ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
+}
+
+
+INSTANTIATE_TEST_CASE_P(MaxMin, FloatMaxMin, ::testing::Combine(
+    ::testing::ValuesIn(
+        TRTest::filter(TRTest::const_value_pairs<float, float>(), smallFp_filter<float>)),
+    ::testing::Values(
+        std::make_tuple<const char*, float(*)(float, float)>("fmax", f_max),
+        std::make_tuple<const char*, float(*)(float, float)>("fmin", f_min))));
+
+class DoubleMaxMin : public TRTest::BinaryOpTest<double> {};
+
+TEST_P(DoubleMaxMin, UsingConst) {
+    SKIP_ON_X86(KnownBug) << "The X86 code generator currently doesn't support fmax/fmin (see issue #4276)";
+    SKIP_ON_HAMMER(KnownBug) << "The AMD64 code generator currently doesn't support fmax/fmin (see issue #4276)";
+
+    auto param = TRTest::to_struct(GetParam());
+
+    char inputTrees[1024] = {0};
+    std::snprintf(inputTrees, sizeof(inputTrees),
+        "(method return=Double"
+        "  (block"
+        "    (dreturn"
+        "      (%s"
+        "        (dconst %f )"
+        "        (dconst %f ))"
+        ")))",
+        param.opcode.c_str(),
+        param.lhs,
+        param.rhs);
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<double (*)(void)>();
+    ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point());
+}
+
+TEST_P(DoubleMaxMin, UsingLoadParam) {
+    SKIP_ON_X86(KnownBug) << "The X86 code generator currently doesn't support fmax/fmin (see issue #4276)";
+    SKIP_ON_HAMMER(KnownBug) << "The AMD64 code generator currently doesn't support fmax/fmin (see issue #4276)";
+
+    auto param = TRTest::to_struct(GetParam());
+
+    char inputTrees[1024] = {0};
+    std::snprintf(inputTrees, sizeof(inputTrees),
+        "(method return=Double args=[Double, Double]"
+        "  (block"
+        "    (dreturn"
+        "      (%s"
+        "        (dload parm=0)"
+        "        (dload parm=1))"
+        ")))",
+        param.opcode.c_str());
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<double (*)(double, double)>();
+    ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
+}
+
+
+INSTANTIATE_TEST_CASE_P(MaxMin, DoubleMaxMin, ::testing::Combine(
+    ::testing::ValuesIn(
+        TRTest::filter(TRTest::const_value_pairs<double, double>(), smallFp_filter<double>)),
+    ::testing::Values(
+        std::make_tuple<const char*, double(*)(double, double)>("dmax", dmax),
+        std::make_tuple<const char*, double(*)(double, double)>("dmin", dmin))));

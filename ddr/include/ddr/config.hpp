@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,18 +29,23 @@
 
 #if defined(J9ZOS390)
 /* We need to define these for the limit macros to get defined in z/OS */
+#if !defined(_ISOC99_SOURCE)
 #define _ISOC99_SOURCE 1
+#endif
+#if !defined(__STDC_LIMIT_MACROS)
 #define __STDC_LIMIT_MACROS 1
+#endif
 #endif /* defined(J9ZOS390) */
 
 /* C++ TR1 support */
 
-#if defined(AIXPPC) || defined(J9ZOS390)
+#if (__cplusplus < 201103) && (defined(AIXPPC) || defined(J9ZOS390))
+#if !defined(__IBMCPP_TR1__)
 #define __IBMCPP_TR1__ 1
-#define OMR_HAVE_TR1 1
+#endif
 #else
 #define OMR_HAVE_CXX11 1
-#endif /* !defined(AIXPPC) && !defined(J9ZOS390) */
+#endif /* (__cplusplus < 201103) && (defined(AIXPPC) || defined(J9ZOS390)) */
 
 /* Why is this disabled? */
 

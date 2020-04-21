@@ -101,7 +101,6 @@ public:
 
 	virtual void *allocateObject(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, MM_MemorySpace *memorySpace, bool shouldCollectOnFailure) = 0;
 	virtual void *allocateArray(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, MM_MemorySpace *memorySpace, bool shouldCollectOnFailure) = 0;
-#if defined(OMR_GC_ARRAYLETS)
 	/**
 	 * Allocate the arraylet spine.
 	 */
@@ -121,7 +120,6 @@ public:
 		Assert_MM_unreachable();
 		return NULL;
 	}
-#endif /* OMR_GC_ARRAYLETS */
 
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 	virtual void *allocateTLH(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *memorySubSpace, MM_MemoryPool *memoryPool);

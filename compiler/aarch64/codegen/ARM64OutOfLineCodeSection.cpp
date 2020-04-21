@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,6 +20,8 @@
  *******************************************************************************/
 
 #include "codegen/ARM64OutOfLineCodeSection.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/GenerateInstructions.hpp"
 
 TR_ARM64OutOfLineCodeSection::TR_ARM64OutOfLineCodeSection(TR::Node *callNode,
                             TR::ILOpCodes callOp,
@@ -34,10 +36,30 @@ TR_ARM64OutOfLineCodeSection::TR_ARM64OutOfLineCodeSection(TR::Node *callNode,
 
 void TR_ARM64OutOfLineCodeSection::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   TR_ASSERT(false, "Not implemented yet.");
+   TR_UNIMPLEMENTED();
    }
 
 void TR_ARM64OutOfLineCodeSection::generateARM64OutOfLineCodeSectionDispatch()
    {
-   TR_ASSERT(false, "Not implemented yet.");
+   // Switch to cold helper instruction stream.
+   //
+   swapInstructionListsWithCompilation();
+
+   generateLabelInstruction(_cg, TR::InstOpCode::label, _callNode, _entryLabel);
+
+   TR::Register *resultReg = TR::TreeEvaluator::performCall(_callNode, _callNode->getOpCode().isCallIndirect(), _cg);
+
+   if (_targetReg)
+      {
+      TR_ASSERT(resultReg, "resultReg must not be a NULL");
+      generateMovInstruction(_cg, _callNode, _targetReg, resultReg);
+      }
+   _cg->decReferenceCount(_callNode);
+
+   if (_restartLabel)
+      generateLabelInstruction(_cg, TR::InstOpCode::b, _callNode, _restartLabel);
+
+   // Switch from cold helper instruction stream.
+   //
+   swapInstructionListsWithCompilation();
    }

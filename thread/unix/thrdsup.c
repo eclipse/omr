@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,6 @@
 
 #if defined(LINUX) && !defined(OMRZTPF)
 #include <sys/prctl.h>
-#include <linux/prctl.h>
 #endif /* defined(LINUX) */
 
 #if defined(OMRZTPF)
@@ -315,6 +314,7 @@ ztpf_init_proc()
          *  Set ECB attributes, ensure that these attributes are set in child ECBs too.
          */
         tpf_easetc(TPF_EASETC_SWITCHABLE, TPF_EASETC_SET_ON+TPF_EASETC_INHERIT_YES);
+        tpf_easetc(TPF_EASETC_NOSTACKVAL, TPF_EASETC_SET_ON+TPF_EASETC_INHERIT_YES);
 }
 #endif /* defined(OMRZTPF) */
 

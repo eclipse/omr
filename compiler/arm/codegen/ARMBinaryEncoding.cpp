@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,13 +70,13 @@ uint32_t encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor,
 
 uint32_t encodeHelperBranch(bool isBranchAndLink, TR::SymbolReference *symRef, uint8_t *cursor, TR_ARMConditionCode cc, TR::Node *node, TR::CodeGenerator *cg)
    {
-   intptrj_t target = (intptrj_t)symRef->getMethodAddress();
+   intptr_t target = (intptr_t)symRef->getMethodAddress();
 
-   if (cg->directCallRequiresTrampoline(target, (intptrj_t)cursor))
+   if (cg->directCallRequiresTrampoline(target, (intptr_t)cursor))
       {
       target = TR::CodeCacheManager::instance()->findHelperTrampoline(symRef->getReferenceNumber(), (void *)cursor);
 
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(target, (intptrj_t)cursor),
+      TR_ASSERT_FATAL(cg->comp()->target().cpu.isTargetWithinBranchImmediateRange(target, (intptr_t)cursor),
                       "Target address is out of range");
       }
 
@@ -256,32 +256,16 @@ uint8_t *TR::ARMImmSymInstruction::generateBinaryEncoding()
 
    if (getOpCodeValue() == ARMOp_bl)
       {
-      TR::ResolvedMethodSymbol *sym = getSymbolReference()->getSymbol()->getResolvedMethodSymbol();
-      TR_ResolvedMethod *resolvedMethod = (sym==NULL)?NULL:sym->getResolvedMethod();
-
       label = getSymbolReference()->getSymbol()->getLabelSymbol();
 
       if (cg()->hasCodeCacheSwitched())
          {
-         TR::SymbolReference *calleeSymRef = NULL;
-
-         if (label == NULL)
-            calleeSymRef = getSymbolReference();
-         else if (getNode() != NULL)
-            calleeSymRef = getNode()->getSymbolReference();
-
-         if (calleeSymRef != NULL)
-            {
-            if (calleeSymRef->getReferenceNumber()>=TR_ARMnumRuntimeHelpers)
-               cg()->fe()->reserveTrampolineIfNecessary(comp, calleeSymRef, true);
-            }
-         else
-            {
-            TR_ASSERT(0, "Missing possible re-reservation for trampolines.\n");
-            }
+         cg()->redoTrampolineReservationIfNecessary(this, getSymbolReference());
          }
 
-      if (resolvedMethod != NULL && resolvedMethod->isSameMethod(comp->getCurrentMethod()) && !comp->isDLT())
+      TR::ResolvedMethodSymbol *sym = getSymbolReference()->getSymbol()->getResolvedMethodSymbol();
+
+      if (comp->isRecursiveMethodTarget(sym))
          {
          uint32_t jitTojitStart = (uintptr_t) cg()->getCodeStart();
 
@@ -307,7 +291,7 @@ uint8_t *TR::ARMImmSymInstruction::generateBinaryEncoding()
             {
             int32_t imm = getSourceImmediate();
 
-            if (TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange((intptrj_t)imm, (intptrj_t)cursor))
+            if (cg()->comp()->target().cpu.isTargetWithinBranchImmediateRange((intptr_t)imm, (intptr_t)cursor))
                {
                *(int32_t *)cursor |= encodeBranchDistance((uintptr_t)cursor, (uint32_t) imm);
                }
@@ -335,9 +319,9 @@ uint8_t *TR::ARMImmSymInstruction::generateBinaryEncoding()
                else
                   {
                   // have to use the trampoline as the target and not the label
-                  intptrj_t targetAddress = cg()->fe()->methodTrampolineLookup(comp, getSymbolReference(), (void *)cursor);
+                  intptr_t targetAddress = cg()->fe()->methodTrampolineLookup(comp, getSymbolReference(), (void *)cursor);
 
-                  TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(targetAddress, (intptrj_t)cursor),
+                  TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinBranchImmediateRange(targetAddress, (intptr_t)cursor),
                                   "Target address is out of range");
 
                   *(int32_t *)cursor |= encodeBranchDistance((uintptr_t)cursor, (uintptr_t) targetAddress);
@@ -409,12 +393,12 @@ uint8_t *TR::ARMTrg1Src2Instruction::generateBinaryEncoding()
    if (std::find(comp->getStaticPICSites()->begin(), comp->getStaticPICSites()->end(), this) != comp->getStaticPICSites()->end())
       {
       TR::Node *node = getNode();
-      cg()->jitAddPicToPatchOnClassUnload((void *)(TR::Compiler->target.is64Bit()?node->getLongInt():node->getInt()), (void *)cursor);
+      cg()->jitAddPicToPatchOnClassUnload((void *)(cg()->comp()->target().is64Bit()?node->getLongInt():node->getInt()), (void *)cursor);
       }
    if (std::find(comp->getStaticMethodPICSites()->begin(), comp->getStaticMethodPICSites()->end(), this) != comp->getStaticMethodPICSites()->end())
       {
       TR::Node *node = getNode();
-      cg()->jitAddPicToPatchOnClassUnload((void *) (cg()->fe()->createResolvedMethod(cg()->trMemory(), (TR_OpaqueMethodBlock *) (TR::Compiler->target.is64Bit()?node->getLongInt():node->getInt()), comp->getCurrentMethod())->classOfMethod()), (void *)cursor);
+      cg()->jitAddPicToPatchOnClassUnload((void *) (cg()->fe()->createResolvedMethod(cg()->trMemory(), (TR_OpaqueMethodBlock *) (cg()->comp()->target().is64Bit()?node->getLongInt():node->getInt()), comp->getCurrentMethod())->classOfMethod()), (void *)cursor);
       }
 
    cursor += ARM_INSTRUCTION_LENGTH;

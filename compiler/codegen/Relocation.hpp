@@ -194,6 +194,80 @@ class LabelRelative32BitRelocation : public TR::LabelRelocation
    virtual void apply(TR::CodeGenerator *codeGen);
    };
 
+/** \brief
+ *
+ *  Represents a 16-bit relocation from an offset into the binary encoding location of an instruction to a label by a
+ *  specified width (bytes, half-words, words, double-words, etc.).
+ */
+class InstructionLabelRelative16BitRelocation : public TR::LabelRelocation
+   {
+   public:
+
+   /** \brief
+    *     Initializes the InstructionLabelRelative16BitRelocation relocation using a \c NULL base target pointer.
+    *
+    *  \param cursor
+    *     The instruction whose binary encoding location will be used for the relocation.
+    *
+    *  \param offset
+    *     The offset from the binary encoding of \p cursor where the relocation will be encoded
+    *
+    *  \param l
+    *     The label whose distance from \p cursor will be encoded
+    *
+    *  \param divisor
+    *     The width of each unit of the encoding. For example if \p divisor is 2 then the value which will be encoded
+    *     at \p cursor + \p offset will be the number of half-words between \p cursor and \p l
+    */
+   InstructionLabelRelative16BitRelocation(TR::Instruction* cursor, int32_t offset, TR::LabelSymbol* l, int32_t divisor);
+      
+   virtual uint8_t* getUpdateLocation();
+   virtual void apply(TR::CodeGenerator* cg);
+
+   private:
+
+   TR::Instruction* _cursor;
+   int32_t _offset;
+   int32_t _divisor;
+   };
+
+/** \brief
+ *
+ *  Represents a 32-bit relocation from an offset into the binary encoding location of an instruction to a label by a
+ *  specified width (bytes, half-words, words, double-words, etc.).
+ */
+class InstructionLabelRelative32BitRelocation : public TR::LabelRelocation
+   {
+   public:
+      
+   /** \brief
+    *     Initializes the InstructionLabelRelative16BitRelocation relocation using a \c NULL base target pointer.
+    *
+    *  \param cursor
+    *     The instruction whose binary encoding location will be used for the relocation.
+    *
+    *  \param offset
+    *     The offset from the binary encoding of \p cursor where the relocation will be encoded
+    *
+    *  \param l
+    *     The label whose distance from \p cursor will be encoded
+    *
+    *  \param divisor
+    *     The width of each unit of the encoding. For example if \p divisor is 2 then the value which will be encoded
+    *     at \p cursor + \p offset will be the number of half-words between \p cursor and \p l
+    */
+   InstructionLabelRelative32BitRelocation(TR::Instruction* cursor, int32_t offset, TR::LabelSymbol* l, int32_t divisor);
+      
+   virtual uint8_t* getUpdateLocation();
+   virtual void apply(TR::CodeGenerator* cg);
+
+   private:
+
+   TR::Instruction* _cursor;
+   int32_t _offset;
+   int32_t _divisor;
+   };
+
 class InstructionAbsoluteRelocation : public TR::Relocation
    {
    public:

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,14 +176,15 @@ void valgrindClearRange(MM_GCExtensionsBase *extensions, uintptr_t baseAddress, 
 void valgrindFreeObject(MM_GCExtensionsBase *extensions, uintptr_t baseAddress)
 {
     int objSize;
-    if (MM_ForwardedHeader((omrobjectptr_t)baseAddress).isForwardedPointer())
+	bool const compressed = extensions->compressObjectReferences();
+    if (MM_ForwardedHeader((omrobjectptr_t)baseAddress, compressed).isForwardedPointer())
     {
         /* In scavanger an object may act as pointer to another object(it's replica in another region).
            In this case, getConsumedSizeInBytesWithHeader returns some junk value.
            So instead we calculate the size of the object (replica) it is pointing to 
            and use it for freeing original object.
         */
-        omrobjectptr_t fwObject = MM_ForwardedHeader((omrobjectptr_t)baseAddress).getForwardedObject();
+        omrobjectptr_t fwObject = MM_ForwardedHeader((omrobjectptr_t)baseAddress, compressed).getForwardedObject();
         objSize = (int)((GC_ObjectModel)extensions->objectModel).getConsumedSizeInBytesWithHeader(fwObject);
     }
     else

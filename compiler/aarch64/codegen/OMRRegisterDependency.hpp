@@ -231,9 +231,27 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
     * @brief Clones RegisterDependencyConditions
     * @param[in] cg : CodeGenerator
     * @param[in] added : conditions to be added
+    * @param[in] omitPre : if true, result will have empty pre conditions
+    * @param[in] omitPost : if true, result will have empty post conditions
     * @return cloned RegisterDependencyConditions
     */
-   TR::RegisterDependencyConditions *clone(TR::CodeGenerator *cg, TR::RegisterDependencyConditions *added=NULL);
+   TR::RegisterDependencyConditions *clone(TR::CodeGenerator *cg, TR::RegisterDependencyConditions *added=NULL, bool omitPre = false, bool omitPost = false);
+
+   /**
+    * @brief Clones only pre-condition part of RegisterDependencyConditions
+    * @param[in] cg : CodeGenerator
+    * @param[in] added : conditions to be added
+    * @return cloned RegisterDependencyConditions
+    */
+   TR::RegisterDependencyConditions *clonePre(TR::CodeGenerator *cg, TR::RegisterDependencyConditions *added=NULL) { return clone(cg, added, false, true); }
+
+   /**
+    * @brief Clones only post-condition part of RegisterDependencyConditions
+    * @param[in] cg : CodeGenerator
+    * @param[in] added : conditions to be added
+    * @return cloned RegisterDependencyConditions
+    */
+   TR::RegisterDependencyConditions *clonePost(TR::CodeGenerator *cg, TR::RegisterDependencyConditions *added=NULL) { return clone(cg, added, true, false); }
 
    /**
     * @brief Adds NoReg to post-condition

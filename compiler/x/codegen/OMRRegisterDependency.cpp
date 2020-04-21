@@ -57,7 +57,7 @@
 
 // TODO:AMD64: IA32 FPR GRA currently interferes XMM GRA in a somewhat
 // confusing way that doesn't occur on AMD64.
-#define XMM_GPRS_USE_DISTINCT_NUMBERS (TR::Compiler->target.is64Bit())
+#define XMM_GPRS_USE_DISTINCT_NUMBERS(cg) (cg->comp()->target().is64Bit())
 
 static void generateRegcopyDebugCounter(TR::CodeGenerator *cg, const char *category)
    {
@@ -127,7 +127,7 @@ OMR::X86::RegisterDependencyConditions::RegisterDependencyConditions(
       TR_GlobalRegisterNumber  highGlobalRegNum = child->getHighGlobalRegisterNumber();
 
       TR::RealRegister::RegNum realRegNum = TR::RealRegister::NoReg, realHighRegNum = TR::RealRegister::NoReg;
-      if (globalReg->getKind() == TR_GPR || globalReg->getKind() == TR_VRF || XMM_GPRS_USE_DISTINCT_NUMBERS)
+      if (globalReg->getKind() == TR_GPR || globalReg->getKind() == TR_VRF || XMM_GPRS_USE_DISTINCT_NUMBERS(cg))
          {
          realRegNum = (TR::RealRegister::RegNum) cg->getGlobalRegister(globalRegNum);
 

@@ -25,8 +25,9 @@
  * @ingroup Port
  * @brief Stack backtracing support
  */
-
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #include "omrport.h"
 #include "omrportpriv.h"

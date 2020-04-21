@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,6 @@
 
 #include "env/Processors.hpp"
 
-#ifdef RUBY_PROJECT_SPECIFIC
-#include "ruby/config.h"
-#endif
-
 #include "codegen/LinkageConventionsEnum.hpp"
 
 namespace TR { class Compilation; }
@@ -55,7 +51,6 @@ void initializeJitRuntimeHelperTable(char jvmpi);
 
 enum TR_CCPreLoadedCode
    {
-#if !defined(TR_TARGET_S390)
    TR_AllocPrefetch = 0,
 #if defined(TR_TARGET_POWER)
    TR_ObjAlloc,
@@ -67,7 +62,6 @@ enum TR_CCPreLoadedCode
    TR_arrayStoreCHK,
 #endif // TR_TARGET_POWER
    TR_NonZeroAllocPrefetch,
-#endif // !defined(TR_TARGET_S390)
    TR_numCCPreLoadedCode
    };
 
@@ -163,6 +157,8 @@ enum TR_RuntimeHelper
    TR_numRuntimeHelpers = TR_ARM64numRuntimeHelpers
 #elif defined(TR_HOST_S390)
    TR_numRuntimeHelpers = TR_S390numRuntimeHelpers
+#elif defined(TR_HOST_RISCV)
+   TR_numRuntimeHelpers = TR_RISCVnumRuntimeHelpers
 #endif
 
    };
@@ -171,7 +167,7 @@ class TR_RuntimeHelperTable
    {
 public:
 
-    static const intptrj_t INVALID_FUNCTION_POINTER = 0xdeadb00f;
+    static const intptr_t INVALID_FUNCTION_POINTER = 0xdeadb00f;
 
     /**
      * \brief
@@ -441,10 +437,10 @@ typedef enum
 
 // Multi Code Cache Routine for S390 for checking whether an entry point is within reach of a RIL instruction.
 // In RIL instruction, the relative address is specified in number of half words.
-#define CHECK_32BIT_TRAMPOLINE_RANGE(x,rip)  (((intptrj_t)(x) == (intptrj_t)(rip) + ((intptrj_t)((int32_t)(((intptrj_t)(x) - (intptrj_t)(rip))/2)))*2) && (x % 2 == 0))
+#define CHECK_32BIT_TRAMPOLINE_RANGE(x,rip)  (((intptr_t)(x) == (intptr_t)(rip) + ((intptr_t)((int32_t)(((intptr_t)(x) - (intptr_t)(rip))/2)))*2) && (x % 2 == 0))
 
 // Routine to check trampoline range for x86-64
-#define IS_32BIT_RIP_JUMP(x,rip)  ((intptrj_t)(x) == (intptrj_t)(rip) + (int32_t)((intptrj_t)(x) - (intptrj_t)(rip)))
+#define IS_32BIT_RIP_JUMP(x,rip)  ((intptr_t)(x) == (intptr_t)(rip) + (int32_t)((intptr_t)(x) - (intptr_t)(rip)))
 
 // Branch limit for PPC and ARM ARM64
 #define BRANCH_FORWARD_LIMIT      (0x01fffffc)

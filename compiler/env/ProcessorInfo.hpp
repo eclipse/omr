@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,42 +23,6 @@
 #define TR_PROCESSOR_INFO_INCL
 
 #include <stdint.h>
-
-
-enum TR_S390MachineType
-   {
-   TR_UNDEFINED_S390_MACHINE  =  0,
-   TR_G5                      =  9672,
-   TR_MULTIPRISE7000          =  7060,
-   TR_FREEWAY                 =  2064,  // z900
-   TR_Z800                    =  2066,  // z800 - entry-level, less powerful variant of the z900
-   TR_MIRAGE                  =  1090,
-   TR_MIRAGE2                 =  1091,
-   TR_TREX                    =  2084,  // z990
-   TR_Z890                    =  2086,  // z890 - kneecapped version of z990
-   TR_GOLDEN_EAGLE            =  2094,  // z9
-   TR_DANU_GA2                =  2094,  // doesn't change from GoldenEagle
-   TR_Z9BC                    =  2096,  // z9 BC
-   TR_Z10                     =  2097,
-   TR_Z10BC                   =  2098,  // zMR
-   TR_ZG                      =  2817,  // zGryphon HE - z196
-   TR_ZGMR                    =  2818,  // zGryphon MR - z114
-   TR_ZG_RESERVE              =  2819,  // reserve for zGryphon
-   TR_ZEC12                   =  2827,  // zEC12 / zHelix
-   TR_ZEC12MR                 =  2828,  // zHelix MR
-   TR_ZEC12_RESERVE           =  2829,  // reserve for zHelix
-   TR_Z13                     =  2964,  // z13
-   TR_Z13s                    =  2965,  // z13s
-   TR_Z14                     =  3906,
-   TR_Z14s                    =  3907,
-   TR_ZNEXT                   =  9998,
-   TR_ZNEXTs                  =  9999,
-
-   TR_ZH                      =  2458,  // reserve for zHybrid
-   TR_DATAPOWER               =  2462,  // reserve for DataPower on 2458
-   TR_ZH_RESERVE1             =  2459,  // reserve for zHybrid
-   TR_ZH_RESERVE2             =  2461,  // reserve for zHybrid
-   };
 
 // Private struct for interfacing with the assembly helper.
 // WARNING: Possible alignment issues with non-MS compilers.
@@ -124,6 +88,16 @@ enum TR_X86ProcessorFeatures
    TR_X86ProcessorInfoInitialized   = 0x80000000  // FIXME: Using a reserved bit for our purposes.
    };
 
+inline uint32_t getFeatureFlagsMask()
+   {
+   return  TR_BuiltInFPU
+         | TR_CMPXCHG8BInstruction
+         | TR_CMOVInstructions
+         | TR_MMXInstructions
+         | TR_SSE
+         | TR_SSE2;
+   }
+
 enum TR_X86ProcessorFeatures2
    {
    TR_SSE3                          = 0x00000001,
@@ -160,6 +134,17 @@ enum TR_X86ProcessorFeatures2
    // Not used by Intel             = 0x80000000,
    };
 
+inline uint32_t getFeatureFlags2Mask()
+   {
+   return  TR_SSSE3
+         | TR_SSE4_1
+         | TR_POPCNT
+         | TR_AESNI
+         | TR_OSXSAVE
+         | TR_AVX
+         | TR_FMA;
+   }
+
 enum TR_X86ProcessorFeatures8
    {
    TR_FSGSBASE                = 0x00000001,
@@ -195,6 +180,12 @@ enum TR_X86ProcessorFeatures8
    // Reserved by Intel       = 0x40000000,
    // Reserved by Intel       = 0x80000000,
    };
+
+inline uint32_t getFeatureFlags8Mask()
+   {
+   return  TR_HLE
+         | TR_RTM;
+   }
 
 enum TR_ProcessorDescription
    {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,103 +35,13 @@ namespace OMR { typedef OMR::Z::InstOpCode InstOpCodeConnector; }
 
 #include <stdint.h>
 #include "compiler/codegen/OMRInstOpCode.hpp"
+#include "compiler/z/env/OMRCPU.hpp"
 #include "env/Processors.hpp"
 #include "il/DataTypes.hpp"
 #include "infra/Assert.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Node; }
-
-class TR_S390ProcessorInfo
-   {
-   public:
-
-   enum TR_S390ProcessorArchitectures
-      {
-      TR_UnknownArchitecture = 0,
-      TR_ESA390 = 1,
-      TR_z900 = 2,
-      TR_z990 = 3,
-      TR_z9 = 4,
-      TR_z10 = 5,
-      TR_z196 = 6,
-      TR_zEC12 = 7,
-      TR_z13 = 8,
-      TR_z14 = 9,
-      TR_zNext = 10,
-
-      TR_LatestArchitecture = TR_zNext
-      };
-
-   bool crossCompile() { return _crossCompile; }
-
-   bool supportsArch(TR_S390ProcessorArchitectures arch)
-      {
-      TR_ASSERT(arch >= TR_UnknownArchitecture && arch <= TR_LatestArchitecture, "Invalid Processor Architecture.");
-      return _processorArchitecture >= arch;
-      }
-
-   void disableArch(TR_S390ProcessorArchitectures arch)
-      {
-      TR_ASSERT(arch > TR_UnknownArchitecture && arch <= TR_LatestArchitecture, "Invalid Processor Architecture.");
-      _processorArchitecture = _processorArchitecture < arch ? _processorArchitecture : (TR_S390ProcessorArchitectures)((uint32_t)arch - 1);
-      }
-
-   void enableArch(TR_S390ProcessorArchitectures arch)
-      {
-      TR_ASSERT(arch >= TR_UnknownArchitecture && arch <= TR_LatestArchitecture, "Invalid Processor Architecture.");
-      _processorArchitecture = _processorArchitecture > arch ? _processorArchitecture : arch;
-      }
-
-   TR_Processor getProcessor();
-
-   TR_S390ProcessorArchitectures _processorArchitecture;
-
-   bool _crossCompile;
-
-   TR_S390ProcessorInfo()
-      :
-      _processorArchitecture(TR_UnknownArchitecture),
-      _crossCompile(false)
-      {
-#ifndef TR_HOST_S390
-      _crossCompile = true;
-#endif
-      initialize();
-      }
-
-   bool checkz900();
-   bool checkz10();
-   bool checkz990();
-   bool checkz9();
-   bool checkz196();
-   bool checkzEC12();
-   bool checkZ13();
-   bool checkZ14();
-   bool checkZNext();
-
-   void initialize()
-      {
-      if (checkZNext())
-         _processorArchitecture = TR_zNext;
-      else if (checkZ14())
-         _processorArchitecture = TR_z14;
-      else if (checkZ13())
-         _processorArchitecture = TR_z13;
-      else if (checkzEC12())
-         _processorArchitecture = TR_zEC12;
-      else if (checkz196())
-         _processorArchitecture = TR_z196;
-      else if (checkz10())
-         _processorArchitecture = TR_z10;
-      else if (checkz9())
-         _processorArchitecture = TR_z9;
-      else if (checkz990())
-         _processorArchitecture = TR_z990;
-      else if (checkz900())
-         _processorArchitecture = TR_z900;
-      }
-   };
 
 namespace OMR
 {
@@ -613,7 +523,7 @@ class InstOpCode: public OMR::InstOpCode
        *  \brief
        *      The minimum architecture level set (ALS) which introduced this instruction.
        */
-      TR_S390ProcessorInfo::TR_S390ProcessorArchitectures minimumALS;
+      CPU::Architecture minimumALS;
 
       /**
        *  \brief
@@ -631,7 +541,7 @@ class InstOpCode: public OMR::InstOpCode
     * \return
     *    The minimum ALS of this instruction.
     */
-   TR_S390ProcessorInfo::TR_S390ProcessorArchitectures getMinimumALS() const
+   CPU::Architecture getMinimumALS() const
       {
       return metadata[_mnemonic].minimumALS;
       }
@@ -639,7 +549,6 @@ class InstOpCode: public OMR::InstOpCode
    /* Queries for instruction properties */
    uint32_t hasBypass();
    uint32_t isAdmin();
-   uint32_t isHighWordInstruction();
    uint64_t isOperandHW(uint32_t i);
    uint64_t setsOperand(uint32_t opNum);
 

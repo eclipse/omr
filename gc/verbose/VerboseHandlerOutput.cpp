@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,8 @@ MM_VerboseHandlerOutput::newInstance(MM_EnvironmentBase *env, MM_VerboseManager 
 
 
 MM_VerboseHandlerOutput::MM_VerboseHandlerOutput(MM_GCExtensionsBase *extensions) :
-	_extensions(extensions)
+	_reportingLock()
+	,_extensions(extensions)
 	,_omrVM(NULL)
 	,_mmPrivateHooks(NULL)
 	,_mmOmrHooks(NULL)
@@ -70,6 +71,10 @@ MM_VerboseHandlerOutput::initialize(MM_EnvironmentBase *env, MM_VerboseManager *
 	_mmPrivateHooks = J9_HOOK_INTERFACE(_extensions->privateHookInterface);
 	_mmOmrHooks = J9_HOOK_INTERFACE(_extensions->omrHookInterface);
 	_manager = manager;
+
+	if (!_reportingLock.initialize(env, &env->getExtensions()->lnrlOptions, "MM_VerboseHandlerOutput:_reportingLock")) {
+		return false;
+	}
 
 	return true;
 }
@@ -85,6 +90,7 @@ MM_VerboseHandlerOutput::kill(MM_EnvironmentBase *env)
 void
 MM_VerboseHandlerOutput::tearDown(MM_EnvironmentBase *env)
 {
+	_reportingLock.tearDown();
 	return ;
 }
 
@@ -224,13 +230,24 @@ MM_VerboseHandlerOutput::handleInitializedRegion(J9HookInterface** hook, uintptr
 	MM_InitializedEvent* event = (MM_InitializedEvent*)eventData;
 	MM_VerboseWriterChain* writer = _manager->getWriterChain();
 	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(event->currentThread);
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+	bool isArrayletDoubleMapRequested = _extensions->isArrayletDoubleMapRequested;
+	const char *arrayletDoubleMappingStatus = _extensions->indexableObjectModel.isDoubleMappingEnabled() ? "enabled" : "disabled";
+	const char *arrayletDoubleMappingRequested = isArrayletDoubleMapRequested ? "true" : "false";
+#endif /* OMR_GC_DOUBLE_MAP_ARRAYLETS */
 
 	writer->formatAndOutput(env, 1, "<region>");
 	writer->formatAndOutput(env, 2, "<attribute name=\"regionSize\" value=\"%zu\" />", event->regionSize);
 	writer->formatAndOutput(env, 2, "<attribute name=\"regionCount\" value=\"%zu\" />", event->regionCount);
-#if defined(OMR_GC_ARRAYLETS)
 	writer->formatAndOutput(env, 2, "<attribute name=\"arrayletLeafSize\" value=\"%zu\" />", event->arrayletLeafSize);
-#endif	
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+	if (_extensions->isVLHGC()) {
+		writer->formatAndOutput(env, 2, "<attribute name=\"arrayletDoubleMappingRequested\" value=\"%s\"/>", arrayletDoubleMappingRequested);
+		if (isArrayletDoubleMapRequested) {
+			writer->formatAndOutput(env, 2, "<attribute name=\"arrayletDoubleMapping\" value=\"%s\"/>", arrayletDoubleMappingStatus);
+		}
+	}
+#endif /* OMR_GC_DOUBLE_MAP_ARRAYLETS */
 	writer->formatAndOutput(env, 1, "</region>");
 }
 
@@ -265,12 +282,15 @@ MM_VerboseHandlerOutput::handleInitialized(J9HookInterface** hook, uintptr_t eve
 	writer->formatAndOutput(env, 1, "<attribute name=\"maxHeapSize\" value=\"0x%zx\" />", event->maxHeapSize);
 	writer->formatAndOutput(env, 1, "<attribute name=\"initialHeapSize\" value=\"0x%zx\" />", event->initialHeapSize);
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-	writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefs\" value=\"true\" />");
-	writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefsDisplacement\" value=\"0x%zx\" />", 0);
-	writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefsShift\" value=\"0x%zx\" />", event->compressedPointersShift);
-#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
-	writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefs\" value=\"false\" />");
+	if (env->compressObjectReferences()) {
+		writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefs\" value=\"true\" />");
+		writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefsDisplacement\" value=\"0x%zx\" />", 0);
+		writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefsShift\" value=\"0x%zx\" />", event->compressedPointersShift);
+	} else
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	{
+		writer->formatAndOutput(env, 1, "<attribute name=\"compressedRefs\" value=\"false\" />");
+	}
 	writer->formatAndOutput(env, 1, "<attribute name=\"pageSize\" value=\"0x%zx\" />", event->heapPageSize);
 	writer->formatAndOutput(env, 1, "<attribute name=\"pageType\" value=\"%s\" />", event->heapPageType);
 	writer->formatAndOutput(env, 1, "<attribute name=\"requestedPageSize\" value=\"0x%zx\" />", event->heapRequestedPageSize);
@@ -290,7 +310,9 @@ MM_VerboseHandlerOutput::handleInitialized(J9HookInterface** hook, uintptr_t eve
 	}
 
 	writer->formatAndOutput(env, 1, "<attribute name=\"packetListSplit\" value=\"%zu\" />", _extensions->packetListSplit);
+#if defined(OMR_GC_MODRON_SCAVENGER)
 	writer->formatAndOutput(env, 1, "<attribute name=\"cacheListSplit\" value=\"%zu\" />", _extensions->cacheListSplit);
+#endif /* OMR_GC_MODRON_SCAVENGER */
 	writer->formatAndOutput(env, 1, "<attribute name=\"splitFreeListSplitAmount\" value=\"%zu\" />", _extensions->splitFreeListSplitAmount);
 	writer->formatAndOutput(env, 1, "<attribute name=\"numaNodes\" value=\"%zu\" />", event->numaNodes);
 
@@ -696,13 +718,13 @@ MM_VerboseHandlerOutput::handleAcquiredExclusiveToSatisfyAllocation(J9HookInterf
 void
 MM_VerboseHandlerOutput::enterAtomicReportingBlock()
 {
-	/* default implementation needs no special support */
+	_reportingLock.acquire();
 }
 
 void
 MM_VerboseHandlerOutput::exitAtomicReportingBlock()
 {
-	/* default implementation needs no special support */
+	_reportingLock.release();
 }
 
 void

@@ -27,8 +27,8 @@
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 
-class TR_Method;
 namespace TR { class Compilation; }
+namespace TR { class Method; }
 namespace TR { class TreeTop; }
 
 // This is the type of the debugging counters.
@@ -47,7 +47,7 @@ struct CountedCallSite
   int32_t frequency;
   int32_t numLocals;
   TR_OpaqueMethodBlock *opaque_method;
-  TR_Method *method;
+  TR::Method *method;
   TR_ByteCodeInfo bcInfo;
   CountedCallSite * _next;
   };

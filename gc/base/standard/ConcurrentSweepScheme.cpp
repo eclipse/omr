@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -577,6 +577,7 @@ MM_ConcurrentSweepScheme::postConnectChunk(MM_EnvironmentBase *env, MM_ParallelS
 	 * book keeping - just a matter of getting the right header installed.
 	 */
 	if(NULL != sweepState->_connectPreviousFreeEntry) {
+		bool const compressed = env->compressObjectReferences();
 		/* If we are connecting to the top of the chunk then we may need to fix the heap to ensure it is still walkable.
 		 * The scenario that can result in a corrupted heap is having an object/dead entry span two different chunks, with the last valid connection
 		 * being at the end of the current chunk.  The result is the 2nd chunk can be unwalkable.
@@ -616,7 +617,7 @@ MM_ConcurrentSweepScheme::postConnectChunk(MM_EnvironmentBase *env, MM_ParallelS
 		/* TODO: This "connect" operation should really be left to the pool */
 		if(NULL != sweepState->_connectNextFreeEntry) {
 			Assert_MM_true(sweepState->_connectPreviousFreeEntry < sweepState->_connectNextFreeEntry);
-			sweepState->_connectPreviousFreeEntry->setNext(sweepState->_connectNextFreeEntry);
+			sweepState->_connectPreviousFreeEntry->setNext(sweepState->_connectNextFreeEntry, compressed);
 		}
 	}
 	
@@ -722,20 +723,19 @@ MM_ConcurrentSweepScheme::setupForSweep(MM_EnvironmentBase *env)
 void
 MM_ConcurrentSweepScheme::verifyFreeList(MM_EnvironmentStandard *env, MM_HeapLinkedFreeHeader *freeListHead)
 {
-	for (MM_HeapLinkedFreeHeader *current = freeListHead; NULL != current; current = current->getNext()) {
+	bool const compressed = env->compressObjectReferences();
+	for (MM_HeapLinkedFreeHeader *current = freeListHead; NULL != current; current = current->getNext(compressed)) {
 		assume(current < current->afterEnd(), "Free list size overflows");
-		assume( (current->getNext() == NULL) || (current < current->getNext()), "Free list next pointer is lower in memory");
-		assume( (current->getNext() == NULL) || (current->getNext() > current->afterEnd()), "Size is too large (flows into next free entry)");
+		assume( (current->getNext(compressed) == NULL) || (current < current->getNext(compressed)), "Free list next pointer is lower in memory");
+		assume( (current->getNext(compressed) == NULL) || (current->getNext(compressed) > current->afterEnd()), "Size is too large (flows into next free entry)");
 
-#if 1
-		MM_HeapLinkedFreeHeader *tempNext = current->getNext();
+		MM_HeapLinkedFreeHeader *tempNext = current->getNext(compressed);
 		UDATA tempSize = current->getSize();
 
 		memset((void *)current, 0xFA, tempSize);
 
-		current->setNext(tempNext);
+		current->setNext(tempNext, compressed);
 		current->setSize(tempSize);
-#endif /* 1 */
 	}
 }
 
@@ -977,6 +977,7 @@ MM_ConcurrentSweepScheme::initializeStateForConnections(
 	 * really belongs in the pool itself, but keep hacks localized for now.
 	 * In reality, the pool should maintain the end entry itself and just hand it back.
 	 */
+	bool const compressed = envModron->compressObjectReferences();
 	MM_HeapLinkedFreeHeader *existingPrevious, *existingNext;
 	existingPrevious = NULL;
 	existingNext = memoryPool->_heapFreeList;
@@ -986,7 +987,7 @@ MM_ConcurrentSweepScheme::initializeStateForConnections(
 				break;
 			}
 			existingPrevious = existingNext;
-			existingNext = existingNext->getNext();
+			existingNext = existingNext->getNext(compressed);
 		}
 	}
 	/* Adjust the state information to reflect the correct "on the fly" free list information */

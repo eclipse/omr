@@ -40,11 +40,12 @@ target_sources(omr_example_gc_glue INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/VerboseManagerImpl.cpp
 )
 
-if(OMR_GC_SCAVENGER_DELEGATE)
-	target_sources(omr_example_gc_glue INTERFACE
-		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerDelegate.cpp
+if(OMR_GC_MODRON_SCAVENGER)
+	target_sources(omr_example_gc_glue
+		INTERFACE
+			${CMAKE_CURRENT_SOURCE_DIR}/ScavengerDelegate.cpp
 	)
-endif()
+endif(OMR_GC_MODRON_SCAVENGER)
 
 target_link_libraries(omr_example_gc_glue
 	INTERFACE

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,8 @@
  * @ddr_namespace: default
  */
 
+#include "omrcfg.h"
+
 #include "omrport.h"
 
 #define OMRPORT_ACCESS_FROM_OMRRUNTIME(omrRuntime) OMRPortLibrary *privateOmrPortLibrary = (omrRuntime)->_portLibrary
@@ -41,11 +43,15 @@
 #define OMR_COMPATIBLE_FUNCTION_POINTER(fp) ((void*)(fp))
 #endif /* J9ZOS390 */
 
+#if !(defined(OMR_GC_COMPRESSED_POINTERS) || defined(OMR_GC_FULL_POINTERS))
+#error One or both of OMR_GC_COMPRESSED_POINTERS and OMR_GC_FULL_POINTERS must be defined
+#endif /* !(defined(OMR_GC_COMPRESSED_POINTERS) || defined(OMR_GC_FULL_POINTERS)) */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define OMR_OS_STACK_SIZE	256 * 1024 /* Corresponds to desktopBigStack in builder */
+#define OMR_OS_STACK_SIZE (256 * 1024)
 
 typedef enum {
 	OMR_ERROR_NONE = 0,
@@ -78,7 +84,7 @@ struct UtThreadData;
 struct OMR_TraceThread;
 
 typedef struct OMR_RuntimeConfiguration {
-	uintptr_t _maximum_vm_count;		/* 0 for unlimited */
+	uintptr_t _maximum_vm_count; /* 0 for unlimited */
 } OMR_RuntimeConfiguration;
 
 typedef struct OMR_Runtime {
@@ -92,7 +98,7 @@ typedef struct OMR_Runtime {
 } OMR_Runtime;
 
 typedef struct OMR_VMConfiguration {
-	uintptr_t _maximum_thread_count;		/* 0 for unlimited */
+	uintptr_t _maximum_thread_count; /* 0 for unlimited */
 } OMR_VMConfiguration;
 
 typedef struct movedObjectHashCode {
@@ -113,6 +119,9 @@ typedef struct OMR_ExclusiveVMAccessStats {
 typedef struct OMR_VM {
 	struct OMR_Runtime *_runtime;
 	void *_language_vm;
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	uintptr_t _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	struct OMR_VM *_linkNext;
 	struct OMR_VM *_linkPrevious;
 	struct OMR_VMThread *_vmThreadList;
@@ -149,9 +158,28 @@ typedef struct OMR_VM {
 #endif /* defined(OMR_GC_REALTIME) */
 } OMR_VM;
 
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+/* Mixed mode - necessarily 64-bit */
+#define OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM) (0 != (omrVM)->_compressObjectReferences)
+#define OMRVM_REFERENCE_SHIFT(omrVM) (OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM) ? 2 : 3)
+#else /* OMR_GC_FULL_POINTERS */
+/* Compressed only - necessarily 64-bit */
+#define OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM) TRUE
+#define OMRVM_REFERENCE_SHIFT(omrVM) 2
+#endif /* OMR_GC_FULL_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
+/* Full only - could be 32 or 64-bit */
+#define OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM) FALSE
+#define OMRVM_REFERENCE_SHIFT(omrVM) OMR_LOG_POINTER_SIZE
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+
 typedef struct OMR_VMThread {
 	struct OMR_VM *_vm;
 	uint32_t _sampleStackBackoff;
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	uint32_t _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	void *_language_vmthread;
 	omrthread_t _os_thread;
 	struct OMR_VMThread *_linkNext;
@@ -189,6 +217,22 @@ typedef struct OMR_VMThread {
 	void *_savedObject1; /**< holds new object allocation until object can be attached to reference graph (see MM_AllocationDescription::save/restoreObjects()) */
 	void *_savedObject2; /**< holds new object allocation until object can be attached to reference graph (see MM_AllocationDescription::save/restoreObjects()) */
 } OMR_VMThread;
+
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+/* Mixed mode - necessarily 64-bit */
+#define OMRVMTHREAD_COMPRESS_OBJECT_REFERENCES(omrVMThread) (0 != (omrVMThread)->_compressObjectReferences)
+#define OMRVMTHREAD_REFERENCE_SHIFT(omrVMThread) (OMRVMTHREAD_COMPRESS_OBJECT_REFERENCES(omrVMThread) ? 2 : 3)
+#else /* OMR_GC_FULL_POINTERS */
+/* Compressed only - necessarily 64-bit */
+#define OMRVMTHREAD_COMPRESS_OBJECT_REFERENCES(omrVMThread) TRUE
+#define OMRVMTHREAD_REFERENCE_SHIFT(omrVMThread) 2
+#endif /* OMR_GC_FULL_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
+/* Full only - could be 32 or 64-bit */
+#define OMRVMTHREAD_COMPRESS_OBJECT_REFERENCES(omrVMThread) FALSE
+#define OMRVMTHREAD_REFERENCE_SHIFT(omrVMThread) OMR_LOG_POINTER_SIZE
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 /**
  * Perform basic structural initialization of the OMR runtime
@@ -329,7 +373,6 @@ void omr_vmthread_reattach(OMR_VMThread *currentThread, const char *threadName);
  */
 void omr_vmthread_redetach(OMR_VMThread *omrVMThread);
 
-
 /**
  * Get the current OMR_VMThread, if the current thread is attached.
  *
@@ -404,9 +447,6 @@ void omr_vm_preFork(OMR_VM *vm);
 
 #endif /* defined(OMR_THR_FORK_SUPPORT) */
 
-
-
-
 /*
  * LANGUAGE VM GLUE
  * The following functions must be implemented by the language VM.
@@ -420,7 +460,7 @@ void omr_vm_preFork(OMR_VM *vm);
  *
  * @param[in] omrVM the OMR vm
  * @param[in] threadName An optional name for the thread. May be NULL.
- * 	 It is the responsibility of the caller to ensure this string remains valid for the lifetime of the thread.
+ *   It is the responsibility of the caller to ensure this string remains valid for the lifetime of the thread.
  * @param[out] omrVMThread the current OMR VMThread
  * @return an OMR error code
  */
@@ -519,7 +559,21 @@ int OMR_Glue_GetMethodDictionaryPropertyNum(void);
 const char * const *OMR_Glue_GetMethodDictionaryPropertyNames(void);
 
 #ifdef __cplusplus
-}
-#endif
+/*
+ * Not all compilers retain debugging information for anonymous enum types.
+ * This macro works around that behavior by declaring a static member
+ * (that will not be defined). It must be applied selectively because
+ * not all compilers generate debugging information for static members
+ * (__xlC__ is defined by xlC_r, __ibmxl_version__ is defined by xlclang++).
+ */
+#if (defined(__xlC__) && ((__xlC__ >> 8) >= 16)) \
+ || (defined(__ibmxl_version__) && (__ibmxl_version__ >= 16))
+#define ddr_constant(name, value) static enum { name = value } ddr_ref_ ## name
+#else /* defined(__ibmxl_version__) && (__ibmxl_version__ >= 16) */
+#define ddr_constant(name, value)        enum { name = value }
+#endif /* defined(__ibmxl_version__) && (__ibmxl_version__ >= 16) */
+
+} /* extern "C" */
+#endif /* __cplusplus */
 
 #endif /* omr_h */

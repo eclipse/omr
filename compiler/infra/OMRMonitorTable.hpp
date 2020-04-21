@@ -43,8 +43,8 @@ class OMR_EXTENSIBLE MonitorTable
 
    static TR::MonitorTable *get() { return _instance; }
 
-   void free() { TR_ASSERT(false, "not implemented by project"); }
-   void removeAndDestroy(TR::Monitor *monitor) { TR_ASSERT(false, "not implemented by project"); }
+   void free() { TR_UNIMPLEMENTED(); }
+   void removeAndDestroy(TR::Monitor *monitor) { TR_UNIMPLEMENTED(); }
 
    TR::Monitor *getMemoryAllocMonitor() { return _memoryAllocMonitor; }
    TR::Monitor *getScratchMemoryPoolMonitor() { return _scratchMemoryPoolMonitor; }
@@ -69,7 +69,7 @@ class OMR_EXTENSIBLE MonitorTable
    friend class TR::Monitor;
    friend class TR::MonitorTable;
 
-   TR::Monitor *create(char *name) { TR_ASSERT(false, "not implemented by project"); return 0; }
+   TR::Monitor *create(char *name) { TR_UNIMPLEMENTED(); return 0; }
    };
 
 }

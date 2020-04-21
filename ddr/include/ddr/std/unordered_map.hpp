@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2017 IBM Corp. and others
+ * Copyright (c) 2013, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,15 +30,12 @@
 #undef tolower
 #endif /* defined(J9ZOS390) */
 
+#include <unordered_map>
+
 #if defined(OMR_HAVE_CXX11)
-#include <unordered_map>
 using std::unordered_map;
-#elif defined(OMR_HAVE_TR1)
-#include <unordered_map>
-using std::tr1::hash;
-using std::tr1::unordered_map;
 #else /* defined(OMR_HAVE_CXX11) */
-#error "Need std::unordered_map defined in TR1 or C++11."
+using std::tr1::unordered_map;
 #endif /* defined(OMR_HAVE_CXX11) */
 
 #if defined(J9ZOS390)

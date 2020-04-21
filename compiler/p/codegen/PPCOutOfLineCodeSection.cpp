@@ -29,8 +29,8 @@
 #include "compile/Compilation.hpp"
 #include "env/TRMemory.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 #include "p/codegen/PPCInstruction.hpp"
@@ -45,6 +45,11 @@ TR_PPCOutOfLineCodeSection::TR_PPCOutOfLineCodeSection(TR::Node  *callNode,
                             TR::CodeGenerator *cg) :
                             TR_OutOfLineCodeSection(callNode,callOp,targetReg,entryLabel,restartLabel,cg)
    {
+   if(callNode->isPreparedForDirectJNI())
+      {
+      _callNode->setPreparedForDirectJNI();
+      }
+
    generatePPCOutOfLineCodeSectionDispatch();
    }
 

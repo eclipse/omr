@@ -80,8 +80,8 @@ OMR::TreeTop::unlink(bool decRefCountRecursively)
 inline void
 OMR::TreeTop::join(TR::TreeTop * p)
    {
-   if (self())
-      self()->setNextTreeTop(p);
+   self()->setNextTreeTop(p);
+   
    if (p)
       p->setPrevTreeTop(self());
    }

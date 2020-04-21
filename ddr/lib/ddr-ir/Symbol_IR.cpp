@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 
 #include "ddr/ir/ClassUDT.hpp"
 #include "ddr/ir/EnumUDT.hpp"
+#include "ddr/ir/TextFile.hpp"
 #include "ddr/ir/TypedefUDT.hpp"
 #include "ddr/ir/UnionUDT.hpp"
 
@@ -76,44 +77,30 @@ DDR_RC
 Symbol_IR::applyOverridesList(const char *overridesListFile)
 {
 	DDR_RC rc = DDR_RC_OK;
-	OMRPORT_ACCESS_FROM_OMRPORT(_portLibrary);
 	vector<string> filenames;
 	OverrideInfo overrideInfo;
+	TextFile listFile(_portLibrary);
 
 	/* Read list of type override files from specified file. */
-	intptr_t fd = omrfile_open(overridesListFile, EsOpenRead, 0);
-	if (0 > fd) {
+	if (!listFile.openRead(overridesListFile)) {
 		ERRMSG("Failure attempting to open %s\nExiting...\n", overridesListFile);
 		rc = DDR_RC_ERROR;
 	} else {
-		int64_t offset = omrfile_seek(fd, 0, EsSeekEnd);
-		if (-1 != offset) {
-			char *buff = (char *)malloc((size_t)(offset + 1));
-			if (NULL == buff) {
-				ERRMSG("Unable to allocate memory for file contents: %s", overridesListFile);
-				rc = DDR_RC_ERROR;
-				goto closeFile;
+		string line;
+
+		/* Read each line as a file name. */
+		while (listFile.readLine(line)) {
+			size_t commentPosition = line.find("#");
+			if (string::npos != commentPosition) {
+				line.erase(commentPosition, line.length());
 			}
-			memset(buff, 0, (size_t)(offset + 1));
-			omrfile_seek(fd, 0, EsSeekSet);
-			/* Read each line as a file name. */
-			if (offset == omrfile_read(fd, buff, (intptr_t)offset)) {
-				for (char *nextLine = strtok(buff, "\r\n"); NULL != nextLine; nextLine = strtok(NULL, "\r\n")) {
-					string line(nextLine);
-					size_t commentPosition = line.find("#");
-					if (string::npos != commentPosition) {
-						line.erase(commentPosition, line.length());
-					}
-					line.erase(line.find_last_not_of(" \t") + 1, line.length());
-					if (!line.empty()) {
-						filenames.push_back(line);
-					}
-				}
+			line.erase(line.find_last_not_of(" \t") + 1, line.length());
+			if (!line.empty()) {
+				filenames.push_back(line);
 			}
-			free(buff);
 		}
-closeFile:
-		omrfile_close(fd);
+
+		listFile.close();
 	}
 
 	for (vector<string>::const_iterator it = filenames.begin(); filenames.end() != it; ++it) {
@@ -182,102 +169,80 @@ DDR_RC
 Symbol_IR::readOverridesFile(const char *overridesFile, OverrideInfo *overrideInfo)
 {
 	DDR_RC rc = DDR_RC_OK;
-	OMRPORT_ACCESS_FROM_OMRPORT(_portLibrary);
+	TextFile file(_portLibrary);
 
 	/* Read list of type overrides from specified file. */
-	intptr_t fd = omrfile_open(overridesFile, EsOpenRead, 0);
-	if (0 > fd) {
+	if (!file.openRead(overridesFile)) {
 		ERRMSG("Failure attempting to open %s\nExiting...\n", overridesFile);
 		rc = DDR_RC_ERROR;
 	} else {
-		int64_t offset = omrfile_seek(fd, 0, EsSeekEnd);
-		if (-1 != offset) {
-			char *buff = (char *)malloc((size_t)(offset + 1));
-			if (NULL == buff) {
-				ERRMSG("Unable to allocate memory for file contents: %s", overridesFile);
-				rc = DDR_RC_ERROR;
-				goto closeFile;
+		const string blobprefix = "ddrblob.";
+		const string opaquetype = "opaquetype=";
+		const string fieldoverride = "fieldoverride.";
+		const string typeoverride = "typeoverride.";
+		string line;
+
+		/*
+		 * Read each line, expecting one of the following formats:
+		 *   opaquetype={TypeName}
+		 *   fieldoverride.{StructureName}.{fieldName}={newName}
+		 *   typeoverride.{StructureName}.{fieldName}={newType}"
+		 */
+		while (file.readLine(line)) {
+			/* Remove comment portion of the line, if present. */
+			size_t commentPosition = line.find("#");
+			if (string::npos != commentPosition) {
+				line.erase(commentPosition, line.length());
 			}
-			memset(buff, 0, (size_t)(offset + 1));
-			omrfile_seek(fd, 0, EsSeekSet);
+			line.erase(line.find_last_not_of(" \t") + 1, line.length());
 
-			/*
-			 * Read each line, expecting one of the following formats:
-			 *   opaquetype={TypeName}
-			 *   fieldoverride.{StructureName}.{fieldName}={newName}
-			 *   typeoverride.{StructureName}.{fieldName}={newType}"
-			 */
-			if (offset != omrfile_read(fd, buff, (intptr_t)offset)) {
-				ERRMSG("Failure reading %s", overridesFile);
-				rc = DDR_RC_ERROR;
-			} else {
-				const string blobprefix = "ddrblob.";
-				const string opaquetype = "opaquetype=";
-				const string fieldoverride = "fieldoverride.";
-				const string typeoverride = "typeoverride.";
+			/* Ignore the prefix "ddrblob.", if present. */
+			if (startsWith(line, blobprefix)) {
+				line.erase(0, blobprefix.length());
+			}
 
-				for (char *nextLine = strtok(buff, "\r\n");
-						NULL != nextLine;
-						nextLine = strtok(NULL, "\r\n")) {
-					string line = nextLine;
-
-					/* Remove comment portion of the line, if present. */
-					size_t commentPosition = line.find("#");
-					if (string::npos != commentPosition) {
-						line.erase(commentPosition, line.length());
-					}
-					line.erase(line.find_last_not_of(" \t") + 1, line.length());
-
-					/* Ignore the prefix "ddrblob.", if present. */
-					if (startsWith(line, blobprefix)) {
-						line.erase(0, blobprefix.length());
-					}
-
-					/* Check for opaque types. */
-					if (startsWith(line, opaquetype)) {
-						line.erase(0, opaquetype.length());
-						if (!line.empty()) {
-							overrideInfo->opaqueTypeNames.insert(line);
-						}
-						continue;
-					}
-
-					/* Check if the override is a typeoverride or a fieldoverride. */
-					bool isTypeOverride = false;
-					if (startsWith(line, fieldoverride)) {
-						line.erase(0, fieldoverride.length());
-					} else if (startsWith(line, typeoverride)) {
-						isTypeOverride = true;
-						line.erase(0, typeoverride.length());
-					} else {
-						continue;
-					}
-
-					/* Correctly formatted lines must have exactly 1 dot and 1 equals in that order. */
-					size_t dotPosition = line.find('.');
-					if ((string::npos == dotPosition) || (string::npos != line.find('.', dotPosition + 1))) {
-						/* not exactly one '.' */
-						continue;
-					}
-					size_t equalsPosition = line.find('=', dotPosition);
-					if ((string::npos == equalsPosition) || (string::npos != line.find('=', equalsPosition + 1))) {
-						/* not exactly one '=' after the '.' */
-						continue;
-					}
-					/* Get the structure name, field name, and override name. Add to list to process. */
-					FieldOverride override = {
-						line.substr(0, dotPosition),
-						line.substr(dotPosition + 1, equalsPosition - dotPosition - 1),
-						line.substr(equalsPosition + 1),
-						isTypeOverride
-					};
-					overrideInfo->fieldOverrides.push_back(override);
+			/* Check for opaque types. */
+			if (startsWith(line, opaquetype)) {
+				line.erase(0, opaquetype.length());
+				if (!line.empty()) {
+					overrideInfo->opaqueTypeNames.insert(line);
 				}
+				continue;
 			}
-			free(buff);
+
+			/* Check if the override is a typeoverride or a fieldoverride. */
+			bool isTypeOverride = false;
+			if (startsWith(line, fieldoverride)) {
+				line.erase(0, fieldoverride.length());
+			} else if (startsWith(line, typeoverride)) {
+				isTypeOverride = true;
+				line.erase(0, typeoverride.length());
+			} else {
+				continue;
+			}
+
+			/* Correctly formatted lines must have exactly 1 dot and 1 equals in that order. */
+			size_t dotPosition = line.find('.');
+			if ((string::npos == dotPosition) || (string::npos != line.find('.', dotPosition + 1))) {
+				/* not exactly one '.' */
+				continue;
+			}
+			size_t equalsPosition = line.find('=', dotPosition);
+			if ((string::npos == equalsPosition) || (string::npos != line.find('=', equalsPosition + 1))) {
+				/* not exactly one '=' after the '.' */
+				continue;
+			}
+			/* Get the structure name, field name, and override name. Add to list to process. */
+			FieldOverride override = {
+					line.substr(0, dotPosition),
+					line.substr(dotPosition + 1, equalsPosition - dotPosition - 1),
+					line.substr(equalsPosition + 1),
+					isTypeOverride
+			};
+			overrideInfo->fieldOverrides.push_back(override);
 		}
-closeFile:
-		omrfile_close(fd);
+
+		file.close();
 	}
 
 	return rc;
@@ -345,6 +310,10 @@ MergeVisitor::visitEnum(EnumUDT *type) const
 {
 	/* Merge by adding the fields/subtypes of '_other' into 'type'. */
 	EnumUDT *other = (EnumUDT *)_other;
+	/* This type may be derived from only a forward declaration; if so, update the size now. */
+	if (0 == type->_sizeOf) {
+		type->_sizeOf = other->_sizeOf;
+	}
 	_ir->mergeEnums(&type->_enumMembers, &other->_enumMembers);
 	return DDR_RC_OK;
 }
@@ -369,6 +338,21 @@ MergeVisitor::visitComposite(ClassType *type) const
 DDR_RC
 MergeVisitor::visitClass(ClassUDT *type) const
 {
+	if (NULL == type->_superClass) {
+		ClassUDT *otherSuper = ((ClassUDT *)_other)->_superClass;
+
+		if (NULL != otherSuper) {
+			Type *thisSuper = _ir->findTypeInMap(otherSuper);
+
+			if (NULL != thisSuper) {
+				otherSuper = (ClassUDT *)thisSuper;
+			} else {
+				_merged->push_back(otherSuper);
+			}
+			type->_superClass = otherSuper;
+		}
+	}
+
 	return visitComposite(type);
 }
 

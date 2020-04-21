@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "infra/Checklist.hpp"
 #include "infra/ILWalk.hpp"
 #include "ras/ILValidationStrategies.hpp"
@@ -41,7 +41,7 @@
 
 /**
  * SoundnessRule (a TR::MethodValidationRule) :
- * 
+ *
  * "Soundness" comprises the criteria required to make the IL iterators
  * function properly.
  *
@@ -152,7 +152,7 @@ void TR::SoundnessRule::checkSoundnessCondition(TR::TreeTop *location, bool cond
 
 /**
  * ValidateLivenessBoundaries (a TR::MethodValidationRule):
- * 
+ *
  * Validates NodeLivnessBoundaries across the entire `method`
  * by checking that no nodes are Live across block boundaries.
  *

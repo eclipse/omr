@@ -115,6 +115,9 @@ public:
 	
 	virtual void *getHeapBase() = 0;
 	virtual void *getHeapTop() = 0;
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+	virtual void *doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize) = 0;
+#endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 
 	virtual uintptr_t getMaximumPhysicalRange() = 0;
 
@@ -145,7 +148,7 @@ public:
 	 * moved from one subspace to another.
 	 * @param env[in] The thread which performed the change in heap geometry 
 	 */
-	virtual void heapReconfigured(MM_EnvironmentBase *env);
+	virtual void heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress);
 
 	virtual bool objectIsInGap(void *object);
 

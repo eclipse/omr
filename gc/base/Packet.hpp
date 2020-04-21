@@ -105,7 +105,7 @@ public:
 	/**
 	 * Return the address of currentPtr for this packet.
 	 * 
-	 * @note currently only used by staccato
+	 * @note currently only used by realtime
 	 * @return the address of currentPtr
 	 */
 	uintptr_t **getCurrentAddr(MM_EnvironmentBase *env)
@@ -116,7 +116,7 @@ public:
 	/**
 	 * Return the address of topPtr for this packet.
 	 * 
-	 * @note currently only used by staccato
+	 * @note currently only used by realtime
 	 * @return the address of topPtr
 	 */
 	uintptr_t **getTopAddr(MM_EnvironmentBase *env)
@@ -128,7 +128,7 @@ public:
 	 * Set _currentPtr equal to _topPtr so
 	 * the packet looks as if it is full.
 	 * 
-	 * @note currently only used by staccato
+	 * @note currently only used by realtime
 	 */
 	void setFull(MM_EnvironmentBase *env)
 	{

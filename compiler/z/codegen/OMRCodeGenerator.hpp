@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ namespace OMR { typedef OMR::Z::CodeGenerator CodeGeneratorConnector; }
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/Machine.hpp"
@@ -52,7 +52,6 @@ namespace OMR { typedef OMR::Z::CodeGenerator CodeGeneratorConnector; }
 #include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/arrayof.h"
 #include "cs2/hashtab.h"
 #include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
@@ -64,11 +63,12 @@ namespace OMR { typedef OMR::Z::CodeGenerator CodeGeneratorConnector; }
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -80,7 +80,6 @@ namespace OMR { typedef OMR::Z::CodeGenerator CodeGeneratorConnector; }
 #include "env/IO.hpp"
 
 
-#include "il/symbol/LabelSymbol.hpp"
 #include "z/codegen/S390OutOfLineCodeSection.hpp"
 #include "codegen/BackingStore.hpp"
 #include "codegen/Relocation.hpp"
@@ -96,7 +95,6 @@ namespace TR { class S390ConstantInstructionSnippet; }
 namespace TR { class S390EyeCatcherDataSnippet; }
 namespace TR { class S390ImmInstruction; }
 class TR_S390OutOfLineCodeSection;
-namespace TR { class S390PrivateLinkage; }
 class TR_S390ScratchRegisterManager;
 namespace TR { class S390WritableDataSnippet; }
 class TR_StorageReference;
@@ -127,7 +125,7 @@ extern int64_t getIntegralValue(TR::Node* node);
 #endif
 
 // Multi Code Cache Routines for checking whether an entry point is within reach of a BASRL.
-#define NEEDS_TRAMPOLINE(target, rip, cg) (cg->directCallRequiresTrampoline((intptrj_t)target, (intptrj_t)rip))
+#define NEEDS_TRAMPOLINE(target, rip, cg) (cg->directCallRequiresTrampoline((intptr_t)target, (intptr_t)rip))
 
 #define TR_MAX_MVC_SIZE 256
 #define TR_MAX_CLC_SIZE 256
@@ -203,6 +201,9 @@ public:
    TR_BranchPreloadCallData _outlineCall;
    TR_BranchPreloadCallData _outlineArrayCall;
 
+   TR::list<TR::Register*> *getFirstTimeLiveOOLRegisterList() {return _firstTimeLiveOOLRegisterList;}
+   TR::list<TR::Register*> *setFirstTimeLiveOOLRegisterList(TR::list<TR::Register*> *r) {return _firstTimeLiveOOLRegisterList = r;}
+
    TR::list<TR_BranchPreloadCallData*> *_callsForPreloadList;
 
    TR::list<TR_BranchPreloadCallData*> * getCallsForPreloadList() { return _callsForPreloadList; }
@@ -221,7 +222,7 @@ public:
     *
     * @return : true if a trampoline is required; false otherwise.
     */
-   bool directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress);
+   bool directCallRequiresTrampoline(intptr_t targetAddress, intptr_t sourceAddress);
 
    /**
     * \brief Tells the optimzers and codegen whether a load constant node should be rematerialized.
@@ -260,7 +261,7 @@ public:
 
    bool canTransformUnsafeCopyToArrayCopy();
    bool supportsInliningOfIsInstance();
-   bool supports32bitAiadd() {return TR::Compiler->target.is64Bit();}
+   bool supports32bitAiadd() {return OMR::Z::CodeGenerator::comp()->target().is64Bit();}
 
    void addPICsListForInterfaceSnippet(TR::S390ConstantDataSnippet * ifcSnippet, TR::list<TR_OpaqueClassBlock*> * PICSlist);
    TR::list<TR_OpaqueClassBlock*> * getPICsListForInterfaceSnippet(TR::S390ConstantDataSnippet * ifcSnippet);
@@ -290,22 +291,13 @@ public:
 
    bool shouldYankCompressedRefs() { return true; }
 
-   TR::RegisterIterator *getHPRegisterIterator()                            {return  _hpRegisterIterator;         }
-   TR::RegisterIterator *setHPRegisterIterator(TR::RegisterIterator *iter)   {return _hpRegisterIterator = iter; }
-
    bool supportsJITFreeSystemStackPointer() { return false; }
    TR::RegisterIterator *getVRFRegisterIterator()                           {return  _vrfRegisterIterator;        }
    TR::RegisterIterator *setVRFRegisterIterator(TR::RegisterIterator *iter)  {return _vrfRegisterIterator = iter;}
 
    bool supportsLengthMinusOneForMemoryOpts() {return true;}
 
-   bool supportsTrapsInTMRegion()
-      {
-      return TR::Compiler->target.isZOS();
-      }
-
-   bool inlineNDmemcpyWithPad(TR::Node * node, int64_t * maxLengthPtr = NULL);
-   bool codegenSupportsLoadlessBNDCheck() {return _processorInfo.supportsArch(TR_S390ProcessorInfo::TR_zEC12);}
+   bool codegenSupportsLoadlessBNDCheck() {return OMR::Z::CodeGenerator::comp()->target().cpu.getSupportsArch(TR::CPU::zEC12);}
    TR::Register *evaluateLengthMinusOneForMemoryOps(TR::Node *,  bool , bool &lenMinusOne);
 
    virtual TR_GlobalRegisterNumber getGlobalRegisterNumber(uint32_t realRegNum);
@@ -375,8 +367,6 @@ public:
 
 //Convenience accessor methods
    TR::Linkage *getS390Linkage();
-   TR::S390PrivateLinkage *getS390PrivateLinkage();
-   TR::SystemLinkage * getS390SystemLinkage();
 
    TR::RealRegister *getStackPointerRealRegister(TR::Symbol *symbol = NULL);
    TR::RealRegister *getEntryPointRealRegister();
@@ -449,12 +439,6 @@ public:
    virtual bool getSupportsBitPermute();
    int32_t getEstimatedExtentOfLitLoop()  {return _extentOfLitPool;}
 
-   int64_t setAvailableHPRSpillMask(int64_t i)  {return _availableHPRSpillMask = i;}
-   int64_t maskAvailableHPRSpillMask(int64_t i) {return _availableHPRSpillMask &= i;}
-   int64_t getAvailableHPRSpillMask()           {return _availableHPRSpillMask;}
-   int32_t getPreprologueOffset()               { return _preprologueOffset; }
-   int32_t setPreprologueOffset(int32_t offset) { return _preprologueOffset = offset; }
-
    bool supportsBranchPreload()          {return _cgFlags.testAny(S390CG_enableBranchPreload);}
    void setEnableBranchPreload()          {_cgFlags.set(S390CG_enableBranchPreload);}
    void setDisableBranchPreload()          {_cgFlags.reset(S390CG_enableBranchPreload);}
@@ -479,8 +463,6 @@ public:
    // Query to codegen to know if regs are available or not
    bool isLitPoolFreeForAssignment();
 
-   // zGryphon HPR
-   TR::Instruction * upgradeToHPRInstruction(TR::Instruction * inst);
    // REG ASSOCIATION
    //
    bool enableRegisterAssociations();
@@ -502,9 +484,6 @@ public:
 
    TR_BitVector *getGlobalGPRsPreservedAcrossCalls(){ return &_globalGPRsPreservedAcrossCalls; }
    TR_BitVector *getGlobalFPRsPreservedAcrossCalls(){ return &_globalFPRsPreservedAcrossCalls; }
-
-   TR_GlobalRegisterNumber getGlobalHPRFromGPR (TR_GlobalRegisterNumber n);
-   TR_GlobalRegisterNumber getGlobalGPRFromHPR (TR_GlobalRegisterNumber n);
 
    bool considerTypeForGRA(TR::Node *node);
    bool considerTypeForGRA(TR::DataType dt);
@@ -554,6 +533,8 @@ public:
 
    virtual bool isAddMemoryUpdate(TR::Node * node, TR::Node * valueChild);
 
+   bool afterRA() { return _afterRA; }
+
 #ifdef DEBUG
    void dumpPreGPRegisterAssignment(TR::Instruction *);
    void dumpPostGPRegisterAssignment(TR::Instruction *, TR::Instruction *);
@@ -572,8 +553,6 @@ public:
    void incTotalRegisterMoves();
    void printStats(int32_t);
 #endif
-
-   TR_S390ProcessorInfo *getS390ProcessorInfo() {return &_processorInfo;}
 
    TR_S390OutOfLineCodeSection *findS390OutOfLineCodeSectionFromLabel(TR::LabelSymbol *label);
 
@@ -718,9 +697,6 @@ public:
 
    bool supportsDirectIntegralLoadStoresFromLiteralPool();
 
-   void setSupportsHighWordFacility(bool val)  { _cgFlags.set(S390CG_supportsHighWordFacility, val); }
-   bool supportsHighWordFacility()     { return _cgFlags.testAny(S390CG_supportsHighWordFacility); }
-
    void setCanExceptByTrap(bool val) { _cgFlags.set(S390CG_canExceptByTrap, val); }
    virtual bool canExceptByTrap()    { return _cgFlags.testAny(S390CG_canExceptByTrap); }
 
@@ -803,15 +779,13 @@ public:
       return 7;
       }
 
-   // LL: move to .cpp
-   bool arithmeticNeedsLiteralFromPool(TR::Node *node);
+   uint32_t getJitMethodEntryAlignmentBoundary();
+
+   uint32_t getJitMethodEntryAlignmentThreshold();
 
    // LL: move to .cpp
    bool bitwiseOpNeedsLiteralFromPool(TR::Node *parent, TR::Node *child);
 
-   bool bndsChkNeedsLiteralFromPool(TR::Node *child);
-
-   bool constLoadNeedsLiteralFromPool(TR::Node *node);
    virtual bool isDispInRange(int64_t disp);
 
    bool getSupportsOpCodeForAutoSIMD(TR::ILOpCode, TR::DataType);
@@ -830,20 +804,22 @@ public:
 
    TR::S390ImmInstruction          *_returnTypeInfoInstruction;
    int32_t                        _extentOfLitPool;  // excludes snippets
-   uint64_t                       _availableHPRSpillMask;
 
 protected:
    TR::list<TR::S390ConstantDataSnippet*>  _constantList;
    TR::list<TR::S390ConstantDataSnippet*>  _snippetDataList;
 
-   /**
-    * _processorInfo contains the targeted hardware level for the compilation.
-    * This may be different than the real hardware the JIT compiler is currently running
-    * on, due to user specified options.
-    */
-   TR_S390ProcessorInfo            _processorInfo;
+   TR::list<TR::Register*> *_firstTimeLiveOOLRegisterList;
 
 private:
+
+   // TODO: These should move into the base class. There also seems to be a little overlap between these and
+   // _firstInstruction and _appendInstruction. We should likely expose a getLastInstruction API as well. The former
+   // API should return _methodBegin and latter _methodEnd always. The append instruction will be the instruction
+   // preceeding _methodEnd.
+   TR::Instruction* _methodBegin;
+   TR::Instruction* _methodEnd;
+
    TR::list<TR::S390WritableDataSnippet*>  _writableList;
    TR::list<TR_S390OutOfLineCodeSection*> _outOfLineCodeSectionList;
 
@@ -854,7 +830,6 @@ private:
 
    TR_HashTab * _interfaceSnippetToPICsListHashTab;
 
-   TR::RegisterIterator            *_hpRegisterIterator;
    TR::RegisterIterator            *_vrfRegisterIterator;
 
    TR_Array<TR::Register *>        _transientLongRegisters;
@@ -874,10 +849,6 @@ private:
 
    bool  TR_LiteralPoolOnDemandOnRun;
 
-
-   /** Saves the preprologue offset to allow JIT entry point alignment padding. */
-   int32_t _preprologueOffset;
-
    TR_BackingStore* _localF2ISpill;
 
    TR_BackingStore* _localD2LSpill;
@@ -889,6 +860,8 @@ private:
    CS2::HashTable<ncount_t, bool, TR::Allocator> _nodesToBeEvaluatedInRegPairs;
 
 protected:
+
+   bool _afterRA;
    flags32_t  _cgFlags;
 
    /** Miscellaneous S390CG boolean flags. */
@@ -911,7 +884,7 @@ protected:
       S390CG_condCodeShouldBePreserved   = 0x00004000,
       S390CG_enableBranchPreload         = 0x00008000,
       S390CG_globalStaticBaseRegisterOn  = 0x00010000,
-      S390CG_supportsHighWordFacility    = 0x00020000,
+      // Available                       = 0x00020000,
       S390CG_canExceptByTrap             = 0x00040000,
       S390CG_enableTLHPrefetching        = 0x00080000,
       S390CG_enableBranchPreloadForCalls = 0x00100000,
@@ -928,4 +901,7 @@ class TR_S390ScratchRegisterManager : public TR_ScratchRegisterManager
    TR_S390ScratchRegisterManager(int32_t capacity, TR::CodeGenerator *cg) : TR_ScratchRegisterManager(capacity, cg) {}
    };
 
+#ifdef J9_PROJECT_SPECIFIC
+uint32_t CalcCodeSize(TR::Instruction *start,TR::Instruction *end);
+#endif
 #endif

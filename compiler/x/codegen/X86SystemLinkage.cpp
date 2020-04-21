@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,8 @@
 #include <stddef.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
@@ -31,13 +33,13 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/TRMemory.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/List.hpp"
@@ -125,7 +127,7 @@ TR::X86SystemLinkage::copyParametersToHomeLocation(TR::Instruction *cursor)
       {
       int8_t lri = paramCursor->getLinkageRegisterIndex();     // How the parameter enters the method
       TR::RealRegister::RegNum ai                              // Where method body expects to find it
-         = (TR::RealRegister::RegNum)paramCursor->getAllocatedIndex();
+         = (TR::RealRegister::RegNum)paramCursor->getAssignedGlobalRegisterIndex();
       int32_t offset = paramCursor->getParameterOffset();      // Location of the parameter's stack slot
       TR_MovDataTypes movDataType = paramMovType(paramCursor); // What sort of MOV instruction does it need?
 
@@ -514,7 +516,7 @@ TR::X86SystemLinkage::createPrologue(TR::Instruction *cursor)
 
    // Allocate the stack frame
    //
-   const int32_t singleWordSize = TR::Compiler->target.is32Bit() ? 4 : 8;
+   const int32_t singleWordSize = cg()->comp()->target().is32Bit() ? 4 : 8;
    if (allocSize == 0)
       {
       // No need to do anything
@@ -560,7 +562,7 @@ TR::X86SystemLinkage::createPrologue(TR::Instruction *cursor)
       paramCursor != NULL;
       paramCursor = paramIterator.getNext()
       ){
-      TR::RealRegister::RegNum ai = (TR::RealRegister::RegNum)paramCursor->getAllocatedIndex();
+      TR::RealRegister::RegNum ai = (TR::RealRegister::RegNum)paramCursor->getAssignedGlobalRegisterIndex();
       debugFrameSlotInfo = new (trHeapMemory()) TR_DebugFrameSegmentInfo(comp(),
          paramCursor->getOffset(), paramCursor->getSize(), "Parameter",
          debugFrameSlotInfo,
@@ -704,7 +706,7 @@ TR::X86SystemLinkage::createEpilogue(TR::Instruction *cursor)
 
    // Deallocate the stack frame
    //
-   const int32_t singleWordSize = TR::Compiler->target.is32Bit() ? 4 : 8;
+   const int32_t singleWordSize = comp()->target().is32Bit() ? 4 : 8;
    if (_properties.getAlwaysDedicateFramePointerRegister())
       {
       // Restore stack pointer from frame pointer
@@ -819,7 +821,7 @@ TR::X86SystemLinkage::copyGlRegDepsToParameterSymbols(
          {
          TR::Node *child = glRegDeps->getChild(childNum);
          TR::ParameterSymbol *sym = child->getSymbol()->getParmSymbol();
-         sym->setAllocatedIndex(cg->getGlobalRegister(child->getGlobalRegisterNumber()));
+         sym->setAssignedGlobalRegisterIndex(cg->getGlobalRegister(child->getGlobalRegisterNumber()));
          }
       }
    }
@@ -873,7 +875,7 @@ TR::X86SystemLinkage::layoutTypeOnStack(
          dataCursor += 8;
          break;
       case TR::Address:
-         dataCursor += TR::Compiler->target.is32Bit() ? 4 : 8;
+         dataCursor += comp()->target().is32Bit() ? 4 : 8;
          break;
       case TR::Aggregate:
       default:
@@ -883,3 +885,15 @@ TR::X86SystemLinkage::layoutTypeOnStack(
       }
    return typeAlign;
    }
+
+
+intptr_t TR::X86SystemLinkage::entryPointFromCompiledMethod()
+   {
+   return reinterpret_cast<intptr_t>(cg()->getCodeStart());
+   }
+
+intptr_t TR::X86SystemLinkage::entryPointFromInterpretedMethod()
+   {
+   return reinterpret_cast<intptr_t>(cg()->getCodeStart());
+   }
+

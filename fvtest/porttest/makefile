@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2016 IBM Corp. and others
+# Copyright (c) 2015, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,8 +51,14 @@ OBJECTS := \
   si_numcpusTest \
   testHelpers \
   testProcessHelpers \
-  vmemTest \
   main_function
+
+ifeq (1,$(OMR_PORT_SOCKET_SUPPORT))
+  # TODO: Remove ifneq (win,$(OMR_HOST_OS)) after OMRSOCK API is implemented on Windows.
+  ifneq (win,$(OMR_HOST_OS))
+    OBJECTS += omrsockTest
+  endif
+endif
 
 vpath main_function.cpp $(top_srcdir)/util/main_function
 

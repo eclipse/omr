@@ -38,14 +38,13 @@ namespace OMR { typedef OMR::Z::RegisterDependencyConditions RegisterDependencyC
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterDependencyStruct.hpp"
 #include "compile/Compilation.hpp"
-#include "cs2/hashtab.h"
 #include "env/TRMemory.hpp"
 #include "infra/Assert.hpp"
 
@@ -118,8 +117,6 @@ class TR_S390RegisterDependencyGroup
       _dependencies[index].assignFlags(flag);
       _dependencies[index].setRealRegister(rr);
       if (vr) vr->setDependencySet(true);
-      if (vr != NULL)
-         vr->setIsNotHighWordUpgradable(true);
       }
 
    TR::Register *searchForRegister(TR::Register* vr, uint8_t flag, uint32_t numberOfRegisters, TR::CodeGenerator *cg)
@@ -159,31 +156,11 @@ class TR_S390RegisterDependencyGroup
       _dependencies[index].setRealRegister(regNum);
       }
 
-   void checkRegisterPairSufficiencyAndHPRAssignment(TR::CodeGenerator *cg,
-                                     TR::Instruction  *currentInstruction,
-                                     const uint32_t availableGPRMap,
-                                     uint32_t numOfDependencies);
-
-   void checkRegisterDependencyDuplicates(TR::CodeGenerator* cg,
-                                          const uint32_t numOfDependencies);
-
-   uint32_t checkDependencyGroup(TR::CodeGenerator *cg,
-                                 TR::Instruction  *currentInstruction,
-                                 uint32_t numOfDependencies);
-
    void assignRegisters(TR::Instruction  *currentInstruction,
                         TR_RegisterKinds kindToBeAssigned,
                         uint32_t         numberOfRegisters,
                         TR::CodeGenerator *cg);
-   void decFutureUseCounts(uint32_t         numberOfRegisters,
-                           TR::CodeGenerator *cg)
-      {
-      for (uint32_t i = 0; i< numberOfRegisters; i++)
-         {
-         TR::Register *virtReg = _dependencies[i].getRegister();
-         virtReg->decFutureUseCount();
-         }
-      }
+
    void blockRegisters(uint32_t numberOfRegisters, TR::CodeGenerator *cg)
       {
       for (uint32_t i = 0; i < numberOfRegisters; i++)
@@ -231,8 +208,6 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
    uint16_t                         _numPostConditions;
    uint16_t                         _addCursorForPost;
    bool                            _isUsed;
-   bool                            _isHint;
-   bool                            _conflictsResolved;
    TR::CodeGenerator               *_cg;
 
    public:
@@ -262,9 +237,7 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
         _addCursorForPre(numPreConds),
         _numPostConditions(numPostConds),
         _addCursorForPost(numPostConds),
-        _isHint(false),
         _isUsed(false),
-        _conflictsResolved(false),
 	_cg(cg)
       {}
 
@@ -275,9 +248,7 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
         _addCursorForPre(0),
         _numPostConditions(0),
         _addCursorForPost(0),
-        _isHint(false),
         _isUsed(false),
-        _conflictsResolved(false),
 	_cg(NULL)
       {}
 
@@ -291,9 +262,7 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
         _addCursorForPre(0),
         _numPostConditions(numPostConds + NUM_VM_THREAD_REG_DEPS),
         _addCursorForPost(0),
-        _isHint(false),
         _isUsed(false),
-        _conflictsResolved(false),
         _cg(cg)
       {
       for(int32_t i=0;i<numPreConds;i++)
@@ -318,12 +287,6 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
    bool getIsUsed() {return _isUsed;}
    void setIsUsed() {_isUsed=true;}
    void resetIsUsed() {_isUsed=false;}
-   bool getIsHint() {return _isHint;}
-   void setIsHint() {_isHint = true;}
-   void resetIsHint() {_isUsed = false;}
-   bool getConflictsResolved() {return _conflictsResolved;}
-   void setConflictsResolved() {_conflictsResolved=true;}
-   void resetConflictsResolved() {_conflictsResolved=false;}
 
    TR_S390RegisterDependencyGroup *getPreConditions()  {return _preConditions;}
 
@@ -399,14 +362,7 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
       // dont add dependencies if reg is real register
       if (vr && vr->getRealRegister()!=NULL) return;
 
-      if (_addCursorForPre >= _numPreConditions)
-         {
-         // Printf added so it triggers some output even in prod build.
-         // If this failure is triggered in a prod build, you might
-         // not get a SEGV nor any meaningful error msg.
-         TR_ASSERT(0,"ERROR: addPreCondition list overflow\n");
-         _cg->comp()->failCompilation<TR::CompilationException>("addPreCondition list overflow, abort compilation\n");
-         }
+      TR_ASSERT_FATAL(_addCursorForPre < _numPreConditions,"addPreCondition list overflow. addCursorForPre(%d), numPreConditions(%d), virtual register name(%s) and pointer(%p)\n",_addCursorForPre, _numPreConditions,vr->getRegisterName(_cg->comp()),vr);
       _preConditions->setDependencyInfo(_addCursorForPre++, vr, rr, flag);
       }
 
@@ -442,14 +398,7 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
 
       // dont add dependencies if reg is real register
       if (vr && vr->getRealRegister()!=NULL) return;
-      if (_addCursorForPost >= _numPostConditions)
-         {
-         // Printf added so it triggers some output even in prod build.
-         // If this failure is triggered in a prod build, you might
-         // not get a SEGV nor any meaningful error msg.
-         TR_ASSERT(0,"ERROR: addPostCondition list overflow\n");
-         _cg->comp()->failCompilation<TR::CompilationException>("addPostCondition list overflow, abort compilation\n");
-         }
+      TR_ASSERT_FATAL(_addCursorForPost < _numPostConditions,"addPostCondition list overflow. addCursorForPost(%d), numPostConditions(%d), virtual register name(%s) and pointer(%p)\n",_addCursorForPost, _numPostConditions,vr->getRegisterName(_cg->comp()),vr);
       _postConditions->setDependencyInfo(_addCursorForPost++, vr, rr, flag);
       }
 
@@ -469,10 +418,7 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
          {
          cg->clearRegisterAssignmentFlags();
          cg->setRegisterAssignmentFlag(TR_PostDependencyCoercion);
-         if (getIsHint())
-            _postConditions->decFutureUseCounts(_addCursorForPost, cg);
-         else
-            _postConditions->assignRegisters(currentInstruction, kindToBeAssigned, _addCursorForPost, cg);
+         _postConditions->assignRegisters(currentInstruction, kindToBeAssigned, _addCursorForPost, cg);
          }
       }
 
@@ -521,7 +467,7 @@ class RegisterDependencyConditions: public OMR::RegisterDependencyConditions
 
    bool addPostConditionIfNotAlreadyInserted(TR::Register *vr,
                                              TR::RealRegister::RegNum rr,
-				                                 uint8_t flag = ReferencesDependentRegister);                                     
+				                                 uint8_t flag = ReferencesDependentRegister);
    bool addPostConditionIfNotAlreadyInserted(TR::Register *vr,
                                              TR::RealRegister::RegDep rr,
 				                                 uint8_t flag = ReferencesDependentRegister);

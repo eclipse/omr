@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ set(OMR_EXAMPLE ON CACHE BOOL "Enable the Example application")
 ###
 
 set(OMR_TOOLS ON CACHE BOOL "Enable the native build tools")
-set(OMR_DDR ON CACHE BOOL "Enable DDR")
+set(OMR_DDR OFF CACHE BOOL "Enable DDR")
 set(OMR_RAS_TDF_TRACE ON CACHE BOOL "Enable trace engine")
 set(OMR_FVTEST ON CACHE BOOL "Enable the FV Testing.")
 
@@ -48,6 +48,9 @@ set(OMR_TEST_COMPILER OFF CACHE BOOL "Enable building the test compiler")
 set(OMR_GC ON CACHE BOOL "Enable the GC")
 set(OMR_GC_TEST ${OMR_GC} CACHE BOOL "Enable the GC tests.")
 
+set(OMR_USE_NATIVE_ENCODING ON CACHE BOOL
+	"Indicates that runtime components should use the systems native encoding (currently only defined for z/OS)"
+)
 ## OMR_COMPILER is required for OMR_JITBUILDER and OMR_TEST_COMPILER
 if(NOT OMR_COMPILER)
 	if(OMR_JITBUILDER)
@@ -62,9 +65,16 @@ endif()
 ## Do NOT force it since it is explicitly disabled on Windows for now.
 if(OMR_JITBUILDER)
 	set(OMR_JITBUILDER_TEST ON CACHE BOOL "")
+
+	# Enable additional JitBuilder tests if running on a supported platform
+	# (which currently means 64-bit x86 platforms except for Windows).
+	if((OMR_HOST_ARCH STREQUAL "x86" AND NOT OMR_OS_WINDOWS) AND OMR_TEMP_DATA_SIZE STREQUAL "64")
+		set(OMR_JITBUILDER_TEST_EXTENDED ON)
+	endif()
+
 else()
-    # if JitBuilder isn't enabled, the tests can't be built
-    set(OMR_JITBUILDER_TEST OFF CACHE BOOL "" FORCE)
+	# if JitBuilder isn't enabled, the tests can't be built
+	set(OMR_JITBUILDER_TEST OFF CACHE BOOL "" FORCE)
 endif()
 
 ###
@@ -73,6 +83,10 @@ endif()
 
 set(OMR_TOOLS_IMPORTFILE "IMPORTFILE-NOTFOUND" CACHE FILEPATH
 	"Point it to the ImportTools.cmake file of a native build"
+)
+
+set(OMR_TOOLS_USE_NATIVE_ENCODING ON CACHE BOOL
+	"Indicates if omr tooling should use system native character encoding (currently only defined for z/OS)"
 )
 
 ###
@@ -103,7 +117,6 @@ set(OMR_CORE_GLUE_TARGET "NOTFOUND" CACHE STRING "The core glue target, must be 
 set(OMR_GC_ALLOCATION_TAX ON CACHE BOOL "TODO: Document")
 set(OMR_GC_API OFF CACHE BOOL "Enable a high-level GC API")
 set(OMR_GC_API_TEST OFF CACHE BOOL "Enable testing for the OMR GC API")
-set(OMR_GC_ARRAYLETS ON CACHE BOOL "TODO: Document")
 set(OMR_GC_BATCH_CLEAR_TLH ON CACHE BOOL "TODO: Document")
 set(OMR_GC_COMBINATION_SPEC ON CACHE BOOL "TODO: Document")
 set(OMR_GC_DEBUG_ASSERTS ON CACHE BOOL "TODO: Document")
@@ -114,7 +127,6 @@ set(OMR_GC_MINIMUM_OBJECT_SIZE ON CACHE BOOL "TODO: Document")
 set(OMR_GC_MODRON_STANDARD ON CACHE BOOL "TODO: Document")
 set(OMR_GC_NON_ZERO_TLH ON CACHE BOOL "TODO: Document")
 set(OMR_GC_THREAD_LOCAL_HEAP ON CACHE BOOL "TODO: Document")
-set(OMR_GC_COMPRESSED_POINTERS OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_TLH_PREFETCH_FTA OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_OBJECT_MAP OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_DYNAMIC_CLASS_UNLOADING OFF CACHE BOOL "TODO: Document")
@@ -122,20 +134,33 @@ set(OMR_GC_LEAF_BITS OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_MODRON_COMPACTION OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_MODRON_CONCURRENT_MARK OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_MODRON_SCAVENGER OFF CACHE BOOL "TODO: Document")
+set(OMR_GC_DOUBLE_MAP_ARRAYLETS OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_CONCURRENT_SCAVENGER OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_CONCURRENT_SWEEP OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_HYBRID_ARRAYLETS OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_IDLE_HEAP_MANAGER OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_OBJECT_ALLOCATION_NOTIFY OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_REALTIME OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_SCAVENGER_DELEGATE OFF CACHE BOOL "DEVELOPMENT: turn on the scavenger delegate")
+set(OMR_GC_SCAN_OBJECT_GLUE OFF CACHE BOOL "Implement ScanObject in glue code, not OMR core")
 set(OMR_GC_SEGREGATED_HEAP OFF CACHE BOOL "TODO: Document")
-set(OMR_GC_STACCATO OFF CACHE BOOL "TODO: Document")
 set(OMR_GC_VLHGC OFF CACHE BOOL "TODO: Document")
-
+set(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD OFF CACHE BOOL "Enable VLHGC concurrent copy forward")
 set(OMR_INTERP_HAS_SEMAPHORES ON CACHE BOOL "TODO: Document")
-set(OMR_INTERP_COMPRESSED_OBJECT_HEADER OFF CACHE BOOL "TODO: Document")
-set(OMR_INTERP_SMALL_MONITOR_SLOT OFF CACHE BOOL "TODO: Document")
+set(OMR_GC_POINTER_MODE "full" CACHE STRING "The mode of pointers.")
+set_property(CACHE OMR_GC_POINTER_MODE PROPERTY STRINGS "full" "compressed" "mixed")
+if(OMR_GC_POINTER_MODE STREQUAL "full")
+	set(OMR_GC_COMPRESSED_POINTERS OFF CACHE INTERNAL "")
+	set(OMR_GC_FULL_POINTERS ON CACHE INTERNAL "")
+elseif(OMR_GC_POINTER_MODE STREQUAL "compressed")
+	omr_assert(FATAL_ERROR TEST NOT OMR_ENV_DATA32 MESSAGE "OMR_GC_POINTER_MODE must be \"full\" on 32 bit platforms")
+	set(OMR_GC_COMPRESSED_POINTERS ON CACHE INTERNAL "")
+	set(OMR_GC_FULL_POINTERS OFF CACHE INTERNAL "")
+elseif(OMR_GC_POINTER_MODE STREQUAL "mixed")
+	omr_assert(FATAL_ERROR TEST NOT OMR_ENV_DATA32 MESSAGE "OMR_GC_POINTER_MODE must be \"full\" on 32 bit platforms")
+	set(OMR_GC_COMPRESSED_POINTERS ON CACHE INTERNAL "")
+	set(OMR_GC_FULL_POINTERS ON CACHE INTERNAL "")
+else()
+	message(FATAL_ERROR "OMR_GC_FULL_POINTERS must be set to one of \"full\", \"compressed\", or \"mixed\"")
+endif()
 
 set(OMR_THR_ADAPTIVE_SPIN ON CACHE BOOL "TODO: Document")
 set(OMR_THR_JLM ON CACHE BOOL "TODO: Document")
@@ -146,8 +171,15 @@ set(OMR_THR_THREE_TIER_LOCKING OFF CACHE BOOL "TODO: Document")
 set(OMR_THR_CUSTOM_SPIN_OPTIONS OFF CACHE BOOL "TODO: Document")
 set(OMR_THR_SPIN_WAKE_CONTROL OFF CACHE BOOL "TODO: Document")
 set(OMR_THR_YIELD_ALG OFF CACHE BOOL "TODO: Document")
+if(OMR_THR_YIELD_ALG)
+	omr_assert(FATAL_ERROR
+		TEST OMR_OS_LINUX OR OMR_OS_OSX OR OMR_OS_AIX
+		MESSAGE "OMR_THR_YIELD_ALG enabled, but not supported on current platform"
+	)
+endif()
 #TODO set to disabled. Stuff fails to compile when its on
 set(OMR_THR_TRACING OFF CACHE BOOL "TODO: Document")
+set(OMR_THR_MCS_LOCKS OFF CACHE BOOL "Enable the usage of the MCS lock in the OMR thread monitor.")
 
 #TODO this should maybe be a OMRTHREAD_LIB string variable?
 set(OMRTHREAD_WIN32_DEFAULT OFF)
@@ -172,6 +204,7 @@ set(OMRTHREAD_LIB_UNIX ${OMRTHREAD_UNIX_DEFAULT} CACHE BOOL "TODO: Document")
 
 set(OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS ON CACHE BOOL "TODO: Document")
 set(OMR_PORT_NUMA_SUPPORT OFF CACHE BOOL "TODO: Document")
+set(OMR_PORT_SOCKET_SUPPORT OFF CACHE BOOL "Enable the usage of OMR socket API.")
 set(OMR_PORT_ALLOCATE_TOP_DOWN OFF CACHE BOOL "TODO: Document")
 set(OMR_PORT_ZOS_CEEHDLRSUPPORT OFF CACHE BOOL "TODO: Document")
 set(OMRPORT_OMRSIG_SUPPORT OFF CACHE BOOL "TODO: Document")
@@ -182,7 +215,10 @@ set(OMR_NOTIFY_POLICY_CONTROL OFF CACHE BOOL "TODO: Document")
 
 set(OMR_ENV_GCC OFF CACHE BOOL "TODO: Document")
 
-
-set(OMR_OPT_CUDA OFF CACHE BOOL "TODO: Document")
+set(OMR_OPT_CUDA OFF CACHE BOOL "Enable CUDA support in OMR. See also: OMR_CUDA_HOME in FindOmrCuda.cmake")
 
 set(OMR_SANITIZE OFF CACHE STRING "Sanitizer selection. Only has an effect on GNU or Clang")
+
+if(OMR_HOST_OS STREQUAL "win")
+	set(OMR_WINDOWS_NOMINMAX ON CACHE BOOL "Define NOMINMAX in every compilation unit; prevents Windows headers from polluting the global namespace with 'min' and 'max' macros.")
+endif()

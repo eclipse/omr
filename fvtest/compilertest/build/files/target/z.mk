@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/z/codegen/S390Peephole.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRLinkage.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/SystemLinkage.cpp \
+    $(JIT_OMR_DIRTY_DIR)/z/codegen/SystemLinkageLinux.cpp \
+    $(JIT_OMR_DIRTY_DIR)/z/codegen/SystemLinkagezOS.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/S390OutOfLineCodeSection.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRRegisterDependency.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRSnippet.cpp \
@@ -47,12 +49,16 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRTreeEvaluator.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/UnaryEvaluator.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRInstruction.cpp \
+    $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRInstructionDelegate.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/InstOpCode.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRRegister.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRRealRegister.cpp \
-    $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRRegisterPair.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRCodeGenPhase.cpp \
-    $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRCodeGenerator.cpp
+    $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRCodeGenerator.cpp \
+    $(JIT_OMR_DIRTY_DIR)/z/codegen/snippet/PPA1Snippet.cpp \
+    $(JIT_OMR_DIRTY_DIR)/z/codegen/snippet/PPA2Snippet.cpp \
+    $(JIT_OMR_DIRTY_DIR)/z/codegen/snippet/PPA2Snippet.cpp \
+    $(JIT_OMR_DIRTY_DIR)/z/env/OMRCPU.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
     $(JIT_PRODUCT_DIR)/z/codegen/TestCodeGenerator.cpp \

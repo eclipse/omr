@@ -94,7 +94,7 @@ public:
  *
  * The effect is that you get the benefits of an optimally-implemented version of
  * B but with maintainability on par with ordinary virtual register allocation
- * outside an internal control flow region (where you’d just use allocateRegister
+ * outside an internal control flow region (where you'd just use allocateRegister
  * and stopUsingRegister).
  */
 class TR_ScratchRegisterManager

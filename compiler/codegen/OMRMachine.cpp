@@ -29,7 +29,7 @@
 #pragma csect(TEST,"OMRMachine#T")
 
 
-#include "codegen/OMRMachine.hpp"
+#include "codegen/Machine.hpp"
 
 #include "codegen/Machine.hpp"
 #include "codegen/Machine_inlines.hpp"

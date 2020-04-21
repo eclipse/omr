@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -232,10 +232,12 @@ MM_MemoryPoolBumpPointer::reset(Cause cause)
 	/* Call superclass first .. */
 	MM_MemoryPool::reset(cause);
 
+	_heapFreeList = (MM_HeapLinkedFreeHeader *)NULL;
 	_scannableBytes = 0;
 	_nonScannableBytes = 0;
 
 	_allocatePointer = _topPointer;
+	_lastFreeEntry = NULL;
 }
 
 /**
@@ -302,22 +304,32 @@ MM_MemoryPoolBumpPointer::contractWithRange(MM_EnvironmentBase *env, uintptr_t c
 	return NULL;
 }
 
-MMINLINE void
-MM_MemoryPoolBumpPointer::internalRecycleHeapChunk(void *addrBase, void *addrTop)
-{
-	/* Determine if the heap chunk belongs in the free list */
-	uintptr_t freeEntrySize = ((uintptr_t)addrTop) - ((uintptr_t)addrBase);
-	Assert_MM_true((uintptr_t)addrTop >= (uintptr_t)addrBase);
-	MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, freeEntrySize);
-}
-
 bool
 MM_MemoryPoolBumpPointer::abandonHeapChunk(void *addrBase, void *addrTop)
 {
 	Assert_MM_true(addrTop >= addrBase);
-	internalRecycleHeapChunk(addrBase, addrTop);
+	internalRecycleHeapChunk(addrBase, addrTop, NULL);
 	/* this memory pool doesn't maintain a free list, so always return false */
 	return false;
+}
+
+MMINLINE bool
+MM_MemoryPoolBumpPointer::internalRecycleHeapChunk(void *addrBase, void *addrTop, MM_HeapLinkedFreeHeader *next)
+{
+	/* Determine if the heap chunk belongs in the free list */
+	bool const compressed = compressObjectReferences();
+	uintptr_t freeEntrySize = ((uintptr_t)addrTop) - ((uintptr_t)addrBase);
+	Assert_MM_true((uintptr_t)addrTop >= (uintptr_t)addrBase);
+
+	MM_HeapLinkedFreeHeader *freeEntry = MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, freeEntrySize, compressed);
+	if ((NULL != freeEntry) && (freeEntrySize >= _minimumFreeEntrySize)) {
+		Assert_MM_true(freeEntry == addrBase);
+		Assert_MM_true((NULL == next) || (freeEntry < next));
+		freeEntry->setNext(next, compressed);
+		return true;
+	} else {
+		return false;
+	}
 }
 
 MM_SweepPoolManager *
@@ -360,3 +372,104 @@ MM_MemoryPoolBumpPointer::alignAllocationPointer(uintptr_t alignmentMultiple)
 		_allocatePointer = newAllocatePointer;
 	}
 }
+
+/* (non-doxygen)
+ * @see MM_MemoryPool::createFreeEntry()
+ */
+bool
+MM_MemoryPoolBumpPointer::createFreeEntry(MM_EnvironmentBase* env, void* addrBase, void* addrTop,
+													  MM_HeapLinkedFreeHeader* previousFreeEntry, MM_HeapLinkedFreeHeader* nextFreeEntry)
+{
+	bool const compressed = compressObjectReferences();
+
+	if (internalRecycleHeapChunk(addrBase, addrTop, nextFreeEntry)) {
+
+		/* The range is big enough for the free list, so link the previous to it */
+		if (previousFreeEntry) {
+			previousFreeEntry->setNext((MM_HeapLinkedFreeHeader*)addrBase, compressed);
+		}
+
+		if ((uintptr_t) addrBase > (uintptr_t) getLastFreeEntry()) {
+			setLastFreeEntry(addrBase);
+		}
+		return true;
+	}
+
+	/* The range was not big enough for the free list, so link previous to next */
+	if (previousFreeEntry) {
+		previousFreeEntry->setNext(nextFreeEntry, compressed);
+	}
+	return false;
+}
+
+
+
+
+/* (non-doxygen)
+ * @see MM_MemoryPool::createFreeEntry()
+ */
+bool
+MM_MemoryPoolBumpPointer::createFreeEntry(MM_EnvironmentBase* env, void* addrBase, void* addrTop)
+{
+	return createFreeEntry(env, addrBase, addrTop, NULL, NULL);
+}
+
+/**
+ * Add inner chunk memory piece to pool ("Create")
+ *
+ * @param address free memory start address
+ * @param size free memory size in bytes
+ * @param previousFreeEntry previous element of list (if any) this memory must be connected with
+ * @return true if free memory element accepted
+ */
+bool
+MM_MemoryPoolBumpPointer::connectInnerMemoryToPool(MM_EnvironmentBase* env, void* address, uintptr_t size, void* previousFreeEntry)
+{
+	bool result = false;
+
+	if (size >= getMinimumFreeEntrySize()) {
+		/* Build the free header */
+		createFreeEntry(env, (MM_HeapLinkedFreeHeader*)address, (uint8_t*)address + size, (MM_HeapLinkedFreeHeader*)previousFreeEntry, NULL);
+		result = true;
+	}
+	return result;
+}
+
+
+/**
+ * Connect leading/trailing chunk free memory piece ("Connect")
+ *
+ * @param address free memory start address
+ * @param size free memory size in bytes
+ * @param nextFreeEntry next element of list (if any) this memory must be connected with
+ */
+void
+MM_MemoryPoolBumpPointer::connectOuterMemoryToPool(MM_EnvironmentBase* env, void* address, uintptr_t size, void* nextFreeEntry)
+{
+	Assert_MM_true((NULL == nextFreeEntry) || (address < nextFreeEntry));
+	Assert_MM_true((NULL == address) || (size >= getMinimumFreeEntrySize()));
+
+	/* Build the free header */
+	createFreeEntry(env, (MM_HeapLinkedFreeHeader*)address, (uint8_t*)address + size, NULL, (MM_HeapLinkedFreeHeader*)nextFreeEntry);
+
+	if (NULL == _heapFreeList) {
+		_heapFreeList = (MM_HeapLinkedFreeHeader*)nextFreeEntry;
+	}
+}
+
+/**
+ * Connect leading/trailing chunk free memory piece ("Finalize")
+ * temporary - need be separated because of implementation of subpools
+ *
+ * @param address free memory start address
+ * @param size free memory size in bytes
+ */
+void
+MM_MemoryPoolBumpPointer::connectFinalMemoryToPool(MM_EnvironmentBase* env, void* address, uintptr_t size)
+{
+	Assert_MM_true((NULL == address) || (size >= getMinimumFreeEntrySize()));
+
+	/* Build the free header */
+	createFreeEntry(env, (MM_HeapLinkedFreeHeader*)address, (uint8_t*)address + size);
+}
+

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,13 +29,13 @@
 #include <dlfcn.h>
 #undef __USE_GNU
 
-typedef struct J9PlatformSignalInfo {
+typedef struct OMRPlatformSignalInfo {
 	ucontext_t *context;
 	Dl_info dl_info;
-} J9PlatformSignalInfo;
+} OMRPlatformSignalInfo;
 
 typedef struct OMRUnixSignalInfo {
-	struct J9PlatformSignalInfo platformSignalInfo;
+	struct OMRPlatformSignalInfo platformSignalInfo;
 	uint32_t portLibrarySignalType;
 	void *handlerAddress;
 	void *handlerAddress2;
@@ -47,4 +47,4 @@ uint32_t infoForGPR(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo
 uint32_t infoForModule(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, int32_t index, const char **name, void **value);
 uint32_t infoForControl(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, int32_t index, const char **name, void **value);
 uint32_t infoForSignal(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, int32_t index, const char **name, void **value);
-void fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *j9Info);
+void fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *signalInfo);

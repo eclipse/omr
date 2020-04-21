@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -130,7 +130,7 @@ TR::Register *inlineTrtEvaluator(
    TR::Register *r1Reg = cg->allocateRegister();
    TR::Register *r2Reg = cg->allocateRegister();
 
-   if (packR2 && !cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+   if (packR2 && !cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
       {
       generateRRInstruction(cg, TR::InstOpCode::XR, node, r2Reg, r2Reg);
       }
@@ -158,7 +158,7 @@ TR::Register *inlineTrtEvaluator(
       cg->decReferenceCount(lengthNode);
       }
 
-   if ((opCode == TR::InstOpCode::TRTR) && (TR::Compiler->target.is32Bit()))
+   if ((opCode == TR::InstOpCode::TRTR) && (cg->comp()->target().is32Bit()))
       {
       TR::MemoryReference *r1BitClearRef = generateS390MemoryReference(r1Reg, 0, cg);
       TR::Instruction *cursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, r1Reg, r1BitClearRef);
@@ -169,11 +169,11 @@ TR::Register *inlineTrtEvaluator(
       {
       TR::Register *conditionCodeReg = getConditionCode(node, cg);
 
-      if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12))
+      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12))
          {
          generateRIEInstruction(cg, TR::InstOpCode::RISBGN, node,  conditionCodeReg, r2Reg, 48, 55, 8);
          }
-      else if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+      else if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
          {
          generateRIEInstruction(cg, TR::InstOpCode::RISBG, node,  conditionCodeReg, r2Reg, 48, 55, 8);
          }

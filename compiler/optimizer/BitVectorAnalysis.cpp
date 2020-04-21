@@ -79,7 +79,6 @@ performAnalysis(TR_Structure *rootStructure,
                 bool checkForChanges)
    {
    LexicalTimer tlex("basicDFSetAnalysis_pA", comp()->phaseTimer());
-   //traceMsg(comp(), "DJS perform analysis %d, nodes = %d, bits = %d\n", this->getKind(), comp()->getFlowGraph()->getNextNodeNumber(), getNumberOfBits());
    // Table of bit vectors to be used during the analysis.
    rootStructure->resetAnalysisInfo();
    rootStructure->resetAnalyzedStatus();
@@ -87,8 +86,6 @@ performAnalysis(TR_Structure *rootStructure,
    if (!postInitializationProcessing())
       return false;
    doAnalysis(rootStructure, checkForChanges);
-   //rootStructure->resetAnalysisInfo();
-   //rootStructure->resetAnalyzedStatus();
    return true;
    }
 
@@ -362,56 +359,21 @@ template<class Container>void TR_ForwardDFSetAnalysis<Container *>::initializeGe
    else
       return;
 
+   analysisInfo->_regularGenSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
+   analysisInfo->_regularKillSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
+   analysisInfo->_exceptionGenSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
+   analysisInfo->_exceptionKillSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
+   analysisInfo->_currentRegularGenSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
+   analysisInfo->_currentRegularKillSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
+   analysisInfo->_currentExceptionGenSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
+   analysisInfo->_currentExceptionKillSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
+
+   ListIterator<TR::CFGEdge> ei(&region->getExitEdges());
+   for (TR::CFGEdge *edge = ei.getCurrent(); edge != NULL; edge = ei.getNext())
       {
-      analysisInfo->_regularGenSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
-      analysisInfo->_regularKillSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
-      analysisInfo->_exceptionGenSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
-      analysisInfo->_exceptionKillSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
-      analysisInfo->_currentRegularGenSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
-      analysisInfo->_currentRegularKillSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
-      analysisInfo->_currentExceptionGenSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
-      analysisInfo->_currentExceptionKillSetInfo = new (this->trStackMemory()) TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>;
-
-      ListIterator<TR::CFGEdge> ei(&region->getExitEdges());
-      for (TR::CFGEdge *edge = ei.getCurrent(); edge != NULL; edge = ei.getNext())
+      int32_t toStructureNumber = edge->getTo()->getNumber();
+      if (!exitNodes.get(toStructureNumber))
          {
-         int32_t toStructureNumber = edge->getTo()->getNumber();
-         if (!exitNodes.get(toStructureNumber))
-            {
-            Container *b = NULL;
-
-            typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair *pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
-            analysisInfo->_regularGenSetInfo->add(pair);
-
-            pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
-            analysisInfo->_regularKillSetInfo->add(pair);
-
-            pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
-            analysisInfo->_exceptionGenSetInfo->add(pair);
-
-            pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
-            analysisInfo->_exceptionKillSetInfo->add(pair);
-
-            pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
-            analysisInfo->_currentRegularGenSetInfo->add(pair);
-
-            pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
-            analysisInfo->_currentRegularKillSetInfo->add(pair);
-
-            pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
-            analysisInfo->_currentExceptionGenSetInfo->add(pair);
-
-            pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
-            analysisInfo->_currentExceptionKillSetInfo->add(pair);
-
-            exitNodes.set(toStructureNumber);
-            }
-         }
-
-      if (region->isNaturalLoop())
-         {
-         int32_t toStructureNumber = region->getNumber();
-
          Container *b = NULL;
 
          typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair *pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
@@ -437,9 +399,41 @@ template<class Container>void TR_ForwardDFSetAnalysis<Container *>::initializeGe
 
          pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
          analysisInfo->_currentExceptionKillSetInfo->add(pair);
+
+         exitNodes.set(toStructureNumber);
          }
       }
 
+   if (region->isNaturalLoop())
+      {
+      int32_t toStructureNumber = region->getNumber();
+
+      Container *b = NULL;
+
+      typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair *pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
+      analysisInfo->_regularGenSetInfo->add(pair);
+
+      pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
+      analysisInfo->_regularKillSetInfo->add(pair);
+
+      pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
+      analysisInfo->_exceptionGenSetInfo->add(pair);
+
+      pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
+      analysisInfo->_exceptionKillSetInfo->add(pair);
+
+      pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
+      analysisInfo->_currentRegularGenSetInfo->add(pair);
+
+      pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
+      analysisInfo->_currentRegularKillSetInfo->add(pair);
+
+      pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
+      analysisInfo->_currentExceptionGenSetInfo->add(pair);
+
+      pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, toStructureNumber);
+      analysisInfo->_currentExceptionKillSetInfo->add(pair);
+      }
 
    TR_BitVector pendingList(this->comp()->trMemory()->currentStackRegion());
 
@@ -584,15 +578,15 @@ template<class Container>void TR_ForwardDFSetAnalysis<Container *>::initializeGe
           (this->_analysisQueue.getListHead()->getData()->getStructure() != regionStructure))
       {
       if (!this->_analysisInterrupted)
-   {
+         {
          numIterations++;
          if ((numIterations % 20) == 0)
-      {
-      numIterations = 0;
+            {
+            numIterations = 0;
             if (this->comp()->compilationShouldBeInterrupted(FBVA_INITIALIZE_CONTEXT))
                this->_analysisInterrupted = true;
-      }
-   }
+            }
+         }
 
       if (this->_analysisInterrupted)
          {
@@ -680,10 +674,8 @@ template<class Container>void TR_ForwardDFSetAnalysis<Container *>::initializeGe
 
       if (node == regionStructure->getEntry())
          {
-            {
-            _currentRegularGenSetInfo->empty();
-            _currentRegularKillSetInfo->empty();
-            }
+         _currentRegularGenSetInfo->empty();
+         _currentRegularKillSetInfo->empty();
          }
 
 
@@ -750,11 +742,10 @@ template<class Container>void TR_ForwardDFSetAnalysis<Container *>::initializeGe
          *_currentRegularGenSetInfo = *this->_temp;
          *_currentRegularKillSetInfo = *this->_temp2;
          TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>
-            *_nodeGenSetInfo = normalSucc ? nodeInfo->_regularGenSetInfo : nodeInfo->_exceptionGenSetInfo,
-            *_nodeKillSetInfo = normalSucc ? nodeInfo->_regularKillSetInfo : nodeInfo->_exceptionKillSetInfo;
+         *_nodeGenSetInfo = normalSucc ? nodeInfo->_regularGenSetInfo : nodeInfo->_exceptionGenSetInfo,
+         *_nodeKillSetInfo = normalSucc ? nodeInfo->_regularKillSetInfo : nodeInfo->_exceptionKillSetInfo;
          Container *genBitVector = NULL, *killBitVector = NULL;
-         int32_t nodeNumber =
-            nodeStructure->getStructure()->asRegion() ? succNode->getNumber() : node->getNumber();
+         int32_t nodeNumber = nodeStructure->getStructure()->asRegion() ? succNode->getNumber() : node->getNumber();
          genBitVector = nodeInfo->getContainer(_nodeGenSetInfo, nodeNumber);
          killBitVector = nodeInfo->getContainer(_nodeKillSetInfo, nodeNumber);
 
@@ -1249,18 +1240,23 @@ template<class Container>bool TR_ForwardDFSetAnalysis<Container *>::analyzeNodeI
            bitVector = analysisInfo->getContainer(analysisInfo->_regularKillSetInfo, node->getNumber());
            if (bitVector)
               *this->_temp -= *bitVector;
-
-           bitVector = analysisInfo->getContainer(analysisInfo->_exceptionKillSetInfo, node->getNumber());
-           if (bitVector)
-              *this->_temp -= *bitVector;
+           else
+	      {
+              bitVector = analysisInfo->getContainer(analysisInfo->_exceptionKillSetInfo, node->getNumber());
+              if (bitVector)
+                 *this->_temp -= *bitVector;
+	      }
 
            bitVector = analysisInfo->getContainer(analysisInfo->_regularGenSetInfo, node->getNumber());
            if (bitVector)
               *this->_temp |= *bitVector;
+           else
+	      {
+              bitVector = analysisInfo->getContainer(analysisInfo->_exceptionGenSetInfo, node->getNumber());
+              if (bitVector)
+                 *this->_temp |= *bitVector;
+	      }
 
-           bitVector = analysisInfo->getContainer(analysisInfo->_exceptionGenSetInfo, node->getNumber());
-           if (bitVector)
-              *this->_temp |= *bitVector;
            compose(_currentInSetInfo, this->_temp);
            }
         }
@@ -1278,8 +1274,8 @@ template<class Container>bool TR_ForwardDFSetAnalysis<Container *>::analyzeNodeI
             bool normalSucc = (++count <= node->getSuccessors().size());
             Container* _info = normalSucc ? this->_regularInfo : this->_exceptionInfo;
             TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>
-               *_killSetInfo = normalSucc ? analysisInfo->_regularKillSetInfo : analysisInfo->_exceptionKillSetInfo,
-               *_genSetInfo =  normalSucc ? analysisInfo->_regularGenSetInfo : analysisInfo->_exceptionGenSetInfo;
+            *_killSetInfo = normalSucc ? analysisInfo->_regularKillSetInfo : analysisInfo->_exceptionKillSetInfo,
+            *_genSetInfo =  normalSucc ? analysisInfo->_regularGenSetInfo : analysisInfo->_exceptionGenSetInfo;
             TR::CFGNode *succNode = succ->getTo();
             this->copyFromInto(_currentInSetInfo, _info);
 

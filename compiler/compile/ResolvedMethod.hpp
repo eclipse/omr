@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/RecognizedMethods.hpp"
-#include "compile/Method.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
@@ -34,6 +33,7 @@
 #include "runtime/Runtime.hpp"
 
 class TR_FrontEnd;
+class TR_MethodParameterIterator;
 class TR_OpaqueClassBlock;
 class TR_OpaqueMethodBlock;
 class TR_PrexArgInfo;
@@ -43,6 +43,7 @@ namespace TR { class CodeGenerator; }
 namespace TR { class Compilation; }
 namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class LabelSymbol; }
+namespace TR { class Method; }
 namespace TR { class Node; }
 namespace TR { class ResolvedMethodSymbol; }
 namespace TR { class SymbolReferenceTable; }
@@ -50,8 +51,8 @@ namespace TR { class SymbolReferenceTable; }
 class TR_ResolvedMethod
    {
 public:
-   TR::RecognizedMethod getRecognizedMethod() { return convertToMethod()->getRecognizedMethod(); }
-   virtual TR_Method *convertToMethod();
+   TR::RecognizedMethod getRecognizedMethod();
+   virtual TR::Method *convertToMethod();
 
    virtual uint32_t numberOfParameters();
    virtual uint32_t numberOfExplicitParameters(); // excludes receiver if any
@@ -82,7 +83,7 @@ public:
    virtual bool isProtected();
    virtual bool isPublic();
    virtual bool isFinal();
-   
+
    virtual bool isInterpreted();
    virtual bool isInterpretedForHeuristics();
    virtual bool hasBackwardBranches();
@@ -108,8 +109,8 @@ public:
    virtual void *startAddressForJITInternalNativeMethod();
    virtual bool isSubjectToPhaseChange(TR::Compilation *);
    virtual uint16_t archetypeArgPlaceholderSlot(TR_Memory *);
-   virtual intptrj_t getInvocationCount();
-   virtual bool setInvocationCount(intptrj_t oldCount, intptrj_t newCount);
+   virtual intptr_t getInvocationCount();
+   virtual bool setInvocationCount(intptr_t oldCount, intptr_t newCount);
    virtual bool isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *);
    virtual void setWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *);
    virtual uint8_t *bytecodeStart();
@@ -136,7 +137,7 @@ public:
    virtual bool isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
    virtual bool isConstantDynamic(int32_t cpIndex);
    virtual bool isUnresolvedConstantDynamic(int32_t cpIndex);
-   virtual void *dynamicConstant(int32_t cpIndex);
+   virtual void *dynamicConstant(int32_t cpIndex, uintptr_t *obj);
    virtual void *methodTypeConstant(int32_t cpIndex);
    virtual bool isUnresolvedMethodType(int32_t cpIndex);
    virtual void *methodHandleConstant(int32_t cpIndex);
@@ -164,12 +165,8 @@ public:
    bool isDAAMarshallingIntrinsicMethod();
    bool isDAAPackedDecimalIntrinsicMethod();
 
-   virtual void setMethodHandleLocation(uintptrj_t *location);
-   virtual uintptrj_t *getMethodHandleLocation()
-      {
-      TR_ASSERT(convertToMethod()->isArchetypeSpecimen(), "All methods associated with a MethodHandle must be archetype specimens");
-      return NULL;
-      }
+   virtual void setMethodHandleLocation(uintptr_t *location);
+   virtual uintptr_t *getMethodHandleLocation();
 
    virtual const char *newInstancePrototypeSignature(TR_Memory *, TR_AllocationKind = heapAlloc);
 
@@ -204,7 +201,7 @@ public:
 
    virtual uint32_t vTableSlot(uint32_t);
 
-   virtual TR_OpaqueClassBlock *getResolvedInterfaceMethod(int32_t cpIndex, uintptrj_t * pITableIndex);
+   virtual TR_OpaqueClassBlock *getResolvedInterfaceMethod(int32_t cpIndex, uintptr_t * pITableIndex);
 
    virtual TR_ResolvedMethod *getResolvedStaticMethod (TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP = 0);
    virtual TR_ResolvedMethod *getResolvedSpecialMethod(TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP = 0);
@@ -231,12 +228,9 @@ public:
    virtual TR_OpaqueMethodBlock *getPersistentIdentifier();
    virtual uint8_t *allocateException(uint32_t, TR::Compilation*);
 
-   TR_MethodParameterIterator* getParameterIterator(TR::Compilation& comp)
-         { return convertToMethod()->getParameterIterator(comp, this); }
+   TR_MethodParameterIterator* getParameterIterator(TR::Compilation& comp);
 
-   bool isJ9() { return convertToMethod()->isJ9(); }
-   bool isPython() { return convertToMethod()->isPython(); }
-   bool isRuby() { return convertToMethod()->isRuby(); }
+   bool isJ9();
 
    virtual TR::IlGeneratorMethodDetails *getIlGeneratorMethodDetails();
 
@@ -283,7 +277,21 @@ public:
                                                                       bool resetVisitCount,
                                                                       TR_PrexArgInfo  *argInfo);
 
-   // Make up a parameter list for the corresponding TR::ResolvedMethodSymbol
+   /**
+    * @brief Retrieve the type signature name for the given parameter index.
+    *
+    * @param[in] parmIndex : The parameter index
+    *
+    * @return The char * type signature name.
+    */
+   virtual char *getParameterTypeSignature(int32_t parmIndex);
+
+   /**
+    * @brief Create TR::ParameterSymbols from the signature of a method, and add them
+    *        to the ParameterList on the ResolvedMethodSymbol.
+    *
+    * @param[in] methodSym : the ResolvedMethodSymbol to create the parameter list for
+    */
    virtual void makeParameterList(TR::ResolvedMethodSymbol *);
 
    virtual TR::ResolvedMethodSymbol *findOrCreateJittedMethodSymbol(TR::Compilation *comp);

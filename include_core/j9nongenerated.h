@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -134,6 +134,7 @@ typedef struct J9VMGC_SublistFragment {
 #if defined(OMR_GC_IDLE_HEAP_MANAGER)
 #define J9MMCONSTANT_EXPLICIT_GC_IDLE_GC 12
 #endif
+#define J9MMCONSTANT_IMPLICIT_GC_COMPLETE_CONCURRENT 13
 
 typedef struct J9MemorySpaceDescription {
 	uintptr_t oldSpaceSize;
@@ -212,7 +213,7 @@ typedef struct J9MemorySegmentList {
 	uintptr_t flags;
 } J9MemorySegmentList;
 
-#if defined(OMR_GC_STACCATO)
+#if defined(OMR_GC_REALTIME)
 
 typedef struct MM_GCRememberedSet {
 	uintptr_t globalFragmentIndex;
@@ -228,6 +229,6 @@ typedef struct MM_GCRememberedSetFragment {
 	struct MM_GCRememberedSet* fragmentParent;
 } MM_GCRememberedSetFragment;
 
-#endif /* defined(OMR_GC_STACCATO) */
+#endif /* defined(OMR_GC_REALTIME) */
 
 #endif /* j9nongenerated_h */

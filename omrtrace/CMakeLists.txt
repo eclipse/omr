@@ -40,12 +40,25 @@ if(OMR_ENHANCED_WARNINGS)
 	target_compile_options(omrtrace PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 
+# Avoid a problem verifying strncpys inlined to operate on array fields used
+# to implement variable length structs
+if (OMR_STRNCPY_FORTIFY_OPTIONS)
+	target_compile_options(omrtrace PRIVATE ${OMR_STRNCPY_FORTIFY_OPTIONS})
+endif()
+
 target_link_libraries(omrtrace
 	PUBLIC
 		omr_base
 		${OMR_THREAD_LIB}
 		omrutil
 )
+
+target_enable_ddr(omrtrace)
+ddr_add_headers(omrtrace
+	${omr_SOURCE_DIR}/include_core/ute_module.h
+)
+ddr_set_add_targets(omrddr omrtrace)
+
 #TODO: check if following makefile fragment still required:
 #ifeq (gcc,$(OMR_TOOLCHAIN))
 ## disable builtin strncpy buffer length check for optimized builds (_FORTIFY_SOURCE=1 requires -O3)

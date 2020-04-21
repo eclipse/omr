@@ -26,19 +26,23 @@
 #define __TPF_DO_NOT_MAP_ATOE_REMOVE
 #endif
 
+#undef CODECACHE_DEBUG
+
 #include <stddef.h>
 #include <stdint.h>
+#if defined(CODECACHE_DEBUG)
+#include <stdio.h>
+#endif /* CODECACHE_DEBUG */
+
 #include "runtime/MethodExceptionData.hpp"
 
 /*
  *  Debugging help
  */
-#ifdef CODECACHE_DEBUG
-#define mcc_printf if (CodeCacheDebug) printf
-#define mcc_hashprintf /*printf*/
+#if defined(CODECACHE_DEBUG)
+#define mcc_printf(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #else
-#define mcc_printf
-#define mcc_hashprintf
+#define mcc_printf(fmt, ...) ((void)0)
 #endif
 
 class TR_OpaqueMethodBlock;

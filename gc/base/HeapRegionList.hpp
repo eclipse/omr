@@ -54,7 +54,7 @@ class MM_HeapRegionList : public MM_BaseVirtual
 /* Data members & types */		
 public:	
 	/**< An Enumeration of the different kinds of RegionList.
-	 *   Merely descriptive for Metronome, but in Staccato used to detect that
+	 *   Merely descriptive for Metronome, but in Realtime used to detect that
 	 *   a region has been moved from one list to another concurrently with
 	 *   region list iteration by another thread.
 	 *   

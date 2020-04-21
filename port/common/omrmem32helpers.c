@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,9 +53,9 @@ struct {
  */
 #if defined(AIXPPC) && defined(OMR_GC_COMPRESSED_POINTERS)
 /* virtual memory is allocated in 256M segments on AIX, so grab the whole segment */
-#define HEAP_SIZE_BYTES 256*1024*1024
+#define HEAP_SIZE_BYTES (256 * 1024 * 1024)
 #else
-#define HEAP_SIZE_BYTES 8*1024*1024
+#define HEAP_SIZE_BYTES (8 * 1024 * 1024)
 #endif
 /* Creates any of the resources required to use allocate_memory32
  *
@@ -234,7 +234,6 @@ iterateHeapsAndSubAllocate(struct OMRPortLibrary *portLibrary, uintptr_t byteAmo
 			return NULL;
 		}
 
-
 		/* If memory is committed successfully, then update the value of committedSize */
 		PPG_mem_mem32_subAllocHeapMem32.subCommitCommittedMemorySize += commitSize;
 
@@ -262,7 +261,7 @@ iterateHeapsAndSubAllocate(struct OMRPortLibrary *portLibrary, uintptr_t byteAmo
 	return NULL;
 }
 
-/* The memory will be allocated using vmem, and an attempt will be made to suballocat byteAmount within that memory.
+/* The memory will be allocated using vmem, and an attempt will be made to suballocate byteAmount within that memory.
  * If the overhead of omrheap precludes using suballocation, omrheap will not be used and the memory will be used directly instead.
  */
 static void *
@@ -340,7 +339,6 @@ allocateRegion(struct OMRPortLibrary *portLibrary, uintptr_t regionSize, uintptr
  * @param[in] callSite caller of this function.
  *
  * @return the address of the reserved memory.
- *
  */
 static void *
 reserveAndCommitRegion(struct OMRPortLibrary *portLibrary, uintptr_t reserveSize, const char *callSite, uintptr_t vmemAllocOptions)
@@ -418,7 +416,7 @@ void *
 allocate_memory32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite)
 {
 	void *returnPtr = NULL;
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	BOOLEAN useMalloc31 = FALSE;
 #elif defined(OMRZTPF)
 	/* malloc on z/TPF is 32 bits */
@@ -426,7 +424,7 @@ allocate_memory32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, cons
 #endif
 
 	Trc_PRT_mem_allocate_memory32_Entry(byteAmount);
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	if (OMRPORT_DISABLE_ENSURE_CAP32 == portLibrary->portGlobals->disableEnsureCap32) {
 		useMalloc31 = TRUE;
 	}
@@ -440,7 +438,7 @@ allocate_memory32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, cons
 #endif
 		omrthread_monitor_enter(PPG_mem_mem32_subAllocHeapMem32.monitor);
 
-		/* Check if byteAmout is larger than HEAP_SIZE_BYTES.
+		/* Check if byteAmount is larger than HEAP_SIZE_BYTES.
 		 * The majority of size requests will typically be much smaller.
 		 */
 		returnPtr = iterateHeapsAndSubAllocate(portLibrary, byteAmount);
@@ -453,16 +451,15 @@ allocate_memory32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, cons
 		}
 
 		omrthread_monitor_exit(PPG_mem_mem32_subAllocHeapMem32.monitor);
-#if (defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)) || defined(OMRZTPF)
+#if (defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)) || defined(OMRZTPF)
 	}
 #endif
 
 	Trc_PRT_mem_allocate_memory32_Exit(returnPtr);
 	return returnPtr;
 }
-/* Ensure that we have byteAmount of memory available in the sub-allocator.
- *
- */
+
+/* Ensure that we have byteAmount of memory available in the sub-allocator. */
 uintptr_t
 ensure_capacity32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount)
 {
@@ -477,7 +474,7 @@ ensure_capacity32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount)
 
 	Trc_PRT_mem_ensure_capacity32_Entry(byteAmount);
 
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	if (OMRPORT_DISABLE_ENSURE_CAP32 == portLibrary->portGlobals->disableEnsureCap32) {
 		Trc_PRT_mem_ensure_capacity32_NotRequired_Exit();
 		return OMRPORT_ENSURE_CAPACITY_NOT_REQUIRED;
@@ -539,7 +536,7 @@ allocateVmemRegion32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, J
 	uintptr_t i = 0;
 	J9HeapWrapper *wrapper = NULL;
 
-	if (0 == byteAmount)	{
+	if (0 == byteAmount) {
 		/* prevent malloc from failing causing allocate to return null */
 		byteAmount = 1;
 	}
@@ -670,7 +667,7 @@ free_memory32(struct OMRPortLibrary *portLibrary, void *memoryPointer)
 #endif
 	Trc_PRT_mem_free_memory32_Entry(memoryPointer);
 
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	if (OMRPORT_DISABLE_ENSURE_CAP32 == portLibrary->portGlobals->disableEnsureCap32) {
 		free(memoryPointer);
 	} else {
@@ -720,7 +717,7 @@ free_memory32(struct OMRPortLibrary *portLibrary, void *memoryPointer)
 
 		omrthread_monitor_exit(PPG_mem_mem32_subAllocHeapMem32.monitor);
 
-#if (defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)) || defined(OMRZTPF)
+#if (defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)) || defined(OMRZTPF)
 	}
 #endif
 

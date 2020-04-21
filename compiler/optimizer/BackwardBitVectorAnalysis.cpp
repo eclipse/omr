@@ -250,9 +250,6 @@ template<class Container>void TR_BackwardDFSetAnalysis<Container *>::initializeG
          {
          initializeCurrentGenKillSetInfo();
          }
-      else
-         {
-         }
 
       TR_BitVector seenSuccNodes(this->comp()->trMemory()->currentStackRegion());
       TR_BitVector seenNodes(this->comp()->trMemory()->currentStackRegion());
@@ -381,12 +378,12 @@ template<class Container>void TR_BackwardDFSetAnalysis<Container *>::initializeG
          int32_t nodeNumber = succ->getTo()->getNumber();
          bool normalSucc = (++count <= nodeStructure->getSuccessors().size());
          TR_LinkHead<typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair>
-            *_killSetInfo = normalSucc ? analysisInfo->_regularKillSetInfo : analysisInfo->_exceptionKillSetInfo,
-            *_regionKillSetInfo = normalSucc ? regionAnalysisInfo->_regularKillSetInfo : regionAnalysisInfo->_exceptionKillSetInfo,
-            *_currentKillSetInfo = normalSucc ? analysisInfo->_currentRegularKillSetInfo : regionAnalysisInfo->_currentExceptionKillSetInfo,
-            *_genSetInfo = normalSucc ? analysisInfo->_regularGenSetInfo : analysisInfo->_exceptionGenSetInfo,
-            *_regionGenSetInfo = normalSucc ? regionAnalysisInfo->_regularGenSetInfo : regionAnalysisInfo->_exceptionGenSetInfo,
-            *_currentGenSetInfo = normalSucc ? analysisInfo->_currentRegularGenSetInfo : regionAnalysisInfo->_currentExceptionGenSetInfo;
+         *_killSetInfo = normalSucc ? analysisInfo->_regularKillSetInfo : analysisInfo->_exceptionKillSetInfo,
+         *_regionKillSetInfo = normalSucc ? regionAnalysisInfo->_regularKillSetInfo : regionAnalysisInfo->_exceptionKillSetInfo,
+         *_currentKillSetInfo = normalSucc ? analysisInfo->_currentRegularKillSetInfo : regionAnalysisInfo->_currentExceptionKillSetInfo,
+         *_genSetInfo = normalSucc ? analysisInfo->_regularGenSetInfo : analysisInfo->_exceptionGenSetInfo,
+         *_regionGenSetInfo = normalSucc ? regionAnalysisInfo->_regularGenSetInfo : regionAnalysisInfo->_exceptionGenSetInfo,
+         *_currentGenSetInfo = normalSucc ? analysisInfo->_currentRegularGenSetInfo : regionAnalysisInfo->_currentExceptionGenSetInfo;
 
          Container *killBitVector =
             analysisInfo->getContainer(_killSetInfo, isBlockStructure ? node->getNumber() : nodeNumber);
@@ -770,7 +767,7 @@ template<class Container>void TR_BackwardDFSetAnalysis<Container *>::initializeG
             typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair *pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, fromStructureNumber);
             analysisInfo->_regularGenSetInfo->add(pair);
 
-              pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, fromStructureNumber);
+            pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, fromStructureNumber);
             analysisInfo->_regularKillSetInfo->add(pair);
 
             pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, fromStructureNumber);
@@ -788,7 +785,7 @@ template<class Container>void TR_BackwardDFSetAnalysis<Container *>::initializeG
             pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, fromStructureNumber);
             analysisInfo->_currentExceptionGenSetInfo->add(pair);
 
-              pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, fromStructureNumber);
+            pair = new (this->trStackMemory()) typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair(b, fromStructureNumber);
             analysisInfo->_currentExceptionKillSetInfo->add(pair);
             }
          exitNodes.set(subNode->getNumber());
@@ -849,28 +846,22 @@ template<class Container>void TR_BackwardDFSetAnalysis<Container *>::initializeG
 
       numIterations++;
 
+      ei.reset();
+      for (edge = ei.getCurrent(); edge != NULL; edge = ei.getNext())
          {
-         ei.reset();
-         for (edge = ei.getCurrent(); edge != NULL; edge = ei.getNext())
-            {
-            TR_StructureSubGraphNode *edgeFrom = toStructureSubGraphNode(edge->getFrom());
-
-               {
-               this->addToAnalysisQueue(edgeFrom, 0);
-               initializeGenAndKillSetInfo(region, pendingList, exitNodes, !changed);
-               }
-            }
+         TR_StructureSubGraphNode *edgeFrom = toStructureSubGraphNode(edge->getFrom());
+         this->addToAnalysisQueue(edgeFrom, 0);
+         initializeGenAndKillSetInfo(region, pendingList, exitNodes, !changed);
          }
+
+      bool noExitEdges = region->getExitEdges().isEmpty();
+      si.reset();
+      for (subNode = si.getCurrent(); subNode; subNode = si.getNext())
          {
-         bool noExitEdges = region->getExitEdges().isEmpty();
-         si.reset();
-         for (subNode = si.getCurrent(); subNode; subNode = si.getNext())
+         if (noExitEdges || (subNode->getSuccessors().empty() && subNode->getExceptionSuccessors().empty()))
             {
-            if (noExitEdges || (subNode->getSuccessors().empty() && subNode->getExceptionSuccessors().empty()))
-               {
-               this->addToAnalysisQueue(subNode, 0);
-               initializeGenAndKillSetInfo(region, pendingList, exitNodes, !changed);
-               }
+            this->addToAnalysisQueue(subNode, 0);
+            initializeGenAndKillSetInfo(region, pendingList, exitNodes, !changed);
             }
          }
 
@@ -1065,50 +1056,44 @@ template<class Container>bool TR_BackwardDFSetAnalysis<Container *>::analyzeNode
       typename TR_BasicDFSetAnalysis<Container *>::ExtraAnalysisInfo *analysisInfo = this->getAnalysisInfo(nodeStructure->getStructure());
 
       TR_BitVector seenNodes(this->comp()->trMemory()->currentStackRegion());
-      ///////initializeOutSetInfo();
+      TR_SuccessorIterator successors(nodeStructure);
+      bool firstSucc = true;
+      bool stopAnalyzingThisNode = false;
+      for (auto succ = successors.getFirst(); succ; succ = successors.getNext())
          {
-         TR_SuccessorIterator successors(nodeStructure);
-         bool firstSucc = true;
-         bool stopAnalyzingThisNode = false;
-         for (auto succ = successors.getFirst(); succ; succ = successors.getNext())
+         if (!regionStructure->isExitEdge(succ))
             {
-              //dumpOptDetails(this->comp(), "1Succ %d %p pending %d already visited %d\n", succ->getTo()->getNumber(), succ->getTo(), pendingList->get(succ->getTo()->getNumber()), alreadyVisitedNode);
-            if (!regionStructure->isExitEdge(succ))
+            TR_StructureSubGraphNode *succNode = (TR_StructureSubGraphNode *) succ->getTo();
+            TR_Structure *succStructure = succNode->getStructure();
+            if (pendingList.get(succStructure->getNumber()) && (!alreadyVisitedNode))
                {
-               TR_StructureSubGraphNode *succNode = (TR_StructureSubGraphNode *) succ->getTo();
-               TR_Structure *succStructure = succNode->getStructure();
-               //dumpOptDetails(this->comp(), "2Succ %d %p pending %d already visited %d\n", succStructure->getNumber(), succStructure, pendingList->get(succStructure->getNumber()), alreadyVisitedNode);
-               if (pendingList.get(succStructure->getNumber()) && (!alreadyVisitedNode))
-                  {
-                  this->removeHeadFromAnalysisQueue();
-                  this->addToAnalysisQueue(succNode, 0);
-                  stopAnalyzingThisNode = true;
-                  break;
-                  }
-
-               if (pendingList.get(succStructure->getNumber()) && !succStructure->hasBeenAnalyzedBefore()) //this->_firstIteration)
-                  {
-                  if (firstSucc)
-                     initializeInfo(_currentOutSetInfo[succStructure->getNumber()]);
-                  }
-               else
-                  {
-                  if (!seenNodes.get(succStructure->getNumber()))
-                       initializeInfo(_currentOutSetInfo[succStructure->getNumber()]);
-                  Container *succinfo = this->getAnalysisInfo(succStructure)->_inSetInfo;
-                  compose(_currentOutSetInfo[succStructure->getNumber()], succinfo);
-                  }
-               seenNodes.set(succStructure->getNumber());
+               this->removeHeadFromAnalysisQueue();
+               this->addToAnalysisQueue(succNode, 0);
+               stopAnalyzingThisNode = true;
+               break;
                }
-            firstSucc = false;
+
+            if (pendingList.get(succStructure->getNumber()) && !succStructure->hasBeenAnalyzedBefore()) //this->_firstIteration)
+               {
+               if (firstSucc)
+                  initializeInfo(_currentOutSetInfo[succStructure->getNumber()]);
+               }
+            else
+               {
+               if (!seenNodes.get(succStructure->getNumber()))
+                  initializeInfo(_currentOutSetInfo[succStructure->getNumber()]);
+               Container *succinfo = this->getAnalysisInfo(succStructure)->_inSetInfo;
+               compose(_currentOutSetInfo[succStructure->getNumber()], succinfo);
+               }
+            seenNodes.set(succStructure->getNumber());
             }
-
-         if (stopAnalyzingThisNode)
-            continue;
-
          firstSucc = false;
          }
 
+      if (stopAnalyzingThisNode)
+         continue;
+
+      firstSucc = false;
 
       if (exitNodes.get(nodeStructure->getNumber()))
          {
@@ -1141,10 +1126,6 @@ template<class Container>bool TR_BackwardDFSetAnalysis<Container *>::analyzeNode
 
      typename TR_BasicDFSetAnalysis<Container *>::ExtraAnalysisInfo *regionAnalysisInfo = this->getAnalysisInfo(regionStructure);
 
-     //if (traceBVA())
-     //  dumpOptDetails(this->comp(), "Region structure %d (%p) status %d node structure %d (%p) status %d\n", regionStructure->getNumber(), regionStructure, regionAnalysisInfo->_isInvalid, nodeStructure->getNumber(), nodeStructure->getStructure(), analysisInfo->_isInvalid);
-
-     //dumpOptDetails(this->comp(), "Reached here for %d %p\n", nodeStructure->getNumber(), nodeStructure->getStructure());
      if (this->supportsGenAndKillSets() &&
          canGenAndKillForStructure(nodeStructure->getStructure()))
         {
@@ -1234,76 +1215,44 @@ template<class Container>bool TR_BackwardDFSetAnalysis<Container *>::analyzeNode
 
         bool firstSucc = true;
         typename TR_BasicDFSetAnalysis<Container *>::TR_ContainerNodeNumberPair *nodePair;
-        if (1 /* || isBlockStructure */)
+
+        TR_SuccessorIterator successors(nodeStructure);
+        int count = 0;
+        for (auto succ = successors.getFirst(); succ; succ = successors.getNext())
            {
-           TR_SuccessorIterator successors(nodeStructure);
-           int count = 0;
-           for (auto succ = successors.getFirst(); succ; succ = successors.getNext())
-              {
-              bool normalSucc = (++count <= nodeStructure->getSuccessors().size());
-              int32_t nodeNumber = isBlockStructure ? node->getNumber() : succ->getTo()->getNumber();
-              Container *killBitVector = analysisInfo->getContainer(
+           bool normalSucc = (++count <= nodeStructure->getSuccessors().size());
+           int32_t nodeNumber = isBlockStructure ? node->getNumber() : succ->getTo()->getNumber();
+           Container *killBitVector = analysisInfo->getContainer(
                  normalSucc
                  ? analysisInfo->_regularKillSetInfo
                  : analysisInfo->_exceptionKillSetInfo,
                  nodeNumber);
-              Container *genBitVector = analysisInfo->getContainer(
+           Container *genBitVector = analysisInfo->getContainer(
                  normalSucc
                  ? analysisInfo->_regularGenSetInfo
                  : analysisInfo->_exceptionGenSetInfo,
                  nodeNumber);
 
-              *this->_regularInfo = *(_currentOutSetInfo[nodeNumber]);
+           *this->_regularInfo = *(_currentOutSetInfo[nodeNumber]);
 
-              if (killBitVector)
-                 *this->_regularInfo -= *killBitVector;
+           if (killBitVector)
+              *this->_regularInfo -= *killBitVector;
 
-              if (genBitVector)
-                 *this->_regularInfo |= *genBitVector;
+           if (genBitVector)
+              *this->_regularInfo |= *genBitVector;
 
-              if (!firstSucc)
-                 compose(analysisInfo->_inSetInfo, this->_regularInfo);
-              else
-                 this->copyFromInto(this->_regularInfo, analysisInfo->_inSetInfo);
-              firstSucc = false;
-              }
-
-           if (isBlockStructure && nodeStructure->getSuccessors().empty() &&
-               nodeStructure->getExceptionSuccessors().empty())
-              {
-              Container *genBitVector = analysisInfo->getContainer(analysisInfo->_regularGenSetInfo, node->getNumber());
-              this->copyFromInto(genBitVector, analysisInfo->_inSetInfo);
-              }
+           if (!firstSucc)
+              compose(analysisInfo->_inSetInfo, this->_regularInfo);
+           else
+              this->copyFromInto(this->_regularInfo, analysisInfo->_inSetInfo);
+           firstSucc = false;
            }
-        else
+
+        if (isBlockStructure && nodeStructure->getSuccessors().empty() &&
+            nodeStructure->getExceptionSuccessors().empty())
            {
-           for (nodePair = analysisInfo->_outSetInfo->getFirst(); nodePair; nodePair = nodePair->getNext())
-              {
-              int32_t nodeNumber = isBlockStructure ? node->getNumber() : nodePair->_nodeNumber;
-              Container *killBitVector =
-                 analysisInfo->getContainer(analysisInfo->_regularKillSetInfo, nodeNumber);
-              if (!killBitVector)
-                 killBitVector = analysisInfo->getContainer(analysisInfo->_exceptionKillSetInfo, nodeNumber);
-
-             Container *genBitVector =
-                analysisInfo->getContainer(analysisInfo->_regularGenSetInfo, nodeNumber);
-             if (!genBitVector)
-                genBitVector = analysisInfo->getContainer(analysisInfo->_exceptionGenSetInfo, nodeNumber);
-
-             *this->_regularInfo = *(_currentOutSetInfo[nodePair->_nodeNumber]);
-
-             if (killBitVector)
-                *this->_regularInfo -= *killBitVector;
-
-             if (genBitVector)
-                *this->_regularInfo |= *genBitVector;
-
-              if (!firstSucc)
-                 compose(analysisInfo->_inSetInfo, this->_regularInfo);
-              else
-                 this->copyFromInto(this->_regularInfo, analysisInfo->_inSetInfo);
-              firstSucc = false;
-              }
+           Container *genBitVector = analysisInfo->getContainer(analysisInfo->_regularGenSetInfo, node->getNumber());
+           this->copyFromInto(genBitVector, analysisInfo->_inSetInfo);
            }
 
        if (nodeStructure->getStructure()->asRegion() &&

@@ -25,8 +25,7 @@
 #include <stdint.h>
 #include "codegen/Analyser.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
-#include "codegen/Linkage.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -41,11 +40,11 @@
 #include "env/TRMemory.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "ras/Debug.hpp"
@@ -145,16 +144,37 @@ void TR_X86CompareAnalyser::integerCompareAnalyser(
       }
 
    if (realFirstChild)
-      cg()->recursivelyDecReferenceCount(realFirstChild);
+      {
+      if (!getCmpMem1Reg2())
+         {
+         cg()->recursivelyDecReferenceCount(realFirstChild);
+         }
+      else
+         {
+         cg()->decReferenceCount(realFirstChild);
+         }
+      }
    else
+      {
       cg()->decReferenceCount(firstChild);
+      }
 
    if (realSecondChild)
-      cg()->recursivelyDecReferenceCount(realSecondChild);
+      {
+      if (!getCmpReg1Mem2())
+         {
+         cg()->recursivelyDecReferenceCount(realSecondChild);
+         }
+      else
+         {
+         cg()->decReferenceCount(realSecondChild);
+         }
+      }
    else
+      {
       cg()->decReferenceCount(secondChild);
+      }
    }
-
 
 void TR_X86CompareAnalyser::integerCompareAnalyser(
    TR::Node       *root,

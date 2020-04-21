@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,8 +39,8 @@
 #include "control/Options_inlines.hpp"
 #include "env/TRMemory.hpp"
 #include "il/ILOpCodes.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "runtime/Runtime.hpp"
@@ -307,58 +307,14 @@ class X86LabelInstruction : public TR::Instruction
    bool _needToClearFPStack;
    uint8_t _reloType;
    bool _permitShortening;
+   void initialize(TR::LabelSymbol *sym, bool b);
 
    public:
 
-   X86LabelInstruction(TR::LabelSymbol *sym, TR::Node * node, TR_X86OpCodes op, TR::CodeGenerator *cg, bool b = false)
-     : TR::Instruction(node, op, cg), _symbol(sym), _needToClearFPStack(b), _reloType(TR_NoRelocation),
-       _permitShortening(true)
-      {
-      if (sym && op == LABEL)
-         sym->setInstruction(this);
-      else if (sym)
-         sym->setDirectlyTargeted();
-      }
-
-   X86LabelInstruction(TR::LabelSymbol *sym,
-                          TR_X86OpCodes op,
-                          TR::Instruction *precedingInstruction,
-                          TR::CodeGenerator *cg,
-                          bool b = false)
-      : TR::Instruction(op, precedingInstruction, cg),
-        _symbol(sym),
-        _needToClearFPStack(b),
-        _outlinedInstructionBranch(NULL),
-        _reloType(TR_NoRelocation),
-        _permitShortening(true)
-      {
-      if (sym && op == LABEL)
-         sym->setInstruction(this);
-      else if (sym)
-         sym->setDirectlyTargeted();
-      }
-
    X86LabelInstruction(TR_X86OpCodes op, TR::Node * node, TR::LabelSymbol *sym, TR::CodeGenerator *cg, bool b = false);
-
-   X86LabelInstruction(TR::Instruction *precedingInstruction,
-                          TR_X86OpCodes op,
-                          TR::LabelSymbol *sym,
-                          TR::CodeGenerator *cg,
-                          bool b = false);
-
-   X86LabelInstruction(TR_X86OpCodes op,
-                          TR::Node *node,
-                          TR::LabelSymbol *sym,
-                          TR::RegisterDependencyConditions *cond,
-                          TR::CodeGenerator *cg,
-                          bool b = false);
-
-   X86LabelInstruction(TR::Instruction *precedingInstruction,
-                          TR_X86OpCodes op,
-                          TR::LabelSymbol *sym,
-                          TR::RegisterDependencyConditions *cond,
-                          TR::CodeGenerator *cg,
-                          bool b = false);
+   X86LabelInstruction(TR::Instruction *precedingInstruction, TR_X86OpCodes op, TR::LabelSymbol *sym, TR::CodeGenerator *cg, bool b = false);
+   X86LabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg, bool b = false);
+   X86LabelInstruction(TR::Instruction *precedingInstruction, TR_X86OpCodes op, TR::LabelSymbol *sym, TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg, bool b = false);
 
    void prohibitShortening() { _permitShortening = false; }
 
@@ -1468,7 +1424,7 @@ class X86MemInstruction : public TR::Instruction
          padUnresolvedReferenceInstruction(this, mr, cg);
          }
 
-      if (!cg->comp()->getOption(TR_DisableNewX86VolatileSupport) && TR::Compiler->target.is32Bit())
+      if (!cg->comp()->getOption(TR_DisableNewX86VolatileSupport) && cg->comp()->target().is32Bit())
          {
          int32_t barrier = memoryBarrierRequired(this->getOpCode(), mr, cg, true);
 
@@ -1509,7 +1465,7 @@ class X86MemInstruction : public TR::Instruction
          padUnresolvedReferenceInstruction(this, p, cg);
          }
 
-      if (!cg->comp()->getOption(TR_DisableNewX86VolatileSupport) && TR::Compiler->target.is32Bit())
+      if (!cg->comp()->getOption(TR_DisableNewX86VolatileSupport) && cg->comp()->target().is32Bit())
          {
          int32_t barrier = memoryBarrierRequired(this->getOpCode(), p, cg, true);
 
@@ -1942,7 +1898,7 @@ class X86RegMemInstruction : public TR::X86RegInstruction
          padUnresolvedReferenceInstruction(this, p, cg);
          }
 
-      if (!cg->comp()->getOption(TR_DisableNewX86VolatileSupport) && TR::Compiler->target.is32Bit())
+      if (!cg->comp()->getOption(TR_DisableNewX86VolatileSupport) && cg->comp()->target().is32Bit())
          {
          int32_t barrier = memoryBarrierRequired(this->getOpCode(), p, cg, true);
 
@@ -2888,6 +2844,27 @@ class X86VFPReleaseInstruction : public TR::Instruction
    };
 
 
+/**
+ * Calls are normally responsible for maintaining VFP state.  However, Polymorphic
+ * Inline Caches (PICs) can have multiple call instructions in the same internal
+ * control flow region.  As a consequence, if the VFP adjustment must be attached
+ * to a call then it must go on exactly one of them, which is sometimes hard to
+ * achieve in the code.  Furthermore, with the adjustment on one of the calls, the
+ * VFP offset must be incorrect for at least part of the internal control flow
+ * region, though this doesn't matter because we have tight control over what is
+ * done in there anyway.
+ *
+ * Given that VFP tracking isn't perfect inside internal control flow anyway, it
+ * seems simpler to offer a dedicated "VFP adjustment instruction" that we can
+ * place at the appropriate point in the internal control flow region to make the
+ * adjustment happen there.  Such an instruction is not safe in general, because
+ * we can't control whether a spill comes before or after such an instruction, and
+ * only one of the two possibilities can be correct; however, there are no spills
+ * inside internal control flow anyway.
+ *
+ * Thus, it seems that an explicit VFP adjustment instruction is simpler than what
+ * we have now, and no less correct.
+ */
 class X86VFPCallCleanupInstruction : public TR::Instruction
    {
    int32_t _stackPointerAdjustment;
@@ -2944,6 +2921,7 @@ TR::X86MemInstruction  * generateMemInstruction(TR::Instruction *, TR_X86OpCodes
 TR::X86RegInstruction  * generateRegInstruction(TR_X86OpCodes op, TR::Node *, TR::Register * reg1, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
 TR::X86RegInstruction  * generateRegInstruction(TR_X86OpCodes op, TR::Node *, TR::Register * reg1, TR::CodeGenerator *cg);
 TR::X86RegInstruction  * generateRegInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::Register * reg1, TR::CodeGenerator *cg);
+TR::X86RegInstruction  * generateRegInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::Register * reg1, TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg);
 
 TR::X86MemInstruction  * generateMemInstruction(TR_X86OpCodes op, TR::Node *, TR::MemoryReference  * mr, TR::CodeGenerator *cg);
 
@@ -2961,6 +2939,7 @@ TR::X86RegRegInstruction  * generateRegRegInstruction(TR::Instruction *, TR_X86O
 
 TR::Instruction  * generateInstruction(TR_X86OpCodes, TR::Node *, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
 TR::Instruction  * generateInstruction(TR_X86OpCodes op, TR::Node * node, TR::CodeGenerator *cg);
+TR::Instruction  * generateInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::CodeGenerator *cg);
 
 TR::X86ImmInstruction  * generateImmInstruction(TR_X86OpCodes op, TR::Node * node, int32_t imm, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
 TR::X86ImmInstruction  * generateImmInstruction(TR_X86OpCodes op, TR::Node * node, int32_t imm, TR::CodeGenerator *cg, int32_t reloKind=TR_NoRelocation);
@@ -2972,9 +2951,6 @@ TR::X86RegInstruction  * generateRegInstruction(TR_X86OpCodes op, TR::Node *, TR
 
 TR::X86MemImmSymInstruction  * generateMemImmSymInstruction(TR_X86OpCodes op, TR::Node *, TR::MemoryReference  * mr, int32_t imm, TR::SymbolReference *sr, TR::CodeGenerator *cg);
 
-TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
-TR::X86LabelInstruction  * generateLabelInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
-
 TR::X86PaddingInstruction  * generatePaddingInstruction(uint8_t length, TR::Node * node, TR::CodeGenerator *cg);
 TR::X86PaddingInstruction  * generatePaddingInstruction(TR::Instruction *precedingInstruction, uint8_t length, TR::CodeGenerator *cg);
 
@@ -2985,29 +2961,17 @@ TR::X86AlignmentInstruction  * generateAlignmentInstruction(TR::Node * node, uin
 TR::X86AlignmentInstruction  * generateAlignmentInstruction(TR::Instruction *precedingInstruction, uint8_t boundary, TR::CodeGenerator *cg);
 TR::X86AlignmentInstruction  * generateAlignmentInstruction(TR::Instruction *precedingInstruction, uint8_t boundary, uint8_t margin, TR::CodeGenerator *cg);
 
+TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
+TR::X86LabelInstruction  * generateLabelInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
 TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, TR::CodeGenerator *cg);
-inline TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, bool needsVMThreadRegister, TR::CodeGenerator *cg)
-   { return generateLabelInstruction(op, node, sym, cg); }
-
 TR::X86LabelInstruction  * generateLabelInstruction(TR::Instruction *i, TR_X86OpCodes op, TR::LabelSymbol *sym, TR::CodeGenerator *cg);
-inline TR::X86LabelInstruction  * generateLabelInstruction(TR::Instruction *i, TR_X86OpCodes op, TR::LabelSymbol *sym, bool needsVMThreadRegister, TR::CodeGenerator *cg)
-   { return generateLabelInstruction(i, op, sym, cg); }
-
-
-TR::X86LabelInstruction  * generateLongLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
-TR::X86LabelInstruction  * generateLongLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::CodeGenerator *cg);
-
-TR::X86LabelInstruction  * generateLongLabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, bool needsVMThreadRegister, TR::CodeGenerator *cg);
-
-
 TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::Node * glRegDep, List<TR::Register> *popRegs, bool evaluateGlRegDeps, TR::CodeGenerator *cg);
-
 inline TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, TR::Node * glRegDep, List<TR::Register> *popRegs, TR::CodeGenerator *cg)
    { return generateLabelInstruction(op, node, sym, glRegDep, popRegs, true, cg); }
-
 inline TR::X86LabelInstruction  * generateLabelInstruction(TR_X86OpCodes op, TR::Node *node, TR::LabelSymbol *sym, TR::Node * glRegDep, TR::CodeGenerator *cg)
    { return generateLabelInstruction(op, node, sym, glRegDep, 0, true, cg); }
-
+TR::X86LabelInstruction  * generateLongLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
+TR::X86LabelInstruction  * generateLongLabelInstruction(TR_X86OpCodes op, TR::Node *, TR::LabelSymbol *sym, TR::CodeGenerator *cg);
 
 TR::X86LabelInstruction  * generateJumpInstruction(TR_X86OpCodes op, TR::Node * jumpNode, TR::CodeGenerator *cg, bool needsVMThreadRegister = false, bool evaluateGlRegDeps = true);
 
@@ -3037,6 +3001,8 @@ TR::X86MemRegInstruction  * generateMemRegInstruction(TR_X86OpCodes op, TR::Node
 TR::X86MemRegInstruction  * generateMemRegInstruction(TR_X86OpCodes op, TR::Node *, TR::MemoryReference  * mr, TR::Register * reg1, TR::CodeGenerator *cg);
 TR::X86ImmSymInstruction  * generateImmSymInstruction(TR_X86OpCodes op, TR::Node *, int32_t imm, TR::SymbolReference *, TR::RegisterDependencyConditions  *, TR::CodeGenerator *cg);
 TR::X86ImmSymInstruction  * generateImmSymInstruction(TR_X86OpCodes op, TR::Node *, int32_t imm, TR::SymbolReference *, TR::CodeGenerator *cg);
+TR::X86ImmSymInstruction  * generateImmSymInstruction(TR::Instruction *prev, TR_X86OpCodes op, int32_t imm, TR::SymbolReference *, TR::RegisterDependencyConditions  *, TR::CodeGenerator *cg);
+TR::X86ImmSymInstruction  * generateImmSymInstruction(TR::Instruction *prev, TR_X86OpCodes op, int32_t imm, TR::SymbolReference *, TR::CodeGenerator *cg);
 
 TR::X86RegRegRegInstruction  * generateRegRegRegInstruction(TR_X86OpCodes op, TR::Node *, TR::Register * reg1, TR::Register * reg2, TR::Register * reg3, TR::RegisterDependencyConditions  *deps, TR::CodeGenerator *cg);
 TR::X86RegRegRegInstruction  * generateRegRegRegInstruction(TR_X86OpCodes op, TR::Node *, TR::Register * reg1, TR::Register * reg2, TR::Register * reg3, TR::CodeGenerator *cg);
@@ -3050,6 +3016,7 @@ TR::X86RegRegImmInstruction  * generateRegRegImmInstruction(TR_X86OpCodes op, TR
 
 TR::X86CallMemInstruction  * generateCallMemInstruction(TR_X86OpCodes op, TR::Node *, TR::MemoryReference  * mr, TR::RegisterDependencyConditions  *, TR::CodeGenerator *cg);
 TR::X86CallMemInstruction  * generateCallMemInstruction(TR_X86OpCodes op, TR::Node *, TR::MemoryReference  * mr, TR::CodeGenerator *cg);
+TR::X86CallMemInstruction  * generateCallMemInstruction(TR::Instruction *, TR_X86OpCodes op, TR::MemoryReference *mr, TR::RegisterDependencyConditions *, TR::CodeGenerator *cg);
 
 TR::X86ImmSymInstruction  * generateHelperCallInstruction(TR::Node *, TR_RuntimeHelper, TR::RegisterDependencyConditions  *, TR::CodeGenerator *cg);
 TR::X86ImmSymInstruction  * generateHelperCallInstruction(TR::Instruction *, TR_RuntimeHelper, TR::CodeGenerator *cg);

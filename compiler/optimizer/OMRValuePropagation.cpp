@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "optimizer/OMRValuePropagation.hpp"
+#include "optimizer/ValuePropagation.hpp"
 #include "optimizer/GlobalValuePropagation.hpp"
 
 #include <algorithm>
@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
@@ -49,15 +49,15 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
@@ -191,7 +191,7 @@ void OMR::ValuePropagation::addLoopDef(TR::Node *node)
    {
    // If the loop def entry does not already exist, create it
    //
-   int32_t hash = (((uintptrj_t)node) >> 2) % VP_HASH_TABLE_SIZE;
+   int32_t hash = (((uintptr_t)node) >> 2) % VP_HASH_TABLE_SIZE;
    LoopDefsHashTableEntry *entry;
    for (entry = _loopDefsHashTable[hash]; entry; entry = entry->next)
       {
@@ -209,7 +209,7 @@ OMR::ValuePropagation::LoopDefsHashTableEntry *OMR::ValuePropagation::findLoopDe
    {
    // Find the loop def entry
    //
-   int32_t hash = (((uintptrj_t)node) >> 2) % VP_HASH_TABLE_SIZE;
+   int32_t hash = (((uintptr_t)node) >> 2) % VP_HASH_TABLE_SIZE;
    LoopDefsHashTableEntry *entry;
    for (entry = _loopDefsHashTable[hash]; entry; entry = entry->next)
       {
@@ -497,7 +497,7 @@ TR::VPConstraint *OMR::ValuePropagation::addConstraintToList(TR::Node *node, int
                   ///storeConstraint = constraint->intersect(constraint, this);
                   //
                   //FIXME: ugly, uncomment line above and comment this 'if' block
-                  if (TR::VPConstraint::isSpecialClass((uintptrj_t)constraint->getClass()))
+                  if (TR::VPConstraint::isSpecialClass((uintptr_t)constraint->getClass()))
                      {
                      TR_ASSERT(constraint->asClass(), "special class constraint must be VPClass");
                      traceMsg(comp(), "found special class constraint!\n");
@@ -1255,7 +1255,7 @@ OMR::ValuePropagation::EdgeConstraints *OMR::ValuePropagation::EdgeConstraints::
 //
 OMR::ValuePropagation::EdgeConstraints *OMR::ValuePropagation::getEdgeConstraints(TR::CFGEdge *edge)
    {
-   int32_t hash = ((uintptrj_t)edge) % VP_HASH_TABLE_SIZE;
+   int32_t hash = ((uintptr_t)edge) % VP_HASH_TABLE_SIZE;
    EdgeConstraints *entry;
    for (entry = _edgeConstraintsHashTable[hash]; entry; entry = entry->next)
       {
@@ -1848,6 +1848,15 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
    {
    isGlobal = true; // Will be reset if local constraints found
 
+   if (_defMergedNodes->get(node->getGlobalIndex()))
+      {
+      if (trace())
+         traceMsg(comp(), "Node n%dn has already been processed by mergeDefConstraints - returning NULL\n", node->getGlobalIndex());
+      return NULL;
+      }
+
+   _defMergedNodes->set(node->getGlobalIndex());
+
    // If the node is a use node, look at its def points and merge constraints
    // from them.
    //
@@ -1963,6 +1972,16 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
             continue;
 
          defValueNumber = getValueNumber(defNode);
+         // before we can look at def nodes to build up a set of contraints we had better know that set of defs
+         // dominates the use we are considering - if not we treat the use as an unknown
+         if (node->getSymbol()->isAutoOrParm()
+             && _curDefinedOnAllPaths
+             && !_curDefinedOnAllPaths->get(node->getSymbolReference()->getReferenceNumber()))
+            {
+            if (trace())
+               traceMsg(comp(), "symRef %d is not stored on all paths - treating as unknown\n", defNode->getSymbolReference()->getReferenceNumber());
+            unseenDefsFound = true;
+            }
 
          // Only consider def nodes that are stores; other def nodes
          // (e.g. calls) will make this value unconstrained.
@@ -2293,6 +2312,13 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
          }
       }
 
+   if (relative != AbsoluteConstraint)
+      {
+      if (trace())
+         traceMsg(comp(), "we are processing a relative constraint and merging with backedge constraints is not supported\n");
+      return NULL;
+      }
+
    // Now go through the defs again and look for back-edge constraints on
    // the unseen def nodes
    //
@@ -2311,8 +2337,14 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
 
       sym = defNode->getSymbol();
       defValueNumber = getValueNumber(defNode);
-      if (!hasBeenStored(defValueNumber, sym, _curConstraints))
+      // if we haven't seen a def on this iteration along all paths we must consider the backedge constraints
+      if (node->getSymbol()->isAutoOrParm()
+          && !unseenDefsFound
+          && !_curDefinedOnAllPaths->get(defNode->getSymbolReference()->getReferenceNumber()))
          {
+         if (trace())
+            traceMsg(comp(), "symref %d is not defined on all paths - consulting backedge constraints\n", node->getSymbolReference()->getReferenceNumber());
+
          // this def is unseen
          unseenDefsFound = true;
          LoopInfo *loopInfo;
@@ -2324,11 +2356,17 @@ TR::VPConstraint *OMR::ValuePropagation::mergeDefConstraints(TR::Node *node, int
             // See if the unseen def was seen on a path to this back edge.
             //
             if (!loopInfo ||
-                !loopInfo->_backEdgeConstraints ||
-                !hasBeenStored(defValueNumber, sym, loopInfo->_backEdgeConstraints->valueConstraints))
+                !loopInfo->_backEdgeConstraints)
                {
                if (trace())
                   traceMsg(comp(), "not seen on this back edge, ignored\n");
+               continue;
+               }
+
+            if (!hasBeenStored(defValueNumber, sym, loopInfo->_backEdgeConstraints->valueConstraints))
+               {
+               if (trace())
+                  traceMsg(comp(), "no backedge constraint, ignored\n");
                continue;
                }
 
@@ -3833,254 +3871,9 @@ int32_t TR::GlobalValuePropagation::perform()
 
 void OMR::ValuePropagation::getParmValues()
    {
-   // Determine how many parms there are
-   //
-   TR::ResolvedMethodSymbol *methodSym = comp()->getMethodSymbol();
-   int32_t numParms = methodSym->getParameterList().getSize();
-   if (numParms == 0)
-      return;
-
-   if (!comp()->getCurrentMethod()->isJ9())
-      return; // does not work with multiple entries and seems to be Java specific anyway
-
-   // Allocate the constraints array for the parameters
-   //
-   _parmValues = (TR::VPConstraint**)trMemory()->allocateStackMemory(numParms*sizeof(TR::VPConstraint*));
-
-   // Create a constraint for each parameter that we can find info for.
-   // First look for a "this" parameter then look through the method's signature
-   //
-   TR_ResolvedMethod *method = comp()->getCurrentMethod();
-   TR_OpaqueClassBlock *classObject;
-
-#ifdef J9_PROJECT_SPECIFIC
-   if (!chTableValidityChecked() && usePreexistence())
-      {
-      TR::ClassTableCriticalSection setCHTableWasValid(comp()->fe());
-      if (comp()->getFailCHTableCommit())
-         setChTableWasValid(false);
-      else
-         setChTableWasValid(true);
-      setChTableValidityChecked(true);
-      }
-#endif
-
-   int32_t parmIndex = 0;
-   TR::VPConstraint *constraint = NULL;
-   ListIterator<TR::ParameterSymbol> parms(&methodSym->getParameterList());
-   TR::ParameterSymbol *p = parms.getFirst();
-   if (!comp()->getCurrentMethod()->isStatic())
-      {
-      if (p && p->getOffset() == 0)
-         {
-         classObject = method->containingClass();
-
-#ifdef J9_PROJECT_SPECIFIC
-         TR_OpaqueClassBlock *prexClass = NULL;
-         if (usePreexistence())
-            {
-            TR::ClassTableCriticalSection usesPreexistence(comp()->fe());
-
-            prexClass = classObject;
-            if (TR::Compiler->cls.isAbstractClass(comp(), classObject))
-               classObject = comp()->getPersistentInfo()->getPersistentCHTable()->findSingleConcreteSubClass(classObject, comp());
-
-            if (!classObject)
-               {
-               classObject = prexClass;
-               prexClass = NULL;
-               }
-            else
-               {
-               TR_PersistentClassInfo * cl = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classObject, comp());
-               if (!cl)
-                  prexClass = NULL;
-               else
-                  {
-                  if (!cl->shouldNotBeNewlyExtended())
-                     _resetClassesThatShouldNotBeNewlyExtended.add(cl);
-                  cl->setShouldNotBeNewlyExtended(comp()->getCompThreadID());
-
-                  TR_ScratchList<TR_PersistentClassInfo> subClasses(trMemory());
-                  TR_ClassQueries::collectAllSubClasses(cl, &subClasses, comp());
-
-                  ListIterator<TR_PersistentClassInfo> it(&subClasses);
-                  TR_PersistentClassInfo *info = NULL;
-                  for (info = it.getFirst(); info; info = it.getNext())
-                     {
-                     if (!info->shouldNotBeNewlyExtended())
-                        _resetClassesThatShouldNotBeNewlyExtended.add(info);
-                     info->setShouldNotBeNewlyExtended(comp()->getCompThreadID());
-                     }
-                  }
-               }
-
-            }
-
-         if (prexClass && !fe()->classHasBeenExtended(classObject))
-            {
-            TR_OpaqueClassBlock *jlKlass = fe()->getClassClassPointer(classObject);
-            if (jlKlass)
-               {
-               if (classObject != jlKlass)
-                  {
-                  if (!fe()->classHasBeenExtended(classObject))
-                     constraint = TR::VPFixedClass::create(this, classObject);
-                  else
-                     constraint = TR::VPResolvedClass::create(this, classObject);
-                  }
-               else
-                  constraint = TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject);
-               constraint = constraint->intersect(TR::VPPreexistentObject::create(this, prexClass), this);
-               TR_ASSERT(constraint, "Cannot intersect constraints");
-               }
-            }
-         else
-            {
-            // Constraining the receiver's type here should be fine, even if
-            // its declared type is an interface (i.e. for a default method
-            // implementation). The receiver must always be an instance of (a
-            // subtype of) the type that declares the method.
-            TR_OpaqueClassBlock *jlKlass = fe()->getClassClassPointer(classObject);
-            if (jlKlass)
-               {
-               if (classObject != jlKlass)
-                  constraint = TR::VPResolvedClass::create(this, classObject);
-               else
-                  constraint = TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject);
-               }
-            }
-
-         if (0 && constraint) // cannot do this if 'this' is changed in the method...allow the non null property on the TR::Node set by IL gen to dictate the creation of non null constraint
-            {
-            constraint = constraint->intersect(TR::VPNonNullObject::create(this), this);
-            TR_ASSERT(constraint, "Cannot intersect constraints");
-            }
-#endif
-
-         _parmValues[parmIndex++] = constraint;
-         p = parms.getNext();
-         }
-      }
-
-   TR_MethodParameterIterator * parmIterator = method->getParameterIterator(*comp());
-   for ( ; p; p = parms.getNext())
-      {
-      TR_ASSERT(!parmIterator->atEnd(), "Ran out of parameters unexpectedly.");
-      TR::DataType dataType = parmIterator->getDataType();
-      if ((dataType == TR::Int8 || dataType == TR::Int16)
-          && comp()->getOption(TR_AllowVPRangeNarrowingBasedOnDeclaredType))
-         {
-         _parmValues[parmIndex++] = TR::VPIntRange::create(this, dataType, TR_maybe);
-         }
-      else if (dataType == TR::Aggregate)
-         {
-         constraint = NULL;
-#ifdef J9_PROJECT_SPECIFIC
-         TR_OpaqueClassBlock *opaqueClass = parmIterator->getOpaqueClass();
-         if (opaqueClass)
-            {
-            TR_OpaqueClassBlock *prexClass = NULL;
-            if (usePreexistence())
-               {
-               TR::ClassTableCriticalSection usesPreexistence(comp()->fe());
-
-               prexClass = opaqueClass;
-               if (TR::Compiler->cls.isInterfaceClass(comp(), opaqueClass) || TR::Compiler->cls.isAbstractClass(comp(), opaqueClass))
-                  opaqueClass = comp()->getPersistentInfo()->getPersistentCHTable()->findSingleConcreteSubClass(opaqueClass, comp());
-
-               if (!opaqueClass)
-                  {
-                  opaqueClass = prexClass;
-                  prexClass = NULL;
-                  }
-               else
-                  {
-                  TR_PersistentClassInfo * cl = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(opaqueClass, comp());
-                  if (!cl)
-                     prexClass = NULL;
-                  else
-                     {
-                     if (!cl->shouldNotBeNewlyExtended())
-                        _resetClassesThatShouldNotBeNewlyExtended.add(cl);
-                     cl->setShouldNotBeNewlyExtended(comp()->getCompThreadID());
-
-                     TR_ScratchList<TR_PersistentClassInfo> subClasses(trMemory());
-                     TR_ClassQueries::collectAllSubClasses(cl, &subClasses, comp());
-
-                     ListIterator<TR_PersistentClassInfo> it(&subClasses);
-                     TR_PersistentClassInfo *info = NULL;
-                     for (info = it.getFirst(); info; info = it.getNext())
-                        {
-                        if (!info->shouldNotBeNewlyExtended())
-                           _resetClassesThatShouldNotBeNewlyExtended.add(info);
-                        info->setShouldNotBeNewlyExtended(comp()->getCompThreadID());
-                        }
-                     }
-                  }
-
-               }
-
-            if (prexClass && !fe()->classHasBeenExtended(opaqueClass))
-               {
-               TR_OpaqueClassBlock *jlKlass = fe()->getClassClassPointer(opaqueClass);
-               if (jlKlass)
-                  {
-                  if (opaqueClass != jlKlass)
-                     {
-                     if (!fe()->classHasBeenExtended(opaqueClass))
-                        constraint = TR::VPFixedClass::create(this, opaqueClass);
-                     else
-                        constraint = TR::VPResolvedClass::create(this, opaqueClass);
-                     }
-                  else
-                     constraint = TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject);
-                  constraint = constraint->intersect(TR::VPPreexistentObject::create(this, prexClass), this);
-                  TR_ASSERT(constraint, "Cannot intersect constraints");
-                  }
-               }
-            else if (!TR::Compiler->cls.isInterfaceClass(comp(), opaqueClass)
-                     || comp()->getOption(TR_TrustAllInterfaceTypeInfo))
-               {
-               // Interface-typed parameters are not handled here because they
-               // will accept arbitrary objects.
-               TR_OpaqueClassBlock *jlKlass = fe()->getClassClassPointer(opaqueClass);
-               if (jlKlass)
-                  {
-                  if (opaqueClass != jlKlass)
-                     constraint = TR::VPResolvedClass::create(this, opaqueClass);
-                  else
-                     constraint = TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject);
-                  }
-               }
-            }
-         else if (0) //added here since an unresolved parm could be an interface in which case nothing is known
-            {
-            char *sig;
-            uint32_t len;
-            sig = parmIterator->getUnresolvedJavaClassSignature(len);
-            constraint = TR::VPUnresolvedClass::create(this, sig, len, method);
-            if (usePreexistence() && parmIterator->isClass())
-               {
-               classObject = constraint->getClass();
-               if (classObject && !fe()->classHasBeenExtended(classObject))
-                  constraint = TR::VPFixedClass::create(this, classObject);
-               constraint = constraint->intersect(TR::VPPreexistentObject::create(this, classObject), this);
-               TR_ASSERT(constraint, "Cannot intersect constraints");
-               }
-            }
-#endif
-         _parmValues[parmIndex++] = constraint;
-         }
-      else
-         {
-         _parmValues[parmIndex++] = NULL;
-         }
-      parmIterator->advanceCursor();
-      }
-
-   TR_ASSERT(parmIterator->atEnd() && parmIndex == numParms, "Bad signature for owning method");
+   return;
    }
+
 
 
 
@@ -4282,6 +4075,7 @@ void TR::GlobalValuePropagation::processStructure(TR_StructureSubGraphNode *node
    TR_RegionStructure *region = node->getStructure()->asRegion();
    if (region)
       {
+      _defMergedNodes->empty();
       if (region->isAcyclic())
          {
          processAcyclicRegion(node, lastTimeThrough, insideLoop);
@@ -4341,6 +4135,14 @@ void TR::GlobalValuePropagation::processNaturalLoop(TR_StructureSubGraphNode *no
 
       _visitCount--;
       processRegionSubgraph(node, false, true, true);
+
+      // having processed the loop the first time we want to make sure to wipe out any
+      // seenOnAllPaths information on the back edges - we use this notion only for the current iteration
+      for (auto itr = region->getEntry()->getPredecessors().begin(), end = region->getEntry()->getPredecessors().end(); itr != end; ++itr)
+         {
+         (*_definedOnAllPaths)[*itr] = NULL;
+         }
+
       if (_reachedMaxRelationDepth)
         {
         _loopInfo = parentLoopInfo;
@@ -4395,10 +4197,79 @@ void TR::GlobalValuePropagation::processNaturalLoop(TR_StructureSubGraphNode *no
       collectInductionVariableEntryConstraints();
 
    processRegionSubgraph(node, lastTimeThrough, true, true);
+
+   // having processed the loop again we again clear out any seenOnAllPaths information on the back edges
+   for (auto itr = region->getEntry()->getPredecessors().begin(), end = region->getEntry()->getPredecessors().end(); itr != end; ++itr)
+      {
+      (*_definedOnAllPaths)[*itr] = NULL;
+      }
+
    if (_reachedMaxRelationDepth)
       {
       _loopInfo = parentLoopInfo;
       return;
+      }
+
+   // we now compute the definedOnAllPaths information for the exit edges
+   // the exit edge is a union of the exit edge seenOnAllPaths and the intersection of the entry
+   // seen on all paths
+   TR_BitVector *inboundDefinedOnAllPaths = mergeDefinedOnAllPaths(node);
+
+   // we treat exceptions conservatively for now - we know nothing
+   // this could be improved in the future
+   if (!node->getExceptionPredecessors().empty())
+      inboundDefinedOnAllPaths->empty();
+
+   if (trace())
+      {
+      traceMsg(comp(), "   defined on all paths for entry of loop %d", region->getNumber());
+      inboundDefinedOnAllPaths->print(comp());
+      traceMsg(comp(), "\n");
+      }
+
+   ListIterator<TR::CFGEdge> it(&region->getExitEdges());
+   for (TR::CFGEdge *edge = it.getFirst(); edge; edge = it.getNext())
+      {
+      if (trace())
+         traceMsg(comp(), "   defined on all paths for exit %d->%d:", edge->getFrom()->getNumber(), edge->getTo()->getNumber());
+
+      if ((*_definedOnAllPaths)[edge])
+         {
+         if (trace())
+            {
+            ((*_definedOnAllPaths)[edge])->print(comp());
+            traceMsg(comp(), "\n");
+            }
+         (*(*_definedOnAllPaths)[edge]) |= *inboundDefinedOnAllPaths;
+         }
+      else
+         {
+         if (trace())
+            traceMsg(comp(), " NULL\n");
+         (*_definedOnAllPaths)[edge] = inboundDefinedOnAllPaths;
+         }
+
+      // the exit edges in the natural loop region do not connect to the parent's nodes
+      // so we now find the matching exit edge in the parent region and copy the defined on all paths
+      // information onto those edges
+      for (auto itr = node->getSuccessors().begin(), end = node->getSuccessors().end(); itr != end; ++itr)
+         {
+         if ((*itr)->getTo()->getNumber() == edge->getTo()->getNumber())
+            {
+            TR_BitVector *parentEdgeDefinedOnAllPaths = (*_definedOnAllPaths)[*itr];
+            if (parentEdgeDefinedOnAllPaths != NULL)
+               {
+               *parentEdgeDefinedOnAllPaths &= (*(*_definedOnAllPaths)[edge]);
+               }
+            else
+               {
+               parentEdgeDefinedOnAllPaths = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
+               (*_definedOnAllPaths)[*itr] = parentEdgeDefinedOnAllPaths;
+               *parentEdgeDefinedOnAllPaths = (*(*_definedOnAllPaths)[edge]);
+               }
+            break;
+            }
+         }
       }
 
    // Back edge constraints have now been accumulated into a separate list of
@@ -4692,6 +4563,38 @@ void TR::GlobalValuePropagation::processRegionNode(TR_StructureSubGraphNode *nod
    processStructure(node, lastTimeThrough, insideLoop);
    }
 
+TR_BitVector *TR::GlobalValuePropagation::mergeDefinedOnAllPaths(TR_StructureSubGraphNode *node)
+   {
+   TR_BitVector *mergeResult = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
+
+   if (!node->getExceptionPredecessors().empty())
+      return mergeResult;
+
+   bool first = true;
+   for (auto itr = node->getPredecessors().begin(), end = node->getPredecessors().end(); itr != end; ++itr)
+      {
+      TR_BitVector *predDefinedOnAllPaths = (*_definedOnAllPaths)[*itr];
+      if (trace())
+         {
+         traceMsg(comp(), "   inbound seenOnAllpaths for edge %d->%d", (*itr)->getFrom()->getNumber(), (*itr)->getTo()->getNumber());
+         if (predDefinedOnAllPaths)
+            predDefinedOnAllPaths->print(comp());
+         else
+            traceMsg(comp(), "NULL");
+         traceMsg(comp(), "\n");
+         }
+
+      if (predDefinedOnAllPaths == NULL)
+         mergeResult->empty();
+      else if (first)
+         (*mergeResult) = *predDefinedOnAllPaths;
+      else
+         (*mergeResult) &= *predDefinedOnAllPaths;
+
+      first = false;
+      }
+   return mergeResult;
+   }
 
 void TR::GlobalValuePropagation::processBlock(TR_StructureSubGraphNode *node, bool lastTimeThrough, bool insideLoop)
    {
@@ -4713,6 +4616,21 @@ void TR::GlobalValuePropagation::processBlock(TR_StructureSubGraphNode *node, bo
    if (trace())
       {
       traceMsg(comp(), "GVP: Processing block_%i\n", _curBlock->getNumber());
+      }
+
+   // inside of a loop we track the defined on all paths bitvector so we know when a merge of def constraints
+   // may need to consider the backedge - here we compute the block's inbound seen on all paths set by intersecting
+   // the sets on the inbound edges
+   if (insideLoop)
+      {
+      _curDefinedOnAllPaths = mergeDefinedOnAllPaths(node);
+      }
+
+   if (insideLoop && trace())
+      {
+      traceMsg(comp(), "   defined on all paths for entry of block %d", block->getNumber());
+      _curDefinedOnAllPaths->print(comp());
+      traceMsg(comp(), "\n");
       }
 
 #if DEBUG
@@ -4779,6 +4697,22 @@ void TR::GlobalValuePropagation::processBlock(TR_StructureSubGraphNode *node, bo
    processTrees(startTree, endTree);
    if (_reachedMaxRelationDepth)
       return;
+
+   // inside a loop we will now propagate the seen on all paths definitions computed through the block onto
+   // the exit edges
+   if (insideLoop)
+      {
+      for (auto itr = node->getSuccessors().begin(), end = node->getSuccessors().end(); itr != end; ++itr)
+         {
+         if (trace())
+            {
+            traceMsg(comp(), "   outbound seenOnAllpaths for edge %d->%d", (*itr)->getFrom()->getNumber(), (*itr)->getTo()->getNumber());
+            _curDefinedOnAllPaths->print(comp());
+            traceMsg(comp(), "\n");
+            }
+         (*_definedOnAllPaths)[*itr] = _curDefinedOnAllPaths;
+         }
+      }
 
    if (!isUnreachablePath(_curConstraints))
       {
@@ -5409,7 +5343,7 @@ int64_t TR::ArraycopyTransformation::arraycopyHighFrequencySpecificLength(TR::No
    const float MIN_ARRAYCOPY_FREQ_FOR_SPECIALIZATION = 0.7f;
    if (comp()->getRecompilationInfo())
       {
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          TR_LongValueInfo *valueInfo = static_cast<TR_LongValueInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(arrayCopyNode, comp(), LongValueInfo));
          if (valueInfo && valueInfo->getTopProbability() > MIN_ARRAYCOPY_FREQ_FOR_SPECIALIZATION)
@@ -5433,7 +5367,7 @@ int64_t TR::ArraycopyTransformation::arraycopyHighFrequencySpecificLength(TR::No
 
 TR::TreeTop* TR::ArraycopyTransformation::createPointerCompareNode(TR::Node* node, TR::SymbolReference* srcRef, TR::SymbolReference* dstRef)
    {
-   bool is64Bit = TR::Compiler->target.is64Bit();
+   bool is64Bit = comp()->target().is64Bit();
    TR::Node* cmp;
    TR::Node* src; // = TR::Node::createLoad(node, srcRef);
    if (srcRef)
@@ -5465,7 +5399,7 @@ TR::TreeTop* TR::ArraycopyTransformation::createPointerCompareNode(TR::Node* nod
 
 TR::TreeTop* TR::ArraycopyTransformation::createRangeCompareNode(TR::Node* node, TR::SymbolReference* srcRef, TR::SymbolReference* dstRef, TR::SymbolReference* lenRef)
    {
-   bool is64Bit = TR::Compiler->target.is64Bit();
+   bool is64Bit = comp()->target().is64Bit();
    TR::Node* cmp;
    TR::Node* src; // = TR::Node::createLoad(node, srcRef);
    if (srcRef)
@@ -5612,7 +5546,7 @@ TR::TreeTop* TR::ArraycopyTransformation::createMultipleArrayNodes(TR::TreeTop* 
 
    arraycopyBlock = outerArraycopyTree->getEnclosingBlock();
    if (specificLength >= 0)
-      specializeForLength(outerArraycopyTree, node, (uintptrj_t) specificLength, srcRef, dstRef, lenRef, srcObjRef, dstObjRef);
+      specializeForLength(outerArraycopyTree, node, (uintptr_t) specificLength, srcRef, dstRef, lenRef, srcObjRef, dstObjRef);
 
    if (trace())
       {
@@ -5642,7 +5576,7 @@ TR::TreeTop* TR::ArraycopyTransformation::tryToSpecializeForLength(TR::TreeTop *
       TR::SymbolReference *dstRef = NULL;
       TR::SymbolReference *lenRef = NULL;
       TR::TreeTop *firstInsertedTree = createStoresForArraycopyChildren(comp(), tt, srcObjRef, dstObjRef, srcRef, dstRef, lenRef);
-      specializeForLength(tt, arraycopyNode, (uintptrj_t) specificLength, srcRef, dstRef, lenRef, srcObjRef, dstObjRef);
+      specializeForLength(tt, arraycopyNode, (uintptr_t) specificLength, srcRef, dstRef, lenRef, srcObjRef, dstObjRef);
       return firstInsertedTree;
       }
    else
@@ -5651,15 +5585,15 @@ TR::TreeTop* TR::ArraycopyTransformation::tryToSpecializeForLength(TR::TreeTop *
       }
    }
 
-static TR::Node *addressSizedConst(TR::Compilation *comp, TR::Node *n, intptrj_t val)
+static TR::Node *addressSizedConst(TR::Compilation *comp, TR::Node *n, intptr_t val)
    {
-   TR::Node *node = TR::Compiler->target.is64Bit()? TR::Node::lconst(n, val) : TR::Node::iconst(n, val);
+   TR::Node *node = comp->target().is64Bit()? TR::Node::lconst(n, val) : TR::Node::iconst(n, val);
    if (node->getOpCodeValue() == TR::lconst)
       node->setLongInt(val);
    return node;
    }
 
-TR::TreeTop* TR::ArraycopyTransformation::specializeForLength(TR::TreeTop *tt, TR::Node *arraycopyNode, uintptrj_t lengthInBytes,
+TR::TreeTop* TR::ArraycopyTransformation::specializeForLength(TR::TreeTop *tt, TR::Node *arraycopyNode, uintptr_t lengthInBytes,
       TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, TR::SymbolReference *lenRef, TR::SymbolReference *srcObjRef, TR::SymbolReference *dstObjRef)
    {
    TR::TreeTop* arraycopyOriginal = TR::TreeTop::create(comp());
@@ -6119,6 +6053,7 @@ bool OMR::ValuePropagation::prepareForBlockVersion(TR_LinkHead<ArrayLengthToVers
          }
 
     TR_OpaqueClassBlock *instanceOfClass = NULL;
+    TR_OpaqueClassBlock *indexSourceObjectClass = NULL;
 
       //check if aloads are invariants
     if (!arrayLen->getOpCode().isLoadDirect())
@@ -6251,9 +6186,21 @@ bool OMR::ValuePropagation::prepareForBlockVersion(TR_LinkHead<ArrayLengthToVers
       if (!shouldAnalyze)
          continue;
 
+      if(baseNode && baseNode->getOpCode().getOpCodeValue() == TR::iloadi)
+         {
+         // Get the class of the field
+         int32_t len;
+         TR::SymbolReference *symRefField = baseNode->getSymbolReference();
+         char *sig = symRefField->getOwningMethod(comp())->classNameOfFieldOrStatic(symRefField->getCPIndex(), len);
+         TR_OpaqueClassBlock *classOfField = (sig)?fe()->getClassFromSignature(sig, len,symRefField->getOwningMethod(comp())):NULL;
+         if (!classOfField)
+            continue;
+         indexSourceObjectClass = classOfField;
+         }
+
       if (!array )
          {
-         createNewBucketForArrayIndex(array, arrayLengths, c, baseNode, bndchkNode, instanceOfClass);
+         createNewBucketForArrayIndex(array, arrayLengths, c, baseNode, bndchkNode, instanceOfClass, indexSourceObjectClass);
          continue;
          }
 
@@ -6365,7 +6312,7 @@ bool OMR::ValuePropagation::prepareForBlockVersion(TR_LinkHead<ArrayLengthToVers
          }//if arrayIndexInfoFound
       else
          {
-         createNewBucketForArrayIndex(array, arrayLengths, c, baseNode, bndchkNode, instanceOfClass);
+         createNewBucketForArrayIndex(array, arrayLengths, c, baseNode, bndchkNode, instanceOfClass, indexSourceObjectClass);
          continue; //next bndchk
          }
 
@@ -6411,8 +6358,14 @@ bool OMR::ValuePropagation::prepareForBlockVersion(TR_LinkHead<ArrayLengthToVers
 
 void OMR::ValuePropagation::buildBoundCheckComparisonNodes(BlockVersionInfo *blockInfo, List<TR::Node> *comparisonNodes)
    {
-   //walk arrayLength and for each one walk all buckets - create tests for min and max.
+   // Walk arrayLength and for each one walk all buckets - create tests for min, max, null-tests and instanceof.
+   // Also performs some conservative calculations to decide if the required tests might be to costly.
+   int numBoundChecksRemoved=0, numInstanceOfChecksAdded=0, numOfNullTestsAdded=0;
+   int32_t len;
+   const char *sig;
+   TR_OpaqueClassBlock *clazz;
    TR::Node *nextComparisonNode;
+
    for (ArrayLengthToVersion *arrayLength = blockInfo->_arrayLengths->getFirst(); arrayLength; arrayLength = arrayLength->getNext())
       {
       bool arrayLengthVersioned=false;
@@ -6422,6 +6375,7 @@ void OMR::ValuePropagation::buildBoundCheckComparisonNodes(BlockVersionInfo *blo
          if (!arrayIndex->_versionBucket)
             continue;
 
+         numBoundChecksRemoved += arrayIndex->_bndChecks->getSize();
 
          if (performTransformation(comp(), "%s Creating tests outside block_%d for versioning arraylenth %p \n", OPT_DETAILS, blockInfo->_block->getNumber(), arrayLength->_arrayLen))
             {
@@ -6433,7 +6387,6 @@ void OMR::ValuePropagation::buildBoundCheckComparisonNodes(BlockVersionInfo *blo
 
             if (arrayIndex->_baseNode)
                {
-
                maxIndex = TR::Node::create(TR::iadd,2, arrayIndex->_baseNode->duplicateTree(), TR::Node::create(arrayLength->_arrayLen,TR::iconst, 0, arrayIndex->_max));
                minIndex = TR::Node::create(TR::iadd,2, arrayIndex->_baseNode->duplicateTree(), TR::Node::create(arrayLength->_arrayLen,TR::iconst, 0, arrayIndex->_min));
                }
@@ -6459,6 +6412,38 @@ void OMR::ValuePropagation::buildBoundCheckComparisonNodes(BlockVersionInfo *blo
                traceMsg(comp(), "Second test - Creating %p (%s)\n", nextComparisonNode, nextComparisonNode->getOpCode().getName());
 
             temp.add(nextComparisonNode);
+
+            if (arrayIndex->_baseNode && arrayIndex->_instanceOfClass && 
+                arrayIndex->_baseNode->getOpCode().getOpCodeValue() == TR::iloadi)
+               {
+               // InstanceOf check for the object we load the array index from
+               TR::Node *indexObjectRefChild = arrayIndex->_baseNode->getFirstChild();
+               if (indexObjectRefChild)
+                  {
+                  sig = indexObjectRefChild->getTypeSignature(len);
+                  clazz = sig ? fe()->getClassFromSignature(sig,len,indexObjectRefChild->getSymbolReference()->getOwningMethod(comp())) : NULL;
+                  TR_YesNoMaybe result = clazz ? comp()->fe()->isInstanceOf(arrayIndex->_instanceOfClass,clazz,false) : TR_no;
+                  if (result != TR_yes)
+                     {
+                     if (comp()->compileRelocatableCode())
+                        {
+                        dumpOptDetails(comp(), "%s Abandoned versioning of block_%d because an instanceOf check is needed and this is a relocatable compile.\n", OPT_DETAILS, blockInfo->_block->getNumber());
+                        comparisonNodes->deleteAll();
+                        return;
+                        }
+                     dumpOptDetails(comp(), "%s Creating test for instanceof of %p outside block_%d for versioning array index %p \n", OPT_DETAILS, indexObjectRefChild, blockInfo->_block->getNumber(), arrayIndex->_baseNode);
+                     TR::Node *duplicateClassPtr = TR::Node::createWithSymRef(indexObjectRefChild, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateClassSymbol(arrayIndex->_baseNode->getSymbolReference()->getOwningMethodSymbol(comp()), -1, arrayIndex->_instanceOfClass, false));
+                     TR::Node *instanceofNode = TR::Node::createWithSymRef(TR::instanceof, 2, 2, indexObjectRefChild->duplicateTree(),  duplicateClassPtr, comp()->getSymRefTab()->findOrCreateInstanceOfSymbolRef(comp()->getMethodSymbol()));
+                     TR::Node *ificmpeqNode =  TR::Node::createif(TR::ificmpeq, instanceofNode, TR::Node::create(arrayIndex->_baseNode, TR::iconst, 0, 0));
+                     temp.add(ificmpeqNode);
+                     numInstanceOfChecksAdded++;
+                     }
+                  else
+                     {
+                     dumpOptDetails(comp(), "%s ctInstanceOf test passed, skipping runtime instanceof of %p outside block_%d for versioning array index %p\n", OPT_DETAILS, indexObjectRefChild, blockInfo->_block->getNumber(), arrayIndex->_baseNode);
+                     }
+                  }
+               }
             }
          }
       if (arrayLengthVersioned)
@@ -6476,17 +6461,49 @@ void OMR::ValuePropagation::buildBoundCheckComparisonNodes(BlockVersionInfo *blo
                dumpOptDetails(comp(), "%s Creating test for nullCheck of %p outside block_%d for versioning arraylenth %p \n", OPT_DETAILS, objectRefChild, blockInfo->_block->getNumber(), arrayLength->_arrayLen);
                TR::Node *nullTestNode = TR::Node::createif(TR::ifacmpeq, objectRefChild->duplicateTree(), TR::Node::aconst(objectRefChild, 0));
                comparisonNodes->add(nullTestNode);
+               numOfNullTestsAdded++;
                }
 
-            if (arrayLength->_instanceOfClass && objectRefChild && !comp()->compileRelocatableCode())
+            if (arrayLength->_instanceOfClass && objectRefChild)
                {
-               dumpOptDetails(comp(), "%s Creating test for instanceof of %p outside block_%d for versioning arraylenth %p \n", OPT_DETAILS, objectRefChild, blockInfo->_block->getNumber(), arrayLength->_arrayLen);
-               TR::Node *duplicateClassPtr = TR::Node::createWithSymRef(objectRefChild, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateClassSymbol(objectRef->getSymbolReference()->getOwningMethodSymbol(comp()), -1, arrayLength->_instanceOfClass, false));
-               TR::Node *instanceofNode = TR::Node::createWithSymRef(TR::instanceof, 2, 2, objectRefChild->duplicateTree(),  duplicateClassPtr, comp()->getSymRefTab()->findOrCreateInstanceOfSymbolRef(comp()->getMethodSymbol()));
-               TR::Node *ificmpeqNode =  TR::Node::createif(TR::ificmpeq, instanceofNode, TR::Node::create(objectRef, TR::iconst, 0, 0));
-               comparisonNodes->add(ificmpeqNode);
-               requestOpt(OMR::localCSE,  true);
-               requestOpt(OMR::localValuePropagation,  true);
+               sig = objectRefChild->getTypeSignature(len);
+               clazz = sig ? fe()->getClassFromSignature(sig,len,objectRefChild->getSymbolReference()->getOwningMethod(comp())) : NULL;
+               TR_YesNoMaybe result = clazz ? comp()->fe()->isInstanceOf(arrayLength->_instanceOfClass,clazz,false) : TR_no;
+               ArrayIndexInfo *arrayIndex = NULL;
+
+               if (result != TR_yes)
+                  {
+                  // Have we already generated an instanceOf for this object/class when handling array indexes?
+                  for (arrayIndex = arrayLength->_arrayIndicesInfo->getFirst(); result != TR_yes && arrayIndex; arrayIndex = arrayIndex->getNext())
+                     {
+                     if (arrayIndex->_versionBucket && arrayIndex->_baseNode && arrayIndex->_baseNode->getOpCode().getOpCodeValue() == TR::iloadi &&
+                         objectRefChild == arrayIndex->_baseNode->getFirstChild() && arrayLength->_instanceOfClass == arrayIndex->_instanceOfClass)
+                        {
+                        result = TR_yes; // We already generated an instanceOf check for this object&class combination
+                        dumpOptDetails(comp(), "%s Skipping redundant runtime instanceof of %p outside block_%d for versioning arraylenth %p\n", OPT_DETAILS, objectRefChild, blockInfo->_block->getNumber(), arrayLength->_arrayLen);
+                        }
+                     }
+                  }
+
+               if (result != TR_yes)
+                  {
+                  if (comp()->compileRelocatableCode())
+                     {
+                     dumpOptDetails(comp(), "%s Abandoned versioning of block_%d because an instanceOf check is needed and this is a relocatable compile.\n", OPT_DETAILS, blockInfo->_block->getNumber());
+                     comparisonNodes->deleteAll();
+                     return;
+                     }
+                  dumpOptDetails(comp(), "%s Creating test for instanceof of %p outside block_%d for versioning arraylenth %p \n", OPT_DETAILS, objectRefChild, blockInfo->_block->getNumber(), arrayLength->_arrayLen);
+                  TR::Node *duplicateClassPtr = TR::Node::createWithSymRef(objectRefChild, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateClassSymbol(objectRef->getSymbolReference()->getOwningMethodSymbol(comp()), -1, arrayLength->_instanceOfClass, false));
+                  TR::Node *instanceofNode = TR::Node::createWithSymRef(TR::instanceof, 2, 2, objectRefChild->duplicateTree(),  duplicateClassPtr, comp()->getSymRefTab()->findOrCreateInstanceOfSymbolRef(comp()->getMethodSymbol()));
+                  TR::Node *ificmpeqNode =  TR::Node::createif(TR::ificmpeq, instanceofNode, TR::Node::create(objectRef, TR::iconst, 0, 0));
+                  comparisonNodes->add(ificmpeqNode);
+                  numInstanceOfChecksAdded++;
+                  }
+               else if (arrayIndex)
+                  {
+                  dumpOptDetails(comp(), "%s ctInstanceOf test passed, skipping runtime instanceof of %p outside block_%d for versioning arraylenth %p\n", OPT_DETAILS, objectRefChild, blockInfo->_block->getNumber(), arrayLength->_arrayLen);
+                  }
                }
 
             if (!objectRef->isNonNull())
@@ -6494,9 +6511,28 @@ void OMR::ValuePropagation::buildBoundCheckComparisonNodes(BlockVersionInfo *blo
                dumpOptDetails(comp(), "%s Creating test for nullCheck of %p outside block_%d for versioning arraylenth %p \n", OPT_DETAILS, objectRef, blockInfo->_block->getNumber(), arrayLength->_arrayLen);
                TR::Node *nullTestNode = TR::Node::createif(TR::ifacmpeq, objectRef->duplicateTree(), TR::Node::aconst(objectRef, 0));
                comparisonNodes->add(nullTestNode);
+               numOfNullTestsAdded++;
                }
             }
          comparisonNodes->add(temp);
+         }
+      }
+   // Is this transformation worthwhile? Since we are adding a min & max test it's only a win
+   // if we are removing 3 bound-checks. We estimate a instanceOf is as costly as 3 bound-checks
+   // and null-tests is about as costly as one bound-check
+   if (numBoundChecksRemoved <= 3+(numInstanceOfChecksAdded*3)+numOfNullTestsAdded)
+      {
+      dumpOptDetails(comp(), "%s Abandoned versioning of block_%d, it would require %d instanceOfChecks and %d null-tests while only saving %d boundChecks\n", OPT_DETAILS, blockInfo->_block->getNumber(), numInstanceOfChecksAdded, numOfNullTestsAdded, numBoundChecksRemoved);
+      comparisonNodes->deleteAll();
+      }
+   else
+      {
+      dumpOptDetails(comp(), "%s Versioning of block_%d requires %d instanceOfChecks and %d null-tests while saving %d boundChecks\n", OPT_DETAILS, blockInfo->_block->getNumber(), numInstanceOfChecksAdded, numOfNullTestsAdded, numBoundChecksRemoved);
+      if (numInstanceOfChecksAdded>0)
+         {
+         // We had added an instanceOf, so lets run opts to see if they can be removed
+         requestOpt(OMR::localCSE,  true);
+         requestOpt(OMR::localValuePropagation,  true);
          }
       }
    }
@@ -6642,7 +6678,7 @@ TR::Node *OMR::ValuePropagation::findVarOfSimpleForm(TR::Node *node) //ArrayInde
    }
 
 
-void OMR::ValuePropagation::createNewBucketForArrayIndex(ArrayLengthToVersion *array, TR_LinkHead<ArrayLengthToVersion> *arrayLengths, int32_t c, TR::Node *baseNode, TR::Node *bndchkNode, TR_OpaqueClassBlock *instanceOfClass)
+void OMR::ValuePropagation::createNewBucketForArrayIndex(ArrayLengthToVersion *array, TR_LinkHead<ArrayLengthToVersion> *arrayLengths, int32_t c, TR::Node *baseNode, TR::Node *bndchkNode, TR_OpaqueClassBlock *instanceOfClass, TR_OpaqueClassBlock *indexSourceObjectClass)
    {
    if (!array )
       {         //create a new arrayLengthToVersion
@@ -6658,6 +6694,7 @@ void OMR::ValuePropagation::createNewBucketForArrayIndex(ArrayLengthToVersion *a
    arrayIndex->_max = c;
    arrayIndex->_delta = 0;
    arrayIndex->_baseNode = baseNode;
+   arrayIndex->_instanceOfClass = indexSourceObjectClass;
    arrayIndex->_bndChecks = new (trStackMemory()) TR_ScratchList<TR::Node>(trMemory());
    arrayIndex->_bndChecks->add(bndchkNode);
    arrayIndex->_versionBucket= false;
@@ -7009,151 +7046,6 @@ static void changeBranchToGoto(OMR::ValuePropagation *vp, TR::Node *guardNode, T
    }
 
 
-void OMR::ValuePropagation::transformStringConcats(VPStringCached *stringCached)
-  {
-   if (!performTransformation(comp(), "%sSimplified String Concatenation:(StringCache) [%p] \n", OPT_DETAILS, stringCached->_treetop1, stringCached->_treetop2)&& getStringCacheRef())
-       return;
-
-   TR::TreeTop *appendTree[2];
-   appendTree[0] = stringCached->_treetop1;
-   appendTree[1] = stringCached->_treetop2;
-   TR::Node    *appendedString[2];
-   appendedString[0]= stringCached->_appendedString1;
-   appendedString[1] = stringCached->_appendedString2;
-   TR::TreeTop *newTree = stringCached->_newTree;
-   TR::TreeTop *toStringTree = stringCached->_toStringTree;
-
-   //Eliminate the appends and leave only loads to the objects
-   for (int32_t i = 1; i >= 0; i--)
-     {
-     if (appendTree[i])
-        {
-        appendTree[i]->getNode()->recursivelyDecReferenceCount();
-        TR::Node::recreate(appendTree[i]->getNode(), TR::treetop);
-        appendTree[i]->getNode()->setNumChildren(1);
-        appendTree[i]->getNode()->setAndIncChild(0, appendedString[i]);
-        }
-     }
-
-  TR::Node *stringNode = NULL;
-  TR::Node *indexNode = TR::Node::iconst(appendedString[0], 0); // Length of string 1
-
-
-  // vCall to cachedConstantStringArray
-  TR::Node::recreate(toStringTree->getNode(), TR::treetop);
-  stringNode = toStringTree->getNode()->getFirstChild();
-  stringNode->getFirstChild()->recursivelyDecReferenceCount();
-  TR::Node::recreate(stringNode, TR::acall);
-  stringNode->setNumChildren(3);
-  TR::SymbolReference *symRef = getStringCacheRef() ? comp()->getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, getStringCacheRef()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Static) : 0;
-  stringNode->setSymbolReference(symRef);
-  stringNode->setAndIncChild(0, appendedString[0]);
-  stringNode->setAndIncChild(1, appendedString[1]);
-  stringNode->setAndIncChild(2, indexNode);
-  TR::TransformUtil::removeTree(comp(), newTree);
-  }
-
-TR::SymbolReference * OMR::ValuePropagation::getStringCacheRef()
-  {
-
-#ifdef J9_PROJECT_SPECIFIC
-
-  /*
-  "We create a class symbol with a CPI of -1!\n"
-  "Enabling recognized methods might trigger this code to be executed in AOT!\n"
-  "We need to figure out how to validate and relocate this symbol safely before removing this assertion!\n"
-  */
-  if (comp()->compileRelocatableCode())
-     {
-     return NULL;
-     }
-
-  TR::ResolvedMethodSymbol *methodSymbol;
-  TR_ResolvedMethod *feMethod = comp()->getCurrentMethod();
-  TR_OpaqueClassBlock *stringClass = comp()->getStringClassPointer();
-  TR::SymbolReference      *stringSymRef;
-  methodSymbol = comp()->getOwningMethodSymbol(feMethod);
-  stringSymRef = comp()->getSymRefTab()->findOrCreateClassSymbol(methodSymbol, -1, stringClass);
-  TR_ScratchList<TR_ResolvedMethod> stringMethods(comp()->trMemory());
-  comp()->fej9()->getResolvedMethods(comp()->trMemory(), stringClass, &stringMethods);
-  ListIterator<TR_ResolvedMethod> it(&stringMethods);
-  TR::SymbolReference * callsymreference=NULL;
-
-  for (TR_ResolvedMethod *method = it.getCurrent(); method; method = it.getNext())
-      {
-	   char *sig  = method->signatureChars();
-	   if (!callsymreference  && !strncmp(sig, "(Ljava/lang/String;Ljava/lang/String;I)", 39))
-          {
-           callsymreference = comp()->getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, method, TR::MethodSymbol::Static);
-	       break;
-          }
-      }
-
-  if(callsymreference)
-	  return callsymreference;
-  else
-	  return 0;
-
-#else
-   return 0;
-#endif
-}
-
-void OMR::ValuePropagation::transformStringCtors(VPTreeTopPair *treeTopPair)
-{
-
-  if (!performTransformation(comp(), "%sSimplified String Concatenation:(StringCache) [%p] \n", OPT_DETAILS, treeTopPair->_treetop1,treeTopPair->_treetop2)&& getStringCacheRef())
-    return;
-
-  TR::Node *appendedString[2];
-  appendedString[0] = treeTopPair->_treetop1->getNode()->getFirstChild()->getSecondChild();
-  appendedString[1] = treeTopPair->_treetop1->getNode()->getFirstChild()->getLastChild();
-
-  //Check ConstantString Constraint
-  bool isGlobal ;
-  TR::VPConstraint * base1 =  getConstraint(appendedString[0], isGlobal);
-  TR::VPConstraint * base2 = getConstraint(appendedString[1], isGlobal);
-
-  if (!(base1 && base1->isConstString() && base2 && base2->isConstString()))
-     {
-	  traceMsg(comp(),"%p, %p not Constant Strings, returning from StringCtors",appendedString[0],appendedString[1]);
-	  return ;
-     }
-  TR::Node *indexNode = TR::Node::iconst(treeTopPair->_treetop1->getNode()->getFirstChild()->getSecondChild(), 0);
-
-
-  /* Before									After
-
-     treetop1								treetop1
-     --------                               ---------
-	 treetop								will dissappear
-	 vcall Method[String.<init>]
-	 new
-     aload
-	 aload
-
-    treetop2								treetop2
-	--------       							---------
-	new										treetop
-	loadaddr								acall  Method[java/lang/String.cachedConstantString]
-    										aload
-    										aload
-    										iconst
-  */
-
-  treeTopPair->_treetop2->getNode()->getFirstChild()->getFirstChild()->decReferenceCount();
-  TR::Node::recreate(treeTopPair->_treetop2->getNode()->getFirstChild(), TR::acall);
-  treeTopPair->_treetop2->getNode()->getFirstChild()->setNumChildren(3);
-  TR::SymbolReference *symRef = getStringCacheRef() ? comp()->getSymRefTab()->findOrCreateMethodSymbol(treeTopPair->_treetop2->getNode()->getFirstChild()->getSymbolReference()->getOwningMethodIndex(), -1, getStringCacheRef()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Static) : 0;
-  treeTopPair->_treetop2->getNode()->getFirstChild()->setSymbolReference(symRef);
-  treeTopPair->_treetop2->getNode()->getFirstChild()->setAndIncChild(0, appendedString[0]);
-  treeTopPair->_treetop2->getNode()->getFirstChild()->setAndIncChild(1, appendedString[1]);
-  treeTopPair->_treetop2->getNode()->getFirstChild()->setAndIncChild(2, indexNode);
-
-  //Deleting the vcall to <string.init>
-  treeTopPair->_treetop1->unlink(true);
-}
-
 /** \brief
  *     Extension point for language specific optimizations on recognized methods
  *
@@ -7215,26 +7107,6 @@ bool OMR::ValuePropagation::checkAllUnsafeReferences(TR::Node *node, vcount_t vi
 
 void OMR::ValuePropagation::doDelayedTransformations()
    {
-   // If there were unreachable blocks, remove them
-   ListIterator<VPStringCached> treesIt0(&_cachedStringBufferVcalls);
-   VPStringCached *stringCache;
-   for (stringCache= treesIt0.getFirst();stringCache; stringCache = treesIt0.getNext())
-      {
-      traceMsg(comp(),"Transforming call now in do-delayed");
-      transformStringConcats(stringCache);
-      }
-
-   _cachedStringBufferVcalls.deleteAll();  //cachedStringConcats
-
-   ListIterator<VPTreeTopPair> treesIt2(&_cachedStringPeepHolesVcalls);
-   VPTreeTopPair *treeTopPair;
-   for (treeTopPair= treesIt2.getFirst();treeTopPair; treeTopPair = treesIt2.getNext())
-      {
-      traceMsg(comp(),"Transforming call now in do-delayed");
-      transformStringCtors(treeTopPair);
-      }
-   _cachedStringPeepHolesVcalls.deleteAll(); //cachedStringCtors
-
    ListIterator<TR_TreeTopNodePair> treesIt1(&_scalarizedArrayCopies);
    TR_TreeTopNodePair *scalarizedArrayCopy;
    for (scalarizedArrayCopy = treesIt1.getFirst();

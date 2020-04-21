@@ -90,7 +90,6 @@ MM_AllocationInterfaceGeneric::allocateArray(MM_EnvironmentBase *env, MM_Allocat
 	return allocateObject(env, allocateDescription, memorySpace, shouldCollectOnFailure);
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 /**
  * Allocate the arraylet spine.
  */
@@ -110,7 +109,6 @@ MM_AllocationInterfaceGeneric::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_
 	Assert_MM_unreachable();
 	return NULL;
 }
-#endif /* OMR_GC_ARRAYLETS */
 
 /**
  * Flush the allocation cache.

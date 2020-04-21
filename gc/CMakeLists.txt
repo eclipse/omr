@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -169,6 +169,7 @@ add_library(omrgc STATIC
 	stats/CardCleaningStats.cpp
 	stats/ClassUnloadStats.cpp
 
+	stats/FreeEntrySizeClassStats.cpp
 	stats/HeapResizeStats.cpp
 	stats/LargeObjectAllocateStats.cpp
 	stats/MarkStats.cpp
@@ -200,6 +201,13 @@ add_library(omrgc STATIC
 	verbose/VerboseWriterStreamOutput.cpp
 	verbose/handler_standard/VerboseHandlerOutputStandard.cpp
 	$<TARGET_OBJECTS:omrgc_tracegen>
+)
+target_enable_ddr(omrgc EARLY_SOURCE_EVAL)
+ddr_set_add_targets(omrddr omrgc)
+ddr_add_headers(omrgc
+	base/HeapMap.hpp
+	include/omrmodroncore.h
+	structs/ForwardedHeader.hpp
 )
 
 if(OMR_GC_OBJECT_MAP)
@@ -287,7 +295,7 @@ if(OMR_GC_MODRON_STANDARD)
 				stats/ScavengerCopyScanRatio.cpp
 		)
 		if(OMR_GC_CONCURRENT_SCAVENGER)
-			ltarget_sources(omrgc
+			target_sources(omrgc
 				PRIVATE
 					base/standard/ConcurrentScavengeTask.cpp
 			)
@@ -319,6 +327,19 @@ if(OMR_GC_SEGREGATED_HEAP)
 			base/segregated/SizeClasses.cpp
 			base/segregated/SweepSchemeSegregated.cpp
 			base/segregated/WorkPacketsSegregated.cpp
+	)
+	ddr_add_headers(omrgc base/segregated/RegionPoolSegregated.hpp)
+endif()
+
+if(OMR_GC_VLHGC)
+	target_sources(omrgc
+		PRIVATE
+			base/vlhgc/HeapRegionStateTable.cpp
+	)
+
+	target_include_directories(omrgc
+		PUBLIC
+			base/vlhgc
 	)
 endif()
 
@@ -360,6 +381,7 @@ target_link_libraries(omrgc
 		${OMR_PORT_LIB}
 		${OMR_HOOK_LIB}
 )
+
 
 set_target_properties(omrgc omrgc_hookgen omrgc_tracegen PROPERTIES FOLDER gc)
 

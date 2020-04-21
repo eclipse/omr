@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -993,7 +993,7 @@ ztpf_nonpreemptible_helper(void)
 	/*
 	 *    Only proceed if (1) the signal is currently NOT blocked, and (2)
 	 *    if no other interrupt has queued itself. In the interim, if
-	 *    applicable, sleep for 50 ms. IOW, serialize all synchronous
+	 *    applicable, sleep for 10 ms. IOW, serialize all synchronous
 	 *    signals -- we have to, we only have one JDB.
 	 */
 	sigemptyset(&newmask); /* Ensure our 'constant' mask word is zeros    */
@@ -1003,7 +1003,7 @@ ztpf_nonpreemptible_helper(void)
 		PROC_LOCK(&(s->pPROC->iproc_JVMLock), holdkey);
 		if (s->pPROC->iproc_tdibptr) { /* Are we blocked because we're already    working    */
 			PROC_UNLOCK(&(s->pPROC->iproc_JVMLock), holdkey); /* another signal? If so,unlock    */
-			usleep(50000); /* and sleep for 50 ms.            */
+			usleep(10000); /* and sleep for 10 ms.            */
 		}
 		pthread_sigmask(SIG_BLOCK, NULL, &oldmask); /* Test the signal mask again.    */
 	} while ((newmask & oldmask) || (s->pPROC->iproc_tdibptr));

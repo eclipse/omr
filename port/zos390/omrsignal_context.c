@@ -79,10 +79,10 @@ checkIfResumableTrapsSupported(struct OMRPortLibrary *portLibrary)
 
 
 void
-fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *j9Info)
+fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *signalInfo)
 {
 	/* __mcontext_t_ is defined in port/zos390/edcwccwi.h and appears to overlay the ucontext_t structure */
-	j9Info->platformSignalInfo.context = (__mcontext_t_ *) contextInfo;
+	signalInfo->platformSignalInfo.context = (__mcontext_t_ *) contextInfo;
 	/* module info is filled on demand */
 }
 
@@ -348,11 +348,11 @@ infoForControl(struct OMRPortLibrary *portLibrary, OMRUnixSignalInfo *info, int3
 {
 #if defined(OMR_ENV_DATA64)
 	struct __cib *conditionInfoBlock = NULL;
-	__mch_t *j9mch = NULL;
+	__mch_t *mchRegs = NULL;
 #else
 	_CEECIB *conditionInfoBlock = NULL;
 	_FEEDBACK cibfc;
-	j9_31bit_mch *j9mch = NULL;
+	omr_31bit_mch *mchRegs = NULL;
 #endif
 
 	*name = "";
@@ -397,16 +397,16 @@ infoForControl(struct OMRPortLibrary *portLibrary, OMRUnixSignalInfo *info, int3
 		conditionInfoBlock = __le_cib_get();
 
 		if (NULL != conditionInfoBlock) {
-			j9mch = (__mch_t *)conditionInfoBlock->cib_machine;
-			info->platformSignalInfo.breakingEventAddr = *(uintptr_t *)(&j9mch->__mch_bea);
+			mchRegs = (__mch_t *)conditionInfoBlock->cib_machine;
+			info->platformSignalInfo.breakingEventAddr = *(uintptr_t *)(&mchRegs->__mch_bea);
 #else
 		/* 31-bit: request the condition information block to access the machine context for BEA */
 		CEE3CIB(NULL, &conditionInfoBlock, &cibfc);
 
 		/* verify that CEE3CIB was successful */
 		if (0 == _FBCHECK(cibfc , CEE000)) {
-			j9mch = (j9_31bit_mch *)conditionInfoBlock->cib_machine;
-			info->platformSignalInfo.breakingEventAddr = *(uintptr_t *)(&j9mch->bea);
+			mchRegs = (omr_31bit_mch *)conditionInfoBlock->cib_machine;
+			info->platformSignalInfo.breakingEventAddr = *(uintptr_t *)(&mchRegs->bea);
 #endif
 			*name = "bea";
 			*value = &(info->platformSignalInfo.breakingEventAddr);

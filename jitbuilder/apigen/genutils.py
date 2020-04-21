@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 ###############################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -450,6 +450,58 @@ class APIDescription:
         """
         assert self.is_class(c), "'{}' is not a class in the {} API".format(c, self.project())
         return self.base_of(self.inheritance_table[c].name()) if c in self.inheritance_table else c
+
+class PrettyPrinter:
+    """A class to help with pretty printing indented text"""
+    def __init__(self, out, indentstr="    "):
+        """
+        Construct a pretty printer
+        out - stream formatted text will be written to
+        indentstr - string to be used for each level of indentation
+        """
+        self.indent_level = 0
+        self.is_start_of_line = True
+        self.out = out
+        self.indentstr = indentstr
+
+    def _write(self, line, append_nl):
+        prefix_str = ""
+        if self.is_start_of_line and line != "":
+            self._put_indent()
+            self.is_start_of_line = False
+        self.out.write(line)
+        if append_nl:
+            self.out.write("\n")
+            self.is_start_of_line = True
+
+    def _put_indent(self):
+        self.out.write(self.indentstr * self.indent_level)
+
+    def write(self, str):
+        """
+        Writes a string to output, indenting if required.
+        Embeded newlines are detected and embedded if required
+        """
+        lines = str.split('\n')
+
+        for line in lines[:-1]:
+            self._write(line, True)
+
+        self._write(lines[-1], False)
+
+    def writeln(self, str):
+        """Convinience function. Equivilent to write(str+"\n")"""
+        self.write("{}\n".format(str))
+
+    def indent(self):
+        """Increase the indent level"""
+        self.indent_level += 1
+
+    def outdent(self):
+        """Decrease the indent level"""
+        self.indent_level -= 1
+        if self.indent_level < 0:
+            self.indent_level = 0
 
 # Useful helper functions
 

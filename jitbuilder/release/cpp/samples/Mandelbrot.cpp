@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -294,7 +294,6 @@ MandelbrotMethod::buildIL()
    return true;
    }
 
-
 #define max(a,b) ((a)>(b)?(a):(b))
 
 int
@@ -302,10 +301,10 @@ main(int argc, char *argv[])
    {
    if (argc < 2)
       {
-      fprintf(stderr, "Usage: mandelbrot <N> [output file name]\n");
+      fprintf(stderr, "Usage: mandelbrot <N> [output file name in PPM format]\n");
       exit(-1);
       }
-   const int N=max(0, (argc > 1) ? atoi(argv[1]) : 0);
+   const int N = max(0, (argc > 1) ? atoi(argv[1]) : 0);
 
    printf("Step 1: initialize JIT\n");
    bool initialized = initializeJit();
@@ -320,7 +319,7 @@ main(int argc, char *argv[])
 
    printf("Step 3: compile method builder\n");
    MandelbrotMethod mandelbrotMethod(&types);
-   void *entry=0;
+   void *entry = 0;
    int32_t rc = compileMethodBuilder(&mandelbrotMethod, &entry);
    if (rc != 0)
       {
@@ -340,6 +339,12 @@ main(int argc, char *argv[])
 
    printf("Step 5: output result buffer\n");
    FILE *out = (argc == 3) ? fopen(argv[2], "wb") : stdout;
+
+   // The file we generate here is in the PPM image format which has a simple header describing how to interpret the
+   // buffer. This string needs to be encoded as ASCII in the file generated, however on platforms such as z/OS whose
+   // native encoding is not ASCII this is problematic.
+   //
+   // TODO (#4901): Use the port library to output the header bytes for PPM image file format
    fprintf(out, "P4\n%u %u\n", max_x, height);
    fwrite(buffer, size, 1, out);
 

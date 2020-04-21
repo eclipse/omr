@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,8 +117,8 @@ OMR::TransformUtil::scalarizeArrayCopy(
    // abort if this requirement is not met.
    // TODO: also need to check if the first two children are aload nodes
    bool cannot_use_load_store_long = false;
-   if (TR::Compiler->target.cpu.isPower())
-      if (dataType == TR::Int64 && TR::Compiler->target.is64Bit())
+   if (comp->target().cpu.isPower())
+      if (dataType == TR::Int64 && comp->target().is64Bit())
          {
          TR::Node * firstChild = node->getFirstChild();
          if (firstChild->getNumChildren() == 2)
@@ -368,7 +368,7 @@ OMR::TransformUtil::transformIndirectLoadChainAt(
       TR::Compilation *comp,
       TR::Node *node,
       TR::Node *baseExpression,
-      uintptrj_t *baseReferenceLocation,
+      uintptr_t *baseReferenceLocation,
       TR::Node **removedNode)
    {
    return false;

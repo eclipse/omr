@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
@@ -49,13 +49,14 @@
 #include "env/TRMemory.hpp"
 #include "env/defines.h"
 #include "env/jittypes.h"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "infra/Assert.hpp"
 #include "ras/Debug.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
+#include "omrformatconsts.h"
 #include "runtime/CodeCacheManager.hpp"
 
 #if defined (_MSC_VER) && _MSC_VER < 1900
@@ -80,7 +81,7 @@ writePerfToolEntry(void *start, uint32_t size, const char *name)
       static const int maxPerfFilenameSize = 15 + sizeof(jvmPid)* 3; // "/tmp/perf-%ld.map"
       char perfFilename[maxPerfFilenameSize] = { 0 };
 
-      int numCharsWritten = snprintf(perfFilename, maxPerfFilenameSize, "/tmp/perf-%ld.map", jvmPid);
+      int numCharsWritten = snprintf(perfFilename, maxPerfFilenameSize, "/tmp/perf-%" OMR_PRId64 ".map", static_cast<int64_t>(jvmPid));
       if (numCharsWritten > 0 && numCharsWritten < maxPerfFilenameSize)
          {
          perfFile = fopen(perfFilename, "a");
@@ -184,7 +185,7 @@ int32_t init_options(TR::JitConfig *jitConfig, char *cmdLineOptions)
 
    if (cmdLineOptions)
       {
-      // The callers (ruby/python) guarantee that we have at least -Xjit in cmdline options
+      // The callers must guarantee that we have at least -Xjit in cmdline options
       //
       cmdLineOptions += 5; // skip the leading -Xjit
       if (*cmdLineOptions == ':') cmdLineOptions++; // also skip :
@@ -378,7 +379,7 @@ compileMethodFromDetails(
          // not ready yet...
          //OMR::MethodMetaDataPOD *metaData = fe.createMethodMetaData(&compiler);
 
-         startPC = compiler.cg()->getCodeStart();
+         startPC = (uint8_t*)compiler.getMethodSymbol()->getMethodAddress();
          uint64_t translationTime = TR::Compiler->vm.getUSecClock() - translationStartTime;
 
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance))

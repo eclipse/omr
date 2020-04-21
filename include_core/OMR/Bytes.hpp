@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2018, 2018 IBM and others
+ *  Copyright (c) 2018, 2019 IBM and others
  *
  *  This program and the accompanying materials are made available under
  *  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <limits>
 
 namespace OMR
 {
@@ -63,10 +64,10 @@ isPow2(size_t x)
 }
 
 /// The maximum safe alignment, when aligning sizes up to UNALIGNED_SIZE_MAX.
-static const size_t ALIGNMENT_MAX = (SIZE_MAX >> 1) + 1;
+static const size_t ALIGNMENT_MAX = (std::numeric_limits<size_t>::max() >> 1) + 1;
 
 /// The maximum safe size, when aligning up to ALIGNMENT_MAX.
-static const size_t UNALIGNED_SIZE_MAX = (SIZE_MAX >> 1) + 1;
+static const size_t UNALIGNED_SIZE_MAX = (std::numeric_limits<size_t>::max() >> 1) + 1;
 
 /// True if size is aligned to alignment. No safety checks.
 /// alignment must be a power of two.
@@ -103,7 +104,7 @@ inline size_t
 align(size_t size, size_t alignment)
 {
 	assert(isPow2(alignment));
-	assert(size <= SIZE_MAX - alignment + 1); // overflow check
+	assert(size <= std::numeric_limits<size_t>::max() - alignment + 1); // overflow check
 	return alignNoCheck(size, alignment);
 }
 

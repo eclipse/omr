@@ -32,7 +32,7 @@
 #include <stdint.h>
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Machine.hpp"
@@ -46,19 +46,18 @@
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/hashtab.h"
 #include "env/CompilerEnv.hpp"
 #include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "ras/Debug.hpp"
@@ -105,8 +104,6 @@ OMR::Z::RegisterDependencyConditions::RegisterDependencyConditions(TR::CodeGener
    _numPostConditions = totalNum;
    _addCursorForPost = 0;
    _isUsed = false;
-   _isHint = false;
-   _conflictsResolved = false;
 
    for (i = 0; i < totalNum; i++)
       {
@@ -133,31 +130,13 @@ OMR::Z::RegisterDependencyConditions::RegisterDependencyConditions(TR::CodeGener
          }
 
       TR::RegisterPair * regPair = reg->getRegisterPair();
-      resolveSplitDependencies(cg, node, child, regPair, regList,
-         reg, highReg, copyReg, highCopyReg, iCursor, regNum);
+      resolveSplitDependencies(cg, node, child, regPair, regList, reg, highReg, copyReg, highCopyReg, iCursor, regNum);
 
-      TR::Register * copyHPR = NULL;
-      if (cg->machine()->getHPRFromGlobalRegisterNumber(child->getGlobalRegisterNumber()))
-         {
-         if (reg->is64BitReg() && !reg->containsCollectedReference())
-            {
-            //if GRA wants a 64-bit scalar into an HPR we must split this register
-            copyHPR = cg->allocateRegister(TR_GPR);
-            iCursor = generateRRInstruction(cg, TR::InstOpCode::LR, node, copyHPR, reg, iCursor);
-            reg = copyHPR;
-            }
-         reg->setAssignToHPR(true);
-         }
       reg->setAssociation(regNum);
       cg->setRealRegisterAssociation(reg, regNum);
 
       addPreCondition(reg, regNum);
       addPostCondition(reg, regNum);
-
-      if (copyHPR != NULL)
-         {
-         cg->stopUsingRegister(copyHPR);
-         }
 
       if (copyReg != NULL)
          {
@@ -190,9 +169,7 @@ OMR::Z::RegisterDependencyConditions::RegisterDependencyConditions(TR::RegisterD
      _addCursorForPre(0),
      _numPostConditions((iConds?iConds->getNumPostConditions():0)+numNewPostConds),
      _addCursorForPost(0),
-     _isHint(false),
      _isUsed(false),
-     _conflictsResolved(false),
      _cg(cg)
    {
      int32_t i;
@@ -252,8 +229,6 @@ OMR::Z::RegisterDependencyConditions::RegisterDependencyConditions(TR::RegisterD
      _numPostConditions(conds_1->getNumPostConditions()+conds_2->getNumPostConditions()),
      _addCursorForPost(0),
      _isUsed(false),
-     _isHint(false),
-     _conflictsResolved(false),
      _cg(cg)
    {
    int32_t i;
@@ -406,11 +381,6 @@ void OMR::Z::RegisterDependencyConditions::resolveSplitDependencies(
          {
          copyReg->setContainsInternalPointer();
          copyReg->setPinningArrayPointer(reg->getPinningArrayPointer());
-         }
-
-      if (cg->machine()->getHPRFromGlobalRegisterNumber(child->getGlobalRegisterNumber()) != NULL)
-         {
-         copyReg->setAssignToHPR(true);
          }
 
       switch (kind)
@@ -650,6 +620,10 @@ TR_S390RegisterDependencyGroup::genBitMapOfAssignableGPRs(TR::CodeGenerator * cg
    {
    TR::Machine* machine = cg->machine();
 
+   // TODO: This looks like it can be cached as it should be the same value every time in a single compilation. Should
+   // also investigate whether we even need this? Don't we already block registers which are part of a dependency? I
+   // suppose with a mask we can avoid shuffling things into GPRs which are part of the dependency and may need to get
+   // other virtual registers shuffled into such GPRs. Need to think about this. Are other codegens doing this?
    uint32_t availRegMap = machine->genBitMapOfAssignableGPRs();
 
    for (uint32_t i = 0; i < numberOfRegisters; i++)
@@ -662,226 +636,6 @@ TR_S390RegisterDependencyGroup::genBitMapOfAssignableGPRs(TR::CodeGenerator * cg
       }
 
    return availRegMap;
-   }
-
-
-/** \brief
- *     Checks to ensure that we have enough register pairs available to satisfy all register
- *     dependencies in the current dependency group and aborts the
- *     compilation if not enough register pairs are available.
- *
- *     Also, if highword facility is supported, this function checks the type of each register
- *     dependency condition and sets HPR related flags for future register assignment steps.
- *
- *  \param cg
- *     The code generator used to query various machine state.
- *
- *  \param currentInstruction
- *     The instruction on which the register dependency group is attached.
- *
- *  \param availableGPRMap
- *     The bitmask of available GRP registers.
- *
- *  \param numOfDependencies
- *     The number of pre or post dependencies in the register dependency group.
- **/
-void
-TR_S390RegisterDependencyGroup::checkRegisterPairSufficiencyAndHPRAssignment(TR::CodeGenerator *cg,
-                                                             TR::Instruction* currentInstruction,
-                                                             const uint32_t availableGPRMap,
-                                                             uint32_t numOfDependencies)
-   {
-   TR::Machine* machine = cg->machine();
-
-   uint32_t numReqPairs = 0, numAvailPairs = 0;
-
-   // Count the number of required pairs to be assigned in reg deps
-   for (int32_t i = 0; i < numOfDependencies; i++)
-      {
-      TR::RealRegister::RegNum realRegI = _dependencies[i].getRealRegister();
-      TR::Register* virtRegI            = _dependencies[i].getRegister();
-
-      if (realRegI == TR::RealRegister::EvenOddPair)
-         numReqPairs++;
-
-      // Set HPR or 64-bit register assignment flags
-      virtRegI->setIsNotHighWordUpgradable(true);
-
-      if (virtRegI &&
-            virtRegI->getKind() != TR_FPR &&
-            virtRegI->getKind() != TR_VRF)
-         {
-         // on 64-bit conservatively assume rEP and rRA are going to clobber highword
-         if (TR::Compiler->target.is64Bit() &&
-               !(currentInstruction->isLabel() &&
-               toS390LabelInstruction(currentInstruction)->getLabelSymbol()->isStartOfColdInstructionStream()) &&
-               (realRegI == cg->getReturnAddressRegister() ||
-               realRegI == cg->getEntryPointRegister()))
-            {
-            virtRegI->setIs64BitReg(true);
-            }
-
-         virtRegI->setAssignToHPR(false);
-         if (TR::RealRegister::isHPR(realRegI))
-            {
-            virtRegI->setAssignToHPR(true);
-            cg->maskAvailableHPRSpillMask(~(machine->getRealRegister(realRegI)->getRealRegisterMask()));
-            }
-         else if (TR::RealRegister::isGPR(realRegI) && virtRegI->is64BitReg())
-            {
-            cg->maskAvailableHPRSpillMask(~(machine->getRealRegister(realRegI)->getRealRegisterMask() << 16));
-            }
-         }
-      }
-
-   // Count the number of even-odd GPR pairs remaining after deps are filled and breaks early if the
-   // number of register pairs in available is sufficient.
-   bool isRegPairSufficient = false;
-
-   if (numReqPairs > 0)
-      {
-      for (int32_t i = 0; i < NUM_S390_GPR; i += 2)
-         {
-         if ((availableGPRMap >> i) & 0x3 == 0x3)
-            {
-            numAvailPairs++;
-            if (numAvailPairs >= numReqPairs)
-               {
-               isRegPairSufficient = true;
-               break;
-               }
-            }
-         }
-      }
-   else
-      {
-      isRegPairSufficient = true;
-      }
-
-   if (!isRegPairSufficient)
-      {
-      TR::Compilation *comp = cg->comp();
-      if (cg->getDebug())
-         {
-         trfprintf(comp->getOutFile(), "\nNum AVAIL PAIRS %d, Num REQ PAIRS %d\n", numAvailPairs, numReqPairs);
-         trfprintf(comp->getOutFile(), "AVAIL REG MAP %x\n", availableGPRMap);
-         cg->getDebug()->printRegisterDependencies(comp->getOutFile(), this, numOfDependencies);
-         }
-      TR_ASSERT( 0, "checkDependencyGroup::Insufficient available pairs to satisfy all reg deps.\n");
-      comp->failCompilation<TR::CompilationException>("checkDependencyGroup::Insufficient available pairs to satisfy all reg deps, abort compilation\n");
-      }
-   }
-
-/**
- *
- * \brief
- *      Performs pairwise checks in dependencies to find duplicates
- *
- *      1. If the duplicated registers are virtual registers or real registers, assert fail.
- *      2. If the duplicated registers are GPR/HPR dependencies, remove the duplicates.
- *
- * \param cg
- *      The CodeGenerator object used to query machine states
- *
- * \param numOfDependencies
- *      The number of register dependency conditions to examine.
- */
-void
-TR_S390RegisterDependencyGroup::checkRegisterDependencyDuplicates(TR::CodeGenerator* cg,
-                                                                  const uint32_t numOfDependencies)
-   {
-   TR::Compilation *comp = cg->comp();
-
-   if (numOfDependencies <= 1)
-      return;
-
-   for (uint32_t i = 0; i < numOfDependencies - 1; ++i)
-      {
-      TR::Register* virtRegI = _dependencies[i].getRegister();
-      TR::Register* virtRegJ;
-      TR::RealRegister::RegNum realRegI = _dependencies[i].getRealRegister();
-      TR::RealRegister::RegNum realRegJ;
-
-      for (uint32_t j = i + 1; j < numOfDependencies; ++j)
-         {
-         virtRegJ = _dependencies[j].getRegister();
-         realRegJ = _dependencies[j].getRealRegister();
-
-         if (virtRegI == virtRegJ
-               && realRegI != TR::RealRegister::SpilledReg
-               && realRegJ != TR::RealRegister::SpilledReg)
-            {
-            TR_ASSERT(false, "Virtual register duplicate found in a register dependency\n");
-            }
-
-         if (realRegI == realRegJ &&
-               TR::RealRegister::isRealReg(realRegI))
-            {
-            TR_ASSERT(false, "Real register duplicate found in a register dependency\n");
-            }
-
-         if (realRegI == realRegJ + (TR::RealRegister::FirstHPR - TR::RealRegister::FirstGPR) &&
-                virtRegI->isPlaceholderReg() &&
-                virtRegJ->is64BitReg() &&
-                virtRegJ->getKind() != TR_FPR &&
-                virtRegJ->getKind() != TR_VRF)
-            {
-            traceMsg(comp, "Remove duplicate GPR (%s) / HPR (%s) register dependency\n", virtRegJ->getRegisterName(comp), virtRegI->getRegisterName(comp));
-            _dependencies[i].setRealRegister(TR::RealRegister::NoReg);
-            }
-
-         if (realRegJ == realRegI + (TR::RealRegister::FirstHPR - TR::RealRegister::FirstGPR) &&
-                virtRegJ->isPlaceholderReg() &&
-                virtRegI->is64BitReg() &&
-                virtRegI->getKind() != TR_FPR &&
-                virtRegI->getKind() != TR_VRF)
-            {
-            traceMsg(comp, "Remove duplicate GPR (%s) / HPR (%s) register dependency\n", virtRegI->getRegisterName(comp), virtRegJ->getRegisterName(comp));
-            _dependencies[j].setRealRegister(TR::RealRegister::NoReg);
-            }
-         }
-      }
-   }
-
-/**
- *
- * \brief
- *      Generates a uint32_t bit map for available GPR registers.
- *      This function also checks to make sure that there are enough register pairs
- *      for assignment, and that there are no duplicates in real, virtual, and
- *      HPR registers.
- *
- * \param cg
- *      The CodeGenerator object used to query machine states
- *
- * \param currentInstruction
- *      The current instruction on which the register dependency group is attached.
- *
- * \param numOfDependencies
- *      The number of register dependency conditions to examine.
- *
- * \return
- *      a bit mask of available GPR map.
- *      Bit is set to 1 if the GPR is available, and 0 otherwise.
-*/
-uint32_t
-TR_S390RegisterDependencyGroup::checkDependencyGroup(TR::CodeGenerator * cg,
-                                                     TR::Instruction * currentInstruction,
-                                                     uint32_t          numOfDependencies)
-   {
-   // availableGPRMap is a bitmap of all available (not locked) GPRs on the machine
-   // excluding the real registers already specified in the _dependencies.
-   uint32_t availableGPRMap = genBitMapOfAssignableGPRs(cg, numOfDependencies);
-   cg->setAvailableHPRSpillMask(0xFFFF0000);
-
-   ///// Check the number of register pairs. The compilation may fail due to insufficient register pairs
-   checkRegisterPairSufficiencyAndHPRAssignment(cg, currentInstruction, availableGPRMap,
-                                                numOfDependencies);
-
-   ///// Check and remove duplicates
-   checkRegisterDependencyDuplicates(cg, numOfDependencies);
-
-   return availableGPRMap;
    }
 
 void
@@ -897,8 +651,7 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
    TR::RealRegister * dependentRealReg, * assignedRegister;
    int32_t i, j;
    bool changed;
-   uint32_t availRegMask = checkDependencyGroup(cg, currentInstruction, numOfDependencies);
-   bool highRegSpill = false;
+   uint32_t availRegMask = genBitMapOfAssignableGPRs(cg, numOfDependencies);
 
    if (!comp->getOption(TR_DisableOOL))
       {
@@ -909,23 +662,14 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
          if (dependentRegNum == TR::RealRegister::SpilledReg && !_dependencies[i].getRegister()->getRealRegister())
             {
             TR_ASSERT_FATAL(virtReg->getBackingStorage() != NULL, "Spilled virtual register on dependency list does not have backing storage");
-            TR::RealRegister * spilledHPR = NULL;
-            if (virtReg->getKind() != TR_FPR && virtReg->getKind() != TR_VRF && virtReg->getAssignedRealRegister() == NULL)
-               {
-               spilledHPR = cg->machine()->findVirtRegInHighWordRegister(virtReg);
-               cg->traceRegisterAssignment (" \nOOL: found %R spilled to %R", virtReg, spilledHPR);
-               }
-            if (virtReg->getAssignedRealRegister() || spilledHPR)
+
+            if (virtReg->getAssignedRealRegister())
                {
                // this happens when the register was first spilled in main line path then was reverse spilled
                // and assigned to a real register in OOL path. We protected the backing store when doing
                // the reverse spill so we could re-spill to the same slot now
                TR::Node *currentNode = currentInstruction->getNode();
-               TR::RealRegister *assignedReg;
-               if (spilledHPR)
-                  assignedReg = spilledHPR;
-               else
-                  assignedReg = toRealRegister(virtReg->getAssignedRegister());
+               TR::RealRegister *assignedReg = toRealRegister(virtReg->getAssignedRegister());
                cg->traceRegisterAssignment ("\nOOL: Found %R spilled in main line and reused inside OOL", virtReg);
                TR::MemoryReference * tempMR = generateS390MemoryReference(currentNode, virtReg->getBackingStorage()->getSymbolReference(), cg);
                TR::InstOpCode::Mnemonic opCode;
@@ -952,24 +696,8 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
                      TR_ASSERT( 0, "\nRegister kind not supported in OOL spill\n");
                      break;
                   }
-               
-               if (rk != TR_FPR && rk != TR_VRF)
-                  {
-                  if (assignedReg->isHighWordRegister())
-                     {
-                     // virtReg was spilled to an HPR and now we need it spilled to stack
-                     opCode = TR::InstOpCode::LFH;
-                     if (virtReg->is64BitReg())
-                        {
-                        TR_ASSERT(virtReg->containsCollectedReference(),
-                                "virtReg is assigned to HPR but is not a spilled compress pointer");
-                        // we need to decompress pointer
-                        tempMR = generateS390MemoryReference(*tempMR, 4, cg);
-                        virtReg->setSpilledToHPR(false);
-                        }
-                     }
-                  }
-               bool isVector = rk == TR_VRF ? true : false;
+
+               bool isVector = (rk == TR_VRF);
 
                TR::Instruction *inst = isVector ? generateVRXInstruction(cg, opCode, currentNode, assignedReg, tempMR, 0, currentInstruction) :
                                                      generateRXInstruction (cg, opCode, currentNode, assignedReg, tempMR, currentInstruction);
@@ -978,12 +706,6 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
                assignedReg->setAssignedRegister(NULL);
                virtReg->setAssignedRegister(NULL);
                assignedReg->setState(TR::RealRegister::Free);
-
-               if (virtReg->is64BitReg() && rk != TR_FPR && rk != TR_VRF)
-                  {
-                  assignedReg->getHighWordRegister()->setAssignedRegister(NULL);
-                  assignedReg->getHighWordRegister()->setState(TR::RealRegister::Free);
-                  }
                }
 
             // now we are leaving the OOL sequence, anything that was previously spilled in OOL hot path or main line
@@ -1014,9 +736,8 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
             }
          }
       }
-   
+
    uint32_t numGPRs = 0;
-   uint32_t numHPRs = 0;
    uint32_t numFPRs = 0;
    uint32_t numVRFs = 0;
 
@@ -1037,27 +758,7 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
          switch (virtReg->getKind())
             {
             case TR_GPR:
-               // TODO (Issue #2739): Currently HPRs are not propperly tagged with TR_HPR register kind and are instead
-               // labeled as TR_GPR. This produces incorrect counts for the number of GPR vs. HPR dependencies that we
-               // have. We use a workaround here to circumvent the issue but a larger change is needed to properly tag
-               // the register kinds and eliminate this ugly code.
-               if ((dependentRegNum >= TR::RealRegister::FirstHPR && dependentRegNum <= TR::RealRegister::LastHPR) ||
-
-                     // This case is used to handle removed GPR / HPR dependencies in checkRegisterDependencyDuplicates
-                     // in which we don't actually remove the HPR dependency but simply set the target real register to
-                     // be TR::RealRegister::NoReg. This is also a hack that needs to be cleaned up, i.e. we shouldn't
-                     // be creating the duplicate register dependency in the first place.
-                     (virtReg->isPlaceholderReg() && dependentRegNum == TR::RealRegister::NoReg))
-                  {
-                  ++numHPRs;
-                  }
-               else
-                  {
-                  ++numGPRs;
-                  }
-               break;
-            case TR_HPR:
-               ++numHPRs;
+               ++numGPRs;
                break;
             case TR_FPR:
                ++numFPRs;
@@ -1073,7 +774,6 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
 
 #ifdef DEBUG
    int32_t lockedGPRs = 0;
-   int32_t lockedHPRs = 0;
    int32_t lockedFPRs = 0;
    int32_t lockedVRFs = 0;
 
@@ -1083,13 +783,6 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
       TR::RealRegister* realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
       if (realReg->getState() == TR::RealRegister::Locked)
          ++lockedGPRs;
-      }
-
-   for (int32_t i = TR::RealRegister::FirstHPR; i <= TR::RealRegister::LastHPR; ++i)
-      {
-      TR::RealRegister* realReg = machine->getRealRegister((TR::RealRegister::RegNum)i);
-      if (realReg->getState() == TR::RealRegister::Locked)
-         ++lockedHPRs;
       }
 
    for (int32_t i = TR::RealRegister::FirstFPR; i <= TR::RealRegister::LastFPR; ++i)
@@ -1107,7 +800,6 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
       }
 
    TR_ASSERT(lockedGPRs == machine->getNumberOfLockedRegisters(TR_GPR), "Inconsistent number of locked GPRs");
-   TR_ASSERT(lockedHPRs == machine->getNumberOfLockedRegisters(TR_HPR), "Inconsistent number of locked HPRs");
    TR_ASSERT(lockedFPRs == machine->getNumberOfLockedRegisters(TR_FPR), "Inconsistent number of locked FPRs");
    TR_ASSERT(lockedVRFs == machine->getNumberOfLockedRegisters(TR_VRF), "Inconsistent number of locked VRFs");
 #endif
@@ -1118,19 +810,15 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
    // being blocked.
 
    bool haveSpareGPRs = true;
-   bool haveSpareHPRs = true;
    bool haveSpareFPRs = true;
    bool haveSpareVRFs = true;
 
    TR_ASSERT(numGPRs <= (TR::RealRegister::LastGPR - TR::RealRegister::FirstGPR + 1 - machine->getNumberOfLockedRegisters(TR_GPR)), "Too many GPR dependencies, unable to assign");
-   TR_ASSERT(numHPRs <= (TR::RealRegister::LastHPR - TR::RealRegister::FirstHPR + 1 - machine->getNumberOfLockedRegisters(TR_HPR)), "Too many HPR dependencies, unable to assign");
    TR_ASSERT(numFPRs <= (TR::RealRegister::LastFPR - TR::RealRegister::FirstFPR + 1 - machine->getNumberOfLockedRegisters(TR_FPR)), "Too many FPR dependencies, unable to assign");
    TR_ASSERT(numVRFs <= (TR::RealRegister::LastVRF - TR::RealRegister::FirstVRF + 1 - machine->getNumberOfLockedRegisters(TR_VRF)), "Too many VRF dependencies, unable to assign");
 
    if (numGPRs == (TR::RealRegister::LastGPR - TR::RealRegister::FirstGPR + 1 - machine->getNumberOfLockedRegisters(TR_GPR)))
       haveSpareGPRs = false;
-   if (numHPRs == (TR::RealRegister::LastHPR - TR::RealRegister::FirstHPR + 1 - machine->getNumberOfLockedRegisters(TR_HPR)))
-      haveSpareHPRs = false;
    if (numFPRs == (TR::RealRegister::LastFPR - TR::RealRegister::FirstFPR + 1 - machine->getNumberOfLockedRegisters(TR_FPR)))
       haveSpareFPRs = false;
    if (numVRFs == (TR::RealRegister::LastVRF - TR::RealRegister::FirstVRF + 1 - machine->getNumberOfLockedRegisters(TR_VRF)))
@@ -1150,13 +838,12 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
             {
             TR::RealRegister::RegNum assignedRegNum = toRealRegister(virtReg->getAssignedRealRegister())->getRegisterNumber();
 
-            // Always block if the required register and assigned register match or if the assigned register is 
+            // Always block if the required register and assigned register match or if the assigned register is
             // required by another dependency but only if there are any spare registers left so as to avoid blocking
             // all existing registers
             if (_dependencies[i].getRealRegister() == assignedRegNum ||
                 (map.getDependencyWithTarget(assignedRegNum) &&
                  ((virtReg->getKind() != TR_GPR || haveSpareGPRs) &&
-                  (virtReg->getKind() != TR_HPR || haveSpareHPRs) &&
                   (virtReg->getKind() != TR_FPR || haveSpareFPRs) &&
                   (virtReg->getKind() != TR_VRF || haveSpareVRFs))))
                {
@@ -1166,13 +853,11 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
          }
 
       // Check for directive to spill high registers. Used on callouts
-      if ( _dependencies[i].getRealRegister() == TR::RealRegister::KillVolHighRegs && TR::Compiler->target.is32Bit())
+      if ( _dependencies[i].getRealRegister() == TR::RealRegister::KillVolHighRegs)
          {
          machine->spillAllVolatileHighRegisters(currentInstruction);
          _dependencies[i].setRealRegister(TR::RealRegister::NoReg);  // ignore from now on
-         highRegSpill = true;
          }
-
       }
 
    /////    REGISTER PAIRS
@@ -1535,7 +1220,6 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
 
          if(virtReg->isUsedInMemRef())
            {
-           virtReg->setAssignToHPR(false);
            uint32_t availRegMask =~TR::RealRegister::GPR0Mask;
 
             // No bookkeeping on assignment call as we do bookkeeping at end of this method
@@ -1606,15 +1290,6 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
             }
          if (dependentRegister->getFutureUseCount() == 0)
             {
-            // check if need to free HW
-            if (assignedRealRegister != NULL)
-               {
-               if (dependentRegister->is64BitReg() && dependentRegister->getKind() != TR_FPR && dependentRegister->getKind() != TR_VRF)
-                  {
-                  toRealRegister(assignedRealRegister)->getHighWordRegister()->setState(TR::RealRegister::Unlatched);
-                  cg->traceRegFreed(dependentRegister, toRealRegister(assignedRealRegister)->getHighWordRegister());
-                  }
-               }
             dependentRegister->setAssignedRegister(NULL);
             dependentRegister->resetIsLive();
             if(assignedRealRegister)
@@ -1650,13 +1325,6 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
                assignedRegister->setAssignedRegister(NULL);
 
             cg->traceRegFreed(dependentRegisterHigh, assignedRegister);
-
-            if (dependentRegisterHigh->is64BitReg() && dependentRegisterHigh->getKind() != TR_FPR &&
-                  dependentRegisterHigh->getKind() != TR_VRF)
-               {
-               toRealRegister(assignedRegister)->getHighWordRegister()->setState(TR::RealRegister::Unlatched);
-               cg->traceRegFreed(dependentRegisterHigh, toRealRegister(assignedRegister)->getHighWordRegister());
-               }
             }
 
          TR::Register * dependentRegisterLow = dependentRegister->getLowOrder();
@@ -1682,43 +1350,31 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
             if (assignedRegister->getState() == TR::RealRegister::Locked)
                assignedRegister->setAssignedRegister(NULL);
             cg->traceRegFreed(dependentRegisterLow, assignedRegister);
-
-            if (dependentRegisterLow->is64BitReg() && dependentRegisterLow->getKind() != TR_FPR &&
-                  dependentRegisterLow->getKind() != TR_VRF)
-               {
-               toRealRegister(assignedRegister)->getHighWordRegister()->setState(TR::RealRegister::Unlatched);
-               cg->traceRegFreed(dependentRegisterLow, toRealRegister(assignedRegister)->getHighWordRegister());
-               }
             }
          }
       }
 
-
-   // OOL slow path HPR spills
    if (!comp->getOption(TR_DisableOOL))
       {
-      for (i = 0; i< numOfDependencies; i++)
+      // TODO: Is this HPR related? Do we need this code?
+      for (i = 0; i < numOfDependencies; i++)
          {
-         // we put {real HPR:SpilledReg} as deps for OOL HPR spills
          if (_dependencies[i].getRegister()->getRealRegister())
             {
-            TR::RealRegister * highWordReg = toRealRegister(_dependencies[i].getRegister());
+            TR::RealRegister* realReg = toRealRegister(_dependencies[i].getRegister());
             dependentRegNum = _dependencies[i].getRealRegister();
             if (dependentRegNum == TR::RealRegister::SpilledReg)
                {
-               virtReg = highWordReg->getAssignedRegister();
-               //printf ("\nOOL HPR Spill in %s", comp->signature());fflush(stdout);
-               traceMsg(comp,"\nOOL HPR Spill: %s", cg->getDebug()->getName(highWordReg));
+               virtReg = realReg->getAssignedRegister();
+
+               traceMsg(comp,"\nOOL HPR Spill: %s", cg->getDebug()->getName(realReg));
                traceMsg(comp,":%s\n", cg->getDebug()->getName(virtReg));
-               TR_ASSERT(virtReg, "\nOOL HPR spill: spilled HPR should have a virt Reg assigned!");
-               TR_ASSERT(highWordReg->isHighWordRegister(), "\nOOL HPR spill: spilled HPR should be a real HPR!");
+
                virtReg->setAssignedRegister(NULL);
-               virtReg->setSpilledToHPR(true);
                }
             }
          }
       }
-
    }
 
 /**

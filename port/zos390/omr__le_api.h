@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,24 +25,24 @@
 
 #include "omrcomp.h"
 
-/* if this bit is set in the mch_flags field of j9_31bit_mch, the values in the hgprs field in j9_31bit_mch are valid */
+/* if this bit is set in the mch_flags field of omr_31bit_mch, the values in the hgprs field in omr_31bit_mch are valid */
 /*
  * &NAME.HR_VALID   EQU   X'40'      High regs valid in REG_H field   @D3A
  */
-#define J9MCH_FLAGS_HGPRS_VALID 0x40
-/* if this bit is set in the mch_flags field of j9_31bit_mch, the values in the hgprs field in j9_31bit_mch are valid */
+#define OMRPORT_MCH_FLAGS_HGPRS_VALID 0x40
+/* if this bit is set in the mch_flags field of omr_31bit_mch, the values in the hgprs field in omr_31bit_mch are valid */
 /*
  * &NAME.INT_SF_VALID   EQU X'20'    Interrupt stackframe valid in    @D5A
  *                                 INT_SF field
  */
-#define J9MCH_FLAGS_INT_SF_VALID 0x20
+#define OMRPORT_MCH_FLAGS_INT_SF_VALID 0x20
 
 /*
- * If this bit is set in the mch_flags field of the j9_31bit_mch, the values in the VR registers in j9_31bit_mch are valid
+ * If this bit is set in the mch_flags field of the omr_31bit_mch, the values in the VR registers in omr_31bit_mch are valid
  *
  * &NAME.VR_VALID	EQU X'2'	Vector registers saved in MCH
  */
-#define J9MCH_FLAGS_VR_VALID	0x2
+#define OMRPORT_MCH_FLAGS_VR_VALID	0x2
 
 /*
  * Derived from the assembler version, CEEMCH.COPY, as there is no C-mapping of the 31-bit (machine context)
@@ -54,7 +54,7 @@
  * struct _CEECIB is accessible from a condition handler via the LE service CEE3CIB
  *
  */
-typedef struct j9_31bit_mch {
+typedef struct omr_31bit_mch {
 	/*
 	 * &NAME.EYEC       DC    CL4'CMCH'          Eye catcher
 	 * &NAME.SIZE       DC    H'0'               Size of area
@@ -128,6 +128,6 @@ typedef struct j9_31bit_mch {
 	uint32_t padding6[32];
 
 	U_128 vr[32];
-} j9_31bit_mch;
+} omr_31bit_mch;
 
 #endif /* omr__le_api_h */

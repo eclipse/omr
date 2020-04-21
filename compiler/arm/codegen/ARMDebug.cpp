@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,8 @@ int jitDebugARM;
 #endif
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCRegisterMap.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Snippet.hpp"
 #include "codegen/StackCheckFailureSnippet.hpp"
@@ -422,8 +424,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMImmSymInstruction * instr)
    TR_ResolvedMethod     *callee    = calleeSym ? calleeSym->getResolvedMethod() : NULL;
 
    bool longJump = imm &&
-                   _cg->directCallRequiresTrampoline((intptrj_t)imm, (intptrj_t)bufferPos) &&
-                   (!callee || !callee->isSameMethod(_comp->getCurrentMethod()));
+                   _cg->directCallRequiresTrampoline((intptr_t)imm, (intptr_t)bufferPos) &&
+                   !_comp->isRecursiveMethodTarget(sym);
 
    if (bufferPos != NULL && longJump)
       {
@@ -823,10 +825,10 @@ void
 TR_Debug::printARMHelperBranch(TR::SymbolReference *symRef, uint8_t *bufferPos, TR::FILE *pOutFile, const char * opcodeName)
    {
    TR::MethodSymbol *methodSym = symRef->getSymbol()->castToMethodSymbol();
-   intptrj_t         target    = (intptrj_t)methodSym->getMethodAddress();
+   intptr_t         target    = (intptr_t)methodSym->getMethodAddress();
    char             *info      = "";
 
-   if (_cg->directCallRequiresTrampoline(target, (intptrj_t)bufferPos))
+   if (_cg->directCallRequiresTrampoline(target, (intptr_t)bufferPos))
       {
       int32_t refNum = symRef->getReferenceNumber();
       if (refNum < TR_ARMnumRuntimeHelpers)
@@ -836,7 +838,7 @@ TR_Debug::printARMHelperBranch(TR::SymbolReference *symRef, uint8_t *bufferPos, 
          }
       else if (*((uintptr_t*)bufferPos) == 0xe28fe004)  // This is a JNI method
          {
-         target = *((intptrj_t*)(bufferPos+8));
+         target = *((intptr_t*)(bufferPos+8));
          info   = " long jump";
          }
       else
@@ -1382,7 +1384,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMHelperCallSnippet * snippet)
       printPrefix(pOutFile, NULL, bufferPos, 4);
       //int32_t distance = *((int32_t *) bufferPos) & 0x00ffffff;
       //distance = (distance << 8) >> 8;   // sign extend
-      trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptrj_t)(restartLabel->getCodeLocation()), getName(restartLabel));
+      trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptr_t)(restartLabel->getCodeLocation()), getName(restartLabel));
       }
 #endif
    }

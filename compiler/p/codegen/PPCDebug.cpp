@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@ int jitDebugPPC;
 #include <string.h>
 #include "codegen/CodeGenPhase.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/GCRegisterMap.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
@@ -48,10 +48,10 @@ int jitDebugPPC;
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "p/codegen/PPCHelperCallSnippet.hpp"
@@ -72,12 +72,10 @@ int jitDebugPPC;
 namespace TR { class PPCForceRecompilationSnippet; }
 namespace TR { class PPCRecompilationSnippet; }
 
-extern const char * ppcOpCodeToNameMap[][2];
-
 const char *
 TR_Debug::getOpCodeName(TR::InstOpCode * opCode)
    {
-   return ppcOpCodeToNameMap[opCode->getOpCodeValue()][1];
+   return TR::InstOpCode::metadata[opCode->getOpCodeValue()].name;
    }
 
 void
@@ -111,6 +109,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * instr)
 
    switch (instr->getKind())
       {
+      case OMR::Instruction::IsAlignmentNop:
+         print(pOutFile, (TR::PPCAlignmentNopInstruction *)instr);
+         break;
       case OMR::Instruction::IsImm:
          print(pOutFile, (TR::PPCImmInstruction *)instr);
          break;
@@ -123,14 +124,10 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * instr)
       case OMR::Instruction::IsDep:
          print(pOutFile, (TR::PPCDepInstruction *)instr);
          break;
-      case OMR::Instruction::IsDepImm:
-         print(pOutFile, (TR::PPCDepImmInstruction *)instr);
-         break;
       case OMR::Instruction::IsDepImmSym:
          print(pOutFile, (TR::PPCDepImmSymInstruction *)instr);
          break;
       case OMR::Instruction::IsLabel:
-      case OMR::Instruction::IsAlignedLabel:
          print(pOutFile, (TR::PPCLabelInstruction *)instr);
          break;
       case OMR::Instruction::IsDepLabel:
@@ -223,6 +220,14 @@ TR_Debug::printPrefix(TR::FILE *pOutFile, TR::Instruction * instr)
       }
    else
       trfprintf(pOutFile, "0 \t");
+   }
+
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::PPCAlignmentNopInstruction * instr)
+   {
+   printPrefix(pOutFile, instr);
+   trfprintf(pOutFile, "%s\t; Align to %u bytes", getOpCodeName(&instr->getOpCode()), instr->getAlignment());
+   trfflush(pOutFile);
    }
 
 void
@@ -368,18 +373,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCSrc1Instruction * instr)
    trfprintf(pOutFile, "%s \t", getOpCodeName(&instr->getOpCode()));
    print(pOutFile, instr->getSource1Register(), TR_WordReg);
    if (!(instr->getOpCodeValue() == TR::InstOpCode::mtlr || instr->getOpCodeValue() == TR::InstOpCode::mtctr))
-      trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, (intptrj_t)(int32_t)instr->getSourceImmediate());
+      trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, (intptr_t)(int32_t)instr->getSourceImmediate());
 
-   trfflush(_comp->getOutFile());
-   }
-
-void
-TR_Debug::print(TR::FILE *pOutFile, TR::PPCDepImmInstruction * instr)
-   {
-   printPrefix(pOutFile, instr);
-   trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT, getOpCodeName(&instr->getOpCode()), instr->getSourceImmediate());
-   if (instr->getDependencyConditions())
-      print(pOutFile, instr->getDependencyConditions());
    trfflush(_comp->getOutFile());
    }
 
@@ -390,23 +385,23 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCDepImmInstruction * instr)
 bool
 TR_Debug::isBranchToTrampoline(TR::SymbolReference *symRef, uint8_t *cursor, int32_t &distance)
    {
-   intptrj_t methodAddress = (intptrj_t)(symRef->getMethodAddress());
+   intptr_t methodAddress = (intptr_t)(symRef->getMethodAddress());
    bool requiresTrampoline = false;
 
-   if (_cg->directCallRequiresTrampoline(methodAddress, (intptrj_t)cursor))
+   if (_cg->directCallRequiresTrampoline(methodAddress, (intptr_t)cursor))
       {
       methodAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(symRef->getReferenceNumber(), (void *)cursor);
       requiresTrampoline = true;
       }
 
-   distance = (int32_t)(methodAddress - (intptrj_t)cursor);
+   distance = (int32_t)(methodAddress - (intptr_t)cursor);
    return requiresTrampoline;
    }
 
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::PPCDepImmSymInstruction * instr)
    {
-   intptrj_t targetAddress = instr->getAddrImmediate();
+   intptr_t targetAddress = instr->getAddrImmediate();
    uint8_t *cursor = instr->getBinaryEncoding();
    TR::Symbol *target = instr->getSymbolReference()->getSymbol();
    TR::LabelSymbol *label = target->getLabelSymbol();
@@ -417,16 +412,16 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCDepImmSymInstruction * instr)
       {
       if (label)
          {
-         targetAddress = (intptrj_t)label->getCodeLocation();
+         targetAddress = (intptr_t)label->getCodeLocation();
          }
       else if (targetAddress == 0)
          {
          uint8_t *jitTojitStart = _cg->getCodeStart();
 
          jitTojitStart += ((*(int32_t *)(jitTojitStart - 4)) >> 16) & 0x0000ffff;
-         targetAddress = (intptrj_t)jitTojitStart;
+         targetAddress = (intptr_t)jitTojitStart;
          }
-      else if (_cg->directCallRequiresTrampoline(targetAddress, (intptrj_t)cursor))
+      else if (_cg->directCallRequiresTrampoline(targetAddress, (intptr_t)cursor))
          {
          int32_t refNum = instr->getSymbolReference()->getReferenceNumber();
          if (refNum < TR_PPCnumRuntimeHelpers)
@@ -440,13 +435,13 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCDepImmSymInstruction * instr)
          }
       }
 
-   intptrj_t distance = targetAddress - (intptrj_t)cursor;
+   intptr_t distance = targetAddress - (intptr_t)cursor;
 
    const char *name = target ? getName(instr->getSymbolReference()) : 0;
    if (name)
-      trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT "\t\t; Direct Call \"%s\"", getOpCodeName(&instr->getOpCode()), (intptrj_t)cursor + distance, name);
+      trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT "\t\t; Direct Call \"%s\"", getOpCodeName(&instr->getOpCode()), (intptr_t)cursor + distance, name);
    else
-      trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT, getOpCodeName(&instr->getOpCode()), (intptrj_t)cursor + distance);
+      trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT, getOpCodeName(&instr->getOpCode()), (intptr_t)cursor + distance);
 
    if (instr->getDependencyConditions())
       print(pOutFile, instr->getDependencyConditions());
@@ -488,19 +483,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCTrg1ImmInstruction * instr)
    printPrefix(pOutFile, instr);
    trfprintf(pOutFile, "%s \t", getOpCodeName(&instr->getOpCode()));
 
-   if (instr->getOpCodeValue() ==  TR::InstOpCode::mtcrf)
-      {
-      trfprintf(pOutFile, POINTER_PRINTF_FORMAT ", ", (intptrj_t)(int32_t)instr->getSourceImmediate());
-      print(pOutFile, instr->getTargetRegister(), TR_WordReg);
-      }
-   else
-      {
-      print(pOutFile, instr->getTargetRegister(), TR_WordReg);
-      if (instr->getOpCodeValue() !=  TR::InstOpCode::mfcr)
-         {
-         trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, (intptrj_t)(int32_t)instr->getSourceImmediate());
-         }
-      }
+   print(pOutFile, instr->getTargetRegister(), TR_WordReg);
+   trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, (intptr_t)(int32_t)instr->getSourceImmediate());
 
    trfflush(_comp->getOutFile());
    }
@@ -514,12 +498,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCTrg1Src1ImmInstruction * instr)
    print(pOutFile, instr->getSource1Register(), TR_WordReg);
    TR::InstOpCode::Mnemonic op =  instr->getOpCodeValue();
 
-   if (op == TR::InstOpCode::subfic || op == TR::InstOpCode::addi || op == TR::InstOpCode::addi2 ||
-       op == TR::InstOpCode::addic  || op == TR::InstOpCode::addic_r ||
-       op == TR::InstOpCode::addis  || op == TR::InstOpCode::mulli)
-      trfprintf(pOutFile, ", %d", (signed short)instr->getSourceImmediate());
-   else
-      trfprintf(pOutFile, ", " "%d", (intptrj_t)(int32_t)instr->getSourceImmediate());
+   trfprintf(pOutFile, ", " "%d", (intptr_t)(int32_t)instr->getSourceImmediate());
 
    if (instr->getDependencyConditions())
       print(pOutFile, instr->getDependencyConditions());
@@ -537,7 +516,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCTrg1Src1Imm2Instruction * instr)
    print(pOutFile, instr->getSource1Register(), TR_WordReg);
 
    lmask = instr->getLongMask();
-   if (TR::Compiler->target.is64Bit())
+   if (instr->cg()->comp()->target().is64Bit())
       trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT ", " POINTER_PRINTF_FORMAT, instr->getSourceImmediate(), lmask);
    else
       trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT ", 0x%x", instr->getSourceImmediate(), (uint32_t)lmask);
@@ -586,7 +565,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCTrg1Src2ImmInstruction * instr)
    print(pOutFile, instr->getSource1Register(), TR_WordReg); trfprintf(pOutFile, ", ");
    print(pOutFile, instr->getSource2Register(), TR_WordReg);
    lmask = instr->getLongMask();
-   if (TR::Compiler->target.is64Bit())
+   if (instr->cg()->comp()->target().is64Bit())
       trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, lmask);
    else
       trfprintf(pOutFile, ", 0x%x", (uint32_t)lmask);
@@ -928,7 +907,6 @@ TR::Instruction* TR_Debug::getOutlinedTargetIfAny(TR::Instruction *instr)
    switch (instr->getKind())
       {
       case TR::Instruction::IsLabel:
-      case TR::Instruction::IsAlignedLabel:
       case TR::Instruction::IsDepLabel:
       case TR::Instruction::IsVirtualGuardNOP:
       case TR::Instruction::IsConditionalBranch:

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,8 +24,8 @@
 
 #include "ilgen/VirtualMachineRegister.hpp"
 #include "compile/Compilation.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
 #include "ilgen/IlBuilder.hpp"
 #include "ilgen/MethodBuilder.hpp"
 #include "ilgen/TypeDictionary.hpp"
@@ -109,9 +109,10 @@ OMR::VirtualMachineOperandStack::Reload(TR::IlBuilder* b)
    }
 
 void
-OMR::VirtualMachineOperandStack::MergeInto(TR::VirtualMachineOperandStack* other, TR::IlBuilder* b)
+OMR::VirtualMachineOperandStack::MergeInto(TR::VirtualMachineState* o, TR::IlBuilder* b)
    {
-   TR_ASSERT(_stackTop == other->_stackTop, "stacks are not same size");
+   TR::VirtualMachineOperandStack *other = static_cast<TR::VirtualMachineOperandStack *>(o);
+   TR_ASSERT_FATAL(_stackTop == other->_stackTop, "stacks are not same size");
    for (int32_t i=_stackTop;i >= 0;i--)
       {
       // only need to do something if the two entries aren't already the same
@@ -122,7 +123,7 @@ OMR::VirtualMachineOperandStack::MergeInto(TR::VirtualMachineOperandStack* other
          // two incoming control flow edges can have different primitive types. objects, sure
          // but not primitive types (even different types of objects should have same primitive
          // type: Address. Expecting to be disappointed here some day...
-         TR_ASSERT(_stack[i]->getDataType() == other->_stack[i]->getDataType(), "invalid stack merge: primitive type mismatch at same depth stack elements");
+         TR_ASSERT_FATAL(_stack[i]->getDataType() == other->_stack[i]->getDataType(), "invalid stack merge: primitive type mismatch at same depth stack elements");
          b->StoreOver(other->_stack[i], _stack[i]);
          }
       }
@@ -145,47 +146,47 @@ OMR::VirtualMachineOperandStack::MakeCopy()
    new (copy) TR::VirtualMachineOperandStack(static_cast<TR::VirtualMachineOperandStack *>(this));
 
    return copy;
-   } 
+   }
 
 void
 OMR::VirtualMachineOperandStack::Push(TR::IlBuilder *b, TR::IlValue *value)
    {
    checkSize();
-   _stack[++_stackTop] = value; 
+   _stack[++_stackTop] = value;
    }
 
 TR::IlValue *
 OMR::VirtualMachineOperandStack::Top()
    {
-   TR_ASSERT(_stackTop >= 0, "no top: stack empty");
+   TR_ASSERT_FATAL(_stackTop >= 0, "no top: stack empty");
    return _stack[_stackTop];
    }
 
 TR::IlValue *
 OMR::VirtualMachineOperandStack::Pop(TR::IlBuilder *b)
    {
-   TR_ASSERT(_stackTop >= 0, "stack underflow"); 
+   TR_ASSERT_FATAL(_stackTop >= 0, "stack underflow");
    return _stack[_stackTop--];
    }
 
 TR::IlValue *
 OMR::VirtualMachineOperandStack::Pick(int32_t depth)
    {
-   TR_ASSERT(_stackTop >= depth, "pick request exceeds stack depth");
+   TR_ASSERT_FATAL(_stackTop >= depth, "pick request exceeds stack depth");
    return _stack[_stackTop - depth];
    }
 
 void
 OMR::VirtualMachineOperandStack::Drop(TR::IlBuilder *b, int32_t depth)
    {
-   TR_ASSERT(_stackTop >= depth-1, "stack underflow");
-   _stackTop-=depth; 
+   TR_ASSERT_FATAL(_stackTop >= depth-1, "stack underflow");
+   _stackTop-=depth;
    }
 
 void
 OMR::VirtualMachineOperandStack::Dup(TR::IlBuilder *b)
    {
-   TR_ASSERT(_stackTop >= 0, "cannot dup: stack empty");
+   TR_ASSERT_FATAL(_stackTop >= 0, "cannot dup: stack empty");
    TR::IlValue *top = _stack[_stackTop];
    Push(b, top);
    }

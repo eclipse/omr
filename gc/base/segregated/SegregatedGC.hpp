@@ -96,7 +96,6 @@ public:
 
 	virtual bool heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress);
 	virtual bool heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace,uintptr_t size, void *lowAddress, void *highAddress, void *lowValidAddress, void *highValidAddress);
-	virtual void heapReconfigured(MM_EnvironmentBase* env);
 
 	virtual bool isMarked(void *objectPtr) { return _markingScheme->isMarked(static_cast<omrobjectptr_t>(objectPtr)); }
 

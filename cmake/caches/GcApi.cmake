@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,10 +25,10 @@ set(OMR_GC_API ON CACHE BOOL "")
 set(OMR_GC_API_TEST ON CACHE_BOOL "")
 
 set(OMR_EXAMPLE ON CACHE BOOL "")
-set(OMR_PORT    ON CACHE BOOL "")
-set(OMR_THREAD  ON CACHE BOOL "")
-set(OMR_FVTEST  ON CACHE BOOL "")
-set(OMR_GC      ON CACHE BOOL "")
+set(OMR_PORT ON CACHE BOOL "")
+set(OMR_THREAD ON CACHE BOOL "")
+set(OMR_FVTEST ON CACHE BOOL "")
+set(OMR_GC ON CACHE BOOL "")
 
 # Disable incompatible GC tests
 
@@ -55,7 +55,7 @@ set(OMR_WARNINGS_AS_ERRORS ON CACHE BOOL "")
 
 # Disable unrelated OMR elements
 
-set(OMR_JIT  OFF CACHE BOOL "")
+set(OMR_JIT OFF CACHE BOOL "")
 set(OMR_JITBUILDER OFF CACHE BOOL "")
 set(OMR_DDR OFF CACHE BOOL "")
 set(OMR_OMRSIG OFF CACHE BOOL "")

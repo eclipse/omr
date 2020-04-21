@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@ class S390OpCodesTest : public OpCodesTest
    virtual void compileMemoryOperationTestMethods();
    virtual void compileUnaryTestMethods();
    virtual void compileBitwiseTestMethods();
-   virtual void compileTernaryTestMethods();
+   virtual void compileSelectTestMethods();
    virtual void compileCompareTestMethods();
    virtual void compileDirectCallTestMethods();
    virtual void compileAddressTestMethods();
@@ -41,7 +41,7 @@ class S390OpCodesTest : public OpCodesTest
    virtual void invokeMemoryOperationTests();
    virtual void invokeUnaryTests();
    virtual void invokeBitwiseTests();
-   virtual void invokeTernaryTests();
+   virtual void invokeSelectTests();
    virtual void invokeCompareTests();
    virtual void invokeDirectCallTests();
    virtual void invokeAddressTests();
@@ -49,7 +49,7 @@ class S390OpCodesTest : public OpCodesTest
    virtual void compileDisabledCompareOpCodesTestMethods();
    virtual void compileDisabledIntegerArithmeticTestMethods();
    virtual void compileDisabledUnaryTestMethods();
-   virtual void compileDisabledTernaryTestMethods();
+   virtual void compileDisabledSelectTestMethods();
    virtual void compileDisabledMemoryOperationTestMethods();
    virtual void compileDisabledBitwiseTestMethods();
    virtual void compileDisabledDirectCallTestMethods();
@@ -58,7 +58,7 @@ class S390OpCodesTest : public OpCodesTest
    virtual void invokeDisabledCompareOpCodesTests();
    virtual void invokeDisabledIntegerArithmeticTests();
    virtual void invokeDisabledUnaryTests();
-   virtual void invokeDisabledTernaryTests();
+   virtual void invokeDisabledSelectTests();
    virtual void invokeDisabledMemoryOperationTests();
    virtual void invokeDisabledBitwiseTests();
    virtual void invokeDisabledDirectCallTests();

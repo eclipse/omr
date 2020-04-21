@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -62,8 +62,8 @@ TR::Instruction *generateMvFprGprInstructions(TR::CodeGenerator *cg, TR::Node *n
    {
    TR::MemoryReference *tempMRStore1, *tempMRStore2, *tempMRLoad1, *tempMRLoad2;
    static bool disableDirectMove = feGetEnv("TR_disableDirectMove") ? true : false;
-   bool checkp8DirectMove = TR::Compiler->target.cpu.id() >= TR_PPCp8 && !disableDirectMove && TR::Compiler->target.cpu.getPPCSupportsVSX();
-   bool isLittleEndian = TR::Compiler->target.cpu.isLittleEndian();
+   bool checkp8DirectMove = cg->comp()->target().cpu.id() >= TR_PPCp8 && !disableDirectMove && cg->comp()->target().cpu.getPPCSupportsVSX();
+   bool isLittleEndian = cg->comp()->target().cpu.isLittleEndian();
 
    // it's fine if reg3 and reg2 are assigned in modes they are not used
    // what we want to avoid is them being NULL when we need to use them
@@ -166,7 +166,7 @@ TR::Instruction *generateMvFprGprInstructions(TR::CodeGenerator *cg, TR::Node *n
       else if (mode == gprLow2fpr)
          cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, tempMRStore1, reg1, cursor);
 
-      if ((nonops == false) && (TR::Compiler->target.cpu.id() >= TR_PPCgp))
+      if ((nonops == false) && (cg->comp()->target().cpu.id() >= TR_PPCgp))
          {
     	 // Insert 3 nops to break up the load/stores into separate groupings,
     	 // thus preventing a costly stall
@@ -204,6 +204,15 @@ TR::Instruction *generateInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnem
    if (preced)
       return new (cg->trHeapMemory()) TR::Instruction(op, n, preced, cg);
    return new (cg->trHeapMemory()) TR::Instruction(op, n, cg);
+   }
+
+TR::Instruction *generateAlignmentNopInstruction(TR::CodeGenerator *cg, TR::Node * n, uint32_t alignment, TR::Instruction *preced)
+   {
+   auto op = cg->comp()->target().cpu.id() >= TR_PPCp6 ? TR::InstOpCode::genop : TR::InstOpCode::nop;
+
+   if (preced)
+      return new (cg->trHeapMemory()) TR::PPCAlignmentNopInstruction(op, n, alignment, preced, cg);
+   return new (cg->trHeapMemory()) TR::PPCAlignmentNopInstruction(op, n, alignment, cg);
    }
 
 TR::Instruction *generateImmInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t imm,
@@ -294,14 +303,6 @@ TR::Instruction *generateLabelInstruction(TR::CodeGenerator *cg, TR::InstOpCode:
    return new (cg->trHeapMemory()) TR::PPCLabelInstruction(op, n, sym, cg);
    }
 
-TR::Instruction *generateAlignedLabelInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
-   TR::LabelSymbol *sym, int32_t alignment, TR::Instruction *preced)
-   {
-   if (preced)
-      return new (cg->trHeapMemory()) TR::PPCAlignedLabelInstruction(op, n, sym, alignment, preced, cg);
-   return new (cg->trHeapMemory()) TR::PPCAlignedLabelInstruction(op, n, sym, alignment, cg);
-   }
-
 TR::Instruction *generateDepLabelInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
    TR::LabelSymbol *sym, TR::RegisterDependencyConditions *cond, TR::Instruction *preced)
    {
@@ -382,9 +383,9 @@ TR::Instruction *generateDepConditionalBranchInstruction(TR::CodeGenerator *cg, 
    }
 
 TR::Instruction *generateTrg1Src1ImmInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
-   TR::Register *treg, TR::Register *s1reg, intptrj_t imm, TR::Instruction *preced)
+   TR::Register *treg, TR::Register *s1reg, intptr_t imm, TR::Instruction *preced)
    {
-   if (TR::Compiler->target.cpu.id() == TR_PPCp6 && TR::InstOpCode(op).isCompare())
+   if (cg->comp()->target().cpu.id() == TR_PPCp6 && TR::InstOpCode(op).isCompare())
       treg->resetFlippedCCR();
    if (preced)
       return new (cg->trHeapMemory()) TR::PPCTrg1Src1ImmInstruction(op, n, treg, s1reg, imm, preced, cg);
@@ -394,7 +395,7 @@ TR::Instruction *generateTrg1Src1ImmInstruction(TR::CodeGenerator *cg, TR::InstO
 TR::Instruction *generateTrg1Src1ImmInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
    TR::Register *treg, TR::Register *s1reg, TR::Register *cr0reg, int32_t imm, TR::Instruction *preced)
    {
-   if (TR::Compiler->target.cpu.id() == TR_PPCp6)
+   if (cg->comp()->target().cpu.id() == TR_PPCp6)
       cr0reg->resetFlippedCCR();
    if (preced)
       return new (cg->trHeapMemory()) TR::PPCTrg1Src1ImmInstruction(op, n,treg, s1reg, cr0reg, imm, preced, cg);
@@ -449,7 +450,7 @@ TR::Instruction *generateTrg1Src2Instruction(TR::CodeGenerator *cg, TR::InstOpCo
    {
    TR::Compilation * comp = cg->comp();
    static bool disableFlipCompare = feGetEnv("TR_DisableFlipCompare") != NULL;
-   if (!disableFlipCompare && TR::Compiler->target.cpu.id() == TR_PPCp6 &&
+   if (!disableFlipCompare && cg->comp()->target().cpu.id() == TR_PPCp6 &&
        TR::InstOpCode(op).isCompare() &&
        n->getOpCode().isBranch() && n->getOpCode().isBooleanCompare())
       {
@@ -475,7 +476,7 @@ TR::Instruction *generateTrg1Src2Instruction(TR::CodeGenerator *cg, TR::InstOpCo
 TR::Instruction *generateTrg1Src2Instruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
    TR::Register *treg, TR::Register *s1reg, TR::Register *s2reg, TR::Register *cr0Reg, TR::Instruction *preced)
    {
-   if (TR::Compiler->target.cpu.id() == TR_PPCp6)
+   if (cg->comp()->target().cpu.id() == TR_PPCp6)
       cr0Reg->resetFlippedCCR();
    return new (cg->trHeapMemory()) TR::PPCTrg1Src2Instruction(op, n, treg, s1reg, s2reg, cr0Reg, preced, cg);
    }
@@ -507,7 +508,7 @@ TR::Instruction *generateTrg1Src1Imm2Instruction(TR::CodeGenerator *cg, TR::Inst
 TR::Instruction *generateTrg1Src1Imm2Instruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
    TR::Register *trgReg, TR::Register *srcReg, TR::Register *cr0reg, int32_t imm1, int64_t imm2, TR::Instruction *preced)
    {
-   if (TR::Compiler->target.cpu.id() == TR_PPCp6)
+   if (cg->comp()->target().cpu.id() == TR_PPCp6)
       cr0reg->resetFlippedCCR();
    if (preced)
       return new (cg->trHeapMemory()) TR::PPCTrg1Src1Imm2Instruction(op, n, trgReg, srcReg, cr0reg, imm1, imm2, preced, cg);
@@ -568,11 +569,11 @@ TR::Instruction *generateShiftRightLogicalImmediateLong(TR::CodeGenerator *cg, T
 
 
 TR::Instruction *generateControlFlowInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
-   TR::RegisterDependencyConditions *deps, TR::Instruction *preced)
+   TR::RegisterDependencyConditions *deps, TR::Instruction *preced, bool useRegPairForResult, bool useRegPairForCond)
    {
    if (preced)
-      return new (cg->trHeapMemory()) TR::PPCControlFlowInstruction(op, n, preced, cg, deps);
-   return new (cg->trHeapMemory()) TR::PPCControlFlowInstruction(op, n, cg, deps);
+      return new (cg->trHeapMemory()) TR::PPCControlFlowInstruction(op, n, preced, cg, deps, useRegPairForResult, useRegPairForCond);
+   return new (cg->trHeapMemory()) TR::PPCControlFlowInstruction(op, n, cg, deps, useRegPairForResult, useRegPairForCond);
    }
 
 TR::Instruction *generateAdminInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
@@ -583,16 +584,8 @@ TR::Instruction *generateAdminInstruction(TR::CodeGenerator *cg, TR::InstOpCode:
    return new (cg->trHeapMemory()) TR::PPCAdminInstruction(op, n, fenceNode, cg);
    }
 
-TR::Instruction *generateDepImmInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
-   uint32_t imm, TR::RegisterDependencyConditions *cond, TR::Instruction *preced)
-   {
-   if (preced)
-      return new (cg->trHeapMemory()) TR::PPCDepImmInstruction(op, n, imm, cond, preced, cg);
-   return new (cg->trHeapMemory()) TR::PPCDepImmInstruction(op, n, imm, cond, cg);
-   }
-
 TR::Instruction *generateDepImmSymInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node * n,
-   uintptrj_t imm, TR::RegisterDependencyConditions *cond, TR::SymbolReference *sr, TR::Snippet *s, TR::Instruction *preced)
+   uintptr_t imm, TR::RegisterDependencyConditions *cond, TR::SymbolReference *sr, TR::Snippet *s, TR::Instruction *preced)
    {
    if (preced)
       return new (cg->trHeapMemory()) TR::PPCDepImmSymInstruction(op, n, imm, cond, sr, s, preced, cg);
@@ -674,4 +667,50 @@ int estimateLikeliness(TR::CodeGenerator *cg, TR::Node *n)
          }
       }
    return 0;
+   }
+
+void generateZeroExtendInstruction(TR::Node *node,
+                                   TR::Register *trgReg,
+                                   TR::Register *srcReg,
+                                   int32_t bitsInTarget,
+                                   TR::CodeGenerator *cg)
+   {
+   TR_ASSERT((cg->comp()->target().is64Bit() && bitsInTarget > 0 && bitsInTarget < 64) ||
+          (cg->comp()->target().is32Bit() && bitsInTarget > 0 && bitsInTarget < 32),
+          "invalid zero extension requested");
+   int64_t mask = (uint64_t)(CONSTANT64(0xffffFFFFffffFFFF)) >> (64 - bitsInTarget);
+   generateTrg1Src1Imm2Instruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::rldicl : TR::InstOpCode::rlwinm, node, trgReg, srcReg, 0, mask);
+   }
+
+void generateSignExtendInstruction(TR::Node *node,
+                                   TR::Register *trgReg,
+                                   TR::Register *srcReg,
+                                   TR::CodeGenerator *cg,
+                                   int32_t operandSize)
+   {
+   TR::InstOpCode::Mnemonic signExtendOp = TR::InstOpCode::bad;
+   switch (operandSize)
+      {
+      case 0x1:
+         signExtendOp = TR::InstOpCode::extsb;
+         break;
+      case 0x2:
+         signExtendOp = TR::InstOpCode::extsh;
+         break;
+      case 0x4:
+         signExtendOp = TR::InstOpCode::extsw;
+         break;
+      default:
+         TR_ASSERT(0,"unexpected operand size %d\n",operandSize);
+         break;
+      }
+   generateTrg1Src1Instruction(cg, signExtendOp, node, trgReg, srcReg);
+   }
+
+void generateSignExtendInstruction(TR::Node *node,
+                                   TR::Register *trgReg,
+                                   TR::Register *srcReg,
+                                   TR::CodeGenerator *cg)
+   {
+   generateSignExtendInstruction(node, trgReg, srcReg, cg, node->getOpCode().getSize());
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <stdint.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
@@ -39,11 +39,11 @@
 #include "il/Node.hpp"
 #include "il/NodeUtils.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/Link.hpp"
 #include "infra/List.hpp"
@@ -127,7 +127,7 @@ int32_t TR_StripMiner::perform()
       _cfg->setStructure(NULL);
 
       /* Initialize block mappers */
-      intptrj_t size = _nodesInCFG * sizeof(TR::Block *);
+      intptr_t size = _nodesInCFG * sizeof(TR::Block *);
       _origBlockMapper = (TR::Block **) trMemory()->allocateStackMemory(size);
       memset(_origBlockMapper, 0, size);
       _mainBlockMapper = (TR::Block **) trMemory()->allocateStackMemory(size);
@@ -461,7 +461,7 @@ void TR_StripMiner::collectLoops(TR_Structure *str)
 void TR_StripMiner::transformLoops()
    {
    ListIterator<LoopInfo> it(&_loopInfos);
-   intptrj_t size = _nodesInCFG * sizeof(TR::Block *);
+   intptr_t size = _nodesInCFG * sizeof(TR::Block *);
    for (LoopInfo *li = it.getFirst(); li; li = it.getNext())
       {
       if (li != NULL &&
@@ -653,7 +653,7 @@ void TR_StripMiner::transformLoop(LoopInfo *li)
    TR::Node *phNode = phEntry->getNode();
    TR::Block *lt = li->_loopTest;
    TR::TreeTop *ltTree = lt->getLastRealTreeTop();
-   intptrj_t stripLength = li->_stripLen;
+   intptr_t stripLength = li->_stripLen;
 
    TR::Block *clonedPh = _mainBlockMapper[ph->getNumber()];
    TR::TreeTop *clonedPhEntry = clonedPh->getEntry();
@@ -670,7 +670,7 @@ void TR_StripMiner::transformLoop(LoopInfo *li)
 
    if (limitNode->getOpCode().isLoadConst())
       {
-      intptrj_t limit = limitNode->getType().isInt32() ?
+      intptr_t limit = limitNode->getType().isInt32() ?
                         limitNode->getInt() : limitNode->getLongInt();
       if ((li->_increasing && limit < limit + li->_stripLen) ||
           (!li->_increasing && limit > limit - li->_stripLen))
@@ -1050,7 +1050,7 @@ TR::Block *TR_StripMiner::stripMineLoop(LoopInfo *li, TR::Block *outerHeader)
    TR::Node *phNode = phEntry->getNode();
    TR::Block *lt = li->_loopTest;
    TR::TreeTop *ltTree = lt->getLastRealTreeTop();
-   intptrj_t stripLength = li->_stripLen;
+   intptr_t stripLength = li->_stripLen;
 
    TR::Block *mainPh = _mainBlockMapper[ph->getNumber()];
    TR::TreeTop *mainPhEntry = mainPh->getEntry();
@@ -1316,7 +1316,7 @@ TR::Block *TR_StripMiner::stripMineLoop(LoopInfo *li, TR::Block *outerHeader)
    ListIterator<TR::CFGEdge> eItExit(&loop->getExitEdges());
    TR::CFGEdge *exitEdge = NULL;
    TR::Block *dest = NULL;
-   intptrj_t freq;
+   intptr_t freq;
    for (block = bIt.getFirst(); block; block = bIt.getNext())
       {
       if ((block != lt) && (block->getNumber() < _nodesInCFG))
@@ -1388,7 +1388,7 @@ TR::Block *TR_StripMiner::stripMineLoop(LoopInfo *li, TR::Block *outerHeader)
 TR::Block *TR_StripMiner::createGotoBlock(TR::Block *source, TR::Block *dest)
    {
    TR::TreeTop *destEntry = dest->getEntry();
-   intptrj_t freq = (source->getFrequency() < dest->getFrequency()) ?
+   intptr_t freq = (source->getFrequency() < dest->getFrequency()) ?
                     source->getFrequency() : dest->getFrequency();
 
    TR::Block *gotoBlock = TR::Block::createEmptyBlock(destEntry->getNode(), comp(), freq, source);
@@ -1424,7 +1424,7 @@ void TR_StripMiner::redirect(TR::Block *source, TR::Block *oldDest, TR::Block *n
 
    if (branchNode->getOpCode().isSwitch())
       {
-      for (intptrj_t i = branchNode->getCaseIndexUpperBound() - 1; i > 0; --i)
+      for (intptr_t i = branchNode->getCaseIndexUpperBound() - 1; i > 0; --i)
          {
          if (branchNode->getChild(i)->getBranchDestination()->getNode()->getBlock() == oldDest)
             {
@@ -1438,7 +1438,7 @@ void TR_StripMiner::redirect(TR::Block *source, TR::Block *oldDest, TR::Block *n
       }
    else if(branchNode->getOpCode().isJumpWithMultipleTargets() && branchNode->getOpCode().hasBranchChildren())
       {
-      for (intptrj_t i = 0 ; i< branchNode->getNumChildren() - 1; ++i)
+      for (intptr_t i = 0 ; i< branchNode->getNumChildren() - 1; ++i)
          {
          if (branchNode->getChild(i)->getBranchDestination()->getNode()->getBlock() == oldDest)
             {
@@ -1501,7 +1501,7 @@ TR::Block *TR_StripMiner::createLoopTest(LoopInfo *li, TR_ClonedLoopType type)
    TR::TreeTop *clonedPhEntry = clonedPh->getEntry();
    TR::Node *clonedPhNode = clonedPhEntry->getNode();
    TR::Block *clonedLt = blockMapper[lt->getNumber()];
-   intptrj_t offset = type == preLoop ? li->_preOffset : li->_postOffset;
+   intptr_t offset = type == preLoop ? li->_preOffset : li->_postOffset;
 
    bool isInt32 = li->_piv->getSymRef()->getSymbol()->getType().isInt32();
 
@@ -1559,7 +1559,7 @@ void TR_StripMiner::examineLoop(LoopInfo *li, TR_ClonedLoopType type, bool check
 
    ListIterator<TR::Block> bIt(&blocksInLoop);
    TR::Block *block = NULL;
-   intptrj_t visitCount = comp()->incVisitCount();
+   intptr_t visitCount = comp()->incVisitCount();
    for (block = bIt.getFirst(); block; block = bIt.getNext())
       {
       if (checkClone)
@@ -1705,7 +1705,7 @@ void TR_StripMiner::examineNode(LoopInfo *li, TR::Node *parent, TR::Node *node,
                                      accessNode->getSecondChild()->getOpCodeValue() == TR::iconst)
                                     {
                                     foundArrayAccess = true;
-                                    intptrj_t offset = accessNode->getOpCodeValue() == TR::iadd ?
+                                    intptr_t offset = accessNode->getOpCodeValue() == TR::iadd ?
                                        accessNode->getSecondChild()->getInt() :
                                        accessNode->getSecondChild()->getInt() * -1;
                                     if (li->_increasing)
@@ -1772,7 +1772,7 @@ void TR_StripMiner::examineNode(LoopInfo *li, TR::Node *parent, TR::Node *node,
          if (foundArrayAccess)
             {
             TR::DataType type = symbol->getDataType();
-            intptrj_t dataSize = TR::Symbol::convertTypeToSize(type);
+            intptr_t dataSize = TR::Symbol::convertTypeToSize(type);
             if (comp()->useCompressedPointers() && (type == TR::Address))
                dataSize = TR::Compiler->om.sizeofReferenceField();
             if (li->_arrayDataSize != 0 && li->_arrayDataSize != dataSize)
@@ -1784,7 +1784,7 @@ void TR_StripMiner::examineNode(LoopInfo *li, TR::Node *parent, TR::Node *node,
       }
 
    /* Walk its children */
-   for (intptrj_t i = 0; i < node->getNumChildren(); ++i)
+   for (intptr_t i = 0; i < node->getNumChildren(); ++i)
       {
       /* This loop cannot be strip mined, return */
       if (comp()->generateArraylets() &&
@@ -1832,7 +1832,7 @@ void TR_StripMiner::replaceLoopPivs(LoopInfo *li, TR::ILOpCodes newOpCode, TR::N
    for (parent = it.getFirst(); parent != NULL; parent = it.getNext())
       {
       TR::Node *parentNode = parent->getParent();
-      intptrj_t childNum = parent->getChildNumber();
+      intptr_t childNum = parent->getChildNumber();
       ListIterator<TR_Pair<TR::Node, TR::Node> > lit(&loadMapper);
       TR_Pair<TR::Node, TR::Node> *loadPair = NULL;
       TR::Node *loadNode = NULL;
@@ -1840,7 +1840,7 @@ void TR_StripMiner::replaceLoopPivs(LoopInfo *li, TR::ILOpCodes newOpCode, TR::N
 #if 1
 
       bool skipNode = false;
-      intptrj_t value;
+      intptr_t value;
       if ((parentNode->getOpCode().isRightShift() || parentNode->getOpCode().isDiv()) &&
           parentNode->getSecondChild()->getOpCode().isLoadConst())
          {
@@ -2037,7 +2037,7 @@ bool TR_StripMiner::checkIfIncrementalIncreasesOfPIV(LoopInfo *li)
 
    ListIterator<TR::Block> bIt(&blocksInLoop);
    TR::Block *block = NULL;
-   intptrj_t visitCount = comp()->incVisitCount();
+   intptr_t visitCount = comp()->incVisitCount();
    int32_t pivIncInStore;
    for (block = bIt.getFirst(); block; block = bIt.getNext())
       {

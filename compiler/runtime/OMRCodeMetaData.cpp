@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "runtime/OMRCodeMetaData.hpp"
+#include "runtime/CodeMetaData.hpp"
 
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"

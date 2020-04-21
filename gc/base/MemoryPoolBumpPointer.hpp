@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,8 @@ private:
 	MM_SweepPoolState *_sweepPoolState;	/**< GC Sweep Pool State */
 	MM_SweepPoolManager *_sweepPoolManager;		/**< pointer to SweepPoolManager class */
 
+	MM_HeapLinkedFreeHeader *_heapFreeList;
+	MM_HeapLinkedFreeHeader *_lastFreeEntry;							/**< address of the last free entry in the pool; valid after sweepforPGC; NOT maintained during allocation */
 protected:
 public:
 	
@@ -66,7 +68,7 @@ private:
 	void *internalAllocate(MM_EnvironmentBase *env, uintptr_t sizeInBytesRequired);
 	bool internalAllocateTLH(MM_EnvironmentBase *env, uintptr_t maximumSizeInBytesRequired, void * &addrBase, void * &addrTop);
 
-	void internalRecycleHeapChunk(void *addrBase, void *addrTop);
+	bool internalRecycleHeapChunk(void *addrBase, void *addrTop, MM_HeapLinkedFreeHeader *next);
 
 	/**
 	 * Check, can free memory element be connected to memory pool
@@ -106,6 +108,15 @@ public:
 	
 	virtual void expandWithRange(MM_EnvironmentBase *env, uintptr_t expandSize, void *lowAddress, void *highAddress, bool canCoalesce);
 	virtual void *contractWithRange(MM_EnvironmentBase *env, uintptr_t contractSize, void *lowAddress, void *highAddress);
+
+	virtual bool createFreeEntry(MM_EnvironmentBase* env, void* addrBase, void* addrTop,
+								 MM_HeapLinkedFreeHeader* previousFreeEntry, MM_HeapLinkedFreeHeader* nextFreeEntry);
+
+	virtual bool createFreeEntry(MM_EnvironmentBase* env, void* addrBase, void* addrTop);
+
+	bool connectInnerMemoryToPool(MM_EnvironmentBase* env, void* address, uintptr_t size, void* previousFreeEntry);
+	void connectOuterMemoryToPool(MM_EnvironmentBase *env, void *address, uintptr_t size, void *nextFreeEntry);
+	void connectFinalMemoryToPool(MM_EnvironmentBase *env, void *address, uintptr_t size);
 
 	bool abandonHeapChunk(void *addrBase, void *addrTop);
 
@@ -184,6 +195,32 @@ public:
 	 */
 	void alignAllocationPointer(uintptr_t alignmentMultiple);
 
+	MMINLINE MM_HeapLinkedFreeHeader *findLastFreeEntry(MM_EnvironmentBase *env, UDATA regionSize)
+	{
+		bool const compressed = compressObjectReferences();
+		MM_HeapLinkedFreeHeader *lastFreeEntry = NULL;
+		MM_HeapLinkedFreeHeader *currentFreeEntry = _heapFreeList;
+		while (NULL != currentFreeEntry) {
+			if (currentFreeEntry->getSize() > regionSize) {
+				lastFreeEntry = NULL;
+				break;
+			}
+			lastFreeEntry = currentFreeEntry;
+			currentFreeEntry = currentFreeEntry->getNext(compressed);
+		}
+		return lastFreeEntry;
+	}
+
+	/**
+	 * set the address of the last free entry in the pool
+	 */
+	virtual void setLastFreeEntry(void * addr) { _lastFreeEntry = (MM_HeapLinkedFreeHeader *)addr; }
+
+	/**
+	 * get the address of the last free entry in the pool
+	 */
+	virtual MM_HeapLinkedFreeHeader *getLastFreeEntry() { return _lastFreeEntry; }
+
 	/**
 	 * Create a MemoryPoolBumpPointer object.
 	 */
@@ -195,6 +232,8 @@ public:
 		,_nonScannableBytes(0)
 		,_sweepPoolState(NULL)
 		,_sweepPoolManager(NULL)
+		,_heapFreeList(NULL)
+		,_lastFreeEntry(NULL)
 	{
 		_typeId = __FUNCTION__;
 	};

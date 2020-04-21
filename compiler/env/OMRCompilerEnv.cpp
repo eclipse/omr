@@ -32,7 +32,8 @@ OMR::CompilerEnv::CompilerEnv(
       rawAllocator(raw),
       _initialized(false),
       _persistentAllocator(persistentAllocatorKit),
-      regionAllocator(_persistentAllocator)
+      regionAllocator(_persistentAllocator),
+      omrPortLib(NULL)
    {
    }
 

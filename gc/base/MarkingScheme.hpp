@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,12 +69,8 @@ private:
 		Assert_GC_true_with_message(env, objectPtr != J9_INVALID_OBJECT, "Invalid object pointer %p\n", objectPtr);
 		Assert_MM_objectAligned(env, objectPtr);
 		Assert_GC_true_with_message3(env, isHeapObject(objectPtr), "Object %p not in heap range [%p,%p)\n", objectPtr, _heapBase, _heapTop);
-		
-		assertNotForwardedPointer(env, objectPtr);
 	}
 	
-	void assertNotForwardedPointer(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
-
 	/**
 	 * Private internal. Called exclusively from completeScan();
 	 */
@@ -241,7 +237,7 @@ public:
 			bool isLeafSlot = false;
 			GC_SlotObject *slotObject;
 #if defined(OMR_GC_LEAF_BITS)
-			while (NULL != (slotObject = objectScanner->getNextSlot(isLeafSlot))) {
+			while (NULL != (slotObject = objectScanner->getNextSlot(&isLeafSlot))) {
 #else /* OMR_GC_LEAF_BITS */
 			while (NULL != (slotObject = objectScanner->getNextSlot())) {
 #endif /* OMR_GC_LEAF_BITS */

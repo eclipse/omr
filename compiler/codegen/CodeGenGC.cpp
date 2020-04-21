@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/OMRCodeGenerator.hpp" // IWYU pragma: keep
+#include "codegen/CodeGenerator.hpp" // IWYU pragma: keep
 
 #include <stdint.h>
 #include <string.h>
@@ -30,7 +30,6 @@
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/Instruction.hpp"
-#include "codegen/Linkage.hpp"
 #include "codegen/Snippet.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
@@ -39,12 +38,12 @@
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Node.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/IGNode.hpp"
@@ -63,7 +62,7 @@ OMR::CodeGenerator::createStackAtlas()
    //
    TR::Compilation *comp = self()->comp();
    TR::ResolvedMethodSymbol * methodSymbol = comp->getMethodSymbol();
-   intptrj_t stackSlotSize = TR::Compiler->om.sizeofReferenceAddress();
+   intptr_t stackSlotSize = TR::Compiler->om.sizeofReferenceAddress();
 
    int32_t slotIndex = 0;
    int32_t numberOfParmSlots = 0;
@@ -289,7 +288,7 @@ OMR::CodeGenerator::buildGCMapForInstruction(TR::Instruction *instr)
          // skip it.  The occupied flag is not accurate in this case because we
          // did not free the spill and therefore did not clear the flag.
          //
-         if ((TR::Compiler->target.cpu.isPower() || TR::Compiler->target.cpu.isZ()) && (*location)->getMaxSpillDepth() == 0  && comp->cg()->isOutOfLineHotPath())
+         if ((self()->comp()->target().cpu.isPower() || self()->comp()->target().cpu.isZ()) && (*location)->getMaxSpillDepth() == 0  && comp->cg()->isOutOfLineHotPath())
             {
             if (self()->getDebug())
                traceMsg(comp, "\nSkipping GC map [%p] index %d (%s) for instruction [%p] in OOL hot path because it has already been reverse spilled.\n",
@@ -304,7 +303,7 @@ OMR::CodeGenerator::buildGCMapForInstruction(TR::Instruction *instr)
 
    // Build the register save description
    //
-   map->setRegisterSaveDescription(instr->getRegisterSaveDescription());
+   map->setRegisterSaveDescription(0);
 
    // Build the register map
    //

@@ -28,6 +28,7 @@
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -43,9 +44,9 @@
 #include "control/Options_inlines.hpp"
 #include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
@@ -183,7 +184,7 @@ OMR::Power::RegisterDependencyConditions::RegisterDependencyConditions(
       TR::RealRegister::RegNum regNum = (TR::RealRegister::RegNum)cg->getGlobalRegister(child->getGlobalRegisterNumber());
 
       TR::RealRegister::RegNum highRegNum;
-      TR_GlobalRegisterNumber validHighRegNum = TR::TreeEvaluator::getHighGlobalRegisterNumberIfAny(child, cg); 
+      TR_GlobalRegisterNumber validHighRegNum = TR::TreeEvaluator::getHighGlobalRegisterNumberIfAny(child, cg);
 
       if (validHighRegNum != -1)
          {
@@ -228,7 +229,7 @@ OMR::Power::RegisterDependencyConditions::RegisterDependencyConditions(
       TR::RealRegister::RegNum regNum = (TR::RealRegister::RegNum)cg->getGlobalRegister(child->getGlobalRegisterNumber());
 
       TR::RealRegister::RegNum highRegNum;
-      TR_GlobalRegisterNumber validHighRegNum = TR::TreeEvaluator::getHighGlobalRegisterNumberIfAny(child, cg); 
+      TR_GlobalRegisterNumber validHighRegNum = TR::TreeEvaluator::getHighGlobalRegisterNumberIfAny(child, cg);
 
       if (validHighRegNum != -1)
          {
@@ -780,7 +781,8 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
                // this happens when the register was first spilled in main line path then was reverse spilled
                // and assigned to a real register in OOL path. We protected the backing store when doing
                // the reverse spill so we could re-spill to the same slot now
-               traceMsg(comp,"\nOOL: Found register spilled in main line and re-assigned inside OOL");
+               if (comp->getOption(TR_TraceCG))
+                  traceMsg(comp,"\nOOL: Found register spilled in main line and re-assigned inside OOL");
                TR::Node            *currentNode = currentInstruction->getNode();
                TR::RealRegister    *assignedReg = toRealRegister(virtReg->getAssignedRegister());
                TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(currentNode, (TR::SymbolReference*)virtReg->getBackingStorage()->getSymbolReference(), sizeof(uintptr_t), cg);
@@ -918,7 +920,7 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
             {
             TR::RealRegister::RegNum assignedRegNum = toRealRegister(virtReg->getAssignedRealRegister())->getRegisterNumber();
 
-            // Always block if the required register and assigned register match or if the assigned register is 
+            // Always block if the required register and assigned register match or if the assigned register is
             // required by another dependency but only if there are any spare registers left so as to avoid blocking
             // all existing registers
             if (_dependencies[i].getRealRegister() == assignedRegNum ||
@@ -975,7 +977,7 @@ void TR_PPCRegisterDependencyGroup::assignRegisters(TR::Instruction   *currentIn
          }
       }
 
-   // Assign all virtual regs that depend on a specfic real reg that is not free
+   // Assign all virtual regs that depend on a specific real reg that is not free
    for (i = 0; i < numberOfRegisters; i++)
       {
       virtReg          = _dependencies[i].getRegister();

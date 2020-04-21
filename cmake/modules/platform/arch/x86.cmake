@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,21 +32,19 @@ else()
 endif()
 
 # Testarossa build variables. Longer term the distinction between TR and the rest
-# of the OMR code should be heavily reduced. In the mean time, we keep
-# the distinction
+# of the OMR code should be heavily reduced. In the meantime, we keep the distinction.
 list(APPEND TR_COMPILE_DEFINITIONS -DTR_HOST_X86 -DTR_TARGET_X86)
 
-set(TR_HOST_ARCH    x)
+set(TR_HOST_ARCH x)
 
 if(OMR_ENV_DATA64)
 	list(APPEND TR_COMPILE_DEFINITIONS -DTR_HOST_64BIT -DTR_TARGET_64BIT -DBITVECTOR_64BIT)
 
-
 	set(TR_HOST_SUBARCH amd64)
-	set(TR_HOST_BITS    64)
+	set(TR_HOST_BITS 64)
 else()
 	list(APPEND TR_COMPILE_DEFINITIONS -DTR_HOST_32BIT -DTR_TARGET_32BIT)
 
 	set(TR_HOST_SUBARCH i386)
-	set(TR_HOST_BITS    32)
+	set(TR_HOST_BITS 32)
 endif()

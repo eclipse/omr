@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,7 +186,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::initialize(MM_EnvironmentBase* env)
 		return false;
 	} else {
 		for (uintptr_t i = 0; i < _heapFreeListCountExtended; ++i) {
-			new (&_largeObjectAllocateStatsForFreeList[i]) MM_LargeObjectAllocateStats();
+			new (&_largeObjectAllocateStatsForFreeList[i]) MM_LargeObjectAllocateStats(env);
 
 			/* set multiple factor = 2 for doubling _maxVeryLargeEntrySizes to avoid run out of _veryLargeEntryPool (minus count during decrement) */
 			if (!_largeObjectAllocateStatsForFreeList[i].initialize(env, (uint16_t)extensions->largeObjectAllocationProfilingTopK, extensions->largeObjectAllocationProfilingThreshold, extensions->largeObjectAllocationProfilingVeryLargeObjectThreshold, (float)extensions->largeObjectAllocationProfilingSizeClassRatio / (float)100.0,
@@ -388,6 +388,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::printFreeListValidity(MM_EnvironmentBa
 {
 	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	bool result = true;
+	bool const compressed = compressObjectReferences();
 
 	omrtty_printf("----- START SPLIT FREE LIST VALIDITY FOR 0x%p -----\n", this);
 	for (uintptr_t i = 0; i < _heapFreeListCountExtended; ++i) {
@@ -400,11 +401,11 @@ MM_MemoryPoolSplitAddressOrderedListBase::printFreeListValidity(MM_EnvironmentBa
 		MM_HeapLinkedFreeHeader* currentFreeEntry = _heapFreeLists[i]._freeList;
 		MM_HeapLinkedFreeHeader* previousFreeEntry = currentFreeEntry;
 		while (NULL != currentFreeEntry) {
-			listIsSane = listIsSane && ((NULL == currentFreeEntry->getNext()) || (currentFreeEntry < currentFreeEntry->getNext()));
+			listIsSane = listIsSane && ((NULL == currentFreeEntry->getNext(compressed)) || (currentFreeEntry < currentFreeEntry->getNext(compressed)));
 			calculatedSize += currentFreeEntry->getSize();
 			++calculatedHoles;
 			previousFreeEntry = currentFreeEntry;
-			currentFreeEntry = currentFreeEntry->getNext();
+			currentFreeEntry = currentFreeEntry->getNext(compressed);
 		}
 		omrtty_printf("  -- Free List %4zu (head: 0x%p, tail: 0x%p, expected size: %16zu, expected holes: %16zu): ", i, _heapFreeLists[i]._freeList, previousFreeEntry, _heapFreeLists[i]._freeSize, _heapFreeLists[i]._freeCount);
 		listIsSane = listIsSane && (calculatedSize == _heapFreeLists[i]._freeSize) && (calculatedHoles == _heapFreeLists[i]._freeCount);
@@ -424,13 +425,14 @@ MM_MemoryPoolSplitAddressOrderedListBase::printFreeListValidity(MM_EnvironmentBa
 bool
 MM_MemoryPoolSplitAddressOrderedListBase::isValidListOrdering()
 {
+	bool const compressed = compressObjectReferences();
 	for (uintptr_t i = 0; i < _heapFreeListCountExtended; ++i) {
 		MM_HeapLinkedFreeHeader* walk = _heapFreeLists[i]._freeList;
 		while (NULL != walk) {
-			if ((NULL != walk->getNext()) && (walk >= walk->getNext())) {
+			if ((NULL != walk->getNext(compressed)) && (walk >= walk->getNext(compressed))) {
 				return false;
 			}
-			walk = walk->getNext();
+			walk = walk->getNext(compressed);
 		}
 	}
 	return true;
@@ -492,12 +494,13 @@ bool
 MM_MemoryPoolSplitAddressOrderedListBase::recycleHeapChunk(MM_EnvironmentBase* env, void* addrBase, void* addrTop,
 													   MM_HeapLinkedFreeHeader* previousFreeEntry, MM_HeapLinkedFreeHeader* nextFreeEntry, uintptr_t curFreeList)
 {
+	bool const compressed = compressObjectReferences();
 	Assert_MM_true(addrBase <= addrTop);
 	Assert_MM_true((NULL == nextFreeEntry) || (addrTop <= nextFreeEntry));
 	if (internalRecycleHeapChunk(addrBase, addrTop, nextFreeEntry)) {
 		if (previousFreeEntry) {
 			Assert_MM_true(previousFreeEntry < addrBase);
-			previousFreeEntry->setNext((MM_HeapLinkedFreeHeader*)addrBase);
+			previousFreeEntry->setNext((MM_HeapLinkedFreeHeader*)addrBase, compressed);
 		} else {
 			_heapFreeLists[curFreeList]._freeList = (MM_HeapLinkedFreeHeader*)addrBase;
 		}
@@ -507,7 +510,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::recycleHeapChunk(MM_EnvironmentBase* e
 
 	if (previousFreeEntry) {
 		Assert_MM_true((NULL == nextFreeEntry) || (previousFreeEntry < nextFreeEntry));
-		previousFreeEntry->setNext(nextFreeEntry);
+		previousFreeEntry->setNext(nextFreeEntry, compressed);
 	} else {
 		_heapFreeLists[curFreeList]._freeList = nextFreeEntry;
 	}
@@ -560,6 +563,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::getAvailableContractionSizeForRangeEnd
 void*
 MM_MemoryPoolSplitAddressOrderedListBase::findFreeEntryEndingAtAddr(MM_EnvironmentBase* env, void* addr)
 {
+	bool const compressed = compressObjectReferences();
 	MM_HeapLinkedFreeHeader* currentFreeEntry;
 
 	for (uintptr_t i = 0; i < _heapFreeListCountExtended; ++i) {
@@ -577,7 +581,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::findFreeEntryEndingAtAddr(MM_Environme
 				break;
 			}
 
-			currentFreeEntry = currentFreeEntry->getNext();
+			currentFreeEntry = currentFreeEntry->getNext(compressed);
 		}
 	}
 
@@ -594,6 +598,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::findFreeEntryEndingAtAddr(MM_Environme
 void*
 MM_MemoryPoolSplitAddressOrderedListBase::findFreeEntryTopStartingAtAddr(MM_EnvironmentBase* env, void* addr)
 {
+	bool const compressed = compressObjectReferences();
 	MM_HeapLinkedFreeHeader* currentFreeEntry;
 
 	for (uintptr_t i = 0; i < _heapFreeListCountExtended; ++i) {
@@ -611,7 +616,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::findFreeEntryTopStartingAtAddr(MM_Envi
 				break;
 			}
 
-			currentFreeEntry = currentFreeEntry->getNext();
+			currentFreeEntry = currentFreeEntry->getNext(compressed);
 		}
 	}
 
@@ -664,8 +669,9 @@ void*
 MM_MemoryPoolSplitAddressOrderedListBase::getNextFreeStartingAddr(MM_EnvironmentBase* env, void* currentFree, uintptr_t* currentFreeListIndex)
 {
 	Assert_MM_true(currentFree != NULL);
-	if (NULL != ((MM_HeapLinkedFreeHeader*)currentFree)->getNext()) {
-		return ((MM_HeapLinkedFreeHeader*)currentFree)->getNext();
+	bool const compressed = compressObjectReferences();
+	if (NULL != ((MM_HeapLinkedFreeHeader*)currentFree)->getNext(compressed)) {
+		return ((MM_HeapLinkedFreeHeader*)currentFree)->getNext(compressed);
 	}
 	uintptr_t startFreeListIndex = 0;
 	if (currentFreeListIndex != NULL) {
@@ -715,6 +721,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::getNextFreeStartingAddr(MM_Environment
 void
 MM_MemoryPoolSplitAddressOrderedListBase::moveHeap(MM_EnvironmentBase* env, void* srcBase, void* srcTop, void* dstBase)
 {
+	bool const compressed = compressObjectReferences();
 	for (uintptr_t i = 0; i < _heapFreeListCount; ++i) {
 		MM_HeapLinkedFreeHeader* currentFreeEntry, *previousFreeEntry;
 
@@ -727,13 +734,13 @@ MM_MemoryPoolSplitAddressOrderedListBase::moveHeap(MM_EnvironmentBase* env, void
 
 				if (previousFreeEntry) {
 					assume0(previousFreeEntry < newFreeEntry);
-					previousFreeEntry->setNext(newFreeEntry);
+					previousFreeEntry->setNext(newFreeEntry, compressed);
 				} else {
 					_heapFreeLists[i]._freeList = newFreeEntry;
 				}
 			}
 			previousFreeEntry = currentFreeEntry;
-			currentFreeEntry = currentFreeEntry->getNext();
+			currentFreeEntry = currentFreeEntry->getNext(compressed);
 		}
 	}
 }
@@ -769,6 +776,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::printCurrentFreeList(MM_EnvironmentBas
 {
 	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	omrtty_printf("Analysis of %s freelist: \n", area);
+	bool const compressed = compressObjectReferences();
 
 	for (uintptr_t i = 0; i < _heapFreeListCountExtended; ++i) {
 		MM_HeapLinkedFreeHeader* currentFreeEntry = _heapFreeLists[i]._freeList;
@@ -781,7 +789,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::printCurrentFreeList(MM_EnvironmentBas
 						 currentFreeEntry,
 						 currentFreeEntry->afterEnd(),
 						 currentFreeEntry->getSize());
-			currentFreeEntry = currentFreeEntry->getNext();
+			currentFreeEntry = currentFreeEntry->getNext(compressed);
 		}
 	}
 }
@@ -792,6 +800,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::recalculateMemoryPoolStatistics(MM_Env
 	uintptr_t largestFreeEntry = 0;
 	uintptr_t freeBytes = 0;
 	uintptr_t freeEntryCount = 0;
+	bool const compressed = compressObjectReferences();
 
 	for (uintptr_t i = 0; i < _heapFreeListCountExtended; ++i) {
 		MM_HeapLinkedFreeHeader* freeHeader = _heapFreeLists[i]._freeList;
@@ -801,7 +810,7 @@ MM_MemoryPoolSplitAddressOrderedListBase::recalculateMemoryPoolStatistics(MM_Env
 			}
 			freeBytes += freeHeader->getSize();
 			freeEntryCount += 1;
-			freeHeader = freeHeader->getNext();
+			freeHeader = freeHeader->getNext(compressed);
 		}
 	}
 

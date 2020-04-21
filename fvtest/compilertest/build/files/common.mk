@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,12 +21,14 @@
 
 JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/compile/OSRData.cpp \
-    $(JIT_OMR_DIRTY_DIR)/compile/Method.cpp \
+    $(JIT_OMR_DIRTY_DIR)/compile/OMRMethod.cpp \
+    $(JIT_OMR_DIRTY_DIR)/compile/ResolvedMethod.cpp \
     $(JIT_OMR_DIRTY_DIR)/compile/VirtualGuard.cpp \
     $(JIT_OMR_DIRTY_DIR)/control/OMROptions.cpp \
     $(JIT_OMR_DIRTY_DIR)/control/OptimizationPlan.cpp \
     $(JIT_OMR_DIRTY_DIR)/control/OMRRecompilation.cpp  \
     $(JIT_OMR_DIRTY_DIR)/env/ExceptionTable.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/FrontEnd.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/Assert.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/BitVector.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/Checklist.cpp \
@@ -47,17 +49,17 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/infra/OMRCfg.cpp \
     $(JIT_OMR_DIRTY_DIR)/infra/SimpleRegex.cpp \
     $(JIT_OMR_DIRTY_DIR)/ilgen/IlGenRequest.cpp \
-    $(JIT_OMR_DIRTY_DIR)/il/symbol/OMRSymbol.cpp \
+    $(JIT_OMR_DIRTY_DIR)/il/OMRSymbol.cpp \
     $(JIT_OMR_DIRTY_DIR)/il/OMRBlock.cpp \
     $(JIT_OMR_DIRTY_DIR)/compile/OMRSymbolReferenceTable.cpp \
     $(JIT_OMR_DIRTY_DIR)/compile/OMRAliasBuilder.cpp \
-    $(JIT_OMR_DIRTY_DIR)/il/symbol/OMRAutomaticSymbol.cpp \
-    $(JIT_OMR_DIRTY_DIR)/il/symbol/OMRLabelSymbol.cpp \
-    $(JIT_OMR_DIRTY_DIR)/il/symbol/OMRMethodSymbol.cpp \
-    $(JIT_OMR_DIRTY_DIR)/il/symbol/OMRParameterSymbol.cpp \
-    $(JIT_OMR_DIRTY_DIR)/il/symbol/OMRRegisterMappedSymbol.cpp \
-    $(JIT_OMR_DIRTY_DIR)/il/symbol/OMRResolvedMethodSymbol.cpp \
-    $(JIT_OMR_DIRTY_DIR)/il/symbol/OMRStaticSymbol.cpp \
+    $(JIT_OMR_DIRTY_DIR)/il/OMRAutomaticSymbol.cpp \
+    $(JIT_OMR_DIRTY_DIR)/il/OMRLabelSymbol.cpp \
+    $(JIT_OMR_DIRTY_DIR)/il/OMRMethodSymbol.cpp \
+    $(JIT_OMR_DIRTY_DIR)/il/OMRParameterSymbol.cpp \
+    $(JIT_OMR_DIRTY_DIR)/il/OMRRegisterMappedSymbol.cpp \
+    $(JIT_OMR_DIRTY_DIR)/il/OMRResolvedMethodSymbol.cpp \
+    $(JIT_OMR_DIRTY_DIR)/il/OMRStaticSymbol.cpp \
     $(JIT_OMR_DIRTY_DIR)/il/OMRNode.cpp \
     $(JIT_OMR_DIRTY_DIR)/il/NodePool.cpp \
     $(JIT_OMR_DIRTY_DIR)/il/NodeUtils.cpp \
@@ -72,6 +74,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/env/OMRClassEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRDebugEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRVMEnv.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/OMRVMMethodEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/SegmentProvider.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/SegmentAllocator.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/SystemSegmentProvider.cpp \
@@ -93,7 +96,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/ras/LimitFile.cpp \
     $(JIT_OMR_DIRTY_DIR)/ras/LogTracer.cpp \
     $(JIT_OMR_DIRTY_DIR)/ras/OptionsDebug.cpp \
-    $(JIT_OMR_DIRTY_DIR)/ras/PPCOpNames.cpp \
     $(JIT_OMR_DIRTY_DIR)/ras/Tree.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/AsyncCheckInsertion.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/BackwardBitVectorAnalysis.cpp \
@@ -101,7 +103,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/optimizer/BackwardUnionBitVectorAnalysis.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/BitVectorAnalysis.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/CatchBlockRemover.cpp \
-    $(JIT_OMR_DIRTY_DIR)/optimizer/CFGSimplifier.cpp \
+    $(JIT_OMR_DIRTY_DIR)/optimizer/OMRCFGSimplifier.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/CompactLocals.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/CopyPropagation.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/DataFlowAnalysis.cpp \
@@ -160,6 +162,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/optimizer/OMRSimplifierHandlers.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/StructuralAnalysis.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/Structure.cpp \
+    $(JIT_OMR_DIRTY_DIR)/optimizer/SwitchAnalyzer.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/TranslateTable.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/UnionBitVectorAnalysis.cpp \
     $(JIT_OMR_DIRTY_DIR)/optimizer/UseDefInfo.cpp \
@@ -180,7 +183,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/codegen/CodeGenPrep.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/CodeGenGC.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/CodeGenRA.cpp \
-    $(JIT_OMR_DIRTY_DIR)/codegen/FrontEnd.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/OMRGCRegisterMap.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/OMRGCStackAtlas.cpp \
     $(JIT_OMR_DIRTY_DIR)/codegen/OMRLinkage.cpp \
@@ -214,7 +216,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     $(JIT_PRODUCT_DIR)/tests/injectors/CmpBranchOpIlInjector.cpp \
     $(JIT_PRODUCT_DIR)/tests/injectors/OpIlInjector.cpp \
     $(JIT_PRODUCT_DIR)/tests/injectors/StoreOpIlInjector.cpp \
-    $(JIT_PRODUCT_DIR)/tests/injectors/TernaryOpIlInjector.cpp \
+    $(JIT_PRODUCT_DIR)/tests/injectors/SelectOpIlInjector.cpp \
     $(JIT_PRODUCT_DIR)/tests/injectors/UnaryOpIlInjector.cpp \
     $(JIT_PRODUCT_DIR)/tests/injectors/BarIlInjector.cpp \
     $(JIT_PRODUCT_DIR)/tests/injectors/CallIlInjector.cpp \
@@ -267,13 +269,12 @@ JIT_PRODUCT_SOURCE_FILES+=\
     $(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineRegister.cpp \
     $(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineRegisterInStruct.cpp \
     $(JIT_OMR_DIRTY_DIR)/ilgen/OMRVirtualMachineState.cpp \
-    $(JIT_OMR_DIRTY_DIR)/runtime/Alignment.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/CodeCacheTypes.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/OMRCodeCache.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/OMRCodeCacheManager.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/OMRCodeCacheMemorySegment.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/OMRCodeCacheConfig.cpp \
-    $(JIT_PRODUCT_DIR)/compile/Method.cpp \
+    $(JIT_PRODUCT_DIR)/compile/ResolvedMethod.cpp \
     $(JIT_PRODUCT_DIR)/control/TestJit.cpp \
     $(JIT_PRODUCT_DIR)/env/FrontEnd.cpp \
     $(JIT_PRODUCT_DIR)/ilgen/IlInjector.cpp \

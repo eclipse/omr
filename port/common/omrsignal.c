@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@
  * \arg OMRPORT_SIG_VALUE_FLOAT_64 -- value is a (double*) and points to a floating point value. No assumptions should be made about the validity of the floating point number.
  *
  * @note The caller may modify the value returned in value for some entries. Only entries in the OMRPORT_SIG_GPR, OMRPORT_SIG_CONTROL or OMRPORT_SIG_FPR categories may be modified.
- * @note If the exception is resumed using J9SIG_EXCEPTION_CONTINUE_EXECUTION, the modified values will be used
+ * @note If the exception is resumed using OMRPORT_SIG_EXCEPTION_CONTINUE_EXECUTION, the modified values will be used
  */
 uint32_t
 omrsig_info(struct OMRPortLibrary *portLibrary, void *info, uint32_t category, int32_t index, const char **name, void **value)
@@ -243,7 +243,7 @@ omrsig_map_portlib_signal_to_os_signal(struct OMRPortLibrary *portLibrary, uint3
  * for the portlibSignalFlag signal are left unchanged when this function overrides the master
  * handler. When the master handler is re-registered with the portlibSignalFlag signal, then
  * the records associated with master handler don't need to be restored. An example of records
- * is J9*AsyncHandlerRecord(s) in asyncHandlerList.
+ * is OMR*AsyncHandlerRecord(s) in asyncHandlerList.
  *
  * Each platform variant of omrsignal.c should have a signalMap. signalMap should have a list of
  * signals, which are supported on a platform. This function supports all signals listed in
@@ -316,41 +316,33 @@ omrsig_is_signal_ignored(struct OMRPortLibrary *portLibrary, uint32_t portlibSig
 
 
 /**
- * Determine if the port library is capable of protecting a function from the indicated signals in the indicated way.
+ * Determine if omrsig_protect is capable of protecting a function from
+ * the indicated signals in the indicated way. omrsig_protect only supports
+ * synchronous signals so omrsig_can_protect does not need to check for
+ * asynchronous signals.
  *
  * @param[in] portLibrary The port library
- * @param[in] flags flags to control the signal handlers. Construct from bitwise-orring any of the following constants:
- *	OMRPORT_SIG_FLAG_MAY_RETURN - indicates that the handler might return OMRPORT_SIG_EXCEPTION_RETURN, so a jmpbuf must be maintained in case that happens
- *	OMRPORT_SIG_FLAG_MAY_CONTINUE_EXECUTION - indicates that the handler might return OMRPORT_SIG_EXCEPTION_CONTINUE_EXECUTION
-
- *	Synchronous Signals: If the signal option OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS has been set we cannot protect against any synchronous signals.
- *		OMRPORT_SIG_FLAG_SIGSEGV - catch SIGSEGV
- *		OMRPORT_SIG_FLAG_SIGBUS - catch SIGBUS
- *		OMRPORT_SIG_FLAG_SIGILL - catch SIGILL
- *		OMRPORT_SIG_FLAG_SIGFPE - catch SIGFPE
- *		OMRPORT_SIG_FLAG_SIGTRAP - catch SIGTRAP
- * 		OMRPORT_SIG_FLAG_SIGALLSYNC - catch any of the above synchronous signals
+ * @param[in] flags flags to control the signal handlers. Construct from
+ *            bitwise-orring any of the following constants:
+ *            1. OMRPORT_SIG_FLAG_MAY_RETURN - indicates that the handler
+ *            might return OMRPORT_SIG_EXCEPTION_RETURN, so a jmpbuf must be
+ *            maintained in case that happens.
+ *            2. OMRPORT_SIG_FLAG_MAY_CONTINUE_EXECUTION - indicates that the
+ *            handler might return OMRPORT_SIG_EXCEPTION_CONTINUE_EXECUTION.
  *
- *  Asynchronous Signals: If the signal option OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS has been set we cannot protect against any asynchronous signals.
- *  	OMRPORT_SIG_FLAG_SIGQUIT - catch SIGQUIT
- * 		OMRPORT_SIG_FLAG_SIGABRT - catch SIGABRT
- *		OMRPORT_SIG_FLAG_SIGTERM - catch SIGTERM
- *		OMRPORT_SIG_FLAG_SIGRECONFIG - catch SIGRECONFIG
- *		OMRPORT_SIG_FLAG_SIGINT - catch SIGINT
- *		OMRPORT_SIG_FLAG_SIGXFSZ - catch SIGXFSZ
- *		OMRPORT_SIG_FLAG_SIGALLASYNC - catch any of the above asynchronous signals
+ * If the signal option OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS has been
+ * set, then no protection is available for the synchronous signals.
  *
- * @return non-zero if the portlibrary can support the specified flags.
+ * Refer to the definition of the OMRPORT_SIG_FLAG_SIGALLSYNC macro for the list
+ * of synchronous signals.
+ *
+ * @return non-zero if the port library can support the specified flags.
  */
 int32_t
 omrsig_can_protect(struct OMRPortLibrary *portLibrary,  uint32_t flags)
 {
 	/* in the stub implementation, no signals are supported */
-	if (flags & OMRPORT_SIG_FLAG_SIGALLSYNC) {
-		return 0;
-	} else {
-		return 1;
-	}
+	return 0;
 }
 
 /**

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2016 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,21 @@ typedef struct J9PortNodeMask {
 } J9PortNodeMask;
 #endif
 
+#if defined(LINUX)
+typedef int (*memfd_function_t)(const char *name, unsigned int flags);
+#endif /* defined(LINUX) */
+
+typedef struct OMRSTFLEFacilities {
+	uint64_t dw1;
+	uint64_t dw2;
+	uint64_t dw3;
+} OMRSTFLEFacilities;
+
+typedef struct OMRSTFLECache {
+	uintptr_t lastDoubleWord;
+	OMRSTFLEFacilities facilities;
+} OMRSTFLECache;
+
 typedef struct OMRPortPlatformGlobals {
 	uintptr_t numa_platform_supports_numa;
 	uintptr_t numa_platform_interleave_memory;
@@ -85,11 +100,15 @@ typedef struct OMRPortPlatformGlobals {
 	int32_t introspect_threadSuspendSignal;
 #endif /* defined(OMR_CONFIGURABLE_SUSPEND_SIGNAL) */
 #if defined(LINUX)
+	uintptr_t huge_pages_mmap_enabled;
+	memfd_function_t memfd_function;
 	uint64_t cgroupSubsystemsAvailable; /**< cgroup subsystems available for port library to use; it is valid only when cgroupEntryList is non-null */
 	uint64_t cgroupSubsystemsEnabled; /**< cgroup subsystems enabled in port library; it is valid only when cgroupEntryList is non-null */
 	OMRCgroupEntry *cgroupEntryList; /**< head of the circular linked list, each element contains information about cgroup of the process for a subsystem */
+	uintptr_t performFullMemorySearch; /**< Always perform full range memory search even smart address can not be established */
 	BOOLEAN syscallNotAllowed; /**< Assigned True if the mempolicy syscall is failed due to security opts (Can be seen in case of docker) */
 #endif /* defined(LINUX) */
+	OMRSTFLECache stfleCache;
 } OMRPortPlatformGlobals;
 
 
@@ -136,7 +155,12 @@ typedef struct OMRPortPlatformGlobals {
 #define PPG_cgroupSubsystemsEnabled (portLibrary->portGlobals->platformGlobals.cgroupSubsystemsEnabled)
 #define PPG_cgroupEntryList (portLibrary->portGlobals->platformGlobals.cgroupEntryList)
 #define PPG_numaSyscallNotAllowed (portLibrary->portGlobals->platformGlobals.syscallNotAllowed)
+#define PPG_performFullMemorySearch (portLibrary->portGlobals->platformGlobals.performFullMemorySearch)
+#define PPG_huge_pages_mmap_enabled (portLibrary->portGlobals->platformGlobals.huge_pages_mmap_enabled)
+#define PPG_memfd_function (portLibrary->portGlobals->platformGlobals.memfd_function)
 #endif /* defined(LINUX) */
+
+#define PPG_stfleCache (portLibrary->portGlobals->platformGlobals.stfleCache)
 
 #endif /* omrportpg_h */
 

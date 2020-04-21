@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,3 +103,4 @@ IsI,               ///< is I instruction, i.e. SVC
 IsIE,              ///< is IE instruction, i.e. NIAI
 IsOpCodeOnly,      ///< This is used for many instructions which only require the opcode
 IsNOP,
+IsAlignmentNop,

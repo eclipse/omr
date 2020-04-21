@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,6 +95,18 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 		}
 	}
 
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+	/*
+	 * The decision to create a heap with a shared file descriptor is based on if double map was requested
+	 * or not, because we do not know at this point the actual heap page size (double map does not support
+	 * huge pages). Nonetheless, this is a safe operation because in case page size equals system's huge page
+	 * the mode flag OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN will be ignored.
+	 */
+	if(extensions->isVLHGC() && extensions->isArrayletDoubleMapRequested) {
+		mode |= OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN;
+	}
+#endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
+
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	if (extensions->enableSplitHeap) {
 		/* currently (ceiling != NULL) is using to recognize CompressedRefs so must be NULL for 32 bit platforms */
@@ -121,178 +133,181 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 		instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
 												 ceiling, mode, options, memoryCategory);
 
-#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
-		if (1 == extensions->fvtest_enableReadBarrierVerification) {
-			MM_VirtualMemory* instanceShadow = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags,
-					tailPadding, preferredAddress, (void*)OMR_MIN(NON_SCALING_LOW_MEMORY_HEAP_CEILING,
-					(uintptr_t)ceiling), mode, options, memoryCategory);
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
+		if (!env->compressObjectReferences()) {
+			if (1 == extensions->fvtest_enableReadBarrierVerification) {
+				MM_VirtualMemory* instanceShadow = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags,
+						tailPadding, preferredAddress, (void*)OMR_MIN(NON_SCALING_LOW_MEMORY_HEAP_CEILING,
+						(uintptr_t)ceiling), mode, options, memoryCategory);
 
-			extensions->shadowHeapBase = instanceShadow->getHeapBase();
-			extensions->shadowHeapTop = instanceShadow->getHeapTop();
-			extensions->shadowHeapHandle.setVirtualMemory(instanceShadow);
+				extensions->shadowHeapBase = instanceShadow->getHeapBase();
+				extensions->shadowHeapTop = instanceShadow->getHeapTop();
+				extensions->shadowHeapHandle.setVirtualMemory(instanceShadow);
+			}
 		}
-#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 	} else {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-		/*
-		 * This function is used for Compressed References platforms only
-		 * The ceiling for such platforms is set maximum memory value be supported (32G for 3-bit shift)
-		 * The ceiling it is 0 for all other platforms
-		 */
-		/* NON_SCALING_LOW_MEMORY_HEAP_CEILING is set to 4G for 64-bit platforms only, 0 for 32-bit platforms */
-		Assert_MM_true(NON_SCALING_LOW_MEMORY_HEAP_CEILING > 0);
+		if (env->compressObjectReferences()) {
+			OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+			/*
+			 * This function is used for Compressed References platforms only
+			 * The ceiling for such platforms is set maximum memory value be supported (32G for 3-bit shift)
+			 * The ceiling it is 0 for all other platforms
+			 */
+			/* NON_SCALING_LOW_MEMORY_HEAP_CEILING is set to 4G for 64-bit platforms only, 0 for 32-bit platforms */
+			Assert_MM_true(NON_SCALING_LOW_MEMORY_HEAP_CEILING > 0);
 		
-		/*
-		 * Usually the suballocator memory should be allocated first (before heap) however
-		 * in case when preferred address is specified we will try to allocate heap first
-		 * to avoid possible interference with requested heap location
-		 */
-		bool shouldHeapBeAllocatedFirst = (NULL != preferredAddress);
-		void* startAllocationAddress = preferredAddress;
+			/*
+			 * Usually the suballocator memory should be allocated first (before heap) however
+			 * in case when preferred address is specified we will try to allocate heap first
+			 * to avoid possible interference with requested heap location
+			 */
+			bool shouldHeapBeAllocatedFirst = (NULL != preferredAddress);
+			void* startAllocationAddress = preferredAddress;
 
-		/* Set the commit size for the sub allocator. This needs to be completed before the call to omrmem_ensure_capacity32 */
-		omrport_control(OMRPORT_CTLDATA_ALLOCATE32_COMMIT_SIZE, extensions->suballocatorCommitSize);
+			/* Set the commit size for the sub allocator. This needs to be completed before the call to omrmem_ensure_capacity32 */
+			omrport_control(OMRPORT_CTLDATA_ALLOCATE32_COMMIT_SIZE, extensions->suballocatorCommitSize);
 
-		if (!shouldHeapBeAllocatedFirst) {
-			if (OMRPORT_ENSURE_CAPACITY_FAILED == omrmem_ensure_capacity32(extensions->suballocatorInitialSize)) {
-				extensions->heapInitializationFailureReason = MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_CAN_NOT_ALLOCATE_LOW_MEMORY_RESERVE;
-				return false;
+			if (!shouldHeapBeAllocatedFirst) {
+				if (OMRPORT_ENSURE_CAPACITY_FAILED == omrmem_ensure_capacity32(extensions->suballocatorInitialSize)) {
+					extensions->heapInitializationFailureReason = MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_CAN_NOT_ALLOCATE_LOW_MEMORY_RESERVE;
+					return false;
+				}
 			}
-		}
 
-		options |= OMRPORT_VMEM_STRICT_ADDRESS | OMRPORT_VMEM_ALLOC_QUICK;
+			options |= OMRPORT_VMEM_STRICT_ADDRESS | OMRPORT_VMEM_ALLOC_QUICK;
 
 #if defined(J9ZOS39064)
-		/* 2TO32G area is extended to 64G */
-		options |= OMRPORT_VMEM_ZOS_USE2TO32G_AREA;
+			/* 2TO32G area is extended to 64G */
+			options |= OMRPORT_VMEM_ZOS_USE2TO32G_AREA;
 
-		/*
-		 * On ZOS an address space below 2G can not be taken for virtual memory
-		 */
+			/*
+			 * On ZOS an address space below 2G can not be taken for virtual memory
+			 */
 #define TWO_GB_ADDRESS ((void*)((uintptr_t)2 * 1024 * 1024 * 1024))
-		if (NULL == preferredAddress) {
-			startAllocationAddress = TWO_GB_ADDRESS;
-		}
+			if (NULL == preferredAddress) {
+				startAllocationAddress = TWO_GB_ADDRESS;
+			}
 #endif /* defined(J9ZOS39064) */
 
-		void* requestedTopAddress = (void*)((uintptr_t)startAllocationAddress + allocateSize + tailPadding);
+			void* requestedTopAddress = (void*)((uintptr_t)startAllocationAddress + allocateSize + tailPadding);
 
-		if (extensions->isConcurrentScavengerHWSupported()) {
-			void * ceilingToRequest = ceiling;
-			/* Requested top address might be higher then ceiling because of added chunk */
-			if ((requestedTopAddress > ceiling) && ((void *)((uintptr_t)requestedTopAddress - concurrentScavengerPageSize) <= ceiling)) {
-				/* ZOS 2_TO_64/2_TO_32 options would not allow memory request larger then 64G/32G so total requested size including tail padding should not exceed it */
-				allocateSize = (uintptr_t)ceiling - (uintptr_t)startAllocationAddress - tailPadding;
+			if (extensions->isConcurrentScavengerHWSupported()) {
+				void * ceilingToRequest = ceiling;
+				/* Requested top address might be higher then ceiling because of added chunk */
+				if ((requestedTopAddress > ceiling) && ((void *)((uintptr_t)requestedTopAddress - concurrentScavengerPageSize) <= ceiling)) {
+					/* ZOS 2_TO_64/2_TO_32 options would not allow memory request larger then 64G/32G so total requested size including tail padding should not exceed it */
+					allocateSize = (uintptr_t)ceiling - (uintptr_t)startAllocationAddress - tailPadding;
 
-				if (extensions->isDebugConcurrentScavengerPageAlignment()) {
-					omrtty_printf("Total allocate size exceeds ceiling %p, reduce allocate size to 0x%zx\n", ceiling, allocateSize);
+					if (extensions->isDebugConcurrentScavengerPageAlignment()) {
+						omrtty_printf("Total allocate size exceeds ceiling %p, reduce allocate size to 0x%zx\n", ceiling, allocateSize);
+					}
+					/*
+					 * There is no way that Nursery will be pushed above ceiling for valid memory options however we have
+					 * no idea about start address. So to guarantee an allocation up to the ceiling we need to request extended chunk of memory. 
+					 * Set ceiling to NULL to disable ceiling control. This required bottom-up direction for allocation.
+					 */
+					ceilingToRequest = NULL;
 				}
-				/*
-				 * There is no way that Nursery will be pushed above ceiling for valid memory options however we have
-				 * no idea about start address. So to guarantee an allocation up to the ceiling we need to request extended chunk of memory. 
-				 * Set ceiling to NULL to disable ceiling control. This required bottom-up direction for allocation.
-				 */
-				ceilingToRequest = NULL;
-			}
 
-			options |= OMRPORT_VMEM_ALLOC_DIR_BOTTOM_UP;
-
-			/* An attempt to allocate memory chunk for heap for Concurrent Scavenger */
-			instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress, ceilingToRequest, mode, options, memoryCategory);
-		} else {
-			if (requestedTopAddress <= ceiling) {
-				bool allocationTopDown = true;
-				/* define the scan direction when reserving the GC heap in the range of (4G, 32G) */
-#if defined(S390) || defined(J9ZOS390)
-				/* s390 benefits from smaller shift values so allocate direction is bottom up */
 				options |= OMRPORT_VMEM_ALLOC_DIR_BOTTOM_UP;
-				allocationTopDown = false;
-#else
-				options |= OMRPORT_VMEM_ALLOC_DIR_TOP_DOWN;
+
+				/* An attempt to allocate memory chunk for heap for Concurrent Scavenger */
+				instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress, ceilingToRequest, mode, options, memoryCategory);
+			} else {
+				if (requestedTopAddress <= ceiling) {
+					bool allocationTopDown = true;
+					/* define the scan direction when reserving the GC heap in the range of (4G, 32G) */
+#if defined(S390) || defined(J9ZOS390)
+					/* s390 benefits from smaller shift values so allocate direction is bottom up */
+					options |= OMRPORT_VMEM_ALLOC_DIR_BOTTOM_UP;
+					allocationTopDown = false;
+#else /* defined(S390) || defined(J9ZOS390) */
+					options |= OMRPORT_VMEM_ALLOC_DIR_TOP_DOWN;
 #endif /* defined(S390) || defined(J9ZOS390) */
 
-				if (allocationTopDown && extensions->shouldForceSpecifiedShiftingCompression) {
-					/* force to allocate heap top-down from correspondent to shift address */
-					void* maxAddress = (void *)(((uintptr_t)1 << 32) << extensions->forcedShiftingCompressionAmount);
+					if (allocationTopDown && extensions->shouldForceSpecifiedShiftingCompression) {
+						/* force to allocate heap top-down from correspondent to shift address */
+						void* maxAddress = (void *)(((uintptr_t)1 << 32) << extensions->forcedShiftingCompressionAmount);
 
-					instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
-							maxAddress, mode, options, memoryCategory);
-				} else {
-					if (requestedTopAddress < (void*)NON_SCALING_LOW_MEMORY_HEAP_CEILING) {
-						/*
-						 * Attempt to allocate heap below 4G
-						 */
 						instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
-																 (void*)OMR_MIN(NON_SCALING_LOW_MEMORY_HEAP_CEILING, (uintptr_t)ceiling), mode, options, memoryCategory);
-					}
-
-					if ((NULL == instance) && (ceiling > (void*)NON_SCALING_LOW_MEMORY_HEAP_CEILING)) {
-
-#define THIRTY_TWO_GB_ADDRESS ((uintptr_t)32 * 1024 * 1024 * 1024)
-						if (requestedTopAddress <= (void *)THIRTY_TWO_GB_ADDRESS) {
+								maxAddress, mode, options, memoryCategory);
+					} else {
+						if (requestedTopAddress < (void*)NON_SCALING_LOW_MEMORY_HEAP_CEILING) {
 							/*
-							 * If requested object heap size is in range 28G-32G its allocation with 3-bit shift might compromise amount of low memory below 4G
-							 * To prevent this go straight to 4-bit shift if it possible.
-							 * Set of logical conditions to skip allocation attempt below 32G
-							 *  - 4-bit shift is available option
-							 *  - requested size is larger then 28G (32 minus 4)
-							 *  - allocation direction is top-down, otherwise it does not make sense
+							 * Attempt to allocate heap below 4G
 							 */
-							bool skipAllocationBelow32G = (ceiling > (void*)THIRTY_TWO_GB_ADDRESS)
-								 && (requestedTopAddress > (void*)(THIRTY_TWO_GB_ADDRESS - NON_SCALING_LOW_MEMORY_HEAP_CEILING))
-								 && allocationTopDown;
-
-							if (!skipAllocationBelow32G) {
-								/*
-								 * Attempt to allocate heap below 32G
-								 */
-								instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
-																		 (void*)OMR_MIN((uintptr_t)THIRTY_TWO_GB_ADDRESS, (uintptr_t)ceiling), mode, options, memoryCategory);
-							}
+							instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
+																	 (void*)OMR_MIN(NON_SCALING_LOW_MEMORY_HEAP_CEILING, (uintptr_t)ceiling), mode, options, memoryCategory);
 						}
 
-						/*
-						 * Attempt to allocate above 32G
-						 */
-						if ((NULL == instance) && (ceiling > (void *)THIRTY_TWO_GB_ADDRESS)) {
-							instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
-																	 ceiling, mode, options, memoryCategory);
+						if ((NULL == instance) && (ceiling > (void*)NON_SCALING_LOW_MEMORY_HEAP_CEILING)) {
+
+#define THIRTY_TWO_GB_ADDRESS ((uintptr_t)32 * 1024 * 1024 * 1024)
+							if (requestedTopAddress <= (void *)THIRTY_TWO_GB_ADDRESS) {
+								/*
+								 * If requested object heap size is in range 28G-32G its allocation with 3-bit shift might compromise amount of low memory below 4G
+								 * To prevent this go straight to 4-bit shift if it possible.
+								 * Set of logical conditions to skip allocation attempt below 32G
+								 *  - 4-bit shift is available option
+								 *  - requested size is larger then 28G (32 minus 4)
+								 *  - allocation direction is top-down, otherwise it does not make sense
+								 */
+								bool skipAllocationBelow32G = (ceiling > (void*)THIRTY_TWO_GB_ADDRESS)
+									 && (requestedTopAddress > (void*)(THIRTY_TWO_GB_ADDRESS - NON_SCALING_LOW_MEMORY_HEAP_CEILING))
+									 && allocationTopDown;
+
+								if (!skipAllocationBelow32G) {
+									/*
+									 * Attempt to allocate heap below 32G
+									 */
+									instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
+																			 (void*)OMR_MIN((uintptr_t)THIRTY_TWO_GB_ADDRESS, (uintptr_t)ceiling), mode, options, memoryCategory);
+								}
+							}
+
+							/*
+							 * Attempt to allocate above 32G
+							 */
+							if ((NULL == instance) && (ceiling > (void *)THIRTY_TWO_GB_ADDRESS)) {
+								instance = MM_VirtualMemory::newInstance(env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
+																		 ceiling, mode, options, memoryCategory);
+							}
 						}
 					}
 				}
 			}
-		}
 
-		/*
-		 * If preferredAddress is requested check is it really taken: if not - release memory
-		 * for backward compatibility this check should be done for compressedrefs platforms only
-		 */
-		if ((NULL != preferredAddress) && (NULL != instance) && (instance->getHeapBase() != preferredAddress)) {
-			extensions->heapInitializationFailureReason = MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_CAN_NOT_INSTANTIATE_HEAP;
-			instance->kill(env);
-			instance = NULL;
-			return false;
-		}
-
-		if ((NULL != instance) && shouldHeapBeAllocatedFirst) {
-			if (OMRPORT_ENSURE_CAPACITY_FAILED == omrmem_ensure_capacity32(extensions->suballocatorInitialSize)) {
-				extensions->heapInitializationFailureReason = MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_CAN_NOT_ALLOCATE_LOW_MEMORY_RESERVE;
+			/*
+			 * If preferredAddress is requested check is it really taken: if not - release memory
+			 * for backward compatibility this check should be done for compressedrefs platforms only
+			 */
+			if ((NULL != preferredAddress) && (NULL != instance) && (instance->getHeapBase() != preferredAddress)) {
+				extensions->heapInitializationFailureReason = MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_CAN_NOT_INSTANTIATE_HEAP;
 				instance->kill(env);
 				instance = NULL;
 				return false;
 			}
-		}
-#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
-		/*
-		 * Code above might be used for non-compressedrefs platforms but need a few adjustments on it for this:
-		 *  - NON_SCALING_LOW_MEMORY_HEAP_CEILING should be set
-		 *  - OMRPORT_VMEM_ZOS_USE2TO32G_AREA flag for ZOS is expected to be used for compressedrefs heap allocation only
-		 */
-		Assert_MM_unimplemented();
-
+			if ((NULL != instance) && shouldHeapBeAllocatedFirst) {
+				if (OMRPORT_ENSURE_CAPACITY_FAILED == omrmem_ensure_capacity32(extensions->suballocatorInitialSize)) {
+					extensions->heapInitializationFailureReason = MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_CAN_NOT_ALLOCATE_LOW_MEMORY_RESERVE;
+					instance->kill(env);
+					instance = NULL;
+					return false;
+				}
+			}
+		} else
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		{
+			/*
+			 * Code above might be used for non-compressedrefs platforms but need a few adjustments on it for this:
+			 *  - NON_SCALING_LOW_MEMORY_HEAP_CEILING should be set
+			 *  - OMRPORT_VMEM_ZOS_USE2TO32G_AREA flag for ZOS is expected to be used for compressedrefs heap allocation only
+			 */
+			Assert_MM_unimplemented();
+		}
 	}
 
 	if((NULL != instance) && extensions->largePageFailOnError && (instance->getPageSize() != extensions->requestedPageSize)) {
@@ -307,6 +322,11 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 		instance->incrementConsumerCount();
 		handle->setMemoryBase(instance->getHeapBase());
 		handle->setMemoryTop(instance->getHeapTop());
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+		if (instance->isDoubleMapAvailable()) {
+			extensions->isArrayletDoubleMapAvailable = true;
+		}
+#endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 
 		/*
 		 * Aligning Nursery location to Concurrent Scavenger Page and calculate Concurrent Scavenger Page start address
@@ -504,7 +524,7 @@ MM_MemoryManager::destroyVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_Memory
 {
 	destroyVirtualMemory(env, handle);
 
-#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 	MM_GCExtensionsBase* extensions = env->getExtensions();
 	MM_VirtualMemory* shadowMemory = extensions->shadowHeapHandle.getVirtualMemory();
 	if (NULL != shadowMemory) {
@@ -513,7 +533,7 @@ MM_MemoryManager::destroyVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_Memory
 		extensions->shadowHeapHandle.setMemoryBase(NULL);
 		extensions->shadowHeapHandle.setMemoryTop(NULL);
 	}
-#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 }
 
 void
@@ -546,6 +566,17 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 #endif /* defined(OMR_VALGRIND_MEMCHECK) */
 
 }
+
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+void*
+MM_MemoryManager::doubleMapArraylet(MM_MemoryHandle* handle, MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
+{
+	Assert_MM_true(NULL != handle);
+	MM_VirtualMemory* memory = handle->getVirtualMemory();
+	Assert_MM_true(NULL != memory);
+	return memory->doubleMapArraylet(env, arrayletLeaves, arrayletLeafCount, arrayletLeafSize, byteAmount, newIdentifier, pageSize);
+}
+#endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 
 bool
 MM_MemoryManager::commitMemory(MM_MemoryHandle* handle, void* address, uintptr_t size)

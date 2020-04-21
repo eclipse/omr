@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ namespace OMR { typedef OMR::Options OptionsConnector; }
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "control/OMROptions.hpp"
 #include "control/OptionsUtil.hpp"
@@ -72,19 +72,6 @@ struct J9JITConfig;
  * make-time generated file.
  */
 extern const char TR_BUILD_NAME[];
-
-enum TR_WriteBarrierKind
-   {
-   TR_WrtbarNone,
-   TR_WrtbarAlways,
-   TR_WrtbarOldCheck,
-   TR_WrtbarCardMark,
-   TR_WrtbarCardMarkAndOldCheck,
-   TR_WrtbarCardMarkIncremental,
-   TR_WrtbarRealTime,
-
-   TR_NumberOfWrtBars,
-   };
 
 #define TR_MAX_AVAIL_LIMITED_GRA_REGS 11
 
@@ -205,7 +192,7 @@ enum TR_CompilationOptions
    TR_DisableAsyncCompilation             = 0x00004000 + 3,
    TR_DisableCompilationThread            = 0x00008000 + 3,
    TR_EnableCompilationThread             = 0x00010000 + 3,
-   TR_EnableJITaaSHeuristics              = 0x00020000 + 3,
+   TR_EnableJITServerHeuristics           = 0x00020000 + 3,
    TR_SoftFailOnAssume                    = 0x00040000 + 3,
    TR_DisableNewBlockOrdering             = 0x00080000 + 3,
    TR_DisableZNext                        = 0x00100000 + 3,
@@ -284,7 +271,7 @@ enum TR_CompilationOptions
    // Option word 6
    //
    TR_EnableAggressiveLoopVersioning      = 0x00000020 + 6,
-   TR_EnableElementPrivatization          = 0x00000040 + 6,
+   TR_DisableImmutableFieldAliasing       = 0x00000040 + 6,
    TR_CompileBit                          = 0x00000080 + 6,
    TR_WaitBit                             = 0x00000100 + 6,
    TR_DisableZ14                          = 0x00000200 + 6,
@@ -306,7 +293,7 @@ enum TR_CompilationOptions
    TR_UseSamplingJProfilingForAllFirstTimeComps   = 0x02000000 + 6,
    TR_NoStoreAOT                          = 0x04000000 + 6,
    TR_NoLoadAOT                           = 0x08000000 + 6,
-   TR_DisableNewLoopTransfer              = 0x10000000 + 6, // loop versioning for virtual guards
+   TR_PrintCodeCacheUsage                 = 0x10000000 + 6,
    TR_UseSamplingJProfilingForDLT                 = 0x20000000 + 6,
    TR_UseSamplingJProfilingForInterpSampledMethods= 0x40000000 + 6,
    TR_EmitRelocatableELFFile              = 0x80000000 + 6,
@@ -335,10 +322,10 @@ enum TR_CompilationOptions
    TR_TurnOffSelectiveNoOptServerIfNoStartupHint = 0x01000000 + 7,
    TR_TraceDominators                     = 0x02000000 + 7,
    TR_EnableHCR                           = 0x04000000 + 7, // enable hot code replacement
-   TR_DisableTOCForConsts                 = 0x08000000 + 7,
+   TR_DisableTOC                          = 0x08000000 + 7,
    TR_UseLowPriorityQueueDuringCLP        = 0x10000000 + 7,
    TR_DisableVectorBCD                    = 0x20000000 + 7,
-   TR_EnableTrivialStoreSinking           = 0x40000000 + 7,
+   TR_RealTimeGC                          = 0x40000000 + 7,
    TR_DisableTraps                        = 0x80000000 + 7,
 
    // Option word 8
@@ -348,11 +335,11 @@ enum TR_CompilationOptions
    TR_DisableDirectToJNI                  = 0x00000040 + 8,
    TR_OldJVMPI                            = 0x00000080 + 8,
    TR_EmitExecutableELFFile               = 0x00000100 + 8,
-   TR_EnableJITaaSDoLocalCompilesForRemoteCompiles = 0x00000200 + 8,
+   TR_JITServerFollowRemoteCompileWithLocalCompile = 0x00000200 + 8,
    // Available                           = 0x00000800 + 8,
    TR_DisableLinkageRegisterAllocation    = 0x00001000 + 8,
    // Available                           = 0x00002000 + 8,
-   // Available                           = 0x00004000 + 8,
+   TR_DisableZ15                          = 0x00004000 + 8,
    TR_DisableCompilationAfterDLT          = 0x00008000 + 8,
    TR_DLTMostOnce                         = 0x00010000 + 8,
    TR_DisableSelectiveNoOptServer         = 0x00020000 + 8,
@@ -368,7 +355,7 @@ enum TR_CompilationOptions
    // Available                           = 0x08000000 + 8,
    TR_DisableLiveRangeSplitter            = 0x10000000 + 8,
    TR_DisableHalfSlotSpills               = 0x20000000 + 8,
-   // Available                           = 0x40000000 + 8,
+   TR_DisableMHInlineWithoutPeeking       = 0x40000000 + 8,
    // Available                           = 0x80000000 + 8,
 
 
@@ -393,14 +380,14 @@ enum TR_CompilationOptions
    TR_Randomize                           = 0x00200000 + 9,
    TR_BreakOnWriteBarrier                 = 0x00400000 + 9,
    BreakOnWriteBarrierSnippet             = 0x00800000 + 9,
-   TR_Enable64BitRegsOn32Bit              = 0x01000000 + 9,
+   // Available                           = 0x01000000 + 9,
    TR_CountWriteBarriersRT                = 0x02000000 + 9,
    TR_DisableNoServerDuringStartup        = 0x04000000 + 9,  // set TR_NoOptServer during startup and insert GCR trees
    TR_BreakOnNew                          = 0x08000000 + 9,
    // Available                           = 0x10000000 + 9,
-   TR_SinkAllStores                       = 0x20000000 + 9,
-   TR_SinkAllBlockedStores                = 0x40000000 + 9,
-   TR_DisableStoreAnchoring               = 0x80000000 + 9,
+   // Available                           = 0x20000000 + 9,
+   // Available                           = 0x40000000 + 9,
+   // Available                           = 0x80000000 + 9,
 
    // Option word 10
    //
@@ -418,13 +405,13 @@ enum TR_CompilationOptions
    // Available                           = 0x00010000 + 10,
    TR_EnableSequentialLoadStoreWarm       = 0x00020000 + 10,
    TR_EnableSequentialLoadStoreCold       = 0x00040000 + 10,
-   TR_Enable64BitRegsOn32BitHeuristic     = 0x00080000 + 10,
+   // Available                           = 0x00080000 + 10,
    TR_EnableNewX86PrefetchTLH             = 0x00100000 + 10,
    // Available                           = 0x00200000 + 10,
    TR_ConservativeCompilation             = 0x00400000 + 10,
    // Available                           = 0x00800000 + 10,
-   TR_EnableLargeCodePages                = 0x01000000 + 10,
-   TR_EnableLargePages                    = 0x02000000 + 10,
+   // Available                           = 0x01000000 + 10,
+   // Available                           = 0x02000000 + 10,
    TR_DisableNewX86VolatileSupport        = 0x04000000 + 10,
    // Available                           = 0x08000000 + 10,
    // Available                           = 0x10000000 + 10,
@@ -463,11 +450,11 @@ enum TR_CompilationOptions
 
    // Option word 12
    // Available                               = 0x00000020 + 12,
-   TR_DisableZ13LoadAndMask                   = 0x00000040 + 12,
+   // Available                               = 0x00000040 + 12,
    TR_DisablePartialInlining                  = 0x00000080 + 12,
    TR_AssumeStartupPhaseUntilToldNotTo        = 0x00000100 + 12,
    // Available                               = 0x00000200 + 12,
-   // Available                               = 0x00000400 + 12,
+   TR_DisableAOTBytesCompression              = 0x00000400 + 12,
    TR_X86UseMFENCE                            = 0x00000800 + 12,
    // Available                               = 0x00001000 + 12,
    // Available                               = 0x00002000 + 12,
@@ -585,7 +572,7 @@ enum TR_CompilationOptions
    // Available                                       = 0x00000400 + 16,
    // Available                                       = 0x00000800 + 16,
    TR_DisableEmptyPreHeaderCheck                      = 0x00001000 + 16,
-   TR_SinkOnlyCCStores                                = 0x00002000 + 16,
+   // Available                                       = 0x00002000 + 16,
    TR_EnableDeterministicOrientedCompilation          = 0x00004000 + 16,
    // Available                                       = 0x00008000 + 16,
    TR_EnableAOTStats                                  = 0x00010000 + 16,
@@ -841,7 +828,7 @@ enum TR_CompilationOptions
    TR_PerfTool                                        = 0x00010000 + 25,
    // Available                                       = 0x00020000 + 25,
    TR_DisableBranchOnCount                            = 0x00040000 + 25,
-   TR_LinkagePreserveStrategy2                        = 0x00080000 + 25,
+   // Available                                       = 0x00080000 + 25,
    TR_DisableLoopEntryAlignment                       = 0x00100000 + 25,
    TR_EnableLoopEntryAlignment                        = 0x00200000 + 25,
    TR_DisableLeafRoutineDetection                     = 0x00400000 + 25,
@@ -858,7 +845,7 @@ enum TR_CompilationOptions
    TR_DisableSIMDArrayCompare                         = 0x00000020 + 26,
    TR_EnableJITHelpersoptimizedClone                  = 0x00000040 + 26,
    TR_DontAllocateScratchBTL                          = 0x00000080 + 26,
-   TR_DisableZ13LoadImmediateOnCond                   = 0x00000100 + 26,
+   // Available                                       = 0x00000100 + 26,
    // Available                                       = 0x00000200 + 26,
    TR_TrustAllInterfaceTypeInfo                       = 0x00000400 + 26,
    TR_DisableRefinedAliases                           = 0x00000800 + 26,
@@ -887,7 +874,7 @@ enum TR_CompilationOptions
    TR_ForceIEEEDivideByZeroException                  = 0x00000020 + 27,
    // Available                                       = 0x00000040 + 27,
    TR_DisableDirectStaticAccessOnZ                    = 0x00000080 + 27,
-   TR_EnableRubyTieredCompilation                     = 0x00000100 + 27,
+   // Available                                       = 0x00000100 + 27,
    TR_EnableRIEMIT                                    = 0x00000200 + 27,
    TR_DisableConservativeColdInlining                 = 0x00000400 + 27,
    TR_DisableConservativeInlining                     = 0x00000800 + 27,
@@ -896,7 +883,7 @@ enum TR_CompilationOptions
    TR_DisableArch11PackedToDFP                        = 0x00004000 + 27,
    TR_DisableVectorRegGRA                             = 0x00008000 + 27,
    TR_DisableSIMD                                     = 0x00010000 + 27,
-   TR_EnableRubyCodeCacheReclamation                  = 0x00020000 + 27,
+   // Available                                       = 0x00020000 + 27,
    TR_DisableSIMDStringCaseConv                       = 0x00040000 + 27,
    TR_DisableSIMDUTF16BEEncoder                       = 0x00080000 + 27,
    TR_DisableSIMDArrayCopy                            = 0x00100000 + 27,
@@ -955,7 +942,7 @@ enum TR_CompilationOptions
    TR_IncreaseCountsForNonBootstrapMethods            = 0x00080000 + 29,
    TR_ReduceCountsForMethodsCompiledDuringStartup     = 0x00100000 + 29,
    TR_IncreaseCountsForMethodsCompiledOutsideStartup  = 0x00200000 + 29,
-   // Available                                       = 0x00400000 + 29,
+   TR_ForceGenerateReadOnlyCode                       = 0x00400000 + 29,
    TR_UseGlueIfMethodTrampolinesAreNotNeeded          = 0x00800000 + 29,
    TR_EnableFpreductionAnnotation                     = 0x01000000 + 29,
    TR_ExtractExitsByInvalidatingStructure             = 0x02000000 + 29,
@@ -980,7 +967,7 @@ enum TR_CompilationOptions
    TR_DisableHardwareProfilerReducedWarm              = 0x00002000 + 30,
    TR_RestrictStaticFieldFolding                      = 0x00004000 + 30,
    TR_TraceILValidator                                = 0x00008000 + 30,
-   TR_EnableJProfilingInProfilingCompilations         = 0x00010000 + 30,
+   TR_DisableJProfilingInProfilingCompilations        = 0x00010000 + 30,
    TR_EnableJProfiling                                = 0x00020000 + 30,
    TR_DisableForcedEXInlining                         = 0x00040000 + 30,
    TR_EnableOnsiteCacheForSuperClassTest              = 0x00080000 + 30,
@@ -1064,12 +1051,11 @@ enum TR_CompilationOptions
    // Available                         = 0x00001000,
 
    // Register ITF tracing option word
-   //
-   TR_TraceRegisterITFBasic             = TR_TraceGRABasic,
-   // Avaialble                         = 0x00008000,
-   TR_TraceRegisterITFBuild             = 0x00010000,
+
+   // Available                         = 0x00008000,
+   // Available                         = 0x00010000,
    // Available                         = 0x00020000,
-   TR_TraceRegisterITFColour            = 0x00040000,
+   // Available                         = 0x00040000,
 
    // Register Spill Costs Analysis tracing option word
    //
@@ -1151,8 +1137,8 @@ enum TR_VerboseFlags
    TR_VerboseHookDetailsClassUnloading,
    TR_VerboseSampleDensity,
    TR_VerboseProfiling,
-   TR_VerboseJITaaS,
-
+   TR_VerboseJITServer,
+   TR_VerboseAOTCompression,
    //If adding new options add an entry to _verboseOptionNames as well
    TR_NumVerboseOptions        // Must be the last one;
    };
@@ -1206,6 +1192,10 @@ enum TR_ProcessOptionsFlags
 #define TR_DEFAULT_INITIAL_BCOUNT        3000
 #define TR_DEFAULT_INITIAL_MILCOUNT       250
 
+#define TR_LARGE_SMP_INITIAL_COUNT       2000
+#define TR_LARGE_SMP_INITIAL_BCOUNT      1000
+#define TR_NUMPROC_FOR_LARGE_SMP            4 // Minimum number of CPUs to declare this environment as a "large SMP"
+
 #define TR_QUICKSTART_INITIAL_COUNT      1000
 #define TR_QUICKSTART_INITIAL_BCOUNT      250
 #define TR_QUICKSTART_INITIAL_MILCOUNT      1
@@ -1245,7 +1235,7 @@ enum TR_ProcessOptionsFlags
 #define TR_DEFAULT_INTERPRETER_SAMPLING_DIVISOR 16
 
 #define DEFAULT_SCRATCH_SPACE_LIMIT_KB (256*1024)
-#define DEFAULT_SCRATCH_SPACE_LOWER_BOUND_KB (32*1024)
+#define DEFAULT_SCRATCH_SPACE_LOWER_BOUND_KB (16*1024)
 
 #if defined(J9ZOS390) && defined(TR_TARGET_32BIT)
 #define JSR292_SCRATCH_SPACE_FACTOR 1 // 1.5GB on 31-bit z/OS is too much
@@ -1539,7 +1529,6 @@ public:
    bool      getRegisterAssignmentTraceOption(uint32_t mask) {return (_raTrace & mask) != 0;}
    bool      getTraceRAOption(uint32_t mask);
    bool      getTraceLRA(uint32_t mask) { return (_traceLRA & mask) != 0; }
-   bool      getTraceRegisterITF(uint32_t mask) { return (_traceRegisterITF & mask) != 0; }
    bool      getTraceSpillCosts(uint32_t mask) { return (_traceSpillCosts & mask) != 0; }
    bool      getTraceSimplifier(uint32_t mask) { return (_traceSimplifier & mask) != 0; }
    bool      getDebugEnableFlag(uint32_t mask) { return (_debugEnableFlags & mask) != 0; }
@@ -1891,22 +1880,10 @@ public:
    static bool createDebug();
    static TR_Debug * findOrCreateDebug();
 
-   TR_WriteBarrierKind getGcMode()           { return _gcMode; }
-   uintptr_t           getGcCardSize()       { return _gcCardSize; }
-   uintptr_t           getHeapBase()         { return _heapBase; }
-   uintptr_t           getHeapTop()         { return _heapTop; }
+   uintptr_t           getGcCardSize()   { return _gcCardSize; }
+   uintptr_t           getHeapBase()     { return _heapBase; }
+   uintptr_t           getHeapTop()      { return _heapTop; }
 
-   bool generateWriteBarriers() { return _gcMode != TR_WrtbarNone; }
-   bool alwaysCallWriteBarrier() { return _gcMode == TR_WrtbarAlways; }
-   bool gcIsUsingConcurrentMark()
-      {
-      return    _gcMode == TR_WrtbarCardMark
-             || _gcMode == TR_WrtbarCardMarkAndOldCheck
-             || _gcMode == TR_WrtbarCardMarkIncremental;
-      }
-   bool needWriteBarriers();
-
-   void setGcMode(TR_WriteBarrierKind g) { _gcMode = g; }
    void setGcCardSize(uintptr_t g)       { _gcCardSize = g; }
    void setHeapBase(uintptr_t g)         { _heapBase = g; }
    void setHeapTop(uintptr_t g)          { _heapTop = g; }
@@ -1932,8 +1909,8 @@ public:
    void setActiveCardTableBase(uintptr_t b) { _activeCardTableBase = b; }
    uintptr_t getActiveCardTableBase() { return _activeCardTableBase; }
 
-   void setRealTimeGC(bool m)            { _realTimeGC = m; }
-   inline bool realTimeGC()              { return _realTimeGC; }
+   void setRealTimeGC(bool m);
+   bool realTimeGC();
 
    static void setSharedClassCache(bool c){ _sharedClassCache = c; }
    inline static bool sharedClassCache()  { return _sharedClassCache; }
@@ -1943,8 +1920,6 @@ public:
    bool getOptLevelDowngraded() const { return _optLevelDowngraded; }
    static char *getCompilationStrategyName() { return _compilationStrategyName; }
 
-   int32_t getJitMethodEntryAlignmentBoundary(TR::CodeGenerator *cg);
-   void setJitMethodEntryAlignmentBoundary(int32_t boundary) { _jitMethodEntryAlignmentBoundary = boundary; }
 /**   \brief Returns a threshold on the profiling method invocations to trip recompilation
  */
    int32_t getJProfilingMethodRecompThreshold() { return _jProfilingMethodRecompThreshold; }
@@ -2045,7 +2020,7 @@ private:
    static char *setVerboseBits(char *option, void *base, TR::OptionTable *entry);
    static char *setVerboseBitsInJitPrivateConfig(char *option, void *base, TR::OptionTable *entry);
    // Helper method used by the two methods above
-   static char *setVerboseBitsHelper(char *option, VerboseOptionFlagArray *verboseOptionFlags, uintptrj_t defaultVerboseFlags);
+   static char *setVerboseBitsHelper(char *option, VerboseOptionFlagArray *verboseOptionFlags, uintptr_t defaultVerboseFlags);
 
    // Set samplingjprofiling bits
    //
@@ -2312,7 +2287,6 @@ protected:
    TR::SimpleRegex *            _memUsage;
    TR::SimpleRegex *            _classesWithFolableFinalFields;
    TR::SimpleRegex *            _disabledIdiomPatterns;
-   TR_WriteBarrierKind         _gcMode;
    uintptr_t                   _gcCardSize;
    uintptr_t                   _heapBase;
    uintptr_t                   _heapTop;
@@ -2324,8 +2298,6 @@ protected:
    bool                        _isVariableHeapBaseForBarrierRange0;
    bool                        _isVariableHeapSizeForBarrierRange0;
    bool                        _isVariableActiveCardTableBase;
-
-   static bool                 _realTimeGC;
 
    static bool                 _sharedClassCache;
 
@@ -2355,7 +2327,6 @@ protected:
    int32_t                     _addressToEnumerate;   // Addresses enumeration option flags
    int32_t                     _raTrace;              // Register assigner trace flags
    int32_t                     _traceLRA;             // Live Register Analysis trace flags
-   int32_t                     _traceRegisterITF;     // Register ITF trace flags
    int32_t                     _traceILDeadCode;      // Instruction Level Dead Code trace flags
    int32_t                     _traceSpillCosts;      // Register Spill Costs trace flags
    int32_t                     _traceSimplifier;      // Simplifier trace flags
@@ -2420,7 +2391,6 @@ protected:
 
    bool                        _isAOTCompile;
 
-   int32_t                     _jitMethodEntryAlignmentBoundary; /* Alignment boundary for JIT method entry */
    int32_t                     _jProfilingMethodRecompThreshold;
    int32_t                     _jProfilingLoopRecompThreshold;
    char *                      _blockShufflingSequence;

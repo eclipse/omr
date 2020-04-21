@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,9 +24,10 @@
 #include <stdint.h>
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
@@ -45,14 +46,14 @@
 #include "env/jittypes.h"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "ras/Debug.hpp"
@@ -79,7 +80,7 @@ int32_t memoryBarrierRequired(
       bool onlyAskingAboutFences)
    {
    TR::Compilation *comp = cg->comp();
-   if (!TR::Compiler->target.isSMP())
+   if (!comp->target().isSMP())
       return NoFence;
 
    // LOCKed instructions are serializing instructions and implicitly handle
@@ -307,7 +308,7 @@ uint8_t *TR::X86BoundaryAvoidanceInstruction::generateBinaryEncoding()
    {
    uint8_t *instructionStart = cg()->getBinaryBufferCursor();
 
-   int32_t modulo = ((uintptrj_t)(instructionStart + _minPaddingLength)) % _boundarySpacing;
+   int32_t modulo = ((uintptr_t)(instructionStart + _minPaddingLength)) % _boundarySpacing;
    int32_t padLength = 0;
 
    const TR_AtomicRegion *cur = _atomicRegions;
@@ -401,7 +402,7 @@ uint8_t *TR::X86AlignmentInstruction::generateBinaryEncoding()
    uint8_t *instructionStart = cg()->getBinaryBufferCursor();
    uint8_t *cursor = instructionStart;
 
-   intptrj_t paddingLength = cg()->alignment(cursor + _minPaddingLength, _boundary, _margin);
+   intptr_t paddingLength = cg()->alignment(cursor + _minPaddingLength, _boundary, _margin);
    cursor = cg()->generatePadding(cursor, _minPaddingLength + paddingLength, this);
 
    setBinaryLength(cursor - instructionStart);
@@ -497,7 +498,7 @@ uint8_t *TR::X86LabelInstruction::generateBinaryEncoding()
             else
                {
                cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelRelative8BitRelocation(cursor, label));
-               *cursor = (uint8_t)(-(intptrj_t)(cursor+1));
+               *cursor = (uint8_t)(-(intptr_t)(cursor+1));
                }
 
             cursor += 1;
@@ -526,7 +527,7 @@ uint8_t *TR::X86LabelInstruction::generateBinaryEncoding()
             else
                {
                cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelRelative32BitRelocation(cursor, label));
-               *(uint32_t *)cursor = (uint32_t)(-(intptrj_t)(cursor+4));
+               *(uint32_t *)cursor = (uint32_t)(-(intptr_t)(cursor+4));
                }
 
             cursor += 4;
@@ -705,7 +706,7 @@ uint8_t *TR::X86FenceInstruction::generateBinaryEncoding()
 
 int32_t TR::X86VirtualGuardNOPInstruction::estimateBinaryLength(int32_t currentEstimate)
    {
-   setEstimatedBinaryLength(TR::Compiler->target.is64Bit() ? 5 : 6); //TODO:AMD64: What if patched instruction needs a Rex?  Is 6 enough?
+   setEstimatedBinaryLength(self()->cg()->comp()->target().is64Bit() ? 5 : 6); //TODO:AMD64: What if patched instruction needs a Rex?  Is 6 enough?
    return currentEstimate + getEstimatedBinaryLength();
    }
 
@@ -785,7 +786,7 @@ uint8_t *TR::X86VirtualGuardNOPInstruction::generateBinaryEncoding()
    TR::Instruction *instToBePatched = cg()->getInstructionToBePatched(this);
 
    int32_t shortJumpWidth = 2;
-   int32_t longJumpWidth = TR::Compiler->target.is64Bit() ? 5 : 6;
+   int32_t longJumpWidth = cg()->comp()->target().is64Bit() ? 5 : 6;
 
    _nopSize = 0;
 
@@ -891,7 +892,7 @@ TR::X86ImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
                if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
                   {
                   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                            (uint8_t *)getSourceImmediate(),
+                                                                                            (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                             (uint8_t *)symbolKind,
                                                                                             TR_SymbolFromManager,
                                                                                             cg()),
@@ -935,7 +936,7 @@ uint8_t* TR::X86ImmInstruction::generateOperand(uint8_t* cursor)
       *(int32_t *)cursor = (int32_t)getSourceImmediate();
       if (getOpCode().isCallImmOp())
          {
-         *(int32_t *)cursor -= (int32_t)(intptrj_t)(cursor + 4);
+         *(int32_t *)cursor -= (int32_t)(intptr_t)(cursor + 4);
          }
       cursor += 4;
       }
@@ -1016,7 +1017,7 @@ uint8_t* TR::X86ImmSnippetInstruction::generateOperand(uint8_t* cursor)
 
       if (getOpCode().isCallImmOp())
          {
-         *(int32_t *)cursor -= (int32_t)(intptrj_t)(cursor + 4);
+         *(int32_t *)cursor -= (int32_t)(intptr_t)(cursor + 4);
          }
       cursor += 4;
       }
@@ -1065,19 +1066,20 @@ TR::X86ImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
 
       if (getOpCode().isCallImmOp() || getOpCode().isBranchOp())
          {
-         TR::MethodSymbol *methodSym = sym->getMethodSymbol();
-         TR::ResolvedMethodSymbol *resolvedMethodSym = sym->getResolvedMethodSymbol();
-         TR_ResolvedMethod *resolvedMethod = resolvedMethodSym ? resolvedMethodSym->getResolvedMethod() : 0;
-         TR::LabelSymbol *labelSym = sym->getLabelSymbol();
-
-         if ( !(resolvedMethod && resolvedMethod->isSameMethod(comp->getCurrentMethod()) && !comp->isDLT()) )
+         if (!comp->isRecursiveMethodTarget(sym))
             {
+            TR::LabelSymbol *labelSym = sym->getLabelSymbol();
+
             if (labelSym)
                {
                cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelRelative32BitRelocation(cursor, labelSym));
                }
             else
                {
+               TR::MethodSymbol *methodSym = sym->getMethodSymbol();
+               TR::ResolvedMethodSymbol *resolvedMethodSym = sym->getResolvedMethodSymbol();
+               TR_ResolvedMethod *resolvedMethod = resolvedMethodSym ? resolvedMethodSym->getResolvedMethod() : 0;
+
                if (methodSym && methodSym->isHelper())
                   {
                   cg()->addProjectSpecializedRelocation(cursor, (uint8_t *)getSymbolReference(), NULL, TR_HelperAddress,
@@ -1111,7 +1113,7 @@ TR::X86ImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
       else if (getOpCodeValue() == DDImm4)
          {
          cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                (uint8_t *)(uintptrj_t)getSourceImmediate(),
+                                                                (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                 getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                TR_ConstantPool,
                                                                cg()),
@@ -1136,7 +1138,7 @@ TR::X86ImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
                if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
                   {
                   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                            (uint8_t *)getSourceImmediate(),
+                                                                                            (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                             (uint8_t *)TR::SymbolType::typeClass,
                                                                                             TR_SymbolFromManager,
                                                                                             cg()),
@@ -1208,59 +1210,40 @@ uint8_t* TR::X86ImmSymInstruction::generateOperand(uint8_t* cursor)
       TR::Symbol *sym = getSymbolReference()->getSymbol();
 
       if (sym->isStatic())
-         *(intptrj_t *)cursor = (intptr_t)(sym->getStaticSymbol()->getStaticAddress());
+         *(intptr_t *)cursor = (intptr_t)(sym->getStaticSymbol()->getStaticAddress());
       else
          *(int32_t *)cursor = (int32_t)getSourceImmediate();
 
       if (getOpCode().isCallImmOp() || getOpCode().isBranchOp())
          {
-         TR::MethodSymbol *methodSym = sym->getMethodSymbol();
-         TR::ResolvedMethodSymbol *resolvedMethodSym = sym->getResolvedMethodSymbol();
-         TR_ResolvedMethod *resolvedMethod = resolvedMethodSym ? resolvedMethodSym->getResolvedMethod() : 0;
-         TR::LabelSymbol *labelSym = sym->getLabelSymbol();
+         intptr_t targetAddress = (int32_t)getSourceImmediate();
 
-         intptrj_t targetAddress = (int32_t)getSourceImmediate();
-
-         if (TR::Compiler->target.is64Bit() && cg()->hasCodeCacheSwitched() && getOpCodeValue() == CALLImm4)
+         if (cg()->comp()->target().is64Bit() && cg()->hasCodeCacheSwitched() && getOpCodeValue() == CALLImm4)
             {
-            TR::SymbolReference *calleeSymRef = NULL;
-
-            if (labelSym==NULL)
-               calleeSymRef = getSymbolReference();
-            else if (getNode() != NULL)
-               calleeSymRef = getNode()->getSymbolReference();
-
-            if (calleeSymRef != NULL)
-               {
-               if (calleeSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers)
-                  cg()->fe()->reserveTrampolineIfNecessary(comp, calleeSymRef, true);
-               }
-            else
-               {
-               TR_ASSERT(0, "Missing possible re-reservation for trampolines.\n");
-               }
+            cg()->redoTrampolineReservationIfNecessary(this, getSymbolReference());
             }
 
-         intptrj_t currentInstructionAddress = (intptrj_t)(cursor-1);
-         intptrj_t nextInstructionAddress = (intptrj_t)(cursor+4);
+         intptr_t currentInstructionAddress = (intptr_t)(cursor-1);
+         intptr_t nextInstructionAddress = (intptr_t)(cursor+4);
 
-         if (resolvedMethod && resolvedMethod->isSameMethod(comp->getCurrentMethod()) && !comp->isDLT())
+         if (comp->isRecursiveMethodTarget(sym))
             {
             // Compute method's jit entry point
             //
             uint8_t *start = cg()->getCodeStart();
-            if (TR::Compiler->target.is64Bit())
+            if (comp->target().is64Bit())
                {
                start += TR_LinkageInfo::get(start)->getReservedWord();
-               TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinRIPRange((intptrj_t)start, nextInstructionAddress),
+               TR_ASSERT_FATAL(comp->target().cpu.isTargetWithinRIPRange((intptr_t)start, nextInstructionAddress),
                                "Method start must be within RIP range");
                cg()->fe()->reserveTrampolineIfNecessary(comp, getSymbolReference(), true);
                }
 
-            targetAddress = (intptrj_t)start;
+            targetAddress = (intptr_t)start;
             }
          else
             {
+            TR::LabelSymbol *labelSym = sym->getLabelSymbol();
             if (!labelSym)
                {
                // TODO:
@@ -1284,7 +1267,9 @@ uint8_t* TR::X86ImmSymInstruction::generateOperand(uint8_t* cursor)
                //
                // This logic/handshake will be cleaned up in a future release.
                //
-               if (TR::Compiler->target.is64Bit())
+               TR::MethodSymbol *methodSym = sym->getMethodSymbol();
+
+               if (self()->cg()->comp()->target().is64Bit())
                   {
                   // Obtain the actual target of this call instruction.
                   //
@@ -1293,9 +1278,13 @@ uint8_t* TR::X86ImmSymInstruction::generateOperand(uint8_t* cursor)
                   //
                   TR::Node *symNode = getNode();
                   if (methodSym && methodSym->isJNI() && symNode && symNode->isPreparedForDirectJNI())
-                     targetAddress = (uintptrj_t)resolvedMethod->startAddressForJNIMethod(comp);
+                     {
+                     TR::ResolvedMethodSymbol *resolvedMethodSym = sym->getResolvedMethodSymbol();
+                     TR_ResolvedMethod *resolvedMethod = resolvedMethodSym ? resolvedMethodSym->getResolvedMethod() : 0;
+                     targetAddress = (uintptr_t)resolvedMethod->startAddressForJNIMethod(comp);
+                     }
                   else
-                     targetAddress = (intptrj_t)getSymbolReference()->getMethodAddress();
+                     targetAddress = (intptr_t)getSymbolReference()->getMethodAddress();
                   }
 
                bool isTrampolineRequired = cg()->directCallRequiresTrampoline(targetAddress, currentInstructionAddress);
@@ -1319,7 +1308,7 @@ uint8_t* TR::X86ImmSymInstruction::generateOperand(uint8_t* cursor)
                   {
                   // we need to reserve trampoline in all cases, since methods can get recompiled
                   // and we might need one in the future.
-                  if (TR::Compiler->target.is64Bit())
+                  if (cg()->comp()->target().is64Bit())
                      cg()->fe()->reserveTrampolineIfNecessary(comp, getSymbolReference(), true);
 
                   if (isTrampolineRequired)
@@ -1328,7 +1317,7 @@ uint8_t* TR::X86ImmSymInstruction::generateOperand(uint8_t* cursor)
                      }
                   }
 
-               TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinRIPRange(targetAddress, nextInstructionAddress),
+               TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinRIPRange(targetAddress, nextInstructionAddress),
                                "Direct call target must be reachable directly");
                }
             }
@@ -1346,7 +1335,7 @@ uint8_t* TR::X86ImmSymInstruction::generateOperand(uint8_t* cursor)
                {
                if (sym->isStatic())
                   {
-                  *(intptrj_t *)cursor = (intptrj_t)TR::Compiler->cls.persistentClassPointerFromClassPointer(cg()->comp(), (TR_OpaqueClassBlock*)sym->getStaticSymbol()->getStaticAddress());
+                  *(intptr_t *)cursor = (intptr_t)TR::Compiler->cls.persistentClassPointerFromClassPointer(cg()->comp(), (TR_OpaqueClassBlock*)sym->getStaticSymbol()->getStaticAddress());
                   }
                else
                   {
@@ -1415,7 +1404,7 @@ TR::X86RegInstruction::enlarge(int32_t requestedEnlargementSize, int32_t maxEnla
    int32_t enlargementSize = std::min(requestedEnlargementSize, maxEnlargementSize);
 
    TR::Compilation *comp = cg()->comp();
-   if (  TR::Compiler->target.is64Bit()
+   if (comp->target().is64Bit()
       && !getOpCode().info().hasMandatoryPrefix()
       && performTransformation(comp, "O^O Enlarging instruction %p by %d bytes by repeating the REX prefix\n", this, enlargementSize))
       {
@@ -1567,7 +1556,7 @@ TR::X86RegImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
             if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
                {
                cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                         (uint8_t *)getSourceImmediate(),
+                                                                                         (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                          (uint8_t *)symbolKind,
                                                                                          TR_SymbolFromManager,
                                                                                          cg()),
@@ -1692,7 +1681,7 @@ TR::X86RegImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
             if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
                {
                cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                         (uint8_t *)getSourceImmediate(),
+                                                                                         (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                          (uint8_t *)TR::SymbolType::typeClass,
                                                                                          TR_SymbolFromManager,
                                                                                          cg()),
@@ -1735,7 +1724,7 @@ TR::X86RegImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
          if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
             {
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                      (uint8_t *)getSourceImmediate(),
+                                                                                      (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                       (uint8_t *)symbolKind,
                                                                                       TR_SymbolFromManager,
                                                                                       cg()),
@@ -1912,7 +1901,7 @@ int32_t TR::X86MemInstruction::estimateBinaryLength(int32_t currentEstimate)
    if (barrier & NeedsExplicitBarrier)
       length += estimateMemoryBarrierBinaryLength(barrier, cg());
 
-   int32_t patchBoundaryPadding = (TR::Compiler->target.isSMP() && getMemoryReference()->getSymbolReference().isUnresolved()) ? 1 : 0;
+   int32_t patchBoundaryPadding = (cg()->comp()->target().isSMP() && getMemoryReference()->getSymbolReference().isUnresolved()) ? 1 : 0;
 
    setEstimatedBinaryLength(getOpCode().length(self()->rexBits()) + length + patchBoundaryPadding);
 
@@ -1987,7 +1976,7 @@ TR::X86MemImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
          if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
             {
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                      (uint8_t *)getSourceImmediate(),
+                                                                                      (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                       (uint8_t *)TR::SymbolType::typeClass,
                                                                                       TR_SymbolFromManager,
                                                                                       cg()),
@@ -2103,7 +2092,7 @@ int32_t TR::X86MemImmInstruction::estimateBinaryLength(int32_t currentEstimate)
    else
       length++;
 
-   uint32_t patchBoundaryPadding = (TR::Compiler->target.isSMP() && getMemoryReference()->getSymbolReference().isUnresolved()) ? 1 : 0;
+   uint32_t patchBoundaryPadding = (cg()->comp()->target().isSMP() && getMemoryReference()->getSymbolReference().isUnresolved()) ? 1 : 0;
 
    setEstimatedBinaryLength(getOpCode().length(self()->rexBits()) + length + patchBoundaryPadding);
 
@@ -2149,7 +2138,7 @@ TR::X86MemImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
          if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
             {
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                      (uint8_t *)getSourceImmediate(),
+                                                                                      (uint8_t *)(uintptr_t)getSourceImmediate(),
                                                                                       (uint8_t *)TR::SymbolType::typeClass,
                                                                                       TR_SymbolFromManager,
                                                                                       cg()),
@@ -2302,7 +2291,7 @@ int32_t TR::X86MemRegImmInstruction::estimateBinaryLength(int32_t currentEstimat
    else
       length++;
 
-   int32_t patchBoundaryPadding = (TR::Compiler->target.isSMP() && getMemoryReference()->getSymbolReference().isUnresolved()) ? 1 : 0;
+   int32_t patchBoundaryPadding = (cg()->comp()->target().isSMP() && getMemoryReference()->getSymbolReference().isUnresolved()) ? 1 : 0;
 
    setEstimatedBinaryLength(getOpCode().length(self()->rexBits()) + length + patchBoundaryPadding);
    return currentEstimate + getEstimatedBinaryLength();
@@ -2355,7 +2344,7 @@ int32_t TR::X86RegMemInstruction::estimateBinaryLength(int32_t currentEstimate)
    if (barrier & NeedsExplicitBarrier)
       length += estimateMemoryBarrierBinaryLength(barrier, cg());
 
-   int32_t patchBoundaryPadding = (TR::Compiler->target.isSMP() && getMemoryReference()->getSymbolReference().isUnresolved()) ? 1 : 0;
+   int32_t patchBoundaryPadding = (cg()->comp()->target().isSMP() && getMemoryReference()->getSymbolReference().isUnresolved()) ? 1 : 0;
 
    setEstimatedBinaryLength(getOpCode().length(self()->rexBits()) + rexRepeatCount() + length + patchBoundaryPadding);
    return currentEstimate + getEstimatedBinaryLength();
@@ -2482,7 +2471,7 @@ int32_t TR::X86RegMemImmInstruction::estimateBinaryLength(int32_t currentEstimat
    else
       length++;
 
-   int32_t patchBoundaryPadding = (TR::Compiler->target.isSMP() && getMemoryReference()->getSymbolReference().isUnresolved()) ? 1 : 0;
+   int32_t patchBoundaryPadding = (cg()->comp()->target().isSMP() && getMemoryReference()->getSymbolReference().isUnresolved()) ? 1 : 0;
 
    setEstimatedBinaryLength(getOpCode().length(self()->rexBits()) + length + patchBoundaryPadding);
 
@@ -2619,7 +2608,7 @@ TR::AMD64RegImm64Instruction::addMetaDataForCodeAddress(uint8_t *cursor)
    TR::SymbolReference *methodSymRef = getNode()->getOpCode().hasSymbolReference()?getNode()->getSymbolReference():NULL;
 
 #ifdef J9_PROJECT_SPECIFIC
-   if (comp->fej9()->helpersNeedRelocation())
+   if (cg()->needRelocationsForHelpers())
       {
       if (getNode()->getOpCode().hasSymbolReference() &&
           methodSymRef &&
@@ -2836,7 +2825,7 @@ TR::AMD64RegImm64SymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
 
          case TR_DataAddress:
             {
-            if (comp->needRelocationsForStatics())
+            if (cg()->needRelocationsForStatics())
                {
                cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                                          (uint8_t *) getSymbolReference(),

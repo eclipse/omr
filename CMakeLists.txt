@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,6 +90,22 @@ target_include_directories(omr_base
 		$<INSTALL_INTERFACE:${OMR_INSTALL_INC_DIR}>
 )
 
+if(OMR_OS_ZOS)
+	if(OMR_USE_NATIVE_ENCODING)
+		target_link_libraries(omr_base INTERFACE omr_ebcdic)
+		target_compile_definitions(omr_base
+			INTERFACE
+				-DOMR_EBCDIC
+		)
+	else()
+		target_link_libraries(omr_base INTERFACE omr_ascii)
+	endif()
+endif()
+
+if(OMR_WINDOWS_NOMINMAX)
+	target_compile_definitions(omr_base INTERFACE -DNOMINMAX)
+endif()
+
 install(
 	TARGETS omr_base
 	EXPORT OmrTargets
@@ -111,8 +127,25 @@ add_custom_target(header_check ALL
 	${CMAKE_COMMAND} "-Domr_SOURCE_DIR=${omr_SOURCE_DIR}" -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckSourceTree.cmake)
 endif()
 
-configure_file(./omrcfg.CMakeTemplate.h omrcfg.h)
-configure_file(./omrversionstrings.CMakeTemplate.h omrversionstrings.h)
+configure_file(include_core/omrcfg.cmake.h.in omrcfg.h)
+configure_file(include_core/omrversionstrings.cmake.h.in omrversionstrings.h)
+
+
+###
+### Set up DDR configuration
+###
+include(OmrDDRSupport)
+if(OMR_DDR)
+	make_ddr_set(omrddr)
+	ddr_add_headers(omrddr
+		${omr_BINARY_DIR}/omrcfg.h
+		include_core/j9nongenerated.h
+	)
+	set_property(TARGET omrddr PROPERTY INCLUDE_DIRECTORIES
+		${CMAKE_CURRENT_SOURCE_DIR}/include_core
+		${CMAKE_CURRENT_BINARY_DIR}
+	)
+endif()
 
 ###
 ### Native Tooling

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,7 +145,7 @@ getDeviceData(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaDeviceDescri
 	Assert_PRT_true(NULL != config);
 	Assert_PRT_true(NULL != globals);
 
-	int32_t result = J9CUDA_NO_ERROR;
+	J9CudaError result = J9CUDA_NO_ERROR;
 
 	if (globals->deviceCount <= deviceId) {
 		result = J9CUDA_ERROR_INVALID_DEVICE;
@@ -292,84 +292,286 @@ J9CUDA_STATIC_ASSERT(
 	sizeof(J9CudaFunctionTable) == sizeof(((J9CudaGlobalData *)0)->functionTable));
 
 /**
- * Translate a driver API error to a runtime API error code.
+ * Translate the given driver API error to an OMR error code.
  *
  * @param[in] result a CUDA driver result code
- * @return a representative CUDA runtime error code
+ * @return an equivalent OMR error code
  */
-cudaError_t
-translate(CUresult result)
+J9CudaError
+mapDriver(CUresult result)
 {
 	switch (result) {
 	case CUDA_SUCCESS:
-		return cudaSuccess;
+		return J9CUDA_NO_ERROR;
 
 	case CUDA_ERROR_ASSERT:
-		return cudaErrorAssert;
+		return J9CUDA_ERROR_ASSERT;
 	case CUDA_ERROR_ECC_UNCORRECTABLE:
-		return cudaErrorECCUncorrectable;
+		return J9CUDA_ERROR_ECCUNCORRECTABLE;
 	case CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED:
-		return cudaErrorHostMemoryAlreadyRegistered;
+		return J9CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED;
 	case CUDA_ERROR_HOST_MEMORY_NOT_REGISTERED:
-		return cudaErrorHostMemoryNotRegistered;
+		return J9CUDA_ERROR_HOST_MEMORY_NOT_REGISTERED;
 	case CUDA_ERROR_INVALID_DEVICE:
-		return cudaErrorInvalidDevice;
+		return J9CUDA_ERROR_INVALID_DEVICE;
 	case CUDA_ERROR_INVALID_HANDLE:
-		return cudaErrorInvalidResourceHandle;
+		return J9CUDA_ERROR_INVALID_RESOURCE_HANDLE;
 	case CUDA_ERROR_INVALID_IMAGE:
-		return cudaErrorInvalidKernelImage;
+		return J9CUDA_ERROR_INVALID_KERNEL_IMAGE;
 	case CUDA_ERROR_INVALID_VALUE:
-		return cudaErrorInvalidValue;
+		return J9CUDA_ERROR_INVALID_VALUE;
 	case CUDA_ERROR_LAUNCH_FAILED:
-		return cudaErrorLaunchFailure;
+		return J9CUDA_ERROR_LAUNCH_FAILURE;
 	case CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES:
-		return cudaErrorLaunchOutOfResources;
+		return J9CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES;
 	case CUDA_ERROR_LAUNCH_TIMEOUT:
-		return cudaErrorLaunchTimeout;
+		return J9CUDA_ERROR_LAUNCH_TIMEOUT;
 	case CUDA_ERROR_NO_BINARY_FOR_GPU:
-		return cudaErrorNoKernelImageForDevice;
+		return J9CUDA_ERROR_NO_KERNEL_IMAGE_FOR_DEVICE;
 	case CUDA_ERROR_NO_DEVICE:
-		return cudaErrorNoDevice;
+		return J9CUDA_ERROR_NO_DEVICE;
 	case CUDA_ERROR_NOT_PERMITTED:
-		return cudaErrorNotPermitted;
+		return J9CUDA_ERROR_NOT_PERMITTED;
 	case CUDA_ERROR_NOT_READY:
-		return cudaErrorNotReady;
+		return J9CUDA_ERROR_NOT_READY;
 	case CUDA_ERROR_NOT_SUPPORTED:
-		return cudaErrorNotSupported;
+		return J9CUDA_ERROR_NOT_SUPPORTED;
 	case CUDA_ERROR_OPERATING_SYSTEM:
-		return cudaErrorOperatingSystem;
+		return J9CUDA_ERROR_OPERATING_SYSTEM;
 	case CUDA_ERROR_OUT_OF_MEMORY:
-		return cudaErrorMemoryAllocation;
+		return J9CUDA_ERROR_MEMORY_ALLOCATION;
 	case CUDA_ERROR_PEER_ACCESS_ALREADY_ENABLED:
-		return cudaErrorPeerAccessAlreadyEnabled;
+		return J9CUDA_ERROR_PEER_ACCESS_ALREADY_ENABLED;
 	case CUDA_ERROR_PEER_ACCESS_NOT_ENABLED:
-		return cudaErrorPeerAccessNotEnabled;
+		return J9CUDA_ERROR_PEER_ACCESS_NOT_ENABLED;
 	case CUDA_ERROR_PEER_ACCESS_UNSUPPORTED:
-		return cudaErrorPeerAccessUnsupported;
-	case CUDA_ERROR_PROFILER_ALREADY_STARTED:
-		return cudaErrorProfilerAlreadyStarted;
-	case CUDA_ERROR_PROFILER_ALREADY_STOPPED:
-		return cudaErrorProfilerAlreadyStopped;
+		return J9CUDA_ERROR_PEER_ACCESS_UNSUPPORTED;
 	case CUDA_ERROR_PROFILER_DISABLED:
-		return cudaErrorProfilerDisabled;
-	case CUDA_ERROR_PROFILER_NOT_INITIALIZED:
-		return cudaErrorProfilerNotInitialized;
+		return J9CUDA_ERROR_PROFILER_DISABLED;
 	case CUDA_ERROR_SHARED_OBJECT_INIT_FAILED:
-		return cudaErrorSharedObjectInitFailed;
+		return J9CUDA_ERROR_SHARED_OBJECT_INIT_FAILED;
 	case CUDA_ERROR_SHARED_OBJECT_SYMBOL_NOT_FOUND:
-		return cudaErrorSharedObjectSymbolNotFound;
+		return J9CUDA_ERROR_SHARED_OBJECT_SYMBOL_NOT_FOUND;
 	case CUDA_ERROR_TOO_MANY_PEERS:
-		return cudaErrorTooManyPeers;
+		return J9CUDA_ERROR_TOO_MANY_PEERS;
 	case CUDA_ERROR_UNKNOWN:
-		return cudaErrorUnknown;
+		return J9CUDA_ERROR_UNKNOWN;
 	case CUDA_ERROR_UNMAP_FAILED:
-		return cudaErrorUnmapBufferObjectFailed;
+		return J9CUDA_ERROR_UNMAP_BUFFER_OBJECT_FAILED;
 	case CUDA_ERROR_UNSUPPORTED_LIMIT:
-		return cudaErrorUnsupportedLimit;
+		return J9CUDA_ERROR_UNSUPPORTED_LIMIT;
 
 	default:
-		return (cudaError_t)-(int32_t)result;
+		return (J9CudaError)-(int32_t)result;
 	}
+}
+
+/**
+ * Translate the given runtime API error to an OMR error code.
+ *
+ * @param[in] portLibrary the port library pointer
+ * @param[in] error a CUDA runtime API error code
+ * @return an equivalent OMR error code
+ */
+J9CudaError
+mapRuntime(OMRPortLibrary *portLibrary, cudaError_t error)
+{
+	if (cudaSuccess == error) {
+		/* short-circuit the most common case */
+		return J9CUDA_NO_ERROR;
+#if CUDA_VERSION < 10010
+	} else if (portLibrary->portGlobals->cudaGlobals.runtimeVersion < 10010) {
+		/*
+		 * No mapping is required if the CUDA runtime version is before 10.1.
+		 * If we're compiling with 10.1 or later, that can't happen because
+		 * we refuse to load a runtime library whose version is less than
+		 * the compile-time version.
+		 */
+#endif /* CUDA_VERSION < 10010 */
+	} else {
+		/*
+		 * This switch statement was automatically generated by a tool compiled
+		 * against CUDA 10.1 header files. The case label values must be numeric
+		 * constants because they are potentially associated with a version of
+		 * the runtime which is newer than what is available at compile time.
+		 */
+		switch ((int32_t)error) {
+		case 52: /* cudaErrorMissingConfiguration */
+			return J9CUDA_ERROR_MISSING_CONFIGURATION;
+		case 719: /* cudaErrorLaunchFailure */
+			return J9CUDA_ERROR_LAUNCH_FAILURE;
+		case 702: /* cudaErrorLaunchTimeout */
+			return J9CUDA_ERROR_LAUNCH_TIMEOUT;
+		case 701: /* cudaErrorLaunchOutOfResources */
+			return J9CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES;
+		case 98: /* cudaErrorInvalidDeviceFunction */
+			return J9CUDA_ERROR_INVALID_DEVICE_FUNCTION;
+		case 101: /* cudaErrorInvalidDevice */
+			return J9CUDA_ERROR_INVALID_DEVICE;
+		case 1: /* cudaErrorInvalidValue */
+			return J9CUDA_ERROR_INVALID_VALUE;
+		case 205: /* cudaErrorMapBufferObjectFailed */
+			return J9CUDA_ERROR_MAP_BUFFER_OBJECT_FAILED;
+		case 206: /* cudaErrorUnmapBufferObjectFailed */
+			return J9CUDA_ERROR_UNMAP_BUFFER_OBJECT_FAILED;
+		case 4: /* cudaErrorCudartUnloading */
+			return J9CUDA_ERROR_CUDART_UNLOADING;
+		case 999: /* cudaErrorUnknown */
+			return J9CUDA_ERROR_UNKNOWN;
+		case 400: /* cudaErrorInvalidResourceHandle */
+			return J9CUDA_ERROR_INVALID_RESOURCE_HANDLE;
+		case 600: /* cudaErrorNotReady */
+			return J9CUDA_ERROR_NOT_READY;
+		case 708: /* cudaErrorSetOnActiveProcess */
+			return J9CUDA_ERROR_SET_ON_ACTIVE_PROCESS;
+		case 100: /* cudaErrorNoDevice */
+			return J9CUDA_ERROR_NO_DEVICE;
+		case 214: /* cudaErrorECCUncorrectable */
+			return J9CUDA_ERROR_ECCUNCORRECTABLE;
+		case 302: /* cudaErrorSharedObjectSymbolNotFound */
+			return J9CUDA_ERROR_SHARED_OBJECT_SYMBOL_NOT_FOUND;
+		case 303: /* cudaErrorSharedObjectInitFailed */
+			return J9CUDA_ERROR_SHARED_OBJECT_INIT_FAILED;
+		case 215: /* cudaErrorUnsupportedLimit */
+			return J9CUDA_ERROR_UNSUPPORTED_LIMIT;
+		case 200: /* cudaErrorInvalidKernelImage */
+			return J9CUDA_ERROR_INVALID_KERNEL_IMAGE;
+		case 209: /* cudaErrorNoKernelImageForDevice */
+			return J9CUDA_ERROR_NO_KERNEL_IMAGE_FOR_DEVICE;
+		case 704: /* cudaErrorPeerAccessAlreadyEnabled */
+			return J9CUDA_ERROR_PEER_ACCESS_ALREADY_ENABLED;
+		case 705: /* cudaErrorPeerAccessNotEnabled */
+			return J9CUDA_ERROR_PEER_ACCESS_NOT_ENABLED;
+		case 216: /* cudaErrorDeviceAlreadyInUse */
+			return J9CUDA_ERROR_DEVICE_ALREADY_IN_USE;
+		case 5: /* cudaErrorProfilerDisabled */
+			return J9CUDA_ERROR_PROFILER_DISABLED;
+		case 710: /* cudaErrorAssert */
+			return J9CUDA_ERROR_ASSERT;
+		case 711: /* cudaErrorTooManyPeers */
+			return J9CUDA_ERROR_TOO_MANY_PEERS;
+		case 712: /* cudaErrorHostMemoryAlreadyRegistered */
+			return J9CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED;
+		case 713: /* cudaErrorHostMemoryNotRegistered */
+			return J9CUDA_ERROR_HOST_MEMORY_NOT_REGISTERED;
+		case 304: /* cudaErrorOperatingSystem */
+			return J9CUDA_ERROR_OPERATING_SYSTEM;
+		case 217: /* cudaErrorPeerAccessUnsupported */
+			return J9CUDA_ERROR_PEER_ACCESS_UNSUPPORTED;
+		case 800: /* cudaErrorNotPermitted */
+			return J9CUDA_ERROR_NOT_PERMITTED;
+		case 801: /* cudaErrorNotSupported */
+			return J9CUDA_ERROR_NOT_SUPPORTED;
+		default:
+			break;
+		}
+	}
+
+	return (J9CudaError)(int32_t)error;
+}
+
+/**
+ * Translate the given OMR error code to a CUDA runtime API error code.
+ *
+ * @param[in] portLibrary the port library pointer
+ * @param[in] error an OMR error code
+ * @return an equivalent CUDA error code
+ */
+cudaError_t
+unmapRuntime(OMRPortLibrary *portLibrary, J9CudaError error)
+{
+	if (J9CUDA_NO_ERROR == error) {
+		/* short-circuit the most common case */
+		return cudaSuccess;
+#if CUDA_VERSION < 10010
+	} else if (portLibrary->portGlobals->cudaGlobals.runtimeVersion < 10010) {
+		/*
+		 * No mapping is required if the CUDA runtime version is before 10.1.
+		 * If we're compiling with 10.1 or later, that can't happen because
+		 * we refuse to load a runtime library whose version is less than
+		 * the compile-time version.
+		 */
+#endif /* CUDA_VERSION < 10010 */
+	} else {
+		/*
+		 * This switch statement was automatically generated by a tool compiled
+		 * against CUDA 10.1 header files. The return values must be numeric
+		 * constants because they are potentially associated with a version of
+		 * the runtime which is newer than what is available at compile time.
+		 */
+		switch (error) {
+		case J9CUDA_ERROR_MISSING_CONFIGURATION:
+			return (cudaError_t)52; /* cudaErrorMissingConfiguration */
+		case J9CUDA_ERROR_LAUNCH_FAILURE:
+			return (cudaError_t)719; /* cudaErrorLaunchFailure */
+		case J9CUDA_ERROR_LAUNCH_TIMEOUT:
+			return (cudaError_t)702; /* cudaErrorLaunchTimeout */
+		case J9CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES:
+			return (cudaError_t)701; /* cudaErrorLaunchOutOfResources */
+		case J9CUDA_ERROR_INVALID_DEVICE_FUNCTION:
+			return (cudaError_t)98; /* cudaErrorInvalidDeviceFunction */
+		case J9CUDA_ERROR_INVALID_DEVICE:
+			return (cudaError_t)101; /* cudaErrorInvalidDevice */
+		case J9CUDA_ERROR_INVALID_VALUE:
+			return (cudaError_t)1; /* cudaErrorInvalidValue */
+		case J9CUDA_ERROR_MAP_BUFFER_OBJECT_FAILED:
+			return (cudaError_t)205; /* cudaErrorMapBufferObjectFailed */
+		case J9CUDA_ERROR_UNMAP_BUFFER_OBJECT_FAILED:
+			return (cudaError_t)206; /* cudaErrorUnmapBufferObjectFailed */
+		case J9CUDA_ERROR_CUDART_UNLOADING:
+			return (cudaError_t)4; /* cudaErrorCudartUnloading */
+		case J9CUDA_ERROR_UNKNOWN:
+			return (cudaError_t)999; /* cudaErrorUnknown */
+		case J9CUDA_ERROR_INVALID_RESOURCE_HANDLE:
+			return (cudaError_t)400; /* cudaErrorInvalidResourceHandle */
+		case J9CUDA_ERROR_NOT_READY:
+			return (cudaError_t)600; /* cudaErrorNotReady */
+		case J9CUDA_ERROR_SET_ON_ACTIVE_PROCESS:
+			return (cudaError_t)708; /* cudaErrorSetOnActiveProcess */
+		case J9CUDA_ERROR_NO_DEVICE:
+			return (cudaError_t)100; /* cudaErrorNoDevice */
+		case J9CUDA_ERROR_ECCUNCORRECTABLE:
+			return (cudaError_t)214; /* cudaErrorECCUncorrectable */
+		case J9CUDA_ERROR_SHARED_OBJECT_SYMBOL_NOT_FOUND:
+			return (cudaError_t)302; /* cudaErrorSharedObjectSymbolNotFound */
+		case J9CUDA_ERROR_SHARED_OBJECT_INIT_FAILED:
+			return (cudaError_t)303; /* cudaErrorSharedObjectInitFailed */
+		case J9CUDA_ERROR_UNSUPPORTED_LIMIT:
+			return (cudaError_t)215; /* cudaErrorUnsupportedLimit */
+		case J9CUDA_ERROR_INVALID_KERNEL_IMAGE:
+			return (cudaError_t)200; /* cudaErrorInvalidKernelImage */
+		case J9CUDA_ERROR_NO_KERNEL_IMAGE_FOR_DEVICE:
+			return (cudaError_t)209; /* cudaErrorNoKernelImageForDevice */
+		case J9CUDA_ERROR_PEER_ACCESS_ALREADY_ENABLED:
+			return (cudaError_t)704; /* cudaErrorPeerAccessAlreadyEnabled */
+		case J9CUDA_ERROR_PEER_ACCESS_NOT_ENABLED:
+			return (cudaError_t)705; /* cudaErrorPeerAccessNotEnabled */
+		case J9CUDA_ERROR_DEVICE_ALREADY_IN_USE:
+			return (cudaError_t)216; /* cudaErrorDeviceAlreadyInUse */
+		case J9CUDA_ERROR_PROFILER_DISABLED:
+			return (cudaError_t)5; /* cudaErrorProfilerDisabled */
+		case J9CUDA_ERROR_ASSERT:
+			return (cudaError_t)710; /* cudaErrorAssert */
+		case J9CUDA_ERROR_TOO_MANY_PEERS:
+			return (cudaError_t)711; /* cudaErrorTooManyPeers */
+		case J9CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED:
+			return (cudaError_t)712; /* cudaErrorHostMemoryAlreadyRegistered */
+		case J9CUDA_ERROR_HOST_MEMORY_NOT_REGISTERED:
+			return (cudaError_t)713; /* cudaErrorHostMemoryNotRegistered */
+		case J9CUDA_ERROR_OPERATING_SYSTEM:
+			return (cudaError_t)304; /* cudaErrorOperatingSystem */
+		case J9CUDA_ERROR_PEER_ACCESS_UNSUPPORTED:
+			return (cudaError_t)217; /* cudaErrorPeerAccessUnsupported */
+		case J9CUDA_ERROR_NOT_PERMITTED:
+			return (cudaError_t)800; /* cudaErrorNotPermitted */
+		case J9CUDA_ERROR_NOT_SUPPORTED:
+			return (cudaError_t)801; /* cudaErrorNotSupported */
+		default:
+			break;
+		}
+	}
+
+	return (cudaError_t)(int32_t)error;
 }
 
 /**
@@ -380,9 +582,9 @@ translate(CUresult result)
  * @param[in] deviceId the device identifier
  * @param[in] nameSize the size of the buffer where the name should be stored
  * @param[out] nameOut the buffer where the name should be stored
- * @return cudaSuccess on success, any other value on failure
+ * @return J9CUDA_NO_ERROR on success, any other value on failure
  */
-cudaError_t
+J9CudaError
 getDeviceName(J9CudaFunctionTable *functions, uint32_t deviceId, uint32_t nameSize, char *nameOut)
 {
 	CUresult result = CUDA_ERROR_NO_DEVICE;
@@ -397,7 +599,7 @@ getDeviceName(J9CudaFunctionTable *functions, uint32_t deviceId, uint32_t nameSi
 		}
 	}
 
-	return translate(result);
+	return mapDriver(result);
 }
 
 /**
@@ -407,32 +609,34 @@ getDeviceName(J9CudaFunctionTable *functions, uint32_t deviceId, uint32_t nameSi
  * @param[in] functions the function table pointer
  * @param[in] deviceId the device identifier
  * @param[out] deviceData the device descriptor pointer
- * @return cudaSuccess on success or a non-zero value on failure
+ * @return J9CUDA_NO_ERROR on success or a non-zero value on failure
  */
-cudaError_t
-initDeviceData(J9CudaFunctionTable *functions, uint32_t deviceId, J9CudaDeviceDescriptor *deviceData)
+J9CudaError
+initDeviceData(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaDeviceDescriptor *deviceData)
 {
 	Trc_PRT_cuda_initDeviceData_entry(deviceId);
 
-	cudaError_t result = cudaSuccess;
+	J9CudaError result = J9CUDA_NO_ERROR;
+	cudaError_t error = cudaSuccess;
+	J9CudaFunctionTable *functions = (J9CudaFunctionTable *)portLibrary->portGlobals->cudaGlobals.functionTable;
 
 	{
-		result = functions->SetDevice((int)deviceId);
+		error = functions->SetDevice((int)deviceId);
 
-		if (cudaSuccess != result) {
-			Trc_PRT_cuda_initDeviceData_fail2("set", result);
-			goto done;
+		if (cudaSuccess != error) {
+			Trc_PRT_cuda_initDeviceData_fail2("set", error);
+			goto fail;
 		}
 	}
 
 	{
 		int pciDomainId = 0;
 
-		result = functions->DeviceGetAttribute(&pciDomainId, cudaDevAttrPciDomainId, (int)deviceId);
+		error = functions->DeviceGetAttribute(&pciDomainId, cudaDevAttrPciDomainId, (int)deviceId);
 
-		if (cudaSuccess != result) {
-			Trc_PRT_cuda_initDeviceData_fail("PCI domain id", result);
-			goto done;
+		if (cudaSuccess != error) {
+			Trc_PRT_cuda_initDeviceData_fail("PCI domain id", error);
+			goto fail;
 		}
 
 		deviceData->pciDomainId = (uint32_t)pciDomainId;
@@ -441,11 +645,11 @@ initDeviceData(J9CudaFunctionTable *functions, uint32_t deviceId, J9CudaDeviceDe
 	{
 		int pciBusId = 0;
 
-		result = functions->DeviceGetAttribute(&pciBusId, cudaDevAttrPciBusId, (int)deviceId);
+		error = functions->DeviceGetAttribute(&pciBusId, cudaDevAttrPciBusId, (int)deviceId);
 
-		if (cudaSuccess != result) {
-			Trc_PRT_cuda_initDeviceData_fail("PCI bus id", result);
-			goto done;
+		if (cudaSuccess != error) {
+			Trc_PRT_cuda_initDeviceData_fail("PCI bus id", error);
+			goto fail;
 		}
 
 		deviceData->pciBusId = (uint32_t)pciBusId;
@@ -454,11 +658,11 @@ initDeviceData(J9CudaFunctionTable *functions, uint32_t deviceId, J9CudaDeviceDe
 	{
 		int pciDeviceId = 0;
 
-		result = functions->DeviceGetAttribute(&pciDeviceId, cudaDevAttrPciDeviceId, (int)deviceId);
+		error = functions->DeviceGetAttribute(&pciDeviceId, cudaDevAttrPciDeviceId, (int)deviceId);
 
-		if (cudaSuccess != result) {
-			Trc_PRT_cuda_initDeviceData_fail("PCI device id", result);
-			goto done;
+		if (cudaSuccess != error) {
+			Trc_PRT_cuda_initDeviceData_fail("PCI device id", error);
+			goto fail;
 		}
 
 		deviceData->pciDeviceId = (uint32_t)pciDeviceId;
@@ -467,11 +671,11 @@ initDeviceData(J9CudaFunctionTable *functions, uint32_t deviceId, J9CudaDeviceDe
 	{
 		int computeMajor = 0;
 
-		result = functions->DeviceGetAttribute(&computeMajor, cudaDevAttrComputeCapabilityMajor, (int)deviceId);
+		error = functions->DeviceGetAttribute(&computeMajor, cudaDevAttrComputeCapabilityMajor, (int)deviceId);
 
-		if (cudaSuccess != result) {
-			Trc_PRT_cuda_initDeviceData_fail("major compute capability", result);
-			goto done;
+		if (cudaSuccess != error) {
+			Trc_PRT_cuda_initDeviceData_fail("major compute capability", error);
+			goto fail;
 		}
 
 		deviceData->computeCapability = (uint32_t)(computeMajor * 10);
@@ -480,11 +684,11 @@ initDeviceData(J9CudaFunctionTable *functions, uint32_t deviceId, J9CudaDeviceDe
 	{
 		int computeMinor = 0;
 
-		result = functions->DeviceGetAttribute(&computeMinor, cudaDevAttrComputeCapabilityMinor, (int)deviceId);
+		error = functions->DeviceGetAttribute(&computeMinor, cudaDevAttrComputeCapabilityMinor, (int)deviceId);
 
-		if (cudaSuccess != result) {
-			Trc_PRT_cuda_initDeviceData_fail("minor compute capability", result);
-			goto done;
+		if (cudaSuccess != error) {
+			Trc_PRT_cuda_initDeviceData_fail("minor compute capability", error);
+			goto fail;
 		}
 
 		deviceData->computeCapability += (uint32_t)computeMinor;
@@ -493,11 +697,11 @@ initDeviceData(J9CudaFunctionTable *functions, uint32_t deviceId, J9CudaDeviceDe
 	{
 		int computeMode = 0;
 
-		result = functions->DeviceGetAttribute(&computeMode, cudaDevAttrComputeMode, (int)deviceId);
+		error = functions->DeviceGetAttribute(&computeMode, cudaDevAttrComputeMode, (int)deviceId);
 
-		if (cudaSuccess != result) {
-			Trc_PRT_cuda_initDeviceData_fail("compute mode", result);
-			goto done;
+		if (cudaSuccess != error) {
+			Trc_PRT_cuda_initDeviceData_fail("compute mode", error);
+			goto fail;
 		}
 
 		switch (computeMode) {
@@ -518,19 +722,20 @@ initDeviceData(J9CudaFunctionTable *functions, uint32_t deviceId, J9CudaDeviceDe
 		}
 	}
 
-	{
-		result = getDeviceName(functions, deviceId, (uint32_t)sizeof(deviceData->deviceName), deviceData->deviceName);
+	result = getDeviceName(functions, deviceId, (uint32_t)sizeof(deviceData->deviceName), deviceData->deviceName);
 
-		if (cudaSuccess != result) {
-			Trc_PRT_cuda_initDeviceData_fail("name", result);
-			goto done;
-		}
+	if (J9CUDA_NO_ERROR != result) {
+		Trc_PRT_cuda_initDeviceData_fail("name", result);
 	}
 
 done:
 	Trc_PRT_cuda_initDeviceData_exit(result);
 
 	return result;
+
+fail:
+	result = mapRuntime(portLibrary, error);
+	goto done;
 }
 
 /**
@@ -538,9 +743,9 @@ done:
  * in service data.
  *
  * @param[in] portLibrary the port library pointer
- * @return cudaSuccess on success or a non-zero value on failure
+ * @return J9CUDA_NO_ERROR on success or a non-zero value on failure
  */
-cudaError_t
+J9CudaError
 initConfigData(OMRPortLibrary *portLibrary)
 {
 	J9CudaGlobalData *globals = &portLibrary->portGlobals->cudaGlobals;
@@ -550,7 +755,7 @@ initConfigData(OMRPortLibrary *portLibrary)
 
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 
-	cudaError_t result = cudaSuccess;
+	J9CudaError result = J9CUDA_NO_ERROR;
 	/**
 	 * The instance of J9CudaConfig allocated here is immediately followed
 	 * by an array of deviceCount J9CudaDeviceDescriptor objects.
@@ -560,7 +765,7 @@ initConfigData(OMRPortLibrary *portLibrary)
 
 	if (NULL == config) {
 		Trc_PRT_cuda_initConfigData_fail("allocate config space");
-		result = cudaErrorMemoryAllocation;
+		result = J9CUDA_ERROR_MEMORY_ALLOCATION;
 		goto done;
 	}
 
@@ -572,39 +777,39 @@ initConfigData(OMRPortLibrary *portLibrary)
 
 		if (1 == deviceCount) {
 			/* With only one device, there's no need to save and restore the active device. */
-			result = initDeviceData(functions, 0, &details[0]);
+			result = initDeviceData(portLibrary, 0, &details[0]);
 		} else {
 			int current = 0;
+			cudaError_t error = functions->GetDevice(&current);
 
-			result = functions->GetDevice(&current);
-
-			if (cudaSuccess != result) {
+			if (cudaSuccess != error) {
 				Trc_PRT_cuda_initDeviceData_fail2("get", result);
+				result = mapRuntime(portLibrary, error);
 				goto fail;
 			}
 
 			for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId) {
-				result = initDeviceData(functions, deviceId, &details[deviceId]);
+				result = initDeviceData(portLibrary, deviceId, &details[deviceId]);
 
-				if (cudaSuccess != result) {
+				if (J9CUDA_NO_ERROR != result) {
 					Trc_PRT_cuda_initConfigData_fail("initialize detail");
 					break;
 				}
 			}
 
-			cudaError_t restore = functions->SetDevice(current);
+			error = functions->SetDevice(current);
 
-			if (cudaSuccess != restore) {
-				Trc_PRT_cuda_initDeviceData_fail2("restore", restore);
+			if (cudaSuccess != error) {
+				Trc_PRT_cuda_initDeviceData_fail2("restore", error);
 
-				if (cudaSuccess == result) {
-					result = restore;
+				if (J9CUDA_NO_ERROR == result) {
+					result = mapRuntime(portLibrary, error);
 				}
 			}
 		}
 	}
 
-	if (cudaSuccess != result) {
+	if (J9CUDA_NO_ERROR != result) {
 fail:
 		J9CUDA_FREE_MEMORY(config);
 		config = NULL;
@@ -666,7 +871,7 @@ const J9CudaEntryDescriptor driverDescriptors[] = {
 };
 
 /**
- * Expands to a J9CudaEntryDescriptor initializer for a runtime API functioln.
+ * Expands to a J9CudaEntryDescriptor initializer for a runtime API function.
  *
  * version is the minimum required library version
  * name is the function pointer field of J9CudaFunctionTable
@@ -999,6 +1204,14 @@ const J9CudaLibraryDescriptor runtimeLibraries[] = {
 /*
  * Include forward-compatible support for runtime libraries.
  */
+#if CUDA_VERSION <= 10020
+	OMRCUDA_LIBRARY_ENTRY(10, 2),
+#endif /* CUDA_VERSION <= 10020 */
+
+#if CUDA_VERSION <= 10010
+	OMRCUDA_LIBRARY_ENTRY(10, 1),
+#endif /* CUDA_VERSION <= 10010 */
+
 #if CUDA_VERSION <= 10000
 	OMRCUDA_LIBRARY_ENTRY(10, 0),
 #endif /* CUDA_VERSION <= 10000 */
@@ -1122,7 +1335,7 @@ fail:
 			newState = J9CUDA_STATE_FAILED;
 		}
 
-		if (cudaSuccess != initConfigData(portLibrary)) {
+		if (J9CUDA_NO_ERROR != initConfigData(portLibrary)) {
 			newState = J9CUDA_STATE_FAILED;
 		}
 
@@ -1158,9 +1371,7 @@ resetDevices(J9CudaGlobalData *globals)
 	if ((J9CUDA_STATE_INITIALIZED == globals->state) && (0 != globals->deviceCount)) {
 		int current = 0;
 		J9CudaFunctionTable *functions = (J9CudaFunctionTable *)globals->functionTable;
-		cudaError_t result = cudaSuccess;
-
-		result = functions->GetDevice(&current);
+		cudaError_t result = functions->GetDevice(&current);
 
 		if (cudaSuccess != result) {
 			Trc_PRT_cuda_reset_fail1("get", result);
@@ -1233,14 +1444,14 @@ getDeviceCount(OMRPortLibrary *portLibrary)
  *
  * @param[in] portLibrary the port library pointer
  * @param[in] deviceId the device identifier
- * @return cudaSuccess on success; cudaErrorNoDevice or cudaErrorInvalidDevice on failure
+ * @return J9CUDA_NO_ERROR on success; J9CUDA_ERROR_NO_DEVICE or J9CUDA_ERROR_INVALID_DEVICE on failure
  */
-VMINLINE cudaError_t
+VMINLINE J9CudaError
 validateDeviceId(OMRPortLibrary *portLibrary, uint32_t deviceId)
 {
 	uint32_t deviceCount = getDeviceCount(portLibrary);
 
-	return (0 == deviceCount) ? cudaErrorNoDevice : (deviceId < deviceCount) ? cudaSuccess : cudaErrorInvalidDevice;
+	return (0 == deviceCount) ? J9CUDA_ERROR_NO_DEVICE : (deviceId < deviceCount) ? J9CUDA_NO_ERROR : J9CUDA_ERROR_INVALID_DEVICE;
 }
 
 /**
@@ -1436,29 +1647,31 @@ public:
 	 * @param[in] portLibrary the port library pointer
 	 * @param[in] functions the function table pointer
 	 * @param[in] deviceId the device identifier
-	 * @return cudaSuccess on success, any other value on failure
+	 * @return J9CUDA_NO_ERROR on success, any other value on failure
 	 */
-	static cudaError_t
+	static J9CudaError
 	initDeviceForCurrentThread(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions, uint32_t deviceId)
 	{
 		Trc_PRT_cuda_ThreadState_initCurrent_entry(deviceId);
 
 		uint32_t deviceCount = getDeviceCount(portLibrary);
-		cudaError_t result = cudaErrorInvalidDevice;
+		J9CudaError result = J9CUDA_ERROR_INVALID_DEVICE;
 
 		if (deviceId < deviceCount) {
 			ThreadState *state = getStateForCurrentThread(portLibrary, deviceCount);
 
 			if (NULL == state) {
-				result = cudaErrorMemoryAllocation;
+				result = J9CUDA_ERROR_MEMORY_ALLOCATION;
 			} else if (state->test(deviceId)) {
 				/* previously initialized */
-				result = cudaSuccess;
+				result = J9CUDA_NO_ERROR;
 			} else {
 				/* initialize the device context for the current thread */
-				result = functions->Free(NULL);
+				cudaError_t error = functions->Free(NULL);
 
-				if (cudaSuccess == result) {
+				result = mapRuntime(portLibrary, error);
+
+				if (J9CUDA_NO_ERROR == result) {
 					state->set(deviceId);
 				}
 			}
@@ -1475,23 +1688,23 @@ public:
 	 *
 	 * @param[in] portLibrary the port library pointer
 	 * @param[in] deviceId the device identifier
-	 * @return cudaSuccess on success, any other value on failure
+	 * @return J9CUDA_NO_ERROR on success, any other value on failure
 	 */
-	static cudaError_t
+	static J9CudaError
 	markDeviceForCurrentThread(OMRPortLibrary *portLibrary, uint32_t deviceId)
 	{
 		Trc_PRT_cuda_ThreadState_markCurrent_entry(deviceId);
 
 		uint32_t deviceCount = getDeviceCount(portLibrary);
-		cudaError_t result = cudaErrorInvalidDevice;
+		J9CudaError result = J9CUDA_ERROR_INVALID_DEVICE;
 
 		if (deviceId < deviceCount) {
 			ThreadState *state = getStateForCurrentThread(portLibrary, deviceCount);
 
 			if (NULL == state) {
-				result = cudaErrorMemoryAllocation;
+				result = J9CUDA_ERROR_MEMORY_ALLOCATION;
 			} else {
-				result = cudaSuccess;
+				result = J9CUDA_NO_ERROR;
 				state->set(deviceId);
 			}
 		}
@@ -1507,23 +1720,23 @@ public:
 	 *
 	 * @param[in] portLibrary the port library pointer
 	 * @param[in] deviceId the device identifier
-	 * @return cudaSuccess on success, any other value on failure
+	 * @return J9CUDA_NO_ERROR on success, any other value on failure
 	 */
-	static cudaError_t
+	static J9CudaError
 	unmarkDeviceForCurrentThread(OMRPortLibrary *portLibrary, uint32_t deviceId)
 	{
 		Trc_PRT_cuda_ThreadState_unmarkCurrent_entry(deviceId);
 
 		uint32_t deviceCount = getDeviceCount(portLibrary);
-		cudaError_t result = cudaErrorInvalidDevice;
+		J9CudaError result = J9CUDA_ERROR_INVALID_DEVICE;
 
 		if (deviceId < deviceCount) {
 			ThreadState *state = getStateForCurrentThread(portLibrary, deviceCount);
 
 			if (NULL == state) {
-				result = cudaErrorMemoryAllocation;
+				result = J9CUDA_ERROR_MEMORY_ALLOCATION;
 			} else {
-				result = cudaSuccess;
+				result = J9CUDA_NO_ERROR;
 				state->clear(deviceId);
 			}
 		}
@@ -1546,13 +1759,13 @@ struct InitializerNotNeeded {
 	 * @param[in] (unused) the port library pointer
 	 * @param[in] (unused) the function table pointer
 	 * @param[in] (unused) the device identifier
-	 * @return cudaSuccess on success, any other value on failure
+	 * @return J9CUDA_NO_ERROR on success, any other value on failure
 	 */
-	VMINLINE cudaError_t
+	VMINLINE J9CudaError
 	prepare(OMRPortLibrary *, J9CudaFunctionTable *, uint32_t) const
 	{
 		/* Initialization not needed. */
-		return cudaSuccess;
+		return J9CUDA_NO_ERROR;
 	}
 
 	/**
@@ -1560,13 +1773,13 @@ struct InitializerNotNeeded {
 	 *
 	 * @param[in] (unused) the port library pointer
 	 * @param[in] (unused) the device identifier
-	 * @return cudaSuccess on success, any other value on failure
+	 * @return J9CUDA_NO_ERROR on success, any other value on failure
 	 */
-	VMINLINE cudaError_t
+	VMINLINE J9CudaError
 	onSuccess(OMRPortLibrary *, uint32_t) const
 	{
 		/* Initialization not needed. */
-		return cudaSuccess;
+		return J9CUDA_NO_ERROR;
 	}
 };
 
@@ -1581,9 +1794,9 @@ struct InitializedAfter : public InitializerNotNeeded {
 	 *
 	 * @param[in] portLibrary the port library pointer
 	 * @param[in] deviceId the device identifier
-	 * @return cudaSuccess on success, any other value on failure
+	 * @return J9CUDA_NO_ERROR on success, any other value on failure
 	 */
-	VMINLINE cudaError_t
+	VMINLINE J9CudaError
 	onSuccess(OMRPortLibrary *portLibrary, uint32_t deviceId) const
 	{
 		return ThreadState::markDeviceForCurrentThread(portLibrary, deviceId);
@@ -1602,9 +1815,9 @@ struct InitializedBefore : public InitializerNotNeeded {
 	 * @param[in] portLibrary the port library pointer
 	 * @param[in] functions the function table pointer
 	 * @param[in] deviceId the device identifier
-	 * @return cudaSuccess on success, any other value on failure
+	 * @return J9CUDA_NO_ERROR on success, any other value on failure
 	 */
-	VMINLINE cudaError_t
+	VMINLINE J9CudaError
 	prepare(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions, uint32_t deviceId) const
 	{
 		return ThreadState::initDeviceForCurrentThread(portLibrary, functions, deviceId);
@@ -1617,36 +1830,40 @@ struct InitializedBefore : public InitializerNotNeeded {
  * @param[in] portLibrary the port library pointer
  * @param[in] deviceId the device identifier
  * @param[in] operation the operation to be performed
- * @return cudaSuccess on success, any other value on failure
+ * @return J9CUDA_NO_ERROR on success, any other value on failure
  */
 template<typename Operation>
-VMINLINE cudaError_t
+VMINLINE J9CudaError
 withDevice(OMRPortLibrary *portLibrary, uint32_t deviceId, Operation &operation)
 {
 	Trc_PRT_cuda_withDevice_entry(deviceId);
 
 	int current = 0;
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = cudaErrorNoDevice;
+	J9CudaError result = J9CUDA_ERROR_NO_DEVICE;
 
 	/*
 	 * If any of the (required) functions is not available, then GetDevice will
-	 * be NULL in which case we simply return cudaErrorNoDevice. If GetDevice
+	 * be NULL in which case we simply return J9CUDA_ERROR_NO_DEVICE. If GetDevice
 	 * is not NULL, then we need not check again that a required function is
 	 * available (neither here nor within the Operation type).
 	 */
 	if (NULL != functions->GetDevice) {
-		result = functions->GetDevice(&current);
+		cudaError_t error = functions->GetDevice(&current);
 
-		if (cudaSuccess != result) {
+		result = mapRuntime(portLibrary, error);
+
+		if (J9CUDA_NO_ERROR != result) {
 			Trc_PRT_cuda_withDevice_get_fail(result);
 			goto done;
 		}
 
 		if (current != (int)deviceId) {
-			result = functions->SetDevice((int)deviceId);
+			error = functions->SetDevice((int)deviceId);
 
-			if (cudaSuccess != result) {
+			result = mapRuntime(portLibrary, error);
+
+			if (J9CUDA_NO_ERROR != result) {
 				Trc_PRT_cuda_withDevice_set_fail(result);
 				goto done;
 			}
@@ -1654,33 +1871,33 @@ withDevice(OMRPortLibrary *portLibrary, uint32_t deviceId, Operation &operation)
 
 		result = operation.prepare(portLibrary, functions, deviceId);
 
-		if (cudaSuccess != result) {
+		if (J9CUDA_NO_ERROR != result) {
 			Trc_PRT_cuda_withDevice_prepare_fail(result);
 			goto restore;
 		}
 
-		result = operation.execute(functions);
+		result = operation.execute(portLibrary, functions);
 
-		if (cudaSuccess != result) {
+		if (J9CUDA_NO_ERROR != result) {
 			Trc_PRT_cuda_withDevice_execute_fail(result);
 			goto restore;
 		}
 
 		result = operation.onSuccess(portLibrary, deviceId);
 
-		if (cudaSuccess != result) {
+		if (J9CUDA_NO_ERROR != result) {
 			Trc_PRT_cuda_withDevice_onSuccess_fail(result);
 		}
 
 restore:
 		if (current != (int)deviceId) {
-			cudaError_t restoreResult = functions->SetDevice(current);
+			error = functions->SetDevice(current);
 
-			if (cudaSuccess != restoreResult) {
-				Trc_PRT_cuda_withDevice_restore_fail(restoreResult);
+			if (cudaSuccess != error) {
+				Trc_PRT_cuda_withDevice_restore_fail(error);
 
-				if (cudaSuccess == result) {
-					result = restoreResult;
+				if (J9CUDA_NO_ERROR == result) {
+					result = mapRuntime(portLibrary, error);
 				}
 			}
 		}
@@ -1786,10 +2003,12 @@ struct Allocate : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return functions->Malloc(&deviceAddress, byteCount);
+		cudaError_t error = functions->Malloc(&deviceAddress, byteCount);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -1811,9 +2030,9 @@ omrcuda_deviceAlloc(OMRPortLibrary *portLibrary, uint32_t deviceId, uintptr_t si
 
 	Allocate operation(size);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_deviceAlloc_result(operation.deviceAddress);
 
 		*deviceAddressOut = operation.deviceAddress;
@@ -1839,18 +2058,19 @@ omrcuda_deviceCanAccessPeer(OMRPortLibrary *portLibrary, uint32_t deviceId, uint
 	Trc_PRT_cuda_deviceCanAccessPeer_entry(deviceId, peerDeviceId);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, deviceId);
+	J9CudaError result = validateDeviceId(portLibrary, deviceId);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		result = validateDeviceId(portLibrary, peerDeviceId);
 	}
 
-	if ((cudaSuccess == result) && (NULL != functions->DeviceCanAccessPeer)) {
+	if ((J9CUDA_NO_ERROR == result) && (NULL != functions->DeviceCanAccessPeer)) {
 		int access = 0;
+		cudaError_t error = functions->DeviceCanAccessPeer(&access, (int)deviceId, (int)peerDeviceId);
 
-		result = functions->DeviceCanAccessPeer(&access, (int)deviceId, (int)peerDeviceId);
-
-		if (cudaSuccess == result) {
+		if (cudaSuccess != error) {
+			result = mapRuntime(portLibrary, error);
+		} else {
 			Trc_PRT_cuda_deviceCanAccessPeer_result(access);
 
 			*canAccessPeerOut = 0 != access;
@@ -1880,10 +2100,12 @@ struct DisablePeerAccess : public InitializerNotNeeded {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return functions->DeviceDisablePeerAccess((int)peerDeviceId);
+		cudaError_t error = functions->DeviceDisablePeerAccess((int)peerDeviceId);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -1904,7 +2126,7 @@ omrcuda_deviceDisablePeerAccess(OMRPortLibrary *portLibrary, uint32_t deviceId, 
 
 	const DisablePeerAccess operation(peerDeviceId);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_deviceDisablePeerAccess_exit(result);
 
@@ -1929,10 +2151,12 @@ struct EnablePeerAccess : public InitializerNotNeeded {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return functions->DeviceEnablePeerAccess((int)peerDeviceId, 0);
+		cudaError_t error = functions->DeviceEnablePeerAccess((int)peerDeviceId, 0);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -1953,7 +2177,7 @@ omrcuda_deviceEnablePeerAccess(OMRPortLibrary *portLibrary, uint32_t deviceId, u
 
 	const EnablePeerAccess operation(peerDeviceId);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_deviceEnablePeerAccess_exit(result);
 
@@ -1978,10 +2202,12 @@ struct Free : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return functions->Free(deviceAddress);
+		cudaError_t error = functions->Free(deviceAddress);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -2002,7 +2228,7 @@ omrcuda_deviceFree(OMRPortLibrary *portLibrary, uint32_t deviceId, void *deviceA
 
 	const Free operation(deviceAddress);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_deviceFree_exit(result);
 
@@ -2025,13 +2251,13 @@ omrcuda_deviceGetAttribute(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cud
 	Trc_PRT_cuda_deviceGetAttribute_entry(deviceId, attribute);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = cudaErrorNoDevice;
+	J9CudaError result = J9CUDA_ERROR_NO_DEVICE;
 	cudaDeviceAttr deviceAttribute = cudaDevAttrWarpSize;
 
 	if (NULL != functions->DeviceGetAttribute) {
 		switch (attribute) {
 		default:
-			result = cudaErrorInvalidValue;
+			result = J9CUDA_ERROR_INVALID_VALUE;
 			goto done;
 
 		case J9CUDA_DEVICE_ATTRIBUTE_ASYNC_ENGINE_COUNT:
@@ -2266,24 +2492,27 @@ omrcuda_deviceGetAttribute(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cud
 		}
 
 		int value = 0;
+		cudaError_t error = functions->DeviceGetAttribute(&value, deviceAttribute, (int)deviceId);
 
-		result = functions->DeviceGetAttribute(&value, deviceAttribute, (int)deviceId);
-
-		if (cudaSuccess != result) {
+		if (cudaSuccess != error) {
+fail:
+			result = mapRuntime(portLibrary, error);
 			goto done;
 		}
 
 		if (J9CUDA_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY == attribute) {
 			int minor = 0;
 
-			result = functions->DeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, (int)deviceId);
+			error = functions->DeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, (int)deviceId);
 
-			if (cudaSuccess != result) {
-				goto done;
+			if (cudaSuccess != error) {
+				goto fail;
 			}
 
 			value = (value * 10) + minor;
 		}
+
+		result = J9CUDA_NO_ERROR;
 
 		Trc_PRT_cuda_deviceGetAttribute_result(attribute, value);
 		*valueOut = (int32_t)value;
@@ -2313,10 +2542,12 @@ struct DeviceGetCacheConfig : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return functions->DeviceGetCacheConfig(&config);
+		cudaError_t error = functions->DeviceGetCacheConfig(&config);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -2338,14 +2569,14 @@ omrcuda_deviceGetCacheConfig(OMRPortLibrary *portLibrary, uint32_t deviceId, J9C
 
 	DeviceGetCacheConfig operation;
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_deviceGetCacheConfig_result(operation.config);
 
 		switch (operation.config) {
 		default:
-			result = cudaErrorInvalidValue;
+			result = J9CUDA_ERROR_INVALID_VALUE;
 			break;
 
 		case cudaFuncCachePreferNone:
@@ -2390,9 +2621,9 @@ omrcuda_deviceGetCount(OMRPortLibrary *portLibrary, uint32_t *countOut)
 
 	*countOut = globals->deviceCount;
 
-	Trc_PRT_cuda_deviceGetCount_exit(cudaSuccess);
+	Trc_PRT_cuda_deviceGetCount_exit(J9CUDA_NO_ERROR);
 
-	return cudaSuccess;
+	return J9CUDA_NO_ERROR;
 }
 
 namespace
@@ -2416,14 +2647,14 @@ struct DeviceGetLimit : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
 		cudaLimit deviceLimit = cudaLimitStackSize;
 
 		switch (limit) {
 		default:
-			return cudaErrorInvalidValue;
+			return J9CUDA_ERROR_INVALID_VALUE;
 
 		case J9CUDA_DEVICE_LIMIT_DEV_RUNTIME_PENDING_LAUNCH_COUNT:
 			deviceLimit = cudaLimitDevRuntimePendingLaunchCount;
@@ -2442,7 +2673,9 @@ struct DeviceGetLimit : public InitializedAfter {
 			break;
 		}
 
-		return functions->DeviceGetLimit(&value, deviceLimit);
+		cudaError_t error = functions->DeviceGetLimit(&value, deviceLimit);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -2465,9 +2698,9 @@ omrcuda_deviceGetLimit(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaDev
 
 	DeviceGetLimit operation(limit);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_deviceGetLimit_result(operation.value);
 
 		*valueOut = operation.value;
@@ -2499,10 +2732,12 @@ struct DeviceGetMemInfo : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return functions->MemGetInfo(&freeBytes, &totalBytes);
+		cudaError_t error = functions->MemGetInfo(&freeBytes, &totalBytes);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -2524,9 +2759,9 @@ omrcuda_deviceGetMemInfo(OMRPortLibrary *portLibrary, uint32_t deviceId, uintptr
 
 	DeviceGetMemInfo operation;
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_deviceGetMemInfo_result(operation.freeBytes, operation.totalBytes);
 
 		*freeOut = operation.freeBytes;
@@ -2554,9 +2789,9 @@ omrcuda_deviceGetName(OMRPortLibrary *portLibrary, uint32_t deviceId, uint32_t n
 	Trc_PRT_cuda_deviceGetName_entry(deviceId);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = getDeviceName(functions, deviceId, nameSize, nameOut);
+	J9CudaError result = getDeviceName(functions, deviceId, nameSize, nameOut);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_deviceGetName_result(nameOut);
 	}
 
@@ -2583,10 +2818,12 @@ struct DeviceGetSharedMemConfig : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return functions->DeviceGetSharedMemConfig(&config);
+		cudaError_t error = functions->DeviceGetSharedMemConfig(&config);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -2609,14 +2846,14 @@ omrcuda_deviceGetSharedMemConfig(OMRPortLibrary *portLibrary, uint32_t deviceId,
 
 	DeviceGetSharedMemConfig operation;
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_deviceGetSharedMemConfig_result(operation.config);
 
 		switch (operation.config) {
 		default:
-			result = cudaErrorInvalidValue;
+			result = J9CUDA_ERROR_INVALID_VALUE;
 			break;
 
 		case cudaSharedMemBankSizeDefault:
@@ -2657,10 +2894,12 @@ struct DeviceGetPriorities : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return functions->DeviceGetStreamPriorityRange(&leastPriority, &greatestPriority);
+		cudaError_t error = functions->DeviceGetStreamPriorityRange(&leastPriority, &greatestPriority);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -2684,9 +2923,9 @@ omrcuda_deviceGetStreamPriorityRange(OMRPortLibrary *portLibrary, uint32_t devic
 
 	DeviceGetPriorities operation;
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_deviceGetStreamPriorityRange_result(
 			operation.leastPriority,
 			operation.greatestPriority);
@@ -2713,10 +2952,12 @@ struct DeviceReset : public InitializerNotNeeded {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return functions->DeviceReset();
+		cudaError_t error = functions->DeviceReset();
+
+		return mapRuntime(portLibrary, error);
 	}
 
 	/**
@@ -2724,9 +2965,9 @@ struct DeviceReset : public InitializerNotNeeded {
 	 *
 	 * @param[in] portLibrary the port library pointer
 	 * @param[in] deviceId the device identifier
-	 * @return cudaSuccess on success, any other value on failure
+	 * @return J9CUDA_NO_ERROR on success, any other value on failure
 	 */
-	VMINLINE cudaError_t
+	VMINLINE J9CudaError
 	onSuccess(OMRPortLibrary *portLibrary, uint32_t deviceId) const
 	{
 		return ThreadState::unmarkDeviceForCurrentThread(portLibrary, deviceId);
@@ -2752,7 +2993,7 @@ omrcuda_deviceReset(OMRPortLibrary *portLibrary, uint32_t deviceId)
 
 	const DeviceReset operation;
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_deviceReset_exit(result);
 
@@ -2777,14 +3018,14 @@ struct DeviceSetCacheConfig : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
 		cudaFuncCache deviceConfig = cudaFuncCachePreferEqual;
 
 		switch (config) {
 		default:
-			return cudaErrorInvalidValue;
+			return J9CUDA_ERROR_INVALID_VALUE;
 
 		case J9CUDA_CACHE_CONFIG_PREFER_EQUAL:
 			deviceConfig = cudaFuncCachePreferEqual;
@@ -2800,7 +3041,9 @@ struct DeviceSetCacheConfig : public InitializedAfter {
 			break;
 		}
 
-		return functions->DeviceSetCacheConfig(deviceConfig);
+		cudaError_t error = functions->DeviceSetCacheConfig(deviceConfig);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -2822,7 +3065,7 @@ omrcuda_deviceSetCacheConfig(OMRPortLibrary *portLibrary, uint32_t deviceId, J9C
 
 	const DeviceSetCacheConfig operation(config);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_deviceSetCacheConfig_exit(result);
 
@@ -2850,14 +3093,14 @@ struct DeviceSetLimit : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
 		cudaLimit deviceLimit = cudaLimitStackSize;
 
 		switch (limit) {
 		default:
-			return cudaErrorInvalidValue;
+			return J9CUDA_ERROR_INVALID_VALUE;
 
 		case J9CUDA_DEVICE_LIMIT_DEV_RUNTIME_PENDING_LAUNCH_COUNT:
 			deviceLimit = cudaLimitDevRuntimePendingLaunchCount;
@@ -2876,7 +3119,9 @@ struct DeviceSetLimit : public InitializedAfter {
 			break;
 		}
 
-		return functions->DeviceSetLimit(deviceLimit, value);
+		cudaError_t error = functions->DeviceSetLimit(deviceLimit, value);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -2899,7 +3144,7 @@ omrcuda_deviceSetLimit(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaDev
 
 	const DeviceSetLimit operation(limit, value);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_deviceSetLimit_exit(result);
 
@@ -2924,14 +3169,14 @@ struct DeviceSetSharedMemConfig : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
 		cudaSharedMemConfig deviceConfig = cudaSharedMemBankSizeDefault;
 
 		switch (config) {
 		default:
-			return cudaErrorInvalidValue;
+			return J9CUDA_ERROR_INVALID_VALUE;
 
 		case J9CUDA_SHARED_MEM_CONFIG_DEFAULT_BANK_SIZE:
 			deviceConfig = cudaSharedMemBankSizeDefault;
@@ -2944,7 +3189,9 @@ struct DeviceSetSharedMemConfig : public InitializedAfter {
 			break;
 		}
 
-		return functions->DeviceSetSharedMemConfig(deviceConfig);
+		cudaError_t error = functions->DeviceSetSharedMemConfig(deviceConfig);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -2967,7 +3214,7 @@ omrcuda_deviceSetSharedMemConfig(OMRPortLibrary *portLibrary, uint32_t deviceId,
 
 	const DeviceSetSharedMemConfig operation(config);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_deviceSetSharedMemConfig_exit(result);
 
@@ -2982,10 +3229,12 @@ namespace
  * of the template function 'withDevice'.
  */
 struct DeviceSynchronize : public InitializedAfter {
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return functions->DeviceSynchronize();
+		cudaError_t error = functions->DeviceSynchronize();
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -3005,7 +3254,7 @@ omrcuda_deviceSynchronize(OMRPortLibrary *portLibrary, uint32_t deviceId)
 
 	DeviceSynchronize operation;
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_deviceSynchronize_exit(result);
 
@@ -3029,13 +3278,13 @@ omrcuda_driverGetVersion(OMRPortLibrary *portLibrary, uint32_t *versionOut)
 	getFunctions(portLibrary);
 
 	J9CudaGlobalData *globals = &portLibrary->portGlobals->cudaGlobals;
-	cudaError_t result = cudaErrorNoDevice;
+	J9CudaError result = J9CUDA_ERROR_NO_DEVICE;
 
 	if (0 != globals->deviceCount) {
 		Trc_PRT_cuda_driverGetVersion_result(globals->driverVersion);
 
 		*versionOut = globals->driverVersion;
-		result = cudaSuccess;
+		result = J9CUDA_NO_ERROR;
 	}
 
 	Trc_PRT_cuda_driverGetVersion_exit(result);
@@ -3064,14 +3313,14 @@ struct EventCreate : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
 		const uint32_t allFlags = J9CUDA_EVENT_FLAG_BLOCKING_SYNC
 								  | J9CUDA_EVENT_FLAG_DISABLE_TIMING
 								  | J9CUDA_EVENT_FLAG_INTERPROCESS;
 
-		cudaError_t error = cudaErrorInvalidValue;
+		J9CudaError result = J9CUDA_ERROR_INVALID_VALUE;
 
 		if (OMR_ARE_NO_BITS_SET(flags, ~allFlags)) {
 			unsigned int eventFlags = 0;
@@ -3086,10 +3335,12 @@ struct EventCreate : public InitializedAfter {
 				eventFlags |= cudaEventInterprocess;
 			}
 
-			error = functions->EventCreateWithFlags(&event, eventFlags);
+			cudaError_t error = functions->EventCreateWithFlags(&event, eventFlags);
+
+			result = mapRuntime(portLibrary, error);
 		}
 
-		return error;
+		return result;
 	}
 };
 
@@ -3113,9 +3364,9 @@ omrcuda_eventCreate(OMRPortLibrary *portLibrary, uint32_t deviceId, uint32_t fla
 
 	EventCreate operation(flags);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_eventCreate_result(operation.event);
 
 		*eventOut = (J9CudaEvent)operation.event;
@@ -3140,12 +3391,14 @@ omrcuda_eventDestroy(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaEvent
 	Trc_PRT_cuda_eventDestroy_entry(deviceId, event);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, deviceId);
+	J9CudaError result = validateDeviceId(portLibrary, deviceId);
 
-	if ((cudaSuccess == result) && (NULL != functions->EventDestroy)) {
-		result = functions->EventDestroy((cudaEvent_t)event);
+	if ((J9CUDA_NO_ERROR == result) && (NULL != functions->EventDestroy)) {
+		cudaError_t error = functions->EventDestroy((cudaEvent_t)event);
 
-		if (cudaSuccess == result) {
+		if (cudaSuccess != error) {
+			result = mapRuntime(portLibrary, error);
+		} else {
 			result = ThreadState::markDeviceForCurrentThread(portLibrary, deviceId);
 		}
 	}
@@ -3171,12 +3424,14 @@ omrcuda_eventElapsedTime(OMRPortLibrary *portLibrary, J9CudaEvent startEvent, J9
 	Trc_PRT_cuda_eventElapsedTime_entry(startEvent, endEvent);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = cudaErrorNoDevice;
+	J9CudaError result = J9CUDA_ERROR_NO_DEVICE;
 
 	if (NULL != functions->EventElapsedTime) {
-		result = functions->EventElapsedTime(elapsedMillisOut, (cudaEvent_t)startEvent, (cudaEvent_t)endEvent);
+		cudaError_t error = functions->EventElapsedTime(elapsedMillisOut, (cudaEvent_t)startEvent, (cudaEvent_t)endEvent);
 
-		if (cudaSuccess == result) {
+		result = mapRuntime(portLibrary, error);
+
+		if (J9CUDA_NO_ERROR == result) {
 			Trc_PRT_cuda_eventElapsedTime_result(*elapsedMillisOut);
 		}
 	}
@@ -3199,10 +3454,12 @@ omrcuda_eventQuery(OMRPortLibrary *portLibrary, J9CudaEvent event)
 	Trc_PRT_cuda_eventQuery_entry(event);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = cudaErrorNoDevice;
+	J9CudaError result = J9CUDA_ERROR_NO_DEVICE;
 
 	if (NULL != functions->EventQuery) {
-		result = functions->EventQuery((cudaEvent_t)event);
+		cudaError_t error = functions->EventQuery((cudaEvent_t)event);
+
+		result = mapRuntime(portLibrary, error);
 	}
 
 	Trc_PRT_cuda_eventQuery_exit(result);
@@ -3231,10 +3488,12 @@ struct EventRecord : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return functions->EventRecord(event, stream);
+		cudaError_t error = functions->EventRecord(event, stream);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -3256,7 +3515,7 @@ omrcuda_eventRecord(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaEvent 
 
 	EventRecord operation((cudaStream_t)stream, (cudaEvent_t)event);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_eventRecord_exit(result);
 
@@ -3276,10 +3535,12 @@ omrcuda_eventSynchronize(OMRPortLibrary *portLibrary, J9CudaEvent event)
 	Trc_PRT_cuda_eventSynchronize_entry(event);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = cudaErrorNoDevice;
+	J9CudaError result = J9CUDA_ERROR_NO_DEVICE;
 
 	if (NULL != functions->EventSynchronize) {
-		result = functions->EventSynchronize((cudaEvent_t)event);
+		cudaError_t error = functions->EventSynchronize((cudaEvent_t)event);
+
+		result = mapRuntime(portLibrary, error);
 	}
 
 	Trc_PRT_cuda_eventSynchronize_exit(result);
@@ -3311,14 +3572,14 @@ struct FunctionGetAttribute : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
 		CUfunction_attribute functionAttribute = CU_FUNC_ATTRIBUTE_BINARY_VERSION;
 
 		switch (attribute) {
 		default:
-			return cudaErrorInvalidValue;
+			return J9CUDA_ERROR_INVALID_VALUE;
 
 		case J9CUDA_FUNCTION_ATTRIBUTE_BINARY_VERSION:
 			functionAttribute = CU_FUNC_ATTRIBUTE_BINARY_VERSION;
@@ -3343,7 +3604,9 @@ struct FunctionGetAttribute : public InitializedBefore {
 			break;
 		}
 
-		return translate(functions->FuncGetAttribute(&value, functionAttribute, function));
+		CUresult error = functions->FuncGetAttribute(&value, functionAttribute, function);
+
+		return mapDriver(error);
 	}
 };
 
@@ -3367,9 +3630,9 @@ omrcuda_funcGetAttribute(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaF
 
 	FunctionGetAttribute operation(attribute, (CUfunction)function);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_funcGetAttribute_result(operation.value);
 
 		*valueOut = operation.value;
@@ -3415,16 +3678,17 @@ struct FunctionMaxActiveBlocks : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return translate(
-				   functions->OccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
-					   &numBlocks,
-					   function,
-					   (int)blockSize,
-					   (size_t)dynamicSharedMemorySize,
-					   (int)flags));
+		CUresult error = functions->OccupancyMaxActiveBlocksPerMultiprocessorWithFlags(
+				&numBlocks,
+				function,
+				(int)blockSize,
+				(size_t)dynamicSharedMemorySize,
+				(int)flags);
+
+		return mapDriver(error);
 	}
 };
 
@@ -3462,17 +3726,17 @@ omrcuda_funcMaxActiveBlocksPerMultiprocessor(
 		flags);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, deviceId);
+	J9CudaError result = validateDeviceId(portLibrary, deviceId);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		if (NULL == functions->OccupancyMaxActiveBlocksPerMultiprocessorWithFlags) {
-			result = cudaErrorNotSupported;
+			result = J9CUDA_ERROR_NOT_SUPPORTED;
 		} else {
 			FunctionMaxActiveBlocks operation((CUfunction)function, blockSize, dynamicSharedMemorySize, flags);
 
 			result = withDevice(portLibrary, deviceId, operation);
 
-			if (cudaSuccess == result) {
+			if (J9CUDA_NO_ERROR == result) {
 				Trc_PRT_cuda_funcMaxActiveBlocksPerMultiprocessor_result((uint32_t)operation.numBlocks);
 				*valueOut = (uint32_t)operation.numBlocks;
 			}
@@ -3538,8 +3802,8 @@ struct FunctionPotentialBlockSize: public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
 		CUresult result = CUDA_SUCCESS;
 		uint32_t bestOccupancy = 0;
@@ -3585,7 +3849,7 @@ struct FunctionPotentialBlockSize: public InitializedBefore {
 			blockStep = warpSize;
 		}
 
-		return translate(result);
+		return mapDriver(result);
 	}
 };
 
@@ -3632,9 +3896,9 @@ omrcuda_funcMaxPotentialBlockSize(
 		flags);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, deviceId);
+	J9CudaError result = validateDeviceId(portLibrary, deviceId);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		/* device & function attributes */
 		uint32_t deviceMaxThreadsPerBlock = 0;
 		uint32_t deviceMaxThreadsPerMultiProcessor = 0;
@@ -3643,7 +3907,7 @@ omrcuda_funcMaxPotentialBlockSize(
 		uint32_t functionMaxThreadsPerBlock = 0;
 
 		if (NULL == functions->OccupancyMaxActiveBlocksPerMultiprocessorWithFlags) {
-			result = cudaErrorNotSupported;
+			result = J9CUDA_ERROR_NOT_SUPPORTED;
 			goto done;
 		}
 
@@ -3654,8 +3918,9 @@ omrcuda_funcMaxPotentialBlockSize(
 #define GET_DEVICE_ATTRIBUTE(attribute) \
 		do { \
 			int value = 0; \
-			result = functions->DeviceGetAttribute(&value, (cudaDevAttr ## attribute), (int)deviceId); \
-			if (cudaSuccess != result) { \
+			cudaError_t error = functions->DeviceGetAttribute(&value, (cudaDevAttr ## attribute), (int)deviceId); \
+			if (cudaSuccess != error) { \
+				result = mapRuntime(portLibrary, error); \
 				goto done; \
 			} \
 			device ## attribute = (uint32_t)value; \
@@ -3669,18 +3934,18 @@ omrcuda_funcMaxPotentialBlockSize(
 #undef GET_DEVICE_ATTRIBUTE
 
 		if (0 == deviceWarpSize) {
-			result = cudaErrorInvalidValue;
+			result = J9CUDA_ERROR_INVALID_VALUE;
 			goto done;
 		}
 
 		int value = 0;
 		CUresult error = functions->FuncGetAttribute(
-							 &value,
-							 CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
-							 (CUfunction)function);
+				&value,
+				CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
+				(CUfunction)function);
 
 		if (CUDA_SUCCESS != error) {
-			result = translate(error);
+			result = mapDriver(error);
 			goto done;
 		}
 
@@ -3705,7 +3970,7 @@ omrcuda_funcMaxPotentialBlockSize(
 
 		result = withDevice(portLibrary, deviceId, operation);
 
-		if (cudaSuccess == result) {
+		if (J9CUDA_NO_ERROR == result) {
 			*minGridSizeOut = (uint32_t)operation.bestBlockCountPerMultiProcessor * deviceMultiProcessorCount;
 			*maxBlockSizeOut = (uint32_t)operation.bestBlockSize;
 
@@ -3740,14 +4005,14 @@ struct FunctionSetCacheConfig : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
 		CUfunc_cache deviceConfig = CU_FUNC_CACHE_PREFER_EQUAL;
 
 		switch (config) {
 		default:
-			return cudaErrorInvalidValue;
+			return J9CUDA_ERROR_INVALID_VALUE;
 
 		case J9CUDA_CACHE_CONFIG_PREFER_EQUAL:
 			deviceConfig = CU_FUNC_CACHE_PREFER_EQUAL;
@@ -3763,7 +4028,7 @@ struct FunctionSetCacheConfig : public InitializedBefore {
 			break;
 		}
 
-		return translate(functions->FuncSetCacheConfig(function, deviceConfig));
+		return mapDriver(functions->FuncSetCacheConfig(function, deviceConfig));
 	}
 };
 
@@ -3787,7 +4052,7 @@ omrcuda_funcSetCacheConfig(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cud
 
 	const FunctionSetCacheConfig operation((CUfunction)function, config);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_funcSetCacheConfig_exit(result);
 
@@ -3815,14 +4080,14 @@ struct FunctionSetSharedMemConfig : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
 		CUsharedconfig sharedConfig = CU_SHARED_MEM_CONFIG_DEFAULT_BANK_SIZE;
 
 		switch (config) {
 		default:
-			return cudaErrorInvalidValue;
+			return J9CUDA_ERROR_INVALID_VALUE;
 
 		case J9CUDA_SHARED_MEM_CONFIG_DEFAULT_BANK_SIZE:
 			sharedConfig = CU_SHARED_MEM_CONFIG_DEFAULT_BANK_SIZE;
@@ -3835,7 +4100,7 @@ struct FunctionSetSharedMemConfig : public InitializedBefore {
 			break;
 		}
 
-		return translate(functions->FuncSetSharedMemConfig(function, sharedConfig));
+		return mapDriver(functions->FuncSetSharedMemConfig(function, sharedConfig));
 	}
 };
 
@@ -3859,7 +4124,7 @@ omrcuda_funcSetSharedMemConfig(OMRPortLibrary *portLibrary, uint32_t deviceId, J
 
 	const FunctionSetSharedMemConfig operation((CUfunction)function, config);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_funcSetSharedMemConfig_exit(result);
 
@@ -3889,7 +4154,9 @@ omrcuda_getErrorString(OMRPortLibrary *portLibrary, int32_t error)
 	if (error >= 0) {
 		/* a runtime error */
 		if (NULL != functions->GetErrorString) {
-			result = functions->GetErrorString((cudaError_t)error);
+			cudaError_t cudaError = unmapRuntime(portLibrary, (J9CudaError)error);
+
+			result = functions->GetErrorString(cudaError);
 		}
 
 		if (NULL == result) {
@@ -3897,9 +4164,9 @@ omrcuda_getErrorString(OMRPortLibrary *portLibrary, int32_t error)
 			 * Provide answers for the error codes we return if we
 			 * were unable to load the required shared libraries.
 			 */
-			if (cudaSuccess == error) {
+			if (J9CUDA_NO_ERROR == error) {
 				result = "no error";
-			} else if (cudaErrorNoDevice == error) {
+			} else if (J9CUDA_ERROR_NO_DEVICE  == error) {
 				result = "no CUDA-capable device is detected";
 			}
 		}
@@ -3991,11 +4258,11 @@ omrcuda_hostAlloc(OMRPortLibrary *portLibrary, uintptr_t size, uint32_t flags, v
 							  | J9CUDA_HOST_ALLOC_WRITE_COMBINED;
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = cudaErrorNoDevice;
+	J9CudaError result = J9CUDA_ERROR_NO_DEVICE;
 
 	if (NULL != functions->HostAlloc) {
 		if (OMR_ARE_ANY_BITS_SET(flags, ~allFlags)) {
-			result = cudaErrorInvalidValue;
+			result = J9CUDA_ERROR_INVALID_VALUE;
 		} else {
 			unsigned int cudaFlags = cudaHostAllocDefault;
 
@@ -4009,9 +4276,11 @@ omrcuda_hostAlloc(OMRPortLibrary *portLibrary, uintptr_t size, uint32_t flags, v
 				cudaFlags |= cudaHostAllocWriteCombined;
 			}
 
-			result = functions->HostAlloc(hostAddressOut, size, cudaFlags);
+			cudaError_t error = functions->HostAlloc(hostAddressOut, size, cudaFlags);
 
-			if (cudaSuccess == result) {
+			result = mapRuntime(portLibrary, error);
+
+			if (J9CUDA_NO_ERROR == result) {
 				Trc_PRT_cuda_hostAlloc_result(*hostAddressOut);
 			}
 		}
@@ -4035,10 +4304,12 @@ omrcuda_hostFree(OMRPortLibrary *portLibrary, void *hostAddress)
 	Trc_PRT_cuda_hostFree_entry(hostAddress);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = cudaErrorNoDevice;
+	J9CudaError result = J9CUDA_ERROR_NO_DEVICE;
 
 	if (NULL != functions->FreeHost) {
-		result = functions->FreeHost(hostAddress);
+		cudaError_t error = functions->FreeHost(hostAddress);
+
+		result = mapRuntime(portLibrary, error);
 	}
 
 	Trc_PRT_cuda_hostFree_exit(result);
@@ -4083,22 +4354,22 @@ struct Launch : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return translate(
-				   functions->LaunchKernel(
-					   function,
-					   gridDim.x,
-					   gridDim.y,
-					   gridDim.z,
-					   blockDim.x,
-					   blockDim.y,
-					   blockDim.z,
-					   sharedMem,
-					   stream,
-					   args,
-					   NULL));
+		return mapDriver(
+				functions->LaunchKernel(
+						function,
+						gridDim.x,
+						gridDim.y,
+						gridDim.z,
+						blockDim.x,
+						blockDim.y,
+						blockDim.z,
+						sharedMem,
+						stream,
+						args,
+						NULL));
 	}
 };
 
@@ -4147,7 +4418,7 @@ omrcuda_launchKernel(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaFunct
 		(CUstream)stream,
 		kernelParms);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_launchKernel_exit(result);
 
@@ -4177,7 +4448,7 @@ public:
 	{
 	}
 
-	cudaError_t
+	J9CudaError
 	set(J9CudaJitOptions *j9Ooptions);
 
 	VMINLINE uint32_t
@@ -4205,7 +4476,7 @@ public:
  *
  * @param[in] j9options the input options pointer
  */
-cudaError_t
+J9CudaError
 JitOptions::set(J9CudaJitOptions *j9options)
 {
 	Trc_PRT_cuda_JitOptions_entry(j9options);
@@ -4474,12 +4745,12 @@ JitOptions::set(J9CudaJitOptions *j9options)
 
 	Trc_PRT_cuda_JitOptions_exit(count);
 
-	return cudaSuccess;
+	return J9CUDA_NO_ERROR;
 
 invalid:
 	Trc_PRT_cuda_JitOptions_exit_invalid();
 
-	return cudaErrorInvalidValue;
+	return J9CUDA_ERROR_INVALID_VALUE;
 }
 
 } /* namespace */
@@ -4534,19 +4805,19 @@ struct LinkerAdd : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
 		JitOptions addOptions;
 
-		cudaError_t result = addOptions.set(options);
+		J9CudaError result = addOptions.set(options);
 
-		if (cudaSuccess == result) {
+		if (J9CUDA_NO_ERROR == result) {
 			CUjitInputType inputType = CU_JIT_INPUT_FATBINARY;
 
 			switch (type) {
 			default:
-				result = cudaErrorInvalidValue;
+				result = J9CUDA_ERROR_INVALID_VALUE;
 				goto done;
 
 			case J9CUDA_JIT_INPUT_TYPE_CUBIN:
@@ -4566,16 +4837,16 @@ struct LinkerAdd : public InitializedBefore {
 				break;
 			}
 
-			result = translate(
-						 functions->LinkAddData(
-							 linker->state,
-							 inputType,
-							 image,
-							 imageSize,
-							 name,
-							 addOptions.getCount(),
-							 addOptions.getKeys(),
-							 addOptions.getValues()));
+			result = mapDriver(
+					functions->LinkAddData(
+							linker->state,
+							inputType,
+							image,
+							imageSize,
+							name,
+							addOptions.getCount(),
+							addOptions.getKeys(),
+							addOptions.getValues()));
 		}
 
 done:
@@ -4606,7 +4877,7 @@ omrcuda_linkerAddData(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaLink
 
 	const LinkerAdd operation(linker, type, data, size, name, options);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_linkerAddData_exit(result);
 
@@ -4637,10 +4908,10 @@ struct LinkerComplete : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return translate(functions->LinkComplete(linker->state, &data, &size));
+		return mapDriver(functions->LinkComplete(linker->state, &data, &size));
 	}
 };
 
@@ -4665,9 +4936,9 @@ omrcuda_linkerComplete(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaLin
 
 	LinkerComplete operation(linker);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_linkerComplete_result(operation.data, operation.size);
 
 		*cubinOut = operation.data;
@@ -4698,15 +4969,15 @@ struct LinkerCreate : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return translate(
-				   functions->LinkCreate(
-					   linker->createOptions.getCount(),
-					   linker->createOptions.getKeys(),
-					   linker->createOptions.getValues(),
-					   &linker->state));
+		return mapDriver(
+				functions->LinkCreate(
+						linker->createOptions.getCount(),
+						linker->createOptions.getKeys(),
+						linker->createOptions.getValues(),
+						&linker->state));
 	}
 };
 
@@ -4729,21 +5000,21 @@ omrcuda_linkerCreate(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaJitOp
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 
 	J9CudaLinker linker = (J9CudaLinker)J9CUDA_ALLOCATE_MEMORY(sizeof(J9CudaLinkerState));
-	cudaError_t result = cudaErrorMemoryAllocation;
+	J9CudaError result = J9CUDA_ERROR_MEMORY_ALLOCATION;
 
 	if (NULL == linker) {
 		Trc_PRT_cuda_linkerCreate_nomem();
 	} else {
 		result = linker->createOptions.set(options);
 
-		if (cudaSuccess == result) {
+		if (J9CUDA_NO_ERROR == result) {
 			const LinkerCreate operation(linker);
 
 			linker->state = NULL;
 			result = withDevice(portLibrary, deviceId, operation);
 		}
 
-		if (cudaSuccess != result) {
+		if (J9CUDA_NO_ERROR != result) {
 			J9CUDA_FREE_MEMORY(linker);
 		} else {
 			Trc_PRT_cuda_linkerCreate_result(linker);
@@ -4775,10 +5046,10 @@ struct LinkerDestroy : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return translate(functions->LinkDestroy(linker->state));
+		return mapDriver(functions->LinkDestroy(linker->state));
 	}
 };
 
@@ -4799,7 +5070,7 @@ omrcuda_linkerDestroy(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaLink
 
 	const LinkerDestroy operation(linker);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 
@@ -4880,20 +5151,24 @@ struct Copy2D : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
+		cudaError_t error = cudaSuccess;
+
 		if (sync) {
-			return functions->Memcpy2D(
-					   targetAddress, targetPitch,
-					   sourceAddress, sourcePitch,
-					   width, height, direction);
+			error = functions->Memcpy2D(
+					targetAddress, targetPitch,
+					sourceAddress, sourcePitch,
+					width, height, direction);
 		} else {
-			return functions->Memcpy2DAsync(
-					   targetAddress, targetPitch,
-					   sourceAddress, sourcePitch,
-					   width, height, direction, (cudaStream_t)stream);
+			error = functions->Memcpy2DAsync(
+					targetAddress, targetPitch,
+					sourceAddress, sourcePitch,
+					width, height, direction, (cudaStream_t)stream);
 		}
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -4919,7 +5194,7 @@ omrcuda_memcpy2DDeviceToDevice(OMRPortLibrary *portLibrary, uint32_t deviceId, v
 
 	const Copy2D operation(targetAddress, targetPitch, sourceAddress, sourcePitch, width, height, cudaMemcpyDeviceToDevice);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpy2D_exit(result);
 
@@ -4947,7 +5222,7 @@ omrcuda_memcpy2DDeviceToDeviceAsync(OMRPortLibrary *portLibrary, uint32_t device
 
 	const Copy2D operation(targetAddress, targetPitch, sourceAddress, sourcePitch, width, height, cudaMemcpyDeviceToDevice, stream);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpy2DAsync_exit(result);
 
@@ -4974,7 +5249,7 @@ omrcuda_memcpy2DDeviceToHost(OMRPortLibrary *portLibrary, uint32_t deviceId, voi
 
 	const Copy2D operation(targetAddress, targetPitch, sourceAddress, sourcePitch, width, height, cudaMemcpyDeviceToHost);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpy2D_exit(result);
 
@@ -5002,7 +5277,7 @@ omrcuda_memcpy2DDeviceToHostAsync(OMRPortLibrary *portLibrary, uint32_t deviceId
 
 	const Copy2D operation(targetAddress, targetPitch, sourceAddress, sourcePitch, width, height, cudaMemcpyDeviceToHost, stream);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpy2DAsync_exit(result);
 
@@ -5029,7 +5304,7 @@ omrcuda_memcpy2DHostToDevice(OMRPortLibrary *portLibrary, uint32_t deviceId, voi
 
 	const Copy2D operation(targetAddress, targetPitch, sourceAddress, sourcePitch, width, height, cudaMemcpyHostToDevice);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpy2D_exit(result);
 
@@ -5057,7 +5332,7 @@ omrcuda_memcpy2DHostToDeviceAsync(OMRPortLibrary *portLibrary, uint32_t deviceId
 
 	const Copy2D operation(targetAddress, targetPitch, sourceAddress, sourcePitch, width, height, cudaMemcpyHostToDevice, stream);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpy2DAsync_exit(result);
 
@@ -5106,14 +5381,18 @@ struct Copy : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
+		cudaError_t error = cudaSuccess;
+
 		if (sync) {
-			return functions->Memcpy(targetAddress, sourceAddress, byteCount, direction);
+			error = functions->Memcpy(targetAddress, sourceAddress, byteCount, direction);
 		} else {
-			return functions->MemcpyAsync(targetAddress, sourceAddress, byteCount, direction, (cudaStream_t)stream);
+			error = functions->MemcpyAsync(targetAddress, sourceAddress, byteCount, direction, (cudaStream_t)stream);
 		}
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -5136,7 +5415,7 @@ omrcuda_memcpyDeviceToDevice(OMRPortLibrary *portLibrary, uint32_t deviceId, voi
 
 	const Copy operation(targetAddress, sourceAddress, byteCount, cudaMemcpyDeviceToDevice);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpy_exit(result);
 
@@ -5161,7 +5440,7 @@ omrcuda_memcpyDeviceToDeviceAsync(OMRPortLibrary *portLibrary, uint32_t deviceId
 
 	const Copy operation(targetAddress, sourceAddress, byteCount, cudaMemcpyDeviceToDevice, stream);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpyAsync_exit(result);
 
@@ -5185,7 +5464,7 @@ omrcuda_memcpyDeviceToHost(OMRPortLibrary *portLibrary, uint32_t deviceId, void 
 
 	const Copy operation(targetAddress, sourceAddress, byteCount, cudaMemcpyDeviceToHost);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpy_exit(result);
 
@@ -5210,7 +5489,7 @@ omrcuda_memcpyDeviceToHostAsync(OMRPortLibrary *portLibrary, uint32_t deviceId, 
 
 	const Copy operation(targetAddress, sourceAddress, byteCount, cudaMemcpyDeviceToHost, stream);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpyAsync_exit(result);
 
@@ -5234,7 +5513,7 @@ omrcuda_memcpyHostToDevice(OMRPortLibrary *portLibrary, uint32_t deviceId, void 
 
 	const Copy operation(targetAddress, sourceAddress, byteCount, cudaMemcpyHostToDevice);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpy_exit(result);
 
@@ -5259,7 +5538,7 @@ omrcuda_memcpyHostToDeviceAsync(OMRPortLibrary *portLibrary, uint32_t deviceId, 
 
 	const Copy operation(targetAddress, sourceAddress, byteCount, cudaMemcpyHostToDevice, stream);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memcpyAsync_exit(result);
 
@@ -5285,16 +5564,18 @@ omrcuda_memcpyPeer(OMRPortLibrary *portLibrary, uint32_t targetDeviceId, void *t
 	Trc_PRT_cuda_memcpyPeer_entry(targetDeviceId, targetAddress, sourceDeviceId, sourceAddress, byteCount);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, targetDeviceId);
+	J9CudaError result = validateDeviceId(portLibrary, targetDeviceId);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		result = validateDeviceId(portLibrary, sourceDeviceId);
 	}
 
-	if ((cudaSuccess == result) && (NULL != functions->MemcpyPeer)) {
-		result = functions->MemcpyPeer(
-					 targetAddress, targetDeviceId,
-					 sourceAddress, sourceDeviceId, byteCount);
+	if ((J9CUDA_NO_ERROR == result) && (NULL != functions->MemcpyPeer)) {
+		cudaError_t error = functions->MemcpyPeer(
+				targetAddress, targetDeviceId,
+				sourceAddress, sourceDeviceId, byteCount);
+
+		result = mapRuntime(portLibrary, error);
 	}
 
 	Trc_PRT_cuda_memcpyPeer_exit(result);
@@ -5321,16 +5602,18 @@ omrcuda_memcpyPeerAsync(OMRPortLibrary *portLibrary, uint32_t targetDeviceId, vo
 	Trc_PRT_cuda_memcpyPeerAsync_entry(targetDeviceId, targetAddress, sourceDeviceId, sourceAddress, byteCount, stream);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, targetDeviceId);
+	J9CudaError result = validateDeviceId(portLibrary, targetDeviceId);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		result = validateDeviceId(portLibrary, sourceDeviceId);
 	}
 
-	if ((cudaSuccess == result) && (NULL != functions->MemcpyPeerAsync)) {
-		result = functions->MemcpyPeerAsync(
-					 targetAddress, targetDeviceId,
-					 sourceAddress, sourceDeviceId, byteCount, (cudaStream_t)stream);
+	if ((J9CUDA_NO_ERROR == result) && (NULL != functions->MemcpyPeerAsync)) {
+		cudaError_t error = functions->MemcpyPeerAsync(
+					targetAddress, targetDeviceId,
+					sourceAddress, sourceDeviceId, byteCount, (cudaStream_t)stream);
+
+		result = mapRuntime(portLibrary, error);
 	}
 
 	Trc_PRT_cuda_memcpyPeerAsync_exit(result);
@@ -5365,10 +5648,10 @@ struct Fill8 : InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return translate(functions->MemsetD8Async((CUdeviceptr)deviceAddress, value, count, (CUstream)stream));
+		return mapDriver(functions->MemsetD8Async((CUdeviceptr)deviceAddress, value, count, (CUstream)stream));
 	}
 };
 
@@ -5392,7 +5675,7 @@ omrcuda_memset8Async(OMRPortLibrary *portLibrary, uint32_t deviceId, void *devic
 
 	Fill8 operation(deviceAddress, value, count, stream);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memset8_exit(result);
 
@@ -5426,10 +5709,10 @@ struct Fill16 : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return translate(functions->MemsetD16Async((CUdeviceptr)deviceAddress, value, count, (CUstream)stream));
+		return mapDriver(functions->MemsetD16Async((CUdeviceptr)deviceAddress, value, count, (CUstream)stream));
 	}
 };
 
@@ -5453,7 +5736,7 @@ omrcuda_memset16Async(OMRPortLibrary *portLibrary, uint32_t deviceId, void *devi
 
 	Fill16 operation(deviceAddress, value, count, stream);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memset16_exit(result);
 
@@ -5487,10 +5770,10 @@ struct Fill32 : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return translate(functions->MemsetD32Async((CUdeviceptr)deviceAddress, value, count, (CUstream)stream));
+		return mapDriver(functions->MemsetD32Async((CUdeviceptr)deviceAddress, value, count, (CUstream)stream));
 	}
 };
 
@@ -5514,7 +5797,7 @@ omrcuda_memset32Async(OMRPortLibrary *portLibrary, uint32_t deviceId, void *devi
 
 	Fill32 operation(deviceAddress, value, count, stream);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_memset32_exit(result);
 
@@ -5545,10 +5828,10 @@ struct GetFunction : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return translate(functions->ModuleGetFunction(&function, module, name));
+		return mapDriver(functions->ModuleGetFunction(&function, module, name));
 	}
 };
 
@@ -5571,9 +5854,9 @@ omrcuda_moduleGetFunction(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cuda
 
 	GetFunction operation((CUmodule)module, name);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_moduleGetFunction_result(operation.function);
 
 		*functionOut = (J9CudaFunction)operation.function;
@@ -5611,10 +5894,10 @@ struct GetGlobal : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return translate(functions->ModuleGetGlobal(&symbol, &size, module, name));
+		return mapDriver(functions->ModuleGetGlobal(&symbol, &size, module, name));
 	}
 };
 
@@ -5638,9 +5921,9 @@ omrcuda_moduleGetGlobal(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaMo
 
 	GetGlobal operation((CUmodule)module, name);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_moduleGetGlobal_result((void *)operation.symbol, operation.size);
 
 		*addressOut = operation.symbol;
@@ -5676,10 +5959,10 @@ struct GetSurface : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return translate(functions->ModuleGetSurfRef(&surface, module, name));
+		return mapDriver(functions->ModuleGetSurfRef(&surface, module, name));
 	}
 };
 
@@ -5702,9 +5985,9 @@ omrcuda_moduleGetSurfaceRef(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cu
 
 	GetSurface operation((CUmodule)module, name);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_moduleGetSurfRef_result(operation.surface);
 
 		*surfRefOut = (uintptr_t)operation.surface;
@@ -5739,10 +6022,10 @@ struct GetTexture : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return translate(functions->ModuleGetTexRef(&texture, module, name));
+		return mapDriver(functions->ModuleGetTexRef(&texture, module, name));
 	}
 };
 
@@ -5765,9 +6048,9 @@ omrcuda_moduleGetTextureRef(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cu
 
 	GetTexture operation((CUmodule)module, name);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_moduleGetTexRef_result(operation.texture);
 
 		*texRefOut = (uintptr_t)operation.texture;
@@ -5802,21 +6085,21 @@ struct Load : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
 		JitOptions loadOptions;
 
-		cudaError_t result = loadOptions.set(options);
+		J9CudaError result = loadOptions.set(options);
 
-		if (cudaSuccess == result) {
-			result = translate(
-						 functions->ModuleLoadDataEx(
-							 &module,
-							 image,
-							 loadOptions.getCount(),
-							 loadOptions.getKeys(),
-							 loadOptions.getValues()));
+		if (J9CUDA_NO_ERROR == result) {
+			result = mapDriver(
+					functions->ModuleLoadDataEx(
+							&module,
+							image,
+							loadOptions.getCount(),
+							loadOptions.getKeys(),
+							loadOptions.getValues()));
 		}
 
 		return result;
@@ -5842,9 +6125,9 @@ omrcuda_moduleLoad(OMRPortLibrary *portLibrary, uint32_t deviceId, const void *i
 
 	Load operation(image, options);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_moduleLoad_result(operation.module);
 
 		*moduleOut = (J9CudaModule)operation.module;
@@ -5873,10 +6156,10 @@ struct Unload : public InitializedBefore {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return translate(functions->ModuleUnload(module));
+		return mapDriver(functions->ModuleUnload(module));
 	}
 };
 
@@ -5897,7 +6180,7 @@ omrcuda_moduleUnload(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaModul
 
 	const Unload operation((CUmodule)module);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
 	Trc_PRT_cuda_moduleUnload_exit(result);
 
@@ -5921,13 +6204,13 @@ omrcuda_runtimeGetVersion(OMRPortLibrary *portLibrary, uint32_t *versionOut)
 	getFunctions(portLibrary);
 
 	J9CudaGlobalData *globals = &portLibrary->portGlobals->cudaGlobals;
-	cudaError_t result = cudaErrorNoDevice;
+	J9CudaError result = J9CUDA_ERROR_NO_DEVICE;
 
 	if (0 != globals->deviceCount) {
 		Trc_PRT_cuda_runtimeGetVersion_result(globals->runtimeVersion);
 
 		*versionOut = globals->runtimeVersion;
-		result = cudaSuccess;
+		result = J9CUDA_NO_ERROR;
 	}
 
 	Trc_PRT_cuda_runtimeGetVersion_exit(result);
@@ -5953,8 +6236,9 @@ struct StreamCallback {
 		Trc_PRT_cuda_StreamCallback_handler_entry(stream, error, data);
 
 		StreamCallback *instance = (StreamCallback *)data;
+		J9CudaError omrCode = mapRuntime(instance->portLibrary, error);
 
-		instance->clientFunction((J9CudaStream)stream, error, instance->clientData);
+		instance->clientFunction((J9CudaStream)stream, omrCode, instance->clientData);
 
 		OMRPORT_ACCESS_FROM_OMRPORT(instance->portLibrary);
 
@@ -5982,10 +6266,12 @@ struct StreamAddCallback : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions) const
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions) const
 	{
-		return functions->StreamAddCallback((cudaStream_t)stream, &StreamCallback::handler, callback, 0);
+		cudaError_t error = functions->StreamAddCallback((cudaStream_t)stream, &StreamCallback::handler, callback, 0);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -6008,7 +6294,7 @@ omrcuda_streamAddCallback(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cuda
 
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 
-	cudaError_t result = cudaSuccess;
+	J9CudaError result = J9CUDA_ERROR_MEMORY_ALLOCATION;
 	StreamCallback *callback = (StreamCallback *)J9CUDA_ALLOCATE_MEMORY(sizeof(StreamCallback));
 
 	if (NULL == callback) {
@@ -6024,7 +6310,7 @@ omrcuda_streamAddCallback(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cuda
 
 		result = withDevice(portLibrary, deviceId, operation);
 
-		if (cudaSuccess != result) {
+		if (J9CUDA_NO_ERROR != result) {
 			J9CUDA_FREE_MEMORY(callback);
 		}
 	}
@@ -6052,10 +6338,12 @@ struct StreamCreate : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
-		return functions->StreamCreate(&stream);
+		cudaError_t error = functions->StreamCreate(&stream);
+
+		return mapRuntime(portLibrary, error);
 	}
 };
 
@@ -6076,9 +6364,9 @@ omrcuda_streamCreate(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaStrea
 
 	StreamCreate operation;
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_streamCreate_result(operation.stream);
 
 		*streamOut = (J9CudaStream)operation.stream;
@@ -6113,12 +6401,12 @@ struct StreamCreateEx : public InitializedAfter {
 	{
 	}
 
-	VMINLINE cudaError_t
-	execute(J9CudaFunctionTable *functions)
+	VMINLINE J9CudaError
+	execute(OMRPortLibrary *portLibrary, J9CudaFunctionTable *functions)
 	{
 		const uint32_t allFlags = J9CUDA_STREAM_FLAG_NON_BLOCKING;
 
-		cudaError_t error = cudaErrorInvalidValue;
+		J9CudaError result = J9CUDA_ERROR_INVALID_VALUE;
 
 		if (OMR_ARE_NO_BITS_SET(flags, ~allFlags)) {
 			unsigned int streamFlags = 0;
@@ -6127,10 +6415,12 @@ struct StreamCreateEx : public InitializedAfter {
 				streamFlags |= cudaStreamNonBlocking;
 			}
 
-			error = functions->StreamCreateWithPriority(&stream, streamFlags, priority);
+			cudaError_t error = functions->StreamCreateWithPriority(&stream, streamFlags, priority);
+
+			result = mapRuntime(portLibrary, error);
 		}
 
-		return error;
+		return result;
 	}
 };
 
@@ -6155,9 +6445,9 @@ omrcuda_streamCreateWithPriority(OMRPortLibrary *portLibrary, uint32_t deviceId,
 
 	StreamCreateEx operation(flags, priority);
 
-	cudaError_t result = withDevice(portLibrary, deviceId, operation);
+	J9CudaError result = withDevice(portLibrary, deviceId, operation);
 
-	if (cudaSuccess == result) {
+	if (J9CUDA_NO_ERROR == result) {
 		Trc_PRT_cuda_streamCreateWithPriority_result(operation.stream);
 
 		*streamOut = (J9CudaStream)operation.stream;
@@ -6182,12 +6472,14 @@ omrcuda_streamDestroy(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaStre
 	Trc_PRT_cuda_streamDestroy_entry(deviceId, stream);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, deviceId);
+	J9CudaError result = validateDeviceId(portLibrary, deviceId);
 
-	if ((cudaSuccess == result) && (NULL != functions->StreamDestroy)) {
-		result = functions->StreamDestroy((cudaStream_t)stream);
+	if ((J9CUDA_NO_ERROR == result) && (NULL != functions->StreamDestroy)) {
+		cudaError_t error = functions->StreamDestroy((cudaStream_t)stream);
 
-		if (cudaSuccess == result) {
+		if (cudaSuccess != error) {
+			result = mapRuntime(portLibrary, error);
+		} else {
 			result = ThreadState::markDeviceForCurrentThread(portLibrary, deviceId);
 		}
 	}
@@ -6212,14 +6504,15 @@ omrcuda_streamGetFlags(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaStr
 	Trc_PRT_cuda_streamGetFlags_entry(deviceId, stream);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, deviceId);
+	J9CudaError result = validateDeviceId(portLibrary, deviceId);
 
-	if ((cudaSuccess == result) && (NULL != functions->StreamGetFlags)) {
+	if ((J9CUDA_NO_ERROR == result) && (NULL != functions->StreamGetFlags)) {
 		unsigned int flags = 0;
+		cudaError_t error = functions->StreamGetFlags((cudaStream_t)stream, &flags);
 
-		result = functions->StreamGetFlags((cudaStream_t)stream, &flags);
-
-		if (cudaSuccess == result) {
+		if (cudaSuccess != error) {
+			result = mapRuntime(portLibrary, error);
+		} else {
 			Trc_PRT_cuda_streamGetFlags_result(flags);
 
 			*flagsOut = 0;
@@ -6252,18 +6545,18 @@ omrcuda_streamGetPriority(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cuda
 	Trc_PRT_cuda_streamGetPriority_entry(deviceId, stream);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, deviceId);
+	J9CudaError result = validateDeviceId(portLibrary, deviceId);
 
-	if ((cudaSuccess == result) && (NULL != functions->StreamGetPriority)) {
+	if ((J9CUDA_NO_ERROR == result) && (NULL != functions->StreamGetPriority)) {
 		int priority = 0;
+		cudaError_t error = functions->StreamGetPriority((cudaStream_t)stream, &priority);
 
-		result = functions->StreamGetPriority((cudaStream_t)stream, &priority);
-
-		if (cudaSuccess == result) {
-			Trc_PRT_cuda_streamGetPriority_result(priority);
-
+		if (cudaSuccess != error) {
+			result = mapRuntime(portLibrary, error);
+		} else {
 			*priorityOut = (int32_t)priority;
 			result = ThreadState::markDeviceForCurrentThread(portLibrary, deviceId);
+			Trc_PRT_cuda_streamGetPriority_result(priority);
 		}
 	}
 
@@ -6286,10 +6579,12 @@ omrcuda_streamQuery(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaStream
 	Trc_PRT_cuda_streamQuery_entry(deviceId, stream);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, deviceId);
+	J9CudaError result = validateDeviceId(portLibrary, deviceId);
 
-	if ((cudaSuccess == result) && (NULL != functions->StreamQuery)) {
-		result = functions->StreamQuery((cudaStream_t)stream);
+	if ((J9CUDA_NO_ERROR == result) && (NULL != functions->StreamQuery)) {
+		cudaError_t error = functions->StreamQuery((cudaStream_t)stream);
+
+		result = mapRuntime(portLibrary, error);
 	}
 
 	Trc_PRT_cuda_streamQuery_exit(result);
@@ -6311,12 +6606,14 @@ omrcuda_streamSynchronize(OMRPortLibrary *portLibrary, uint32_t deviceId, J9Cuda
 	Trc_PRT_cuda_streamSynchronize_entry(deviceId, stream);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, deviceId);
+	J9CudaError result = validateDeviceId(portLibrary, deviceId);
 
-	if ((cudaSuccess == result) && (NULL != functions->StreamSynchronize)) {
-		result = functions->StreamSynchronize((cudaStream_t)stream);
+	if ((J9CUDA_NO_ERROR == result) && (NULL != functions->StreamSynchronize)) {
+		cudaError_t error = functions->StreamSynchronize((cudaStream_t)stream);
 
-		if (cudaSuccess == result) {
+		if (cudaSuccess != error) {
+			result = mapRuntime(portLibrary, error);
+		} else {
 			result = ThreadState::markDeviceForCurrentThread(portLibrary, deviceId);
 		}
 	}
@@ -6341,12 +6638,14 @@ omrcuda_streamWaitEvent(OMRPortLibrary *portLibrary, uint32_t deviceId, J9CudaSt
 	Trc_PRT_cuda_streamWaitEvent_entry(deviceId, stream, event);
 
 	J9CudaFunctionTable *functions = getFunctions(portLibrary);
-	cudaError_t result = validateDeviceId(portLibrary, deviceId);
+	J9CudaError result = validateDeviceId(portLibrary, deviceId);
 
-	if ((cudaSuccess == result) && (NULL != functions->StreamWaitEvent)) {
-		result = functions->StreamWaitEvent((cudaStream_t)stream, (cudaEvent_t)event, 0);
+	if ((J9CUDA_NO_ERROR == result) && (NULL != functions->StreamWaitEvent)) {
+		cudaError_t error = functions->StreamWaitEvent((cudaStream_t)stream, (cudaEvent_t)event, 0);
 
-		if (cudaSuccess == result) {
+		if (cudaSuccess != error) {
+			result = mapRuntime(portLibrary, error);
+		} else {
 			result = ThreadState::markDeviceForCurrentThread(portLibrary, deviceId);
 		}
 	}

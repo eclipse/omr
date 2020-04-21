@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2018 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -146,12 +146,14 @@ OBJECTS += omrsignal
 ifneq (win,$(OMR_HOST_OS))
   OBJECTS += omrsignal_context
 endif
+ifeq (1, $(OMR_PORT_SOCKET_SUPPORT))
+  OBJECTS += omrsock
+  OBJECTS += omrsockptb
+endif
 OBJECTS += omrsl
 OBJECTS += omrstr
 OBJECTS += omrsysinfo
-ifeq (zos,$(OMR_HOST_OS))
-  OBJECTS += omrsysinfo_helpers
-endif
+OBJECTS += omrsysinfo_helpers
 OBJECTS += omrsyslog
 ifeq (win,$(OMR_HOST_OS))
   OBJECTS += omrsyslogmessages.res
@@ -278,6 +280,15 @@ ifeq ($(OMR_HOST_OS),$(filter $(OMR_HOST_OS),linux linux_ztpf))
     endif
     vpath % $(PORT_SRCDIR)linux386
     MODULE_INCLUDES += $(PORT_SRCDIR)linux386
+  endif
+  
+  ifeq (riscv,$(OMR_HOST_ARCH))
+    ifeq (1,$(OMR_ENV_DATA64))
+      vpath % $(PORT_SRCDIR)linuxriscv64
+      MODULE_INCLUDES += $(PORT_SRCDIR)linuxriscv64
+    endif
+    vpath % $(PORT_SRCDIR)linuxriscv
+    MODULE_INCLUDES += $(PORT_SRCDIR)linuxriscv
   endif
 
   vpath % $(PORT_SRCDIR)linux

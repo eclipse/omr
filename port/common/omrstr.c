@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -162,13 +162,13 @@ static void setJ9TimeToEpoch(struct J9TimeInfo *tm);
 static uint32_t omrstr_subst_time(struct OMRPortLibrary *portLibrary, char *buf, uint32_t bufLen, const char *format, int64_t timeMillis);
 static intptr_t omrstr_set_token_from_buf(struct OMRPortLibrary *portLibrary, struct J9StringTokens *tokens, const char *key, char *tokenBuf, uint32_t tokenLen);
 static int32_t convertPlatformToMutf8(struct OMRPortLibrary *portLibrary, uint32_t codePage, const uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
-static int32_t convertMutf8ToPlatform(struct OMRPortLibrary *portLibrary, const uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
+static int32_t convertMutf8ToPlatform(struct OMRPortLibrary *portLibrary, uint32_t codePage, const uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 static int32_t convertWideToMutf8(const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 static int32_t convertUtf8ToMutf8(struct OMRPortLibrary *portLibrary, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 static int32_t convertPlatformToUtf8(struct OMRPortLibrary *portLibrary, const uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 static int32_t convertMutf8ToWide(const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 static int32_t convertPlatformToWide(struct OMRPortLibrary *portLibrary, charconvState_t encodingState, uint32_t codePage, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
-static int32_t convertWideToPlatform(struct OMRPortLibrary *portLibrary, charconvState_t encodingState, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
+static int32_t convertWideToPlatform(struct OMRPortLibrary *portLibrary, charconvState_t encodingState, uint32_t codePage, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 static int32_t convertLatin1ToMutf8(struct OMRPortLibrary *portLibrary, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 static int32_t convertMutf8ToLatin1(struct OMRPortLibrary *portLibrary, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize);
 
@@ -292,7 +292,7 @@ omrstr_convert(struct OMRPortLibrary *portLibrary, int32_t fromCode, int32_t toC
 	case J9STR_CODE_MUTF8: {
 		switch (toCode) {
 		case J9STR_CODE_PLATFORM_RAW:
-			result = convertMutf8ToPlatform(portLibrary, inBuffer, inBufferSize, outBuffer, outBufferSize);
+			result = convertMutf8ToPlatform(portLibrary, OS_ENCODING_CODE_PAGE, inBuffer, inBufferSize, outBuffer, outBufferSize);
 			break;
 		case J9STR_CODE_LATIN1: {
 			const uint8_t *mutf8Cursor = inBuffer;
@@ -307,6 +307,14 @@ omrstr_convert(struct OMRPortLibrary *portLibrary, int32_t fromCode, int32_t toC
 			}
 		}
 		break;
+#if defined(OMR_OS_WINDOWS)
+		case J9STR_CODE_WINTHREADACP:
+			result = convertMutf8ToPlatform(portLibrary, CP_THREAD_ACP, inBuffer, inBufferSize, outBuffer, outBufferSize);
+			break;
+		case J9STR_CODE_WINDEFAULTACP:
+			result = convertMutf8ToPlatform(portLibrary, CP_ACP, inBuffer, inBufferSize, outBuffer, outBufferSize);
+			break;
+#endif /* defined(OMR_OS_WINDOWS) */
 		case J9STR_CODE_WIDE: {
 			const uint8_t *mutf8Cursor = inBuffer;
 			uintptr_t mutf8Remaining = inBufferSize;
@@ -2583,16 +2591,18 @@ convertPlatformToMutf8(struct OMRPortLibrary *portLibrary, uint32_t codePage, co
 	return (int32_t) resultSize;
 }
 
-/*
-* Two step process: convert modified UTF-8 to wide characters, then wide characters to platform encoding .
-* iconv() both is resumable if the output buffer is full, but Windows WideCharToMultiByte() is not.
- * @param[in]  inBuffer        input string  to be converted.
- * @param[in]  inBufferSize  input string size in bytes.
- * @param[in] outBuffer    user-allocated output buffer that stores converted characters, ignored if inBufferSize is 0.
- * @param[in]  outBufferSize output buffer size in bytes (zero to request the required output buffer size)
-*/
+/**
+ * Two step process: convert modified UTF-8 to wide characters, then wide characters to platform encoding.
+ * iconv() both is resumable if the output buffer is full, but Windows WideCharToMultiByte() is not.
+ * @param [in] portLibrary port library
+ * @param [in] codePage specify the "platform" code page: CP_THREAD_ACP, CP_ACP (Windows ANSI code pages) or OS_ENCODING_CODE_PAGE. Ignored on non-Windows systems
+ * @param [in] inBuffer input string to be converted
+ * @param [in] inBufferSize input string size in bytes
+ * @param [in] outBuffer user-allocated output buffer that stores converted characters, ignored if inBufferSize is 0
+ * @param [in] outBufferSize output buffer size in bytes (zero to request the required output buffer size)
+ */
 static int32_t
-convertMutf8ToPlatform(struct OMRPortLibrary *portLibrary, const uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize)
+convertMutf8ToPlatform(struct OMRPortLibrary *portLibrary, uint32_t codePage, const uint8_t *inBuffer, uintptr_t inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize)
 {
 	/* need mutable copies */
 	const uint8_t *mutf8Cursor = inBuffer;
@@ -2625,7 +2635,7 @@ convertMutf8ToPlatform(struct OMRPortLibrary *portLibrary, const uint8_t *inBuff
 		}
 		wideBufferCount = (uintptr_t)result;
 
-		platformPartCount = convertWideToPlatform(portLibrary, encodingState, &wideBufferCursor, &wideBufferCount, outCursor, outLimit);
+		platformPartCount = convertWideToPlatform(portLibrary, encodingState, codePage, &wideBufferCursor, &wideBufferCount, outCursor, outLimit);
 		/*
 		 * convertWideToPlatform may return OMRPORT_ERROR_STRING_BUFFER_TOO_SMALL.
 		 * convertWideToPlatform sets up to MAX_STRING_TERMINATOR_LENGTH bytes bytes after the converted characters to 0,
@@ -3124,22 +3134,23 @@ convertPlatformToWide(struct OMRPortLibrary *portLibrary, charconvState_t encodi
 	return resultSize;
 }
 
-/*
-* transliterate from wide (UTF-16) to platform encoding.  The input and output buffer pointers and sizes are updated (except on Windows) to allow
-* resumption if the translation failed due to output buffer too small.
-* Resumable, so it updates its inputs
-* The output buffer may contain additional data such as a byte order mark (0xff, 0xfe or vice versa)
-* If the buffer is large enough, the byte after the last output character is set to 0.
-* @param [in] portLibrary port library
-* @param [in] encodingState iconv_t on Linux, z/OS and AIX, void * on Windows (unused)
-* @param [inout] inBuffer input buffer. Updated to point to start of first untranslated character
-* @param [inout] inBufferSize number of wide characters in wideBuffer.  Updated to number of untranslated characters
-* @param [in] outBuffer point to start of buffer to receive platform-encoded string.
-* @param [in] outBufferSize size in characters of the platformBuffer.  Set to 0 to get the length of bytes required to hold the output
-* @return number of characters generated, or negative in case of error
-*/
+/**
+ * Transliterate from wide (UTF-16) to platform encoding. The input and output buffer pointers and sizes are updated (except on Windows) to allow
+ * resumption if the translation failed due to output buffer too small.
+ * Resumable, so it updates its inputs.
+ * The output buffer may contain additional data such as a byte order mark (0xff, 0xfe or vice versa).
+ * If the buffer is large enough, the byte after the last output character is set to 0.
+ * @param [in] portLibrary port library
+ * @param [in] encodingState iconv_t on Linux, z/OS and AIX, void * on Windows (unused)
+ * @param [in] codePage specify the "platform" code page: CP_THREAD_ACP, CP_ACP (Windows ANSI code pages) or OS_ENCODING_CODE_PAGE. Ignored on non-Windows systems
+ * @param [inout] inBuffer input buffer. Updated to point to start of first untranslated character
+ * @param [inout] inBufferSize number of wide characters in wideBuffer. Updated to number of untranslated characters
+ * @param [in] outBuffer point to start of buffer to receive platform-encoded string
+ * @param [in] outBufferSize size in characters of the platformBuffer. Set to 0 to get the length of bytes required to hold the output
+ * @return number of characters generated, or negative in case of error
+ */
 static int32_t
-convertWideToPlatform(struct OMRPortLibrary *portLibrary, charconvState_t encodingState, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize)
+convertWideToPlatform(struct OMRPortLibrary *portLibrary, charconvState_t encodingState, uint32_t codePage, const uint8_t **inBuffer, uintptr_t *inBufferSize, uint8_t *outBuffer, uintptr_t outBufferSize)
 {
 	int32_t resultSize = -1;
 #if defined(J9STR_USE_ICONV)
@@ -3185,7 +3196,7 @@ convertWideToPlatform(struct OMRPortLibrary *portLibrary, charconvState_t encodi
 #elif defined(OMR_OS_WINDOWS)
 	LPCWSTR wideCursor = (LPCWSTR)*inBuffer;
 	uintptr_t wideRemaining = *inBufferSize / WIDE_CHAR_SIZE;
-	resultSize = WideCharToMultiByte(OS_ENCODING_CODE_PAGE, OS_ENCODING_MB_FLAGS, wideCursor,
+	resultSize = WideCharToMultiByte(codePage, OS_ENCODING_MB_FLAGS, wideCursor,
 									 (int)wideRemaining, (LPSTR)outBuffer, (int)outBufferSize, NULL, NULL);
 	if (0 == resultSize) {
 		DWORD error = GetLastError();

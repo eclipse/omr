@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
 #include "env/jittypes.h"
@@ -1349,7 +1350,7 @@ static void loadRelocatableConstant(TR::Node               *node,
        && cg->wantToPatchClassPointer((TR_OpaqueClassBlock*)symbol->getStaticSymbol()->getStaticAddress(), node))
       {
       TR_ASSERT(!comp->getOption(TR_AOT), "HCR: AOT is currently no supported");
-      intptrj_t address = (intptrj_t)symbol->getStaticSymbol()->getStaticAddress();
+      intptr_t address = (intptr_t)symbol->getStaticSymbol()->getStaticAddress();
       loadAddressConstantInSnippet(cg, node ? node : cg->getCurrentEvaluationTreeTop()->getNode(), address, reg); // isStore ? TR::InstOpCode::Op_st : TR::InstOpCode::Op_load
       return;
       }

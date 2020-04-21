@@ -87,12 +87,6 @@ OMR::Options::getNumLimitedGRARegsWithheld()
          return regsToWithhold;
       }
 
-inline bool
-OMR::Options::needWriteBarriers()
-   {
-   return (self()->gcIsUsingConcurrentMark() || _gcMode == TR_WrtbarOldCheck);
-   }
-
 
 inline bool
 OMR::Options::getTraceRAOption(uint32_t mask)

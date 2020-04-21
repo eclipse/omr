@@ -653,7 +653,7 @@ template <class T> class TR_Queue : public TR_ScratchList<T>
 
    ListElement<T> *getLastElement()      { return getListTail(); }
 
-   T *remove(T *elem) { TR_ASSERT(0, "remove is not implemented for ListHeadAndTail"); }
+   T *remove(T *elem) { TR_UNIMPLEMENTED(); }
    };
 
 

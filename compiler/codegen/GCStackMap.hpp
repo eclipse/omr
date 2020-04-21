@@ -22,7 +22,6 @@
 #ifndef GCSTACKMAP_INCL
 #define GCSTACKMAP_INCL
 
-#include "il/symbol/LabelSymbol.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -30,7 +29,8 @@
 #include "codegen/GCRegisterMap.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/AutomaticSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 
@@ -224,11 +224,6 @@ public:
                                       uint32_t info) {_registerMap.maskRegistersWithInfoBits(mask, info);}
    void     setInfoBits(uint32_t info) {_registerMap.setInfoBits(info);}
 
-   void     setHighWordRegisterBits(uint32_t bits)    {_registerMap.setHighWordRegisterBits(bits);}
-   void     resetHighWordRegistersBits(uint32_t bits) {_registerMap.resetHighWordRegisterBits(bits);}
-   uint32_t getHighWordRegisterMap()               {return _registerMap.getHPRMap();}
-   void     clearHighWordRegisterMap()             {_registerMap.emptyHPR();}
-
    uint32_t getRegisterSaveDescription()              {return _registerMap.getRegisterSaveDescription();}
    void     setRegisterSaveDescription(uint32_t bits) {_registerMap.setRegisterSaveDescription(bits);}
 
@@ -273,7 +268,6 @@ public:
          memcpy(newMap->_liveMonitorBits, getLiveMonitorBits(), getMapSizeInBytes());
          }
       newMap->setRegisterBits(getRegisterMap());
-      newMap->setHighWordRegisterBits(getHighWordRegisterMap());
       return newMap;
       }
 

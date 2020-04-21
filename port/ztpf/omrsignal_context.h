@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,21 +36,14 @@
 #include <dlfcn.h>
 #undef __USE_GNU
 
-
-/*
- * This structure declaration came in this file in this format from J9
- */
-typedef struct J9PlatformSignalInfo {
+typedef struct OMRPlatformSignalInfo {
 	ucontext_t *context;
 	uintptr_t breakingEventAddr;
 	Dl_info	dl_info;
-} J9PlatformSignalInfo;
+} OMRPlatformSignalInfo;
 
-/*
- * This structure declaration came in this file in this format from J9
- */
 typedef struct OMRUnixSignalInfo {
-	struct J9PlatformSignalInfo	platformSignalInfo;
+	struct OMRPlatformSignalInfo	platformSignalInfo;
 	uint32_t portLibrarySignalType;
 	void* handlerAddress;
 	void* handlerAddress2;
@@ -126,5 +119,5 @@ uint32_t infoForControl(struct OMRPortLibrary *portLibrary, struct OMRUnixSignal
 
 uint32_t infoForSignal(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo* info, int32_t index, const char **name, void **value) __attribute__((nonnull(1,2,4,5)));
 
-void fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *j9Info)  __attribute__((nonnull));
+void fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *signalInfo)  __attribute__((nonnull));
 #endif

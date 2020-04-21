@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,21 +96,6 @@ typedef struct omrthread_monitor_walk_state_t {
 } omrthread_monitor_walk_state_t;
 
 /* ---------------- omrthreadinspect.c ---------------- */
-#if defined (J9VM_OUT_OF_PROCESS)
-/* redefine thread functions */
-#define omrthread_monitor_walk dbg_omrthread_monitor_walk
-#define omrthread_monitor_walk_no_locking dbg_omrthread_monitor_walk_no_locking
-#define omrthread_tls_get dbg_omrthread_tls_get
-#define omrthread_get_priority dbg_omrthread_get_priority
-#define omrthread_get_flags dbg_omrthread_get_flags
-#define omrthread_get_state dbg_omrthread_get_state
-#define omrthread_get_osId dbg_omrthread_get_osId
-#define omrthread_monitor_get_name dbg_omrthread_monitor_get_name
-#define omrthread_get_stack_range dbg_omrthread_get_stack_range
-#define omrthread_monitor_get_tracing dbg_omrthread_monitor_get_tracing
-#define getVMThreadRawState dbgGetVMThreadRawState
-#endif
-
 
 /**
 * @brief
@@ -1410,6 +1395,14 @@ omrthread_numa_get_node_affinity(omrthread_t thread, uintptr_t *numaNodes, uintp
  */
 void
 omrthread_numa_set_enabled(BOOLEAN enabled);
+
+
+/**
+ * Gets the NUMA node the caller is being executed on
+ * @return uintptr_t
+ */
+uintptr_t
+omrthread_numa_get_current_node();
 
 /* -------------- rasthrsup.c ------------------- */
 /**

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -191,6 +191,8 @@ omrvmem_startup(struct OMRPortLibrary *portLibrary)
 
 	/* set default value to advise OS about vmem that is no longer needed */
 	portLibrary->portGlobals->vmemAdviseOSonFree = 1;
+	/* set default value to advise OS about vmem to consider for Transparent HugePage (Only for Linux) */
+	portLibrary->portGlobals->vmemEnableMadvise = 0;
 
 	return 0;
 }
@@ -309,20 +311,26 @@ omrvmem_free_memory(struct OMRPortLibrary *portLibrary, void *userAddress, uintp
 	int32_t result = 0;
 	Trc_PRT_vmem_omrvmem_free_memory_Entry(userAddress, byteAmount);
 
-	if (OMRPORT_VMEM_RESERVE_USED_J9MEM_ALLOCATE_MEMORY == identifier->allocator) {
-		portLibrary->mem_free_memory(portLibrary, identifier->address);
+	void *address = identifier->address;
+	uintptr_t allocator = identifier->allocator;
+	uintptr_t size = identifier->size;
+	OMRMemCategory *category = identifier->category;
+	
+	update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
+
+	if (OMRPORT_VMEM_RESERVE_USED_J9MEM_ALLOCATE_MEMORY == allocator) {
+		portLibrary->mem_free_memory(portLibrary, address);
 		/* omrmem_categories_decrement_counters will be done by mem_free_memory */
-	} else if (OMRPORT_VMEM_RESERVE_USED_MMAP == identifier->allocator) {
-		result = (int32_t)munmap(identifier->address, byteAmount);
-		omrmem_categories_decrement_counters(identifier->category, identifier->size);
-	} else if (OMRPORT_VMEM_RESERVE_USED_SHM == identifier->allocator) {
-		result = (int32_t)shmdt(identifier->address);
-		omrmem_categories_decrement_counters(identifier->category, identifier->size);
+	} else if (OMRPORT_VMEM_RESERVE_USED_MMAP == allocator) {
+		result = (int32_t)munmap(address, byteAmount);
+		omrmem_categories_decrement_counters(category, size);
+	} else if (OMRPORT_VMEM_RESERVE_USED_SHM == allocator) {
+		result = (int32_t)shmdt(address);
+		omrmem_categories_decrement_counters(category, size);
 	} else {
 		result = (int32_t)OMRPORT_ERROR_VMEM_INVALID_PARAMS;
 	}
 
-	update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
 	Trc_PRT_vmem_omrvmem_free_memory_Exit(result);
 	return result;
 }
@@ -646,7 +654,7 @@ detectAndRecordPageSize(struct OMRPortLibrary *portLibrary, struct J9PortVmemIde
 	}
 
 	/* Update identifier and commit memory if required, else return reserved memory */
-	update_vmemIdentifier(identifier, memoryPointer, (void *)addressKey, byteAmount, mode, (uintptr_t)page_info.pagesize, OMRPORT_VMEM_PAGE_FLAG_NOT_USED, OMRPORT_VMEM_RESERVE_USED_SHM, category);
+	update_vmemIdentifier(identifier, memoryPointer, (void *)(intptr_t)addressKey, byteAmount, mode, (uintptr_t)page_info.pagesize, OMRPORT_VMEM_PAGE_FLAG_NOT_USED, OMRPORT_VMEM_RESERVE_USED_SHM, category);
 
 	if (0 != vmgetinfoResult) {
 		Trc_PRT_vmem_omrvmem_reserve_memory_ex_aix_vmgetinfo_failed(page_info.addr);
@@ -746,6 +754,11 @@ default_pageSize_reserve_memory(struct OMRPortLibrary *portLibrary, void *addres
 	int flags = MAP_SHARED;
 	int protMask;
 	void *result = NULL;
+
+	if(mode & OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN) {
+		portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
+		return result;
+	}
 
 	Trc_PRT_vmem_default_reserve_entry(address, byteAmount);
 
@@ -1510,4 +1523,11 @@ omrvmem_get_process_memory_size(struct OMRPortLibrary *portLibrary, J9VMemMemory
 	}
 	Trc_PRT_vmem_get_process_memory_exit(result, *memorySize);
 	return result;
+}
+
+void *
+omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
+{
+	portLibrary->error_set_last_error(portLibrary, errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
+	return NULL;
 }

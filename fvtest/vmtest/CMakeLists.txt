@@ -40,4 +40,4 @@ target_link_libraries(omrvmtest
 
 set_property(TARGET omrvmtest PROPERTY FOLDER fvtest)
 
-add_test(NAME vmtest COMMAND omrvmtest)
+add_test(NAME vmtest COMMAND omrvmtest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrvmtest-results.xml)

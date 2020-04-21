@@ -36,3 +36,15 @@ list(APPEND OMR_PLATFORM_DEFINITIONS
 	-D_WIN32_WINNT=0x0601
 	-DWINVER=0x0601
 )
+
+get_filename_component(kit_dir "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots;KitsRoot]" REALPATH)
+if(OMR_ENV_DATA64)
+	set(kit_dir "${kit_dir}/bin/x64")
+else()
+	set(kit_dir "${kit_dir}/bin/x86")
+endif()
+# find the message compiler
+find_program(CMAKE_MC_COMPILER mc.exe HINTS "${kit_dir}")
+if(NOT CMAKE_MC_COMPILER)
+	message(SEND_ERROR "Failed to find message compiler (mc.exe)")
+endif()

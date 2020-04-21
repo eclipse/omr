@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/OMRGCStackAtlas.hpp"
+#include "codegen/GCStackAtlas.hpp"
 
 #include <stdint.h>
 #include <string.h>
@@ -79,7 +79,6 @@ OMR::GCStackAtlas::close(TR::CodeGenerator *cg)
       int32_t mapBytes = map->getMapSizeInBytes();
       if (mapBytes == nextMap->getMapSizeInBytes() &&
           map->getRegisterMap() == nextMap->getRegisterMap() &&
-          map->getHighWordRegisterMap() == nextMap->getHighWordRegisterMap() &&
           !memcmp(map->getMapBits(), nextMap->getMapBits(), mapBytes) &&
           map->isByteCodeInfoIdenticalTo(nextMap))
          {
@@ -135,7 +134,6 @@ OMR::GCStackAtlas::addStackMap(TR_GCStackMap *m)
                   map->isInternalPointerMapIdenticalTo(m))))
                {
                map->setRegisterBits(m->getRegisterMap());
-               map->setHighWordRegisterBits(m->getHighWordRegisterMap());
 
                // Adjust for the fact that we're not adding a map
                //

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,14 @@ flag_undef_regex="^ *# *undef +(${id}) *($|//|/\*)"
 flag_undef_regex_comment="^/\* #undef (${id}) \*/"
 value_define_regex="^ *# *define +(${id}) +[^ /].*($|//|/\*)"
 include_guard_regex=".*_[Hh]([Pp][Pp])?_? *($|//|/\*)"
+
+# Detect if we're running on z/OS, in which case we'll
+# need to use iconv to produce EBCDIC output.
+if [ "$(uname -s)" = "OS/390" ]; then
+	zos390=yes
+else
+	zos390=no
+fi
 
 ##
 # Create a list of all c, h, cpp and hpp files that have simple (non function) macros within them.
@@ -146,7 +154,6 @@ define_value_macro() {
 
 process_one_policy_file() {
 	# Inject repeated include guard and file delimiter
-	(( filenum++ ))
 	echo ""
 	echo "#ifndef DDRGEN_F${filenum}_GUARD_H"
 	echo "#define DDRGEN_F${filenum}_GUARD_H"
@@ -202,7 +209,6 @@ parse_namespace_policy_files() {
 	local filenum=0
 
 	for f in "${annotated_files[@]}"; do
-
 		# Find ddr_options or use the default.
 		get_ddr_options
 
@@ -215,8 +221,17 @@ parse_namespace_policy_files() {
 			mv ${f} ${f}.orig
 			cp ${f}.orig ${f}
 
+			# Increment the sequence number embedded in generated include guard names.
+			(( filenum++ ))
+
 			# read from the backup, rather than the file to which we're appending
-			process_one_policy_file < ${f}.orig >> ${f}
+			if [ $zos390 = yes ] ; then
+				# On z/OS, all source files are in EBCDIC: we must retain that
+				# property as we append to header files.
+				process_one_policy_file < ${f}.orig | iconv -f ISO8859-1 -t IBM-1047 >> ${f}
+			else
+				process_one_policy_file < ${f}.orig >> ${f}
+			fi
 		fi
 	done
 }
@@ -272,7 +287,8 @@ main() {
 	date "+[%F %T] Scraping anotations from preprocessed code ..."
 	find ${scan_dir} -type f -name '*.i' \
 		| sort \
-		| xargs -L1 grep -hE -e '^@(DDRFILE|MACRO|TYPE)_' \
+		| xargs cat \
+		| grep -E -e '^@(DDRFILE|MACRO|TYPE)_' \
 		| awk "${dedup_filter[*]}" \
 		> ${macroList_file}
 

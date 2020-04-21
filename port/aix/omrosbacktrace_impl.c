@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,7 +79,7 @@ tbtable_symbol_start(struct tbtable *table)
 
 	/* get the offset */
 	/* TODO: do we need to delete the word of NULLs? */
-	return (void *)((char *)table - (char *)table->tb_ext.tb_offset);
+	return (void *)((char *)table - table->tb_ext.tb_offset);
 }
 
 
@@ -227,18 +227,18 @@ omrintrospect_backtrace_symbols_raw(struct OMRPortLibrary *portLibrary, J9Platfo
 		if (ldInfo != NULL) {
 			void *moduleEnd = (void *)(ldInfo->ldinfo_textorg + ldInfo->ldinfo_textsize - sizeof(struct AIXFunctionEpilogue));
 			/* align our search for the word aligned null word that terminates the procedure */
-			struct tbtable *epilogue = (struct tbtable *)(iar & (uintptr_t)((~NULL) << 5));
+			struct tbtable *epilogue = (struct tbtable *)(iar & ((~(uintptr_t)0) << 5));
 
 			/* now we've bounded the search to the module look for the function name */
-			while (*(uint32_t *)epilogue != 0 && epilogue < moduleEnd) {
-				((uint32_t *)epilogue)++;
+			while (*(uint32_t *)epilogue != 0 && (void *)epilogue < moduleEnd) {
+				epilogue = (struct tbtable *)(((uint32_t *)epilogue) + 1);
 			}
 
 			if (*(uint32_t *)epilogue == 0) {
 				uintptr_t symbol_start;
 
 				/* step past the marking NULL */
-				((uint32_t *)epilogue)++;
+				epilogue = (struct tbtable *)(((uint32_t *)epilogue) + 1);
 
 				symbol_name = tbtable_name(epilogue, &symbol_length);
 				symbol_start = (uintptr_t)tbtable_symbol_start(epilogue);

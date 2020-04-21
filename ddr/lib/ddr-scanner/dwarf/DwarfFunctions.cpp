@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ static const char * const _errmsgs[] = {
 	"DW_DLE_VMM (9) dwarf format/library version mismatch",
 };
 
-vector<string> Dwarf_CU_Context::_fileList;
+unordered_map<string, size_t> Dwarf_CU_Context::_fileId;
 unordered_map<Dwarf_Off, Dwarf_Die> Dwarf_Die_s::refMap;
 
 int
@@ -53,21 +53,19 @@ dwarf_srcfiles(Dwarf_Die die, char ***srcfiles, Dwarf_Signed *filecount, Dwarf_E
 		 * This implementation maintains the entire list through
 		 * all CU's, rather than just the current CU, for simplicity.
 		 */
-		*filecount = Dwarf_CU_Context::_fileList.size();
+		*filecount = Dwarf_CU_Context::_fileId.size();
 		*srcfiles = new char *[*filecount];
 		if (NULL == *srcfiles) {
 			ret = DW_DLV_ERROR;
 			setError(error, DW_DLE_MAF);
 		} else {
-			size_t index = 0;
-			for (str_vect::iterator it = Dwarf_CU_Context::_fileList.begin(); it != Dwarf_CU_Context::_fileList.end(); ++it) {
-				(*srcfiles)[index] = strdup(it->c_str());
-				if (NULL == (*srcfiles)[index]) {
+			for (unordered_map<string, size_t>::const_iterator it = Dwarf_CU_Context::_fileId.begin(); it != Dwarf_CU_Context::_fileId.end(); ++it) {
+				(*srcfiles)[it->second] = strdup(it->first.c_str());
+				if (NULL == (*srcfiles)[it->second]) {
 					ret = DW_DLV_ERROR;
 					setError(error, DW_DLE_MAF);
 					break;
 				}
-				index += 1;
 			}
 		}
 	}
@@ -176,6 +174,18 @@ dwarf_hasattr(Dwarf_Die die, Dwarf_Half attr, Dwarf_Bool *returned_bool, Dwarf_E
 }
 
 int
+dwarf_formblock(Dwarf_Attribute attr, Dwarf_Block **returned_block, Dwarf_Error *error)
+{
+	/* No attributes are generated with block forms on OSX. */
+	if ((NULL == attr) || (NULL == returned_block)) {
+		setError(error, DW_DLE_IA);
+	} else {
+		setError(error, DW_DLE_ATTR_FORM_BAD);
+	}
+	return DW_DLV_ERROR;
+}
+
+int
 dwarf_formflag(Dwarf_Attribute attr, Dwarf_Bool *returned_flag, Dwarf_Error *error)
 {
 	int ret = DW_DLV_OK;
@@ -273,12 +283,15 @@ dwarf_offdie_b(Dwarf_Debug dbg,
 	if (NULL == return_die) {
 		ret = DW_DLV_ERROR;
 		setError(error, DW_DLE_IA);
-	} else if (Dwarf_Die_s::refMap.end() != Dwarf_Die_s::refMap.find(offset)) {
-		/* Return any Die from its global offset. */
-		*return_die = Dwarf_Die_s::refMap[offset];
 	} else {
-		ret = DW_DLV_NO_ENTRY;
-		setError(error, DW_DLE_BADOFF);
+		unordered_map<Dwarf_Off, Dwarf_Die>::const_iterator iter = Dwarf_Die_s::refMap.find(offset);
+		if ((Dwarf_Die_s::refMap.end() != iter) && (NULL != iter->second)) {
+			/* Return any Die from its global offset. */
+			*return_die = iter->second;
+		} else {
+			ret = DW_DLV_NO_ENTRY;
+			setError(error, DW_DLE_BADOFF);
+		}
 	}
 	return ret;
 }

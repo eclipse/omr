@@ -22,6 +22,7 @@
 
 #include "OpCodeTest.hpp"
 #include "default_compiler.hpp"
+#include "omrformatconsts.h"
 
 int32_t ineg(int32_t l) {
     return -l;
@@ -73,7 +74,7 @@ TEST_P(Int32LogicalUnary, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -93,7 +94,7 @@ TEST_P(Int32LogicalUnary, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -104,9 +105,9 @@ TEST_P(Int32LogicalUnary, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(LogicalTest, Int32LogicalUnary, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int32_t>()),
     ::testing::Values(
-        std::make_tuple("ineg", ineg),
-        std::make_tuple("iabs", iabs)
-        )));
+        std::make_tuple<const char*, int32_t(*)(int32_t)>("ineg", ineg),
+        std::make_tuple<const char*, int32_t(*)(int32_t)>("iabs", iabs)
+    )));
 
 class Int32LogicalBinary : public TRTest::BinaryOpTest<int32_t> {};
 
@@ -119,7 +120,7 @@ TEST_P(Int32LogicalBinary, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -139,7 +140,7 @@ TEST_P(Int32LogicalBinary, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -150,10 +151,10 @@ TEST_P(Int32LogicalBinary, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(LogicalTest, Int32LogicalBinary, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int32_t,int32_t>()),
     ::testing::Values(
-        std::make_tuple("ior", ior),
-        std::make_tuple("iand", iand),
-        std::make_tuple("ixor", ixor)
-        )));
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("ior", ior),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("iand", iand),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("ixor", ixor)
+    )));
 
 class Int64LogicalBinary : public TRTest::BinaryOpTest<int64_t> {};
 
@@ -166,14 +167,14 @@ TEST_P(Int64LogicalBinary, UsingConst) {
         "  (block"
         "    (lreturn"
         "      (%s"
-        "        (lconst %li)"
-        "        (lconst %li) ) ) ) )", 
+        "        (lconst %" OMR_PRId64 ")"
+        "        (lconst %" OMR_PRId64 ") ) ) ) )",
         param.opcode.c_str(), param.lhs, param.rhs);
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -200,7 +201,7 @@ TEST_P(Int64LogicalBinary, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -211,10 +212,10 @@ TEST_P(Int64LogicalBinary, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(LogicalTest, Int64LogicalBinary, ::testing::Combine(
 	::testing::ValuesIn(TRTest::const_value_pairs<int64_t,int64_t>()),
 	::testing::Values(
-		std::make_tuple("lor", lor),
-		std::make_tuple("land", land),
-		std::make_tuple("lxor", lxor)
-				)));
+		std::make_tuple<const char*, int64_t(*)(int64_t, int64_t)>("lor", lor),
+		std::make_tuple<const char*, int64_t(*)(int64_t, int64_t)>("land", land),
+		std::make_tuple<const char*, int64_t(*)(int64_t, int64_t)>("lxor", lxor)
+   )));
 
                 
 class Int64LogicalUnary : public TRTest::UnaryOpTest<int64_t> {};
@@ -228,7 +229,7 @@ TEST_P(Int64LogicalUnary, UsingConst) {
         "  (block"
         "    (lreturn"
         "      (%s"
-        "        (lconst %ld) )"
+        "        (lconst %" OMR_PRId64 ") )"
         ")))",
         param.opcode.c_str(),
         param.value);
@@ -237,7 +238,7 @@ TEST_P(Int64LogicalUnary, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -264,7 +265,7 @@ TEST_P(Int64LogicalUnary, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -275,5 +276,5 @@ TEST_P(Int64LogicalUnary, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(LogicalTest, Int64LogicalUnary, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int64_t>()),
     ::testing::Values(
-        std::make_tuple("lneg", lneg)
+        std::make_tuple<const char*, int64_t(*)(int64_t)>("lneg", lneg)
         )));

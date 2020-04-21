@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@ add_library(omr_ddr_ir
 	Modifiers.cpp
 	NamespaceUDT.cpp
 	Symbol_IR.cpp
+	TextFile.cpp
 	Type.cpp
 	TypedefUDT.cpp
 	UDT.cpp
@@ -40,4 +41,8 @@ set_property(TARGET omr_ddr_ir PROPERTY CXX_STANDARD 11)
 
 target_link_libraries(omr_ddr_ir
 	omr_ddr_base
+)
+
+target_compile_definitions(omr_ddr_ir
+	PRIVATE __STDC_LIMIT_MACROS
 )

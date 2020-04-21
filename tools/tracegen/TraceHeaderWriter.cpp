@@ -141,12 +141,14 @@ TraceHeaderWriter::writeOutputFiles(J9TDFOptions *options, J9TDFFile *tdf)
 	time_t targetFileMtime = FileUtils::getMtime(fileName);
 
 	if (false == options->force && targetFileMtime > sourceFileMtime) {
-		printf("Header file is already up-to-date: %s\n", fileName);
+		if (options->verboseOutput) {
+			printf("Header file is already up-to-date: %s\n", fileName);
+		}
 		Port::omrmem_free((void **)&fileName);
 		return RC_OK;
 	}
 
-	if (true == options->verboseOutput) {
+	if (options->verboseOutput) {
 		printf("Creating header file: %s\n", fileName);
 	}
 

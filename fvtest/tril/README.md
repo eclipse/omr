@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2017 IBM Corp. and others
+Copyright (c) 2016, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,8 +40,7 @@ The `test/` directory contains some GTest-based test cases for Tril.
 
 ## Building Tril
 
-1. Make sure you have the latest versions of cmake, flex, and yacc installed
-on your machine
+1. Make sure you have the latest versions of cmake installed on your machine.
 
 2. Clone the Eclipse OMR repo:
 

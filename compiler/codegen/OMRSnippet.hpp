@@ -74,10 +74,7 @@ class OMR_EXTENSIBLE Snippet
    virtual uint32_t getLength(int32_t estimatedSnippetStart) = 0;
    virtual uint8_t *emitSnippetBody() = 0;
 
-   virtual void print(TR::FILE *, TR_Debug *debug)
-      {
-      // temporary until this becomes pure virtual
-      }
+   virtual void print(TR::FILE *, TR_Debug *debug);
 
    void prepareSnippetForGCSafePoint();
 

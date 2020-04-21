@@ -126,11 +126,6 @@ MM_SegregatedGC::heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *sub
 	return _markingScheme->heapRemoveRange(env, subspace, size, lowAddress, highAddress, lowValidAddress, highValidAddress);
 }
 
-void MM_SegregatedGC::heapReconfigured(MM_EnvironmentBase* env)
-{
-	/* OMRTODO implement proper heap resizing in segregated heaps */
-}
-
 bool
 MM_SegregatedGC::collectorStartup(MM_GCExtensionsBase* extensions)
 {
@@ -470,14 +465,6 @@ MM_SegregatedGC::reportGCEnd(MM_EnvironmentBase *env)
 	/* these are assigned to temporary variable out-of-line since some preprocessors get confused if you have directives in macros */
 	uintptr_t approximateActiveFreeMemorySize = 0;
 	uintptr_t activeMemorySize = 0;
-
-	TRIGGER_J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE(
-		_extensions->privateHookInterface,
-		env->getOmrVMThread(),
-		omrtime_hires_clock(),
-		J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE,
-		_extensions->getForge()->getCurrentStatistics()
-	);
 
 	TRIGGER_J9HOOK_MM_OMR_GLOBAL_GC_END(
 		_extensions->omrHookInterface,

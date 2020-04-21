@@ -23,7 +23,7 @@
 
 set -evx
 
-time make -f run_configure.mk OMRGLUE=./example/glue SPEC=${SPEC} PLATFORM=${PLATFORM} HAS_AUTOCONF=1 distclean all
+time make -f run_configure.mk OMRGLUE=./example/glue SPEC=${SPEC} PLATFORM=${PLATFORM} HAS_AUTOCONF=1 all
 if test "x$RUN_LINT" = "xyes"; then
   llvm-config --version
   clang++ --version

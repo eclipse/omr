@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2017 IBM Corp. and others
+# Copyright (c) 2016, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,12 +25,12 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/p/codegen/FPTreeEvaluator.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/codegen/GenerateInstructions.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/codegen/OMRMemoryReference.cpp \
-    $(JIT_OMR_DIRTY_DIR)/p/codegen/OpBinary.cpp \
-    $(JIT_OMR_DIRTY_DIR)/p/codegen/OpProperties.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/codegen/PPCAOTRelocation.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/codegen/PPCBinaryEncoding.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/codegen/OMRCodeGenerator.cpp \
+    $(JIT_OMR_DIRTY_DIR)/p/codegen/OMRInstOpCode.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/codegen/OMRInstruction.cpp \
+    $(JIT_OMR_DIRTY_DIR)/p/codegen/OMRInstructionDelegate.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/codegen/PPCDebug.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/codegen/PPCHelperCallSnippet.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/codegen/PPCInstruction.cpp \

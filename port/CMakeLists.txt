@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,14 @@
 
 include(OmrFindFiles)
 
+if(OMR_OPT_CUDA)
+	find_package(OmrCuda REQUIRED)
+endif()
+
+if(OMR_HOST_OS STREQUAL "zos")
+	include(OmrMetalC)
+endif()
+
 set(OBJECTS "")
 set(VPATH "")
 
@@ -40,6 +48,13 @@ target_include_directories(omrport_obj
 		$<TARGET_PROPERTY:omr_base,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
+if(OMR_OPT_CUDA)
+	target_include_directories(omrport_obj
+		PRIVATE
+			${OmrCuda_INCLUDE_DIRS}
+	)
+endif()
+
 target_compile_definitions(omrport_obj
 	PUBLIC
 		$<TARGET_PROPERTY:omr_base,INTERFACE_COMPILE_DEFINITIONS>
@@ -51,6 +66,14 @@ endif()
 
 
 if(OMR_HOST_OS STREQUAL "zos")
+	omr_compile_metalc(
+	    zos390/omrlpdat.mc
+	    zos390/omrlpdat.o
+	)
+	target_sources(omrport_obj
+		PRIVATE
+			${CMAKE_CURRENT_BINARY_DIR}/zos390/omrlpdat.o
+	)
 	list(APPEND OBJECTS
 		omrgenerate_ieat_dump.s
 		omrget_large_pageable_pages_supported.s
@@ -61,7 +84,6 @@ if(OMR_HOST_OS STREQUAL "zos")
 		omrjobname.s
 		omruserid.s
 		omrzfs.c
-		omrlpdat.mc
 	)
 	#TODO more objects here. See port_objects.mk:55
 	if(OMR_ENV_DATA64)
@@ -164,6 +186,10 @@ list(APPEND OBJECTS
 	omrsignal.c
 )
 
+if(OMR_PORT_SOCKET_SUPPORT)
+	list(APPEND OBJECTS omrsock.c omrsockptb.c)
+endif()
+
 if(NOT OMR_HOST_OS STREQUAL "win")
 	list(APPEND OBJECTS omrsignal_context.c)
 endif()
@@ -174,9 +200,7 @@ list(APPEND OBJECTS
 	omrsysinfo.c
 )
 
-if(OMR_HOST_OS STREQUAL zos)
-	list(APPEND OBJECTS omrsysinfo_helpers.c)
-endif()
+list(APPEND OBJECTS omrsysinfo_helpers.c)
 
 list(APPEND OBJECTS omrsyslog.c)
 
@@ -185,7 +209,7 @@ if(OMR_HOST_OS STREQUAL win)
 	enable_language(RC)
 	add_custom_command(
 		OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/win32/omrsyslogmessages.rc
-		COMMAND mc  ${CMAKE_CURRENT_SOURCE_DIR}/win32/omrsyslogmessages.mc
+		COMMAND ${CMAKE_MC_COMPILER}  ${CMAKE_CURRENT_SOURCE_DIR}/win32/omrsyslogmessages.mc
 		DEPENDS win32/omrsyslogmessages.mc
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/win32
 	)
@@ -301,6 +325,16 @@ if(OMR_HOST_OS STREQUAL "linux")
 		list(APPEND VPATH linuxppc)
 		target_include_directories(omrport_obj PRIVATE linuxppc)
 	endif()
+	
+	if(OMR_ARCH_RISCV)
+		if(OMR_ENV_DATA64)
+			list(APPEND VPATH linuxriscv64)
+			target_include_directories(omrport_obj PRIVATE linuxriscv64)
+		else()
+			list(APPEND VPATH linuxriscv32)
+			target_include_directories(omrport_obj PRIVATE linuxriscv32)
+		endif()
+	endif()
 
 	if(OMR_ARCH_S390)
 		if(OMR_ENV_DATA64)
@@ -309,6 +343,16 @@ if(OMR_HOST_OS STREQUAL "linux")
 		endif()
 		list(APPEND VPATH linuxs390)
 		target_include_directories(omrport_obj PRIVATE linuxs390)
+	endif()
+
+	if(OMR_ARCH_RISCV)
+		if(OMR_ENV_DATA64)
+			list(APPEND VPATH linuxriscv64)
+			target_include_directories(omrport_obj PRIVATE linuxriscv64)
+		else()
+			list(APPEND VPATH linuxriscv32)
+			target_include_directories(omrport_obj PRIVATE linuxriscv32)
+		endif()
 	endif()
 
 	list(APPEND VPATH linux)
@@ -340,16 +384,12 @@ omr_find_files(resolvedPaths
 	FILES ${OBJECTS}
 )
 
-
 if(OMR_HOST_OS STREQUAL "win")
 	list(APPEND resolvedPaths win32/omrsyslogmessages.rc)
 endif()
 
 target_sources(omrport_obj PRIVATE ${resolvedPaths})
 
-add_library(omrport STATIC
-	$<TARGET_OBJECTS:omrport_obj>
-)
 
 if(OMR_WARNINGS_AS_ERRORS)
 	target_compile_options(omrport_obj PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
@@ -359,6 +399,43 @@ if(OMR_ENHANCED_WARNINGS)
 	target_compile_options(omrport_obj PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 
+target_include_directories(omrport_obj PRIVATE
+	../nls
+)
+
+# This flag indicates that we are compiling the port library
+target_compile_definitions(omrport_obj PRIVATE -DOMRPORT_LIBRARY_DEFINE)
+
+omr_add_exports(omrport_obj
+	omrport_allocate_library
+	omrport_create_library
+	omrport_getSize
+	omrport_getVersion
+	omrport_init_library
+	omrport_isCompatible
+	omrport_startup_library
+)
+
+target_enable_ddr(omrport_obj)
+ddr_add_headers(omrport_obj
+	${omr_SOURCE_DIR}/include_core/omrport.h
+)
+ddr_set_add_targets(omrddr omrport_obj)
+
+
+
+###
+### omrport static lib
+###
+
+add_library(omrport STATIC
+	$<TARGET_OBJECTS:omrport_obj>
+)
+
+# Duplicate the export list onto the static library version
+get_target_property(port_exports omrport_obj EXPORTED_SYMBOLS)
+omr_add_exports(omrport ${port_exports})
+
 target_link_libraries(omrport
 	PUBLIC
 		omr_base
@@ -367,28 +444,21 @@ target_link_libraries(omrport
 		j9hashtable
 		j9pool
 		${OMR_THREAD_LIB}
+		${CMAKE_DL_LIBS}
 )
 
-target_include_directories(omrport_obj PRIVATE
-	../nls
-)
-
-# This flag indicates that we are compiling the port library
-target_compile_definitions(omrport_obj PRIVATE -DOMRPORT_LIBRARY_DEFINE)
-
-
-
-#TODO hack to get to compile. Need platform checks
-if(NOT OMR_HOST_OS STREQUAL "win")
-	if(NOT OMR_HOST_OS STREQUAL "zos")
-		target_link_libraries(omrport PRIVATE dl)
-	endif()
+if(OMRPORT_OMRSIG_SUPPORT)
+	target_link_libraries(omrport PRIVATE omrsig)
 endif()
 
-if(OMR_HOST_OS STREQUAL "osx")
+if(OMR_OS_LINUX)
+	target_link_libraries(omrport PRIVATE rt)
+endif()
+
+if(OMR_OS_OSX)
 	target_link_libraries(omrport PRIVATE iconv)
 endif()
 
-if(OMR_HOST_OS STREQUAL "win")
+if(OMR_OS_WINDOWS)
 	target_link_libraries(omrport PRIVATE psapi pdh)
 endif()

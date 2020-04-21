@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,12 @@ public:
 	MM_CopyScanCacheStandard *_deferredCopyCache; /**< a copy cache about to be pushed to scan queue, but before that may be merged with some other caches that collectively form contiguous memory */
 	MM_CopyScanCacheStandard *_tenureCopyScanCache; /**< the current copy cache for tenuring */
 	MM_CopyScanCacheStandard *_effectiveCopyScanCache; /**< the the copy cache the received the most recently copied object, or NULL if no object copied in copy() */
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	volatile MM_CopyScanCacheStandard *_inactiveSurvivorCopyScanCache; /**< variant of survivor copy cache, when mutator thread is inactive (released VM access) */
+	volatile MM_CopyScanCacheStandard *_inactiveDeferredCopyCache; /**< variant of deferred copy cache, when mutator thread is inactive (released VM access) */
+	volatile MM_CopyScanCacheStandard *_inactiveTenureCopyScanCache; /**< variant of tenure copy cache, when mutator thread is inactive (released VM access) */
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+	
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	J9VMGC_SublistFragment _scavengerRememberedSet;
 #endif
@@ -70,14 +76,8 @@ public:
 	static MM_EnvironmentStandard *newInstance(MM_GCExtensionsBase *extensions, OMR_VMThread *vmThread);
 	
 	virtual void flushNonAllocationCaches();
-	virtual void flushGCCaches();
+	virtual void flushGCCaches(bool final);
 	
-	virtual void initializeGCThread() {
-		/* before a thread turning into a GC one, it shortly acted as a mutator (during thread attach sequence),
-		 * which means it may have allocated or exacuted an object access barrier. */
-		flushGCCaches();
-	}
-
 	MMINLINE static MM_EnvironmentStandard *getEnvironment(OMR_VMThread *omrVMThread) { return static_cast<MM_EnvironmentStandard*>(omrVMThread->_gcOmrVMThreadExtensions); }
 	MMINLINE static MM_EnvironmentStandard *getEnvironment(MM_EnvironmentBase *env) { return static_cast<MM_EnvironmentStandard*>(env); }
 
@@ -88,6 +88,11 @@ public:
 		,_deferredCopyCache(NULL)
 		,_tenureCopyScanCache(NULL)
 		,_effectiveCopyScanCache(NULL)
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		,_inactiveSurvivorCopyScanCache(NULL)
+		,_inactiveDeferredCopyCache(NULL)
+		,_inactiveTenureCopyScanCache(NULL)
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 		,_tenureTLHRemainderBase(NULL)
 		,_tenureTLHRemainderTop(NULL)
 		,_loaAllocation(false)

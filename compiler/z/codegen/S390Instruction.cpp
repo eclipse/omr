@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,11 @@
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
@@ -55,13 +56,13 @@
 #include "il/Block.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
 #include "infra/List.hpp"
@@ -247,8 +248,6 @@ bool TR::S390LabeledInstruction::isNopCandidate()
    return isNopCandidate;
    }
 
-
-
 ////////////////////////////////////////////////////////
 // TR::S390LabelInstruction:: member functions
 ////////////////////////////////////////////////////////
@@ -284,7 +283,6 @@ TR::S390LabelInstruction::generateBinaryEncoding()
          size_t batchObjCodeSize = 0;
          size_t objCodeSize = 0;
 
-
          if (traceLabelTargetNOPs)
             traceMsg(comp,"\toffsetForLabelTargetNOPs = absOffset 0x%p + batchObjCodeSize 0x%p + objCodeSize 0x%p = 0x%p\n",
                offsetForLabelTargetNOPs,batchObjCodeSize,objCodeSize,offsetForLabelTargetNOPs + batchObjCodeSize + objCodeSize);
@@ -317,13 +315,12 @@ TR::S390LabelInstruction::generateBinaryEncoding()
       cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
                              __FILE__, __LINE__, getNode());
 
-
       if (label->getCodeLocation() != NULL)
          {
-         *((uintptrj_t *) cursor) = boa((uintptrj_t) label->getCodeLocation());
+         *((uintptr_t *) cursor) = boa((uintptr_t) label->getCodeLocation());
          }
 
-      cursor += sizeof(uintptrj_t);
+      cursor += sizeof(uintptr_t);
       }
    else  // must be real LABEL instruction
       {
@@ -334,7 +331,7 @@ TR::S390LabelInstruction::generateBinaryEncoding()
             traceMsg(comp,"force tryToUseLabelTargetNOPs to false because _alignment already needed on inst %p\n",this);
          tryToUseLabelTargetNOPs = false;
 
-         int32_t padding = _alignment - (((uintptrj_t)instructionStart) % _alignment);
+         int32_t padding = _alignment - (((uintptr_t)instructionStart) % _alignment);
 
          for (int i = padding / 6; i > 0; i--)
             {
@@ -391,7 +388,7 @@ TR::S390LabelInstruction::generateBinaryEncoding()
    else
       {
       offset = (uint64_t)cursor&(0xff);
-      newInstructionStart = (uint8_t *) (((uintptrj_t)cursor+256)/256*256);
+      newInstructionStart = (uint8_t *) (((uintptr_t)cursor+256)/256*256);
       }
 
    if (offset && (doUseLabelTargetNOPs || isNopCandidate()))
@@ -473,7 +470,7 @@ TR::S390LabelInstruction::generateBinaryEncoding()
             traceMsg(comp,"\tfinished NOP insertion : setBinaryLength to 0, addAccumError = estBinLen %d - bytesInserted %d = %d, setBinaryEncoding to 0x%x\n",
                getEstimatedBinaryLength(),labelTargetBytesInserted,getEstimatedBinaryLength() - labelTargetBytesInserted,instructionStart);
          setBinaryLength(0);
-         TR_ASSERT(getEstimatedBinaryLength() >= labelTargetBytesInserted,"lable inst %p : estimatedBinaryLength %d must be >= labelTargetBytesInserted %d inserted\n",
+         TR_ASSERT(getEstimatedBinaryLength() >= labelTargetBytesInserted,"label inst %p : estimatedBinaryLength %d must be >= labelTargetBytesInserted %d inserted\n",
             this,getEstimatedBinaryLength(),labelTargetBytesInserted);
          cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - labelTargetBytesInserted);
          setBinaryEncoding(instructionStart);
@@ -532,7 +529,6 @@ TR::S390LabelInstruction::considerForLabelTargetNOPs(bool inEncodingPhase)
    return doConsider;
    }
 
-
 int32_t
 TR::S390LabelInstruction::estimateBinaryLength(int32_t  currentEstimate)
    {
@@ -545,7 +541,7 @@ TR::S390LabelInstruction::estimateBinaryLength(int32_t  currentEstimate)
 
    if (getOpCode().getOpCodeValue() == TR::InstOpCode::DC)
       {
-      estimatedSize = sizeof(uintptrj_t);
+      estimatedSize = sizeof(uintptr_t);
       }
    else
       {
@@ -739,7 +735,7 @@ TR::S390BranchInstruction::generateBinaryEncoding()
    memset(static_cast<void*>(cursor), 0, getEstimatedBinaryLength());
    TR::Compilation *comp = cg()->comp();
 
-   intptrj_t distance;
+   intptr_t distance;
    uint8_t * relocationPoint = NULL;
    bool doRelocation;
    bool shortRelocation = false;
@@ -836,7 +832,6 @@ TR::S390BranchInstruction::estimateBinaryLength(int32_t  currentEstimate)
    return currentEstimate + getEstimatedBinaryLength();
    }
 
-
 ////////////////////////////////////////////////////////
 // TR::S390BranchOnCountInstruction:: member functions
 ////////////////////////////////////////////////////////
@@ -872,7 +867,7 @@ TR::S390BranchOnCountInstruction::generateBinaryEncoding()
    uint16_t binOpCode = *(uint16_t *) (getOpCode().getOpCodeBinaryRepresentation());
    TR::Compilation *comp = cg()->comp();
 
-   intptrj_t distance;
+   intptr_t distance;
 
    uint8_t * relocationPoint = NULL;
    bool doRelocation;
@@ -1021,7 +1016,7 @@ TR::S390BranchOnIndexInstruction::generateBinaryEncoding()
    uint16_t binOpCode = *(uint16_t *) (getOpCode().getOpCodeBinaryRepresentation());
    bool shortRelocation = false;
 
-   intptrj_t distance;
+   intptr_t distance;
    uint8_t * relocationPoint = NULL;
    bool doRelocation;
 
@@ -1091,7 +1086,7 @@ TR::S390BranchOnIndexInstruction::estimateBinaryLength(int32_t  currentEstimate)
    setEstimatedBinaryLength(getOpCode().getInstructionLength());
    //code could be expanded into BRAS(4)+DC(4)+L(4)+BXLE(4) sequence
    //or  BRAS(4)+DC(8)+LG(6)+BXLG(6) sequence
-   if (sizeof(intptrj_t) == 8)
+   if (sizeof(intptr_t) == 8)
       {
       setEstimatedBinaryLength(24);
       }
@@ -1153,8 +1148,6 @@ TR::S390PseudoInstruction::generateBinaryEncoding()
       }
    setBinaryLength(0);
 
-
-
    if (_callDescLabel != NULL) // We have to emit a branch around a 8-byte aligned call descriptor.
       {
       // For zOS-31 XPLINK, if the call descriptor is too far away from the native call NOP, we have
@@ -1162,7 +1155,7 @@ TR::S390PseudoInstruction::generateBinaryEncoding()
       //    BRC  4 + Padding
       //    <Padding>
       //    DC <call Descriptor> // 8-bytes aligned.
-      _padbytes = ((intptrj_t)(cursor + 4) + 7) / 8 * 8 - (intptrj_t)(cursor + 4);
+      _padbytes = ((intptr_t)(cursor + 4) + 7) / 8 * 8 - (intptr_t)(cursor + 4);
 
       // BRC 4 + padding.
       *((uint32_t *) cursor) = boi(0xA7F40000 + 6 + _padbytes / 2);
@@ -1186,7 +1179,7 @@ TR::S390PseudoInstruction::generateBinaryEncoding()
          *(uint16_t *) cursor = bos(0x0000);
          cursor += 2;
          }
-      TR_ASSERT(((intptrj_t)cursor) % 8 == 0, "Call Descriptor not aligned\n");
+      TR_ASSERT(((intptr_t)cursor) % 8 == 0, "Call Descriptor not aligned\n");
       // Encode the Call Descriptor
       memcpy (cursor, &_callDescValue,8);
       getCallDescLabel()->setCodeLocation(cursor);
@@ -1198,14 +1191,12 @@ TR::S390PseudoInstruction::generateBinaryEncoding()
    return cursor;
    }
 
-
 int32_t
 TR::S390PseudoInstruction::estimateBinaryLength(int32_t currentEstimate)
    {
-   int32_t estimate = (getOpCodeValue() == TR::InstOpCode::XPCALLDESC) ? 18 : 0;
+   setEstimatedBinaryLength(0);
 
-   setEstimatedBinaryLength(estimate);
-   return currentEstimate + estimate;
+   return currentEstimate;
    }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1270,7 +1261,7 @@ TR::S390DebugCounterBumpInstruction::generateBinaryEncoding()
    *(int32_t *) cursor  = boi(0xEB000000 | (((int8_t) getDelta()) << 16));                // On 64-bit platforms
    scratchReg->setBaseRegisterField((uint32_t *)cursor);                                  // AGSI 0(Rscrtch), delta
    cursor += 4;                                                                           //
-   *(int16_t *) cursor  = TR::Compiler->target.is64Bit() ? bos(0x007A) : bos(0x006A);     // On 32-bit platforms
+   *(int16_t *) cursor  = comp->target().is64Bit() ? bos(0x007A) : bos(0x006A);     // On 32-bit platforms
    cursor += 2;                                                                           //  ASI 0(Rscrtch), delta
 
    if (spillNeeded)
@@ -1324,7 +1315,7 @@ TR::S390ImmInstruction::generateBinaryEncoding()
       // We can't register the first word because the second word wouldn't yet
       // be binary-encoded by the time we need to compute the proper hash key.
       //
-      void **locationToPatch = (void**)(cursor - (TR::Compiler->target.is64Bit()?4:0));
+      void **locationToPatch = (void**)(cursor - (comp->target().is64Bit()?4:0));
       cg()->jitAddPicToPatchOnClassUnload(*locationToPatch, locationToPatch);
       }
    if (std::find(comp->getStaticHCRPICSites()->begin(), comp->getStaticHCRPICSites()->end(), this) != comp->getStaticHCRPICSites()->end())
@@ -1333,7 +1324,7 @@ TR::S390ImmInstruction::generateBinaryEncoding()
       // We can't register the first word because the second word wouldn't yet
       // be binary-encoded by the time we need to compute the proper hash key.
       //
-      void **locationToPatch = (void**)(cursor - (TR::Compiler->target.is64Bit()?4:0));
+      void **locationToPatch = (void**)(cursor - (comp->target().is64Bit()?4:0));
       cg()->jitAddPicToPatchOnClassRedefinition(*locationToPatch, locationToPatch);
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)locationToPatch, (uint8_t *)*locationToPatch, TR_HCR, cg()), __FILE__,__LINE__, getNode());
       }
@@ -1345,7 +1336,6 @@ TR::S390ImmInstruction::generateBinaryEncoding()
    cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - getBinaryLength());
    return cursor;
    }
-
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
 /**
@@ -1387,7 +1377,7 @@ TR::S390Imm2Instruction::generateBinaryEncoding()
       // We can't register the first word because the second word wouldn't yet
       // be binary-encoded by the time we need to compute the proper hash key.
       //
-      void **locationToPatch = (void**)(cursor - (TR::Compiler->target.is64Bit()?4:0));
+      void **locationToPatch = (void**)(cursor - (comp->target().is64Bit()?4:0));
       cg()->jitAddPicToPatchOnClassUnload(*locationToPatch, locationToPatch);
       }
 
@@ -1479,17 +1469,6 @@ TR::S390RegInstruction::generateBinaryEncoding()
    cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - getBinaryLength());
    return cursor;
    }
-
-void
-TR::S390RegInstruction::assignRegistersNoDependencies(TR_RegisterKinds kindToBeAssigned)
-   {
-   TR::Machine *machine = cg()->machine();
-   setRegisterOperand(1,machine->assignBestRegister(getRegisterOperand(1), this, BOOKKEEPING));
-
-   return;
-   }
-
-// TR::S390RRInstruction:: member functions /////////////////////////////////////////
 
 bool
 TR::S390RRInstruction::refsRegister(TR::Register * reg)
@@ -1599,7 +1578,6 @@ TR::S390TranslateInstruction::generateBinaryEncoding()
    cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - getBinaryLength());
    return cursor;
    }
-
 
 // TR::S390RRFInstruction:: member functions /////////////////////////////////////////
 
@@ -1716,7 +1694,6 @@ TR::S390RRFInstruction::generateBinaryEncoding()
          else
             toRealRegister(srcRegPair->getHighOrder())->setRegisterField((uint32_t *) cursor, 0);
 
-
          if ( !isSrc2Pair )
             toRealRegister(getRegisterOperand(3))->setRegisterField((uint32_t *) cursor, 3);
          else
@@ -1794,7 +1771,6 @@ TR::S390RRRInstruction::generateBinaryEncoding()
    TR::RegisterPair* src2RegPair = getRegisterOperand(3)->getRegisterPair();
    TR::RegisterPair* tgtRegPair = getRegisterOperand(1)->getRegisterPair();
    bool isTgtFPPair = false;
-
 
    if (!isTgtFPPair)
       {
@@ -1895,7 +1871,7 @@ TR::S390RILInstruction::estimateBinaryLength(int32_t  currentEstimate)
    int32_t delta = 0;
    TR::Compilation *comp = cg()->comp();
 
-   if (TR::Compiler->target.is64Bit()                        &&
+   if (comp->target().is64Bit()                        &&
         (getOpCode().getOpCodeValue() == TR::InstOpCode::LGRL  ||
          getOpCode().getOpCodeValue() == TR::InstOpCode::LGFRL ||
          getOpCode().getOpCodeValue() == TR::InstOpCode::LLGFRL
@@ -1909,7 +1885,7 @@ TR::S390RILInstruction::estimateBinaryLength(int32_t  currentEstimate)
       //
       delta = 12;
       }
-   else if (TR::Compiler->target.is64Bit()                        &&
+   else if (comp->target().is64Bit()                        &&
         getOpCode().getOpCodeValue() == TR::InstOpCode::STGRL
         )
       {
@@ -1922,7 +1898,7 @@ TR::S390RILInstruction::estimateBinaryLength(int32_t  currentEstimate)
       //
       delta = 24;
       }
-   else if (TR::Compiler->target.is64Bit()                        &&
+   else if (comp->target().is64Bit()                        &&
             (getOpCode().getOpCodeValue() == TR::InstOpCode::STRL ||
              getOpCode().getOpCodeValue() == TR::InstOpCode::LRL))
       {
@@ -1970,22 +1946,22 @@ TR::S390RILInstruction::adjustCallOffsetWithTrampoline(int32_t offset, uint8_t *
    // Check to make sure that we can reach our target!  Otherwise, we need to look up appropriate
    // trampoline and branch through the trampoline.
 
-   if (cg()->directCallRequiresTrampoline(getTargetPtr(), (intptrj_t)currentInst))
+   if (cg()->directCallRequiresTrampoline(getTargetPtr(), (intptr_t)currentInst))
       {
-      intptrj_t targetAddr;
+      intptr_t targetAddr;
 
 #if defined(CODE_CACHE_TRAMPOLINE_DEBUG)
-      printf("Target: %p,  Cursor: %p, Our Reference # is: %d\n",getTargetPtr(),(uintptrj_t)currentInst,getSymbolReference()->getReferenceNumber());
+      printf("Target: %p,  Cursor: %p, Our Reference # is: %d\n",getTargetPtr(),(uintptr_t)currentInst,getSymbolReference()->getReferenceNumber());
 #endif
       if (getSymbolReference()->getReferenceNumber() < TR_S390numRuntimeHelpers)
          targetAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(getSymbolReference()->getReferenceNumber(), (void *)currentInst);
       else
          targetAddr = cg()->fe()->methodTrampolineLookup(cg()->comp(), getSymbolReference(), (void *)currentInst);
 
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinBranchRelativeRILRange(targetAddr, (intptrj_t)currentInst),
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinBranchRelativeRILRange(targetAddr, (intptr_t)currentInst),
                       "Local trampoline must be directly reachable.");
 
-      offsetHalfWords = (int32_t)((targetAddr - (uintptrj_t)currentInst) / 2);
+      offsetHalfWords = (int32_t)((targetAddr - (uintptr_t)currentInst) / 2);
       }
 
    return offsetHalfWords;
@@ -2002,12 +1978,10 @@ TR::S390RILInstruction::generateBinaryEncoding()
    TR::Compilation *comp = cg()->comp();
    int32_t offsetToLongDispSlot = (cg()->getLinkage())->getOffsetToLongDispSlot();
 
-
    if (isLiteralPoolAddress())
       {
       setTargetSnippet(cg()->getFirstSnippet());
       }
-
 
    if (getTargetSnippet() &&
       getTargetSnippet()->getKind() == TR::Snippet::IsConstantData)
@@ -2040,11 +2014,11 @@ TR::S390RILInstruction::generateBinaryEncoding()
          {
       //  Using RIL to get to a Static
       //
-      uintptrj_t addr = getTargetPtr();
+      uintptr_t addr = getTargetPtr();
 
-      i2 = (int32_t)((addr - (uintptrj_t)cursor) / 2);
+      i2 = (int32_t)((addr - (uintptr_t)cursor) / 2);
 
-      if (TR::Compiler->target.cpu.isTargetWithinBranchRelativeRILRange((intptrj_t)getTargetPtr(), (intptrj_t)cursor))
+      if (cg()->comp()->target().cpu.isTargetWithinBranchRelativeRILRange((intptr_t)getTargetPtr(), (intptr_t)cursor))
          {
          getOpCode().copyBinaryToBuffer(instructionStart);
          toRealRegister(getRegisterOperand(1))->setRegister1Field((uint32_t *) cursor);
@@ -2053,7 +2027,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
          }
       else // We need to do things the old fashioned way
          {
-         TR_ASSERT( TR::Compiler->target.is64Bit() ,"We should only be here on 64-bit platforms\n");
+         TR_ASSERT( cg()->comp()->target().is64Bit() ,"We should only be here on 64-bit platforms\n");
 
          TR::RealRegister * scratchReg = NULL;
          TR::RealRegister * sourceReg  = NULL;
@@ -2207,7 +2181,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
       }
    else if (getOpCode().getOpCodeValue() == TR::InstOpCode::EXRL)
       {
-      i2 = (int32_t)((getTargetPtr() - (uintptrj_t)cursor) / 2);
+      i2 = (int32_t)((getTargetPtr() - (uintptr_t)cursor) / 2);
 
       if (isImmediateOffsetInBytes()) i2 = (int32_t)(getImmediateOffsetInBytes() / 2);
 
@@ -2246,7 +2220,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
          if (doRegisterPIC &&
                !TR::Compiler->cls.sameClassLoaders(comp, unloadableClass, comp->getCurrentMethod()->classOfMethod()))
             {
-            cg()->jitAdd32BitPicToPatchOnClassUnload((void *) unloadableClass, (void *) (uintptrj_t *) (cursor+2));
+            cg()->jitAdd32BitPicToPatchOnClassUnload((void *) unloadableClass, (void *) (uintptr_t *) (cursor+2));
 
                // register 32 bit patchable immediate part of a LARL instruction
             }
@@ -2260,7 +2234,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
       if (sym && sym->isStartPC())
          setImmediateOffsetInBytes((uint8_t *) sym->getStaticSymbol()->getStaticAddress() - cursor);
 
-      i2 = (int32_t)((getTargetPtr() - (uintptrj_t)cursor) / 2);
+      i2 = (int32_t)((getTargetPtr() - (uintptr_t)cursor) / 2);
 
       if (isImmediateOffsetInBytes()) i2 = (int32_t)(getImmediateOffsetInBytes() / 2);
 
@@ -2285,9 +2259,9 @@ TR::S390RILInstruction::generateBinaryEncoding()
             // Check to make sure that we can reach our target!  Otherwise, we
             // need to look up appropriate trampoline and branch through the
             // trampoline.
-            if (!isImmediateOffsetInBytes() && !TR::Compiler->target.cpu.isTargetWithinBranchRelativeRILRange((intptrj_t)getTargetPtr(), (intptrj_t)cursor))
+            if (!isImmediateOffsetInBytes() && !cg()->comp()->target().cpu.isTargetWithinBranchRelativeRILRange((intptr_t)getTargetPtr(), (intptr_t)cursor))
                {
-               intptrj_t targetAddr = ((intptrj_t)(cursor) + ((intptrj_t)(i2) * 2));
+               intptr_t targetAddr = ((intptr_t)(cursor) + ((intptr_t)(i2) * 2));
                TR_ASSERT( targetAddr != getTargetPtr(), "LARL is correct already!\n");
                // lower 32 bits should be correct.
                TR_ASSERT( (int32_t)(targetAddr) == (int32_t)(getTargetPtr()), "LARL lower 32-bits is incorrect!\n");
@@ -2338,7 +2312,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
       if (getTargetSnippet() != NULL && (getTargetSnippet()->getKind() == TR::Snippet::IsUnresolvedData))
          {
          // address must be 4 byte aligned for atomic patching
-         int32_t padSize = 4 - ((uintptrj_t) (cursor + 2) % 4);
+         int32_t padSize = 4 - ((uintptr_t) (cursor + 2) % 4);
          if (padSize == 2)
             {
             (*(uint16_t *) cursor) = bos(0x1800);
@@ -2360,7 +2334,7 @@ TR::S390RILInstruction::generateBinaryEncoding()
          }
       else
          {
-         i2 = (int32_t)((getTargetPtr() - (uintptrj_t)cursor) / 2);
+         i2 = (int32_t)((getTargetPtr() - (uintptr_t)cursor) / 2);
 
 #if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
@@ -2389,10 +2363,10 @@ TR::S390RILInstruction::generateBinaryEncoding()
 
 #if defined(J9ZOS390) || !defined(TR_TARGET_64BIT)
       // Address must not cross an 8 byte boundary for atomic patching
-      int32_t padSize = ((uintptrj_t) (cursor + 4) % 8) == 0 ? 2 : 0;
+      int32_t padSize = ((uintptr_t) (cursor + 4) % 8) == 0 ? 2 : 0;
 #else
       // Address must be 4 byte aligned for atomic patching
-      int32_t padSize = 4 - ((uintptrj_t) (cursor + 2) % 4);
+      int32_t padSize = 4 - ((uintptr_t) (cursor + 2) % 4);
 #endif
 
       if (padSize == 2)
@@ -2407,26 +2381,11 @@ TR::S390RILInstruction::generateBinaryEncoding()
          {
          if (cg()->hasCodeCacheSwitched())
             {
-            TR::SymbolReference *calleeSymRef = NULL;
-
-            calleeSymRef = getSymbolReference();
-
-            if (calleeSymRef != NULL)
-               {
-               if (calleeSymRef->getReferenceNumber()>=TR_S390numRuntimeHelpers)
-                  cg()->fe()->reserveTrampolineIfNecessary(comp, calleeSymRef, true);
-               }
-            else
-               {
-#ifdef DEBUG
-               printf("Missing possible re-reservation for trampolines.\n");
-#endif
-               }
+            cg()->redoTrampolineReservationIfNecessary(this, getSymbolReference());
             }
          }
 #endif
 
-      i2 = (int32_t)((getTargetPtr() - (uintptrj_t)cursor) / 2);
       (*(uint16_t *) cursor) = bos(0xC005);
       toRealRegister(getRegisterOperand(1))->setRegister1Field((uint32_t *) cursor);
 
@@ -2445,29 +2404,29 @@ TR::S390RILInstruction::generateBinaryEncoding()
           *     If targetAddress is not provided, TargetSymbol should be a method symbol.
           */
          TR_ASSERT(getTargetPtr() || (getTargetSymbol() && getTargetSymbol()->isMethod()),"targetAddress or method symbol should be provided for BRASL\n");
-         bool isRecursiveCall = false;
-         TR::MethodSymbol * callSymbol = NULL;
-         if (getTargetSymbol())
-            {
-            callSymbol = getTargetSymbol()->isMethod() ? getTargetSymbol()->castToMethodSymbol() : NULL;
-            TR::ResolvedMethodSymbol * sym = (callSymbol) ? callSymbol->getResolvedMethodSymbol() : NULL;
-            TR_ResolvedMethod * fem = sym ? sym->getResolvedMethod() : NULL;
-            isRecursiveCall = (fem != NULL && fem->isSameMethod(comp->getCurrentMethod()) && !comp->isDLT());
-            }
-         if (isRecursiveCall)
+
+         if (comp->isRecursiveMethodTarget(getTargetSymbol()))
             {
             // call myself case
             uint8_t * jitTojitStart = cg()->getCodeStart();
 
             // Calculate jit-to-jit entry point
             jitTojitStart += ((*(int32_t *) (jitTojitStart - 4)) >> 16) & 0x0000ffff;
-            *(int32_t *) (cursor + 2) = boi(((intptrj_t) jitTojitStart - (intptrj_t) cursor) / 2);
+            *(int32_t *) (cursor + 2) = boi(((intptr_t) jitTojitStart - (intptr_t) cursor) / 2);
             }
          else
             {
+            TR::MethodSymbol *callSymbol = NULL;
+            if (getTargetSymbol())
+               {
+               callSymbol = getTargetSymbol()->isMethod() ? getTargetSymbol()->castToMethodSymbol() : NULL;
+               }
+
+            i2 = (int32_t)((getTargetPtr() - (uintptr_t)cursor) / 2);
+
             if (getTargetPtr() == 0 && callSymbol)
                {
-               i2 = (int32_t)(((uintptrj_t)(callSymbol->getMethodAddress()) - (uintptrj_t)cursor) / 2);
+               i2 = (int32_t)(((uintptr_t)(callSymbol->getMethodAddress()) - (uintptr_t)cursor) / 2);
                }
 #if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
@@ -2478,10 +2437,18 @@ TR::S390RILInstruction::generateBinaryEncoding()
                }
 #endif
             (*(int32_t *) (cursor + 2)) = boi(i2);
-            if (getSymbolReference() && getSymbolReference()->getSymbol()->castToMethodSymbol()->isHelper())
+            TR::Symbol *sym = getSymbolReference() ? getSymbolReference()->getSymbol() : NULL;
+            TR::ResolvedMethodSymbol *resolvedMethodSym = sym ? sym->getResolvedMethodSymbol() : NULL;
+            TR_ResolvedMethod *resolvedMethod = resolvedMethodSym ? resolvedMethodSym->getResolvedMethod() : NULL;
+            if (sym && sym->castToMethodSymbol()->isHelper())
                {
                AOTcgDiag1(comp, "add TR_HelperAddress cursor=%x\n", cursor);
                cg()->addProjectSpecializedRelocation(cursor+2, (uint8_t*) getSymbolReference(), NULL, TR_HelperAddress,
+                     __FILE__, __LINE__, getNode());
+               }
+            else if (resolvedMethod)
+               {
+               cg()->addProjectSpecializedRelocation(cursor+2, (uint8_t *)getSymbolReference()->getMethodAddress(), NULL, TR_MethodCallAddress,
                      __FILE__, __LINE__, getNode());
                }
             }
@@ -2616,7 +2583,6 @@ TR::S390RSInstruction::generateBinaryEncoding()
    return cursor;
    }
 
-
 // TR::S390RRSInstruction:: member functions
 
 /**
@@ -2681,7 +2647,6 @@ TR::S390RRSInstruction::generateBinaryEncoding()
    return cursor;
    }
 
-
 // TR::S390RIEInstruction:: member functions
 /**
  *    RIE Format
@@ -2734,7 +2699,6 @@ TR::S390RIEInstruction::estimateBinaryLength(int32_t  currentEstimate)
 uint8_t *
 TR::S390RIEInstruction::generateBinaryEncoding()
    {
-
 
    // let's determine what form of RIE we are dealing with
    bool RIE1 = (getRieForm() == TR::S390RIEInstruction::RIE_RR);
@@ -2988,7 +2952,6 @@ TR::S390RIEInstruction::generateBinaryEncoding()
    // the end.
    cursor += 2;
 
-
    // set the binary length of our instruction
    setBinaryLength(cursor - instructionStart);
 
@@ -3162,7 +3125,6 @@ TR::S390RIEInstruction::splitIntoCompareAndBranch(TR::Instruction *insertBranchA
 
    }
 
-
 // TR::S390RISInstruction:: member functions
 /**
  *    RIS Format
@@ -3227,8 +3189,6 @@ TR::S390RISInstruction::generateBinaryEncoding()
    return cursor;
    }
 
-
-
 // TR::S390MemInstruction:: member functions
 
 bool
@@ -3239,11 +3199,7 @@ TR::S390MemInstruction::refsRegister(TR::Register * reg)
       {
       TR::RealRegister * realReg = (TR::RealRegister *)reg;
       TR::Register * regMem = reg;
-      if (realReg->isHighWordRegister())
-         {
-         // Highword aliasing low word regs
-         regMem = realReg->getLowWordRegister();
-         }
+
       if (getMemoryReference()->refsRegister(regMem))
          {
          return true;
@@ -3292,11 +3248,7 @@ TR::S390RXInstruction::refsRegister(TR::Register * reg)
       {
       TR::RealRegister * realReg = (TR::RealRegister *)reg;
       TR::Register * regMem = reg;
-      if (realReg->isHighWordRegister())
-         {
-         // Highword aliasing low word regs
-         regMem = (TR::Register *)(realReg->getLowWordRegister());
-         }
+
       if (getMemoryReference()->refsRegister(regMem))
          {
          return true;
@@ -3476,11 +3428,7 @@ TR::S390RXFInstruction::refsRegister(TR::Register * reg)
       {
       TR::RealRegister * realReg = (TR::RealRegister *)reg;
       TR::Register * regMem = reg;
-      if (realReg->isHighWordRegister())
-         {
-         // Highword aliasing low word regs
-         regMem = (TR::Register *)(realReg->getLowWordRegister());
-         }
+
       if (getMemoryReference()->refsRegister(regMem))
          {
          return true;
@@ -3512,12 +3460,10 @@ TR::S390RXFInstruction::generateBinaryEncoding()
 
    getOpCode().copyBinaryToBufferWithoutClear(cursor);
 
-
    TR::RegisterPair* srcRegPair = getRegisterOperand(2)->getRegisterPair();
    TR::RegisterPair* tgtRegPair = getRegisterOperand(1)->getRegisterPair();
 
    bool isTgtFPPair = false;
-
 
    if(isTgtFPPair)
       {
@@ -3657,7 +3603,6 @@ TR::S390VRIInstruction::preGenerateBinaryEncoding()
 
    return instructionStart;
    }
-
 
 /**
  * VRI postGenerateBinaryEncoding
@@ -3894,7 +3839,6 @@ TR::S390VRIhInstruction::generateBinaryEncoding()
    return postGenerateBinaryEncoding(cursor);
    }
 
-
 /** \details
  *
  * VRI-i generate binary encoding for VRI-i instruction format
@@ -4071,7 +4015,6 @@ TR::S390VRRInstruction::getExtendedMnemonicName()
    return setOpCodeBuffer(tmpOpCodeBuffer);
    }
 
-
 /** \details
  *
  *  VRR Generate Binary Encoding for most sub-types of the VRR instruction format
@@ -4114,7 +4057,6 @@ TR::S390VRRInstruction::generateBinaryEncoding()
    if (getRegisterOperand(3) != NULL)
       toRealRegister(getRegisterOperand(3))->setRegister3Field(reinterpret_cast<uint32_t *>(cursor));
 
-
    if (getRegisterOperand(4) != NULL)
       {
        // Will cause assertion failure by now
@@ -4125,7 +4067,6 @@ TR::S390VRRInstruction::generateBinaryEncoding()
        // mask in mask field 3 (bit 32-35) is aliased with register operand 4
       setMaskField(reinterpret_cast<uint32_t *>(cursor), maskIn3, 3);
       }
-
 
    // Cursor move
    // update binary length
@@ -4156,7 +4097,6 @@ TR::S390VRRaInstruction::generateBinaryEncoding()
    return TR::S390VRRInstruction::generateBinaryEncoding();
    }
 
-
 /** \details
  *
  * VRR-b generate binary encoding
@@ -4174,7 +4114,6 @@ TR::S390VRRbInstruction::generateBinaryEncoding()
    return TR::S390VRRInstruction::generateBinaryEncoding();
    }
 
-
 /** \details
  *
  * VRR-d generate binary encoding
@@ -4191,7 +4130,6 @@ TR::S390VRRcInstruction::generateBinaryEncoding()
    // Generate Binary Encoding
    return TR::S390VRRInstruction::generateBinaryEncoding();
    }
-
 
 /** \details
  *
@@ -4211,7 +4149,6 @@ TR::S390VRRdInstruction::generateBinaryEncoding()
    return TR::S390VRRInstruction::generateBinaryEncoding();
    }
 
-
 /** \details
  *
  * VRR-e generate binary encoding
@@ -4230,7 +4167,6 @@ TR::S390VRReInstruction::generateBinaryEncoding()
    return TR::S390VRRInstruction::generateBinaryEncoding();
    }
 
-
 /** \details
  *
  * VRR-f generate binary encoding
@@ -4247,8 +4183,6 @@ TR::S390VRRfInstruction::generateBinaryEncoding()
    // Generate Binary Encoding
    return TR::S390VRRInstruction::generateBinaryEncoding();
    }
-
-
 
 /** \details
  *
@@ -4281,7 +4215,6 @@ TR::S390VRRgInstruction::generateBinaryEncoding()
    cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - getBinaryLength());
    return cursor;
    }
-
 
 /** \details
  *
@@ -4322,7 +4255,6 @@ TR::S390VRRhInstruction::generateBinaryEncoding()
    return cursor;
    }
 
-
 /** \details
  *
  * VRR-i generate binary encoding
@@ -4344,8 +4276,8 @@ TR::S390VRRiInstruction::generateBinaryEncoding()
    // Copy binary
    getOpCode().copyBinaryToBuffer(instructionStart);
 
-   // Masks
    setMaskField(reinterpret_cast<uint32_t *>(cursor), getM3(), 1);
+   setMaskField(reinterpret_cast<uint32_t *>(cursor), getM4(), 2);
 
    // Operands
    toRealRegister(r1Reg)->setRegister1Field(reinterpret_cast<uint32_t *>(cursor));
@@ -4360,7 +4292,6 @@ TR::S390VRRiInstruction::generateBinaryEncoding()
    cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - getBinaryLength());
    return cursor;
    }
-
 
 /** \details
  *
@@ -4453,7 +4384,6 @@ TR::S390VStorageInstruction::estimateBinaryLength(int32_t  currentEstimate)
       return TR::Instruction::estimateBinaryLength(currentEstimate);
       }
    }
-
 
 /**** VRS variants ***/
 /** \details
@@ -4553,7 +4483,6 @@ TR::S390VRVInstruction::generateBinaryEncoding()
    return cursor;
    }
 
-
 /** \details
  *
  * VSI format generate binary encoding implementation
@@ -4599,7 +4528,6 @@ TR::S390VSIInstruction::generateBinaryEncoding()
 
    return cursor;
    }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // TR::S390MemMemInstruction:: member functions
@@ -4766,7 +4694,6 @@ TR::S390SS2Instruction::generateBinaryEncoding()
    uint16_t lenField = (getLen() << 4) | getLen2();
    (*(uint8_t *) (cursor + 1)) |= lenField;
 
-
    instructionStart = cursor;
    cursor += getOpCode().getInstructionLength();
 
@@ -4817,7 +4744,6 @@ TR::S390SS4Instruction::generateBinaryEncoding()
    if(getSourceKeyReg())
       toRealRegister(getRegForBinaryEncoding(getSourceKeyReg()))->setRegisterField((uint32_t *)cursor, 4);
 
-
    instructionStart = cursor;
    cursor += getOpCode().getInstructionLength();
 
@@ -4845,11 +4771,7 @@ TR::S390SSFInstruction::refsRegister(TR::Register * reg)
       {
       TR::RealRegister * realReg = (TR::RealRegister *)reg;
       TR::Register * regMem = reg;
-      if (realReg->isHighWordRegister())
-         {
-         // Highword aliasing low word regs
-         regMem = (TR::Register *)(realReg->getLowWordRegister());
-         }
+
       if (getMemoryReference()->refsRegister(regMem))
          {
          return true;
@@ -5261,7 +5183,6 @@ TR::S390SInstruction::generateBinaryEncoding()
    return cursor;
    }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // TR::S390NOPInstruction:: member functions
 ////////////////////////////////////////////////////////////////////////////////
@@ -5271,9 +5192,7 @@ TR::S390NOPInstruction::estimateBinaryLength(int32_t  currentEstimate)
    {
    // could have 2 byte, 4 byte or 6 byte NOP
    setEstimatedBinaryLength(6);
-   // Save the offset for Call Descriptor NOP (zOS-31 XPLINK), so that we can estimate the distance
-   // to Call Descriptor Snippet to decide whether we need to branch around.
-   _estimatedOffset = currentEstimate;
+
    return currentEstimate + getEstimatedBinaryLength();
    }
 
@@ -5285,13 +5204,7 @@ TR::S390NOPInstruction::generateBinaryEncoding()
    memset( (void*)cursor,0,getEstimatedBinaryLength());
    TR::Compilation *comp = cg()->comp();
 
-   if (getKindNOP() == FastLinkCallNOP)
-      { // assumes 4 byte length
-      uint32_t nopInst = 0x47000000 + (unsigned)getArgumentsLengthOnCall();
-      (*(uint32_t *) cursor) = boi(nopInst);
-      cursor += 4;
-      }
-   else if (getBinaryLength() == 2)
+   if (getBinaryLength() == 2)
       {
       uint16_t nopInst;
          nopInst = 0x1800;
@@ -5300,35 +5213,8 @@ TR::S390NOPInstruction::generateBinaryEncoding()
       }
    else if (getBinaryLength() == 4)
       {
-      uint32_t nopInst = 0x47000000 + (((unsigned)getCallType()) << 16);
+      uint32_t nopInst = 0x47000000;
       (*(uint32_t *) cursor) = boi(nopInst);
-      if (getTargetSnippet() != NULL)
-         {
-         // Check Relocation Distance, and see whether it's within 16 bits distance.
-         // The offset is a 16 bit field containg the offset in double worlds from the call site to the call descriptor.
-         // Our snippet is always emitted later than our NOP.
-         intptrj_t snippetOffset = getTargetSnippet()->getSnippetLabel()->getEstimatedCodeLocation();
-         intptrj_t currentOffset = _estimatedOffset;
-
-         intptrj_t distance = snippetOffset - currentOffset + 8;  // Add 8 to conservatively estimate the alginment of NOP.
-
-         //TODO: confirm that it's okay to have negative offset (for cases when JNI call is outofline)
-         TR_ASSERT(distance > 0, "XPLINK Call Descriptor Snippet is before NOP instruction (JNI Call).");
-
-         // If within range, we don't have to emit our psuedo branch around instruction.
-         if (distance < 0x3FFF8 && distance > 0)
-            {
-            cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelRelative16BitRelocation(cursor+2, getTargetSnippet()->getSnippetLabel(),8));
-            }
-         else
-            {
-            // Snippet is beyond 16 bit relative relocation distance.
-            // In this case, we have to activate our pseudo branch around call descriptor
-            getCallDescInstr()->setCallDescValue(((TR::S390ConstantDataSnippet *)getTargetSnippet())->getDataAs8Bytes(), cg()->trMemory());
-            cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelRelative16BitRelocation(cursor+2, getCallDescInstr()->getCallDescLabel(),8));
-
-            }
-         }
       cursor += 4;
       }
    else if(getBinaryLength() == 6)
@@ -5348,6 +5234,72 @@ TR::S390NOPInstruction::generateBinaryEncoding()
    setBinaryEncoding(instructionStart);
    cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - getBinaryLength());
    return cursor;
+   }
+
+int32_t
+TR::S390AlignmentNopInstruction::estimateBinaryLength(int32_t currentEstimate)
+   {
+   self()->setEstimatedBinaryLength(_alignment - 2);
+   return currentEstimate + self()->getEstimatedBinaryLength();
+   }
+
+uint8_t*
+TR::S390AlignmentNopInstruction::generateBinaryEncoding()
+   {
+   bool trace = cg()->comp()->getOption(TR_TraceCG);
+   uint32_t currentMisalign = reinterpret_cast<uintptr_t>(cg()->getBinaryBufferCursor()) % _alignment;
+
+   if (currentMisalign != 0)
+      {
+      uint32_t nopsOfLength6ToAdd = (_alignment - currentMisalign) / 6;
+      uint32_t nopsOfLength4ToAdd = ((_alignment - currentMisalign) % 6) / 4;
+      uint32_t nopsOfLength2ToAdd = (((_alignment - currentMisalign) % 6) % 4) / 2;
+      
+      if (trace)
+         traceMsg(cg()->comp(), "Expanding alignment nop %p into %u instructions: [ ", self(), nopsOfLength6ToAdd + nopsOfLength4ToAdd + nopsOfLength2ToAdd);
+
+      for (uint32_t i = 0; i < nopsOfLength2ToAdd; ++i)
+         {
+         TR::Instruction *nop = new (cg()->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, getNode(), self(), cg());
+
+         if (trace)
+            traceMsg(cg()->comp(), "%p ", nop);
+         }
+
+      for (uint32_t i = 0; i < nopsOfLength4ToAdd; ++i)
+         {
+         TR::Instruction *nop = new (cg()->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 4, getNode(), self(), cg());
+
+         if (trace)
+            traceMsg(cg()->comp(), "%p ", nop);
+         }
+      
+      for (uint32_t i = 0; i < nopsOfLength6ToAdd; ++i)
+         {
+         TR::Instruction *nop = new (cg()->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 6, getNode(), self(), cg());
+
+         if (trace)
+            traceMsg(cg()->comp(), "%p ", nop);
+         }
+
+      if (trace)
+         traceMsg(cg()->comp(), "]\n");
+      }
+   else
+      {
+      if (trace)
+         traceMsg(cg()->comp(), "Eliminating alignment nop %p, since the next instruction is already aligned\n", self());
+      }
+
+   cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - currentMisalign);
+
+   // When the trace log prints the list of instructions after binary encoding, we don't want this
+   // instruction to show up any more. Removing it from the linked list of instructions does this
+   // without affecting this instruction's next pointer, so the binary encoding loop can continue
+   // and encode the actual nops we emitted as if nothing happened.
+   self()->remove();
+
+   return cg()->getBinaryBufferCursor();
    }
 
 // ////////////////////////////////////////////////////////////////////////////////
@@ -5386,7 +5338,7 @@ TR::S390MIIInstruction::generateBinaryEncoding()
          (cursor + cg()->getAccumulatedInstructionLengthError());
 
    static bool bpp = (feGetEnv("TR_BPPNOBINARY")!=NULL);
-   intptrj_t offset = (intptrj_t) getSymRef()->getMethodAddress() - (intptrj_t) instructionStart;
+   intptr_t offset = (intptr_t) getSymRef()->getMethodAddress() - (intptr_t) instructionStart;
 
    if (distance >= MIN_12_RELOCATION_VAL && distance <= MAX_12_RELOCATION_VAL && !bpp &&
          offset >= MIN_24_RELOCATION_VAL && offset <= MAX_24_RELOCATION_VAL)
@@ -5413,7 +5365,7 @@ TR::S390MIIInstruction::generateBinaryEncoding()
       // add RI3 24-47 # of halfword from current or memory
       //TODO need a check too
 
-      intptrj_t offset = (intptrj_t) getSymRef()->getMethodAddress() - (intptrj_t) instructionStart;
+      intptr_t offset = (intptr_t) getSymRef()->getMethodAddress() - (intptr_t) instructionStart;
 
       int32_t offsetInHalfWords = (int32_t) (offset/2);
 
@@ -5535,7 +5487,7 @@ TR::S390VirtualGuardNOPInstruction::generateBinaryEncoding()
    uint8_t * cursor = instructionStart;
    memset( (void*)cursor,0,getEstimatedBinaryLength());
    uint16_t binOpCode;
-   intptrj_t distance;
+   intptr_t distance;
    bool doRelocation;
    bool shortRelocation = false;
    bool longRelocation = false;
@@ -5655,7 +5607,6 @@ TR::S390VirtualGuardNOPInstruction::generateBinaryEncoding()
              nextI->getOpCodeValue() == TR::InstOpCode::LARL)
             break;
 
-
          // we shouldn't need to check for PSEUDO instructions, but VGNOP has a non-zero length so
          // skip PSEUDO instructions from length consideration because in practice they will generally
          // be zero
@@ -5766,126 +5717,3 @@ TR::S390VirtualGuardNOPInstruction::generateBinaryEncoding()
    return cursor;
    }
 #endif
-
-
-TR::MemoryReference *getFirstReadWriteMemoryReference(TR::Instruction *i)
-  {
-  TR::MemoryReference *mr = NULL;
-  switch(i->getKind())
-    {
-    case TR::Instruction::IsRS:
-    case TR::Instruction::IsRSY:
-      mr = toS390RSInstruction(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsSMI:
-      mr = toS390SMIInstruction(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsMem:
-    case TR::Instruction::IsMemMem:
-    case TR::Instruction::IsSI:
-    case TR::Instruction::IsSIY:
-    case TR::Instruction::IsSIL:
-    case TR::Instruction::IsS:
-    case TR::Instruction::IsRSL:
-    case TR::Instruction::IsSS1:
-    case TR::Instruction::IsSS2:
-    case TR::Instruction::IsSS4:
-    case TR::Instruction::IsSSE:
-    case TR::Instruction::IsRXYb:
-      mr = toS390MemInstruction(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsRSLb:
-      mr = toS390RSLbInstruction(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsRX:
-    case TR::Instruction::IsRXE:
-    case TR::Instruction::IsRXY:
-    case TR::Instruction::IsSSF:
-      mr = toS390RXInstruction(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsRXF:
-      mr = toS390RXFInstruction(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsVRSa:
-      mr = toS390VRSaInstruction(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsVRSb:
-      mr = toS390VRSbInstruction(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsVRSc:
-      mr = toS390VRScInstruction(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsVRSd:
-      mr = static_cast<TR::S390VRSdInstruction*>(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsVRV:
-      mr = toS390VRVInstruction(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsVRX:
-      mr = toS390VRXInstruction(i)->getMemoryReference();
-      break;
-     case TR::Instruction::IsVSI:
-      mr = static_cast<TR::S390VSIInstruction*>(i)->getMemoryReference();
-      break;
-    case TR::Instruction::IsBranch:
-    case TR::Instruction::IsVirtualGuardNOP:
-    case TR::Instruction::IsBranchOnCount:
-    case TR::Instruction::IsBranchOnIndex:
-    case TR::Instruction::IsLabel:
-    case TR::Instruction::IsPseudo:
-    case TR::Instruction::IsNotExtended:
-    case TR::Instruction::IsImm:
-    case TR::Instruction::IsImm2Byte:
-    case TR::Instruction::IsImmSnippet:
-    case TR::Instruction::IsImmSym:
-    case TR::Instruction::IsReg:
-    case TR::Instruction::IsRR:
-    case TR::Instruction::IsRRD:
-    case TR::Instruction::IsRRE:
-    case TR::Instruction::IsRRF:
-    case TR::Instruction::IsRRF2:
-    case TR::Instruction::IsRRF3:
-    case TR::Instruction::IsRRF4:
-    case TR::Instruction::IsRRF5:
-    case TR::Instruction::IsRRR:
-    case TR::Instruction::IsRI:
-    case TR::Instruction::IsRIL:
-    case TR::Instruction::IsRRS:     // Storage is branch destination
-    case TR::Instruction::IsRIS:     // Storage is branch destination
-    case TR::Instruction::IsIE:
-    case TR::Instruction::IsRIE:
-    case TR::Instruction::IsMII:
-
-    case TR::Instruction::IsVRIa:
-    case TR::Instruction::IsVRIb:
-    case TR::Instruction::IsVRIc:
-    case TR::Instruction::IsVRId:
-    case TR::Instruction::IsVRIe:
-    case TR::Instruction::IsVRIf:
-    case TR::Instruction::IsVRIg:
-    case TR::Instruction::IsVRIh:
-    case TR::Instruction::IsVRIi:
-
-    case TR::Instruction::IsVRRa:
-    case TR::Instruction::IsVRRb:
-    case TR::Instruction::IsVRRc:
-    case TR::Instruction::IsVRRd:
-    case TR::Instruction::IsVRRe:
-    case TR::Instruction::IsVRRf:
-    case TR::Instruction::IsVRRg:
-    case TR::Instruction::IsVRRh:
-    case TR::Instruction::IsVRRi:
-
-    case TR::Instruction::IsNOP:
-    case TR::Instruction::IsI:
-    case TR::Instruction::IsE:
-    case TR::Instruction::IsOpCodeOnly:
-      mr = NULL;
-      break;
-    default:
-      TR_ASSERT( 0, "This type of instruction needs to be told how to get memory reference if any. opcode=%s kind=%d\n",i->getOpCode().getMnemonicName(),
-                 i->getKind());
-      break;
-    }
-  return mr;
-  }

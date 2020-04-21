@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,6 +81,9 @@ protected:
 	virtual void tearDown(MM_EnvironmentBase* env);
 
 	virtual void* reserveMemory(J9PortVmemParams* params);
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+	virtual void *doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize);
+#endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 
 	MM_VirtualMemory(MM_EnvironmentBase* env, uintptr_t heapAlignment, uintptr_t pageSize, uintptr_t pageFlags, uintptr_t tailPadding, uintptr_t mode)
 		: MM_BaseVirtual()
@@ -172,6 +175,14 @@ protected:
 	MMINLINE void decrementConsumerCount()
 	{
 		_consumerCount -= 1;
+	}
+
+	/**
+	 * Returns true if double map API is available in the system and false otherwise
+	 */
+	MMINLINE bool isDoubleMapAvailable()
+	{
+		return 0 != (OMRPORT_VMEM_MEMORY_MODE_DOUBLE_MAP_AVAILABLE & _identifier.mode);
 	}
 
 public:

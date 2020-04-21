@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,6 @@ CONFIGURE_ARGS += \
 	--enable-OMR_ENV_LITTLE_ENDIAN \
 	--enable-OMR_EXAMPLE \
 	--enable-OMR_GC \
-	--enable-OMR_GC_ARRAYLETS \
 	--enable-OMR_GC_TLH_PREFETCH_FTA \
 	--enable-OMR_PORT \
 	--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \

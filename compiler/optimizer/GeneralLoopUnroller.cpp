@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@
 #include <string.h>
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
@@ -36,13 +36,13 @@
 #include "env/StackMemoryRegion.hpp"
 #include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/TreeTop.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/CfgEdge.hpp"
 #include "infra/CfgNode.hpp"
@@ -93,7 +93,7 @@ static TR::ILOpCodes getConstOpCode(TR::DataType type)
       case TR::Int16: return TR::sconst;
       case TR::Int32: return TR::iconst;
       case TR::Int64: return TR::lconst;
-      case TR::Address: return TR::Compiler->target.is64Bit() ? TR::lconst : TR::iconst;
+      case TR::Address: return TR::comp()->target().is64Bit() ? TR::lconst : TR::iconst;
       default:
          TR_ASSERT(false, "unsupported type");
          return TR::iconst;
@@ -942,26 +942,12 @@ void TR_LoopUnroller::modifyOriginalLoop(TR_RegionStructure *loop, TR_StructureS
          else
             TR::Node::recreate(branch, TR::ificmpgt);
          }
-      else  if (branch->getOpCodeValue() == TR::ifiucmpne)
-         {
-         if (isIncreasingLoop())
-            TR::Node::recreate(branch, TR::ifiucmplt);
-         else
-            TR::Node::recreate(branch, TR::ifiucmpgt);
-         }
       else if (branch->getOpCodeValue() == TR::iflcmpne)
          {
          if (isIncreasingLoop())
             TR::Node::recreate(branch, TR::iflcmplt);
          else
             TR::Node::recreate(branch, TR::iflcmpgt);
-         }
-      else if (branch->getOpCodeValue() == TR::iflucmpne)
-         {
-         if (isIncreasingLoop())
-            TR::Node::recreate(branch, TR::iflucmplt);
-         else
-            TR::Node::recreate(branch, TR::iflucmpgt);
          }
       }
    else if (_unrollKind == CompleteUnroll) /*GGLU*/
@@ -1820,7 +1806,7 @@ void TR_LoopUnroller::collectInternalPointers()
 
 void TR_LoopUnroller::collectArrayAccesses()
    {
-   intptrj_t visitCount = comp()->incVisitCount();
+   intptr_t visitCount = comp()->incVisitCount();
    TR_ScratchList<TR::Block> blocksInRegion(trMemory());
    _loop->getBlocks(&blocksInRegion);
 
@@ -1851,7 +1837,7 @@ void TR_LoopUnroller::collectArrayAccesses()
       }
    }
 
-void TR_LoopUnroller::examineNode(TR::Node *node, intptrj_t visitCount)
+void TR_LoopUnroller::examineNode(TR::Node *node, intptr_t visitCount)
    {
    // If we have seen this node before, we are done
    // Otherwise, set visit count
@@ -1903,7 +1889,7 @@ void TR_LoopUnroller::examineNode(TR::Node *node, intptrj_t visitCount)
       }
 
    /* Walk its children */
-   for (intptrj_t i = 0; i < node->getNumChildren(); i++)
+   for (intptr_t i = 0; i < node->getNumChildren(); i++)
       {
       examineNode(node->getChild(i), visitCount);
       }
@@ -3909,8 +3895,7 @@ TR_GeneralLoopUnroller::countNodesAndSubscripts(TR::Node *node, int32_t &numNode
    if (node->getOpCodeValue() != TR::treetop)
       numNodes++;
 
-   if (node->getOpCodeValue() == TR::aiadd || node->getOpCodeValue() == TR::aiuadd ||
-       node->getOpCodeValue() == TR::aladd || node->getOpCodeValue() == TR::aluadd)
+   if (node->getOpCodeValue() == TR::aiadd || node->getOpCodeValue() == TR::aladd)
       {
       // TODO: make this more intelligent -- check if the subscript indexes
       // an induction variable

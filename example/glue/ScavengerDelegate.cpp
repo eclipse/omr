@@ -21,7 +21,7 @@
 
 #include "omrcfg.h"
 
-#if defined(OMR_GC_SCAVENGER_DELEGATE)
+#if defined(OMR_GC_MODRON_SCAVENGER)
 
 #include "ScavengerDelegate.hpp"
 
@@ -175,41 +175,44 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 			(ObjectSize)objectModel->getConsumedSizeInBytesWithHeader(forwardedObject),
 			(uint8_t)objectModel->getObjectFlags(forwardedObject));
 
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
-		/* Restore destroyed overlapped slot in the original object. This slot might need to be reversed
-		 * as well or it may be already reversed - such fixup will be completed at in a later pass.
-		 */
-		forwardedHeader->restoreDestroyedOverlap();
-#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#if defined (OMR_GC_COMPRESSED_POINTERS)
+		if (env->compressObjectReferences()) {
+			/* Restore destroyed overlapped slot in the original object. This slot might need to be reversed
+			 * as well or it may be already reversed - such fixup will be completed at in a later pass.
+			 */
+			forwardedHeader->restoreDestroyedOverlap();
+		}
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 	}
 }
 
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 void
 MM_ScavengerDelegate::fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, MM_MemorySubSpaceSemiSpace *subSpaceNew)
 {
+	bool const compressed = _extensions->compressObjectReferences();
 	/* This method must be implemented if (and only if) the object header is stored in a compressed slot. in that
 	 * case the other half of the full (omrobjectptr_t sized) slot may hold a compressed object reference that
 	 * must be restored by this method.
 	 */
 	/* This assumes that all slots are object slots, including the slot adjacent to the header slot */
 	if ((0 != forwardedHeader->getPreservedOverlap()) && !_extensions->objectModel.isIndexable(forwardedHeader)) {
-		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
+		OMR_VM* omrVM = _extensions->getOmrVM();
 		/* Get the uncompressed reference from the slot */
 		fomrobject_t preservedOverlap = (fomrobject_t)forwardedHeader->getPreservedOverlap();
-		GC_SlotObject preservedSlotObject(_omrVM, &preservedOverlap);
+		GC_SlotObject preservedSlotObject(omrVM, &preservedOverlap);
 		omrobjectptr_t survivingCopyAddress = preservedSlotObject.readReferenceFromSlot();
 		/* Check if the address we want to read is aligned (since mis-aligned reads may still be less than a top address but extend beyond it) */
-		if (0 == ((uintptr_t)survivingCopyAddress & (extensions->getObjectAlignmentInBytes() - 1))) {
+		if (0 == ((uintptr_t)survivingCopyAddress & (_extensions->getObjectAlignmentInBytes() - 1))) {
 			/* Ensure that the address we want to read is within part of the heap which could contain copied objects (tenure or survivor) */
 			void *topOfObject = (void *)((uintptr_t *)survivingCopyAddress + 1);
-			if (subSpaceNew->isObjectInNewSpace(survivingCopyAddress, topOfObject) || extensions->isOld(survivingCopyAddress, topOfObject)) {
+			if (subSpaceNew->isObjectInNewSpace(survivingCopyAddress, topOfObject) || _extensions->isOld(survivingCopyAddress, topOfObject)) {
 				/* if the slot points to a reverse-forwarded object, restore the original location (in evacuate space) */
-				MM_ForwardedHeader reverseForwardedHeader(survivingCopyAddress);
+				MM_ForwardedHeader reverseForwardedHeader(survivingCopyAddress, compressed);
 				if (reverseForwardedHeader.isReverseForwardedPointer()) {
 					/* overlapped slot must be fixed up */
 					fomrobject_t fixupSlot = 0;
-					GC_SlotObject fixupSlotObject(_omrVM, &fixupSlot);
+					GC_SlotObject fixupSlotObject(omrVM, &fixupSlot);
 					fixupSlotObject.writeReferenceToSlot(reverseForwardedHeader.getReverseForwardedPointer());
 					forwardedHeader->restoreDestroyedOverlap((uint32_t)fixupSlot);
 				}
@@ -217,6 +220,6 @@ MM_ScavengerDelegate::fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHe
 		}
 	}
 }
-#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 
-#endif /* defined(OMR_GC_SCAVENGER_DELEGATE) */
+#endif /* defined(OMR_GC_MODRON_SCAVENGER) */

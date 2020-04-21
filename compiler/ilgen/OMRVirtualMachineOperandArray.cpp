@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,8 @@
 #include "ilgen/VirtualMachineOperandArray.hpp"
 
 #include "compile/Compilation.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
 #include "ilgen/BytecodeBuilder.hpp"
 #include "ilgen/MethodBuilder.hpp"
 #include "ilgen/TypeDictionary.hpp"
@@ -102,17 +102,17 @@ void
 OMR::VirtualMachineOperandArray::MergeInto(TR::VirtualMachineState *o, TR::IlBuilder *b)
    {
    TR::VirtualMachineOperandArray *other = (TR::VirtualMachineOperandArray *)o;
-   TR_ASSERT(_numberOfElements == other->_numberOfElements, "array are not same size");
+   TR_ASSERT_FATAL(_numberOfElements == other->_numberOfElements, "array are not same size");
    for (int32_t i=0;i < _numberOfElements;i++)
       {
       if (NULL == other->_values[i])
          {
-         TR_ASSERT(_values[i] == NULL, "if an element in the dest array at index is NULL it has to be NULL in the src array");
+         TR_ASSERT_FATAL(_values[i] == NULL, "if an element in the dest array at index is NULL it has to be NULL in the src array");
          }
       else if (other->_values[i]->getID() != _values[i]->getID())
          {
          // Types have to match!!!
-         TR_ASSERT(_values[i]->getDataType() == other->_values[i]->getDataType(), "invalid array merge: primitive type mismatch at same index");
+         TR_ASSERT_FATAL(_values[i]->getDataType() == other->_values[i]->getDataType(), "invalid array merge: primitive type mismatch at same index");
          TraceIL("VirtualMachineOperandArray[ %p ]::MergeInto builder %p index %d storeOver %p(%d) with %p(%d)\n", this, b, i, other->_values[i], other->_values[i]->getID(), _values[i], _values[i]->getID());
          b->StoreOver(other->_values[i], _values[i]);
          }
@@ -141,16 +141,16 @@ OMR::VirtualMachineOperandArray::MakeCopy()
 TR::IlValue *
 OMR::VirtualMachineOperandArray::Get(int32_t index)
    {
-   TR_ASSERT(index < _numberOfElements, "index has to be less than the number of elements");
-   TR_ASSERT(index >= 0, "index can not be negative");
+   TR_ASSERT_FATAL(index < _numberOfElements, "index has to be less than the number of elements");
+   TR_ASSERT_FATAL(index >= 0, "index can not be negative");
    return _values[index];
    }
 
 void
 OMR::VirtualMachineOperandArray::Set(int32_t index, TR::IlValue *value)
    {
-   TR_ASSERT(index < _numberOfElements, "index has to be less than the number of elements");
-   TR_ASSERT(index >= 0, "index can not be negative");
+   TR_ASSERT_FATAL(index < _numberOfElements, "index has to be less than the number of elements");
+   TR_ASSERT_FATAL(index >= 0, "index can not be negative");
 
    if (NULL != _values[index])
       {
@@ -168,10 +168,10 @@ OMR::VirtualMachineOperandArray::Set(int32_t index, TR::IlValue *value)
 void
 OMR::VirtualMachineOperandArray::Move(TR::IlBuilder *b, int32_t dstIndex, int32_t srcIndex)
    {
-   TR_ASSERT(dstIndex < _numberOfElements, "dstIndex has to be less than the number of elements");
-   TR_ASSERT(dstIndex >= 0, "dstIndex can not be negative");
-   TR_ASSERT(srcIndex < _numberOfElements, "srcIndex has to be less than the number of elements");
-   TR_ASSERT(srcIndex >= 0, "srcIndex can not be negative");
+   TR_ASSERT_FATAL(dstIndex < _numberOfElements, "dstIndex has to be less than the number of elements");
+   TR_ASSERT_FATAL(dstIndex >= 0, "dstIndex can not be negative");
+   TR_ASSERT_FATAL(srcIndex < _numberOfElements, "srcIndex has to be less than the number of elements");
+   TR_ASSERT_FATAL(srcIndex >= 0, "srcIndex can not be negative");
 
    _values[dstIndex] = b->Copy(_values[srcIndex]);
    TraceIL("VirtualMachineOperandArray[ %p ]::Move builder %p move srcIndex %d %p(%d) to dstIndex %d %p(%d)\n", this, b, srcIndex, _values[srcIndex], _values[srcIndex]->getID(), dstIndex, _values[dstIndex], _values[dstIndex]->getID());

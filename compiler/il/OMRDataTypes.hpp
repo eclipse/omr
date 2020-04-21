@@ -82,7 +82,7 @@ typedef int32_t CASECONST_TYPE;
 #define DOUBLE_NAN            DOUBLE_ORDER(((uint64_t)0x7FF80000)<<32)
 
 #define DOUBLE_NAN_1_LOW      ((uint64_t)((((uint64_t)0x7FF00000)<<32)+1))
-#define DOUBLE_NAN_1_HIGH     ((uint64_t)TR::getMaxSigned<TR::Int32>())
+#define DOUBLE_NAN_1_HIGH     ((uint64_t)TR::getMaxSigned<TR::Int64>())
 #define DOUBLE_NAN_2_LOW      ((uint64_t)((((uint64_t)0xFFF00000)<<32)+1))
 #define DOUBLE_NAN_2_HIGH     ((uint64_t)((int64_t)-1))
 #define IN_DOUBLE_NAN_1_RANGE(d) (DOUBLE_ORDER(d) >= DOUBLE_NAN_1_LOW && DOUBLE_ORDER(d) <= DOUBLE_NAN_1_HIGH)

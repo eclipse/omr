@@ -38,8 +38,14 @@ class OMR_EXTENSIBLE Block : public OMR::BlockConnector
    Block(TR_Memory * m) :
       OMR::BlockConnector(m) {};
 
+   Block(TR::CFG & cfg) :
+      OMR::BlockConnector(cfg) {};
+
    Block(TR::TreeTop *entry, TR::TreeTop *exit, TR_Memory * m) :
       OMR::BlockConnector(entry,exit,m) {};
+
+   Block(TR::TreeTop *entry, TR::TreeTop *exit, TR::CFG &cfg) :
+      OMR::BlockConnector(entry,exit,cfg) {};
 
    Block(Block &other, TR::TreeTop *entry, TR::TreeTop *exit) :
       OMR::BlockConnector(other,entry,exit) {};

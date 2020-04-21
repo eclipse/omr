@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::X86::MemoryReference
    {
 
    TR::Register *_addressRegister;   // Used when extra loads are required to compute the address
-   bool         _preferRIPRelative; // used to indicate bias to RIP relative addressing as opposed to SIB
+   bool _forceRIPRelative;           // Force use of RIP-relative addressing form
 
    public:
 
@@ -67,7 +67,18 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::X86::MemoryReference
    virtual uint8_t *generateBinaryEncoding(uint8_t *modRM, TR::Instruction  *containingInstruction, TR::CodeGenerator *cg);
 #endif
    TR::Register *getAddressRegister(){ return _addressRegister; }
-   void         setPreferRIPRelative(bool b) {_preferRIPRelative = b;}
+
+   /**
+    * @details
+    *    This API forces the use of a RIP-relative addressing mode for this memory reference.
+    *    The expectation in using this API is that the underlying memory reference can
+    *    be validly represented in a RIP-relative mode.  In particular, it cannot contain
+    *    a base or index register, nor have a SIB byte.  While not enforced here, the
+    *    memory reference is checked for a valid RIP-relative form during binary encoding
+    *    and will fatally assert if a RIP-relative addressing mode cannot be generated.
+    */
+   void setForceRIPRelative(bool b) {_forceRIPRelative = b;}
+   bool getForceRIPRelative() { return _forceRIPRelative; }
 
    public: // Constructors
    TR_ALLOC(TR_Memory::MemoryReference)
@@ -78,11 +89,11 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::X86::MemoryReference
 
    MemoryReference(TR::Register *br, TR::Register *ir, uint8_t s, TR::CodeGenerator *cg);
 
-   MemoryReference(TR::Register *br, intptrj_t disp, TR::CodeGenerator *cg);
+   MemoryReference(TR::Register *br, intptr_t disp, TR::CodeGenerator *cg);
 
-   MemoryReference(intptrj_t disp, TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm = NULL);
+   MemoryReference(intptr_t disp, TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm = NULL);
 
-   MemoryReference(TR::Register *br, TR::Register *ir, uint8_t s, intptrj_t disp, TR::CodeGenerator *cg);
+   MemoryReference(TR::Register *br, TR::Register *ir, uint8_t s, intptr_t disp, TR::CodeGenerator *cg);
 
    MemoryReference(TR::X86DataSnippet *cds, TR::CodeGenerator *cg);
 
@@ -90,11 +101,53 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::X86::MemoryReference
 
    MemoryReference(TR::Node *rootLoadOrStore, TR::CodeGenerator *cg, bool canRematerializeAddressAdds, TR_ScratchRegisterManager *srm = NULL);
 
+   /**
+    * @brief Construct a MemoryReference
+    *
+    * @param[in] symRef : SymbolReference of memory access
+    * @param[in] cg : CodeGenerator object
+    * @param[in] srm : optional ScratchRegisterManager to use to allocate overflow address register;
+    *                  NULL (the default) will use the CodeGenerator allocator
+    */
    MemoryReference(TR::SymbolReference *symRef, TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm = NULL);
 
-   MemoryReference(TR::SymbolReference *symRef, intptrj_t displacement, TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm = NULL);
+   /**
+    * @brief Construct a MemoryReference
+    *
+    * @param[in] symRef : SymbolReference of memory access
+    * @param[in] cg : CodeGenerator object
+    * @param[in] forceRIPRelative : true forces use of RIP-relative addressing if applicable;
+    *                               false leaves it to the MemoryReference to decide
+    * @param[in] srm : optional ScratchRegisterManager to use to allocate overflow address register;
+    *                  NULL (the default) will use the CodeGenerator allocator
+    */
+   MemoryReference(TR::SymbolReference *symRef, TR::CodeGenerator *cg, bool forceRIPRelative, TR_ScratchRegisterManager *srm = NULL);
 
-   MemoryReference(TR::MemoryReference& mr, intptrj_t n, TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm = NULL);
+   /**
+    * @brief Construct a MemoryReference
+    *
+    * @param[in] symRef : SymbolReference of memory access
+    * @param[in] displacement : additional displacement to include on the memory reference displacement
+    * @param[in] cg : CodeGenerator object
+    * @param[in] srm : optional ScratchRegisterManager to use to allocate overflow address register;
+    *                  NULL (the default) will use the CodeGenerator allocator
+    */
+   MemoryReference(TR::SymbolReference *symRef, intptr_t displacement, TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm = NULL);
+
+   /**
+    * @brief Construct a MemoryReference
+    *
+    * @param[in] symRef : SymbolReference of memory access
+    * @param[in] displacement : additional displacement to include on the memory reference displacement
+    * @param[in] cg : CodeGenerator object
+    * @param[in] forceRIPRelative : true forces use of RIP-relative addressing if applicable;
+    *                               false leaves it to the MemoryReference to decide
+    * @param[in] srm : optional ScratchRegisterManager to use to allocate overflow address register;
+    *                  NULL (the default) will use the CodeGenerator allocator
+    */
+   MemoryReference(TR::SymbolReference *symRef, intptr_t displacement, TR::CodeGenerator *cg, bool forceRIPRelative, TR_ScratchRegisterManager *srm = NULL);
+
+   MemoryReference(TR::MemoryReference& mr, intptr_t n, TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm = NULL);
 
    virtual void blockRegisters()
       {
@@ -115,15 +168,15 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::X86::MemoryReference
       }
 
    void addMetaDataForCodeAddressWithLoad(uint8_t *displacementLocation, TR::Instruction *containingInstruction, TR::CodeGenerator *cg, TR::SymbolReference *srCopy);
-   void addMetaDataForCodeAddressDisplacementOnly(intptrj_t displacement, uint8_t *cursor, TR::CodeGenerator *cg);
+   void addMetaDataForCodeAddressDisplacementOnly(intptr_t displacement, uint8_t *cursor, TR::CodeGenerator *cg);
 
    protected:
 
 #if defined(TR_TARGET_64BIT)
-   bool needsAddressLoadInstruction(intptrj_t rip,TR::CodeGenerator *cg);
+   bool needsAddressLoadInstruction(intptr_t nextInstructionAddress, TR::CodeGenerator *cg);
    void finishInitialization(TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm);
 #else
-   bool needsAddressLoadInstruction(intptrj_t rip){ return false; }
+   bool needsAddressLoadInstruction(intptr_t rip) { return false; }
    void finishInitialization(TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm) {}
 #endif
 

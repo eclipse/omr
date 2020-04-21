@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,7 +94,7 @@ class ConstantDataSnippet
    {
    List< PPCConstant<double> > _doubleConstants;
    List< PPCConstant<float> > _floatConstants;
-   List< PPCConstant<intptrj_t> > _addressConstants;
+   List< PPCConstant<intptr_t> > _addressConstants;
    uint8_t *_snippetBinaryStart;
    TR::CodeGenerator *_cg;
 
@@ -125,7 +125,7 @@ class ConstantDataSnippet
       int32_t count);
 
    virtual void emitAddressConstant(
-      PPCConstant<intptrj_t> *acursor,
+      PPCConstant<intptr_t> *acursor,
       TR_Array<TR::Instruction *> &requestors,
       uint8_t *codeCursor,
       int32_t count);

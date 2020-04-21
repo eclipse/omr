@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,7 +68,6 @@
 
       uint32_t                     _memrefNestDepth; // Recursion depth of simulateMemoryReference; used for diagnostics
       TR_SimulatedMemoryReference *_currentMemref;
-      bool          _candidateIsHPREligible;  // 390 zGryphon Highword GRA
 
       TR_RegisterPressureState(TR_RegisterCandidate *candidate, bool candidateIsLiveOnEntry, TR_BitVector &alreadyAssignedOnEntry, TR_BitVector &alreadyAssignedOnExit, TR_LinkHead<TR_RegisterCandidate> *candidatesAlreadyAssigned, uint32_t gprLimit, uint32_t fprLimit, uint32_t vrfLimit, vcount_t visitCountForInit):
          _currentBlock(NULL),
@@ -90,8 +89,7 @@
          _visitCountForInit(visitCountForInit),
          _memrefNestDepth(0),
          _rematNestDepth(0),
-         _currentMemref(0),
-         _candidateIsHPREligible(0)
+         _currentMemref(0)
          {}
       TR_RegisterPressureState(const TR_RegisterPressureState &other, TR_RegisterCandidate *candidate, bool candidateIsLiveOnEntry, vcount_t visitCountForInit):
          _currentBlock              (other._currentBlock),
@@ -113,8 +111,7 @@
          _numLiveCandidateLoads     (other._numLiveCandidateLoads),
          _memrefNestDepth           (other._memrefNestDepth),
          _rematNestDepth            (other._rematNestDepth),
-         _currentMemref             (other._currentMemref),
-         _candidateIsHPREligible    (0)
+         _currentMemref             (other._currentMemref)
          {}
 
        TR::SymbolReference *getCandidateSymRef();
@@ -144,8 +141,6 @@
 
       bool pressureIsAtRisk()       { return _pressureRiskFromStart || (_pressureRiskUntilEnd > 0); }
       bool candidateIsLiveAfterGRA(){ return pressureIsAtRisk() || (_numLiveCandidateLoads > 0); }
-      bool getCandidateIsHPREligible() { return _candidateIsHPREligible;}
-      void setCandidateIsHPREligible(bool b) { _candidateIsHPREligible = b;}
 
       void updateRegisterPressure(TR::Symbol *symbol);
 

@@ -52,14 +52,14 @@ extern TR::Instruction *armLoadConstant(TR::Node     *node,
 
 extern TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg,
                                     TR::Node        *node,
-                                    intptrj_t      address,
+                                    intptr_t      address,
                                     TR::Register    *targetRegister,
                                     bool           isUnloadablePicSite=false,
                                     TR::Instruction *cursor=NULL);
 
 extern TR::Instruction *loadAddressConstantFixed(TR::CodeGenerator *cg,
                                     TR::Node        *node,
-                                    intptrj_t         value,
+                                    intptr_t         value,
                                     TR::Register    *targetRegister,
                                     TR::Instruction *cursor=NULL,
                                     uint8_t         *targetAddress = NULL,
@@ -69,7 +69,7 @@ extern TR::Instruction *loadAddressConstantFixed(TR::CodeGenerator *cg,
 
 extern TR::Instruction *loadAddressConstant(TR::CodeGenerator *cg,
                                     TR::Node        *node,
-                                    intptrj_t         value,
+                                    intptr_t         value,
                                     TR::Register    *targetRegister,
                                     TR::Instruction *cursor=NULL,
                                     bool            isPicSite=false,
@@ -211,7 +211,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
     *
     * @return : true if a trampoline is required; false otherwise.
     */
-   bool directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress);
+   bool directCallRequiresTrampoline(intptr_t targetAddress, intptr_t sourceAddress);
 
    private:
 

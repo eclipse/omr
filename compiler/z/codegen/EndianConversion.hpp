@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,9 +50,9 @@ inline uint32_t boi(uint32_t arg)
    }
 
 // byte order big to little address (4 or 8 bytes)
-inline intptrj_t boa(intptrj_t arg)
+inline intptr_t boa(intptr_t arg)
    {
-   if (sizeof(intptrj_t) == 4)
+   if (sizeof(intptr_t) == 4)
       return boi(arg);
    else
       return bol(arg);
@@ -71,6 +71,6 @@ inline uint16_t bos(uint16_t arg)
 #else
 inline uint64_t bol(uint64_t arg)   { return arg; }
 inline uint32_t boi(uint32_t arg)   { return arg; }
-inline intptrj_t boa(intptrj_t arg) { return arg; }
+inline intptr_t boa(intptr_t arg) { return arg; }
 inline uint16_t bos(uint16_t arg)   { return arg; }
 #endif

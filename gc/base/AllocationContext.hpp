@@ -91,13 +91,11 @@ public:
 		Assert_MM_unreachable();
 		return NULL;
 	}
-#if defined(OMR_GC_ARRAYLETS)
 	virtual void *allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, bool shouldCollectOnFailure)
 	{
 		Assert_MM_unreachable();
 		return NULL;
 	}
-#endif /* defined(OMR_GC_ARRAYLETS) */		
 
 protected:
 	virtual void tearDown(MM_EnvironmentBase *env);

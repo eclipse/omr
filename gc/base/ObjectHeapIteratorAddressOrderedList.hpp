@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -152,7 +152,7 @@ public:
 		while(_scanPtr < _scanPtrTop) {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 			/* There are no known users of this type of iteration, while there are still forwarded objects in the heap */
-			Assert_MM_false(MM_ForwardedHeader(_scanPtr).isForwardedPointer());
+			Assert_MM_false(MM_ForwardedHeader(_scanPtr, _extensions->compressObjectReferences()).isForwardedPointer());
 #endif
 		
 			_isDeadObject = _extensions->objectModel.isDeadObject(_scanPtr);

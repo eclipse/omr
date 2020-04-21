@@ -57,6 +57,7 @@ public:
                         _programHeader(NULL),
                         _zeroSection(NULL),
                         _textSection(NULL),
+                        _dataSection(NULL),
                         _relaSection(NULL),
                         _dynSymSection(NULL),
                         _shStrTabSection(NULL),
@@ -133,6 +134,20 @@ protected:
      * @param[in] shSize the section header size
     */
     void initializeTextSection(
+                                uint32_t shName, 
+                                ELFAddress shAddress,
+                                ELFOffset shOffset, 
+                                uint32_t shSize
+                              );
+    
+    /**
+     * Set up the trailer data section
+     * @param[in] shName the section header name
+     * @param[in] shAddress the section header address
+     * @param[in] shOffset the section header offset
+     * @param[in] shSize the section header size
+    */
+    void initializeDataSection(
                                 uint32_t shName, 
                                 ELFAddress shAddress,
                                 ELFOffset shOffset, 
@@ -235,6 +250,12 @@ protected:
     void writeCodeSegmentToFile(::FILE *fp);
 
     /**
+     * Write the code segment to file
+     * @param[in] fp the file stream ptr
+     */
+    void writeDataSegmentToFile(::FILE *fp);
+
+    /**
      * Write the ELFSymbols to file
      * @param[in] fp the file stream ptr
      */
@@ -255,7 +276,9 @@ protected:
     ELFSectionHeader *_zeroSection;         
     char              _zeroSectionName[1];
     ELFSectionHeader *_textSection;
-    char              _textSectionName[6];    
+    char              _textSectionName[6];
+    ELFSectionHeader *_dataSection;
+    char              _dataSectionName[6];     
     ELFSectionHeader *_relaSection;
     char              _relaSectionName[11];
     ELFSectionHeader *_dynSymSection;

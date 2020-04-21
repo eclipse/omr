@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@
 
 #define MAX_NAME 256
 
-typedef struct {
+typedef struct OMRLEConditionInfo {
 	_FEEDBACK *fc;
 	_CEECIB *cib;
 	uint16_t messageNumber;
@@ -43,12 +43,12 @@ typedef struct {
 	uint32_t portLibrarySignalType;
 	void *handlerAddress;
 	void *handlerAddress2;
-} J9LEConditionInfo;
+} OMRLEConditionInfo;
 
-uint32_t infoForFPR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value);
-uint32_t infoForGPR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value);
-uint32_t infoForVR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value);
-uint32_t infoForControl_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value);
-uint32_t infoForModule_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value);
+uint32_t infoForFPR_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value);
+uint32_t infoForGPR_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value);
+uint32_t infoForVR_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value);
+uint32_t infoForControl_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value);
+uint32_t infoForModule_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value);
 
 #endif /* omrsignal_context_ceehdlr_h */

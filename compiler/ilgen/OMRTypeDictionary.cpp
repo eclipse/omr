@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,7 +120,7 @@ public:
 
    TR::IlType *primitiveType(TR::TypeDictionary * d) { return d->Address; }
    TR::DataType getPrimitiveType()                   { return TR::Address; }
-   void Close(size_t finalSize)                      { TR_ASSERT(_size <= finalSize, "Final size %d of struct %s is less than its current size %d\n", finalSize, _name, _size); _size = finalSize; _closed = true; };
+   void Close(size_t finalSize)                      { TR_ASSERT_FATAL(_size <= finalSize, "Final size %d of struct %s is less than its current size %d\n", finalSize, _name, _size); _size = finalSize; _closed = true; };
    void Close()                                      { _closed = true; };
 
    void AddField(const char *name, TR::IlType *fieldType, size_t offset);
@@ -194,7 +194,7 @@ public:
       _baseType(baseType)
       {
       char *baseName = (char *)_baseType->getName();
-      TR_ASSERT(strlen(baseName) < 45, "cannot store name of pointer type");
+      TR_ASSERT_FATAL(strlen(baseName) < 45, "cannot store name of pointer type");
       sprintf(_nameArray, "L%s;", baseName);
       }
    virtual bool isPointer() { return true; }
@@ -222,7 +222,7 @@ OMR::StructType::AddField(const char *name, TR::IlType *typeInfo, size_t offset)
    if (_closed)
       return;
 
-   TR_ASSERT(_size <= offset, "Offset of new struct field %s::%s is %d, which is less than the current size of the struct %d\n", _name, name, offset, _size);
+   TR_ASSERT_FATAL(_size <= offset, "Offset of new struct field %s::%s is %d, which is less than the current size of the struct %d\n", _name, name, offset, _size);
 
    OMR::FieldInfo *fieldInfo = new (PERSISTENT_NEW) OMR::FieldInfo(name, offset, typeInfo);
    if (0 != _lastField)
@@ -381,7 +381,7 @@ TR::SymbolReference *
 OMR::UnionType::getFieldSymRef(const char *fieldName)
    {
    OMR::FieldInfo *info = findField(fieldName);
-   TR_ASSERT(info, "Struct %s has no field with name %s\n", getName(), fieldName);
+   TR_ASSERT_FATAL(info, "Struct %s has no field with name %s\n", getName(), fieldName);
 
    TR::SymbolReference *symRef = info->getSymRef();
    if (NULL == symRef)
@@ -446,6 +446,14 @@ OMR::TypeDictionary::MemoryManager::~MemoryManager()
    static_cast<TR::SystemSegmentProvider *>(_segmentProvider)->~SystemSegmentProvider();
    ::operator delete(_segmentProvider, TR::Compiler->persistentAllocator());
    }
+
+// Copy constructor is private but it must be defined
+// to avoid undefined behavior, since we can't use `delete`
+OMR::TypeDictionary::TypeDictionary(const TypeDictionary &src) : 
+   _client(0),
+   _structsByName(str_comparator, trMemory()->heapMemoryRegion()),
+   _unionsByName(str_comparator, trMemory()->heapMemoryRegion()) 
+   {}
 
 OMR::TypeDictionary::TypeDictionary() :
    _client(0),

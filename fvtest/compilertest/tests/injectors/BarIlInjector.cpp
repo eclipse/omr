@@ -21,7 +21,6 @@
 
 #include "compile/Compilation.hpp"
 #include "env/FrontEnd.hpp"
-#include "compile/Method.hpp"
 #include "tests/FooBarTest.hpp"
 #include "tests/injectors/BarIlInjector.hpp"
 

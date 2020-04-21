@@ -37,7 +37,7 @@ CodeCacheHashTable::dumpHashUnresolvedMethod(void)
       {
       entry = _buckets[i];
       if (entry)
-         mcc_printf("index = %d, constPool = 0x%x  cpIndex = %d\n", i, entry->_info._unresolved._constPool,entry->_info._unresolved._constPoolIndex);
+         mcc_printf("index = %d, constPool = 0x%p  cpIndex = %d\n", i, entry->_info._unresolved._constPool,entry->_info._unresolved._constPoolIndex);
       }
    return;
    }

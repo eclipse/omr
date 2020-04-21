@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 
 set(cudaSources "")
+set(socketSources "")
 
 if(OMR_OPT_CUDA)
 	set(cudaSources
@@ -41,6 +42,12 @@ if(OMR_OPT_CUDA)
 	)
 endif()
 
+# TODO: Remove AND (NOT OMR_HOST_OS STREQUAL "win") after OMRSOCK API is implemented on Windows.
+if((OMR_PORT_SOCKET_SUPPORT) AND (NOT OMR_HOST_OS STREQUAL "win"))
+	set(socketSources
+		omrsockTest.cpp
+	)
+endif()
 
 add_executable(omrporttest
 	fileTest.cpp
@@ -68,9 +75,9 @@ add_executable(omrporttest
 	si_numcpusTest.cpp
 	testHelpers.cpp
 	testProcessHelpers.cpp
-	vmemTest.cpp
 
 	${cudaSources}
+	${socketSources}
 )
 
 
@@ -94,6 +101,10 @@ add_library(sltestlib SHARED
 	sltestlib/sltest.c
 )
 
+omr_add_exports(sltestlib
+	sl_test1_function
+)
+
 target_compile_options(sltestlib
 	PRIVATE
 		${OMR_PLATFORM_SHARED_COMPILE_OPTIONS}
@@ -114,8 +125,10 @@ endif()
 
 set_target_properties(omrporttest sltestlib PROPERTIES FOLDER fvtest)
 
-add_test(NAME porttest COMMAND omrporttest)
+if (NOT OMR_HOST_OS STREQUAL "aix" AND NOT OMR_HOST_OS STREQUAL "zos")
+	add_test(NAME porttest COMMAND omrporttest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrporttest-results.xml)
+endif()
 
 if(OMR_OPT_CUDA)
-	add_test(NAME cuda_porttest COMMAND omrporttest --gtest_filter="Cuda*" -earlyExit)
+	add_test(NAME cuda_porttest COMMAND omrporttest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrporttest-results.xml --gtest_filter="Cuda*" -earlyExit)
 endif()

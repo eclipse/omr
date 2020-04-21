@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "compile/Method.hpp"
 #include "il/DataTypes.hpp"
 #include "gtest/gtest.h"
 #include "OMRTestEnv.hpp"

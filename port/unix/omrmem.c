@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,7 +75,7 @@ omrmem_allocate_memory_basic(struct OMRPortLibrary *portLibrary, uintptr_t byteA
 {
 #if (defined(S390) || defined(J9ZOS390)) && !defined(OMR_ENV_DATA64)
 	return (void *)(((uintptr_t) malloc(byteAmount)) & 0x7FFFFFFF);
-#elif defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#elif defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	void *retval = NULL;
 	retval = malloc(byteAmount);
 	Assert_AddressAbove4GBBar((NULL == retval) || (0x100000000 <= ((uintptr_t)retval)));
@@ -189,7 +189,7 @@ omrmem_shutdown_basic(struct OMRPortLibrary *portLibrary)
 void
 omrmem_startup_basic(struct OMRPortLibrary *portLibrary, uintptr_t portGlobalSize)
 {
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	char tmpbuff[256];
 #endif
 
@@ -203,7 +203,7 @@ omrmem_startup_basic(struct OMRPortLibrary *portLibrary, uintptr_t portGlobalSiz
 	portLibrary->portGlobals->procSelfMap = omrmem_allocate_memory_basic(portLibrary, J9OSDUMP_SIZE);
 #endif /* defined(LINUX) */
 
-#if defined(J9ZOS390) && defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined(J9ZOS390) && defined(OMR_GC_COMPRESSED_POINTERS)
 	/* 'disableEnsureCap32' is set using omrport_control(OMRPORT_CTLDATA_NOSUBALLOC32BITMEM,...),
 	 * or by setting the J9_SUBALLOC_FOR_32 environment variable before starting the JVM.
 	 *

@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/OMRCodeGenerator.hpp"
+#include "codegen/CodeGenerator.hpp"
 
 #include <limits.h>
 #include <stdint.h>
@@ -28,10 +28,11 @@
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/LiveReference.hpp"
 #include "codegen/LiveRegister.hpp"
@@ -47,20 +48,20 @@
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -132,7 +133,7 @@ OMR::CodeGenerator::estimateRegisterPressure(TR::Node *node, int32_t &registerPr
                {
                registerPressure--;
                if ((node->getType().isInt64()) &&
-                   TR::Compiler->target.is32Bit())
+                   self()->comp()->target().is32Bit())
                   registerPressure--;
                }
 
@@ -228,7 +229,7 @@ OMR::CodeGenerator::estimateRegisterPressure(TR::Node *node, int32_t &registerPr
                   {
                   registerPressure++;
                   if ((node->getType().isInt64()) &&
-                      TR::Compiler->target.is32Bit())
+                      self()->comp()->target().is32Bit())
                      registerPressure++;
                   }
                }
@@ -246,7 +247,7 @@ OMR::CodeGenerator::estimateRegisterPressure(TR::Node *node, int32_t &registerPr
             //
             if (highRegisterPressureOpCode ||
                 ((node->getType().isInt64()) &&
-                 TR::Compiler->target.is32Bit() &&
+                 self()->comp()->target().is32Bit() &&
                  (node->getOpCode().isMul() ||
                   node->getOpCode().isDiv() ||
                   node->getOpCode().isRem() ||
@@ -1106,10 +1107,9 @@ static bool blockIsMuchColderThanContainingLoop(TR::Block *block, TR::CodeGenera
 
 static bool blockIsIgnorablyCold(TR::Block *block, TR::CodeGenerator *cg)
    {
-   bool cannotSpillInBlock = cg->comp()->getJittedMethodSymbol()->isNoTemps();
    if (block->isCold() && cg->traceSimulateTreeEvaluation())
       traceMsg(cg->comp(), "            Block %d is cold\n", block->getNumber());
-   return !cannotSpillInBlock && (block->isCold() || blockIsMuchColderThanContainingLoop(block, cg));
+   return (block->isCold() || blockIsMuchColderThanContainingLoop(block, cg));
    }
 
 void
@@ -1177,7 +1177,7 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
          {
          TR_GlobalRegisterNumber lowRegisterNumber = bvi.getNextElement();
 
-         if (TR::Compiler->target.is32Bit() && rc->getDataType() == TR::Int64)
+         if (self()->comp()->target().is32Bit() && rc->getDataType() == TR::Int64)
             highRegisterNumber = bvi.getNextElement();
          else
             highRegisterNumber = -1;
@@ -1260,8 +1260,6 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
       const bool canExitEarly = !rc->canBeReprioritized();
       TR_BitVector alreadyAssignedOnEntry(self()->comp()->getSymRefCount(), self()->trMemory(), stackAlloc, growable);
       TR_BitVector alreadyAssignedOnExit(self()->comp()->getSymRefCount(), self()->trMemory(), stackAlloc, growable);
-      bool hprSimulated = false;
-      bool hprColdBlockSkipped = false;
 
       TR_BitVector blocksToVisit = rc->getBlocksLiveOnEntry();
       blocksToVisit |= rc->getBlocksLiveOnExit();
@@ -1295,11 +1293,6 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
 
          TR::Block *block = allBlocks[blockIterator.getNextElement()];
 
-         // do not assign HPR to candidate if we skipped any block simulation for correctness
-         if (!block->isExtensionOfPreviousBlock() && blockIsIgnorablyCold(block, self()))
-            {
-            hprColdBlockSkipped = true;
-            }
          if (!block->isExtensionOfPreviousBlock() && !blockIsIgnorablyCold(block, self()))
             {
             // This block starts an extended BB.
@@ -1381,24 +1374,7 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
                   // Perform the simulation for current block and accumulate into highWaterMark
                   //
                   TR_RegisterPressureSummary summary(state._gprPressure, state._fprPressure, state._vrfPressure);
-                  if (self()->supportsHighWordFacility())
-                     {
-                     TR::DataType dtype = rc->getSymbolReference()->getSymbol()->getDataType();
-                     if (dtype == TR::Int8 ||
-                         dtype == TR::Int16 ||
-                         dtype == TR::Int32)
-                        {
-                        // unless proven, candidate is HPR eligible
-                        state.setCandidateIsHPREligible(true);
-                        }
-                     else
-                        {
-                        state.setCandidateIsHPREligible(false);
-                        summary.spill(TR_hprSpill, self());
-                        }
-                     }
                   self()->simulateBlockEvaluation(block, &state, &summary);
-                  hprSimulated = true;
                   highWaterMark.accumulate(summary);
 
 #if defined(CACHE_CANDIDATE_SPECIFIC_RESULTS)
@@ -1691,51 +1667,6 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
             }
          }
 
-      if (self()->supportsHighWordFacility())
-         {
-         TR_BitVector HPRMasks = *self()->getGlobalRegisters(TR_hprSpill, self()->comp()->getMethodSymbol()->getLinkageConvention());
-         // We cannot assign an HPR if the corresponding GPR is alive.
-         // There is no safe way to anticipate whether instruction selection will clobber the High word
-         // e.g. generating 64-bit instructions for long arithmetics on 32-bit platform
-         // todo: maybe try checking candidate data type while assigning GPR? only clobber HPR candidate
-         // if the GPR candidate is long
-
-         if (remainingRegisters.intersects(HPRMasks))
-            {
-            for (int i = self()->getFirstGlobalGPR(); i < self()->getFirstGlobalHPR(); ++i)
-               {
-               if (!remainingRegisters.isSet(i))
-                  {
-                  TR_GlobalRegisterNumber highWordReg = self()->getGlobalHPRFromGPR(i);
-                  if (self()->traceSimulateTreeEvaluation())
-                     {
-                     traceMsg(self()->comp(), "            %s is not available, rejecting %s\n",
-                             self()->getDebug()->getGlobalRegisterName(i), self()->getDebug()->getGlobalRegisterName(highWordReg));
-                     }
-                  remainingRegisters.reset(highWordReg);
-                  }
-               }
-            }
-         // hack: always give priorities to HPR over GPR
-         // if any HPR candidate is present
-         if (remainingRegisters.intersects(HPRMasks))
-            {
-            TR::DataType dtype = rc->getSymbolReference()->getSymbol()->getDataType();
-            if (hprSimulated && !hprColdBlockSkipped)
-               {
-               if (self()->traceSimulateTreeEvaluation())
-                  {
-                  traceMsg(self()->comp(), "            HPR candidates are available, rejecting all GPR\n");
-                  remainingRegisters &= HPRMasks;
-                  }
-               }
-            else
-               {
-               // if simulation did not happen, do not use hpr (cold blocks etc)
-               remainingRegisters -= HPRMasks;
-               }
-            }
-         }
       if (self()->traceSimulateTreeEvaluation())
          {
          traceMsg(self()->comp(), "            final registers: ");
@@ -2261,9 +2192,9 @@ bool OMR::CodeGenerator::isLoadAlreadyAssignedOnEntry(TR::Node *node,  TR_Regist
 uint8_t OMR::CodeGenerator::gprCount(TR::DataType type,int32_t size)
    {
    if (type.isAggregate())
-      return (TR::Compiler->target.is32Bit() && !self()->use64BitRegsOn32Bit() && size > 4 && size <=  8) ? 2 : 1;
+      return (self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit() && size > 4 && size <=  8) ? 2 : 1;
 
-   return (type.isInt64() && TR::Compiler->target.is32Bit() && !self()->use64BitRegsOn32Bit())? 2 : (type.isIntegral() || type.isAddress())? 1 : 0;
+   return (type.isInt64() && self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit())? 2 : (type.isIntegral() || type.isAddress())? 1 : 0;
    }
 
 TR::CodeGenerator::TR_SimulatedNodeState &
@@ -2628,37 +2559,6 @@ OMR::CodeGenerator::simulateTreeEvaluation(TR::Node *node, TR_RegisterPressureSt
       return;
       }
 
-   if (self()->supportsHighWordFacility())
-      {
-      // 390 Highword, maybe move this below to else .hasRegister?
-      if (self()->isCandidateLoad(node, state))
-         {
-         if (node->getOpCodeValue() == TR::iload)
-            {
-            //potential HPR candidate
-            //state->setCandidateIsHPREligible(true);
-            node->setIsHPREligible();
-            }
-         else
-            {
-            // not HPR candidate
-            state->setCandidateIsHPREligible(false);
-            summary->spill(TR_hprSpill, self());
-            }
-         }
-      // if candidate is an object ref
-      if (state->_candidate && node->getOpCode().hasSymbolReference())
-         {
-         if (node->getOpCode().isRef() &&
-             node->getSymbolReference() == state->_candidate->getSymbolReference())
-            {
-            // not HPR candidate
-            state->setCandidateIsHPREligible(false);
-            summary->spill(TR_hprSpill, self());
-            }
-         }
-      }
-
    TR_SimulatedNodeState &nodeState = self()->simulatedNodeState(node);
    if (nodeState.hasRegister())
       {
@@ -2753,63 +2653,12 @@ OMR::CodeGenerator::simulateTreeEvaluation(TR::Node *node, TR_RegisterPressureSt
                traceMsg(self()->comp(), " ++%s", self()->getDebug()->getName(child));
             }
 
-         if (self()->supportsHighWordFacility())
-            {
-            // first time visiting this node, clear the flag
-            if (node->getVisitCount() == state->_visitCountForInit && !self()->isCandidateLoad(node, state))
-               {
-               node->resetIsHPREligible();
-               }
-            }
          self()->simulateNodeEvaluation(node, state, summary);
 
-         if (self()->supportsHighWordFacility())
-            {
-            bool needToCheckHPR = false;
-            for (uint16_t i = 0; i < node->getNumChildren(); i++)
-               {
-               TR::Node *child = node->getChild(i);
-               if (child->getIsHPREligible())
-                  {
-                  //traceMsg(comp(), " child %d has isHPREligible set", i);
-                  needToCheckHPR = true;
-                  }
-               }
-
-            // if enableHighwordRA 390
-            if (needToCheckHPR && state->getCandidateIsHPREligible())
-               {
-               if (node->isEligibleForHighWordOpcode())
-                  {
-                  //traceMsg(comp(), " hpr");
-                  }
-               else
-                  {
-                  //traceMsg(comp(), " !hpr");
-                  node->resetIsHPREligible();
-                  state->setCandidateIsHPREligible(false);
-                  summary->spill(TR_hprSpill, self());
-                  }
-               }
-
-            if (node->getIsHPREligible())
-               {
-               //traceMsg(comp(), " assignedToHPR");
-               }
-            }
          node->setFutureUseCount(originalRefcount); // Parent will decrement
-
          }
       else
          {
-         if (self()->supportsHighWordFacility())
-            {
-            // first time visiting this node, clear the flag
-            if (node->getVisitCount() == state->_visitCountForInit && !self()->isCandidateLoad(node, state))
-               {
-               node->resetIsHPREligible();
-               }
-            }
          // Some kinds of nodes very commonly use temporaries, and sometimes
          // the number of temporaries depends on the registers used by
          // children, so compute this while the children are still live.
@@ -2830,41 +2679,6 @@ OMR::CodeGenerator::simulateTreeEvaluation(TR::Node *node, TR_RegisterPressureSt
             }
 
          self()->simulateNodeEvaluation(node, state, summary);
-
-         if (self()->supportsHighWordFacility())
-            {
-            bool needToCheckHPR = false;
-            for (uint16_t i = 0; i < node->getNumChildren(); i++)
-               {
-               TR::Node *child = node->getChild(i);
-               if (child->getIsHPREligible())
-                  {
-                  //traceMsg(comp(), " child %d has isHPREligible set", i);
-                  needToCheckHPR = true;
-                  }
-               }
-
-            if (needToCheckHPR && state->getCandidateIsHPREligible())
-               {
-               // if enableHighwordRA 390
-               if (node->isEligibleForHighWordOpcode())
-                  {
-                  //traceMsg(comp(), " hpr");
-                  }
-               else
-                  {
-                  node->resetIsHPREligible();
-                  state->setCandidateIsHPREligible(false);
-                  summary->spill(TR_hprSpill, self());
-                  //traceMsg(comp(), " !hpr");
-                  }
-               }
-
-            if (node->getIsHPREligible())
-               {
-               //traceMsg(comp(), " assignedToHPR");
-               }
-            }
          }
 
       // Accumulate the current state into the summary
@@ -2882,19 +2696,6 @@ OMR::CodeGenerator::simulateTreeEvaluation(TR::Node *node, TR_RegisterPressureSt
             TR::Symbol * rcSymbol = state->_candidate->getSymbolReference()->getSymbol();
             TR::Linkage *linkage = self()->getLinkage();
 
-#if defined(TR_TARGET_S390)
-            TR_BitVector* killedRegisters = linkage->getKilledRegisters(node);
-            if (killedRegisters)
-               {
-               TR_BitVectorIterator bvi;
-               bvi.setBitVector(*killedRegisters);
-               while (bvi.hasMoreElements())
-                  {
-                  int32_t realRegNum = bvi.getNextElement();   // GPR0..GPR15, realRegNum 0..15
-                  summary->spill((TR_SpillKinds)(TR_gpr0Spill + realRegNum), self());
-                  }
-               }
-#endif
             // In Xplink, 31-bit mode, each call has a special argument passed in GPR12
             // Incoming special argument can be  passed to the call,
             // otherwise, TR_linkageSpill has to be set so that other candidates don't get

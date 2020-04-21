@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenPhase.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/InstOpCode.hpp"
@@ -56,32 +56,30 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
-#include "cs2/bitvectr.h"
 #include "cs2/hashtab.h"
-#include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/RawAllocator.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -122,10 +120,6 @@
 
 #ifdef J9OS_I5
 #include "Xj9I5OSJitDebug.H"
-#endif
-
-#ifdef RUBY_PROJECT_SPECIFIC
-#include "ruby/config.h"
 #endif
 
 // -----------------------------------------------------------------------------
@@ -498,6 +492,16 @@ TR_Debug::getDiagnosticFormat(const char *format, char *buffer, int32_t length)
 bool
 TR_Debug::performTransformationImpl(bool canOmitTransformation, const char * format, ...)
    {
+   int32_t optIndex = _comp->getOptIndex();
+   int32_t firstOptIndex = _comp->getOptions()->getFirstOptIndex();
+   int32_t lastOptIndex = _comp->getOptions()->getLastOptIndex();
+   // An opt that is marked as MustBeDone will always run.
+   // However, we need to omit optional transformations when the opt is supposed
+   // to be prohibited by firstOptIndex and lastOptIndex
+   //
+   if (canOmitTransformation && (optIndex < firstOptIndex || optIndex > lastOptIndex))
+      return false;
+
    if (_comp->getOptimizer())
       _comp->getOptimizer()->incOptMessageIndex();
 
@@ -542,14 +546,14 @@ TR_Debug::performTransformationImpl(bool canOmitTransformation, const char * for
           curTransformationIndex > _comp->getOptions()->getLastOptTransformationIndex())
          return false;
 
-      if (  _comp->getOptIndex() == _comp->getOptions()->getLastOptIndex()
+      if (optIndex == lastOptIndex
          && _comp->getOptSubIndex() > _comp->getOptions()->getLastOptSubIndex())
          return false;
 
       //
       // Ok, we're doing this transformation
       //
-      if (comp()->getOptIndex() == comp()->getLastBegunOptIndex())
+      if (optIndex == comp()->getLastBegunOptIndex())
          comp()->recordPerformedOptTransformation();
       }
 
@@ -564,9 +568,9 @@ TR_Debug::performTransformationImpl(bool canOmitTransformation, const char * for
          trfprintf(_file, "\n"); // traceRA convention is a newline at the start rather than the end
 
       trfprintf(_file, "[%6d] ", curTransformationIndex);
-      if (_comp->getOptIndex() == _comp->getOptions()->getLastOptIndex())
+      if (optIndex == lastOptIndex)
          {
-         trfprintf(_file, "%3d.%-4d ", _comp->getOptIndex(), _comp->getOptSubIndex());
+         trfprintf(_file, "%3d.%-4d ", optIndex, _comp->getOptSubIndex());
          }
 
       if ((format[0] == '%' && format[1] == 's') || (format[0] == 'O' && format[1] == '^' && format[2] == 'O'))
@@ -753,12 +757,12 @@ TR_Debug::printPrefix(TR::FILE *pOutFile, TR::Instruction *instr, uint8_t *curso
 
       // Print machine code in bytes on X86, in words on PPC,ARM,ARM64
       // Stop if we try to run over the buffer.
-      if (TR::Compiler->target.cpu.isX86())
+      if (_comp->target().cpu.isX86())
          {
          for (int i = 0; i < size && p1 - p0 + 3 < prefixWidth; i++, p1 += 3)
             sprintf(p1, " %02x", *cursor++);
          }
-      else if (TR::Compiler->target.cpu.isPower() || TR::Compiler->target.cpu.isARM() || TR::Compiler->target.cpu.isARM64())
+      else if (_comp->target().cpu.isPower() || _comp->target().cpu.isARM() || _comp->target().cpu.isARM64())
          {
          for (int i = 0; i < size && p1 - p0 + 9 < prefixWidth; i += 4, p1 += 9, cursor += 4)
             sprintf(p1, " %08x", *((uint32_t *)cursor));
@@ -839,7 +843,7 @@ TR_Debug::printSnippetLabel(TR::FILE *pOutFile, TR::LabelSymbol *label, uint8_t 
    trfprintf(pOutFile, ":");
    if (comment1)
       {
-      trfprintf(pOutFile, "\t\t%c %s", (TR::Compiler->target.cpu.isX86() && TR::Compiler->target.isLinux()) ? '#' : ';', comment1);
+      trfprintf(pOutFile, "\t\t%c %s", (_comp->target().cpu.isX86() && _comp->target().isLinux()) ? '#' : ';', comment1);
       if (comment2)
          trfprintf(pOutFile, " (%s)", comment2);
       }
@@ -966,7 +970,7 @@ TR_Debug::signature(TR::ResolvedMethodSymbol *s)
 TR_OpaqueClassBlock *
 TR_Debug::containingClass(TR::SymbolReference *symRef)
    {
-   TR_Method *method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method *method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
 
    if (method)
       {
@@ -1003,11 +1007,7 @@ TR_Debug::nodePrintAllFlags(TR::Node *node, TR_PrettyPrinterString &output)
    output.append(format, node->printCannotOverflow());
    output.append(format, node->printPointsToNonNull());
 
-#ifdef TR_TARGET_S390
-   output.append(format, node->printIsHPREligible());
-#else
    output.append(format, node->printIsInvalid8BitGlobalRegister());
-#endif
    output.append(format, node->printIsDirectMemoryUpdate());
    output.append(format, node->printIsTheVirtualCallNodeForAGuardedInlinedCall());
    if (!inDebugExtension())
@@ -1105,6 +1105,7 @@ TR_Debug::nodePrintAllFlags(TR::Node *node, TR_PrettyPrinterString &output)
 #endif
    output.append(format, node->printIsHeapificationStore());
    output.append(format, node->printIsHeapificationAlloc());
+   output.append(format, node->printIsIdentityless());
    output.append(format, node->printIsLiveMonitorInitStore());
    output.append(format, node->printIsMethodEnterExitGuard());
    output.append(format, node->printReturnIsDummy());
@@ -1160,7 +1161,7 @@ TR_Debug::print(TR::SymbolReference * symRef, TR_PrettyPrinterString& output, bo
       symRefObjIndex.append( " (obj%d)", (int)symRef->getKnownObjectIndex());
    else if (sym && sym->isFixedObjectRef() && comp()->getKnownObjectTable() && !symRef->isUnresolved())
       {
-      TR::KnownObjectTable::Index i = comp()->getKnownObjectTable()->getExistingIndexAt((uintptrj_t*)sym->castToStaticSymbol()->getStaticAddress());
+      TR::KnownObjectTable::Index i = comp()->getKnownObjectTable()->getExistingIndexAt((uintptr_t*)sym->castToStaticSymbol()->getStaticAddress());
       if (i != TR::KnownObjectTable::UNKNOWN)
          symRefObjIndex.append( " (==obj%d)", (int)i);
       }
@@ -1653,12 +1654,16 @@ TR_Debug::getName(TR::SymbolReference * symRef)
              return "<atomicSwap32Bit>";
          case TR::SymbolReferenceTable::atomicSwap64BitSymbol:
              return "<atomicSwap64Bit>";
-         case TR::SymbolReferenceTable::atomicCompareAndSwapSymbol:
-             return "<atomicCompareAndSwap>";
+         case TR::SymbolReferenceTable::atomicCompareAndSwapReturnStatusSymbol:
+             return "<atomicCompareAndSwapReturnStatus>";
+         case TR::SymbolReferenceTable::atomicCompareAndSwapReturnValueSymbol:
+             return "<atomicCompareAndSwapReturnValue>";
          case TR::SymbolReferenceTable::potentialOSRPointHelperSymbol:
              return "<potentialOSRPointHelper>";
          case TR::SymbolReferenceTable::osrFearPointHelperSymbol:
              return "<osrFearPointHelper>";
+         case TR::SymbolReferenceTable::eaEscapeHelperSymbol:
+             return "<eaEscapeHelper>";
          }
       }
 
@@ -1864,7 +1869,7 @@ TR_Debug::getParmName(TR::SymbolReference * symRef)
 const char *
 TR_Debug::getMethodName(TR::SymbolReference * symRef)
    {
-   TR_Method * method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method *method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
 
    if (method==NULL)
       {
@@ -1924,20 +1929,20 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
          {
          TR::StackMemoryRegion stackMemoryRegion(*comp()->trMemory());
          char *contents = NULL;
-         intptrj_t length = 0, prefixLength = 0, suffixOffset = 0;
+         intptr_t length = 0, prefixLength = 0, suffixOffset = 0;
          char *etc = "";
-         const intptrj_t LENGTH_LIMIT=80;
-         const intptrj_t PIECE_LIMIT=20;
+         const intptr_t LENGTH_LIMIT=80;
+         const intptr_t PIECE_LIMIT=20;
 
 #ifdef J9_PROJECT_SPECIFIC
          TR::VMAccessCriticalSection getStaticNameCriticalSection(comp(),
                                                                    TR::VMAccessCriticalSection::tryToAcquireVMAccess);
          if (!symRef->isUnresolved() && getStaticNameCriticalSection.acquiredVMAccess())
             {
-            uintptrj_t stringLocation = (uintptrj_t)sym->castToStaticSymbol()->getStaticAddress();
+            uintptr_t stringLocation = (uintptr_t)sym->castToStaticSymbol()->getStaticAddress();
             if (stringLocation)
                {
-               uintptrj_t string = comp()->fej9()->getStaticReferenceFieldAtAddress(stringLocation);
+               uintptr_t string = comp()->fej9()->getStaticReferenceFieldAtAddress(stringLocation);
                length = comp()->fej9()->getStringUTF8Length(string);
                contents = (char*)comp()->trMemory()->allocateMemory(length+1, stackAlloc, TR_MemoryBase::UnknownType);
                comp()->fej9()->getStringUTF8(string, contents, length+1);
@@ -1962,7 +1967,7 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
 
                // Stop before any non-printable characters (like newlines or UTF8 weirdness)
                //
-               intptrj_t i;
+               intptr_t i;
                for (i=0; i < prefixLength; i++)
                   if (!isprint(contents[i]))
                      {
@@ -2088,6 +2093,7 @@ static const char *commonNonhelperSymbolNames[] =
    "<osrReturnAddress>",
    "<potentialOSRPointHelper>",
    "<osrFearPointHelper>",
+   "<eaEscapeHelper>",
    "<lowTenureAddress>",
    "<highTenureAddress>",
    "<fragmentParent>",
@@ -2103,25 +2109,19 @@ static const char *commonNonhelperSymbolNames[] =
    "<j9methodConstantPoolField>",
    "<startPCLinkageInfo>",
    "<instanceShapeFromROMClass>",
+   "<objectEqualityComparison>",
    "<synchronizedFieldLoad>",
-   "<atomicAdd32Bit>",
-   "<atomicAdd64Bit>",
+   "<atomicAdd>",
+   "<atomicFetchAndAdd>",
    "<atomicFetchAndAdd32Bit>",
    "<atomicFetchAndAdd64Bit>",
+   "<atomicSwap>",
    "<atomicSwap32Bit>",
    "<atomicSwap64Bit>",
-   "<atomicCompareAndSwap32Bit>",
-   "<atomicCompareAndSwap64Bit>",
-   "<pythonFrame_CodeObject>",
-   "<pythonFrame_FastLocals>",
-   "<pythonFrame_Globals>",
-   "<pythonFrame_Builtins>",
-   "<pythonCode_Constants>",
-   "<pythonCode_NumLocals>",
-   "<pythonCode_Names>",
-   "<pythonObject_Type>",
-   "<pythonType_IteratorMethod>",
-   "<pythonObject_ReferenceCount>"
+   "<atomicCompareAndSwapReturnStatus>",
+   "<atomicCompareAndSwapReturnValue>",
+   "<jProfileValueSymbol>",
+   "<jProfileValueWithNullCHKSymbol>",
    };
 
 const char *
@@ -2173,21 +2173,6 @@ TR_Debug::getShadowName(TR::SymbolReference * symRef)
          {
          return symRef->getSymbol()->getNamedShadowSymbol()->getName();
          }
-
-      if (symRef->getSymbol()->isPythonLocalVariableShadowSymbol())
-         {
-         auto comp = TR::comp();
-         return symRef->getOwningMethod(comp)->localName(symRef->getOffset() / TR::DataType::getSize(TR::Address),
-                                                         -1,
-                                                         comp->trMemory());
-         }
-
-      if (symRef->getSymbol()->isPythonConstantShadowSymbol())
-         return "<constant>";
-
-      if (symRef->getSymbol()->isPythonNameShadowSymbol())
-         return "<name>";
-
       }
 
    const int32_t numCommonNonhelperSymbols = TR::SymbolReferenceTable::lastCommonNonhelperSymbol - TR::SymbolReferenceTable::firstCommonNonhelperNonArrayShadowSymbol - TR_numCCPreLoadedCode;
@@ -2571,7 +2556,7 @@ TR_Debug::dumpMethodInstrs(TR::FILE *pOutFile, const char *title, bool dumpTrees
            crtLineNo = lastLineNoPrinted;
            }
 
-        bool printEveryLine = TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isLinux();
+        bool printEveryLine = _comp->target().cpu.isZ() && _comp->target().isLinux();
         // Emit .line directive if there was change in line number, or source file or
         // inlined method state since last time
         if ((crtLineNo != -1) &&
@@ -2586,7 +2571,7 @@ TR_Debug::dumpMethodInstrs(TR::FILE *pOutFile, const char *title, bool dumpTrees
 
            int32_t lno;
 
-           if (TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isLinux())
+           if (_comp->target().cpu.isZ() && _comp->target().isLinux())
               {
               lno = crtLineNo - 1;
               }
@@ -2623,7 +2608,7 @@ TR_Debug::dumpMethodInstrs(TR::FILE *pOutFile, const char *title, bool dumpTrees
          printS390OOLSequences(pOutFile);
 #endif
 #elif defined(TR_TARGET_X86)
-      if (TR::Compiler->target.cpu.isX86())
+      if (_comp->target().cpu.isX86())
          printX86OOLSequences(pOutFile);
 #endif
 
@@ -2784,7 +2769,7 @@ TR_Debug::printCommonDataMiningAnnotations(TR::FILE *pOutFile, TR::Instruction *
   }
 
 
-#if !defined(TR_TARGET_POWER) && !defined(TR_TARGET_ARM) && !defined(TR_TARGET_ARM64)
+#if !defined(TR_TARGET_POWER) && !defined(TR_TARGET_ARM) && !defined(TR_TARGET_ARM64) && !defined(TR_TARGET_RISCV)
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * inst)
    {
@@ -2799,7 +2784,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * inst, const char *title)
       return;
 
 #if defined(TR_TARGET_X86)
-   if (TR::Compiler->target.cpu.isX86())
+   if (_comp->target().cpu.isX86())
       {
       printx(pOutFile, inst);
       return;
@@ -2807,7 +2792,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * inst, const char *title)
 #endif
 
 #if defined(TR_TARGET_POWER)
-   if (TR::Compiler->target.cpu.isPower())
+   if (_comp->target().cpu.isPower())
       {
       print(pOutFile, inst);
       return;
@@ -2815,7 +2800,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * inst, const char *title)
 #endif
 
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
+   if (_comp->target().cpu.isARM())
       {
       print(pOutFile, inst);
       return;
@@ -2823,15 +2808,23 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * inst, const char *title)
 #endif
 
 #if defined(TR_TARGET_ARM64)
-   if (TR::Compiler->target.cpu.isARM64())
+   if (_comp->target().cpu.isARM64())
       {
       print(pOutFile, inst);
       return;
       }
 #endif
 
+#if defined(TR_TARGET_RISCV)
+   if (TR::Compiler->target.cpu.isRISCV())
+      {
+      print(pOutFile, inst);
+      return;
+      }
+#endif      
+
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       {
       printz(pOutFile, inst, title);
       return;
@@ -2847,7 +2840,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::GCRegisterMap * map)
       return;
 
 #if defined(TR_TARGET_X86)
-   if (TR::Compiler->target.cpu.isX86())
+   if (_comp->target().cpu.isX86())
       {
       printX86GCRegisterMap(pOutFile, map);
       return;
@@ -2855,7 +2848,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::GCRegisterMap * map)
 #endif
 
 #if defined(TR_TARGET_POWER)
-   if (TR::Compiler->target.cpu.isPower())
+   if (_comp->target().cpu.isPower())
       {
       printPPCGCRegisterMap(pOutFile, map);
       return;
@@ -2863,7 +2856,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::GCRegisterMap * map)
 #endif
 
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
+   if (_comp->target().cpu.isARM())
       {
       printARMGCRegisterMap(pOutFile, map);
       return;
@@ -2871,7 +2864,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::GCRegisterMap * map)
 #endif
 
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       {
       printS390GCRegisterMap(pOutFile, map);
       return;
@@ -2879,9 +2872,17 @@ TR_Debug::print(TR::FILE *pOutFile, TR::GCRegisterMap * map)
 #endif
 
 #if defined(TR_TARGET_ARM64)
-   if (TR::Compiler->target.cpu.isARM64())
+   if (_comp->target().cpu.isARM64())
       {
       printARM64GCRegisterMap(pOutFile, map);
+      return;
+      }
+#endif
+
+#if defined(TR_TARGET_RISCV)
+   if (TR::Compiler->target.cpu.isRISCV())
+      {
+      printRVGCRegisterMap(pOutFile, map);
       return;
       }
 #endif
@@ -2926,12 +2927,16 @@ const char *
 TR_Debug::getName(TR::Snippet *snippet)
    {
 #if defined(TR_TARGET_X86)
-   if (TR::Compiler->target.cpu.isX86())
+   if (_comp->target().cpu.isX86())
       return getNamex(snippet);
 #endif
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
+   if (_comp->target().cpu.isARM())
       return getNamea(snippet);
+#endif
+#if defined(TR_TARGET_ARM64)
+   if (_comp->target().cpu.isARM64())
+      return getNamea64(snippet);
 #endif
    return "<unknown snippet>"; // TODO: Return a more informative name
    }
@@ -2940,30 +2945,37 @@ void
 TR_Debug::print(TR::FILE *pOutFile, TR::Snippet * snippet)
    {
 #if defined(TR_TARGET_X86)
-   if (TR::Compiler->target.cpu.isX86())
+   if (_comp->target().cpu.isX86())
       {
       printx(pOutFile, snippet);
       return;
       }
 #endif
 #if defined(TR_TARGET_POWER)
-   if (TR::Compiler->target.cpu.isPower())
+   if (_comp->target().cpu.isPower())
       {
       printp(pOutFile, snippet);
       return;
       }
 #endif
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
+   if (_comp->target().cpu.isARM())
       {
       printa(pOutFile, snippet);
       return;
       }
 #endif
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       {
       printz(pOutFile, (TR::Snippet *)snippet);
+      return;
+      }
+#endif
+#if defined(TR_TARGET_ARM64)
+   if (_comp->target().cpu.isARM64())
+      {
+      printa64(pOutFile, snippet);
       return;
       }
 #endif
@@ -3000,25 +3012,30 @@ TR_Debug::getName(TR::Register *reg, TR_RegisterSizes size)
    if (reg->getRealRegister())
       {
 #if defined(TR_TARGET_X86)
-      if (TR::Compiler->target.cpu.isX86())
+      if (_comp->target().cpu.isX86())
          return getName((TR::RealRegister *)reg, size);
 #endif
 #if defined(TR_TARGET_POWER)
-      if (TR::Compiler->target.cpu.isPower())
+      if (_comp->target().cpu.isPower())
          return getName((TR::RealRegister *)reg, size);
 #endif
 #if defined(TR_TARGET_ARM)
-      if (TR::Compiler->target.cpu.isARM())
+      if (_comp->target().cpu.isARM())
          return getName((TR::RealRegister *)reg, size);
 #endif
 #if defined(TR_TARGET_S390)
-      if (TR::Compiler->target.cpu.isZ())
+      if (_comp->target().cpu.isZ())
          return getName(toRealRegister(reg), size);
 #endif
 #if defined(TR_TARGET_ARM64)
-      if (TR::Compiler->target.cpu.isARM64())
+      if (_comp->target().cpu.isARM64())
          return getName((TR::RealRegister *)reg, size);
 #endif
+#if defined(TR_TARGET_RISCV)
+      if (TR::Compiler->target.cpu.isRISCV())
+         return getName((TR::RealRegister *)reg, size);
+#endif
+
       TR_ASSERT(0, "TR_Debug::getName() ==> unknown target platform for given real register\n");
       }
 
@@ -3064,7 +3081,7 @@ TR_Debug::getName(TR::Register *reg, TR_RegisterSizes size)
    else if (_comp->getAddressEnumerationOption(TR_EnumerateRegister) && _comp->getToNumberMap().Locate((void *)reg, hashIndex))
       {
       char *buf = (char *)_comp->trMemory()->allocateHeapMemory(maxPrefixSize + 6 + 11); // max register kind name size plus underscore plus 10-digit reg num plus null terminator
-      uint32_t regNum = (uint32_t)(intptrj_t)_comp->getToNumberMap().DataAt(hashIndex);
+      uint32_t regNum = (uint32_t)(intptr_t)_comp->getToNumberMap().DataAt(hashIndex);
       sprintf(buf, "%s%s_%04d", prefix, getRegisterKindName(reg->getKind()), regNum);
       _comp->getToStringMap().Add((void *)reg, buf);
       return buf;
@@ -3085,20 +3102,24 @@ const char *TR_Debug::getGlobalRegisterName(TR_GlobalRegisterNumber regNum, TR_R
    {
    uint32_t realRegNum = _comp->cg()->getGlobalRegister(regNum);
 #if defined(TR_TARGET_X86)
-   if (TR::Compiler->target.cpu.isX86())
+   if (_comp->target().cpu.isX86())
       return getName(realRegNum, size);
 #endif
 #if defined(TR_TARGET_POWER)
-   if (TR::Compiler->target.cpu.isPower())
+   if (_comp->target().cpu.isPower())
       return getPPCRegisterName(realRegNum);
 #endif
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       return getS390RegisterName(realRegNum);
 #endif
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
+   if (_comp->target().cpu.isARM())
       return getName(realRegNum, size);
+#endif
+#if defined(TR_TARGET_ARM64)
+   if (_comp->target().cpu.isARM64())
+      return getARM64RegisterName(realRegNum, size);
 #endif
    return "???";
    }
@@ -3156,7 +3177,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Register * reg, TR_RegisterSizes size)
    if (pOutFile == NULL)
       return;
 #if defined(TR_TARGET_S390)
-   if (reg == NULL && TR::Compiler->target.cpu.isZ()) // zero based ptr
+   if (reg == NULL && _comp->target().cpu.isZ()) // zero based ptr
       {
       trfprintf(pOutFile, "%s", "GPR0");
       return;
@@ -3166,35 +3187,42 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Register * reg, TR_RegisterSizes size)
    if (reg->getRealRegister())
       {
 #if defined(TR_TARGET_X86)
-      if (TR::Compiler->target.cpu.isX86())
+      if (_comp->target().cpu.isX86())
          {
          print(pOutFile, (TR::RealRegister *)reg, size);
          return;
          }
 #endif
 #if defined(TR_TARGET_POWER)
-      if (TR::Compiler->target.cpu.isPower())
+      if (_comp->target().cpu.isPower())
          {
          print(pOutFile, (TR::RealRegister *)reg, size);
          return;
          }
 #endif
 #if defined(TR_TARGET_ARM)
-      if (TR::Compiler->target.cpu.isARM())
+      if (_comp->target().cpu.isARM())
          {
          print(pOutFile, (TR::RealRegister *)reg, size);
          return;
          }
 #endif
 #if defined(TR_TARGET_S390)
-      if (TR::Compiler->target.cpu.isZ())
+      if (_comp->target().cpu.isZ())
          {
          print(pOutFile, toRealRegister(reg), size);
          return;
          }
 #endif
 #if defined(TR_TARGET_ARM64)
-      if (TR::Compiler->target.cpu.isARM64())
+      if (_comp->target().cpu.isARM64())
+         {
+         print(pOutFile, (TR::RealRegister *)reg, size);
+         return;
+         }
+#endif
+#if defined(TR_TARGET_RISCV)
+      if (TR::Compiler->target.cpu.isRISCV())
          {
          print(pOutFile, (TR::RealRegister *)reg, size);
          return;
@@ -3219,11 +3247,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Register * reg, TR_RegisterSizes size)
 /* TODO: Work in progress, column based, side-by-side traceRA={*} format that looks like this (note order will change, columns will widen etc):
    Initially for Java on z, then sTR on z, then Java on other platforms.
    S = State; W = Weight; V = Virtual Register; RC = Ref Count)
-   +---------------------------------+----------------------------------+------------------------------+------------------------------+
-   | Name   S   W  Flag     V    RC  | Name   S   W  Flag     V     RC  | Name   S   W Flag   V    RC  | Name   S  W Flag    V    RC  |
-   +---------------------------------+----------------------------------+------------------------------+------------------------------+
-   | GPR0       80 Free              | HPR0       80 Free               | VRF16     80 Free            | FPR0     80 Free FPR_34  4/5 |
-   | GPR1       80 Free              | HPR1       80 Free               | VRF17     80 Free            | FPR1     80 Free             |
+   +---------------------------------+------------------------------+------------------------------+
+   | Name   S   W  Flag     V    RC  | Name   S   W Flag   V    RC  | Name   S  W Flag    V    RC  |
+   +---------------------------------+------------------------------+------------------------------+
+   | GPR0       80 Free              | VRF16     80 Free            | FPR0     80 Free FPR_34  4/5 |
+   | GPR1       80 Free              | VRF17     80 Free            | FPR1     80 Free             |
    ..
 */
 void TR_Debug::printFullRegInfoNewFormat(TR::FILE *pOutFile, TR::Register * rr)
@@ -3333,7 +3361,7 @@ TR_Debug::printGPRegisterStatus(TR::FILE *pOutFile, OMR::MachineConnector *machi
    if (pOutFile == NULL)
       return;
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       {
       printGPRegisterStatus(pOutFile, (TR::Machine *)machine);
       return;
@@ -3346,7 +3374,7 @@ TR_Debug::printFPRegisterStatus(TR::FILE *pOutFile, OMR::MachineConnector *machi
    if (pOutFile == NULL)
       return;
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       {
       printFPRegisterStatus(pOutFile, (TR::Machine *)machine);
       return;
@@ -3655,7 +3683,7 @@ TR_Debug::dump(TR::FILE *pOutFile, TR_CHTable * chTable)
 
          char *sig = TR::Compiler->cls.classNameChars(comp(), clazz, len);
 
-         if (len>256) len = 256;
+         if (len>255) len = 255;
          strncpy(buf, sig, len);
          buf[len] = 0;
 
@@ -3670,185 +3698,6 @@ TR_Debug::dump(TR::FILE *pOutFile, TR_CHTable * chTable)
 const char *
 TR_Debug::getRuntimeHelperName(int32_t index)
    {
-
-#if defined(PYTHON)
-   if (index <= PyHelper_Last)
-      {
-      switch (index)
-         {
-         case PyHelper_TupleGetItem:                 return "PyTuple_GetItem";
-         case PyHelper_UnaryNot:                     return "Py_doUnaryNot";
-         case PyHelper_BinaryRemainder:              return "Py_doBinaryRemainder";
-         case PyHelper_BinaryAdd:                    return "Py_doBinaryAdd";
-         case PyHelper_InPlaceAdd:                   return "Py_doInPlaceAdd";
-         case PyHelper_LoadGlobal:                   return "Py_LoadGlobal";
-         case PyHelper_ListAppend:                   return "PyList_Append";
-         case PyHelper_ObjectDelItem:                return "PyObject_DelItem";
-         case PyHelper_ObjectGetItem:                return "PyObject_GetItem";
-         case PyHelper_ObjectGetIter:                return "PyObject_GetIter";
-         case PyHelper_ObjectRichCompare:            return "PyObject_RichCompare";
-         case PyHelper_NumberPositive:               return "PyNumber_Positive";
-         case PyHelper_NumberNegative:               return "PyNumber_Negative";
-         case PyHelper_NumberInvert:                 return "PyNumber_Invert";
-         case PyHelper_NumberPower:                  return "PyNumber_Power";
-         case PyHelper_NumberMultiply:               return "PyNumber_Multiply";
-         case PyHelper_NumberTrueDivide:             return "PyNumber_TrueDivide";
-         case PyHelper_NumberFloorDivide:            return "PyNumber_FloorDivide";
-         case PyHelper_NumberSubtract:               return "PyNumber_Subtract";
-         case PyHelper_NumberLshift:                 return "PyNumber_Lshift";
-         case PyHelper_NumberRshift:                 return "PyNumber_Rshift";
-         case PyHelper_NumberAnd:                    return "PyNumber_And";
-         case PyHelper_NumberXor:                    return "PyNumber_Xor";
-         case PyHelper_NumberOr:                     return "PyNumber_Or";
-         case PyHelper_NumberInPlacePower:           return "PyNumber_InPlacePower";
-         case PyHelper_NumberInPlaceMultiply:        return "PyNumber_InPlaceMultiply";
-         case PyHelper_NumberInPlaceTrueDivide:      return "PyNumber_InPlaceTrueDivide";
-         case PyHelper_NumberInPlaceFloorDivide:     return "PyNumber_InPlaceFloorDivide";
-         case PyHelper_NumberInPlaceRemainder:       return "PyNumber_InPlaceRemainder";
-         case PyHelper_NumberInPlaceSubtract:        return "PyNumber_InPlaceSubtract";
-         case PyHelper_NumberInPlaceLshift:          return "PyNumber_InPlaceLshift";
-         case PyHelper_NumberInPlaceRshift:          return "PyNumber_InPlaceRshift";
-         case PyHelper_NumberInPlaceAnd:             return "PyNumber_InPlaceAnd";
-         case PyHelper_NumberInPlaceXor:             return "PyNumber_InPlaceXor";
-         case PyHelper_NumberInPlaceOr:              return "PyNumber_InPlaceOr";
-         case PyHelper_SequenceContains:             return "PySequence_Contains";
-         case PyHelper_SetAdd:                       return "PySet_Add";
-         case PyHelper_exceptionFromFrame:           return "Py_exceptionFromFrame";
-         case PyHelper_exceptionOnByteCode:          return "Py_exceptionOnByteCode";
-         case PyHelper_exceptionOnByteCodeAndReturn: return "Py_exceptionOnByteCode";
-         case PyHelper_exceptionLoadFast:            return "Py_exceptionLoadFast";
-         case PyHelper_exceptionLoadFastAndReturn:   return "Py_exceptionLoadFastNoHandler";
-         case PyHelper_compareOpForExceptionMatch:   return "Py_compareOpForExceptionMatch";
-         case PyHelper_ObjectSetItem:                return "PyObject_SetItem";
-         case PyHelper_DictSetItem:                  return "PyDict_SetItem";
-         case PyHelper_ObjectIsTrue:                 return "PyObject_IsTrue";
-         case PyHelper_callfunction:                 return "call_function";
-         case PyHelper_long_neg:                     return "long_neg";
-         case PyHelper_long_long:                    return "long_long";
-         case PyHelper_long_add:                     return "long_add";
-         case PyHelper_long_sub:                     return "long_sub";
-         case PyHelper_long_mul:                     return "long_mul";
-         case PyHelper_long_div:                     return "long_div";
-         case PyHelper_long_true_divide:             return "long_true_divide";
-         case PyHelper_long_mod:                     return "long_mod";
-         case PyHelper_long_lshift:                  return "long_lshift";
-         case PyHelper_long_rshift:                  return "long_rshift";
-         case PyHelper_long_and:                     return "long_and";
-         case PyHelper_long_xor:                     return "long_xor";
-         case PyHelper_long_or:                      return "long_or";
-         case PyHelper_UnpackSequence:               return "unpack_iterable";
-         case PyHelper_TupleNew:                     return "PyTuple_New";
-         case PyHelper_TupleSetItem:                 return "PyTuple_SetItem";
-         case PyHelper_ListNew:                      return "PyList_New";
-         case PyHelper_ListSetItem:                  return "PyList_SetItem";
-         case PyHelper_SetNew:                       return "PySet_New";
-         case PyHelper_DictNewPresized:              return "_PyDict_NewPresized";
-         case PyHelper_SliceNew:                     return "PySlice_New";
-         case PyHelper_ObjectGetAttr:                return "PyObject_GetAttr";
-         case PyHelper_ObjectSetAttr:                return "PyObject_SetAttr";
-         case PyHelper_DestroyObject:                return "_Py_Dealloc";
-         case PyHelper_DictDelItem:                  return "PyDict_DelItem";
-         case PyHelper_IncRef:                       return "Py_IncRef";
-         case PyHelper_DecRef:                       return "Py_DecRef";
-         case PyHelper_StopIterating:                return "stopIterating";
-         }
-      }
-#endif
-
-#if defined(OMR_RUBY)
-   if (index < TR_FSRH)
-      {
-      switch (index)
-         {
-         case RubyHelper_rb_funcallv:            return "rb_funcallv";
-         case RubyHelper_vm_send:                return "vm_send";
-         case RubyHelper_vm_send_without_block:  return "vm_send_without_block";
-         case RubyHelper_vm_getspecial:          return "vm_getspecial";
-         case RubyHelper_lep_svar_set:           return "vm_lep_svar_set";
-         case RubyHelper_vm_getivar:             return "vm_getivar";
-         case RubyHelper_vm_setivar:             return "vm_setivar";
-         case RubyHelper_vm_opt_plus:            return "vm_opt_plus";
-         case RubyHelper_vm_opt_minus:           return "vm_opt_minus";
-         case RubyHelper_vm_opt_mult:            return "vm_opt_mult";
-         case RubyHelper_vm_opt_div:             return "vm_opt_div";
-         case RubyHelper_vm_opt_mod:             return "vm_opt_mod";
-         case RubyHelper_vm_opt_eq:              return "vm_opt_eq";
-         case RubyHelper_vm_opt_neq:             return "vm_opt_neq";
-         case RubyHelper_vm_opt_lt:              return "vm_opt_lt";
-         case RubyHelper_vm_opt_le:              return "vm_opt_le";
-         case RubyHelper_vm_opt_gt:              return "vm_opt_gt";
-         case RubyHelper_vm_opt_ge:              return "vm_opt_ge";
-         case RubyHelper_vm_opt_ltlt:            return "vm_opt_ltlt";
-         case RubyHelper_vm_opt_not:             return "vm_opt_not";
-         case RubyHelper_vm_opt_aref:            return "vm_opt_aref";
-         case RubyHelper_vm_opt_aset:            return "vm_opt_aset";
-         case RubyHelper_vm_opt_length:          return "vm_opt_length";
-         case RubyHelper_vm_opt_size:            return "vm_opt_size";
-         case RubyHelper_vm_opt_empty_p:         return "vm_opt_empty_p";
-         case RubyHelper_vm_opt_succ:            return "vm_opt_succ";
-         case RubyHelper_rb_ary_new_capa:        return "rb_ary_new_capa";
-         case RubyHelper_rb_ary_new_from_values: return "rb_ary_new_from_values";
-         case RubyHelper_vm_expandarray:         return "vm_expandarray";
-         case RubyHelper_rb_ary_resurrect:       return "rb_ary_resurrect";
-         case RubyHelper_vm_concatarray:         return "vm_concatarray";
-         case RubyHelper_vm_splatarray:          return "vm_splatarray";
-         case RubyHelper_rb_range_new:           return "rb_range_new";
-         case RubyHelper_rb_hash_new:            return "rb_hash_new";
-         case RubyHelper_rb_hash_aset:           return "rb_hash_aset";
-         case RubyHelper_vm_trace:               return "vm_trace";
-         case RubyHelper_rb_str_new:             return "rb_str_new";
-         case RubyHelper_rb_str_new_cstr:        return "rb_str_new_cstr";
-         case RubyHelper_rb_str_resurrect:       return "rb_str_resurrect";
-
-         case RubyHelper_vm_get_ev_const:        return "vm_get_ev_const";
-         case RubyHelper_vm_check_if_namespace:  return "vm_check_if_namespace";
-         case RubyHelper_rb_const_set:           return "rb_const_set";
-         case RubyHelper_rb_gvar_get:            return "rb_gvar_get";
-         case RubyHelper_rb_gvar_set:            return "rb_gvar_set";
-         case RubyHelper_rb_iseq_add_mark_object:return "rb_iseq_add_mark_object";
-         case RubyHelper_vm_setinlinecache:      return "vm_setinlinecache";
-         case RubyHelper_vm_throw:               return "vm_throw";
-         case RubyHelper_rb_threadptr_execute_interrupts:
-                                                 return "rb_threadptr_execute_interrupts";
-         case RubyHelper_rb_vm_ep_local_ep:      return "rb_vm_ep_local_ep";
-         case RubyHelper_vm_get_cbase:           return "vm_get_cbase";
-         case RubyHelper_vm_get_const_base:      return "vm_get_const_base";
-         case RubyHelper_rb_vm_get_cref:         return "rb_vm_get_cref";
-         case RubyHelper_vm_get_cvar_base:       return "vm_get_cvar_base";
-         case RubyHelper_rb_cvar_get:            return "rb_cvar_get";
-         case RubyHelper_rb_cvar_set:            return "rb_cvar_set";
-         case RubyHelper_vm_checkmatch:          return "vm_checkmatch";
-         case RubyHelper_rb_obj_as_string:       return "rb_obj_as_string";
-         case RubyHelper_rb_str_append:          return "rb_str_append";
-         case RubyHelper_rb_ary_tmp_new:         return "rb_ary_tmp_new";
-         case RubyHelper_rb_ary_store:           return "rb_ary_store";
-         case RubyHelper_rb_reg_new_ary:         return "rb_reg_new_ary";
-         case RubyHelper_vm_opt_regexpmatch1:    return "vm_opt_regexpmatch1";
-         case RubyHelper_vm_opt_regexpmatch2:    return "vm_opt_regexpmatch2";
-         case RubyHelper_vm_defined:             return "vm_defined";
-         case RubyHelper_vm_invokesuper:         return "vm_invokesuper";
-         case RubyHelper_vm_invokeblock:         return "vm_invokeblock";
-         case RubyHelper_vm_get_block_ptr:       return "vm_get_block_ptr";
-         case RubyHelper_rb_bug:                 return "rb_bug";
-         case RubyHelper_vm_exec_core:           return "vm_exec_core";
-         case RubyHelper_rb_class_of:            return "rb_class_of";
-         case RubyHelper_vm_send_woblock_inlineable_guard:  return "vm_send_woblock_inlineable_guard";
-         case RubyHelper_vm_send_woblock_jit_inline_frame:  return "vm_send_woblock_jit_inline_frame";
-         case RubyHelper_ruby_omr_is_valid_object:  return "ruby_omr_is_valid_object";
-         case RubyHelper_rb_class2name:          return "rb_class2name";
-         case RubyHelper_vm_opt_aref_with:       return "vm_opt_aref_with";
-         case RubyHelper_vm_opt_aset_with:       return "vm_opt_aset_with";
-         case RubyHelper_vm_setconstant:         return "vm_setconstant";
-         case RubyHelper_rb_vm_env_write:        return "rb_vm_env_write";
-         case RubyHelper_vm_jit_stack_check:     return "vm_jit_stack_check";
-         case RubyHelper_rb_str_freeze:          return "rb_str_freeze";
-         case RubyHelper_rb_ivar_set:            return "rb_ivar_set";
-         case RubyHelper_vm_compute_case_dest:   return "vm_compute_case_dest";
-         case RubyHelper_vm_getinstancevariable: return "vm_getinstancevariable";
-         case RubyHelper_vm_setinstancevariable: return "vm_setinstancevariable";
-         }
-      }
-#endif
 
 #ifdef J9_PROJECT_SPECIFIC
    if (index < TR_FSRH)
@@ -3884,6 +3733,8 @@ TR_Debug::getRuntimeHelperName(int32_t index)
 
          case TR_newObject:                 return "jitNewObject";
          case TR_newObjectNoZeroInit:       return "jitNewObjectNoZeroInit";
+         case TR_newValue:                  return "jitNewValue";
+         case TR_newValueNoZeroInit:        return "jitNewValueNoZeroInit";
          case TR_newArray:                  return "jitNewArray";
          case TR_newArrayNoZeroInit:        return "jitNewArrayNoZeroInit";
          case TR_aNewArray:                 return "jitANewArray";
@@ -3898,7 +3749,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_divCheck:                  return "jitThrowArithmeticException";
          case TR_arrayStoreException:       return "jitThrowArrayStoreException";
          case TR_typeCheckArrayStore:       return "jitTypeCheckArrayStore";
-         case TR_readBarrier:               return "jitReadBarrier";
+         case TR_softwareReadBarrier:       return "jitSoftwareReadBarrier";
          case TR_writeBarrierStore:         return "jitWriteBarrierStore";
          case TR_writeBarrierStoreGenerational: return "jitWriteBarrierStoreGenerational";
          case TR_writeBarrierStoreGenerationalAndConcurrentMark: return "jitWriteBarrierStoreGenerationalAndConcurrentMark";
@@ -3923,10 +3774,9 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_releaseVMAccess:           return "jitReleaseVMAccess";
          case TR_throwCurrentException:     return "jitThrowCurrentException";
          case TR_throwClassCastException:   return "jitThrowClassCastException";
+         case TR_acmpHelper:                return "jitAcmpHelper";
 
          case TR_IncompatibleClassChangeError:return "jitThrowIncompatibleClassChangeError";
-         case TR_AbstractMethodError:       return "jitThrowAbstractMethodError";
-         case TR_IllegalAccessError:        return "jitThrowIllegalAccessError";
          case TR_newInstanceImplAccessCheck:return "jitNewInstanceImplAccessCheck";
 
          case TR_icallVMprJavaSendStatic0:                        return "icallVMprJavaSendStatic0";
@@ -3947,6 +3797,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_icallVMprJavaSendInvokeExactD:                   return "icallVMprJavaSendInvokeExactD";
          case TR_icallVMprJavaSendInvokeWithArguments:            return "icallVMprJavaSendInvokeWithArguments";
          case TR_icallVMprJavaSendNativeStatic:                   return "icallVMprJavaSendNativeStatic";
+         case TR_j2iTransition:                                   return "j2iTransition";
          case TR_initialInvokeExactThunk_unwrapper:               return "initialInvokeExactThunk_unwrapper";
          case TR_methodHandleJ2I_unwrapper:                       return "methodHandleJ2I_unwrapper";
          case TR_interpreterUnresolvedMethodTypeGlue:             return "interpreterUnresolvedMethodTypeGlue";
@@ -3973,7 +3824,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          }
       }
 #ifdef TR_TARGET_X86
-   else if ((TR::Compiler->target.cpu.isI386() || TR::Compiler->target.cpu.isAMD64()) && !inDebugExtension())
+   else if ((_comp->target().cpu.isI386() || _comp->target().cpu.isAMD64()) && !inDebugExtension())
       {
       if (index < TR_LXRH)
          {
@@ -4004,10 +3855,6 @@ TR_Debug::getRuntimeHelperName(int32_t index)
             case TR_X86PatchSingleComparePIC_je:                      return "jitX86PatchSingleComparePIC_je";
             case TR_X86PatchMultipleComparePIC_mov:                   return "jitX86PatchMultipleComparePIC_mov";
             case TR_X86PatchMultipleComparePIC_je:                    return "jitX86PatchMultipleComparePIC_je";
-            case TR_X86OutlinedNew:                                   return "outlinedNew";
-            case TR_X86OutlinedNewArray:                              return "outlinedNewArray";
-            case TR_X86OutlinedNewNoZeroInit:                         return "outlinedNewNoZeroInit";
-            case TR_X86OutlinedNewArrayNoZeroInit:                    return "outlinedNewArrayNoZeroInit";
             case TR_X86CodeCachePrefetchHelper:                       return "per code cache TLH prefetch helper";
 
             case TR_outlinedPrologue_0preserved:         return "outlinedPrologue_0preserved";
@@ -4021,7 +3868,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
             case TR_outlinedPrologue_8preserved:         return "outlinedPrologue_8preserved";
             }
          }
-      else if (TR::Compiler->target.cpu.isI386())
+      else if (_comp->target().cpu.isI386())
          {
          switch (index)
             {
@@ -4082,7 +3929,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          }
       }
 #elif defined (TR_TARGET_POWER)
-   else if (TR::Compiler->target.cpu.isPower() && !inDebugExtension())
+   else if (_comp->target().cpu.isPower() && !inDebugExtension())
       {
       switch (index)
          {
@@ -4182,7 +4029,6 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_PPCarrayAnd:                                      return "_arrayand";
          case TR_PPCarrayCmp:                                      return "_arraycmp";
          case TR_PPCoverlapArrayCopy:                              return "overlapArrayCopy";
-         case TR_PPCarrayTranslateTRTOSimpleVMX:                   return "__arrayTranslateTRTOSimpleVMX";
          case TR_PPCarrayCmpVMX:                                   return "__arrayCmpVMX";
          case TR_PPCarrayCmpLenVMX:                                return "__arrayCmpLenVMX";
          case TR_PPCarrayCmpScalar:                                return "__arrayCmpScalar";
@@ -4199,7 +4045,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          }
       }
 #elif defined (TR_TARGET_S390)
-   else if (TR::Compiler->target.cpu.isZ() && !inDebugExtension())
+   else if (_comp->target().cpu.isZ() && !inDebugExtension())
       {
       switch (index)
          {
@@ -4296,7 +4142,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          }
       }
 #elif defined (TR_TARGET_ARM)
-   else if (TR::Compiler->target.cpu.isARM() && !inDebugExtension())
+   else if (_comp->target().cpu.isARM() && !inDebugExtension())
       {
       switch (index)
          {
@@ -4429,8 +4275,49 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_ARMrevertToInterpreterGlue:                   return "_revertToInterpreterGlue";
          }
       }
+#elif defined (TR_TARGET_ARM64)
+   else if (_comp->target().cpu.isARM64() && !inDebugExtension())
+      {
+      switch (index)
+         {
+         case TR_ARM64interpreterUnresolvedStaticGlue:             return "_interpreterUnresolvedStaticGlue";
+         case TR_ARM64interpreterUnresolvedSpecialGlue:            return "_interpreterUnresolvedSpecialGlue";
+         case TR_ARM64interpreterUnresolvedDirectVirtualGlue:      return "_interpreterUnresolvedDirectVirtualGlue";
+         case TR_ARM64interpreterUnresolvedClassGlue:              return "_interpreterUnresolvedClassGlue";
+         case TR_ARM64interpreterUnresolvedClassGlue2:             return "_interpreterUnresolvedClassGlue2";
+         case TR_ARM64interpreterUnresolvedStringGlue:             return "_interpreterUnresolvedStringGlue";
+         case TR_ARM64interpreterUnresolvedConstantDynamicGlue:    return "_interpreterUnresolvedConstantDynamicGlue";
+         case TR_ARM64interpreterUnresolvedStaticDataGlue:         return "_interpreterUnresolvedStaticDataGlue";
+         case TR_ARM64interpreterUnresolvedInstanceDataGlue:       return "_interpreterUnresolvedInstanceDataGlue";
+         case TR_ARM64interpreterUnresolvedStaticDataStoreGlue:    return "_interpreterUnresolvedStaticDataStoreGlue";
+         case TR_ARM64interpreterUnresolvedInstanceDataStoreGlue:  return "_interpreterUnresolvedInstanceDataStoreGlue";
+         case TR_ARM64virtualUnresolvedHelper:                     return "_virtualUnresolvedHelper";
+         case TR_ARM64interfaceCallHelper:                         return "_interfaceCallHelper";
+         case TR_ARM64icallVMprJavaSendVirtual0:                   return "icallVMprJavaSendVirtual0";
+         case TR_ARM64icallVMprJavaSendVirtual1:                   return "icallVMprJavaSendVirtual1";
+         case TR_ARM64icallVMprJavaSendVirtualJ:                   return "icallVMprJavaSendVirtualJ";
+         case TR_ARM64icallVMprJavaSendVirtualF:                   return "icallVMprJavaSendVirtualF";
+         case TR_ARM64icallVMprJavaSendVirtualD:                   return "icallVMprJavaSendVirtualD";
+         case TR_ARM64interpreterVoidStaticGlue:                   return "_interpreterVoidStaticGlue";
+         case TR_ARM64interpreterSyncVoidStaticGlue:               return "_interpreterSyncVoidStaticGlue";
+         case TR_ARM64interpreterIntStaticGlue:                    return "_interpreterIntStaticGlue";
+         case TR_ARM64interpreterSyncIntStaticGlue:                return "_interpreterSyncIntStaticGlue";
+         case TR_ARM64interpreterLongStaticGlue:                   return "_interpreterLongStaticGlue";
+         case TR_ARM64interpreterSyncLongStaticGlue:               return "_interpreterSyncLongStaticGlue";
+         case TR_ARM64interpreterFloatStaticGlue:                  return "_interpreterFloatStaticGlue";
+         case TR_ARM64interpreterSyncFloatStaticGlue:              return "_interpreterSyncFloatStaticGlue";
+         case TR_ARM64interpreterDoubleStaticGlue:                 return "_interpreterDoubleStaticGlue";
+         case TR_ARM64interpreterSyncDoubleStaticGlue:             return "_interpreterSyncDoubleStaticGlue";
+         case TR_ARM64nativeStaticHelper:                          return "_nativeStaticHelper";
+         case TR_ARM64interfaceDispatch:                           return "_interfaceDispatch";
+         case TR_ARM64countingRecompileMethod:                     return "_countingRecompileMethod";
+         case TR_ARM64revertToInterpreterGlue:                     return "_revertToInterpreterGlue";
+         case TR_ARM64doubleRemainder:                             return "doubleRemainder";
+         case TR_ARM64floatRemainder:                              return "floatRemainder";
+         }
+      }
 #endif
-#endif
+#endif // J9_PROJECT_SPECIFIC
 
    if (inDebugExtension())
       return "platform specific - not implemented";
@@ -4447,10 +4334,6 @@ TR_Debug::getLinkageConventionName(uint8_t lc)
          return "Private";
       case TR_System:
          return "System";
-      case TR_AllRegister:
-         return "AllRegister";
-      case TR_InterpretedStatic:
-         return "InterpretedStatic";
       case TR_Helper:
          return "Helper";
       default:
@@ -4516,8 +4399,6 @@ TR_Debug::getVirtualGuardTestTypeName(TR_VirtualGuardTestType testType)
          return "MethodTest";
       case TR_NonoverriddenTest:
          return "NonoverriddenTest";
-      case TR_RubyInlineTest:
-         return "RubyInlineTest";
       case TR_FSDTest:
          return "FSDTest";
       }
@@ -4528,17 +4409,26 @@ TR_Debug::getVirtualGuardTestTypeName(TR_VirtualGuardTestType testType)
 const char *
 TR_Debug::getWriteBarrierKindName(int32_t kind)
    {
-   static const char *names[TR_NumberOfWrtBars] =
+   switch (kind)
       {
-      "None",
-      "Always",
-      "OldCheck",
-      "CardMark",
-      "CardMarkAndOldCheck",
-      "CardMarkIncremental",
-      "RealTime",
-      };
-   return names[kind];
+      case gc_modron_wrtbar_none:
+         return "None";
+      case gc_modron_wrtbar_always:
+         return "Always";
+      case gc_modron_wrtbar_oldcheck:
+         return "OldCheck";
+      case gc_modron_wrtbar_cardmark:
+         return "CardMark";
+      case gc_modron_wrtbar_cardmark_incremental:
+         return "CardMarkIncremental";
+      case gc_modron_wrtbar_cardmark_and_oldcheck:
+         return "CardMarkAndOldCheck";
+      case gc_modron_wrtbar_satb:
+      case gc_modron_wrtbar_satb_and_oldcheck:
+         return "RealTime";
+      default:
+         return "UNKNOWN";
+      }
    }
 
 const char *
@@ -4550,8 +4440,6 @@ TR_Debug::getSpillKindName(uint8_t kind)
          return "gpr";
       case TR_fprSpill:
          return "fpr";
-      case TR_hprSpill:
-         return "hpr";
       case TR_vrfSpill:
          return "vrf";
       case TR_volatileSpill:
@@ -4909,7 +4797,6 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
 #if 0
 /* Work in progress side-by side traceRA={*} */
             const bool isGPR = _registerKindsToAssign & TR_GPR_Mask;
-            const bool isHPR = _registerKindsToAssign & TR_HPR_Mask;
             const bool isVRF = _registerKindsToAssign & TR_VRF_Mask;
             const bool isFPR = _registerKindsToAssign & TR_FPR_Mask;
             const bool isX87 = _registerKindsToAssign & TR_X87_Mask;
@@ -4943,16 +4830,6 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
                trfprintf(_file, "</gprs>\n");
                }
 #if defined(TR_TARGET_S390)
-            if (_registerKindsToAssign & TR_HPR_Mask)
-               {
-               trfprintf(_file, "<hprs>\n");
-               TR::RegisterIterator *iter = _cg->getHPRegisterIterator();
-               for (TR::Register *hpr = iter->getFirst(); hpr; hpr = iter->getNext())
-                  {
-                  printFullRegInfo(_file, hpr);
-                  }
-               trfprintf(_file, "</hprs>\n");
-               }
             if (_registerKindsToAssign & TR_VRF_Mask && _cg->getSupportsVectorRegisters())
                {
                trfprintf(_file, "<vrfs>\n");
@@ -5214,22 +5091,11 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
                printf("\n methodStartAddress = %p",startaddr);
                printf("\n methodEndAddress = %p\n",endaddr);
                fprintf(cf, "break *%p\n",startaddr);
-
-               // Insert breakpoints requested by codegen
-               //
-               for (auto bpIterator = _comp->cg()->getBreakPointList().begin();
-                    bpIterator != _comp->cg()->getBreakPointList().end();
-                    ++bpIterator)
-                  {
-                  fprintf(cf, "break *%p\n",*bpIterator);
-                  }
-
                fprintf(cf, "disassemble %p %p\n",startaddr,endaddr);
                }
 
             fprintf(cf, "finish\n");
             fprintf(cf, "shell rm %s\n",cfname);
-            fprintf(cf, "");
             fclose(cf);
 
             Argv[1] = "-x";
@@ -5295,15 +5161,6 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
                {
                printf("\n methodStartAddress = %p",startaddr);
                printf("\n methodEndAddress = %p\n",endaddr);
-
-               // Insert breakpoints requested by codegen
-               //
-               for (auto bpIterator = _comp->cg()->getBreakPointList().begin();
-                    bpIterator != _comp->cg()->getBreakPointList().end(); ++bpIterator)
-                  {
-                  fprintf(cf, "stopi at 0x%p\n",*bpIterator);
-                  }
-
                fprintf(cf, "stopi at 0x%p\n" ,startaddr);
                }
 

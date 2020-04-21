@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,7 @@ public:
 protected:
 	MM_MemoryPoolSegregated *_memoryPool;
 	MM_MarkMap *_markMap;
+	MM_GCExtensionsBase *_extensions;
 private:
 	bool _isFixHeapForWalk;
 	bool _clearMarkMapAfterSweep; /**< If a region should be unmarked after it is swept */
@@ -84,6 +85,7 @@ protected:
 		MM_BaseVirtual()
 		,_memoryPool(NULL)
 		,_markMap(markMap)
+		,_extensions(env->getExtensions())
 		,_isFixHeapForWalk(false)
 		,_clearMarkMapAfterSweep(true)
 	{
@@ -93,9 +95,7 @@ protected:
 private:
 	void unmarkRegion(MM_EnvironmentBase *env, MM_HeapRegionDescriptorSegregated *region);
 	void sweepSmallRegion(MM_EnvironmentBase *env, MM_HeapRegionDescriptorSegregated *region);
-#if defined(OMR_GC_ARRAYLETS)
 	void sweepArrayletRegion(MM_EnvironmentBase *env, MM_HeapRegionDescriptorSegregated *region);
-#endif /* defined(OMR_GC_ARRAYLETS) */
 	void sweepLargeRegion(MM_EnvironmentBase *env, MM_HeapRegionDescriptorSegregated *region);
 	void addBytesFreedAfterSweep(MM_EnvironmentBase *env, MM_HeapRegionDescriptorSegregated *region);
 	void incrementalSweepSmall(MM_EnvironmentBase *env);
@@ -105,13 +105,14 @@ private:
 	MMINLINE bool addFreeChunk(MM_MemoryPoolAggregatedCellList *memoryPoolACL, uintptr_t *freeChunk, uintptr_t freeChunkSize, uintptr_t minimumFreeEntrySize, uintptr_t freeChunkCellCount)
 	{
 		bool result = false;
+		bool const compressed = _extensions->compressObjectReferences();
 		if (freeChunkSize >= minimumFreeEntrySize) {
 			/* add to memory pool */
 			memoryPoolACL->addFreeChunk(freeChunk, freeChunkSize, freeChunkCellCount);
 			result = true;
 		} else if (_isFixHeapForWalk) {
 			/* fill with holes so debugging tools can walk the heap */
-			MM_HeapLinkedFreeHeader::fillWithHoles(freeChunk, freeChunkSize);
+			MM_HeapLinkedFreeHeader::fillWithHoles(freeChunk, freeChunkSize, compressed);
 		} else {
 			/* dark matter */
 		}

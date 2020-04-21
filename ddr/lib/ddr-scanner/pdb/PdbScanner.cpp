@@ -126,7 +126,7 @@ PdbScanner::startScan(OMRPortLibrary *portLibrary, Symbol_IR *ir, vector<string>
 	}
 
 	if (DDR_RC_OK == rc) {
-		rc = loadBlacklist(blacklistPath);
+		rc = loadBlacklist(portLibrary, blacklistPath);
 	}
 
 	if (DDR_RC_OK == rc) {

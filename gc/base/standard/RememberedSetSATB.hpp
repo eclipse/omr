@@ -53,7 +53,7 @@ public:
 		_typeId = __FUNCTION__;
 		/* Initializing the global fragment index to the reserved index means the GC starts
 		 * with the barrier disabled. The preservedGlobalFragmentIndex must be initialized
-		 * to any non-reserved value so that the call to MM_StaccatoGC::enableWriteBarrier which
+		 * to any non-reserved value so that the call to MM_RealtimeGC::enableWriteBarrier which
 		 * in turns restores the globalFragmentIndex from the preservedGlobalFragmentIndex actually
 		 * restores a valid, non-reserved value.
 		 */
@@ -69,7 +69,7 @@ public:
 	void restoreLocalFragmentIndex(MM_EnvironmentBase* env, MM_GCRememberedSetFragment* fragment); /* Called by the root scanner to disable the double-barrier. */
 	void preserveGlobalFragmentIndex(MM_EnvironmentBase* env); /* Called by the code that disables the barrier. */
 	void restoreGlobalFragmentIndex(MM_EnvironmentBase* env); /* Called by the code that enables the barrier. */
-	/* Used to determine if the staccato write barrier is enabled. */
+	/* Used to determine if the realtime write barrier is enabled. */
 	MMINLINE bool
 	isGlobalFragmentIndexPreserved(MM_EnvironmentBase* env)
 	{

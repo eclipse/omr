@@ -42,17 +42,15 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "ras/Debug.hpp"
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
-
-#define ENABLE_ZARCH_FOR_32    1
 
 void
 TR_S390BinaryCommutativeAnalyser::remapInputs(TR::Node * firstChild, TR::Register *firstRegister,
@@ -214,7 +212,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
           }
       }
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       if (firstChild->getOpCodeValue() == TR::l2i && firstChild->getReferenceCount() == 1 &&
           firstChild->getRegister() == NULL && nonClobberingDestination)
@@ -247,8 +245,11 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
 
    bool isLoadNodeNested = false;
 
+   // All of the memToRegOpCodes (MGH, MSGC and MSC) used in the if block below
+   // rely on the miscellaneous-instruction-extension facility 2 being installed
+
    // TODO: add MH and MHY here; outside of the z14 if check.
-   if(TR::Compiler->target.cpu.getS390SupportsZ14())
+   if(cg()->comp()->target().cpu.getSupportsMiscellaneousInstructionExtensions2Facility())
       {
       bool isSetReg2Mem1 = false;
 
@@ -342,7 +343,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
          }
       else
          {
-         if(TR::Compiler->target.cpu.getS390SupportsZ14())
+         if(cg()->comp()->target().cpu.getSupportsMiscellaneousInstructionExtensions2Facility())
             {
             // Check for multiplications on z14
             TR::InstOpCode::Mnemonic z14OpCode = TR::InstOpCode::BAD;
@@ -607,7 +608,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
          tempMR->addToOffset(4);
          tempMR->setDispAdjusted();
          }
-      
+
       auto instructionFormat = TR::InstOpCode(memToRegOpCode).getInstructionFormat();
 
       if (instructionFormat == RXE_FORMAT)
@@ -668,9 +669,9 @@ bool
 TR_S390BinaryCommutativeAnalyser::conversionIsRemoved(TR::Node * root, TR::Node * &child)
    {
    if (((root->getDataType() == TR::Int64 && child->getOpCodeValue() == TR::a2l &&
-         TR::Compiler->target.is64Bit()) ||
+         cg()->comp()->target().is64Bit()) ||
         (root->getDataType() == TR::Int32 && child->getOpCodeValue() == TR::a2i &&
-       TR::Compiler->target.is32Bit()))  &&
+       cg()->comp()->target().is32Bit()))  &&
        child->getFirstChild()->getOpCodeValue() == TR::aloadi &&
        child->getFirstChild()->getRegister() == NULL &&
        child->getFirstChild()->getReferenceCount() == 1 &&
@@ -740,8 +741,8 @@ TR_S390BinaryCommutativeAnalyser::integerAddAnalyser(TR::Node * root, TR::InstOp
       is16BitMemory2Operand = true;
       }
 
-   /**  Attempt to use AGH to add halfworf from memory */
-   if (TR::Compiler->target.cpu.getS390SupportsZ14() &&
+   /* Attempt to use AGH to add halfword from memory */
+   if (cg()->comp()->target().cpu.getSupportsMiscellaneousInstructionExtensions2Facility() &&
        secondChild->getOpCodeValue() == TR::s2l &&
        secondChild->getFirstChild()->getOpCodeValue() == TR::sloadi &&
        secondChild->isSingleRefUnevaluated() &&
@@ -793,7 +794,7 @@ TR_S390BinaryCommutativeAnalyser::integerAddAnalyser(TR::Node * root, TR::InstOp
       TR::Register * tempReg = root->setRegister(allocateAddSubRegister(root, firstRegister));
       bool done = false;
 
-      if (cg()->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+      if (cg()->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
          {
          if (regToRegOpCode == TR::InstOpCode::AR)
             {

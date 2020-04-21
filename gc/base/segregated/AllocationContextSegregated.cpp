@@ -318,7 +318,6 @@ MM_AllocationContextSegregated::preAllocateSmall(MM_EnvironmentBase *env, uintpt
 
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 uintptr_t *
 MM_AllocationContextSegregated::allocateArraylet(MM_EnvironmentBase *env, omrarrayptr_t parent)
 {
@@ -356,7 +355,6 @@ retry:
 
 	return NULL;
 }
-#endif /* defined(OMR_GC_ARRAYLETS) */
 
 /* This method is moved here so that AC can see the large full page and cache it */
 uintptr_t *

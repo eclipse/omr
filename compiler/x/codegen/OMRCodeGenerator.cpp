@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,11 +27,12 @@
 #include <string.h>
 #include "codegen/BackingStore.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
@@ -69,17 +70,17 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
 #include "infra/BitVector.hpp"
@@ -103,23 +104,23 @@ namespace OMR { class RegisterUsage; }
 namespace TR { class RegisterDependencyConditions; }
 
 // Hack markers
-#define CANT_REMATERIALIZE_ADDRESSES (TR::Compiler->target.is64Bit()) // AMD64 produces a memref with an unassigned addressRegister
+#define CANT_REMATERIALIZE_ADDRESSES(cg) (cg->comp()->target().is64Bit()) // AMD64 produces a memref with an unassigned addressRegister
 
 
 TR_X86ProcessorInfo OMR::X86::CodeGenerator::_targetProcessorInfo;
 
-void TR_X86ProcessorInfo::initialize(TR::Compilation *comp)
+void TR_X86ProcessorInfo::initialize(TR::CodeGenerator *cg)
    {
    // For now, we only convert the feature bits into a flags32_t, for easier querying.
    // To retrieve other information, the VM functions can be called directly.
    //
-   _featureFlags.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags(comp));
-   _featureFlags2.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags2(comp));
-   _featureFlags8.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags8(comp));
+   _featureFlags.set(cg->comp()->target().cpu.getX86ProcessorFeatureFlags());
+   _featureFlags2.set(cg->comp()->target().cpu.getX86ProcessorFeatureFlags2());
+   _featureFlags8.set(cg->comp()->target().cpu.getX86ProcessorFeatureFlags8());
 
    // Determine the processor vendor.
    //
-   const char *vendor = TR::Compiler->target.cpu.getX86ProcessorVendorId(comp);
+   const char *vendor = cg->comp()->target().cpu.getX86ProcessorVendorId();
    if (!strncmp(vendor, "GenuineIntel", 12))
       _vendorFlags.set(TR_GenuineIntel);
    else if (!strncmp(vendor, "AuthenticAMD", 12))
@@ -136,7 +137,7 @@ void TR_X86ProcessorInfo::initialize(TR::Compilation *comp)
 
    // set up the processor family and cache description
 
-   uint32_t _processorSignature = TR::Compiler->target.cpu.getX86ProcessorSignature(comp);
+   uint32_t _processorSignature = cg->comp()->target().cpu.getX86ProcessorSignature();
 
    if (isGenuineIntel())
       {
@@ -205,11 +206,11 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    {
 
    bool supportsSSE2 = false;
-   _targetProcessorInfo.initialize(comp);
+   _targetProcessorInfo.initialize(self());
 
    // Pick a padding table
    //
-   if (_targetProcessorInfo.isGenuineIntel() && TR::Compiler->target.is32Bit())
+   if (_targetProcessorInfo.isGenuineIntel() && comp->target().is32Bit())
       {
       _paddingTable = &_old32BitPaddingTable;
       }
@@ -217,7 +218,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
       _paddingTable = &_K8PaddingTable;
    else if (_targetProcessorInfo.prefersMultiByteNOP() && !comp->getOption(TR_DisableZealousCodegenOpts))
       _paddingTable = &_intelMultiBytePaddingTable;
-   else if (TR::Compiler->target.is32Bit())
+   else if (comp->target().is32Bit())
       _paddingTable = &_old32BitPaddingTable; // Unknown 32-bit target
    else
       _paddingTable = &_K8PaddingTable; // Unknown 64-bit target
@@ -226,7 +227,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    //
 
 #if defined(TR_TARGET_X86) && !defined(J9HAMMER)
-   if (_targetProcessorInfo.supportsSSE2() && TR::Compiler->target.cpu.testOSForSSESupport(comp))
+   if (_targetProcessorInfo.supportsSSE2() && comp->target().cpu.testOSForSSESupport())
       supportsSSE2 = true;
 #endif // defined(TR_TARGET_X86) && !defined(J9HAMMER)
 
@@ -240,14 +241,14 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
         */
       if (!_targetProcessorInfo.isIntelHaswell())
          {
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             self()->setSupportsTM(); // disable tm on 32bits for now
             }
          }
       }
 
-   if (TR::Compiler->target.is64Bit()
+   if (comp->target().is64Bit()
 #if defined(TR_TARGET_X86) && !defined(J9HAMMER)
        || supportsSSE2
 #endif
@@ -280,7 +281,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    // 32-bit platforms must check the processor and OS.
    // 64-bit platforms unconditionally support prefetching.
    //
-   if (_targetProcessorInfo.supportsSSE() && TR::Compiler->target.cpu.testOSForSSESupport(comp))
+   if (_targetProcessorInfo.supportsSSE() && comp->target().cpu.testOSForSSESupport())
 #endif // defined(TR_TARGET_X86) && !defined(J9HAMMER)
       {
       self()->setTargetSupportsSoftwarePrefetches();
@@ -308,7 +309,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
     * This code will be reenabled as part of Issue 2280
     */
 #if 0
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       self()->setFirstGlobalVRF(self()->getFirstGlobalFPR());
       self()->setLastGlobalVRF(self()->getLastGlobalFPR());
@@ -400,6 +401,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
          }
       }
 
+   self()->setSupportsRecompilation();
    self()->setSupportsScaledIndexAddressing();
    self()->setSupportsConstantOffsetInAddressing();
    self()->setSupportsCompactedLocals();
@@ -408,6 +410,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
    self()->setSupportsEfficientNarrowUnsignedIntComputation();
    self()->setSupportsVirtualGuardNOPing();
    self()->setSupportsDynamicANewArray();
+   self()->setSupportsSelect();
 
    // allows [i/l]div to decompose to [i/l]mulh in TreeSimplifier
    //
@@ -416,7 +419,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
       {
       self()->setSupportsLoweringConstIDiv();
 
-      if (TR::Compiler->target.is64Bit())
+      if (comp->target().is64Bit())
          self()->setSupportsLoweringConstLDiv();
       }
 
@@ -473,7 +476,7 @@ OMR::X86::CodeGenerator::initialize(TR::Compilation *comp)
          }
       }
 
-   if (TR::Compiler->target.cpu.isI386())
+   if (comp->target().cpu.isI386())
       self()->setGenerateMasmListingSyntax();
 
    if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
@@ -517,7 +520,7 @@ OMR::X86::CodeGenerator::createLinkage(TR_LinkageConventions lc)
       case TR_Helper:
          // Intentional fall through
       case TR_System:
-         if (TR::Compiler->target.isLinux() || TR::Compiler->target.isOSX())
+         if (self()->comp()->target().isLinux() || self()->comp()->target().isOSX())
             {
 #if defined(TR_TARGET_64BIT)
             linkage = new (self()->trHeapMemory()) TR::AMD64ABILinkage(self());
@@ -525,7 +528,7 @@ OMR::X86::CodeGenerator::createLinkage(TR_LinkageConventions lc)
             linkage = new (self()->trHeapMemory()) TR::IA32SystemLinkage(self());
 #endif
             }
-         else if (TR::Compiler->target.isWindows())
+         else if (self()->comp()->target().isWindows())
             {
 #if defined(TR_TARGET_64BIT)
             linkage = new (self()->trHeapMemory()) TR::AMD64Win64FastCallLinkage(self());
@@ -658,7 +661,7 @@ static bool willNotInlineCompareAndSwapNative(TR::Node *node,
       {
       return false;
       }
-   else if (size == 8 && TR::Compiler->target.is64Bit())
+   else if (size == 8 && comp->target().is64Bit())
       {
       return false;
       }
@@ -697,7 +700,7 @@ bool OMR::X86::CodeGenerator::willBeEvaluatedAsCallByCodeGen(TR::Node *node, TR:
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
          return willNotInlineCompareAndSwapNative(node, 4, comp);
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
-         return willNotInlineCompareAndSwapNative(node, (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers()) ? 8 : 4, comp);
+         return willNotInlineCompareAndSwapNative(node, (comp->target().is64Bit() && !comp->useCompressedPointers()) ? 8 : 4, comp);
 #endif
       default:
          return true;
@@ -961,10 +964,10 @@ static const char *getRematerializationOptString()
 
 bool OMR::X86::CodeGenerator::supportsConstantRematerialization()        { static bool b = CAN_REMATERIALIZE("constant"); return b; }
 bool OMR::X86::CodeGenerator::supportsLocalMemoryRematerialization()     { static bool b = CAN_REMATERIALIZE("local"); return b; }
-bool OMR::X86::CodeGenerator::supportsStaticMemoryRematerialization()    { static bool b = CAN_REMATERIALIZE("static"); return !CANT_REMATERIALIZE_ADDRESSES && b; }
+bool OMR::X86::CodeGenerator::supportsStaticMemoryRematerialization()    { static bool b = CAN_REMATERIALIZE("static"); return !CANT_REMATERIALIZE_ADDRESSES(self()) && b; }
 bool OMR::X86::CodeGenerator::supportsXMMRRematerialization()            { static bool b = CAN_REMATERIALIZE("xmmr"); return b; }
-bool OMR::X86::CodeGenerator::supportsIndirectMemoryRematerialization()  { static bool b = ALLOWED_TO_REMATERIALIZE("indirect"); return !CANT_REMATERIALIZE_ADDRESSES && b;}
-bool OMR::X86::CodeGenerator::supportsAddressRematerialization()         { static bool b = ALLOWED_TO_REMATERIALIZE("address"); return !CANT_REMATERIALIZE_ADDRESSES && b; }
+bool OMR::X86::CodeGenerator::supportsIndirectMemoryRematerialization()  { static bool b = ALLOWED_TO_REMATERIALIZE("indirect"); return !CANT_REMATERIALIZE_ADDRESSES(self()) && b;}
+bool OMR::X86::CodeGenerator::supportsAddressRematerialization()         { static bool b = ALLOWED_TO_REMATERIALIZE("address"); return !CANT_REMATERIALIZE_ADDRESSES(self()) && b; }
 
 #undef ALLOWED_TO_REMATERIALIZE
 #undef CAN_REMATERIALIZE
@@ -1026,7 +1029,7 @@ OMR::X86::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode, TR::D
        */
       case TR::getvelem:
 #if 0
-         if (TR::Compiler->target.is64Bit() && (dt == TR::Int32 || dt == TR::Int64 || dt == TR::Float || dt == TR::Double))
+         if (self()->comp()->target().is64Bit() && (dt == TR::Int32 || dt == TR::Int64 || dt == TR::Float || dt == TR::Double))
             return true;
          else
 #endif //closes the if 0
@@ -1076,20 +1079,17 @@ OMR::X86::CodeGenerator::supportsMergingGuards()
 bool
 OMR::X86::CodeGenerator::supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol)
    {
-   bool result = false;
-
    switch (symbol)
       {
       case TR::SymbolReferenceTable::atomicAddSymbol:
       case TR::SymbolReferenceTable::atomicFetchAndAddSymbol:
       case TR::SymbolReferenceTable::atomicSwapSymbol:
-         {
-         result = true;
-         break;
-         }
+      case TR::SymbolReferenceTable::atomicCompareAndSwapReturnStatusSymbol:
+      case TR::SymbolReferenceTable::atomicCompareAndSwapReturnValueSymbol:
+         return true;
+      default:
+         return false;
       }
-
-   return result;
    }
 
 TR::RealRegister *
@@ -1640,7 +1640,7 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
       }
 
    TR::Instruction * interpreterEntryInstruction;
-   if (TR::Compiler->target.is64Bit())
+   if (self()->comp()->target().is64Bit())
       {
       if (self()->comp()->getMethodSymbol()->getLinkageConvention() != TR_System)
          interpreterEntryInstruction = self()->getLinkage()->copyStackParametersToLinkageRegisters(procEntryInstruction);
@@ -1649,7 +1649,7 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
 
       // Patching can occur at the jit entry point, so insert padding if necessary.
       //
-      if (TR::Compiler->target.isSMP())
+      if (self()->comp()->target().isSMP())
          {
          TR::Recompilation * recompilation = self()->comp()->getRecompilationInfo();
          const TR_AtomicRegion *atomicRegions;
@@ -1737,10 +1737,10 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
          gcMapCursor->setGCMap(self()->getStackAtlas()->getParameterMap()->clone(self()->trMemory()));
       }
 
-   /* Adjust estimate based on jitted method entry alignment requirement */
-   uintptr_t boundary = self()->comp()->getOptions()->getJitMethodEntryAlignmentBoundary(self());
-   if (boundary && (boundary & boundary - 1) == 0)
-      estimate += boundary - 1;
+   if (self()->supportsJitMethodEntryAlignment())
+      {
+      estimate += (self()->getJitMethodEntryAlignmentBoundary() - 1);
+      }
 
    if (self()->comp()->getOption(TR_TraceVFPSubstitution))
       traceMsg(self()->comp(), "\n<instructions\n"
@@ -1875,7 +1875,7 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
    uint8_t * temp = self()->allocateCodeMemory(self()->getEstimatedCodeLength(), 0, &coldCode);
    TR_ASSERT(temp, "Failed to allocate primary code area.");
 
-   if (TR::Compiler->target.is64Bit() && self()->hasCodeCacheSwitched() && self()->getPicSlotCount() != 0)
+   if (self()->comp()->target().is64Bit() && self()->hasCodeCacheSwitched() && self()->getPicSlotCount() != 0)
       {
       int32_t numTrampolinesToReserve = self()->getPicSlotCount() - self()->getNumReservedIPICTrampolines();
       TR_ASSERT(numTrampolinesToReserve >= 0, "Discrepancy with number of IPIC trampolines to reserve getPicSlotCount()=%d getNumReservedIPICTrampolines()=%d",
@@ -1916,7 +1916,7 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
               cursorInstruction->getEstimatedBinaryLength(),
               self()->getBinaryBufferCursor() - instructionStart);
 
-      if (TR::Compiler->target.is64Bit() &&
+      if (self()->comp()->target().is64Bit() &&
           (cursorInstruction->getOpCodeValue() == PROCENTRY))
          {
          // A hack to set the linkage info word
@@ -1970,6 +1970,8 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
          }
       }
 #endif
+
+   self()->getLinkage()->performPostBinaryEncoding();
 
    if (self()->comp()->getOption(TR_TraceCG))
       {
@@ -2028,14 +2030,14 @@ TR::Register *OMR::X86::CodeGenerator::gprClobberEvaluate(TR::Node * node, TR_X8
 TR::Register *OMR::X86::CodeGenerator::intClobberEvaluate(TR::Node * node)
    {
    TR_ASSERT(!node->getOpCode().is8Byte() || node->getOpCode().isRef(), "Non-ref 8bytes must use longClobberEvaluate");
-   TR_ASSERT(!node->getOpCode().isRef() || TR::Compiler->target.is32Bit() || self()->comp()->useCompressedPointers(), "64-bit references must use longClobberEvaluate unless under compression");
+   TR_ASSERT(!node->getOpCode().isRef() || self()->comp()->target().is32Bit() || self()->comp()->useCompressedPointers(), "64-bit references must use longClobberEvaluate unless under compression");
    return self()->gprClobberEvaluate(node, MOV4RegReg);
    }
 
 TR::Register *OMR::X86::CodeGenerator::shortClobberEvaluate(TR::Node * node)
    {
    TR_ASSERT(!node->getOpCode().is4Byte() && !node->getOpCode().is8Byte(), "Ints/Longs must use int/longClobberEvaluate");
-   TR_ASSERT(!(node->getOpCode().isRef() && TR::Compiler->target.is64Bit()), "64-bit references must use longClobberEvaluate");
+   TR_ASSERT(!(node->getOpCode().isRef() && self()->comp()->target().is64Bit()), "64-bit references must use longClobberEvaluate");
    return self()->gprClobberEvaluate(node, MOV2RegReg);
    }
 
@@ -2320,7 +2322,7 @@ void OMR::X86::CodeGenerator::apply32BitLoadLabelRelativeRelocation(TR::Instruct
 
 void OMR::X86::CodeGenerator::apply32BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol * label)
    {
-   *cursor += ((uintptrj_t)label->getCodeLocation());
+   *cursor += ((uintptr_t)label->getCodeLocation());
    }
 
 
@@ -2331,17 +2333,17 @@ int32_t OMR::X86::CodeGenerator::branchDisplacementToHelperOrTrampoline(
    uint8_t            *nextInstructionAddress,
    TR::SymbolReference *helper)
    {
-   intptrj_t helperAddress = (intptrj_t)helper->getMethodAddress();
+   intptr_t helperAddress = (intptr_t)helper->getMethodAddress();
 
-   if (self()->directCallRequiresTrampoline(helperAddress, (intptrj_t)nextInstructionAddress))
+   if (self()->directCallRequiresTrampoline(helperAddress, (intptr_t)nextInstructionAddress))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(helper->getReferenceNumber(), (void *)(nextInstructionAddress-4));
 
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinRIPRange(helperAddress, (intptrj_t)nextInstructionAddress),
+      TR_ASSERT_FATAL(self()->comp()->target().cpu.isTargetWithinRIPRange(helperAddress, (intptr_t)nextInstructionAddress),
                       "Local helper trampoline should be reachable directly");
       }
 
-   return (int32_t)(helperAddress - (intptrj_t)(nextInstructionAddress));
+   return (int32_t)(helperAddress - (intptr_t)(nextInstructionAddress));
    }
 
 
@@ -2417,11 +2419,11 @@ TR::RealRegister::RegNum OMR::X86::CodeGenerator::pickNOPRegister(TR::Instructio
 // TODO: Don't duplicate this function all over the place.  Find a good header for it.
 inline bool getNodeIs64Bit(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::Compiler->target.is64Bit() && node->getSize() > 4;
+   return cg->comp()->target().is64Bit() && node->getSize() > 4;
    }
 
 // TODO: Don't duplicate this function all over the place.  Find a good header for it.
-inline intptrj_t integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg)
+inline intptr_t integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg)
    {
    if (getNodeIs64Bit(node, cg))
       {
@@ -2519,7 +2521,7 @@ void OMR::X86::CodeGenerator::simulateNodeEvaluation(TR::Node * node, TR_Registe
       bool clobbersNothing = node->getOpCode().isBooleanCompare() || node->getOpCode().isBndCheck();
       bool tryFoldingLeft = node->getOpCode().isCommutative() || clobbersNothing;
 
-      if (TR::Compiler->target.is32Bit())
+      if (self()->comp()->target().is32Bit())
          {
          while (lookForMemrefInChild(left))
             left = left->getFirstChild();
@@ -2583,7 +2585,7 @@ void OMR::X86::CodeGenerator::simulateNodeEvaluation(TR::Node * node, TR_Registe
 
       bool usesMul = true;
       if (secondChild->getOpCode().isLoadConst() &&
-         (TR::Compiler->target.is64Bit() || !nodeType.isInt64()) &&
+         (self()->comp()->target().is64Bit() || !nodeType.isInt64()) &&
          populationCount(integerConstNodeValue(secondChild, self())) <= 2)
          {
          // Will probably use shifts/adds/etc instead of multiply
@@ -2681,11 +2683,11 @@ static const uint8_t *paddingTableEncoding(TR_X86PaddingTable *paddingTable, uin
    {
    TR_ASSERT(paddingTable->_biggestEncoding <= PADDING_TABLE_MAX_ENCODING_LENGTH, "Padding table must have _biggestEncoding <= PADDING_TABLE_MAX_ENCODING_LENGTH (%d <= %d)", paddingTable->_biggestEncoding, PADDING_TABLE_MAX_ENCODING_LENGTH);
    TR_ASSERT(length <= paddingTable->_biggestEncoding, "Padding length %d cannot exceed %d", length, paddingTable->_biggestEncoding);
-   return (uint8_t *)((uintptrj_t)(paddingTable->_encodings)+(length-1)*PADDING_TABLE_MAX_ENCODING_LENGTH);
+   return (uint8_t *)((uintptr_t)(paddingTable->_encodings)+(length-1)*PADDING_TABLE_MAX_ENCODING_LENGTH);
    }
 
 uint8_t *OMR::X86::CodeGenerator::generatePadding(uint8_t              *cursor,
-                                              intptrj_t             length,
+                                              intptr_t             length,
                                               TR::Instruction    *neighborhood,
                                               TR_PaddingProperties  properties,
                                               bool                  recursive)
@@ -2727,7 +2729,7 @@ uint8_t *OMR::X86::CodeGenerator::generatePadding(uint8_t              *cursor,
       }
    else
       {
-      const intptrj_t jmpThreshold = 100; // Beyond this length, a jmp is faster than a sequence of no-op instructions
+      const intptr_t jmpThreshold = 100; // Beyond this length, a jmp is faster than a sequence of no-op instructions
 
       if ((properties & TR_AtomicNoOpPadding || length >= jmpThreshold))
          {
@@ -2867,21 +2869,21 @@ uint8_t *OMR::X86::CodeGenerator::generatePadding(uint8_t              *cursor,
             TR::DebugCounter::incStaticDebugCounter(self()->comp(), "nopInst/-1/unknown");
          }
       }
-   // End -- Static debug coutners to track nop generation
+   // End -- Static debug counters to track nop generation
    TR_ASSERT(cursor == desiredReturnValue, "Must produce the correct amount of padding");
    return cursor;
    }
 
-intptrj_t
-OMR::X86::CodeGenerator::alignment(void *cursor, intptrj_t boundary, intptrj_t margin)
+intptr_t
+OMR::X86::CodeGenerator::alignment(void *cursor, intptr_t boundary, intptr_t margin)
    {
-   return self()->alignment((intptrj_t)cursor, boundary, margin);
+   return self()->alignment((intptr_t)cursor, boundary, margin);
    }
 
 bool
-OMR::X86::CodeGenerator::patchableRangeNeedsAlignment(void *cursor, intptrj_t length, intptrj_t boundary, intptrj_t margin)
+OMR::X86::CodeGenerator::patchableRangeNeedsAlignment(void *cursor, intptr_t length, intptr_t boundary, intptr_t margin)
    {
-   intptrj_t toAlign = self()->alignment(cursor, boundary, margin);
+   intptr_t toAlign = self()->alignment(cursor, boundary, margin);
    return (toAlign > 0 && toAlign < length);
    }
 
@@ -2893,7 +2895,7 @@ TR_X86ScratchRegisterManager *OMR::X86::CodeGenerator::generateScratchRegisterMa
 bool
 TR_X86ScratchRegisterManager::reclaimAddressRegister(TR::MemoryReference *mr)
    {
-   if (TR::Compiler->target.is32Bit())
+   if (TR::comp()->target().is32Bit())
       return false;
 
    return reclaimScratchRegister(mr->getAddressRegister());
@@ -3127,11 +3129,11 @@ OMR::X86::CodeGenerator::switchCodeCacheTo(TR::CodeCache *newCodeCache)
 
 
 bool
-OMR::X86::CodeGenerator::directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress)
+OMR::X86::CodeGenerator::directCallRequiresTrampoline(intptr_t targetAddress, intptr_t sourceAddress)
    {
    // Adjust the sourceAddress to the start of the following instruction (+5 bytes)
    //
    return
-      !TR::Compiler->target.cpu.isTargetWithinRIPRange(targetAddress, sourceAddress+5) ||
+      !self()->comp()->target().cpu.isTargetWithinRIPRange(targetAddress, sourceAddress+5) ||
       self()->comp()->getOption(TR_StressTrampolines);
    }

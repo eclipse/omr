@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -401,9 +401,9 @@ MM_MemorySpace::systemGarbageCollect(MM_EnvironmentBase *env, uint32_t gcCode)
 }
 
 void
-MM_MemorySpace::localGarbageCollect(MM_EnvironmentBase *env)
+MM_MemorySpace::localGarbageCollect(MM_EnvironmentBase *env, uint32_t gcCode)
 {
-	getDefaultMemorySubSpace()->systemGarbageCollect(env, J9MMCONSTANT_IMPLICIT_GC_DEFAULT);
+	getDefaultMemorySubSpace()->systemGarbageCollect(env, gcCode);
 }
 
 bool
@@ -515,9 +515,9 @@ MM_MemorySpace::heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subs
  * 
  */
 void
-MM_MemorySpace::heapReconfigured(MM_EnvironmentBase *env)
+MM_MemorySpace::heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress)
 {
-	_heap->heapReconfigured(env);
+	_heap->heapReconfigured(env, reason, subspace, lowAddress, highAddress);
 }
 
 /**

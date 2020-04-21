@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "env/StackMemoryRegion.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "cs2/sparsrbit.h"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ namespace TR { struct PPCLinkageProperties; }
 
 extern TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg,
                                     TR::Node        *node,
-                                    intptrj_t      address,
+                                    intptr_t      address,
                                     TR::Register    *targetRegister,
                                     TR::Register    *tempRegister,
                                     TR::InstOpCode::Mnemonic  opCode,
@@ -73,7 +73,17 @@ extern TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg,
 
 extern TR::Instruction *loadAddressConstant(TR::CodeGenerator *cg,
                                     TR::Node        *node,
-                                    intptrj_t         value,
+                                    intptr_t         value,
+                                    TR::Register    *targetRegister,
+                                    TR::Instruction *cursor=NULL,
+                                    bool            isPicSite=false,
+                                    int16_t         typeAddress = -1);
+
+
+extern TR::Instruction *loadAddressConstant(TR::CodeGenerator *cg,
+                                    bool            isRelocatable,
+                                    TR::Node        *node,
+                                    intptr_t         value,
                                     TR::Register    *targetRegister,
                                     TR::Instruction *cursor=NULL,
                                     bool            isPicSite=false,
@@ -81,7 +91,7 @@ extern TR::Instruction *loadAddressConstant(TR::CodeGenerator *cg,
 
 extern TR::Instruction *loadActualConstant(TR::CodeGenerator *cg,
                                     TR::Node        *node,
-                                    intptrj_t       value,
+                                    intptr_t       value,
                                     TR::Register    *targetRegister,
                                     TR::Instruction *cursor=NULL,
                                     bool            isPicSite=false);
@@ -103,7 +113,7 @@ extern TR::Instruction *loadConstant(TR::CodeGenerator *cg,
 
 extern TR::Instruction *fixedSeqMemAccess(TR::CodeGenerator *cg,
                                          TR::Node          *node,
-                                         intptrj_t         addr,
+                                         intptr_t         addr,
                                          TR::Instruction  **nibbles,
                                          TR::Register      *srcOrTrg,
                                          TR::Register      *baseReg,
@@ -124,7 +134,7 @@ extern uint8_t *loadArgumentItem(TR::InstOpCode::Mnemonic       op,
                                  int32_t             offset,
                                  TR::CodeGenerator *cg);
 
-extern intptrj_t findCCLocalPPCHelperTrampoline(int32_t helperIndex, void *target, void*callSite, void*fe);
+extern intptr_t findCCLocalPPCHelperTrampoline(int32_t helperIndex, void *target, void*callSite, void*fe);
 
 #if defined(TR_HOST_POWER)
 void ppcCodeSync(uint8_t * start, uint32_t size);
@@ -178,13 +188,26 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    void doRegisterAssignment(TR_RegisterKinds kindsToAssign);
    void doBinaryEncoding();
    void doPeephole();
+   void expandInstructions();
    virtual TR_RegisterPressureSummary *calculateRegisterPressure();
    void deleteInst(TR::Instruction* old);
    TR::Instruction *generateNop(TR::Node *n, TR::Instruction *preced = 0, TR_NOPKind nopKind=TR_NOPStandard);
    TR::Instruction *generateGroupEndingNop(TR::Node *node , TR::Instruction *preced = 0);
    TR::Instruction *generateProbeNop(TR::Node *node , TR::Instruction *preced = 0);
 
+   bool canEmitDataForExternallyRelocatableInstructions();
+
    bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg);
+
+   /**
+    * Return the proper linkage for this call, especially for the case when the methodSymbol
+    * doesn't capture the complete information.
+    *
+    * @param[in] node, this calling node
+    * @param[in] isIndirect true if this call is an indirect call
+    * @return    appropriate linkage for this call
+    */
+   TR::Linkage *deriveCallingLinkage(TR::Node *node, bool isIndirect);
 
    bool isSnippetMatched(TR::Snippet *, int32_t, TR::SymbolReference *);
 
@@ -232,7 +255,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR::RealRegister *getTOCBaseRegister()                       {return _tocBaseRegister;}
    TR::RealRegister *setTOCBaseRegister(TR::RealRegister *r)  {return (_tocBaseRegister = r);}
 
-   uintptrj_t *getTOCBase();
+   uintptr_t *getTOCBase();
 
    TR_PPCScratchRegisterManager* generateScratchRegisterManager(int32_t capacity = 32);
 
@@ -315,7 +338,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR::SymbolReference &getForwardHalfWordArrayCopySymbolReference();
    TR::SymbolReference &getReferenceArrayCopySymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCreferenceArrayCopy, false, false, false); }
    TR::SymbolReference &getGeneralArrayCopySymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCgeneralArrayCopy, false, false, false); }
-   TR::SymbolReference &getArrayTranslateTRTOSimpleVMXSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayTranslateTRTOSimpleVMX, false, false, false); }
    TR::SymbolReference &getArrayCmpVMXSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpVMX, false, false, false); }
    TR::SymbolReference &getArrayCmpLenVMXSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpLenVMX, false, false, false); }
    TR::SymbolReference &getArrayCmpScalarSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpScalar, false, false, false); }
@@ -395,6 +417,8 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
       return  ((size < (lineSize<<1)) && (size > (lineSize >> 2)));
       }
 
+   uint32_t getJitMethodEntryAlignmentBoundary();
+
    using OMR::CodeGenerator::getSupportsConstantOffsetInAddressing;
    bool getSupportsConstantOffsetInAddressing(int64_t value) { return (value>=LOWER_IMMED) && (value<=UPPER_IMMED);}
 
@@ -412,8 +436,6 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR::RealRegister *regMaskToRealRegister(TR_RegisterMask mask, TR_RegisterKinds rk);
 
    static uint32_t registerBitMask(int32_t reg);
-
-   int32_t getInternalPtrMapBit() { return 18;}
 
    int32_t getMaximumNumbersOfAssignableGPRs();
    int32_t getMaximumNumbersOfAssignableFPRs();
@@ -449,7 +471,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    TR::Instruction *loadAddressConstantFixed(
       TR::Node        *node,
-      intptrj_t         value,
+      intptr_t         value,
       TR::Register    *targetRegister,
       TR::Instruction *cursor=NULL,
       TR::Register    *tempReg=NULL,
@@ -483,7 +505,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
       TR::Instruction *firstInstruction,
       TR::Register *tempReg,
       int16_t typeAddress,
-      intptrj_t value);
+      intptr_t value);
 
    void addMetaDataFor32BitFixedLoadLabelAddressIntoReg(
       TR::Node *node,
@@ -506,7 +528,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
     *
     * @return : true if a trampoline is required; false otherwise.
     */
-   bool directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress);
+   bool directCallRequiresTrampoline(intptr_t targetAddress, intptr_t sourceAddress);
 
    private:
 
@@ -572,5 +594,48 @@ class TR_PPCScratchRegisterManager : public TR_ScratchRegisterManager
    using TR_ScratchRegisterManager::addScratchRegistersToDependencyList;
    void addScratchRegistersToDependencyList(TR::RegisterDependencyConditions *deps, bool excludeGPR0);
    };
+
+   void mulConstant(
+      TR::Node *,
+      TR::Register *trgReg,
+      TR::Register *sourceReg,
+      int32_t value,
+      TR::CodeGenerator *cg);
+                   
+   void mulConstant(
+      TR::Node *,
+      TR::Register *trgReg,
+      TR::Register *sourceReg,
+      int64_t value,
+      TR::CodeGenerator *cg);
+   
+   
+   TR::Register *addConstantToLong(
+      TR::Node * node,
+      TR::Register *srcReg,
+      int64_t value,
+      TR::Register *trgReg,
+      TR::CodeGenerator *cg);
+
+   TR::Register *addConstantToLong(
+      TR::Node *node,
+      TR::Register *srcHigh,
+      TR::Register *srcLow,
+      int32_t valHigh,
+      int32_t valLow,
+      TR::CodeGenerator *cg);
+   
+   TR::Register *addConstantToInteger(
+      TR::Node * node,
+      TR::Register *srcReg,
+      int32_t value,
+      TR::CodeGenerator *cg);
+
+   TR::Register *addConstantToInteger(
+      TR::Node * node,
+      TR::Register *trgReg,
+      TR::Register *srcReg,
+      int32_t value,
+      TR::CodeGenerator *cg);
 
 #endif

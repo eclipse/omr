@@ -23,7 +23,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/TRMemory.hpp"
@@ -314,7 +314,8 @@ bool TR_LoopReplicator::isWellFormedLoop(TR_RegionStructure *region, TR_Structur
 
    if (_maxNestingDepth > MAX_REPLICATION_NESTING_DEPTH)
       {
-      traceMsg(comp(), "for loop (%d), max nest depth thresholds exceeded\n", region->getNumber());
+      if (traceAny())
+         traceMsg(comp(), "for loop (%d), max nest depth thresholds exceeded\n", region->getNumber());
       return false;
       }
 
@@ -322,7 +323,8 @@ bool TR_LoopReplicator::isWellFormedLoop(TR_RegionStructure *region, TR_Structur
    //
    if ((numBlocks*MAX_REPLICATION_GROWTH_FACTOR) > MAX_REPLICATION_GROWTH_SIZE)
       {
-      traceMsg(comp(), "for loop (%d), loop too big, thresholds exceeded\n", region->getNumber());
+      if (traceAny())
+         traceMsg(comp(), "for loop (%d), loop too big, thresholds exceeded\n", region->getNumber());
       return false;
       }
 

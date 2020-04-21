@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,11 +42,7 @@ extern "C" {
 const char*
 omrgc_get_version(OMR_VM *omrVM)
 {
-	return OMR_VERSION_STRING
-#if defined (OMR_GC_COMPRESSED_POINTERS) 
-		"_CMPRSS"
-#endif /* OMR_GC_COMPRESSED_POINTERS */
-	;
+	return OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM) ? OMR_VERSION_STRING "_CMPRSS" : OMR_VERSION_STRING;
 }
 
 uintptr_t

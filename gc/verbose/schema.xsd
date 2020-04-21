@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2010, 2018 IBM Corp. and others
+Copyright (c) 2010, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,6 +89,7 @@ xmlns:vgc="http://www.ibm.com/j9/verbosegc">
 	<element name="event" type="vgc:event" />
 	<element name="memory-cardclean" type="vgc:memory-cardclean" />
 	<element name="memory-traced" type="vgc:memory-traced" />
+	<element name="regions" type="vgc:regions"/>
 	<element name="heap-resize" type="vgc:heap-resize" />
 	<element name="concurrent-start" type="vgc:concurrent-start" />
 	<element name="concurrent-end" type="vgc:concurrent-end" />
@@ -598,6 +599,13 @@ xmlns:vgc="http://www.ibm.com/j9/verbosegc">
 		<attribute name="bytes" type="integer" use="required" />
 	</complexType>
 
+	<complexType name="regions">
+		<attribute name="eden" type="integer" use="required" />
+		<attribute name="other" type="integer" use="required" />
+		<attribute name="evacuated" type="integer" use="optional" />
+		<attribute name="marked" type="integer" use="optional" />
+	</complexType>
+
 	<complexType name="heap-resize">
 		<attribute name="id" type="integer" use="optional" />
 		<attribute name="type" type="string" use="required" />
@@ -648,7 +656,7 @@ xmlns:vgc="http://www.ibm.com/j9/verbosegc">
 	
 	<complexType name="region">
 		<sequence maxOccurs="1" minOccurs="1">
-			<element ref="vgc:attribute" maxOccurs="3" minOccurs="0" />
+			<element ref="vgc:attribute" maxOccurs="5" minOccurs="0" />
 		</sequence>
 	</complexType>	
 
@@ -832,6 +840,7 @@ xmlns:vgc="http://www.ibm.com/j9/verbosegc">
 			<element ref="vgc:memory-copied" maxOccurs="unbounded" minOccurs="1" />
 			<element ref="vgc:memory-cardclean" maxOccurs="1" minOccurs="1" />
 			<element ref="vgc:memory-traced" maxOccurs="unbounded" minOccurs="0" />
+			<element ref="vgc:regions" maxOccurs="1" minOccurs="0" />
 			<element ref="vgc:remembered-set-cleared" maxOccurs="1" minOccurs="1" />
 			<element ref="vgc:finalization" maxOccurs="1" minOccurs="0" />
 			<element ref="vgc:ownableSynchronizers" maxOccurs="1" minOccurs="0" />

@@ -35,6 +35,14 @@ target_link_libraries(tracemerge
 		trace # static
 )
 
+if(OMR_OS_ZOS)
+	if(OMR_TOOLS_USE_NATIVE_ENCODING)
+		target_link_libraries(tracemerge PUBLIC omr_ebcdic)
+	else()
+		target_link_libraries(tracemerge PUBLIC omr_ascii)
+	endif()
+endif()
+
 set_property(TARGET tracemerge PROPERTY FOLDER util)
 
 install(TARGETS tracemerge

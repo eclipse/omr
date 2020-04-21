@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "compile/OMRCompilation.hpp"
+#include "compile/Compilation.hpp"
 
 #include <limits.h>
 #include <math.h>
@@ -32,7 +32,7 @@
 #include <string.h>
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "compile/Compilation.hpp"
@@ -56,22 +56,23 @@
 #include "env/PersistentInfo.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
+#include "env/TypeLayout.hpp"
 #include "env/defines.h"
 #include "env/jittypes.h"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/NodePool.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "infra/Array.hpp"
@@ -87,7 +88,7 @@
 #include "infra/Stack.hpp"
 #include "infra/CfgEdge.hpp"
 #include "infra/Timer.hpp"
-#include "infra/ThreadLocal.h"
+#include "infra/ThreadLocal.hpp"
 #include "optimizer/DebuggingCounters.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimizer.hpp"
@@ -246,7 +247,6 @@ OMR::Compilation::Compilation(
    _snippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(self()->allocator())),
    _methodSnippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(self()->allocator())),
    _snippetsToBePatchedOnClassRedefinition(getTypedAllocator<TR::Snippet*>(self()->allocator())),
-   _snippetsToBePatchedOnRegisterNative(getTypedAllocator<TR_Pair<TR::Snippet,TR_ResolvedMethod> *>(self()->allocator())),
    _genILSyms(getTypedAllocator<TR::ResolvedMethodSymbol*>(self()->allocator())),
    _noEarlyInline(true),
    _returnInfo(TR_VoidReturn),
@@ -293,6 +293,8 @@ OMR::Compilation::Compilation(
    _gpuKernelLineNumberList(m),
    _gpuPtxCount(0),
    _bitVectorPool(self()),
+   _typeLayoutMap((LayoutComparator()), LayoutAllocator(self()->region())),
+   _target(TR::Compiler->target),
    _tlsManager(*self())
    {
 
@@ -333,10 +335,10 @@ OMR::Compilation::Compilation(
    _adhocRandom = new (m->trHeapMemory()) TR_RandomGenerator(options.getRandomSeed());
    if (options.getOption(TR_RandomSeedSignatureHash))
       {
-      int32_t hash = 0;
+      uint32_t hash = 0;
       for (const char *c = self()->signature(); *c; c++)
-         hash = 33*hash + (int32_t)(*c);
-      int32_t seed = _options->getRandomSeed();
+         hash = 33*hash + (uint32_t)(*c);
+      uint32_t seed = _options->getRandomSeed();
       seed ^= hash;
       _primaryRandom->setSeed(seed);
       _adhocRandom->setSeed(_primaryRandom->getRandom());
@@ -377,7 +379,7 @@ OMR::Compilation::Compilation(
       {
       if(self()->getMethodHotness() <= warm)
          {
-         if (!TR::Compiler->target.cpu.isPower()) // Temporarily exclude PPC due to perf regression
+         if (!self()->target().cpu.isPower()) // Temporarily exclude PPC due to perf regression
             self()->setOption(TR_DisableInternalPointers);
          }
       }
@@ -399,7 +401,9 @@ OMR::Compilation::Compilation(
 
    //codegen also needs _methodSymbol
    _codeGenerator = allocateCodeGenerator(self());
-   _recompilationInfo = _codeGenerator->allocateRecompilationInfo();
+
+   _recompilationInfo = _codeGenerator->getSupportsRecompilation() ? _codeGenerator->allocateRecompilationInfo() : NULL;
+
    _globalRegisterCandidates = new (self()->trHeapMemory()) TR_RegisterCandidates(self());
 
 #ifdef J9_PROJECT_SPECIFIC
@@ -457,7 +461,10 @@ OMR::Compilation::Compilation(
    else
       _osrCompilationData = NULL;
 
-
+  if (self()->getOption(TR_ForceGenerateReadOnlyCode))
+      {
+      self()->setGenerateReadOnlyCode();
+      }
 
    }
 
@@ -664,7 +671,8 @@ bool OMR::Compilation::isPotentialOSRPoint(TR::Node *node, TR::Node **osrPointNo
             potentialOSRPoint = true;
             }
          else if (callSymRef->getReferenceNumber() >=
-             self()->getSymRefTab()->getNonhelperIndex(self()->getSymRefTab()->getLastCommonNonhelperSymbol()))
+             self()->getSymRefTab()->getNonhelperIndex(self()->getSymRefTab()->getLastCommonNonhelperSymbol())
+             && !((TR::MethodSymbol*)(callSymRef->getSymbol()))->functionCallDoesNotYieldOSR())
             {
             potentialOSRPoint = (disableGuardedCallOSR == NULL);
             }
@@ -840,6 +848,7 @@ OMR::Compilation::requiresAnalysisOSRPoint(TR::Node *node)
    if (!self()->isPotentialOSRPoint(node, &osrNode))
       {
       TR_ASSERT(0, "requiresAnalysisOSRPoint should only be called on OSR points\n");
+      return false;
       }
 
    // Calls require an analysis and transition point as liveness may change across them
@@ -897,7 +906,7 @@ OMR::Compilation::getProfilingMode()
    if (!self()->isProfilingCompilation())
       return DisabledProfiling;
 
-   if (self()->getOption(TR_EnableJProfiling) || self()->getOption(TR_EnableJProfilingInProfilingCompilations))
+   if (self()->getOption(TR_EnableJProfiling) || !self()->getOption(TR_DisableJProfilingInProfilingCompilations))
       return JProfiling;
 
    return JitProfiling;
@@ -1025,12 +1034,12 @@ int32_t OMR::Compilation::compile()
 
    if (_ilGenSuccess)
       {
-      _methodSymbol->detectInternalCycles(_methodSymbol->getFlowGraph(), self());
+      _methodSymbol->detectInternalCycles();
 
       //detect catch blocks that could have normal predecessors
       //if so, fail the compile
       //
-      if (_methodSymbol->catchBlocksHaveRealPredecessors(_methodSymbol->getFlowGraph(), self()))
+      if (_methodSymbol->catchBlocksHaveRealPredecessors())
          {
          self()->failCompilation<TR::CompilationException>("Catch blocks have real predecessors");
          }
@@ -1163,7 +1172,7 @@ int32_t OMR::Compilation::compile()
                TR::Node*node = tt->getNode()->getFirstChild();
                if (node->getOpCode().isCall())
                   {
-                  TR_Method *method = node->getSymbol()->getMethodSymbol()->getMethod();
+                  TR::Method *method = node->getSymbol()->getMethodSymbol()->getMethod();
                   if (method)
                      {
                      TR_ByteCodeInfo &bcInfo = node->getByteCodeInfo();
@@ -1234,7 +1243,7 @@ int32_t OMR::Compilation::compile()
 #if defined(AIXPPC) || defined(LINUXPPC)
    if (self()->getOption(TR_DebugOnEntry))
       {
-      intptrj_t jitTojitStart = (intptrj_t) self()->cg()->getCodeStart();
+      intptr_t jitTojitStart = (intptr_t) self()->cg()->getCodeStart();
       jitTojitStart += ((*(int32_t *)(jitTojitStart - 4)) >> 16) & 0x0000ffff;
 #if defined(AIXPPC)
       self()->getDebug()->setupDebugger((void *)jitTojitStart);
@@ -1272,20 +1281,6 @@ void OMR::Compilation::performOptimizations()
    {
 
    _optimizer = TR::Optimizer::createOptimizer(self(), self()->getJittedMethodSymbol(), false);
-
-   // This opt is needed if certain ilgen input is seen but there is no optimizer created at this point.
-   // So the block are tracked during ilgen and the opt is turned on here.
-   //
-   ListIterator<TR::Block> listIt(&_methodSymbol->getTrivialDeadTreeBlocksList());
-   for (TR::Block *block = listIt.getFirst(); block; block = listIt.getNext())
-      {
-      ((TR::Optimizer*)(_optimizer))->setRequestOptimization(OMR::trivialDeadTreeRemoval, true, block);
-      }
-
-   if (_methodSymbol->hasUnkilledTemps())
-      {
-      ((TR::Optimizer*)(_optimizer))->setRequestOptimization(OMR::globalDeadStoreElimination);
-      }
 
    if (_optimizer)
       _optimizer->optimize();
@@ -1705,7 +1700,7 @@ int32_t OMR::Compilation::findPrefetchInfo(TR::Node * node)
       {
       if ((*pair)->getKey() == node)
          {
-         uintptrj_t value = (uintptrj_t)(*pair)->getValue();
+         uintptr_t value = (uintptr_t)(*pair)->getValue();
          return (int32_t)value;
          }
       }
@@ -1855,7 +1850,9 @@ void OMR::Compilation::reportFailure(const char *reason)
    {
    traceMsg(self(), "Compilation Failed Because: %s\n", reason);
    if (self()->getOption(TR_PrintErrorInfoOnCompFailure))
+      {
       fprintf(stderr, "Compilation Failed Because: %s\n", reason);
+      }
    }
 
 void OMR::Compilation::AddCopyPropagationRematerializationCandidate(TR::SymbolReference * sr)
@@ -2731,12 +2728,49 @@ void OMR::Compilation::invalidateAliasRegion()
    {
    if (self()->_aliasRegion.bytesAllocated() > (ALIAS_REGION_LOAD_FACTOR) * TR::Region::initialSize())
       {
-      self()->_aliasRegion.~Region();
-      new (&self()->_aliasRegion) TR::Region(_heapMemoryRegion);
+      TR::Region::reset(self()->_aliasRegion, _heapMemoryRegion);
       }
    }
 
 bool OMR::Compilation::incompleteOptimizerSupportForReadWriteBarriers()
    {
    return false;
+   }
+
+
+bool OMR::Compilation::isRecursiveMethodTarget(TR_ResolvedMethod *targetResolvedMethod)
+   {
+   return targetResolvedMethod && targetResolvedMethod->isSameMethod(self()->getCurrentMethod()) && !self()->isDLT();
+   }
+
+
+bool OMR::Compilation::isRecursiveMethodTarget(TR::Symbol *targetSymbol)
+   {
+   bool isRecursive = false;
+
+   if (targetSymbol)
+      {
+      TR::MethodSymbol *methodSymbol = targetSymbol->isMethod() ? targetSymbol->castToMethodSymbol() : NULL;
+      TR::ResolvedMethodSymbol *resolvedSymbol = methodSymbol ? methodSymbol->getResolvedMethodSymbol() : NULL;
+      TR_ResolvedMethod *resolvedMethod  = resolvedSymbol ? resolvedSymbol->getResolvedMethod() : NULL;
+      isRecursive = self()->isRecursiveMethodTarget(resolvedMethod);
+      }
+
+   return isRecursive;
+   }
+
+const TR::TypeLayout* OMR::Compilation::typeLayout(TR_OpaqueClassBlock * clazz)
+   {
+   TR::Region& region = self()->region();
+   auto it = _typeLayoutMap.find(clazz);
+   if (it != _typeLayoutMap.end())
+      {
+      return it->second;
+      }
+   else
+      {
+      const TR::TypeLayout* layout = TR::Compiler->cls.enumerateFields(region, clazz, self());
+      _typeLayoutMap.insert(std::make_pair(clazz, layout));
+      return layout;
+      }
    }

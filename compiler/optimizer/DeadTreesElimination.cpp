@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include "infra/forward_list.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
@@ -34,20 +34,20 @@
 #include "env/IO.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/NodePool.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/ILWalk.hpp"
@@ -96,7 +96,7 @@ static bool fixUpTree(TR::Node *node, TR::TreeTop *treeTop, TR::NodeChecklist &v
    // fold it into if statment and save jump instruction
    if (node->getOpCodeValue() == TR::arraycmp &&
       !node->isArrayCmpLen() &&
-      TR::Compiler->target.cpu.isX86())
+      opt->comp()->target().cpu.isX86())
       {
       anchorArrayCmp = false;
       }
@@ -228,9 +228,20 @@ static int32_t getLongestPathOfDAG(TR::Node *node, LongestPathMap &memo)
    return value;
    }
 
-static bool containsNode(TR::Node *containerNode, TR::Node *node, vcount_t visitCount, TR::Compilation *comp, int32_t *height, int32_t *maxHeight, bool &canMoveIfVolatile)
+/*
+ * \brief This function does 2 things:
+ *        1. check if the \p nodeToSwingDown is in the subtree of \p containerNode
+ *        2. only allowing volatile load being swung down across temps and constant string
+ *
+ * \parm nodeToSwingDown
+ *    The node hanging under a treetop which can potentially be removed
+ *
+ * \parm containerNode
+ *    The subtree to check
+ */
+static bool containsNode(TR::Node *containerNode, TR::Node *nodeToSwingDown, vcount_t visitCount, TR::Compilation *comp, int32_t *height, int32_t *maxHeight, bool &canMoveIfVolatile)
    {
-   if (containerNode == node)
+   if (containerNode == nodeToSwingDown)
       return true;
 
    vcount_t oldVisitCount = containerNode->getVisitCount();
@@ -238,16 +249,25 @@ static bool containsNode(TR::Node *containerNode, TR::Node *node, vcount_t visit
       return false;
    containerNode->setVisitCount(comp->getVisitCount());
 
-   if (containerNode->getOpCode().hasSymbolReference() &&
-       (containerNode->getSymbol()->isShadow() || containerNode->getSymbol()->isStatic()))
-      canMoveIfVolatile = false;
+   if (containerNode->getOpCode().hasSymbolReference())
+      {
+      static const bool relaxedConditionForSwingingDownVolatile = feGetEnv("TR_relaxedConditionForSwingingDownVolatile") ? true: false;
+      if (!relaxedConditionForSwingingDownVolatile)
+         {
+         if (!(containerNode->getSymbol()->isAutoOrParm() ||
+               containerNode->getSymbol()->isConstString()))
+            canMoveIfVolatile = false;
+         }
+      else if (containerNode->getSymbol()->isShadow() || containerNode->getSymbol()->isStatic())
+         canMoveIfVolatile = false;
+      }
 
    (*height)++;
    if (*height > *maxHeight)
      *maxHeight = *height;
    for (int32_t i = 0; i < containerNode->getNumChildren(); ++i)
       {
-      if (containsNode(containerNode->getChild(i), node, visitCount, comp, height, maxHeight, canMoveIfVolatile))
+      if (containsNode(containerNode->getChild(i), nodeToSwingDown, visitCount, comp, height, maxHeight, canMoveIfVolatile))
          return true;
       }
    (*height)--;
@@ -258,7 +278,7 @@ static bool containsNode(TR::Node *containerNode, TR::Node *node, vcount_t visit
 #define MAX_ALLOWED_HEIGHT 50
 
 static bool isSafeToReplaceNode(TR::Node *currentNode, TR::TreeTop *curTreeTop, bool *seenConditionalBranch,
-      vcount_t visitCount, TR::Compilation *comp, List<OMR::TreeInfo> *targetTrees, bool &cannotBeEliminated,
+      vcount_t visitCount, TR::Compilation *comp, TR::Optimization *opt, List<OMR::TreeInfo> *targetTrees, bool &cannotBeEliminated,
       LongestPathMap &longestPaths)
    {
    LexicalTimer tx("safeToReplace", comp->phaseTimer());
@@ -308,8 +328,6 @@ static bool isSafeToReplaceNode(TR::Node *currentNode, TR::TreeTop *curTreeTop, 
       return false;
 
    bool mayBeVolatileReference = currentNode->mightHaveVolatileSymbolReference();
-   //if (mayBeVolatileReference)
-   //   return false;
 
    // Now scan forwards through the trees looking for the next use and checking
    // to see if any symbols in the subtree are getting modified; if so it is not
@@ -318,10 +336,9 @@ static bool isSafeToReplaceNode(TR::Node *currentNode, TR::TreeTop *curTreeTop, 
 
    comp->incVisitCount();
    for (TR::TreeTop *treeTop = curTreeTop->getNextTreeTop(); treeTop; treeTop = treeTop->getNextTreeTop())
-
       {
       TR::Node *node = treeTop->getNode();
-      if(node->getOpCodeValue() == TR::treetop)
+      if (node->getOpCodeValue() == TR::treetop)
           node = node->getFirstChild();
 
       if (node->getOpCodeValue() == TR::BBStart &&
@@ -339,7 +356,20 @@ static bool isSafeToReplaceNode(TR::Node *currentNode, TR::TreeTop *curTreeTop, 
       int32_t tempHeight = 0;
       int32_t maxHeight = 0;
       bool canMoveIfVolatile = true;
-      if (containsNode(node, currentNode, visitCount, comp, &tempHeight, &maxHeight, canMoveIfVolatile))
+      bool nodeInSubTree = containsNode(node, currentNode, visitCount, comp, &tempHeight, &maxHeight, canMoveIfVolatile);
+      /*
+       * Restrictions for swinging down volatile applies even when the volatile node is in the current sub-tree:
+       * treetop
+       *    a.volatileField
+       * someOpcode someSymRef
+       *    ...
+       *    => xload/xloadi a.volatileField
+       *    ...
+       */
+      if (mayBeVolatileReference && !canMoveIfVolatile)
+         return false;
+
+      if (nodeInSubTree)
          {
          // TEMPORARY
          // Disable moving an unresolved reference down to the middle of a
@@ -368,11 +398,10 @@ static bool isSafeToReplaceNode(TR::Node *currentNode, TR::TreeTop *curTreeTop, 
             treeInfo->setHeight(height);
             }
 
+         if (mayBeVolatileReference)
+            dumpOptDetails(opt->comp(), "%sit is safe to remove volatile field load tree n%dn\n", opt->optDetailString(), currentNode->getGlobalIndex());
          return true;
          }
-
-      if (mayBeVolatileReference && !canMoveIfVolatile)
-         return false;
 
       if ((node->getOpCode().isBranch() &&
            (node->getOpCodeValue() != TR::Goto)) ||
@@ -863,6 +892,7 @@ int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *e
                   &seenConditionalBranch,
                   visitCount,
                   comp(),
+                  this,
                   &_targetTrees,
                   _cannotBeEliminated,
                   longestPaths);

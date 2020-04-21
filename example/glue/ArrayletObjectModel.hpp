@@ -25,7 +25,6 @@
 #include "omrcfg.h"
 #include "ModronAssertions.h"
 
-#if defined(OMR_GC_ARRAYLETS)
 
 class MM_GCExtensionsBase;
 class MM_MemorySubSpace;
@@ -69,7 +68,14 @@ public:
 		Assert_MM_unimplemented();
 		return 0;
 	}
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+	MMINLINE bool
+	isDoubleMappingEnabled()
+	{
+		return false;
+	}
+#endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
+
 };
 
-#endif /*OMR_GC_ARRAYLETS */
 #endif /* ARRAYLETOBJECTMODEL_ */

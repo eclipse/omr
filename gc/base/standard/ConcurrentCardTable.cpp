@@ -409,18 +409,6 @@ MM_ConcurrentCardTable::heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpa
 }
 
 /**
- * Re-size all structures which are dependent on the current size of the heap.
- * No new memory has been added to a heap reconfiguration.  This call typically is the result
- * of having segment range changes (memory redistributed between segments) or the meaning of
- * memory changed.
- *
- */
-void
-MM_ConcurrentCardTable::heapReconfigured(MM_EnvironmentBase *env)
-{
-}
-
-/**
  *					Object creation and destruction
  * 					===============================
  *

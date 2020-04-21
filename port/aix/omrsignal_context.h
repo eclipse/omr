@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,12 +26,6 @@
 #include <sys/ucontext.h>
 #include <stdlib.h>
 
-#ifdef PPC64
-#define J9SIG_VALUE_UDATA OMRPORT_SIG_VALUE_64
-#else
-#define J9SIG_VALUE_UDATA OMRPORT_SIG_VALUE_32
-#endif
-
 #define MAX_UNIX_SIGNAL_TYPES  SIGMAX32
 
 /*
@@ -40,13 +34,13 @@
  * sigcontext structure until the uc_link structure, which
  * follows the sigcontext structure.
  */
-typedef struct J9PlatformSignalInfo {
+typedef struct OMRPlatformSignalInfo {
 	ucontext_t *context;
 	struct ld_info ldInfo[128];
-} J9PlatformSignalInfo;
+} OMRPlatformSignalInfo;
 
 typedef struct OMRUnixSignalInfo {
-	struct J9PlatformSignalInfo platformSignalInfo;
+	struct OMRPlatformSignalInfo platformSignalInfo;
 	uint32_t portLibrarySignalType;
 	void *handlerAddress;
 	void *handlerAddress2;
@@ -58,5 +52,5 @@ uint32_t infoForGPR(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo
 uint32_t infoForModule(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, int32_t index, const char **name, void **value);
 uint32_t infoForControl(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, int32_t index, const char **name, void **value);
 uint32_t infoForSignal(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, int32_t index, const char **name, void **value);
-void fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *j9Info);
+void fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *signalInfo);
 

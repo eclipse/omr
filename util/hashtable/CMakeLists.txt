@@ -57,3 +57,10 @@ target_link_libraries(j9hashtable
 )
 
 set_property(TARGET j9hashtable PROPERTY FOLDER util)
+
+target_enable_ddr(j9hashtable)
+ddr_add_headers(j9hashtable
+	${omr_SOURCE_DIR}/include_core/hashtable_api.h
+	${omr_SOURCE_DIR}/include_core/omrhashtable.h
+)
+ddr_set_add_targets(omrddr j9hashtable)

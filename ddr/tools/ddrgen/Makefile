@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,21 +49,16 @@ endif
 
 ifeq (aix,$(OMR_HOST_OS))
   MODULE_SHARED_LIBS += iconv perfstat
-endif
-
-ifeq (win,$(OMR_HOST_OS))
-  MODULE_SHARED_LIBS += ws2_32 shell32 Iphlpapi psapi pdh
-endif
-
-ifeq (osx,$(OMR_HOST_OS))
+else ifeq (osx,$(OMR_HOST_OS))
   MODULE_SHARED_LIBS += iconv
+else ifeq (win,$(OMR_HOST_OS))
+  MODULE_SHARED_LIBS += ws2_32 shell32 Iphlpapi psapi pdh
 endif
 
 ifeq (gcc,$(OMR_TOOLCHAIN))
   MODULE_CXXFLAGS += -frtti -D__STDC_LIMIT_MACROS -std=c++0x
-endif
-
-ifeq (msvc,$(OMR_TOOLCHAIN))
+  MODULE_LDFLAGS += -static-libstdc++
+else ifeq (msvc,$(OMR_TOOLCHAIN))
   MODULE_CXXFLAGS += /EHsc
 endif
 
@@ -71,7 +66,7 @@ ifeq (1,$(OMRPORT_OMRSIG_SUPPORT))
   MODULE_SHARED_LIBS += omrsig
 endif
 
-DDRGEN_STATIC_LIBS = \
+DDRGEN_STATIC_LIBS := \
   ddr-scanner \
   ddr-ir \
   ddr-blobgen \
@@ -84,3 +79,12 @@ OBJECTS = \
   ddrgen$(OBJEXT)
 
 include $(top_srcdir)/omrmakefiles/rules.mk
+
+# This must follow the include above because we want to append to LD_STATIC_LIBS.
+ifeq (zos,$(OMR_HOST_OS))
+  ifeq (1,$(OMR_ENV_DATA64))
+    LD_STATIC_LIBS += /usr/lpp/cbclib/lib/libelfdwarf64.x
+  else
+    LD_STATIC_LIBS += /usr/lpp/cbclib/lib/libelfdwarf32.x
+  endif
+endif

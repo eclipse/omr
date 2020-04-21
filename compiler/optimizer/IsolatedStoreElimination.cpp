@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
@@ -39,12 +39,12 @@
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -1154,7 +1154,7 @@ TR_IsolatedStoreElimination::findStructuresAndNodesUsedIn(TR_UseDefInfo *info, T
             {
             int32_t useIndex = (int32_t)useCursor + info->getFirstUseIndex();
             TR::Node *useNode = info->getNode(useIndex);
-            if (useNode && useNode->getReferenceCount() > 0 && !nodesInStructure->get(useNode->getGlobalIndex()))
+            if (useNode && useNode->getReferenceCount() > 0 && !nodesInStructure->get(useNode->getUseDefIndex()))
                {
                if (trace())
                   {
@@ -1228,7 +1228,8 @@ TR_IsolatedStoreElimination::findStructuresAndNodesUsedIn(TR_UseDefInfo *info, T
                       (loopTestNode->getOpCodeValue() == TR::ificmple) ||
                       (loopTestNode->getOpCodeValue() == TR::iflcmple))
                      {
-                     isIncreasing = true;
+                     if (loopTestNode->getBranchDestination()->getNode()->getBlock() == entryBlock)
+                        isIncreasing = true;
                      loopTestTree = nextBlock->getLastRealTreeTop();
                      }
                   else if ((loopTestNode->getOpCodeValue() == TR::ificmpgt) ||
@@ -1236,6 +1237,8 @@ TR_IsolatedStoreElimination::findStructuresAndNodesUsedIn(TR_UseDefInfo *info, T
                       (loopTestNode->getOpCodeValue() == TR::ificmpge) ||
                       (loopTestNode->getOpCodeValue() == TR::iflcmpge))
                      {
+                     if (loopTestNode->getBranchDestination()->getNode()->getBlock() != entryBlock)
+                        isIncreasing = true;
                      loopTestTree = nextBlock->getLastRealTreeTop();
                      }
                   }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ protected:
 	 * @param[in] flags Scanning context flags
 	 */
 	MMINLINE GC_MixedObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, uintptr_t flags)
-		: GC_ObjectScanner(env, objectPtr, (fomrobject_t *)objectPtr + 1, 0, flags, 0)
+		: GC_ObjectScanner(env, (fomrobject_t *)objectPtr + 1, 0, flags)
 		, _endPtr((fomrobject_t *)((uint8_t*)objectPtr + MM_GCExtensionsBase::getExtensions(env->getOmrVM())->objectModel.getConsumedSizeInBytesWithHeader(objectPtr)))
 		, _mapPtr(_scanPtr)
 	{
@@ -104,17 +104,17 @@ public:
 	 * @see GC_ObjectScanner::getNextSlotMap()
 	 */
 	virtual fomrobject_t *
-	getNextSlotMap(uintptr_t &slotMap, bool &hasNextSlotMap)
+	getNextSlotMap(uintptr_t *slotMap, bool *hasNextSlotMap)
 	{
 		intptr_t slotCount = _endPtr - _scanPtr;
 
 		/* Initialize the slot map assuming all slots are reference slots or NULL */
 		if (slotCount < _bitsPerScanMap) {
-			slotMap = (((uintptr_t)1) << slotCount) - 1;
-			hasNextSlotMap = false;
+			*slotMap = (((uintptr_t)1) << slotCount) - 1;
+			*hasNextSlotMap = false;
 		} else {
-			slotMap = ~((uintptr_t)0);
-			hasNextSlotMap = slotCount > _bitsPerScanMap;
+			*slotMap = ~((uintptr_t)0);
+			*hasNextSlotMap = slotCount > _bitsPerScanMap;
 		}
 
 		_mapPtr += _bitsPerScanMap;
@@ -123,12 +123,12 @@ public:
 
 #if defined(OMR_GC_LEAF_BITS)
 	/**
-	 * @see GC_ObjectScanner::getNextSlotMap(uintptr_t&, uintptr_t&, bool&)
+	 * @see GC_ObjectScanner::getNextSlotMap(uintptr_t *, uintptr_t *, bool *)
 	 */
 	virtual fomrobject_t *
-	getNextSlotMap(uintptr_t &slotMap, uintptr_t &leafMap, bool &hasNextSlotMap)
+	getNextSlotMap(uintptr_t *slotMap, uintptr_t *leafMap, bool *hasNextSlotMap)
 	{
-		leafMap = 0;
+		*leafMap = 0;
 		return getNextSlotMap(slotMap, hasNextSlotMap);
 	}
 #endif /* OMR_GC_LEAF_BITS */

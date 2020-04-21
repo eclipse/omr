@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -148,7 +148,6 @@ namespace TR { class X86FPConvertToLongSnippet; }
 namespace TR { class X86GuardedDevirtualSnippet; }
 namespace TR { class X86HelperCallSnippet; }
 namespace TR { class UnresolvedDataSnippet; }
-namespace TR { class X86UnresolvedVirtualCallSnippet; } // TODO: delete
 namespace TR { class AMD64Imm64Instruction;    }
 namespace TR { class AMD64Imm64SymInstruction; }
 namespace TR { class AMD64RegImm64Instruction; }
@@ -161,14 +160,7 @@ namespace TR { class X86VFPReleaseInstruction;     }
 namespace TR { class X86VFPCallCleanupInstruction; }
 
 #ifdef J9_PROJECT_SPECIFIC
-#ifndef BUILD_DEPRECATED_TR_DEBUG_PRINT
-#define BUILD_DEPRECATED_TR_DEBUG_PRINT
-#endif
 namespace TR { class X86CallSnippet; }
-namespace TR { class IA32WriteBarrierSnippet; }
-namespace TR { class AMD64WriteBarrierSnippet; }
-namespace TR { class X86JNIPauseSnippet; }
-namespace TR { class X86PassJNINullSnippet; }
 namespace TR { class X86CheckFailureSnippet; }
 namespace TR { class X86CheckFailureSnippetWithResolve; }
 namespace TR { class X86BoundCheckWithSpineCheckSnippet; }
@@ -177,6 +169,7 @@ namespace TR { class X86ForceRecompilationSnippet; }
 namespace TR { class X86RecompilationSnippet; }
 #endif
 
+namespace TR { class PPCAlignmentNopInstruction;         }
 namespace TR { class PPCDepInstruction;                  }
 namespace TR { class PPCLabelInstruction;                }
 namespace TR { class PPCDepLabelInstruction;             }
@@ -185,7 +178,6 @@ namespace TR { class PPCDepConditionalBranchInstruction; }
 namespace TR { class PPCAdminInstruction;                }
 namespace TR { class PPCImmInstruction;                  }
 namespace TR { class PPCSrc1Instruction;                 }
-namespace TR { class PPCDepImmInstruction;               }
 namespace TR { class PPCDepImmSymInstruction;            }
 namespace TR { class PPCTrg1Instruction;                 }
 namespace TR { class PPCTrg1Src1Instruction;             }
@@ -315,6 +307,7 @@ namespace TR { class S390SInstruction; }
 namespace TR { class S390SIInstruction; }
 namespace TR { class S390SILInstruction; }
 namespace TR { class S390NOPInstruction; }
+namespace TR { class S390AlignmentNopInstruction; }
 namespace TR { class S390RestoreGPR7Snippet; }
 namespace TR { class S390CallSnippet; }
 namespace TR { class S390ConstantDataSnippet; }
@@ -350,18 +343,45 @@ namespace TR { class ARM64AdminInstruction; }
 namespace TR { class ARM64Trg1Instruction; }
 namespace TR { class ARM64Trg1CondInstruction; }
 namespace TR { class ARM64Trg1ImmInstruction; }
+namespace TR { class ARM64Trg1ImmSymInstruction; }
 namespace TR { class ARM64Trg1Src1Instruction; }
 namespace TR { class ARM64Trg1Src1ImmInstruction; }
 namespace TR { class ARM64Trg1Src2Instruction; }
+namespace TR { class ARM64CondTrg1Src2Instruction; }
 namespace TR { class ARM64Trg1Src2ShiftedInstruction; }
 namespace TR { class ARM64Trg1Src2ExtendedInstruction; }
 namespace TR { class ARM64Trg1Src3Instruction; }
 namespace TR { class ARM64Trg1MemInstruction; }
 namespace TR { class ARM64MemInstruction; }
 namespace TR { class ARM64MemSrc1Instruction; }
+namespace TR { class ARM64Trg1MemSrc1Instruction; }
 namespace TR { class ARM64Src1Instruction; }
 namespace TR { class ARM64Src2Instruction; }
+namespace TR { class ARM64HelperCallSnippet; }
 
+namespace TR { class LabelInstruction; }
+namespace TR { class AdminInstruction; }
+#ifdef J9_PROJECT_SPECIFIC
+namespace TR { class ARM64VirtualGuardNOPInstruction; }
+
+namespace TR { class ARM64InterfaceCallSnippet; }
+namespace TR { class ARM64StackCheckFailureSnippet; }
+namespace TR { class ARM64ForceRecompilationSnippet; }
+namespace TR { class ARM64RecompilationSnippet; }
+namespace TR { class ARM64CallSnippet; }
+namespace TR { class ARM64UnresolvedCallSnippet; }
+namespace TR { class ARM64VirtualUnresolvedSnippet; }
+#endif
+
+
+namespace TR { class RtypeInstruction; }
+namespace TR { class ItypeInstruction; }
+namespace TR { class StypeInstruction; }
+namespace TR { class BtypeInstruction; }
+namespace TR { class UtypeInstruction; }
+namespace TR { class JtypeInstruction; }
+namespace TR { class LoadInstruction;  }
+namespace TR { class StoreInstruction; }
 
 TR_Debug *createDebugObject(TR::Compilation *);
 
@@ -424,11 +444,11 @@ public:
    virtual int32_t *       loadCustomStrategy(char *optFileName);
    virtual bool            methodCanBeCompiled(TR_Memory *mem, TR_ResolvedMethod *, TR_FilterBST * &);
    virtual bool            methodCanBeRelocated(TR_Memory *mem, TR_ResolvedMethod *, TR_FilterBST * &);
-   virtual bool            methodSigCanBeCompiled(const char *, TR_FilterBST * & , TR_Method::Type methodType);
+   virtual bool            methodSigCanBeCompiled(const char *, TR_FilterBST * & , TR::Method::Type methodType);
    virtual bool            methodSigCanBeRelocated(const char *, TR_FilterBST * & );
-   virtual bool            methodSigCanBeCompiledOrRelocated(const char *, TR_FilterBST * &, bool isRelocation, TR_Method::Type methodType);
+   virtual bool            methodSigCanBeCompiledOrRelocated(const char *, TR_FilterBST * &, bool isRelocation, TR::Method::Type methodType);
    virtual bool            methodCanBeFound(TR_Memory *, TR_ResolvedMethod *, TR::CompilationFilters *, TR_FilterBST * &);
-   virtual bool            methodSigCanBeFound(const char *, TR::CompilationFilters *, TR_FilterBST * &, TR_Method::Type methodType);
+   virtual bool            methodSigCanBeFound(const char *, TR::CompilationFilters *, TR_FilterBST * &, TR::Method::Type methodType);
    virtual TR::CompilationFilters * getCompilationFilters() { return _compilationFilters; }
    virtual TR::CompilationFilters * getRelocationFilters() { return _relocationFilters; }
    virtual void            clearFilters(TR::CompilationFilters *);
@@ -618,6 +638,11 @@ public:
    virtual const char * getOpCodeName(TR::InstOpCode *);
    const char * getName(TR::RealRegister *, TR_RegisterSizes size = TR_WordReg);
 #endif
+#if defined(TR_TARGET_RISCV)
+   virtual const char * getOpCodeName(TR::InstOpCode *);
+   const char * getName(TR::RealRegister *, TR_RegisterSizes size = TR_WordReg);
+#endif
+
 
 #if defined(AIXPPC)
    virtual void setupDebugger(void *);
@@ -645,7 +670,7 @@ public:
    virtual void printSubGraph(TR::FILE *, TR_RegionStructure * regionStructure, uint32_t indentation);
    virtual void print(TR::FILE *, TR_InductionVariable * inductionVariable, uint32_t indentation);
    virtual bool inDebugExtension() { return false; }
-   virtual void* dxMallocAndRead(uintptrj_t size, void *remotePtr, bool dontAddToMap = false){return remotePtr;}
+   virtual void* dxMallocAndRead(uintptr_t size, void *remotePtr, bool dontAddToMap = false){return remotePtr;}
    virtual void* dxMallocAndReadString(void *remotePtr, bool dontAddToMap = false){return remotePtr;}
    virtual void  dxFree(void * localPtr){return;}
    void printTopLegend(TR::FILE *);
@@ -671,9 +696,9 @@ public:
    void printDFPNodeInfo(TR::Node * node, TR_PrettyPrinterString& output);
 #endif
 
-   int32_t * printStackAtlas(uintptrj_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, int32_t frameSize);
-   uint16_t printStackAtlasDetails(uintptrj_t startPC, uint8_t * mapBits, int numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, int32_t frameSize, int32_t *offsetInfo);
-   uint8_t *printMapInfo(uintptrj_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, TR_ByteCodeInfo *byteCodeInfo, uint16_t indexOfFirstInternalPtr, int32_t offsetInfo[], bool nummaps=false);
+   int32_t * printStackAtlas(uintptr_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, int32_t frameSize);
+   uint16_t printStackAtlasDetails(uintptr_t startPC, uint8_t * mapBits, int numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, int32_t frameSize, int32_t *offsetInfo);
+   uint8_t *printMapInfo(uintptr_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, TR_ByteCodeInfo *byteCodeInfo, uint16_t indexOfFirstInternalPtr, int32_t offsetInfo[], bool nummaps=false);
    void printStackMapInfo(uint8_t * & mapBits, int32_t numberOfSlotsMapped, int32_t * sizeOfStackAtlas, int32_t * offsetInfo, bool nummaps=false);
    void printJ9JITExceptionTableDetails(J9JITExceptionTable *data, J9JITExceptionTable *dbgextRemotePtr = NULL);
    void printSnippetLabel(TR::FILE *, TR::LabelSymbol *label, uint8_t *cursor, const char *comment1, const char *comment2 = 0);
@@ -833,10 +858,6 @@ public:
 #ifdef J9_PROJECT_SPECIFIC
    void print(TR::FILE *, TR::X86CallSnippet *);
    void print(TR::FILE *, TR::X86PicDataSnippet *);
-   void print(TR::FILE *, TR::X86UnresolvedVirtualCallSnippet *); // TODO: delete
-   void print(TR::FILE *, TR::IA32WriteBarrierSnippet *);
-   void print(TR::FILE *, TR::X86JNIPauseSnippet *);
-   void print(TR::FILE *, TR::X86PassJNINullSnippet *);
    void print(TR::FILE *, TR::X86CheckFailureSnippet *);
    void print(TR::FILE *, TR::X86CheckFailureSnippetWithResolve *);
    void print(TR::FILE *, TR::X86BoundCheckWithSpineCheckSnippet *);
@@ -861,6 +882,7 @@ public:
 #ifdef TR_TARGET_POWER
    void printPrefix(TR::FILE *, TR::Instruction *);
 
+   void print(TR::FILE *, TR::PPCAlignmentNopInstruction *);
    void print(TR::FILE *, TR::PPCDepInstruction *);
    void print(TR::FILE *, TR::PPCLabelInstruction *);
    void print(TR::FILE *, TR::PPCDepLabelInstruction *);
@@ -869,7 +891,6 @@ public:
    void print(TR::FILE *, TR::PPCAdminInstruction *);
    void print(TR::FILE *, TR::PPCImmInstruction *);
    void print(TR::FILE *, TR::PPCSrc1Instruction *);
-   void print(TR::FILE *, TR::PPCDepImmInstruction *);
    void print(TR::FILE *, TR::PPCDepImmSymInstruction *);
    void print(TR::FILE *, TR::PPCTrg1Instruction *);
    void print(TR::FILE *, TR::PPCTrg1Src1Instruction *);
@@ -1031,6 +1052,7 @@ public:
    void print(TR::FILE *, TR::S390AnnotationInstruction *);
    void print(TR::FILE *, TR::S390PseudoInstruction *);
    void print(TR::FILE *, TR::S390NOPInstruction *);
+   void print(TR::FILE *, TR::S390AlignmentNopInstruction *);
    void print(TR::FILE *, TR::MemoryReference *, TR::Instruction *);
    void print(TR::FILE *, TR::S390RRSInstruction *);
    void print(TR::FILE *, TR::S390RIEInstruction *);
@@ -1094,18 +1116,23 @@ public:
    void print(TR::FILE *, TR::ARM64Trg1Instruction *);
    void print(TR::FILE *, TR::ARM64Trg1CondInstruction *);
    void print(TR::FILE *, TR::ARM64Trg1ImmInstruction *);
+   void print(TR::FILE *, TR::ARM64Trg1ImmSymInstruction *);
    void print(TR::FILE *, TR::ARM64Trg1Src1Instruction *);
    void print(TR::FILE *, TR::ARM64Trg1Src1ImmInstruction *);
    void print(TR::FILE *, TR::ARM64Trg1Src2Instruction *);
+   void print(TR::FILE *, TR::ARM64CondTrg1Src2Instruction *);
    void print(TR::FILE *, TR::ARM64Trg1Src2ShiftedInstruction *);
    void print(TR::FILE *, TR::ARM64Trg1Src2ExtendedInstruction *);
    void print(TR::FILE *, TR::ARM64Trg1Src3Instruction *);
    void print(TR::FILE *, TR::ARM64Trg1MemInstruction *);
    void print(TR::FILE *, TR::ARM64MemInstruction *);
    void print(TR::FILE *, TR::ARM64MemSrc1Instruction *);
+   void print(TR::FILE *, TR::ARM64Trg1MemSrc1Instruction *);
    void print(TR::FILE *, TR::ARM64Src1Instruction *);
    void print(TR::FILE *, TR::ARM64Src2Instruction *);
-
+#ifdef J9_PROJECT_SPECIFIC
+   void print(TR::FILE *, TR::ARM64VirtualGuardNOPInstruction *);
+#endif
    void print(TR::FILE *, TR::RealRegister *, TR_RegisterSizes size = TR_WordReg);
    void print(TR::FILE *, TR::RegisterDependency *);
    void print(TR::FILE *, TR::RegisterDependencyConditions *);
@@ -1118,6 +1145,49 @@ public:
    void printMemoryReferenceComment(TR::FILE *, TR::MemoryReference *);
 
    const char *getARM64RegisterName(uint32_t, bool = true);
+
+   void printa64(TR::FILE *, TR::Snippet *);
+   const char * getNamea64(TR::Snippet *);
+
+#ifdef J9_PROJECT_SPECIFIC
+   void print(TR::FILE *, TR::ARM64CallSnippet *);
+   void print(TR::FILE *, TR::ARM64UnresolvedCallSnippet *);
+   void print(TR::FILE *, TR::ARM64VirtualUnresolvedSnippet *);
+   void print(TR::FILE *, TR::ARM64InterfaceCallSnippet *);
+   void print(TR::FILE *, TR::ARM64StackCheckFailureSnippet *);
+   void print(TR::FILE *, TR::ARM64ForceRecompilationSnippet *);
+   void print(TR::FILE *, TR::ARM64RecompilationSnippet *);
+#endif
+   void print(TR::FILE *, TR::ARM64HelperCallSnippet *);
+
+#endif
+#ifdef TR_TARGET_RISCV
+   void printPrefix(TR::FILE *, TR::Instruction *);
+
+   void print(TR::FILE *, TR::LabelInstruction *);
+   void print(TR::FILE *, TR::AdminInstruction *);
+
+   void print(TR::FILE *, TR::RtypeInstruction *);
+   void print(TR::FILE *, TR::ItypeInstruction *);
+   void print(TR::FILE *, TR::StypeInstruction *);
+   void print(TR::FILE *, TR::BtypeInstruction *);
+   void print(TR::FILE *, TR::UtypeInstruction *);
+   void print(TR::FILE *, TR::JtypeInstruction *);
+   void print(TR::FILE *, TR::LoadInstruction * );
+   void print(TR::FILE *, TR::StoreInstruction *);
+
+   void print(TR::FILE *, TR::RealRegister *, TR_RegisterSizes size = TR_WordReg);
+   void print(TR::FILE *, TR::RegisterDependency *);
+   void print(TR::FILE *, TR::RegisterDependencyConditions *);
+   void print(TR::FILE *, TR::MemoryReference *);
+   void print(TR::FILE *, TR::UnresolvedDataSnippet *);
+
+   void printRVOOLSequences(TR::FILE *);
+   void printRVGCRegisterMap(TR::FILE *, TR::GCRegisterMap *);
+   void printInstructionComment(TR::FILE *, int32_t, TR::Instruction *);
+   void printMemoryReferenceComment(TR::FILE *, TR::MemoryReference *);
+
+   const char *getRVRegisterName(uint32_t, bool = true);
 #endif
 
    friend class TR_CFGChecker;

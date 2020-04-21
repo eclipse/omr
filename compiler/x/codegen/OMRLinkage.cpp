@@ -19,17 +19,19 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/OMRLinkage.hpp"
+#include "codegen/Linkage.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
 #include "env/StackMemoryRegion.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/LiveRegister.hpp"
+#include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
@@ -43,15 +45,15 @@
 #include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
 #include "env/CompilerEnv.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/IGNode.hpp"
 #include "infra/InterferenceGraph.hpp"
@@ -65,6 +67,18 @@
 static uint32_t accumOrigSize = 0;
 static uint32_t accumMappedSize = 0;
 #endif
+
+
+OMR::X86::Linkage::Linkage(TR::CodeGenerator *cg) :
+      OMR::Linkage(cg),
+   _minimumFirstInstructionSize(0)
+   {
+   // Initialize the movOp table based on preferred load instructions for this target.
+   //
+   TR_X86OpCodes op = cg->getXMMDoubleLoadOpCode() ? cg->getXMMDoubleLoadOpCode() : MOVSDRegMem;
+   _movOpcodes[RegMem][Float8] = op;
+   }
+
 
 void OMR::X86::Linkage::mapCompactedStack(TR::ResolvedMethodSymbol *method)
    {
@@ -452,14 +466,14 @@ void OMR::X86::Linkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
       for (; parmCursor; parmCursor = parameterIterator.getNext())
          {
          if (!debug("amd64unimplemented"))
-         TR_ASSERT(TR::Compiler->target.is32Bit(), "Right-to-left not yet implemented on AMD64");
+         TR_ASSERT(self()->comp()->target().is32Bit(), "Right-to-left not yet implemented on AMD64");
          parmCursor->setParameterOffset(currentOffset);
          currentOffset += parmCursor->getRoundedSize();
          }
       }
    else
       {
-      TR_ASSERT(TR::Compiler->target.is32Bit(), "This code is IA32-specific");
+      TR_ASSERT(self()->comp()->target().is32Bit(), "This code is IA32-specific");
       // TODO:AMD64: This code deosn't need to support 8-byte slots; put it back the way it was
       uint8_t parmSlotShift = self()->getProperties().getParmSlotShift();
       int32_t topOfParameterArea = (method->getNumParameterSlots() << parmSlotShift) + offsetToFirstParm;
@@ -496,7 +510,7 @@ void OMR::X86::Linkage::mapSingleAutomatic(TR::AutomaticSymbol *p,
    stackIndex -= size;
    // align stack-allocated objects that don't have GC map index > 0
    // and are referenced through a register
-   if (p->isLocalObject() && TR::Compiler->target.is64Bit())
+   if (p->isLocalObject() && self()->comp()->target().is64Bit())
       {
       if (p->getGCMapIndex() == -1)
          self()->alignLocalObjectWithoutCollectedFields(stackIndex);
@@ -761,18 +775,10 @@ OMR::X86::Linkage::paramMovType(TR::ParameterSymbol *param)
    return self()->movType(param->getDataType());
    }
 
-
-TR_HeapMemory
-OMR::X86::Linkage::trHeapMemory()
+TR::Environment&
+OMR::X86::Linkage::getTargetFromComp()
    {
-   return self()->trMemory();
-   }
-
-
-TR_StackMemory
-OMR::X86::Linkage::trStackMemory()
-   {
-   return self()->trMemory();
+   return TR::comp()->target();
    }
 
 

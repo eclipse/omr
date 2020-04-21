@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,7 +68,6 @@ enum TR_VirtualGuardTestType
    TR_VftTest,
    TR_MethodTest,
    TR_NonoverriddenTest,
-   TR_RubyInlineTest,
    TR_FSDTest /**< used in debugging mode to test if a breakpoint is set for the inlined callee */
    };
 
@@ -99,14 +98,6 @@ class TR_VirtualGuard
          TR::Node *guardNode=NULL,
          int32_t currentSiteIndex=-2);
 
-   static TR::Node *createRubyInlineGuard(
-         TR_VirtualGuardKind,
-         TR::Compilation *,
-         int16_t calleeIndex,
-         TR::Node *,
-         TR::TreeTop *,
-         TR_OpaqueClassBlock *);
-
    static TR::Node *createVftGuard(
          TR_VirtualGuardKind,
          TR::Compilation *,
@@ -114,6 +105,15 @@ class TR_VirtualGuard
          TR::Node *,
          TR::TreeTop *,
          TR_OpaqueClassBlock *);
+
+   static TR::Node *createVftGuardWithReceiver(
+         TR_VirtualGuardKind,
+         TR::Compilation *,
+         int16_t calleeIndex,
+         TR::Node *,
+         TR::TreeTop *,
+         TR_OpaqueClassBlock *,
+         TR::Node* receiverNode);
 
    static TR::Node *createMethodGuard(
          TR_VirtualGuardKind,
@@ -148,7 +148,7 @@ class TR_VirtualGuard
          int16_t calleeIndex,
          TR::Node * node,
          TR::TreeTop * destination,
-         uintptrj_t *mcsObject,
+         uintptr_t *mcsObject,
          TR::KnownObjectTable::Index mcsEpoch);
 
    static TR::Node *createDummyOrSideEffectGuard(TR::Compilation *, TR::Node *, TR::TreeTop *);
@@ -226,7 +226,7 @@ class TR_VirtualGuard
    TR_OpaqueClassBlock    *getThisClass()   { return _thisClass; }
    void                    setThisClass(TR_OpaqueClassBlock *thisClass)   { _thisClass = thisClass; }
 
-   uintptrj_t *mutableCallSiteObject()
+   uintptr_t *mutableCallSiteObject()
       {
       TR_ASSERT(_kind == TR_MutableCallSiteTargetGuard, "mutableCallSiteObject only defined for TR_MutableCallSiteTargetGuard");
       return _mutableCallSiteObject;
@@ -298,7 +298,7 @@ class TR_VirtualGuard
    bool                      _mergedWithOSRGuard;
 
    // These reference locations are non-null only for MutableCallSiteGuards
-   uintptrj_t                *_mutableCallSiteObject;
+   uintptr_t                *_mutableCallSiteObject;
    TR::KnownObjectTable::Index _mutableCallSiteEpoch;
    TR_ByteCodeInfo           _bcInfo;
    };

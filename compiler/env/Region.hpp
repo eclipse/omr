@@ -113,6 +113,12 @@ public:
 
    void deallocate(void * allocation, size_t = 0) throw();
 
+   static void reset(TR::Region& targetRegion, TR::Region& prototypeRegion)
+      {
+      targetRegion.~Region(); 
+      new (&targetRegion) TR::Region(prototypeRegion);
+      }
+
    friend bool operator ==(const TR::Region &lhs, const TR::Region &rhs)
       {
       return &lhs == &rhs;

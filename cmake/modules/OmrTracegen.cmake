@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,22 +27,21 @@ set(OMR_TRACEGEN_ 1)
 add_custom_target(run_tracegen)
 set_property(TARGET run_tracegen PROPERTY FOLDER tracegen)
 
-# Setup a default trace root if one has not alreay been set
+# Setup a default trace root if one has not alreay been set.
 if(NOT DEFINED OMR_TRACE_ROOT)
-	message(WARNING "OMR: No trace root has been set. Defaulting to '${CMAKE_CURRENT_BINARY_DIR}'")
 	set(OMR_TRACE_ROOT "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
-
+message(STATUS "OMR: trace root is '${OMR_TRACE_ROOT}'")
 
 # Process an <input> tracegen file to produce trace headers, sources, and pdat files.
 # Usage: omr_add_tracegen(<input> [<output>])
 # By default, <output> is derived from the base name of <input>.
 # tracegen will produce:
-#   ut_<output>.h
-#   ut_<output>.c
-#   ut_<output>.pdat
-#TODO: pehaps should detect output by searching for "executable=" line
-#takes extra optional argument name to override output filename
+# - ut_<output>.h
+# - ut_<output>.c
+# - ut_<output>.pdat
+# TODO: perhaps should detect output by searching for "executable=" line
+# takes extra optional argument name to override output filename
 function(omr_add_tracegen input)
 	get_filename_component(input_dir "${input}" DIRECTORY)
 
@@ -65,8 +64,8 @@ function(omr_add_tracegen input)
 
 	add_custom_command(
 		OUTPUT "${generated_filename}.c" "${generated_filename}.h" "${generated_filename}.pdat"
-		COMMAND tracegen -w2cd -treatWarningAsError -generatecfiles -threshold 1 -file ${CMAKE_CURRENT_SOURCE_DIR}/${input}
-		DEPENDS ${input} tracegen  # adding tracegen as a dependency should be automatic, but for some reason doesnt happen on ninja generators
+		COMMAND ${OMR_EXE_LAUNCHER} $<TARGET_FILE:tracegen> -w2cd -treatWarningAsError -generatecfiles -threshold 1 -file ${CMAKE_CURRENT_SOURCE_DIR}/${input}
+		DEPENDS ${input} tracegen # adding tracegen as a dependency should be automatic, but for some reason doesn't happen on ninja generators
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
 	add_custom_target("trc_${base_name}" DEPENDS "${generated_filename}.c")
@@ -78,11 +77,11 @@ macro(add_tracegen)
 	omr_add_tracegen(${ARGN})
 endmacro(add_tracegen)
 
-# Define a target named 'run_tracegen' which forces generation of all tracegen files (ie by depending on run_tracegen)
+# Define a target named 'run_tracegen' which forces generation of all tracegen files (i.e. by depending on run_tracegen)
 # However this is really only a build order dependency in cmake. In order to have proper dependency tracking
 # based on the output .pdat files we use the generator expression.
 add_custom_command(OUTPUT tracemerge.stamp
-	COMMAND tracemerge -majorversion 5 -minorversion 1 -root ${OMR_TRACE_ROOT}
+	COMMAND ${OMR_EXE_LAUNCHER} $<TARGET_FILE:tracemerge> -majorversion 5 -minorversion 1 -root ${OMR_TRACE_ROOT}
 	COMMAND ${CMAKE_COMMAND} -E touch tracemerge.stamp
 	DEPENDS run_tracegen $<TARGET_PROPERTY:run_tracegen,OMR_TRACE_PDATS>
 	WORKING_DIRECTORY ${OMR_TRACE_ROOT}

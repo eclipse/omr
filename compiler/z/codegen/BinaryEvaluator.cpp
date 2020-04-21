@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Machine.hpp"
@@ -48,14 +48,14 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
 #include "ras/Debug.hpp"
@@ -66,21 +66,6 @@
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
-
-
-//#define TRACE_EVAL
-#if defined(TRACE_EVAL)
-#define EVAL_BLOCK
-#if defined (EVAL_BLOCK)
-#define PRINT_ME(string,node,cg) TR::Delimiter evalDelimiter(TR::comp(), TR::comp()->getOption(TR_TraceCG), "EVAL", string)
-#else
-extern void PRINT_ME(char * string, TR::Node * node, TR::CodeGenerator * cg);
-#endif
-#else
-#define PRINT_ME(string,node,cg)
-#endif
-
-#define ENABLE_ZARCH_FOR_32    1
 
 /**
  * lnegFor32bit - 32 bit code generation to negate a long integer
@@ -183,9 +168,7 @@ laddConst(TR::Node * node, TR::CodeGenerator * cg, TR::RegisterPair * targetRegi
    TR::Register * lowOrder = targetRegisterPair->getLowOrder();
    TR::Register * highOrder = targetRegisterPair->getHighOrder();
 
-   if ( ENABLE_ZARCH_FOR_32 &&
-         performTransformation(comp, "O^O Use AL/ALC to perform long add.\n")
-      )
+   if (performTransformation(comp, "O^O Use AL/ALC to perform long add.\n"))
       {     // wrong carry bit to be set
       if ( l_value != 0 )
          {
@@ -249,7 +232,7 @@ genNullTestForCompressedPointers(TR::Node *node, TR::CodeGenerator *cg, TR::Regi
    {
    TR::Compilation *comp = cg->comp();
    bool hasCompressedPointers = false;
-   if (TR::Compiler->target.is64Bit() &&
+   if (cg->comp()->target().is64Bit() &&
          comp->useCompressedPointers() &&
          node->containsCompressionSequence()  /* &&
          !node->isNonZero() */ )
@@ -313,12 +296,12 @@ genNullTestForCompressedPointers(TR::Node *node, TR::CodeGenerator *cg, TR::Regi
             {
             TR::Register* r = addOrSubNode->getFirstChild()->getRegister();
             generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
-            generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, r, (signed char)0, TR::InstOpCode::COND_BE, skipAdd);
+            generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, r, 0, TR::InstOpCode::COND_BE, skipAdd);
             }
          else
             {
             generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
-            generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, targetRegister, (signed char)0, TR::InstOpCode::COND_BE, skipAdd);
+            generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, targetRegister, 0, TR::InstOpCode::COND_BE, skipAdd);
             }
 
          cFlowRegionStart->setStartInternalControlFlow();
@@ -343,14 +326,14 @@ laddHelper64(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node *curTreeNode = cg->getCurrentEvaluationTreeTop()->getNode();
    bool bumpedRefCount = false;
 
-   bool isCompressionSequence = TR::Compiler->target.is64Bit() &&
+   bool isCompressionSequence = cg->comp()->target().is64Bit() &&
            comp->useCompressedPointers() &&
            node->containsCompressionSequence();
 
    if (NEED_CC(node) || (node->getOpCodeValue() == TR::luaddc))
       {
       TR_ASSERT( !isCompressionSequence, "CC computation not supported with compression sequence.\n");
-      TR_ASSERT(node->getOpCodeValue() == TR::ladd || node->getOpCodeValue() == TR::luadd || node->getOpCodeValue() == TR::luaddc,
+      TR_ASSERT(node->getOpCodeValue() == TR::ladd || node->getOpCodeValue() == TR::luaddc,
               "CC computation not supported for this node %p\n", node);
 
       // we need the carry from integerAddAnalyser for the CC sequence, thus we use logical add instead of add
@@ -533,34 +516,23 @@ generic32BitAddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       int32_t value;
       switch (secondChild->getDataType())
          {
-         case TR::Address:
-            TR_ASSERT( TR::Compiler->target.is32Bit(),"Should not be here for 64bit!");
-         case TR::Int32:
+         case TR::Int8:
             {
-            PRINT_ME("iconst", node, cg);
-            value = secondChild->getInt();
+            value = (int32_t) secondChild->getByte();
             break;
             }
          case TR::Int16:
             {
-            PRINT_ME("sconst", node, cg);
             value = (int32_t) secondChild->getShortInt();
             break;
             }
-//          case TR_UInt16:
-//             {
-//             PRINT_ME("cconst", node, cg);
-//             value = (int32_t) secondChild->getConst<uint16_t>();
-//             break;
-//             }
-         case TR::Int8:
+         case TR::Int32:
             {
-            PRINT_ME("bconst", node, cg);
-            value = (int32_t) secondChild->getByte();
+            value = secondChild->getInt();
             break;
             }
          default:
-            TR_ASSERT( 0, "generic32BitAddEvaluator: Unexpected Type\n");
+            TR_ASSERT_FATAL(false, "Unexpected data type (%s) in generic32BitAddEvaluator", secondChild->getDataType().toString());
             break;
          }
 
@@ -576,7 +548,7 @@ generic32BitAddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       bool useAHIK = false;
 
       // If negative or large enough range we must use LAY. LA has more restrictions.
-      bool useLA = TR::Compiler->target.is64Bit() && node->isNonNegative()
+      bool useLA = cg->comp()->target().is64Bit() && node->isNonNegative()
          && ((value < MAXLONGDISP && value > MINLONGDISP) || (value >= 0 && value <= MAXDISP));
 
       TR::Register * childTargetReg = cg->evaluate(firstChild);
@@ -597,7 +569,7 @@ generic32BitAddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          useLA = false;
          }
 
-      if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
          {
          if (!canClobberReg && (value >= MIN_IMMEDIATE_VAL && value <= MAX_IMMEDIATE_VAL))
             {
@@ -641,7 +613,7 @@ generic32BitAddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 /**
  * Generic subtraction of 32bits
  * This generic subtrac evaluator is invoked from different evaluator functions and handles all subtract types shorter than an int
- * (i.e. byte-bsub, char-csub, short-ssub, and int-isub)
+ * (i.e. byte-bsub, short-ssub, and int-isub)
  *
  * It does not handle long type.
  */
@@ -658,38 +630,27 @@ generic32BitSubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       switch (secondChild->getDataType())
          {
-         case TR::Address:
-            TR_ASSERT( TR::Compiler->target.is32Bit(), "generic32BitSubEvaluator(): unexpected data type for 64bit code-gen!");
-         case TR::Int32:
+         case TR::Int8:
             {
-            PRINT_ME("iconst", node, cg);
-            value = secondChild->getInt();
+            value = (int32_t) secondChild->getByte();
             break;
             }
          case TR::Int16:
             {
-            PRINT_ME("sconst", node, cg);
             value = (int32_t) secondChild->getShortInt();
-            }
             break;
-//          case TR_UInt16:
-//             {
-//             PRINT_ME("cconst", node, cg);
-//             value = (int32_t) secondChild->getConst<uint16_t>();
-//             break;
-//             }
-         case TR::Int8:
+            }
+         case TR::Int32:
             {
-            PRINT_ME("bconst", node, cg);
-            value = (int32_t) secondChild->getByte();
+            value = secondChild->getInt();
             break;
             }
          default:
-            TR_ASSERT( 0, "generic32BitAddEvaluator: Unexpected Type\n");
+            TR_ASSERT_FATAL(false, "Unexpected data type (%s) in generic32BitSubEvaluator", secondChild->getDataType().toString());
             break;
          }
 
-      if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196) &&
+      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196) &&
             firstChild->getRegister() && !cg->canClobberNodesRegister(firstChild) &&
           ((-value) >= MIN_IMMEDIATE_VAL && (-value) <= MAX_IMMEDIATE_VAL))
          {
@@ -838,14 +799,17 @@ lDivRemGenericEvaluator64(TR::Node * node, TR::CodeGenerator * cg, bool isDivisi
          if (isDivision)
             {
             firstRegister = cg->gprClobberEvaluate(firstChild);
-            if (!firstChild->isNonNegative())
+
+            // This adjustment only applies to signed division as we are effectively trying to skirt the sign bit during
+            // the shift operation below
+            if (!isUnsigned && !firstChild->isNonNegative())
                {
                TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
                TR::LabelSymbol * skipSet = generateLabelSymbol(cg);
 
                generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
                cFlowRegionStart->setStartInternalControlFlow();
-               generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, firstRegister, (signed char)0,TR::InstOpCode::COND_BNL, skipSet);
+               generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, firstRegister, 0,TR::InstOpCode::COND_BNL, skipSet);
 
                //adjustment to dividend if dividend is negative
                TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
@@ -871,7 +835,10 @@ lDivRemGenericEvaluator64(TR::Node * node, TR::CodeGenerator * cg, bool isDivisi
 
             TR::LabelSymbol * done = generateLabelSymbol(cg);
             TR::RegisterDependencyConditions *deps = NULL;
-            if (!firstChild->isNonNegative())
+
+            // This adjustment only applies to signed division as we are effectively trying to skirt the sign bit during
+            // the shift operation below
+            if (!isUnsigned && !firstChild->isNonNegative())
                {
                TR::Register * tempRegister1 = cg->allocateRegister();
                TR::Register * tempRegister2 = cg->allocateRegister();
@@ -940,8 +907,10 @@ lDivRemGenericEvaluator64(TR::Node * node, TR::CodeGenerator * cg, bool isDivisi
    dependencies->addPostCondition(remRegister, TR::RealRegister::LegalEvenOfPair);
    dependencies->addPostCondition(quoRegister, TR::RealRegister::LegalOddOfPair);
 
+   // TODO(#3685): Remove this Java-ism from OMR and push it into OpenJ9
    if (!doConditionalRemainder &&
          !node->isSimpleDivCheck() &&
+         !isUnsigned &&
          !firstChild->isNonNegative() &&
          !secondChild->isNonNegative() &&
          !(secondChild->getOpCodeValue() == TR::lconst &&
@@ -1084,7 +1053,9 @@ iDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
    //    R1+1 -> Quotient
    //
    // Note:  D and DR require that R1=0 before executing the division
+   // TODO(#3685): Remove this Java-ism from OMR and push it into OpenJ9
    bool needCheck = (!node->isSimpleDivCheck()            &&
+                     !node->getOpCode().isUnsigned() &&
                      !firstChild->isNonNegative()         &&
                      !secondChild->isNonNegative());
 
@@ -1155,7 +1126,7 @@ iDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
 
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, doDiv);
 
-      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, sourceRegister, (signed char)-1, TR::InstOpCode::COND_BNE, doDiv);
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, sourceRegister, -1, TR::InstOpCode::COND_BNE, doDiv);
       cursor =
          generateRRInstruction(cg, TR::InstOpCode::LR, node, quoRegister, remRegister);
 
@@ -1223,7 +1194,7 @@ genericLongShiftSingle(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::
    TR::Node * secondChild = node->getSecondChild();
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * srcReg = NULL;
-   TR::Register * trgReg = cg->allocateRegister();
+   TR::Register * trgReg = NULL;
    TR::Register * src2Reg = NULL;
    TR::MemoryReference * tempMR = NULL;
 
@@ -1231,7 +1202,7 @@ genericLongShiftSingle(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::
       {
       int32_t value = secondChild->getInt();
 
-      if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
          {
          // Generate RISBG for lshl + i2l sequence
          if (node->getOpCodeValue() == TR::lshl)
@@ -1239,7 +1210,8 @@ genericLongShiftSingle(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::
             if (firstChild->getOpCodeValue() == TR::i2l && firstChild->isSingleRefUnevaluated() && (firstChild->isNonNegative() || firstChild->getFirstChild()->isNonNegative()))
                {
                srcReg = cg->evaluate(firstChild->getFirstChild());
-               auto mnemonic = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
+               trgReg = cg->allocateRegister();
+               auto mnemonic = cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
 
                generateRIEInstruction(cg, mnemonic, node, trgReg, srcReg, (int8_t)(32-value), (int8_t)((63-value)|0x80), (int8_t)value);
 
@@ -1251,10 +1223,35 @@ genericLongShiftSingle(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::
 
                return trgReg;
                }
+            else if (firstChild->getOpCodeValue() == TR::land)
+               {
+               if (trgReg = TR::TreeEvaluator::tryToReplaceShiftLandWithRotateInstruction(firstChild, cg, value, node->getOpCodeValue() == TR::lshl))
+                  {
+                  node->setRegister(trgReg);
+                  cg->decReferenceCount(firstChild);
+                  cg->decReferenceCount(secondChild);
+                  return trgReg;
+                  }
+               }
+            }
+         else if (node->getOpCodeValue() == TR::lshr || node->getOpCodeValue() == TR::lushr)
+            {
+            // Generate RISBGN for (lshr + land) and (lushr + land) sequences
+            if (firstChild->getOpCodeValue() == TR::land)
+               {
+               if (trgReg = TR::TreeEvaluator::tryToReplaceShiftLandWithRotateInstruction(firstChild, cg, -value, node->getOpCodeValue() == TR::lshr))
+                  {
+                  node->setRegister(trgReg);
+                  cg->decReferenceCount(firstChild);
+                  cg->decReferenceCount(secondChild);
+                  return trgReg;
+                  }
+               }
             }
          }
 
       srcReg = cg->evaluate(firstChild);
+      trgReg = cg->allocateRegister();
       if ((value & 0x3f) == 0)
          {
          generateRRInstruction(cg, TR::InstOpCode::LGR, node, trgReg, srcReg);
@@ -1268,6 +1265,7 @@ genericLongShiftSingle(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::
    else
       {
       srcReg = cg->evaluate(firstChild);
+      trgReg = cg->allocateRegister();
       TR::Register * src2Reg;
       // Mask by 63 is redundant since SRLG will only use 6 bits anyway
       bool skippedAnd = false;
@@ -1387,29 +1385,7 @@ genericIntShift(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::Mnemoni
          {
          if (trgReg != srcReg && canUseAltShiftOp )
             {
-            if (cg->supportsHighWordFacility() && srcReg->assignToHPR() &&
-                (altShiftOp == TR::InstOpCode::SLLK || altShiftOp == TR::InstOpCode::SRLK ))
-               {
-               if (altShiftOp == TR::InstOpCode::SLLK)
-                  {
-                  if (trgReg->assignToHPR())
-                     altShiftOp = TR::InstOpCode::SLLHH;
-                  else
-                     altShiftOp = TR::InstOpCode::SLLLH;
-                  }
-               else
-                  {
-                  if (trgReg->assignToHPR())
-                     altShiftOp = TR::InstOpCode::SRLHH;
-                  else
-                     altShiftOp = TR::InstOpCode::SRLLH;
-                  }
-               generateExtendedHighWordInstruction(node, cg, altShiftOp, trgReg, srcReg, shiftAmount);
-               }
-            else
-               {
-               generateRSInstruction(cg, altShiftOp, node, trgReg, srcReg, shiftAmount);
-               }
+            generateRSInstruction(cg, altShiftOp, node, trgReg, srcReg, shiftAmount);
             }
          else
             {
@@ -1452,7 +1428,6 @@ genericIntShift(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::Mnemoni
 TR::Register *
 OMR::Z::TreeEvaluator::iaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("iadd", node, cg);
    return generic32BitAddEvaluator(node, cg);
    }
 
@@ -1462,25 +1437,7 @@ OMR::Z::TreeEvaluator::iaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::laddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("ladd", node, cg);
    return laddHelper64(node, cg);
-   }
-
-
-/**
- * address add helper function
- */
-TR::Register *
-OMR::Z::TreeEvaluator::addrAddHelper(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getOpCodeValue() == TR::aiadd)
-      return generic32BitAddEvaluator(node, cg);
-   else if (node->getOpCodeValue() == TR::aladd)
-      return TR::TreeEvaluator::laddEvaluator(node, cg);
-   else
-      TR_ASSERT(0,"Wrong il-opCode for calling addAddHelper!\n");
-
-   return NULL;
    }
 
 TR::Register *
@@ -1489,7 +1446,7 @@ genericRotateLeft(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
 
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
       {
       if (node->getOpCodeValue() == TR::lor)
          {
@@ -1530,7 +1487,7 @@ genericRotateLeft(TR::Node * node, TR::CodeGenerator * cg)
                   targetReg = sourceReg;
                   }
 
-               TR::InstOpCode::Mnemonic opCode = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
+               TR::InstOpCode::Mnemonic opCode = cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
                   generateRIEInstruction(cg, opCode, node, targetReg, sourceReg, 0, 63, lShftAmnt);
 
                // Clean up skipped nodes
@@ -1680,7 +1637,7 @@ genericRotateLeft(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 genericRotateAndInsertHelper(TR::Node * node, TR::CodeGenerator * cg)
    {
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
       {
       TR::Node * firstChild = node->getFirstChild();
       TR::Node * secondChild = node->getSecondChild();
@@ -1714,22 +1671,13 @@ genericRotateAndInsertHelper(TR::Node * node, TR::CodeGenerator * cg)
           secondChild->getOpCode().isLoadConst() &&
           firstChild->getSecondChild()->getOpCode().isLoadConst())
          {
-         // if GRA had decided to assign HPR to these nodes, we cannot use RISBG because they are 64-bit
-         // instructions
-         if (cg->supportsHighWordFacility() &&
-             firstChild->getFirstChild()->getRegister() &&
-             firstChild->getFirstChild()->getRegister()->assignToHPR())
-            {
-            return NULL;
-            }
-
          uint64_t value = 0;
 
          // Mask
          switch (secondChild->getDataType())
             {
             case TR::Address:
-               TR_ASSERT( TR::Compiler->target.is32Bit(),"genericRotateAndInsertHelper: unexpected data type");
+               TR_ASSERT( cg->comp()->target().is32Bit(),"genericRotateAndInsertHelper: unexpected data type");
             case TR::Int64:
                value = (uint64_t) secondChild->getLongInt();
                break;
@@ -1822,13 +1770,13 @@ genericRotateAndInsertHelper(TR::Node * node, TR::CodeGenerator * cg)
                   generateRRInstruction(cg, TR::InstOpCode::XR, node, targetReg, targetReg);
                   }
                }
-            else if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196) && !node->getType().isInt64())
+            else if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196) && !node->getType().isInt64())
                {
                generateRIEInstruction(cg, TR::InstOpCode::RISBLG, node, targetReg, sourceReg, msBit, 0x80 + lsBit, shiftAmnt);
                }
             else
                {
-               auto mnemonic = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
+               auto mnemonic = cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
 
                generateRIEInstruction(cg, mnemonic, node, targetReg, sourceReg, msBit, 0x80 + lsBit, shiftAmnt);
                }
@@ -1852,19 +1800,38 @@ genericRotateAndInsertHelper(TR::Node * node, TR::CodeGenerator * cg)
    }
 
 TR::Register *
-OMR::Z::TreeEvaluator::tryToReplaceLongAndWithRotateInstruction(TR::Node * node, TR::CodeGenerator * cg)
+OMR::Z::TreeEvaluator::tryToReplaceShiftLandWithRotateInstruction(TR::Node * node, TR::CodeGenerator * cg, int32_t shiftAmount, bool isSignedShift)
    {
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
       {
       TR::Node * firstChild = node->getFirstChild();
       TR::Node * secondChild = node->getSecondChild();
       TR::Compilation *comp = cg->comp();
 
-      // Given the right case, transform land into RISBG as it may be better than discrete pair of ands
+      // Given the right cases, transform land into RISBG as it may be better than discrete pair of ands
       if (node->getOpCodeValue() == TR::land && secondChild->getOpCode().isLoadConst())
          {
          uint64_t longConstValue = secondChild->getLongInt();
 
+         // RISBG instructions perform unsigned rotation, so if we are selecting the sign bit via the logical AND we cannot
+         // perform a signed shift because we must preserve the sign bit. In general we cannot handle this case because we are
+         // not certain our input will be non-negative, hence we must conservatively disallow the optimization in such a case.
+         if (longConstValue >= 0x8000000000000000LL && shiftAmount != 0 && isSignedShift)
+            {
+            return NULL;
+            }
+         // The Shift amount operand in RISBG only holds 6 bits so the optimization will not work on shift amounts >63 or < 63.
+         if (shiftAmount > 63 || shiftAmount < -63)
+            {
+            return NULL;
+            }
+         // If the node entered is a common node, then there is no guarantee that the child of the common node will still be alive.
+         // And when we try to access the value in that node, we might receive values from a node that might've been killed already.
+         // Thus, the optimization will not work.
+         if (node->getRegister() != NULL)
+            {
+            return NULL;
+            }
          int32_t tZeros = trailingZeroes(longConstValue);
          int32_t lZeros = leadingZeroes(longConstValue);
          int32_t tOnes  = trailingZeroes(~longConstValue);
@@ -1927,10 +1894,19 @@ OMR::Z::TreeEvaluator::tryToReplaceLongAndWithRotateInstruction(TR::Node * node,
             //    half and bottom half of the register), then it's better to use RISBG.
             //    This is because there are no NI** instructions allowing us to specify bits in
             //    the top half and bottom half of the register to zero out.
-
+               
             if (firstChild->getReferenceCount() > 1 || lZeros > 31 || tZeros > 31
                 || (lZeros > 0 && tZeros > 0))
                {
+               // If the shift amount is NOT zero, then we must account for the shifted range
+               // [1] If the resultant shifted msb in a right shift is shifted "too far" to the right, then we are basically zeroing the register. This optimization will not be used.
+               // [2] Same case if the resultant lsb of a left shift is shifted out of range.
+               // Eg[1]: 000...0011 >> 3. msb = 62, lsb = 63. If we right shift, then msb and lsb will both be > 63 (out of range)
+               // Eg[2]: 11100...00 << 10. msb = 0, lsb = 2. If we left shift, then msb and lsb will both be < 0 (out of range)
+               if ((shiftAmount < 0 && msBit - shiftAmount > 63) || (shiftAmount > 0 && lsBit - shiftAmount < 0))
+                  {
+                  return NULL;
+                  }
                doTransformation = true;
                }
             }
@@ -1950,35 +1926,75 @@ OMR::Z::TreeEvaluator::tryToReplaceLongAndWithRotateInstruction(TR::Node * node,
             //    Example value: 11111000011111. The NI** instructions can only operate on
             //    the top half or bottom half of a register at a time. So such a case
             //    will require two NI** instructions. Hence we are better off using a single RISBG
+            //
+            // "shiftAmount == 0"
+            //    For cases where we have zeros surrounded by one, if the shift value is not zero
+            //    then the optimization will not work.
 
-            if (firstChild->getReferenceCount()> 1 || (lOnes < 32 && tOnes < 32))
+            if ((firstChild->getReferenceCount()> 1 || (lOnes < 32 && tOnes < 32)) && shiftAmount == 0)
                {
+               // Similar to above, if the shift amount is NOT zero, then we must account for the shifted range
+               if ((shiftAmount < 0 && msBit - shiftAmount > 63) || (shiftAmount > 0 && lsBit - shiftAmount < 0))
+                  {
+                  return NULL;
+                  }
                doTransformation = true;
                }
             }
 
          if (doTransformation && performTransformation(comp, "O^O Use RISBG instead of 2 ANDs for %p.\n", node))
             {
-            TR::Register * targetReg = NULL;
+            TR::Register * targetReg = cg->allocateRegister();
             TR::Register * sourceReg = cg->evaluate(firstChild);
 
-            if (!cg->canClobberNodesRegister(firstChild))
+            // if possible then use the instruction that doesn't set the CC as it's faster
+            TR::InstOpCode::Mnemonic opCode = cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
+
+            // If the shift amount is zero, this instruction sets the rotation factor to 0 and sets the zero bit(0x80).
+            // So it's effectively zeroing out every bit except the inclusive range of lsBit to msBit.
+            // The bits in that range are preserved as is.
+            //
+            // If the shift amount is NOT zero, then we must account for the shifted range
+            // [1] If the shifted lsb of a left shift is still in range, but the msb is out of range, then we can still "capture" the shifted bits by upperbounding the msb.
+            // [2] Similar case if the msb of a right shift is still in range but the lsb is out of range.
+            //
+            // Eg[1]: 00...0111 >> 2. msb = 61, lsb = 63. If we right shift, we get 000...0001, so we can still preserve the last bit.
+            // Eg[2]: 1110...00 << 2. msb = 0, lsb = 2. If we left left, we can still preserve the first bit.
+
+            int32_t rangeStart = msBit;
+            int32_t rangeEnd = lsBit;
+
+            if (shiftAmount < 0)
                {
-               targetReg = cg->allocateClobberableRegister(sourceReg);
+               rangeStart = msBit - shiftAmount;
+               if (lsBit - shiftAmount > 63)
+                  {
+                  rangeEnd = 63;
+                  }
+               else
+                  {
+                  rangeEnd = lsBit - shiftAmount;
+                  }
                }
-            else
+            else if (shiftAmount > 0)
+               {                  
+               rangeEnd = lsBit - shiftAmount;
+               if (msBit - shiftAmount < 0)
+                  {
+                  rangeStart = 0;
+                  }
+               else
+                  {
+                  rangeStart = msBit - shiftAmount;
+                  }
+               }
+            if (shiftAmount < 0)
                {
-               targetReg = sourceReg;
+               shiftAmount = 64 + shiftAmount;
                }
-
-               // if possible then use the instruction that doesn't set the CC as it's faster
-               TR::InstOpCode::Mnemonic opCode = cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_zEC12) ? TR::InstOpCode::RISBGN : TR::InstOpCode::RISBG;
-
-               // this instruction sets the rotation factor to 0 and sets the zero bit(0x80).
-               // So it's effectively zeroing out every bit except the inclusive range of lsBit to msBit
-               // The bits in that range are preserved as is
-               generateRIEInstruction(cg, opCode, node, targetReg, sourceReg, msBit, 0x80 + lsBit, 0);
-
+            generateRIEInstruction(cg, opCode, node, targetReg, sourceReg, rangeStart, 0x80 + rangeEnd, shiftAmount);
+            cg->decReferenceCount(firstChild);
+            cg->decReferenceCount(secondChild);
             return targetReg;
             }
          }
@@ -2008,7 +2024,7 @@ lsubHelper64(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node *curTreeNode = cg->getCurrentEvaluationTreeTop()->getNode();
 
    bool isCompressionSequence = false;
-   if (TR::Compiler->target.is64Bit() &&
+   if (cg->comp()->target().is64Bit() &&
          comp->useCompressedPointers() &&
          node->containsCompressionSequence())
       isCompressionSequence = true;
@@ -2016,7 +2032,7 @@ lsubHelper64(TR::Node * node, TR::CodeGenerator * cg)
    if (NEED_CC(node) || (node->getOpCodeValue() == TR::lusubb))
       {
       TR_ASSERT( !isCompressionSequence,"CC computation not supported with compression sequence.\n");
-      TR_ASSERT(node->getOpCodeValue() == TR::lsub || node->getOpCodeValue() == TR::lusub || node->getOpCodeValue() == TR::lusubb,
+      TR_ASSERT(node->getOpCodeValue() == TR::lsub || node->getOpCodeValue() == TR::lusubb,
               "CC computation not supported for this node %p\n", node);
 
       // we need the borrow from longSubtractAnalyser for the CC sequence,
@@ -2280,7 +2296,6 @@ lmulHelper64(TR::Node * node, TR::CodeGenerator * cg)
 
    if (secondChildIsConstant)
       {
-      PRINT_ME("lconst", node, cg);
       int64_t value = secondChild->getLongInt();
 
       // LA Ry,(Rx,Rx) is the best instruction scale array index by 2
@@ -2292,7 +2307,7 @@ lmulHelper64(TR::Node * node, TR::CodeGenerator * cg)
       bool create_LA = false;
       if (firstChild->getRegister() != NULL &&
           value == 2 &&
-          TR::Compiler->target.is64Bit()) // 3 way AGEN LA is cracked on zG
+          cg->comp()->target().is64Bit()) // 3 way AGEN LA is cracked on zG
          {
          create_LA = true;
          }
@@ -2328,27 +2343,40 @@ lmulHelper64(TR::Node * node, TR::CodeGenerator * cg)
    return targetRegister;
    }
 
-
-/**
- * baddEvaluator - add 2 bytes
- */
 TR::Register *
-OMR::Z::TreeEvaluator::baddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+OMR::Z::TreeEvaluator::baddEvaluator(TR::Node* node, TR::CodeGenerator* cg)
    {
-   PRINT_ME("badd", node, cg);
+   TR::Node* lhsChild = node->getChild(0);
+   TR::Node* rhsChild = node->getChild(1);
 
-   return generic32BitAddEvaluator(node, cg);
+   // We don't have an instruction which adds a source register with a target memory reference, so force the
+   // evaluation of both chlidren here and pass the BAD mnemonic for the register-to-memory operand to the generic
+   // analyzer to ensure it is never generated
+   cg->evaluate(lhsChild);
+   cg->evaluate(rhsChild);
+
+   TR_S390BinaryCommutativeAnalyser temp(cg);
+   temp.genericAnalyser(node, TR::InstOpCode::AR, TR::InstOpCode::BAD, TR::InstOpCode::LR);
+
+   cg->decReferenceCount(lhsChild);
+   cg->decReferenceCount(rhsChild);
+
+   return node->getRegister();
    }
 
-/**
- * saddEvaluator - add 2 short integers
- */
 TR::Register *
-OMR::Z::TreeEvaluator::saddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+OMR::Z::TreeEvaluator::saddEvaluator(TR::Node* node, TR::CodeGenerator* cg)
    {
-   PRINT_ME("sadd", node, cg);
+   TR::Node* lhsChild = node->getChild(0);
+   TR::Node* rhsChild = node->getChild(1);
 
-   return generic32BitAddEvaluator(node, cg);
+   TR_S390BinaryCommutativeAnalyser temp(cg);
+   temp.genericAnalyser(node, TR::InstOpCode::AR, TR::InstOpCode::AH, TR::InstOpCode::LR);
+
+   cg->decReferenceCount(lhsChild);
+   cg->decReferenceCount(rhsChild);
+
+   return node->getRegister();
    }
 
 /**
@@ -2357,9 +2385,37 @@ OMR::Z::TreeEvaluator::saddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::caddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("cadd", node, cg);
-
    return generic32BitAddEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::Z::TreeEvaluator::bsubEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Node* lhsChild = node->getChild(0);
+   TR::Node* rhsChild = node->getChild(1);
+
+   // We don't have an instruction which adds a source register with a target memory reference, so force the
+   // evaluation of both chlidren here and pass the BAD mnemonic for the register-to-memory operand to the generic
+   // analyzer to ensure it is never generated
+   cg->evaluate(lhsChild);
+   cg->evaluate(rhsChild);
+
+   TR_S390BinaryAnalyser temp(cg);
+   temp.genericAnalyser(node, TR::InstOpCode::SR, TR::InstOpCode::BAD, TR::InstOpCode::LR);
+
+   return node->getRegister();
+   }
+
+TR::Register *
+OMR::Z::TreeEvaluator::ssubEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Node* lhsChild = node->getChild(0);
+   TR::Node* rhsChild = node->getChild(1);
+
+   TR_S390BinaryAnalyser temp(cg);
+   temp.genericAnalyser(node, TR::InstOpCode::SR, TR::InstOpCode::SH, TR::InstOpCode::LR);
+
+   return node->getRegister();
    }
 
 /**
@@ -2369,9 +2425,7 @@ OMR::Z::TreeEvaluator::caddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::isubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("isub", node, cg);
-
-   if ((node->getOpCodeValue() == TR::asub) && TR::Compiler->target.is64Bit())
+   if ((node->getOpCodeValue() == TR::asub) && cg->comp()->target().is64Bit())
       {
       return lsubHelper64(node, cg);
       }
@@ -2388,33 +2442,7 @@ OMR::Z::TreeEvaluator::isubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lsubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lsub", node, cg);
    return lsubHelper64(node, cg);
-   }
-
-
-/**
- * bsubEvaluator - subtract 2 bytes
- * (child1 - child2)
- */
-TR::Register *
-OMR::Z::TreeEvaluator::bsubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   PRINT_ME("bsub", node, cg);
-
-   return generic32BitSubEvaluator(node, cg);
-   }
-
-/**
- * ssubEvaluator - subtract 2 short integers
- * (child1 - child2)
- */
-TR::Register *
-OMR::Z::TreeEvaluator::ssubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   PRINT_ME("ssub", node, cg);
-
-   return generic32BitSubEvaluator(node, cg);
    }
 
 /**
@@ -2424,8 +2452,6 @@ OMR::Z::TreeEvaluator::ssubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::csubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("csub", node, cg);
-
    return generic32BitSubEvaluator(node, cg);
    }
 
@@ -2435,8 +2461,6 @@ OMR::Z::TreeEvaluator::csubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lmulhEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lmulh", node, cg);
-
    bool needsUnsignedHighMulOnly = (node->getOpCodeValue() == TR::lumulh) && !node->isDualCyclic();
    if (node->isDualCyclic() || needsUnsignedHighMulOnly)
       {
@@ -2449,7 +2473,7 @@ OMR::Z::TreeEvaluator::lmulhEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * targetRegister = cg->allocateRegister();
    TR::Register * sourceRegister = firstRegister;
    TR::Compilation *comp = cg->comp();
-      
+
    TR::RegisterDependencyConditions * dependencies =
       new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg);
    TR::RegisterPair * targetRegisterPair = cg->allocateConsecutiveRegisterPair(sourceRegister, targetRegister);
@@ -2460,8 +2484,6 @@ OMR::Z::TreeEvaluator::lmulhEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    if (secondChild->getOpCodeValue() == TR::lconst)
       {
-      PRINT_ME("lconst", node, cg);
-
       int64_t value = secondChild->getLongInt();
       int64_t absValue = value > 0 ? value : -value;
 
@@ -2472,7 +2494,7 @@ OMR::Z::TreeEvaluator::lmulhEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // positive first child, branch to posMulh label
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
       cFlowRegionStart->setStartInternalControlFlow();
-      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, sourceRegister, (signed char)0, TR::InstOpCode::COND_BNL, posMulh);
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, sourceRegister, 0, TR::InstOpCode::COND_BNL, posMulh);
 
       // Negative first child, do complements on register
       generateRRInstruction(cg, TR::InstOpCode::LCGR, node, sourceRegister, sourceRegister);
@@ -2523,7 +2545,6 @@ TR::Register *
 OMR::Z::TreeEvaluator::mulhEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    bool isUnsigned = (node->getOpCodeValue() == TR::iumulh);
-   PRINT_ME("imulh", node, cg);
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
    TR::Register * firstRegister = cg->gprClobberEvaluate(firstChild);
@@ -2563,13 +2584,48 @@ OMR::Z::TreeEvaluator::mulhEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    return targetRegister;
    }
 
+TR::Register *
+OMR::Z::TreeEvaluator::bmulEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Node* lhsChild = node->getChild(0);
+   TR::Node* rhsChild = node->getChild(1);
+
+   // We don't have an instruction which multiplies a source register with a target memory reference, so force the
+   // evaluation of both chlidren here and pass the BAD mnemonic for the register-to-memory operand to the generic
+   // analyzer to ensure it is never generated
+   cg->evaluate(lhsChild);
+   cg->evaluate(rhsChild);
+
+   TR_S390BinaryCommutativeAnalyser temp(cg);
+   temp.genericAnalyser(node, TR::InstOpCode::MSR, TR::InstOpCode::BAD, TR::InstOpCode::LR);
+
+   cg->decReferenceCount(lhsChild);
+   cg->decReferenceCount(rhsChild);
+
+   return node->getRegister();
+   }
+
+TR::Register *
+OMR::Z::TreeEvaluator::smulEvaluator(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Node* lhsChild = node->getChild(0);
+   TR::Node* rhsChild = node->getChild(1);
+
+   TR_S390BinaryCommutativeAnalyser temp(cg);
+   temp.genericAnalyser(node, TR::InstOpCode::MSR, TR::InstOpCode::MH, TR::InstOpCode::LR);
+
+   cg->decReferenceCount(lhsChild);
+   cg->decReferenceCount(rhsChild);
+
+   return node->getRegister();
+   }
+
 /**
  * imulEvaluator - multiply 2 integers
  */
 TR::Register *
 OMR::Z::TreeEvaluator::imulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("imul", node, cg);
    TR::Node* secondChild = node->getSecondChild();
    TR::Node* firstChild = node->getFirstChild();
    TR::Node* halfwordNode = NULL;
@@ -2600,7 +2656,6 @@ OMR::Z::TreeEvaluator::imulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    if (secondChild->getOpCode().isLoadConst())
       {
-      PRINT_ME("iconst", node, cg);
       int32_t value = secondChild->getInt();
 
       // LA Ry,(Rx,Rx) is the best instruction scale array index by 2
@@ -2610,7 +2665,7 @@ OMR::Z::TreeEvaluator::imulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // has already been evaluated (by checking if it has a register).
 
       bool create_LA = false;
-      if ((firstChild->getRegister() != NULL) && (value == 2) && (node->isNonNegative() && TR::Compiler->target.is64Bit()))
+      if ((firstChild->getRegister() != NULL) && (value == 2) && (node->isNonNegative() && cg->comp()->target().is64Bit()))
          {
          create_LA = true;
          }
@@ -2667,36 +2722,9 @@ OMR::Z::TreeEvaluator::imulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       }
    else
       {
-      if (!node->getOpCode().isUnsigned())
-         {
-         TR_S390BinaryCommutativeAnalyser temp(cg);
-         temp.genericAnalyser(node, TR::InstOpCode::MSR, TR::InstOpCode::MS, TR::InstOpCode::LR);
-         targetRegister = node->getRegister();
-         }
-      else //Unsigned Multiply Support
-         {
-         TR::Register * secondRegister = cg->evaluate(secondChild);
-         TR::Instruction * cursor = NULL;
-         TR::Register * trgtRegPairFirst = cg->gprClobberEvaluate(firstChild);
-         TR::Register * trgtRegPairSecond = cg->allocateRegister();
-         TR::RegisterPair * trgtRegPair = cg->allocateConsecutiveRegisterPair(trgtRegPairFirst, trgtRegPairSecond);
-
-         TR::RegisterDependencyConditions * dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg);
-
-         dependencies->addPostCondition(trgtRegPair, TR::RealRegister::EvenOddPair);
-         dependencies->addPostCondition(trgtRegPair->getHighOrder(), TR::RealRegister::LegalEvenOfPair);
-         dependencies->addPostCondition(trgtRegPair->getLowOrder(), TR::RealRegister::LegalOddOfPair);
-
-         //do multiplication
-         cursor = generateRRInstruction(cg, TR::InstOpCode::MLR, node, trgtRegPair, secondRegister);
-
-         cursor->setDependencyConditions(dependencies);
-
-         node->setRegister(trgtRegPairFirst);
-         cg->stopUsingRegister(trgtRegPairSecond);
-         cg->stopUsingRegister(trgtRegPair);
-         targetRegister = trgtRegPair->getLowOrder();
-         }
+      TR_S390BinaryCommutativeAnalyser temp(cg);
+      temp.genericAnalyser(node, TR::InstOpCode::MSR, TR::InstOpCode::MS, TR::InstOpCode::LR);
+      targetRegister = node->getRegister();
       }
 
    cg->decReferenceCount(firstChild);
@@ -2713,7 +2741,6 @@ OMR::Z::TreeEvaluator::imulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lmulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lmul", node, cg);
    bool needsUnsignedHighMulOnly = (node->getOpCodeValue() == TR::lumulh) && !node->isDualCyclic();
    if (node->isDualCyclic() || needsUnsignedHighMulOnly)
       {
@@ -2724,36 +2751,12 @@ OMR::Z::TreeEvaluator::lmulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    }
 
 /**
- * bmulEvaluator - multiply 2 bytes
- */
-TR::Register *
-OMR::Z::TreeEvaluator::bmulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   PRINT_ME("bmul", node, cg);
-   TR_ASSERT( 0,"bmulEvaluator: not implemented\n");
-   return NULL;
-   }
-
-/**
- * smulEvaluator - multiply 2 short integers
- */
-TR::Register *
-OMR::Z::TreeEvaluator::smulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   PRINT_ME("smul", node, cg);
-   TR_ASSERT( 0, "smulEvaluator: not implemented\n");
-   return NULL;
-   }
-
-/**
  * idivEvaluator -  divide 2 integers
  * (child1 / child2)
  */
 TR::Register *
 OMR::Z::TreeEvaluator::idivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("idiv", node, cg);
-
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
    TR::Register * targetRegister = NULL;
@@ -2890,7 +2893,6 @@ OMR::Z::TreeEvaluator::idivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::ldivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("ldiv", node, cg);
    return lDivRemGenericEvaluator64(node, cg, DIVISION);
    }
 
@@ -2901,8 +2903,7 @@ OMR::Z::TreeEvaluator::ldivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::bdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("bdiv", node, cg);
-   TR_ASSERT( 0, "bdivEvaluator: not implemented\n");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
@@ -2913,8 +2914,7 @@ OMR::Z::TreeEvaluator::bdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::sdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("sdiv", node, cg);
-   TR_ASSERT( 0,"sdivEvaluator: not implemented\n");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
@@ -2925,8 +2925,6 @@ OMR::Z::TreeEvaluator::sdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::iremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("irem", node, cg);
-
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
    TR::Register * targetRegister = NULL;
@@ -3042,7 +3040,6 @@ OMR::Z::TreeEvaluator::iremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lrem", node, cg);
    return lDivRemGenericEvaluator64(node, cg, REMAINDER);
    }
 
@@ -3053,8 +3050,7 @@ OMR::Z::TreeEvaluator::lremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::bremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("brem", node, cg);
-   TR_ASSERT( 0, "bremEvaluator: not implemented\n");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
@@ -3065,8 +3061,7 @@ OMR::Z::TreeEvaluator::bremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::sremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("srem", node, cg);
-   TR_ASSERT( 0, "sremEvaluator: not implemented\n");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
@@ -3076,7 +3071,6 @@ OMR::Z::TreeEvaluator::sremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::inegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("ineg", node, cg);
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * sourceRegister;
    TR::Register * targetRegister = cg->allocateRegister();
@@ -3090,7 +3084,7 @@ OMR::Z::TreeEvaluator::inegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       cg->decReferenceCount(firstChild->getFirstChild());
 
       // Load Negative
-      if (TR::Compiler->target.is64Bit() && targetRegister->alreadySignExtended())
+      if (cg->comp()->target().is64Bit() && targetRegister->alreadySignExtended())
          generateRRInstruction(cg, TR::InstOpCode::LNGR, node, targetRegister, sourceRegister);
       else
          generateRRInstruction(cg, TR::InstOpCode::LNR, node, targetRegister, sourceRegister);
@@ -3115,7 +3109,7 @@ OMR::Z::TreeEvaluator::inegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       sourceRegister = cg->evaluate(firstChild);
 
       // Do complement
-      if (TR::Compiler->target.is64Bit() && targetRegister->alreadySignExtended())
+      if (cg->comp()->target().is64Bit() && targetRegister->alreadySignExtended())
          generateRRInstruction(cg, TR::InstOpCode::LCGR, node, targetRegister, sourceRegister);
       else
          generateRRInstruction(cg, TR::InstOpCode::LCR, node, targetRegister, sourceRegister);
@@ -3133,7 +3127,6 @@ OMR::Z::TreeEvaluator::inegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lneg", node, cg);
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * targetRegister = NULL;
    TR::Register * sourceRegister;
@@ -3166,7 +3159,6 @@ OMR::Z::TreeEvaluator::lnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::bnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("bneg", node, cg);
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * sourceRegister = cg->evaluate(firstChild);
    TR::Register * targetRegister = cg->allocateRegister();
@@ -3188,7 +3180,6 @@ OMR::Z::TreeEvaluator::bnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::snegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("sneg", node, cg);
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * sourceRegister = cg->evaluate(firstChild);
    TR::Register * targetRegister = cg->allocateRegister();
@@ -3212,11 +3203,9 @@ OMR::Z::TreeEvaluator::snegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::ishlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("ishl", node, cg);
-
    auto altShiftOp = TR::InstOpCode::SLLG;
 
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
       {
       altShiftOp = TR::InstOpCode::SLLK;
       }
@@ -3231,7 +3220,6 @@ OMR::Z::TreeEvaluator::ishlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lshlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lshl", node, cg);
    return genericLongShiftSingle(node, cg, TR::InstOpCode::SLLG);
    }
 
@@ -3242,11 +3230,9 @@ OMR::Z::TreeEvaluator::lshlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::bshlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("bshl", node, cg);
-
    auto altShiftOp = TR::InstOpCode::SLLG;
 
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
       {
       altShiftOp = TR::InstOpCode::SLLK;
       }
@@ -3261,11 +3247,9 @@ OMR::Z::TreeEvaluator::bshlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::sshlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("sshl", node, cg);
-
    auto altShiftOp = TR::InstOpCode::SLLG;
 
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
       {
       altShiftOp = TR::InstOpCode::SLLK;
       }
@@ -3280,7 +3264,6 @@ OMR::Z::TreeEvaluator::sshlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::ishrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("ishr", node, cg);
    TR::InstOpCode::Mnemonic altShiftOp = TR::InstOpCode::SRAG;
    return genericIntShift(node, cg, TR::InstOpCode::SRA, altShiftOp);
    }
@@ -3292,7 +3275,6 @@ OMR::Z::TreeEvaluator::ishrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lshrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lshr", node, cg);
    return genericLongShiftSingle(node, cg, TR::InstOpCode::SRAG);
    }
 
@@ -3303,7 +3285,6 @@ OMR::Z::TreeEvaluator::lshrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::bshrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("bshr", node, cg);
    TR::InstOpCode::Mnemonic altShiftOp = TR::InstOpCode::SRAG;
    return genericIntShift(node, cg, TR::InstOpCode::SRA, altShiftOp);
    }
@@ -3315,7 +3296,6 @@ OMR::Z::TreeEvaluator::bshrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::sshrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("sshr", node, cg);
    TR::InstOpCode::Mnemonic altShiftOp = TR::InstOpCode::SRAG;
    return genericIntShift(node, cg, TR::InstOpCode::SRA, altShiftOp);
    }
@@ -3327,11 +3307,9 @@ OMR::Z::TreeEvaluator::sshrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::iushrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("iushr", node, cg);
-
    auto altShiftOp = TR::InstOpCode::SRLG;
 
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
       {
       altShiftOp = TR::InstOpCode::SRLK;
       }
@@ -3346,7 +3324,6 @@ OMR::Z::TreeEvaluator::iushrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lushrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lushr", node, cg);
    return genericLongShiftSingle(node, cg, TR::InstOpCode::SRLG);
    }
 
@@ -3357,11 +3334,9 @@ OMR::Z::TreeEvaluator::lushrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::bushrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("bushr", node, cg);
-
    auto altShiftOp = TR::InstOpCode::SRLG;
 
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
       {
       altShiftOp = TR::InstOpCode::SRLK;
       }
@@ -3376,11 +3351,9 @@ OMR::Z::TreeEvaluator::bushrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::sushrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("sushr", node, cg);
-
    auto altShiftOp = TR::InstOpCode::SRLG;
 
-   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
       {
       altShiftOp = TR::InstOpCode::SRLK;
       }
@@ -3402,7 +3375,7 @@ OMR::Z::TreeEvaluator::integerRolEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    if (secondChild->getOpCode().isLoadConst())
       {
-      intptrj_t rotateAmount = secondChild->getConstValue();
+      intptr_t rotateAmount = secondChild->getConstValue();
       if (rotateAmount == 0)
          {
          targetRegister = cg->evaluate(firstChild);
@@ -3438,7 +3411,6 @@ OMR::Z::TreeEvaluator::integerRolEvaluator(TR::Node *node, TR::CodeGenerator *cg
 TR::Register *
 OMR::Z::TreeEvaluator::iandEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("iand", node, cg);
    TR::Register * targetRegister = NULL;
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
@@ -3455,7 +3427,6 @@ OMR::Z::TreeEvaluator::iandEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    if (secondChild->getOpCode().isLoadConst())
       {
-      PRINT_ME("iconst", node, cg);
       int32_t value = getIntegralValue(secondChild);
       targetRegister = cg->gprClobberEvaluate(firstChild);
 
@@ -3481,18 +3452,22 @@ OMR::Z::TreeEvaluator::iandEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::landEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("land", node, cg);
    TR::Register * targetRegister = NULL;
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
 
-   if ((targetRegister = genericRotateAndInsertHelper(node, cg)) ||
-      (targetRegister = TR::TreeEvaluator::tryToReplaceLongAndWithRotateInstruction(node, cg)))
+   if ((targetRegister = genericRotateAndInsertHelper(node, cg)))
       {
       node->setRegister(targetRegister);
 
       cg->decReferenceCount(firstChild);
       cg->decReferenceCount(secondChild);
+      return targetRegister;
+      }
+   if ((targetRegister = TR::TreeEvaluator::tryToReplaceShiftLandWithRotateInstruction(node, cg, 0, false)))
+      {
+      //children dereferenced in tryToReplaceShiftLandWithRotateInstruction
+      node->setRegister(targetRegister);
       return targetRegister;
       }
 
@@ -3525,7 +3500,6 @@ OMR::Z::TreeEvaluator::landEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::bandEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("band", node, cg);
    return TR::TreeEvaluator::iandEvaluator(node, cg);
    }
 
@@ -3535,7 +3509,6 @@ OMR::Z::TreeEvaluator::bandEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::sandEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("sand", node, cg);
    return TR::TreeEvaluator::iandEvaluator(node, cg);
    }
 
@@ -3545,7 +3518,6 @@ OMR::Z::TreeEvaluator::sandEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::candEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("cand", node, cg);
    return TR::TreeEvaluator::iandEvaluator(node, cg);
    }
 
@@ -3556,14 +3528,12 @@ OMR::Z::TreeEvaluator::candEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::iorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("ior", node, cg);
    TR::Register * targetRegister = NULL;
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
 
    if (secondChild->getOpCode().isLoadConst())
       {
-      PRINT_ME("iconst", node, cg);
       targetRegister = cg->gprClobberEvaluate(firstChild);
 
       int32_t value=getIntegralValue(secondChild);
@@ -3590,7 +3560,6 @@ OMR::Z::TreeEvaluator::iorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lor", node, cg);
    TR::Register * targetRegister = NULL;
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
@@ -3635,7 +3604,6 @@ OMR::Z::TreeEvaluator::lorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::borEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("bor", node, cg);
    return TR::TreeEvaluator::iorEvaluator(node, cg);
    }
 
@@ -3645,7 +3613,6 @@ OMR::Z::TreeEvaluator::borEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::sorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("sor", node, cg);
    return TR::TreeEvaluator::iorEvaluator(node, cg);
    }
 
@@ -3655,7 +3622,6 @@ OMR::Z::TreeEvaluator::sorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::corEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("cor", node, cg);
    return TR::TreeEvaluator::iorEvaluator(node, cg);
    }
 
@@ -3665,14 +3631,12 @@ OMR::Z::TreeEvaluator::corEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::ixorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("ixor", node, cg);
    TR::Register * targetRegister = NULL;
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
 
    if (secondChild->getOpCode().isLoadConst())
       {
-      PRINT_ME("iconst", node, cg);
       targetRegister = cg->gprClobberEvaluate(firstChild);
 
       int32_t value=getIntegralValue(secondChild);
@@ -3699,7 +3663,6 @@ OMR::Z::TreeEvaluator::ixorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::lxorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("lxor", node, cg);
    TR::Register * targetRegister = NULL;
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
@@ -3744,7 +3707,6 @@ OMR::Z::TreeEvaluator::lxorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::bxorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("bxor", node, cg);
    return TR::TreeEvaluator::ixorEvaluator(node, cg);
    }
 
@@ -3754,7 +3716,6 @@ OMR::Z::TreeEvaluator::bxorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::sxorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("sxor", node, cg);
    return TR::TreeEvaluator::ixorEvaluator(node, cg);
    }
 
@@ -3764,7 +3725,6 @@ OMR::Z::TreeEvaluator::sxorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::cxorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("cxor", node, cg);
    return TR::TreeEvaluator::ixorEvaluator(node, cg);
    }
 
@@ -3773,7 +3733,6 @@ OMR::Z::TreeEvaluator::dexpEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR_ASSERT(0, "This evaluator is not functionally correct. Do Not use.");
 
-
    return TR::TreeEvaluator::libmFuncEvaluator(node, cg);
    }
 
@@ -3781,7 +3740,6 @@ TR::Register *
 OMR::Z::TreeEvaluator::fexpEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR_ASSERT(0, "This evaluator is not functionally correct. Do Not use.");
-
 
    return TR::TreeEvaluator::libmFuncEvaluator(node, cg);
    }

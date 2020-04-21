@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,8 +43,6 @@
 
 #define RANGE_NEEDS_FOUR_BYTE_OFFSET(r) (((r) >= (USHRT_MAX   )) ? 1 : 0)
 
-#define notImplemented(A) TR_ASSERT(0, "This function is not defined for JitBuilder::FrontEnd %s", (A) )
-
 namespace JitBuilder
 {
 
@@ -72,195 +70,15 @@ FrontEnd::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMet
    return new (trMemory->trHeapMemory()) ResolvedMethod(aMethod);
    }
 
-intptrj_t
+intptr_t
 FrontEnd::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference *symRef, void *callSite)
    {
-   TR_ASSERT(0, "methodTrampolineLookup not implemented yet");
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 // -----------------------------------------------------------------------------
 
-void
-FrontEnd::encodeStackMap(
-      TR_GCStackMap *map,
-      uint8_t *location,
-      bool encodeFourByteOffsets,
-      uint32_t bytesPerStackMap,
-      TR::Compilation *comp)
-   {
-   TR::CodeGenerator *cg = comp->cg();
-   uint32_t lowCode = map->getLowestCodeOffset();
 
-   // Encode lowest code offset of this map
-   //
-   if (encodeFourByteOffsets)
-      {
-      *(uint32_t *)location = lowCode;
-      location += 4;
-      }
-   else
-      {
-      *(uint16_t *)location = lowCode;
-      location += 2;
-      }
-
-   // Encode stack map
-   //
-   int32_t mapSize = map->getMapSizeInBytes();
-   if (mapSize)
-      {
-      memcpy(location, map->getMapBits(), mapSize);
-      }
-
-   }
-
-
-bool
-FrontEnd::mapsAreIdentical(
-      TR_GCStackMap *mapCursor,
-      TR_GCStackMap *nextMapCursor,
-      TR::GCStackAtlas *stackAtlas,
-      TR::Compilation *comp)
-   {
-   if (nextMapCursor && nextMapCursor != stackAtlas->getParameterMap() &&
-       mapCursor != stackAtlas->getParameterMap() &&
-       mapCursor->getMapSizeInBytes() == nextMapCursor->getMapSizeInBytes() &&
-       mapCursor->getRegisterMap() == nextMapCursor->getRegisterMap() &&
-#ifdef TR_HOST_S390
-       (mapCursor->getHighWordRegisterMap() == nextMapCursor->getHighWordRegisterMap()) &&
-#endif
-       !memcmp(mapCursor->getMapBits(), nextMapCursor->getMapBits(), mapCursor->getMapSizeInBytes()))
-      {
-      return true;
-      }
-   else
-      {
-      return false;
-      }
-   }
-
-
-uint8_t *
-FrontEnd::createStackAtlas(
-      bool encodeFourByteOffsets,
-      uint32_t numberOfSlotsMapped,
-      uint32_t bytesPerStackMap,
-      uint8_t *encodedAtlasBaseAddress,
-      uint32_t atlasSizeInBytes,
-      TR::Compilation *comp)
-   {
-   TR::CodeGenerator *cg = comp->cg();
-   TR::GCStackAtlas *stackAtlas = cg->getStackAtlas();
-
-   stackAtlas->setAtlasBits(encodedAtlasBaseAddress);
-
-   // Calculate the size of each individual map in the atlas.  The fixed
-   // portion of the map contains:
-   //
-   //    Low Code Offset (2 or 4)
-   //    Stack map (depends on # of mapped parms/locals)
-   //
-   uint32_t sizeOfEncodedCodeOffsetInBytes = encodeFourByteOffsets ? 4 : 2;
-
-   uint32_t sizeOfSingleEncodedMapInBytes = sizeOfEncodedCodeOffsetInBytes;
-   sizeOfSingleEncodedMapInBytes += bytesPerStackMap;
-
-   // Encode the atlas
-   //
-   OMR::StackAtlasPOD *pyAtlas = (OMR::StackAtlasPOD *)encodedAtlasBaseAddress;
-   pyAtlas->numberOfMaps = stackAtlas->getNumberOfMaps();
-   pyAtlas->bytesPerStackMap = bytesPerStackMap;
-
-   // Offset to the MAPPED pyFrameObject parameter
-   //
-   pyAtlas->frameObjectParmOffset = 0;
-
-   // Lowest stack offset where MAPPED locals begin.
-   //
-   pyAtlas->localBaseOffset = stackAtlas->getLocalBaseOffset();
-
-   // Abort if we have overflowed the fields in pyAtlas.
-   //
-   if (bytesPerStackMap > USHRT_MAX ||
-       stackAtlas->getNumberOfMaps() > USHRT_MAX ||
-       stackAtlas->getNumberOfParmSlotsMapped() > USHRT_MAX ||
-       stackAtlas->getParmBaseOffset()  < SHRT_MIN || stackAtlas->getParmBaseOffset()  > SHRT_MAX ||
-       stackAtlas->getLocalBaseOffset() < SHRT_MIN || stackAtlas->getLocalBaseOffset() > SHRT_MAX)
-      {
-      comp->failCompilation<TR::CompilationException>("Overflowed the fields in pyAtlas");
-      }
-
-   // Maps are in reverse order in list from what we want in the atlas
-   // so advance to the address where the last map should go and start
-   // building the maps moving back toward the beginning of the atlas.
-   //
-   uint8_t *cursorInEncodedAtlas = encodedAtlasBaseAddress + atlasSizeInBytes;
-
-   ListIterator<TR_GCStackMap> mapIterator(&stackAtlas->getStackMapList());
-   TR_GCStackMap *mapCursor = mapIterator.getFirst();
-
-   while (mapCursor != NULL)
-      {
-      // Move back from the end of the atlas till the current map can be fit in,
-      // then pass the cursor to the routine that actually creates and fills in
-      // the stack map
-      //
-      TR_GCStackMap *nextMapCursor = mapIterator.getNext();
-
-      if (!mapsAreIdentical(mapCursor, nextMapCursor, stackAtlas, comp))
-         {
-         cursorInEncodedAtlas -= sizeOfSingleEncodedMapInBytes;
-         encodeStackMap(mapCursor, cursorInEncodedAtlas, encodeFourByteOffsets, bytesPerStackMap, comp);
-         }
-
-      mapCursor = nextMapCursor;
-      }
-
-   return encodedAtlasBaseAddress;
-   }
-
-
-uint32_t
-FrontEnd::calculateSizeOfStackAtlas(
-      bool encodeFourByteOffsets,
-      uint32_t numberOfSlotsMapped,
-      uint32_t bytesPerStackMap,
-      TR::Compilation *comp)
-   {
-   TR::CodeGenerator *cg = comp->cg();
-   TR::GCStackAtlas * stackAtlas = cg->getStackAtlas();
-
-   // Calculate the size of each individual map in the atlas.  The fixed
-   // portion of the map contains:
-   //
-   //    Low Code Offset (2 or 4)
-   //    Stack map (depends on # of mapped parms/locals)
-   //
-   uint32_t sizeOfEncodedCodeOffsetInBytes = encodeFourByteOffsets ? 4 : 2;
-   uint32_t sizeOfSingleEncodedMapInBytes = sizeOfEncodedCodeOffsetInBytes;
-   sizeOfSingleEncodedMapInBytes += bytesPerStackMap;
-
-   // Calculate the atlas size
-   //
-   uint32_t atlasSize = sizeof(OMR::StackAtlasPOD);
-
-   ListIterator<TR_GCStackMap> mapIterator(&stackAtlas->getStackMapList());
-   TR_GCStackMap *mapCursor = mapIterator.getFirst();
-
-   while (mapCursor != NULL)
-      {
-      TR_GCStackMap *nextMapCursor = mapIterator.getNext();
-
-      if (!mapsAreIdentical(mapCursor, nextMapCursor, stackAtlas, comp))
-         {
-         atlasSize += sizeOfSingleEncodedMapInBytes;
-         }
-
-      mapCursor = nextMapCursor;
-      }
-
-   return atlasSize;
-   }
 
 } //namespace JitBuilder

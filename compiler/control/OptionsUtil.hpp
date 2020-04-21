@@ -89,8 +89,8 @@ struct OptionTable
    /**
     * Parameters to be passed to the processing method.
     */
-   intptrj_t parm1;
-   uintptrj_t parm2;
+   intptr_t parm1;
+   uintptr_t parm2;
 
    /**
     * Message information to be printed if this option is in effect
@@ -114,7 +114,7 @@ struct OptionTable
     * If the option was found in the option string the OPTION_FOUND bit will be set
     */
 
-   intptrj_t msgInfo;
+   intptr_t msgInfo;
 
    /**
     * Length of the option name. This is set to zero by the option table arrays,
@@ -152,8 +152,8 @@ public:
 
    OptionSet *getNext() {return _next;}
 
-   intptrj_t getIndex() {intptrj_t i = (intptrj_t)_methodRegex; return (i&1) ? i >> 1 : 0 ; }
-   TR::SimpleRegex *getMethodRegex() {intptrj_t i = (intptrj_t)_methodRegex; return (i&1) ? 0 : _methodRegex; }
+   intptr_t getIndex() {intptr_t i = (intptr_t)_methodRegex; return (i&1) ? i >> 1 : 0 ; }
+   TR::SimpleRegex *getMethodRegex() {intptr_t i = (intptr_t)_methodRegex; return (i&1) ? 0 : _methodRegex; }
    TR::SimpleRegex *getOptLevelRegex() {return _optLevelRegex; }
    bool match(const char *s) { TR_ASSERT(false, "should be unreachable"); return false; }
    TR::Options *getOptions() {return _options;}
@@ -163,7 +163,7 @@ public:
 
    void setNext(OptionSet *n) {_next = n;}
    void setOptions(TR::Options *o) {_options = o;}
-   void setIndex(intptrj_t i) { _methodRegex = (TR::SimpleRegex*)(2*i+1);}
+   void setIndex(intptr_t i) { _methodRegex = (TR::SimpleRegex*)(2*i+1);}
    void setMethodRegex(TR::SimpleRegex *r) {_methodRegex = r;}
    void setOptLevelRegex(TR::SimpleRegex *r) {_optLevelRegex = r;}
    void setStart(int32_t n) {_start=n;}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,34 +22,30 @@
 #include "codegen/CodeGenerator.hpp"
 #include "env/ConcreteFE.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
-#include "z/codegen/TRSystemLinkage.hpp"
+#include "z/codegen/SystemLinkage.hpp"
 #include "codegen/S390Snippets.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "env/IO.hpp"
 
-
-#define NOT_IMPLEMENTED { TR_ASSERT_FATAL(0, "This function is not implemented in TestCompiler JIT"); }
-
-
 uint32_t
 TR::S390RestoreGPR7Snippet::getLength(int32_t estimatedSnippetStart)
    {
-   NOT_IMPLEMENTED;
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 uint8_t *
 TR::S390RestoreGPR7Snippet::emitSnippetBody()
    {
-   NOT_IMPLEMENTED;
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::S390RestoreGPR7Snippet *snippet)
    {
-   NOT_IMPLEMENTED;
+   TR_UNIMPLEMENTED();
    }
 
 void

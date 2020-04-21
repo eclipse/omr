@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,13 +35,8 @@ class MM_GCExtensionsBase;
  * @name Heap map platform dependent definitions
  * @{
  */
-#if defined(OMR_ENV_DATA64)
-#define J9MODRON_HMI_SLOT_EMPTY ((uintptr_t)0x0000000000000000)
-#else /* OMR_ENV_DATA64 */
-#define J9MODRON_HMI_SLOT_EMPTY ((uintptr_t)0x00000000)
-#endif /* OMR_ENV_DATA64 */
-
-#define J9MODRON_HMI_HEAPMAP_ALIGNMENT (J9MODRON_HEAP_SLOTS_PER_HEAPMAP_SLOT * sizeof(uintptr_t))	
+#define J9MODRON_HMI_SLOT_EMPTY ((uintptr_t)0x0)
+#define J9MODRON_HMI_HEAPMAP_ALIGNMENT (J9MODRON_HEAP_SLOTS_PER_HEAPMAP_SLOT * sizeof(uintptr_t))
 
 /**
  * Iterate over objects in a chunk of heap using a heap map.
@@ -50,8 +45,8 @@ class MM_GCExtensionsBase;
  * @ingroup GC_Base
  */
 class MM_HeapMapIterator {
-	
-private:	
+
+private:
 	uintptr_t *_heapSlotCurrent;  /**< Current heap slot that corresponds to the heap map bit index being scanned */
 	uintptr_t *_heapChunkTop;  /**< Ending heap slot to scan */
 	uintptr_t *_heapMapSlotCurrent;  /**< Current heap map slot that contains the bits to scan for the corresponding heap */
@@ -59,7 +54,7 @@ private:
 	uintptr_t _heapMapSlotValue;  /**< Cached heap map slot value to avoid memory cache polution */
 	MM_GCExtensionsBase * const _extensions; /**< The GC extensions for the JVM */
 	bool _useLargeObjectOptimization;	/**< Set to true if we want to read objects from the heap and determine their size in order to skip mark map bits which are inside the object.  If this is set to false, we will blindly return the addresses representing the set bits in the mark map */
-	
+
 public:
 	omrobjectptr_t nextObject();
 
@@ -77,7 +72,7 @@ public:
 	/**
 	 * @note heapMap, heapChunkBase and heapChunkTop are not specified, so reset()
 	 *  must be called explicitly by the caller of this constructor.
-	 */ 
+	 */
 	MM_HeapMapIterator(MM_GCExtensionsBase *extensions)
 		: _heapSlotCurrent(NULL)
 		, _heapChunkTop(NULL)

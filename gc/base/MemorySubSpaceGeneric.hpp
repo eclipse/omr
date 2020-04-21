@@ -80,9 +80,7 @@ public:
 	virtual MM_AllocationFailureStats* getAllocationFailureStats();
 
 	virtual void* allocateObject(MM_EnvironmentBase* env, MM_AllocateDescription* allocDescription, MM_MemorySubSpace* baseSubSpace, MM_MemorySubSpace* previousSubSpace, bool shouldCollectOnFailure);
-#if defined(OMR_GC_ARRAYLETS)
 	virtual void* allocateArrayletLeaf(MM_EnvironmentBase* env, MM_AllocateDescription* allocDescription, MM_MemorySubSpace* baseSubSpace, MM_MemorySubSpace* previousSubSpace, bool shouldCollectOnFailure);
-#endif /* OMR_GC_ARRAYLETS */
 
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 	virtual void* allocateTLH(MM_EnvironmentBase* env, MM_AllocateDescription* allocDescription, MM_ObjectAllocationInterface* objectAllocationInterface, MM_MemorySubSpace* baseSubSpace, MM_MemorySubSpace* previousSubSpace, bool shouldCollectOnFailure);

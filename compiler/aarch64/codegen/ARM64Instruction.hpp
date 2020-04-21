@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,9 +30,12 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/MemoryReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
+#include "codegen/RegisterDependency.hpp"
+#include "codegen/UnresolvedDataSnippet.hpp"
+#include "il/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 
+class TR_VirtualGuardSite;
 namespace TR { class SymbolReference; }
 
 #define ARM64_INSTRUCTION_LENGTH 4
@@ -48,13 +51,43 @@ inline bool constantIsImm9(int32_t intValue)
    }
 
 /*
- * @brief Answers if the unsigned integer value can be placed in 12-bit field
+ * @brief Answers if the unsigned integer value can be encoded in a 4-bit field
  * @param[in] intValue : unsigned integer value
- * @return true if the value can be placed in 12-bit field, false otherwise
+ * @return true if the value can be encoded in a 4-bit field, false otherwise
+ */
+inline bool constantIsUnsignedImm4(uint64_t intValue)
+   {
+   return (intValue < (1<<4));  // 16
+   }
+
+/*
+ * @brief Answers if the unsigned integer value can be encoded in a 12-bit field
+ * @param[in] intValue : unsigned integer value
+ * @return true if the value can be encoded in a 12-bit field, false otherwise
  */
 inline bool constantIsUnsignedImm12(uint64_t intValue)
    {
-   return (intValue < 4096);
+   return (intValue < (1<<12));  // 4096
+   }
+
+/*
+ * @brief Answers if the unsigned integer value can be encoded in a 16-bit field
+ * @param[in] intValue : unsigned integer value
+ * @return true if the value can be encoded in a 16-bit field, false otherwise
+ */
+inline bool constantIsUnsignedImm16(uint64_t intValue)
+   {
+   return (intValue < (1<<16));  // 65536
+   }
+
+/*
+ * @brief Answers if the signed integer value can be placed in 21-bit field
+ * @param[in] intValue : signed integer value
+ * @return true if the value can be placed in 21-bit field, false otherwise
+ */
+inline bool constantIsSignedImm21(intptr_t intValue)
+   {
+   return (-0x100000 <= intValue && intValue < 0x100000);
    }
 
 /*
@@ -73,8 +106,6 @@ namespace TR
 class ARM64ImmInstruction : public TR::Instruction
    {
    uint32_t _sourceImmediate;
-   TR_ExternalRelocationTargetKind _reloKind;
-   TR::SymbolReference *_symbolReference;
 
 public:
 
@@ -87,7 +118,7 @@ public:
     * @param[in] cg : CodeGenerator
     */
    ARM64ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, uint32_t imm, TR::CodeGenerator *cg)
-      : TR::Instruction(op, node, cg), _sourceImmediate(imm), _reloKind(TR_NoRelocation), _symbolReference(NULL)
+      : TR::Instruction(op, node, cg), _sourceImmediate(imm)
       {
       }
    /*
@@ -100,72 +131,8 @@ public:
     */
    ARM64ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, uint32_t imm,
                         TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
-      : TR::Instruction(op, node, precedingInstruction, cg), _sourceImmediate(imm), _reloKind(TR_NoRelocation), _symbolReference(NULL)
+      : TR::Instruction(op, node, precedingInstruction, cg), _sourceImmediate(imm)
       {
-      }
-
-   // Constructors with relocation types
-   /*
-    * @brief Constructor
-    * @param[in] op : instruction opcode
-    * @param[in] node : node
-    * @param[in] imm : immediate value
-    * @param[in] relocationKind : relocation kind
-    * @param[in] cg : CodeGenerator
-    */
-   ARM64ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, uint32_t imm, TR_ExternalRelocationTargetKind relocationKind,
-                        TR::CodeGenerator *cg)
-      : TR::Instruction(op, node, cg), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(NULL)
-      {
-      setNeedsAOTRelocation(true);
-      }
-   /*
-    * @brief Constructor
-    * @param[in] op : instruction opcode
-    * @param[in] node : node
-    * @param[in] imm : immediate value
-    * @param[in] relocationKind : relocation kind
-    * @param[in] precedingInstruction : preceding instruction
-    * @param[in] cg : CodeGenerator
-    */
-   ARM64ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, uint32_t imm, TR_ExternalRelocationTargetKind relocationKind,
-                        TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
-      : TR::Instruction(op, node, precedingInstruction, cg), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(NULL)
-      {
-      setNeedsAOTRelocation(true);
-      }
-
-   // Constructors with relocation typesand associated symbol references
-   /*
-    * @brief Constructor
-    * @param[in] op : instruction opcode
-    * @param[in] node : node
-    * @param[in] imm : immediate value
-    * @param[in] relocationKind : relocation kind
-    * @param[in] sr : symbol reference
-    * @param[in] cg : CodeGenerator
-    */
-   ARM64ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, uint32_t imm, TR_ExternalRelocationTargetKind relocationKind,
-                        TR::SymbolReference *sr, TR::CodeGenerator *cg)
-      : TR::Instruction(op, node, cg), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(sr)
-      {
-      setNeedsAOTRelocation(true);
-      }
-   /*
-    * @brief Constructor
-    * @param[in] op : instruction opcode
-    * @param[in] node : node
-    * @param[in] imm : immediate value
-    * @param[in] relocationKind : relocation kind
-    * @param[in] sr : symbol reference
-    * @param[in] precedingInstruction : preceding instruction
-    * @param[in] cg : CodeGenerator
-    */
-   ARM64ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, uint32_t imm, TR_ExternalRelocationTargetKind relocationKind,
-                        TR::SymbolReference *sr, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
-      : TR::Instruction(op, node, precedingInstruction, cg), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(sr)
-      {
-      setNeedsAOTRelocation(true);
       }
 
    /**
@@ -187,29 +154,16 @@ public:
    uint32_t setSourceImmediate(uint32_t si) {return (_sourceImmediate = si);}
 
    /**
-    * @brief Gets relocation kind
-    * @return relocation kind
+    * @brief Encodes the immediate value into the instruction
+    * @param[in] instruction : instruction address
     */
-   TR_ExternalRelocationTargetKind getReloKind() { return _reloKind; }
-   /**
-    * @brief Sets relocation kind
-    * @param[in] reloKind : relocation kind
-    */
-   void setReloKind(TR_ExternalRelocationTargetKind reloKind) { _reloKind = reloKind; }
-
-   /**
-    * @brief Gets symbol reference
-    * @return symbol reference
-    */
-   TR::SymbolReference *getSymbolReference() {return _symbolReference;}
-   /**
-    * @brief Sets symbol reference
-    * @param[in] sr : symbol reference
-    * @return symbol reference
-    */
-   TR::SymbolReference *setSymbolReference(TR::SymbolReference *sr)
+   virtual void insertImmediateField(uint32_t *instruction)
       {
-      return (_symbolReference = sr);
+      // Write the 32-bit immediate with no masking or shifting.
+      // Be aware this will overwrite the entire 32-bit instruction
+      // with the immediate value.
+      //
+      *instruction = _sourceImmediate;
       }
 
    /**
@@ -262,7 +216,13 @@ class ARM64ImmSymInstruction : public TR::Instruction
     * @brief Gets address immediate
     * @return address immediate
     */
-   uintptrj_t getAddrImmediate() { return _addrImmediate; }
+   uintptr_t getAddrImmediate() { return _addrImmediate; }
+   /**
+    * @brief Sets address immediate
+    * @param[in] imm : address immediate
+    * @return address immediate
+    */
+   uintptr_t setAddrImmediate(uintptr_t imm) { return (_addrImmediate = imm); }
 
    /**
     * @brief Gets symbol reference
@@ -290,6 +250,8 @@ class ARM64ImmSymInstruction : public TR::Instruction
     * @return call snippet
     */
    TR::Snippet *setCallSnippet(TR::Snippet *s) { return (_snippet = s); }
+
+   virtual TR::Snippet *getSnippetForGC() {return _snippet;}
 
    /**
     * @brief Sets immediate field in binary encoding
@@ -396,6 +358,8 @@ class ARM64LabelInstruction : public TR::Instruction
       {
       return (_symbol = sym);
       }
+
+   virtual TR::Snippet *getSnippetForGC() {return getLabelSymbol()->getSnippet();}
 
    /**
     * @brief Sets immediate field in binary encoding
@@ -660,6 +624,36 @@ class ARM64CompareBranchInstruction : public ARM64LabelInstruction
       }
 
    /**
+    * @brief Answers whether this instruction references the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction references the virtual register
+    */
+   virtual bool refsRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction uses the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction uses the virtual register
+    */
+   virtual bool usesRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction defines the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction defines the virtual register
+    */
+   virtual bool defsRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction defines the given real register
+    * @param[in] reg : real register
+    * @return true when the instruction defines the real register
+    */
+   virtual bool defsRealRegister(TR::Register *reg);
+   /**
+    * @brief Assigns registers
+    * @param[in] kindToBeAssigned : register kind
+    */
+   virtual void assignRegisters(TR_RegisterKinds kindToBeAssigned);
+
+   /**
     * @brief Generates binary encoding of the instruction
     * @return instruction cursor
     */
@@ -759,6 +753,36 @@ class ARM64RegBranchInstruction : public TR::Instruction
       TR::RealRegister *target = toRealRegister(_register);
       target->setRegisterFieldRN(instruction);
       }
+
+   /**
+    * @brief Answers whether this instruction references the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction references the virtual register
+    */
+   virtual bool refsRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction uses the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction uses the virtual register
+    */
+   virtual bool usesRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction defines the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction defines the virtual register
+    */
+   virtual bool defsRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction defines the given real register
+    * @param[in] reg : real register
+    * @return true when the instruction defines the real register
+    */
+   virtual bool defsRealRegister(TR::Register *reg);
+   /**
+    * @brief Assigns registers
+    * @param[in] kindToBeAssigned : register kind
+    */
+   virtual void assignRegisters(TR_RegisterKinds kindToBeAssigned);
 
    /**
     * @brief Generates binary encoding of the instruction
@@ -1137,11 +1161,85 @@ class ARM64Trg1ImmInstruction : public ARM64Trg1Instruction
          }
       else if (op == TR::InstOpCode::adr || op == TR::InstOpCode::adrp)
          {
-         *instruction |= ((_sourceImmediate & 0x7ffff) << 5) | ((_sourceImmediate & 0x3) << 29);
+         *instruction |= ((_sourceImmediate & 0x1ffffc) << 3) | ((_sourceImmediate & 0x3) << 29);
          }
       else
          {
          TR_ASSERT(false, "Unsupported opcode in ARM64Trg1ImmInstruction.");
+         }
+      }
+
+   /**
+    * @brief Generates binary encoding of the instruction
+    * @return instruction cursor
+    */
+   virtual uint8_t *generateBinaryEncoding();
+   };
+
+class ARM64Trg1ImmSymInstruction : public ARM64Trg1ImmInstruction
+   {
+   TR::Symbol *_symbol;
+
+   public:
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] treg : target register
+    * @param[in] imm : immediate value
+    * @param[in] sym : symbol
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64Trg1ImmSymInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *treg,
+                            uint32_t imm, TR::Symbol *sym, TR::CodeGenerator *cg)
+      : ARM64Trg1ImmInstruction(op, node, treg, imm, cg), _symbol(sym)
+      {
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] treg : target register
+    * @param[in] imm : immediate value
+    * @param[in] sym : symbol
+    * @param[in] precedingInstruction : preceding instruction
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64Trg1ImmSymInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *treg,
+                            uint32_t imm, TR::Symbol *sym,
+                            TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : ARM64Trg1ImmInstruction(op, node, treg, imm, precedingInstruction, cg), _symbol(sym)
+      {
+      }
+
+   /**
+    * @brief Gets instruction kind
+    * @return instruction kind
+    */
+   virtual Kind getKind() { return IsTrg1ImmSym; }
+
+   /**
+    *
+    * @brief Gets symbol
+    * @return symbol
+    */
+   TR::Symbol *getSymbol() {return _symbol;}
+
+   /**
+    * @brief Sets immediate field in binary encoding
+    * @param[in] instruction : instruction cursor
+    */
+   void insertImmediateField(uint32_t *instruction)
+      {
+      TR::InstOpCode::Mnemonic op = getOpCodeValue();
+      if (op == TR::InstOpCode::adr || op == TR::InstOpCode::adrp)
+         {
+         *instruction |= ((getSourceImmediate() & 0x1ffffc) << 3) | ((getSourceImmediate() & 0x3) << 29);
+         }
+      else
+         {
+         *instruction |= ((getSourceImmediate() & 0x7ffff) << 5);
          }
       }
 
@@ -1299,6 +1397,7 @@ class ARM64Trg1Src1Instruction : public ARM64Trg1Instruction
 class ARM64Trg1Src1ImmInstruction : public ARM64Trg1Src1Instruction
    {
    uint32_t _source1Immediate;
+   bool _Nbit;
 
    public:
 
@@ -1313,7 +1412,23 @@ class ARM64Trg1Src1ImmInstruction : public ARM64Trg1Src1Instruction
     */
    ARM64Trg1Src1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *treg,
                                 TR::Register *sreg, uint32_t imm, TR::CodeGenerator *cg)
-      : ARM64Trg1Src1Instruction(op, node, treg, sreg, cg), _source1Immediate(imm)
+      : ARM64Trg1Src1Instruction(op, node, treg, sreg, cg), _source1Immediate(imm), _Nbit(false)
+      {
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] treg : target register
+    * @param[in] sreg : source register
+    * @param[in] N   : N bit value
+    * @param[in] imm : immediate value
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64Trg1Src1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *treg,
+                                TR::Register *sreg, bool N, uint32_t imm, TR::CodeGenerator *cg)
+      : ARM64Trg1Src1Instruction(op, node, treg, sreg, cg), _source1Immediate(imm), _Nbit(N)
       {
       }
 
@@ -1330,7 +1445,25 @@ class ARM64Trg1Src1ImmInstruction : public ARM64Trg1Src1Instruction
    ARM64Trg1Src1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *treg,
                                 TR::Register *sreg, uint32_t imm,
                                 TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
-      : ARM64Trg1Src1Instruction(op, node, treg, sreg, precedingInstruction, cg), _source1Immediate(imm)
+      : ARM64Trg1Src1Instruction(op, node, treg, sreg, precedingInstruction, cg), _source1Immediate(imm), _Nbit(false)
+      {
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] treg : target register
+    * @param[in] sreg : source register
+    * @param[in] N   : N bit value
+    * @param[in] imm : immediate value
+    * @param[in] precedingInstruction : preceding instruction
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64Trg1Src1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *treg,
+                                TR::Register *sreg, bool N, uint32_t imm,
+                                TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : ARM64Trg1Src1Instruction(op, node, treg, sreg, precedingInstruction, cg), _source1Immediate(imm), _Nbit(N)
       {
       }
 
@@ -1347,7 +1480,7 @@ class ARM64Trg1Src1ImmInstruction : public ARM64Trg1Src1Instruction
    ARM64Trg1Src1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *treg,
                                TR::Register *sreg, uint32_t imm,
                                TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg)
-      : ARM64Trg1Src1Instruction(op, node, treg, sreg, cond, cg), _source1Immediate(imm)
+      : ARM64Trg1Src1Instruction(op, node, treg, sreg, cond, cg), _source1Immediate(imm), _Nbit(false)
       {
       }
 
@@ -1365,7 +1498,7 @@ class ARM64Trg1Src1ImmInstruction : public ARM64Trg1Src1Instruction
    ARM64Trg1Src1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *treg,
                                TR::Register *sreg, uint32_t imm, TR::RegisterDependencyConditions *cond,
                                TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
-      : ARM64Trg1Src1Instruction(op, node, treg, sreg, cond, precedingInstruction, cg), _source1Immediate(imm)
+      : ARM64Trg1Src1Instruction(op, node, treg, sreg, cond, precedingInstruction, cg), _source1Immediate(imm), _Nbit(false)
       {
       }
 
@@ -1388,12 +1521,36 @@ class ARM64Trg1Src1ImmInstruction : public ARM64Trg1Src1Instruction
    uint32_t setSourceImmediate(uint32_t si) {return (_source1Immediate = si);}
 
    /**
+    * @brief Gets the N bit (bit 22)
+    * @return N bit value
+    */
+   bool getNbit() { return _Nbit;}
+   /**
+    * @brief Sets the N bit (bit 22)
+    * @param[in] n : N bit value
+    * @return N bit value
+    */ 
+   bool setNbit(bool n) { return (_Nbit = n);}
+
+   /**
     * @brief Sets immediate field in binary encoding
     * @param[in] instruction : instruction cursor
     */
    void insertImmediateField(uint32_t *instruction)
       {
       *instruction |= ((_source1Immediate & 0xfff) << 10); /* imm12 */
+      }
+
+   /**
+    * @brief Sets N bit (bit 22) field in binary encoding
+    * @param[in] instruction : instruction cursor
+    */
+   void insertNbit(uint32_t *instruction)
+      {
+      if (_Nbit)
+         {
+         *instruction |= (1 << 22);
+         }
       }
 
    /**
@@ -1568,6 +1725,142 @@ class ARM64Trg1Src2Instruction : public ARM64Trg1Src1Instruction
     */
    virtual uint8_t *generateBinaryEncoding();
    };
+
+class ARM64CondTrg1Src2Instruction : public ARM64Trg1Src2Instruction
+   {
+   TR::ARM64ConditionCode _cc;
+
+   public:
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] treg : target register
+    * @param[in] s1reg : source register 1
+    * @param[in] s2reg : source register 2
+    * @param[in] cc : branch condition code
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64CondTrg1Src2Instruction( TR::InstOpCode::Mnemonic op,
+                             TR::Node *node,
+                             TR::Register *treg,
+                             TR::Register *s1reg,
+                             TR::Register *s2reg,
+                             TR::ARM64ConditionCode cc,
+                             TR::CodeGenerator *cg)
+      : ARM64Trg1Src2Instruction(op, node, treg, s1reg, s2reg, cg), _cc(cc)
+      {
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] treg : target register
+    * @param[in] s1reg : source register 1
+    * @param[in] s2reg : source register 2
+    * @param[in] cc : branch condition code
+    * @param[in] precedingInstruction : preceding instruction
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64CondTrg1Src2Instruction( TR::InstOpCode::Mnemonic op,
+                             TR::Node *node,
+                             TR::Register *treg,
+                             TR::Register *s1reg,
+                             TR::Register *s2reg,
+                             TR::ARM64ConditionCode cc,
+                             TR::Instruction *precedingInstruction,
+                             TR::CodeGenerator *cg)
+      : ARM64Trg1Src2Instruction(op, node, treg, s1reg, s2reg, precedingInstruction, cg), _cc(cc)
+      {
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] treg : target register
+    * @param[in] s1reg : source register 1
+    * @param[in] s2reg : source register 2
+    * @param[in] cc : branch condition code
+    * @param[in] cond : Register Dependency Condition
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64CondTrg1Src2Instruction( TR::InstOpCode::Mnemonic op,
+                             TR::Node *node,
+                             TR::Register *treg,
+                             TR::Register *s1reg,
+                             TR::Register *s2reg,
+                             TR::ARM64ConditionCode cc,
+                             TR::RegisterDependencyConditions *cond,
+                             TR::CodeGenerator *cg)
+      : ARM64Trg1Src2Instruction(op, node, treg, s1reg, s2reg, cond, cg), _cc(cc)
+      {
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] treg : target register
+    * @param[in] s1reg : source register 1
+    * @param[in] s2reg : source register 2
+    * @param[in] cc : branch condition code
+    * @param[in] cond : Register Dependency Condition
+    * @param[in] precedingInstruction : preceding instruction
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64CondTrg1Src2Instruction( TR::InstOpCode::Mnemonic op,
+                             TR::Node *node,
+                             TR::Register *treg,
+                             TR::Register *s1reg,
+                             TR::Register *s2reg,
+                             TR::ARM64ConditionCode cc,
+                             TR::RegisterDependencyConditions *cond,
+                             TR::Instruction *precedingInstruction,
+                             TR::CodeGenerator *cg)
+      : ARM64Trg1Src2Instruction(op, node, treg, s1reg, s2reg, cond, precedingInstruction, cg), _cc(cc)
+      {
+      }
+
+   /**
+    * @brief Gets instruction kind
+    * @return instruction kind
+    */
+   virtual Kind getKind() { return IsCondTrg1Src2; }
+
+   /**
+    * @brief Gets condition code
+    * @return condition code
+    */
+   TR::ARM64ConditionCode getConditionCode() {return _cc;}
+
+   /**
+    * @brief Sets condition code
+    * @param[in] cc : condition code
+    * @return condition code
+    */
+   TR::ARM64ConditionCode setConditionCode(TR::ARM64ConditionCode cc)
+      {
+      return (_cc = cc);
+      }
+
+   /**
+    * @brief Sets condition code in binary encoding
+    * @param[in] instruction : instruction cursor
+    */
+   void insertConditionCodeField(uint32_t *instruction)
+      {
+      *instruction |= ((_cc & 0xf) << 12);
+      }
+
+   /**
+    * @brief Generates binary encoding of the instruction
+    * @return instruction cursor
+    */
+   virtual uint8_t *generateBinaryEncoding();
+};
 
 class ARM64Trg1Src2ShiftedInstruction : public ARM64Trg1Src2Instruction
    {
@@ -1964,6 +2257,7 @@ class ARM64Trg1MemInstruction : public ARM64Trg1Instruction
                             TR::MemoryReference *mr, TR::CodeGenerator *cg)
       : ARM64Trg1Instruction(op, node, treg, cg), _memoryReference(mr)
       {
+      mr->incRegisterTotalUseCounts(cg);
       }
 
    /*
@@ -2005,6 +2299,8 @@ class ARM64Trg1MemInstruction : public ARM64Trg1Instruction
       {
       return (_memoryReference = mr);
       }
+
+   virtual TR::Snippet *getSnippetForGC() {return getMemoryReference()->getUnresolvedSnippet();}
 
    /**
     * @brief Gets base register of memory reference
@@ -2084,6 +2380,7 @@ class ARM64MemInstruction : public TR::Instruction
                         TR::MemoryReference *mr, TR::CodeGenerator *cg)
       : TR::Instruction(op, node, cg), _memoryReference(mr)
       {
+      mr->incRegisterTotalUseCounts(cg);
       }
 
    /*
@@ -2100,6 +2397,7 @@ class ARM64MemInstruction : public TR::Instruction
                         TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
       : TR::Instruction(op, node, precedingInstruction, cg), _memoryReference(mr)
       {
+      mr->incRegisterTotalUseCounts(cg);
       }
 
    /**
@@ -2174,7 +2472,6 @@ class ARM64MemSrc1Instruction : public ARM64MemInstruction
       : ARM64MemInstruction(op, node, mr, cg), _source1Register(sreg)
       {
       useRegister(sreg);
-      mr->incRegisterTotalUseCounts(cg);
       }
 
    /*
@@ -2193,6 +2490,7 @@ class ARM64MemSrc1Instruction : public ARM64MemInstruction
                             TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
       : ARM64MemInstruction(op, node, mr, precedingInstruction, cg), _source1Register(sreg)
       {
+      useRegister(sreg);
       }
 
    /**
@@ -2212,6 +2510,139 @@ class ARM64MemSrc1Instruction : public ARM64MemInstruction
     * @return source register
     */
    TR::Register *setSource1Register(TR::Register *sr) {return (_source1Register = sr);}
+
+   virtual TR::Snippet *getSnippetForGC() {return getMemoryReference()->getUnresolvedSnippet();}
+
+   /**
+    * @brief Sets source register in binary encoding
+    * @param[in] instruction : instruction cursor
+    */
+   void insertSource1Register(uint32_t *instruction)
+      {
+      TR::RealRegister *source1 = toRealRegister(_source1Register);
+      source1->setRegisterFieldRT(instruction);
+      }
+
+   /**
+    * @brief Answers whether this instruction references the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction references the virtual register
+    */
+   virtual bool refsRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction uses the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction uses the virtual register
+    */
+   virtual bool usesRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction defines the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction defines the virtual register
+    */
+   virtual bool defsRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction defines the given real register
+    * @param[in] reg : real register
+    * @return true when the instruction defines the real register
+    */
+   virtual bool defsRealRegister(TR::Register *reg);
+   /**
+    * @brief Assigns registers
+    * @param[in] kindToBeAssigned : register kind
+    */
+   virtual void assignRegisters(TR_RegisterKinds kindToBeAssigned);
+
+   /**
+    * @brief Generates binary encoding of the instruction
+    * @return instruction cursor
+    */
+   virtual uint8_t *generateBinaryEncoding();
+
+   /**
+    * @brief Estimates binary length
+    * @param[in] currentEstimate : current estimated length
+    * @return estimated binary length
+    */
+   virtual int32_t estimateBinaryLength(int32_t currentEstimate);
+   };
+
+// for "store exclusive" instructions such as stxrx/stxrw
+class ARM64Trg1MemSrc1Instruction : public ARM64Trg1MemInstruction
+   {
+   TR::Register *_source1Register;
+
+   public:
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] treg : target register
+    * @param[in] mr : memory reference
+    * @param[in] sreg : source register
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64Trg1MemSrc1Instruction(TR::InstOpCode::Mnemonic op,
+                               TR::Node *node,
+                               TR::Register *treg,
+                               TR::MemoryReference *mr,
+                               TR::Register *sreg, TR::CodeGenerator *cg)
+      : ARM64Trg1MemInstruction(op, node, treg, mr, cg), _source1Register(sreg)
+      {
+      useRegister(sreg);
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] treg : target register
+    * @param[in] mr : memory reference
+    * @param[in] sreg : source register
+    * @param[in] precedingInstruction : preceding instruction
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64Trg1MemSrc1Instruction(TR::InstOpCode::Mnemonic op,
+                               TR::Node *node,
+                               TR::Register *treg,
+                               TR::MemoryReference *mr,
+                               TR::Register *sreg,
+                               TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : ARM64Trg1MemInstruction(op, node, treg, mr, precedingInstruction, cg), _source1Register(sreg)
+      {
+      useRegister(sreg);
+      }
+
+   /**
+    * @brief Gets instruction kind
+    * @return instruction kind
+    */
+   virtual Kind getKind() { return IsTrg1MemSrc1; }
+
+   /**
+    * @brief Gets source register
+    * @return source register
+    */
+   TR::Register *getSource1Register() {return _source1Register;}
+   /**
+    * @brief Sets source register
+    * @param[in] sr : source register
+    * @return source register
+    */
+   TR::Register *setSource1Register(TR::Register *sr) {return (_source1Register = sr);}
+
+   virtual TR::Snippet *getSnippetForGC() {return getMemoryReference()->getUnresolvedSnippet();}
+
+   /**
+    * @brief Sets target register in binary encoding
+    * @param[in] instruction : instruction cursor
+    */
+   void insertTargetRegister(uint32_t *instruction)
+      {
+      TR::RealRegister *target = toRealRegister(getTargetRegister());
+      target->setRegisterFieldRS(instruction);
+      }
 
    /**
     * @brief Sets source register in binary encoding
@@ -2488,6 +2919,147 @@ class ARM64Src2Instruction : public ARM64Src1Instruction
     */
    virtual uint8_t *generateBinaryEncoding();
    };
+
+class ARM64SynchronizationInstruction : public ARM64ImmInstruction
+   {
+
+   public:
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] imm : immediate value
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64SynchronizationInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node,
+                                    uint32_t imm, TR::CodeGenerator *cg)
+      : ARM64ImmInstruction(op, node, imm, cg)
+      {
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] imm : immediate value
+    * @param[in] preced : preceding instruction
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64SynchronizationInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node,
+                                    uint32_t imm, TR::Instruction *precedingInstruction,
+                                    TR::CodeGenerator *cg)
+      : ARM64ImmInstruction(op, node, imm, precedingInstruction, cg)
+      {
+      }
+
+   /**
+    * @brief Gets instruction kind
+    * @return instruction kind
+    */
+   virtual Kind getKind() { return IsSynchronization; }
+
+   /**
+    * @brief Encodes the immediate value into the instruction
+    * @param[in] instruction : instruction address
+    */
+   virtual void insertImmediateField(uint32_t *instruction)
+      {
+      TR_ASSERT_FATAL(constantIsUnsignedImm4(getSourceImmediate()), "Immediate value exceeds 4 bits.");
+      *instruction |= ((getSourceImmediate() & 0xF) << 8);
+      }
+
+   };
+
+class ARM64ExceptionInstruction : public ARM64ImmInstruction
+   {
+
+   public:
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] imm : immediate value
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64ExceptionInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node,
+                                    uint32_t imm, TR::CodeGenerator *cg)
+      : ARM64ImmInstruction(op, node, imm, cg)
+      {
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] imm : immediate value
+    * @param[in] preced : preceding instruction
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64ExceptionInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node,
+                                    uint32_t imm, TR::Instruction *precedingInstruction,
+                                    TR::CodeGenerator *cg)
+      : ARM64ImmInstruction(op, node, imm, precedingInstruction, cg)
+      {
+      }
+
+   /**
+    * @brief Gets instruction kind
+    * @return instruction kind
+    */
+   virtual Kind getKind() { return IsException; }
+
+   /**
+    * @brief Encodes the immediate value into the instruction
+    * @param[in] instruction : instruction address
+    */
+   virtual void insertImmediateField(uint32_t *instruction)
+      {
+      TR_ASSERT_FATAL(constantIsUnsignedImm16(getSourceImmediate()), "Immediate value exceeds 16 bits.");
+      *instruction |= ((getSourceImmediate() & 0xFFFF) << 5);
+      }
+
+   };
+
+#ifdef J9_PROJECT_SPECIFIC
+class ARM64VirtualGuardNOPInstruction : public TR::ARM64LabelInstruction
+   {
+   private:
+   TR_VirtualGuardSite *_site;
+
+   public:
+   ARM64VirtualGuardNOPInstruction(TR::Node                       *node,
+                                 TR_VirtualGuardSite              *site,
+                                 TR::RegisterDependencyConditions *cond,
+                                 TR::LabelSymbol                  *sym,
+                                 TR::CodeGenerator                *cg)
+      : TR::ARM64LabelInstruction(TR::InstOpCode::vgdnop, node, sym, cond, cg),
+        _site(site)
+      {
+      }
+
+   ARM64VirtualGuardNOPInstruction(TR::Node                       *node,
+                                 TR_VirtualGuardSite              *site,
+                                 TR::RegisterDependencyConditions *cond,
+                                 TR::LabelSymbol                  *sym,
+                                 TR::Instruction                  *precedingInstruction,
+                                 TR::CodeGenerator                *cg)
+      : TR::ARM64LabelInstruction(TR::InstOpCode::vgdnop, node, sym, cond, precedingInstruction, cg),
+        _site(site)
+      {
+      }
+
+   virtual Kind getKind() { return IsVirtualGuardNOP; }
+
+   void setSite(TR_VirtualGuardSite *site) { _site = site; }
+   TR_VirtualGuardSite * getSite() { return _site; }
+
+   virtual uint8_t *generateBinaryEncoding();
+   virtual int32_t estimateBinaryLength(int32_t currentEstimate);
+   virtual bool     isVirtualGuardNOPInstruction() {return true;}
+   };
+#endif
 
 } // TR
 

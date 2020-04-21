@@ -87,4 +87,4 @@ endif()
 
 set_property(TARGET omrsigtest PROPERTY FOLDER fvtest)
 
-add_test(NAME sigtest COMMAND omrsigtest)
+add_test(NAME sigtest COMMAND omrsigtest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrsigtest-results.xml)

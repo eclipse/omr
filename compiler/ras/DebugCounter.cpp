@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "codegen/CodeGenerator.hpp"
@@ -39,8 +39,8 @@
 #include "il/ILOpCodes.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "ras/Debug.hpp"
 #include "infra/SimpleRegex.hpp"
@@ -58,7 +58,7 @@ void
 TR::DebugCounter::prependDebugCounterBump(TR::Compilation *comp, TR::TreeTop *nextTreeTop, TR::DebugCounterBase *counter, int32_t delta)
    {
    // Use long operations in 64 bit platforms and int operations in 32 bit platforms
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       prependDebugCounterBump(comp, nextTreeTop, counter, TR::Node::lconst(nextTreeTop->getNode(), delta));
       }
@@ -284,9 +284,9 @@ const char *TR::DebugCounter::debugCounterBucketName(TR::Compilation *comp, int3
 TR::Node *TR::DebugCounterBase::createBumpCounterNode(TR::Compilation *comp, TR::Node *deltaNode)
    {
    TR::SymbolReference *symref = getBumpCountSymRef(comp);
-   TR::Node *load = TR::Node::createWithSymRef(deltaNode, TR::Compiler->target.is64Bit() ? TR::lload : TR::iload, 0, symref);
-   TR::Node *add = TR::Node::create(TR::Compiler->target.is64Bit() ? TR::ladd : TR::iadd, 2, load, deltaNode);
-   TR::Node *store = TR::Node::createWithSymRef(TR::Compiler->target.is64Bit() ? TR::lstore : TR::istore, 1, 1, add, symref);
+   TR::Node *load = TR::Node::createWithSymRef(deltaNode, comp->target().is64Bit() ? TR::lload : TR::iload, 0, symref);
+   TR::Node *add = TR::Node::create(comp->target().is64Bit() ? TR::ladd : TR::iadd, 2, load, deltaNode);
+   TR::Node *store = TR::Node::createWithSymRef(comp->target().is64Bit() ? TR::lstore : TR::istore, 1, 1, add, symref);
 
    if (comp->compileRelocatableCode())
       comp->mapStaticAddressToCounter(symref, this);
@@ -319,14 +319,14 @@ TR::DebugCounterBase::finalizeReloData(TR::Compilation *comp, TR::Node *node, ui
 
 TR::SymbolReference *TR::DebugCounter::getBumpCountSymRef(TR::Compilation *comp)
    {
-   TR::SymbolReference *symRef = comp->getSymRefTab()->findOrCreateCounterSymRef(const_cast<char*>(_name), TR::Compiler->target.is64Bit() ? TR::Int64 : TR::Int32, &_bumpCount);
+   TR::SymbolReference *symRef = comp->getSymRefTab()->findOrCreateCounterSymRef(const_cast<char*>(_name), comp->target().is64Bit() ? TR::Int64 : TR::Int32, &_bumpCount);
    symRef->getSymbol()->setIsDebugCounter();
    return symRef;
    }
 
-intptrj_t TR::DebugCounter::getBumpCountAddress()
+intptr_t TR::DebugCounter::getBumpCountAddress()
    {
-   return (intptrj_t)&_bumpCount;
+   return (intptr_t)&_bumpCount;
    }
 
 void TR::DebugCounter::getInsertionCounterNames(TR::Compilation *comp, TR_OpaqueMethodBlock *method, int32_t bytecodeIndex, const char *(&counterNames)[3])
@@ -427,9 +427,9 @@ void TR::DebugCounterAggregation::aggregateDebugCounterHistogram(TR::Compilation
       }
    }
 
-intptrj_t TR::DebugCounterAggregation::getBumpCountAddress()
+intptr_t TR::DebugCounterAggregation::getBumpCountAddress()
    {
-   return (intptrj_t)&_bumpCount;
+   return (intptr_t)&_bumpCount;
    }
 
 TR::SymbolReference *TR::DebugCounterAggregation::getBumpCountSymRef(TR::Compilation *comp)

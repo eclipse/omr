@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,3 +42,4 @@
    TR::CodeGenPhase::performInliningReportPhase,                                             //InliningReportPhase
    TR::CodeGenPhase::performInsertDebugCountersPhase,
    TR::CodeGenPhase::performCleanUpFlagsPhase,
+   TR::CodeGenPhase::performExpandInstructionsPhase,

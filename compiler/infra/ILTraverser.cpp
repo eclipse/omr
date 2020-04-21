@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,13 +21,13 @@
 
 #include "infra/ILTraverser.hpp"
 
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/Block_inlines.hpp"
-#include "il/TreeTop.hpp"
-#include "il/TreeTop_inlines.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/TreeTop.hpp"
+#include "il/TreeTop_inlines.hpp"
 
 TR::ILTraverser::ILTraverser(TR::Compilation * comp) : _observers(comp->allocator()), _visitedNodes(comp), _comp(comp)
    {

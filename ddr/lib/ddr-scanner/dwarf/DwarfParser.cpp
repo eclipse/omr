@@ -22,6 +22,7 @@
 #include "ddr/scanner/dwarf/DwarfFunctions.hpp"
 
 /* Statics to create: */
+static bool findTool(char **buffer, const char *command);
 static void deleteDie(Dwarf_Die die);
 static void cleanUnknownDiesInCU(Dwarf_CU_Context *cu);
 static int parseDwarfInfo(char *line, Dwarf_Die *lastCreatedDie, Dwarf_Die *currentDie,
@@ -49,7 +50,7 @@ dwarf_finish(Dwarf_Debug dbg, Dwarf_Error *error)
 		delete Dwarf_CU_Context::_currentCU;
 		Dwarf_CU_Context::_currentCU = nextCU;
 	}
-	Dwarf_CU_Context::_fileList.clear();
+	Dwarf_CU_Context::_fileId.clear();
 	Dwarf_CU_Context::_currentCU = NULL;
 	Dwarf_CU_Context::_firstCU = NULL;
 	return DW_DLV_OK;
@@ -79,9 +80,25 @@ dwarf_init(int fd,
 	 */
 	FILE *fp = NULL;
 	if (DW_DLV_OK == ret) {
-		stringstream ss;
-		ss << "dwarfdump " << filepath << " 2>&1";
-		fp = popen(ss.str().c_str(), "r");
+
+		/* On some Mac machines, calling "dwarfdump" in shell calls a version named
+		 * "llvm-dwarfdump" instead of the version of dwarfdump DDR uses, which is
+		 * instead named "dwarfdump-classic" on those systems. Thus, we first try to
+		 * find "dwarfdump-classic" directly in case "dwarfdump" is linked to
+		 * "llvm-dwarfdump". If we don't find "dwarfdump-classic", then the machine
+		 * we are on uses the correct version of dwarfdump.
+		 */
+		char *toolpath = NULL;
+		if (findTool(&toolpath, "xcrun -f dwarfdump-classic 2>/dev/null")
+		||  findTool(&toolpath, "xcrun -f dwarfdump 2>/dev/null")) {
+			stringstream command;
+			command << toolpath << " " << filepath << " 2>&1";
+			fp = popen(command.str().c_str(), "r");
+		}
+		if (NULL != toolpath) {
+			free(toolpath);
+		}
+
 		if (NULL == fp) {
 			ret = DW_DLV_ERROR;
 			setError(error, DW_DLE_IOF);
@@ -448,8 +465,12 @@ parseAttribute(char *line, Dwarf_Die *lastCreatedDie,
 					setError(error, DW_DLE_MAF);
 					newAttr->_udata = 0;
 				} else if (DW_TAG_unknown != (*lastCreatedDie)->_tag) {
-					Dwarf_CU_Context::_fileList.push_back(string(newAttr->_stringdata));
-					newAttr->_udata = Dwarf_CU_Context::_fileList.size();
+					string fileName = string(newAttr->_stringdata);
+					unordered_map<string, size_t>::const_iterator insertIt = Dwarf_CU_Context::_fileId.insert(make_pair(fileName, Dwarf_CU_Context::_fileId.size())).first;
+					/* whether the insert succeeded or not due to duplicates, the pair at the iterator will have the right index value */
+					newAttr->_udata = insertIt->second + 1; /* since this attribute is indexed at 1 */
+
+
 				}
 			} else if (DW_FORM_string == form) {
 				char *valueStart = line + span + 3;
@@ -528,4 +549,30 @@ parseAttrType(char *string, size_t length, Dwarf_Half *type, Dwarf_Half *form)
 			break;
 		}
 	}
+}
+
+
+/* Runs a shell command to get the path for a tool DDR needs (dwarfdump)
+ * If successful, returns true and stores the path in 'buffer' variable.
+ * If not, returns false.
+ */
+static bool
+findTool(char **buffer, const char *command)
+{
+	FILE *fp = popen(command, "r");
+	if (NULL != fp) {
+		size_t cap = 0;
+		ssize_t len = getline(buffer, &cap, fp);
+		/* if xcrun fails to find the tool, then returned length would be 0 */
+		if ((len > 0) &&  ('/' == (*buffer)[0])) {
+			/* remove the newline consumed by getline */
+			if ('\n' == (*buffer)[len - 1]) {
+				(*buffer)[len - 1] = '\0';
+			}
+			pclose(fp);
+			return true;
+		}
+		pclose(fp);
+	}
+	return false;
 }

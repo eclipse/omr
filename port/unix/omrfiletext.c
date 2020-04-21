@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,8 +84,11 @@ omrfile_write_text(struct OMRPortLibrary *portLibrary, intptr_t fd, const char *
 #endif
 
 #if defined(J9ZOS390) || defined(OMRZTPF)
-	/* z/OS and z/TPF always needs to translate to EBCDIC */
+#if !defined(OMR_EBCDIC)
+	/* z/OS and z/TPF always needs to translate to EBCDIC, unless we are already using EBCDIC as the native encoding, */
+	/* in which case no translation is required. */
 	requiresTranslation = 1;
+#endif /* !defined(OMR_EBCDIC) */
 #else
 	/* we can short circuit if the string is all ASCII */
 	for (i = 0; i < nbytes; i++) {
@@ -404,12 +407,12 @@ file_write_using_iconv(struct OMRPortLibrary *portLibrary, intptr_t fd, const ch
 char *
 omrfile_read_text(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, intptr_t nbytes)
 {
-#if (defined(J9ZOS390))
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	const char eol = a2e_tab['\n'];
 	char *tempStr = NULL;
-#else
+#else /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	const static char eol = '\n';
-#endif /* defined(J9ZOS390) */
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	char temp[64];
 	char *cursor = buf;
 	BOOLEAN foundEOL = FALSE;
@@ -451,7 +454,7 @@ omrfile_read_text(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, in
 	}
 
 	*cursor = '\0';
-#if (defined(J9ZOS390))
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	tempStr = e2a_string(buf);
 	if (NULL == tempStr) {
 		return NULL;
@@ -459,7 +462,7 @@ omrfile_read_text(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, in
 
 	memcpy(buf, tempStr, strlen(buf));
 	free(tempStr);
-#endif /* defined(J9ZOS390) */
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	return buf;
 }
 
@@ -473,11 +476,11 @@ omrfile_get_text_encoding(struct OMRPortLibrary *portLibrary, char *charsetName,
 		return -1;
 	}
 
-#ifdef J9ZOS390
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	codepage = etoa_nl_langinfo(CODESET);
 #else
 	codepage = nl_langinfo(CODESET);
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 	/* nl_langinfo returns "" on failure */
 	if (codepage[0] == '\0') {

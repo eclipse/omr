@@ -107,6 +107,8 @@ public:
 
    TR::PersistentAllocator &persistentAllocator() { return _persistentAllocator; }
 
+   OMRPortLibrary * const omrPortLib;
+
 protected:
    // Initialize 'target' environment for this compiler
    //

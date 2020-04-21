@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -721,7 +721,7 @@ omrthread_get_process_times(omrthread_process_time_t *processTime)
 		}
 #endif	/* defined(OMR_OS_WINDOWS) */
 
-#if (defined(LINUX) && !defined(J9ZTPF)) || defined(AIXPPC) || defined(OSX)
+#if defined(LINUX) || defined(AIXPPC) || defined(OSX)
 		struct rusage rUsage;
 		memset(&rUsage, 0, sizeof(rUsage));
 
@@ -823,7 +823,7 @@ omrthread_get_process_times(omrthread_process_time_t *processTime)
 uint64_t
 omrthread_get_hires_clock(void)
 {
-#if defined(LINUX) && (defined(J9HAMMER) || defined(J9X86))
+#if defined(LINUX) && (defined(J9HAMMER) || defined(J9X86) || defined(RISCV64))
 #define J9TIME_NANOSECONDS_PER_SECOND	J9CONST_U64(1000000000)
 	struct timespec ts;
 	uint64_t hiresTime = 0;
@@ -833,7 +833,7 @@ omrthread_get_hires_clock(void)
 	}
 
 	return hiresTime;
-#elif defined(OMR_OS_WINDOWS) /* defined(LINUX) && (defined(J9HAMMER) || defined(J9X86)) */
+#elif defined(OMR_OS_WINDOWS) /* defined(LINUX) && (defined(J9HAMMER) || defined(J9X86) || defined(RISCV64)) */
 	LARGE_INTEGER i;
 
 	if (QueryPerformanceCounter(&i)) {

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,7 +88,7 @@ macro(omr_toolconfig_global_setup)
 	omr_remove_flags(CMAKE_EXE_LINKER_FLAGS    /INCREMENTAL)
 	omr_remove_flags(CMAKE_SHARED_LINKER_FLAGS /INCREMENTAL)
 
-	foreach(build_type IN LISTS CMAKE_CONFIGURATION_TYPES)
+	foreach(build_type IN ITEMS ${CMAKE_CONFIGURATION_TYPES} ${CMAKE_BUILD_TYPE})
 		string(TOUPPER ${build_type} build_type)
 		omr_remove_flags(CMAKE_EXE_LINKER_FLAGS_${build_type}    /INCREMENTAL)
 		omr_remove_flags(CMAKE_SHARED_LINKER_FLAGS_${build_type} /INCREMENTAL)
@@ -106,3 +106,20 @@ macro(omr_toolconfig_global_setup)
 	# Hack up output dir to fix dll dependency issues on windows
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 endmacro(omr_toolconfig_global_setup)
+
+function(_omr_toolchain_process_exports TARGET_NAME)
+	# we only need to do something if we are dealing with a shared library
+	get_target_property(target_type ${TARGET_NAME} TYPE)
+	if(NOT target_type STREQUAL "SHARED_LIBRARY")
+		return()
+	endif()
+
+	set(def_file "$<TARGET_PROPERTY:${TARGET_NAME},BINARY_DIR>/${TARGET_NAME}.def")
+
+	omr_process_template(
+		"${omr_SOURCE_DIR}/cmake/modules/platform/toolcfg/msvc_exports.def.in"
+		"${def_file}"
+	)
+
+	target_sources("${TARGET_NAME}" PRIVATE "${def_file}")
+endfunction()

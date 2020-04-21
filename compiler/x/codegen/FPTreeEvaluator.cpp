@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,8 +25,9 @@
 #include <stdio.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
@@ -48,15 +49,15 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "runtime/Runtime.hpp"
@@ -213,7 +214,7 @@ TR::Register *OMR::X86::TreeEvaluator::fconstEvaluator(TR::Node *node, TR::CodeG
          {
          TR::MemoryReference  *tempMR = generateX86MemoryReference(cg->findOrCreate4ByteConstant(node, node->getFloatBits()), cg);
          TR::Instruction *instr = generateRegMemInstruction(MOVSSRegMem, node, targetRegister, tempMR, cg);
-         setDiscardableIfPossible(TR_RematerializableFloat, targetRegister, node, instr, (intptrj_t)node->getFloatBits(), cg);
+         setDiscardableIfPossible(TR_RematerializableFloat, targetRegister, node, instr, (intptr_t)node->getFloatBits(), cg);
          }
       }
    else
@@ -284,7 +285,7 @@ TR::Register *OMR::X86::TreeEvaluator::performFload(TR::Node *node, TR::MemoryRe
    TR::Instruction *instr;
    if (cg->useSSEForSinglePrecision())
       {
-      if (TR::Compiler->target.is64Bit() &&
+      if (cg->comp()->target().is64Bit() &&
           sourceMR->getSymbolReference().isUnresolved())
          {
          // The 64-bit mode XMM load instructions may be wider than 8-bytes (our patching
@@ -333,7 +334,7 @@ TR::Register *OMR::X86::TreeEvaluator::performDload(TR::Node *node, TR::MemoryRe
    TR::Instruction *instr;
    if (cg->useSSEForDoublePrecision())
       {
-      if (TR::Compiler->target.is64Bit() &&
+      if (cg->comp()->target().is64Bit() &&
           sourceMR->getSymbolReference().isUnresolved())
          {
          // The 64-bit load instructions may be wider than 8-bytes (our patching
@@ -406,10 +407,17 @@ TR::Register *OMR::X86::TreeEvaluator::floatingPointStoreEvaluator(TR::Node *nod
       {
       if (nodeIs64Bit)
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             {
             TR::Register *floatConstReg = cg->allocateRegister(TR_GPR);
-            generateRegImm64Instruction(MOV8RegImm64, node, floatConstReg, valueChild->getLongInt(), cg);
+            if (valueChild->getLongInt() == 0)
+               {
+               generateRegRegInstruction(XOR8RegReg, node, floatConstReg, floatConstReg, cg);
+               }
+            else
+               {
+               generateRegImm64Instruction(MOV8RegImm64, node, floatConstReg, valueChild->getLongInt(), cg);
+               }
             exceptionPoint = generateMemRegInstruction(S8MemReg, node, tempMR, floatConstReg, cg);
             cg->stopUsingRegister(floatConstReg);
             }
@@ -446,7 +454,7 @@ TR::Register *OMR::X86::TreeEvaluator::floatingPointStoreEvaluator(TR::Node *nod
       TR::Register *sourceRegister = cg->evaluate(valueChild);
       if (sourceRegister->getKind() == TR_FPR)
          {
-         if (TR::Compiler->target.is64Bit() &&
+         if (cg->comp()->target().is64Bit() &&
             tempMR->getSymbolReference().isUnresolved())
             {
 
@@ -505,7 +513,7 @@ TR::Register *OMR::X86::TreeEvaluator::fpReturnEvaluator(TR::Node *node, TR::Cod
    TR_ASSERT(returnRegister, "Return node's child should evaluate to a register");
    TR::Compilation *comp = cg->comp();
 
-   if (TR::Compiler->target.is32Bit() &&
+   if (cg->comp()->target().is32Bit() &&
        !cg->useSSEForDoublePrecision() &&
        returnRegister->getKind() == TR_FPR)
       {
@@ -714,6 +722,19 @@ TR::Register *OMR::X86::TreeEvaluator::fpSqrtEvaluator(TR::Node *node, TR::CodeG
    return result;
    }
 
+TR::Register *OMR::X86::TreeEvaluator::dsqrtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *operand = node->getFirstChild();
+   TR::Register *opRegister = cg->evaluate(operand);
+   TR::Register *targetRegister = cg->allocateRegister(TR_FPR);
+
+   generateRegRegInstruction(SQRTSDRegReg, node, targetRegister, opRegister, cg);
+
+   node->setRegister(targetRegister);
+   cg->decReferenceCount(operand);
+   return targetRegister;
+   }
+
 TR::Register *OMR::X86::TreeEvaluator::faddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return TR::TreeEvaluator::fpBinaryArithmeticEvaluator(node, true, cg);
@@ -766,7 +787,7 @@ TR::Register *OMR::X86::TreeEvaluator::fpRemEvaluator(TR::Node *node, TR::CodeGe
       TR::Node *divisor = node->getSecondChild();
       TR::Node *dividend = node->getFirstChild();
 
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          {
          // TODO: We should do this for IA32 eventually
          TR::SymbolReference *helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(nodeIsDouble ? TR_AMD64doubleRemainder : TR_AMD64floatRemainder, false, false, false);
@@ -1001,7 +1022,7 @@ TR::Register *OMR::X86::TreeEvaluator::i2dEvaluator(TR::Node *node, TR::CodeGene
 TR::Register *OMR::X86::TreeEvaluator::fpConvertToInt(TR::Node *node, TR::SymbolReference *helperSymRef, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR_ASSERT(TR::Compiler->target.is32Bit(), "AMD64 has enableSSE set, so it doesn't use this logic");
+   TR_ASSERT(cg->comp()->target().is32Bit(), "AMD64 has enableSSE set, so it doesn't use this logic");
 
    TR::Node     *child     = node->getFirstChild();
    TR::Register *accReg    = 0;
@@ -1163,7 +1184,7 @@ TR::Register *OMR::X86::TreeEvaluator::fpConvertToInt(TR::Node *node, TR::Symbol
 TR::Register *OMR::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::SymbolReference *helperSymRef, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR_ASSERT(TR::Compiler->target.is32Bit(), "AMD64 doesn't use this logic");
+   TR_ASSERT(cg->comp()->target().is32Bit(), "AMD64 doesn't use this logic");
 
    TR::Node *child = node->getFirstChild();
 
@@ -1371,7 +1392,7 @@ TR::Register *OMR::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
             TR_ASSERT(0, "Unknown opcode value in f2iEvaluator");
             break;
          }
-      TR_ASSERT(TR::Compiler->target.is64Bit() || !longTarget, "Incorrect opcode value in f2iEvaluator");
+      TR_ASSERT(cg->comp()->target().is64Bit() || !longTarget, "Incorrect opcode value in f2iEvaluator");
 
       TR::TreeEvaluator::coerceFPOperandsToXMMRs(node, cg);
 
@@ -1385,7 +1406,7 @@ TR::Register *OMR::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
       sourceRegister = cg->evaluate(child);
       if (sourceRegister->getKind() == TR_X87 && child->getReferenceCount() == 1)
          {
-         TR_ASSERT(TR::Compiler->target.is32Bit(), "assertion failure");
+         TR_ASSERT(cg->comp()->target().is32Bit(), "assertion failure");
          TR::MemoryReference  *tempMR = cg->machine()->getDummyLocalMR(TR::Float);
          generateFPMemRegInstruction(FSTMemReg, node, tempMR, sourceRegister, cg);
          generateRegMemInstruction(CVTTSS2SIReg4Mem,
@@ -1405,7 +1426,7 @@ TR::Register *OMR::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
 
       if (longTarget)
          {
-         TR_ASSERT(TR::Compiler->target.is64Bit(), "We should only get here on AMD64");
+         TR_ASSERT(cg->comp()->target().is64Bit(), "We should only get here on AMD64");
          // We can't compare with 0x8000000000000000.
          // Instead, rotate left 1 bit and compare with 0x0000000000000001.
          generateRegInstruction(ROL8Reg1, node, targetRegister, cg);
@@ -1418,6 +1439,10 @@ TR::Register *OMR::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
          generateLabelInstruction(JE4, node, exceptionLabel, cg);
          }
 
+      //TODO: (omr issue #4969): Remove once support for spills in OOL paths is added
+      TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)2, cg);
+      deps->addPostCondition(targetRegister, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(sourceRegister, TR::RealRegister::NoReg, cg);
       {
       TR_OutlinedInstructionsGenerator og(exceptionLabel, node, cg);
       // at this point, target is set to -INF and there can only be THREE possible results: -INF, +INF, NaN
@@ -1443,7 +1468,7 @@ TR::Register *OMR::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
       generateLabelInstruction(JMP4, node, endLabel, cg);
       }
 
-      generateLabelInstruction(LABEL, node, endLabel, cg);
+      generateLabelInstruction(LABEL, node, endLabel, deps, cg);
       if (longTarget)
          {
          generateRegInstruction(ROR8Reg1, node, targetRegister, cg);
@@ -1462,7 +1487,7 @@ TR::Register *OMR::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
       }
    else
       {
-      TR_ASSERT(TR::Compiler->target.is32Bit(), "assertion failure");
+      TR_ASSERT(cg->comp()->target().is32Bit(), "assertion failure");
       return TR::TreeEvaluator::fpConvertToInt(node, cg->symRefTab()->findOrCreateRuntimeHelper(node->getOpCodeValue() == TR::f2i ? TR_IA32floatToInt : TR_IA32doubleToInt, false, false, false), cg);
       }
    }
@@ -1470,7 +1495,7 @@ TR::Register *OMR::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
 
 TR::Register *OMR::X86::TreeEvaluator::f2lEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(TR::Compiler->target.is32Bit(), "AMD64 uses f2iEvaluator for this");
+   TR_ASSERT(cg->comp()->target().is32Bit(), "AMD64 uses f2iEvaluator for this");
    return TR::TreeEvaluator::fpConvertToLong(node, cg->symRefTab()->findOrCreateRuntimeHelper(TR_IA32floatToLong, false, false, false), cg);
    }
 
@@ -1537,7 +1562,7 @@ TR::Register *OMR::X86::TreeEvaluator::f2cEvaluator(TR::Node *node, TR::CodeGene
 
 TR::Register *OMR::X86::TreeEvaluator::d2lEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(TR::Compiler->target.is32Bit(), "AMD64 uses f2iEvaluator for this");
+   TR_ASSERT(cg->comp()->target().is32Bit(), "AMD64 uses f2iEvaluator for this");
 
    return TR::TreeEvaluator::fpConvertToLong(node, cg->symRefTab()->findOrCreateRuntimeHelper(TR_IA32doubleToLong, false, false, false), cg);
    }

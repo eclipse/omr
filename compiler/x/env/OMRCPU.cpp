@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,14 +24,40 @@
 #include "env/CPU.hpp"
 #include "env/JitConfig.hpp"
 #include "env/ProcessorInfo.hpp"
+#include "infra/Flags.hpp"
 #include "x/runtime/X86Runtime.hpp"
 
+TR::CPU
+OMR::X86::CPU::detect(OMRPortLibrary * const omrPortLib)
+   {   
+   // Only enable the features that compiler currently uses
+   uint32_t enabledFeatures [] = {OMR_FEATURE_X86_FPU, OMR_FEATURE_X86_CX8, OMR_FEATURE_X86_CMOV,
+                                  OMR_FEATURE_X86_MMX, OMR_FEATURE_X86_SSE, OMR_FEATURE_X86_SSE2,
+                                  OMR_FEATURE_X86_SSSE3, OMR_FEATURE_X86_SSE4_1, OMR_FEATURE_X86_POPCNT,
+                                  OMR_FEATURE_X86_AESNI, OMR_FEATURE_X86_OSXSAVE, OMR_FEATURE_X86_AVX,
+                                  OMR_FEATURE_X86_HLE, OMR_FEATURE_X86_RTM};
+
+   OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
+   OMRProcessorDesc featureMasks;
+   memset(featureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+   for (size_t i = 0; i < sizeof(enabledFeatures)/sizeof(uint32_t); i++)
+      {
+      omrsysinfo_processor_set_feature(&featureMasks, enabledFeatures[i], TRUE);
+      }
+
+   OMRProcessorDesc processorDescription;
+   omrsysinfo_get_processor_description(&processorDescription);
+   for (size_t i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
+      {
+      processorDescription.features[i] &= featureMasks.features[i];
+      }
+
+   return TR::CPU(processorDescription);
+   }
+
 TR_X86CPUIDBuffer *
-OMR::X86::CPU::queryX86TargetCPUID(TR::Compilation *comp)
+OMR::X86::CPU::queryX86TargetCPUID()
    {
-#ifdef J9_PROJECT_SPECIFIC
-   return NULL;
-#else
    static TR_X86CPUIDBuffer *buf = NULL;
    auto jitConfig = TR::JitConfig::instance();
 
@@ -70,49 +96,109 @@ OMR::X86::CPU::queryX86TargetCPUID(TR::Compilation *comp)
       }
 
    return buf;
-#endif
    }
 
-
 const char *
-OMR::X86::CPU::getX86ProcessorVendorId(TR::Compilation *comp)
+OMR::X86::CPU::getX86ProcessorVendorId()
    {
    static char buf[13];
 
    // Terminate the vendor ID with NULL before returning.
    //
-   strncpy(buf, self()->queryX86TargetCPUID(comp)->_vendorId, 12);
+   strncpy(buf, self()->queryX86TargetCPUID()->_vendorId, 12);
    buf[12] = '\0';
 
    return buf;
    }
 
 uint32_t
-OMR::X86::CPU::getX86ProcessorSignature(TR::Compilation *comp)
+OMR::X86::CPU::getX86ProcessorSignature()
    {
-   return self()->queryX86TargetCPUID(comp)->_processorSignature;
+   return self()->queryX86TargetCPUID()->_processorSignature;
    }
 
 uint32_t
-OMR::X86::CPU::getX86ProcessorFeatureFlags(TR::Compilation *comp)
+OMR::X86::CPU::getX86ProcessorFeatureFlags()
    {
-   return self()->queryX86TargetCPUID(comp)->_featureFlags;
+   return self()->queryX86TargetCPUID()->_featureFlags;
    }
 
 uint32_t
-OMR::X86::CPU::getX86ProcessorFeatureFlags2(TR::Compilation *comp)
+OMR::X86::CPU::getX86ProcessorFeatureFlags2()
    {
-   return self()->queryX86TargetCPUID(comp)->_featureFlags2;
+   return self()->queryX86TargetCPUID()->_featureFlags2;
    }
 
 uint32_t
-OMR::X86::CPU::getX86ProcessorFeatureFlags8(TR::Compilation *comp)
+OMR::X86::CPU::getX86ProcessorFeatureFlags8()
    {
-   return self()->queryX86TargetCPUID(comp)->_featureFlags8;
+   return self()->queryX86TargetCPUID()->_featureFlags8;
    }
 
 bool
-OMR::X86::CPU::testOSForSSESupport(TR::Compilation *comp)
+OMR::X86::CPU::getSupportsHardwareSQRT()
+   {
+   return true;
+   }
+
+bool
+OMR::X86::CPU::testOSForSSESupport()
    {
    return false;
    }
+
+bool
+OMR::X86::CPU::supportsTransactionalMemoryInstructions()
+   {
+   flags32_t processorFeatureFlags8(self()->getX86ProcessorFeatureFlags8());
+   return processorFeatureFlags8.testAny(TR_RTM);
+   }
+
+bool
+OMR::X86::CPU::isGenuineIntel()
+   {
+   return self()->isAtLeast(OMR_PROCESSOR_X86_INTEL_FIRST) && self()->isAtMost(OMR_PROCESSOR_X86_INTEL_LAST);
+   }
+
+bool
+OMR::X86::CPU::isAuthenticAMD()
+   {
+   return self()->isAtLeast(OMR_PROCESSOR_X86_AMD_FIRST) && self()->isAtMost(OMR_PROCESSOR_X86_AMD_LAST);
+   }
+
+bool
+OMR::X86::CPU::requiresLFence()
+   {
+   return false;  /* Dummy for now, we may need LFENCE in future processors*/
+   }
+
+bool
+OMR::X86::CPU::supportsFCOMIInstructions()
+   {
+   return self()->supportsFeature(OMR_FEATURE_X86_FPU) || self()->supportsFeature(OMR_FEATURE_X86_CMOV);
+   }
+
+bool
+OMR::X86::CPU::supportsMFence()
+   {
+   return self()->supportsFeature(OMR_FEATURE_X86_SSE2);
+   }
+
+bool
+OMR::X86::CPU::supportsLFence()
+   {
+   return self()->supportsFeature(OMR_FEATURE_X86_SSE2);
+   }
+
+bool
+OMR::X86::CPU::supportsSFence()
+   {
+   return self()->supportsFeature(OMR_FEATURE_X86_SSE2) || self()->supportsFeature(OMR_FEATURE_X86_MMX);
+   }
+
+bool
+OMR::X86::CPU::prefersMultiByteNOP()
+   {
+   return self()->isGenuineIntel() && !self()->is(OMR_PROCESSOR_X86_INTELPENTIUM);
+   }
+

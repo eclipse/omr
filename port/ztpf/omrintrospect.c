@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -725,11 +725,11 @@ upcall_handler(int signal, siginfo_t *siginfo, void *context_arg)
  * queue full error, but then we can't queue additional signals to prompt thread scheduling. Also it may not be
  * capped on all systems).
  *
- * @param data - the platform specific data, ignored 
+ * @param data - the platform specific data, ignored
  * @return number of threads in the process
  */
 static int
-count_threads( struct PlatformWalkData *data ) { 
+count_threads( struct PlatformWalkData *data ) {
 	struct iproc		*pProc;
 	struct ithgl		*pThgl;
 	if( is_threaded_ecb() ) {
@@ -817,10 +817,10 @@ resume_all_preempted(struct PlatformWalkData *data)
 	struct OMRPortLibrary *portLibrary = state->portLibrary;
 	int	test_sig = SUSPEND_SIG;
 
-	/* 
-	 * We skip everything but the semaphores and the process mask if we didn't 
-	 * successfully install the signal handlers. Now there are no outstanding 
-	 * signals on the queue we can drop the handler 
+	/*
+	 * We skip everything but the semaphores and the process mask if we didn't
+	 * successfully install the signal handlers. Now there are no outstanding
+	 * signals on the queue we can drop the handler
 	 */
 	if (data->threadsOutstanding > 0) {
 		/* inhibit collection of contexts from any of the outstanding threads we release */
@@ -882,7 +882,7 @@ resume_all_preempted(struct PlatformWalkData *data)
 }
 
 
-int  __attribute__((optimize(O0)))
+int  __attribute__((optimize(0)))
 J9ZTPF_getcontext( void *region )
 {
         register char *rgn asm("r2") = (char *)region;
@@ -1076,7 +1076,7 @@ omrintrospect_threads_startDo_with_signal(struct OMRPortLibrary *portLibrary, J9
 
 /*
  *	The following preprocessor guard will stop all attempts at attempting to walk the
- *	native thread stacks, thus avoiding some pretty sticky code which may or may not 
+ *	native thread stacks, thus avoiding some pretty sticky code which may or may not
  *	work on z/TPF. We'll leave this gate open for now, with a pending decision to close
  *	it or not.
  */
@@ -1167,7 +1167,7 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 			} else if (timedOut(data->state->deadline1) || data->error) {
 				break;
 			} else {
-				sigval_t val;
+				union sigval val;
 				val.sival_ptr = data;
 
 				/*

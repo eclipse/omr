@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,9 +44,20 @@ target_compile_definitions(j9hook_obj
 		$<TARGET_PROPERTY:omr_base,INTERFACE_COMPILE_DEFINITIONS>
 )
 
+omr_add_exports(j9hook_obj
+	J9HookInitializeInterface
+	omrhook_lib_control
+)
+
+target_enable_ddr(j9hook_obj)
+ddr_set_add_targets(omrddr j9hook_obj)
+
 add_library(j9hookstatic STATIC
 	$<TARGET_OBJECTS:j9hook_obj>
 )
+# Duplicate the export list onto the static library version
+get_target_property(hook_exports j9hook_obj EXPORTED_SYMBOLS)
+omr_add_exports(j9hookstatic ${hook_exports})
 
 if(OMR_WARNINGS_AS_ERRORS)
 	target_compile_options(j9hook_obj PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})

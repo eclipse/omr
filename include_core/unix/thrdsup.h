@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,8 @@
  *******************************************************************************/
 #ifndef thrdsup_h
 #define thrdsup_h
+
+#include "omrcfg.h"
 
 #if !defined(J9ZOS390)
 #define J9_POSIX_THREADS
@@ -67,19 +69,17 @@ typedef void* WRAPPER_ARG;
 #define WRAPPER_RETURN() return NULL
 typedef WRAPPER_TYPE (*WRAPPER_FUNC)(WRAPPER_ARG);
 
-#if defined(LINUX) || defined(AIXPPC)
+#if defined(OMR_USE_POSIX_SEMAPHORES)
 #include <semaphore.h>
 typedef sem_t OSSEMAPHORE;
-#elif defined(OSX) /* defined(LINUX) || defined(AIXPPC) */
+#elif defined(OMR_USE_OSX_SEMAPHORES) /* defined(OMR_USE_POSIX_SEMAPHORES) */
 typedef semaphore_t OSSEMAPHORE;
-#elif defined(J9ZOS390) /* defined(OSX) */
+#elif defined(OMR_USE_ZOS_SEMAPHORES) /* defined(OMR_USE_OSX_SEMAPHORES) */
 typedef struct zos_sem_t {
 	int count;
 	struct J9ThreadMonitor *monitor;
 } zos_sem_t;
 typedef zos_sem_t OSSEMAPHORE;
-#else /* defined(J9ZOS390) */
-typedef intptr_t OSSEMAPHORE;
 #endif /* defined(LINUX) || defined(AIXPPC) */
 
 
@@ -228,6 +228,10 @@ extern pthread_condattr_t *defaultCondAttr;
 	}\
 }
 #endif
+#else /* (defined(LINUX) || defined(AIXPPC) || defined(OSX)) */
+#ifdef OMR_THR_YIELD_ALG
+#error 'OMR_THR_YIELD_ALG' is not supported on this platform
+#endif
 #endif /* (defined(LINUX) || defined(AIXPPC) || defined(OSX)) */
 
 #if defined(MVS) || defined (J9ZOS390)
@@ -324,83 +328,34 @@ extern pthread_condattr_t *defaultCondAttr;
 #define TLS_GET(key) (pthread_getspecific(key))
 #endif
 
-/* SEM_CREATE */
-
-#if defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX)
+/* Semaphore functions */
 #define SEM_CREATE(threadLibrary, initValue) omrthread_allocate_memory(threadLibrary, sizeof(OSSEMAPHORE), OMRMEM_CATEGORY_THREADS)
-#else /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) */
-#define SEM_CREATE(threadLibrary, initValue)
-#endif /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) */
-/* SEM_INIT */
+#define	SEM_FREE(lib, s)  	omrthread_free_memory(lib, s);
 
-#if defined(LINUX) || defined(AIXPPC)
-#define SEM_INIT(sm, pshrd, inval)	\
-	(sem_init((sem_t *)(sm), pshrd, inval))
-#elif defined(OSX)
+#if defined(OMR_USE_POSIX_SEMAPHORES)
+#define SEM_INIT(sm, pshrd, inval) (sem_init((sem_t *)(sm), pshrd, inval))
+#define SEM_DESTROY(sm) (sem_destroy((sem_t *)(sm)))
+#define SEM_POST(smP) (sem_post((sem_t *)(smP)))
+#define SEM_WAIT(smP) (sem_wait((sem_t *)(smP)))
+#define SEM_GETVALUE(smP, intP) (sem_getvalue(smP, intP))
+#elif defined(OMR_USE_OSX_SEMAPHORES)
 #define SEM_INIT(sm, pshrd, inval)	\
 	(semaphore_create(mach_task_self(), (semaphore_t *)(sm), SYNC_POLICY_FIFO, inval))
-#elif defined(J9ZOS390)
-#define SEM_INIT(sm,pshrd,inval)  (sem_init_zos(sm, pshrd, inval))
-#else /* defined(J9ZOS390) */
-#define SEM_INIT(sm,pshrd,inval)
-#endif /* defined(J9ZOS390) */
-/* SEM_DESTROY */
-
-#if defined(LINUX) || defined(AIXPPC)
-#define SEM_DESTROY(sm)	\
-	(sem_destroy((sem_t *)(sm)))
-#elif defined(OSX)
 #define SEM_DESTROY(sm)	\
 	(semaphore_destroy(mach_task_self(), *(semaphore_t *)(sm)))
-#elif defined(J9ZOS390)
-#define SEM_DESTROY(sm)	\
-	(sem_destroy_zos(sm))
+#define SEM_POST(smP) (semaphore_signal(*(semaphore_t *)(smP)))
+#define SEM_WAIT(smP) (semaphore_wait(*(semaphore_t *)(smP)))
+#define SEM_GETVALUE(smP, intP)
+#elif defined(OMR_USE_ZOS_SEMAPHORES)
+#define SEM_INIT(sm,pshrd,inval) (sem_init_zos(sm, pshrd, inval))
+#define SEM_DESTROY(sm)	(sem_destroy_zos(sm))
+#define SEM_POST(smP) (sem_post_zos(smP))
+#define SEM_WAIT(smP) (sem_wait_zos(smP))
+#define SEM_GETVALUE(smP, intP) (sem_getvalue_zos(smP, intP))
 #else
-#define SEM_DESTROY(sm) 0
+#error Could not find semaphore implementation
 #endif
-/* SEM_FREE */
 
-#if defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX)
-#define	SEM_FREE(lib, s)  	omrthread_free_memory(lib, s);
-#else /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) */
-#define SEM_FREE(lib, s)
-#endif /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) */
-/* SEM_POST */
-
-#if defined(LINUX) || defined(AIXPPC)
-#define SEM_POST(smP)	\
-	(sem_post((sem_t *)(smP)))
-#elif defined(OSX)
-#define SEM_POST(smP)	\
-	(semaphore_signal(*(semaphore_t *)(smP)))
-#elif defined(J9ZOS390)
-#define SEM_POST(smP)   (sem_post_zos(smP))
-#else
-#define SEM_POST(sm)
-#endif
-/* SEM_WAIT */
-
-#if defined(LINUX) || defined(AIXPPC)
-#define SEM_WAIT(smP)	\
-	(sem_wait((sem_t *)(smP)))
-#elif defined(OSX)
-#define SEM_WAIT(smP)	\
-	(semaphore_wait(*(semaphore_t *)(smP)))
-#elif defined(J9ZOS390)
-#define SEM_WAIT(smP)           (sem_wait_zos(smP))
-#else
-#define SEM_WAIT(sm)
-#endif
-/* SEM_GETVALUE */
-
-#if defined(LINUX) || defined(AIXPPC)
-#define SEM_GETVALUE(smP, intP)	\
-	(sem_getvalue(smP, intP))
-#elif defined(J9ZOS390)
-#define SEM_GETVALUE(sm) (sem_getvalue_zos(smP, intP))
-#else
-#define SEM_GETVALUE(sm)
-#endif
 /* GET_HIRES_CLOCK */
 
 #ifdef OMR_THR_JLM_HOLD_TIMES

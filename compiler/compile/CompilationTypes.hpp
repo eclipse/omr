@@ -46,7 +46,6 @@ enum TR_Hotness
    warm,
    hot,
    lastOMRStrategy      = hot,  // currently used to test available omr optimizations
-   lastRubyStrategy     = hot,
    veryHot,
    scorching,
    minHotness           = noOpt,

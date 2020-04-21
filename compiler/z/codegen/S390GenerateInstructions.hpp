@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -189,12 +189,13 @@ TR::Instruction * generateS390CompareAndBranchInstruction(
                    bool needsCC = true,
                    bool targetIsFarAndCold = false);
 
+template <typename imm32Or64Bit>
 TR::Instruction * generateS390CompareAndBranchInstruction(
                    TR::CodeGenerator * cg,
                    TR::InstOpCode::Mnemonic compareOpCode,
                    TR::Node * node,
                    TR::Register * first,
-                   int32_t second,
+                   imm32Or64Bit second,
                    TR::InstOpCode::S390BranchCondition bc,
                    TR::LabelSymbol * branchDestination,
                    bool needsCC = true,
@@ -1160,7 +1161,8 @@ TR::Instruction * generateVRRiInstruction(
                       TR::Node                * n          ,
                       TR::Register            * targetReg  ,    /* GPR */
                       TR::Register            * sourceReg2 ,    /* VRF */
-                      uint8_t                   mask3);         /* 4 bits*/
+                      uint8_t                   mask3      ,    /* 4 bits*/
+                      uint8_t                   mask4 = 0);
 
 /****** VRS ******/
 TR::Instruction * generateVRSaInstruction(
@@ -1299,7 +1301,7 @@ TR::Instruction *generateVirtualGuardNOPInstruction(
                    TR::Instruction                     *preced = 0);
 
 bool
-canThrowDecimalOverflowException(TR::InstOpCode::Mnemonic op);
+canThrowDecimalOverflowException(TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic op);
 
 void
 generateS390DAAExceptionRestoreSnippet(TR::CodeGenerator* cg,
@@ -1331,7 +1333,7 @@ TR::Instruction *generateRegLitRefInstruction(
                    TR::InstOpCode::Mnemonic                       op,
                    TR::Node                             *n,
                    TR::Register                         *treg,
-                   uintptrj_t                              imm,
+                   uintptr_t                              imm,
                    int32_t                              reloType = 0,
                    TR::RegisterDependencyConditions *cond = 0,
                    TR::Instruction                      *preced = 0,
@@ -1363,7 +1365,7 @@ TR::Instruction *generateRegLitRefInstruction(
                    TR::InstOpCode::Mnemonic                       op,
                    TR::Node                             *n,
                    TR::Register                         *treg,
-                   uintptrj_t                            imm,
+                   uintptr_t                            imm,
                    TR::RegisterDependencyConditions *cond,
                    TR::Instruction                      *preced = 0,
                    TR::Register                         *base = 0,
@@ -1505,15 +1507,6 @@ TR::Instruction *generateRuntimeInstrumentationInstruction(
                    TR::Register      *target = NULL,
                    TR::Instruction   *preced = NULL);
 
-TR::Instruction *generateExtendedHighWordInstruction(
-                   TR::Node * node,
-                   TR::CodeGenerator *cg,
-                   TR::InstOpCode::Mnemonic op,
-                   TR::Register * targetReg,
-                   TR::Register * srcReg,
-                   int8_t imm8,
-                   TR::Instruction *preced = 0);
-
 TR::Instruction *
 generateReplicateNodeInVectorReg(TR::Node * node, TR::CodeGenerator *cg, TR::Register * targetVRF, TR::Node * srcElementNode,
                                  int elementSize, TR::Register *zeroReg=NULL, TR::Instruction * preced=NULL);
@@ -1530,7 +1523,28 @@ void generateShiftAndKeepSelected31Bit(
 
 TR::Instruction *generateZeroVector(TR::Node *node, TR::CodeGenerator *cg, TR::Register *vecZeroReg);
 
-#ifdef DEBUG
-#define TRACE_EVAL
-#endif
+/** \brief
+ *     Generates an alignment NOP (no-operation) pseudo-instruction in the instruction stream which will expand into
+ *     an appropriate number of NOP instructions at binary encoding time to satisfy the specified alignment.
+ *
+ *  \param cg
+ *     The code generator used to generate the instructions.
+ *
+ *  \param node
+ *     The node with which the generated instruction will be associated.
+ *
+ *  \param alignment
+ *     The alignment at which the next instruction in the instruction stream will be encoded at. For example specifying
+ *     a value of 16 will ensure that the binary encoding location of the subsequent instruction will be 16-byte
+ *     aligned, i.e. the low order four bits will be zero.
+ *
+ *  \param preced
+ *     The preceeding instruction to link the generated data constant instruction with.
+ *
+ *  \return
+ *     The generated instruction.
+ */
+TR::Instruction*
+generateAlignmentNopInstruction(TR::CodeGenerator *cg, TR::Node *node, uint32_t alignment, TR::Instruction *preced = NULL);
+
 #endif

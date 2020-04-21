@@ -27,11 +27,11 @@
 #include "codegen/TreeEvaluator.hpp"
 #include "compile/Compilation.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 
 TR_OutOfLineCodeSection::TR_OutOfLineCodeSection(TR::Node          *callNode,

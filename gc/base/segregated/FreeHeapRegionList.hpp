@@ -84,18 +84,14 @@ public:
 			region->setRangeHead(region);
 			if (szClass == OMR_SIZECLASSES_LARGE) {
 				region->setLarge(1);
-#if defined(OMR_GC_ARRAYLETS)
 			} else if (szClass == OMR_SIZECLASSES_ARRAYLET) {
 				region->setArraylet();
-#endif /* defined(OMR_GC_ARRAYLETS) */		
 			} else {
 				region->setSmall(szClass);
 			}
 		}
 		return region;
 	}
-
-	virtual uintptr_t getMaxRegions() = 0;
 		
 	/* Methods inherited from HeapRegionList */
 	virtual bool isEmpty() { return 0 == _length; }

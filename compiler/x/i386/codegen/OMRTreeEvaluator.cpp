@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
@@ -47,14 +48,14 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "ras/Debug.hpp"
@@ -489,7 +490,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR:
                generateRegRegInstruction(MOV4RegReg, node, ecxReg, valueReg->getHighOrder(), cg);
 
                TR::MemoryReference  *cmpxchgMR = generateX86MemoryReference(node, cg);
-               generateMemInstruction (TR::Compiler->target.isSMP() ? LCMPXCHG8BMem : CMPXCHG8BMem, node, cmpxchgMR, deps, cg);
+               generateMemInstruction (cg->comp()->target().isSMP() ? LCMPXCHG8BMem : CMPXCHG8BMem, node, cmpxchgMR, deps, cg);
 
                cg->stopUsingRegister(eaxReg);
                cg->stopUsingRegister(edxReg);
@@ -497,7 +498,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR:
                cg->stopUsingRegister(ebxReg);
                }
             }
-         else if(symRef && symRef->isUnresolved() && symRef->getSymbol()->isVolatile() && (!comp->getOption(TR_DisableNewX86VolatileSupport) && TR::Compiler->target.is32Bit()) )
+         else if(symRef && symRef->isUnresolved() && symRef->getSymbol()->isVolatile() && (!comp->getOption(TR_DisableNewX86VolatileSupport) && cg->comp()->target().is32Bit()) )
             {
             TR_ASSERT( cg->getX86ProcessorInfo().supportsCMPXCHG8BInstruction(), "Assumption of support of the CMPXCHG8B instruction failed in lstoreEvaluator()" );
             eaxReg = cg->allocateRegister();
@@ -526,7 +527,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR:
             highMR->setProcessAsLongVolatileHigh();
 
             TR::MemoryReference  *cmpxchgMR = generateX86MemoryReference(node, cg);
-            generateMemInstruction (TR::Compiler->target.isSMP() ? LCMPXCHG8BMem : CMPXCHG8BMem, node, cmpxchgMR, deps, cg);
+            generateMemInstruction (cg->comp()->target().isSMP() ? LCMPXCHG8BMem : CMPXCHG8BMem, node, cmpxchgMR, deps, cg);
 
             cg->stopUsingRegister(eaxReg);
             cg->stopUsingRegister(edxReg);
@@ -1515,7 +1516,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairDivEvaluator(TR::Node *n
    TR::RegisterDependencyConditions  *dependencies = generateRegisterDependencyConditions((uint8_t)0, 2, cg);
    dependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
    dependencies->addPostCondition(highRegister, TR::RealRegister::edx, cg);
-   TR::IA32PrivateLinkage *linkage = TR::toIA32PrivateLinkage(cg->getLinkage(TR_Private));
+   J9::IA32PrivateLinkage *linkage = static_cast<J9::IA32PrivateLinkage *>(cg->getLinkage(TR_Private));
    TR::IA32LinkageUtils::pushLongArg(secondChild, cg);
    TR::IA32LinkageUtils::pushLongArg(firstChild, cg);
    TR::X86ImmSymInstruction  *instr =
@@ -1629,7 +1630,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairRemEvaluator(TR::Node *n
    dependencies->addPostCondition(firstRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(secondRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
 
-   TR::IA32PrivateLinkage *linkage = TR::toIA32PrivateLinkage(cg->getLinkage(TR_Private));
+   J9::IA32PrivateLinkage *linkage = static_cast<J9::IA32PrivateLinkage *>(cg->getLinkage(TR_Private));
    TR::IA32LinkageUtils::pushLongArg(secondChild, cg);
    TR::IA32LinkageUtils::pushLongArg(firstChild, cg);
    TR::X86ImmSymInstruction  *instr =
@@ -3168,7 +3169,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::performLload(TR::Node *node, TR::Me
 
          generateRegRegInstruction (MOV4RegReg, node, ecxReg, highRegister, cg);
          generateRegRegInstruction (MOV4RegReg, node, ebxReg, lowRegister, cg);
-         generateMemInstruction ( TR::Compiler->target.isSMP() ? LCMPXCHG8BMem : CMPXCHG8BMem, node, sourceMR, deps, cg);
+         generateMemInstruction ( cg->comp()->target().isSMP() ? LCMPXCHG8BMem : CMPXCHG8BMem, node, sourceMR, deps, cg);
 
          cg->stopUsingRegister(ecxReg);
          cg->stopUsingRegister(ebxReg);
@@ -3318,8 +3319,6 @@ TR::Register *OMR::X86::I386::TreeEvaluator::iflcmpeqEvaluator(TR::Node *node, T
       TR::Register                         *cmpRegister = NULL;
       TR::RegisterDependencyConditions  *deps        = NULL;
 
-      bool needVMThreadDep = true;
-
       if ((lowValue | highValue) == 0)
          {
          TR::Node     *landConstChild;
@@ -3368,7 +3367,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::iflcmpeqEvaluator(TR::Node *node, T
             generateRegRegInstruction(OR4RegReg, node, targetRegister, cmpRegister->getHighOrder(), cg);
             }
 
-         generateConditionalJumpInstruction(JE4, node, cg, needVMThreadDep);
+         generateConditionalJumpInstruction(JE4, node, cg);
 
          if (targetNeedsToBeExplicitlyStopped)
             {
@@ -3409,9 +3408,9 @@ TR::Register *OMR::X86::I386::TreeEvaluator::iflcmpeqEvaluator(TR::Node *node, T
             }
          else
             {
-            generateLabelInstruction(JNE4, node, doneLabel, needVMThreadDep, cg);
+            generateLabelInstruction(JNE4, node, doneLabel, cg);
             compareGPRegisterToConstantForEquality(node, highValue, cmpRegister->getHighOrder(), cg);
-            generateLabelInstruction(JE4, node, destinationLabel, needVMThreadDep, cg);
+            generateLabelInstruction(JE4, node, destinationLabel, cg);
             deps = generateRegisterDependencyConditions((uint8_t)0, 2, cg);
             deps->addPostCondition(cmpRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
             deps->addPostCondition(cmpRegister->getHighOrder(), TR::RealRegister::NoReg, cg);
@@ -3456,8 +3455,6 @@ TR::Register *OMR::X86::I386::TreeEvaluator::iflcmpneEvaluator(TR::Node *node, T
       TR::Node                             *firstChild  = node->getFirstChild();
       TR::Register                         *cmpRegister = NULL;
       TR::RegisterDependencyConditions  *deps        = NULL;
-
-      bool needVMThreadDep = true;
 
       if ((lowValue | highValue) == 0)
          {
@@ -3506,7 +3503,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::iflcmpneEvaluator(TR::Node *node, T
             generateRegRegInstruction(OR4RegReg, node, targetRegister, cmpRegister->getHighOrder(), cg);
             }
 
-         generateConditionalJumpInstruction(JNE4, node, cg, needVMThreadDep);
+         generateConditionalJumpInstruction(JNE4, node, cg);
 
          if (targetNeedsToBeExplicitlyStopped)
             {
@@ -3547,9 +3544,9 @@ TR::Register *OMR::X86::I386::TreeEvaluator::iflcmpneEvaluator(TR::Node *node, T
             }
          else
             {
-            generateLabelInstruction(JNE4, node, destinationLabel, needVMThreadDep, cg);
+            generateLabelInstruction(JNE4, node, destinationLabel, cg);
             compareGPRegisterToConstantForEquality(node, highValue, cmpRegister->getHighOrder(), cg);
-            generateLabelInstruction(JNE4, node, destinationLabel, needVMThreadDep, cg);
+            generateLabelInstruction(JNE4, node, destinationLabel, cg);
             }
          }
 
@@ -3611,7 +3608,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::iflcmpleEvaluator(TR::Node *node, T
    }
 
 
-TR::Register *OMR::X86::I386::TreeEvaluator::lternaryEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *OMR::X86::I386::TreeEvaluator::lselectEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *condition = node->getChild(0);
    TR::Node *trueVal   = node->getChild(1);
@@ -3620,11 +3617,12 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lternaryEvaluator(TR::Node *node, T
    TR::Register *falseReg = cg->evaluate(falseVal);
    TR::Register *trueReg  = cg->longClobberEvaluate(trueVal);
 
-   TR::ILOpCodes condOp = condition->getOpCodeValue();
-   if((condOp == TR::icmpeq) || (condOp == TR::icmpne))
+   auto condOp = condition->getOpCode();
+   bool longCompare = (condition->getOpCode().isBooleanCompare() && condition->getFirstChild()->getOpCode().isLong());
+   if (!longCompare && condOp.isCompareForEquality() && condition->getFirstChild()->getOpCode().isIntegerOrAddress())
       {
       compareIntegersForEquality(condition, cg);
-      if(condOp == TR::icmpeq)
+      if(condOp.isCompareTrueIfEqual())
          {
          generateRegRegInstruction(CMOVNE4RegReg, node,
                                    trueReg-> getRegisterPair()->getLowOrder(),
@@ -3642,6 +3640,16 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lternaryEvaluator(TR::Node *node, T
                                    trueReg-> getRegisterPair()->getHighOrder(),
                                    falseReg->getRegisterPair()->getHighOrder(), cg);
          }
+      }
+   else if (!longCompare && condOp.isCompareForOrder() && condition->getFirstChild()->getOpCode().isIntegerOrAddress())
+      {
+      compareIntegersForOrder(condition, cg);
+      generateRegRegInstruction((condOp.isCompareTrueIfEqual()) ?
+                         ((condOp.isCompareTrueIfGreater()) ? CMOVL4RegReg : CMOVG4RegReg) :
+                         ((condOp.isCompareTrueIfGreater()) ? CMOVLE4RegReg : CMOVGE4RegReg), node, trueReg->getRegisterPair()->getLowOrder(), falseReg->getRegisterPair()->getLowOrder(), cg);
+      generateRegRegInstruction((condOp.isCompareTrueIfEqual()) ?
+                         ((condOp.isCompareTrueIfGreater()) ? CMOVL4RegReg : CMOVG4RegReg) :
+                         ((condOp.isCompareTrueIfGreater()) ? CMOVLE4RegReg : CMOVGE4RegReg), node, trueReg->getRegisterPair()->getHighOrder(), falseReg->getRegisterPair()->getHighOrder(), cg);
       }
    else
       {
@@ -3748,7 +3756,7 @@ OMR::X86::I386::TreeEvaluator::lcmpsetEvaluator(TR::Node *node, TR::CodeGenerato
    deps->addPostCondition(compareReg->getLowOrder(),  TR::RealRegister::eax, cg);
    deps->addPostCondition(replaceReg->getHighOrder(), TR::RealRegister::ecx, cg);
    deps->addPostCondition(replaceReg->getLowOrder(),  TR::RealRegister::ebx, cg);
-   generateMemInstruction(TR::Compiler->target.isSMP() ? LCMPXCHG8BMem : CMPXCHG8BMem, node, memRef, deps, cg);
+   generateMemInstruction(cg->comp()->target().isSMP() ? LCMPXCHG8BMem : CMPXCHG8BMem, node, memRef, deps, cg);
 
    cg->stopUsingRegister(compareReg);
 
@@ -3764,12 +3772,47 @@ OMR::X86::I386::TreeEvaluator::lcmpsetEvaluator(TR::Node *node, TR::CodeGenerato
 
 TR::Register *OMR::X86::I386::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
    return TR::TreeEvaluator::istoreEvaluator(node, cg);
    }
 
-TR::Register *OMR::X86::I386::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *OMR::X86::I386::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::istoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::X86::I386::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
    return TR::TreeEvaluator::dstoreEvaluator(node, cg);
    }
+
+TR::Register *
+OMR::X86::I386::TreeEvaluator::dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::dstoreEvaluator(node, cg);
+   }
+

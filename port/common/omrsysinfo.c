@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,10 +85,67 @@ omrsysinfo_get_CPU_architecture(struct OMRPortLibrary *portLibrary)
 	return OMRPORT_ARCH_S390;
 #elif defined(X86)
 	return OMRPORT_ARCH_X86;
+#elif defined(RISCV)
+	return OMRPORT_ARCH_RISCV;
 #else
 	return "unknown";
 #endif
 }
+
+/**
+ * Determine CPU type and features.
+ *
+ * @param[in] portLibrary The port library.
+ * @param[out] desc pointer to the struct that will contain the CPU type and features.
+ *              - desc will still be initialized if there is a failure.
+ *
+ * @return 0 on success, -1 on failure
+ */
+intptr_t
+omrsysinfo_get_processor_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
+{
+	Trc_PRT_sysinfo_get_processor_description_Entered(desc);
+	intptr_t rc = OMRPORT_ERROR_NOT_SUPPORTED_ON_THIS_PLATFORM;
+	Trc_PRT_sysinfo_get_processor_description_Exit(rc);
+	return rc;
+}
+
+/**
+ * Determine if a CPU feature is present.
+ *
+ * @param[in] portLibrary The port library.
+ * @param[in] desc The struct that will contain the CPU type and features.
+ * @param[in] feature The feature to check (see omrport.h for list of features OMRPORT_FEATURE_{PPC,S390,PPC}_*)
+ *
+ * @return TRUE if feature is present, FALSE otherwise.
+ */
+BOOLEAN
+omrsysinfo_processor_has_feature(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc, uint32_t feature)
+{
+	Trc_PRT_sysinfo_processor_has_feature_Entered(desc, feature);
+	BOOLEAN rc = FALSE;
+	Trc_PRT_sysinfo_processor_has_feature_Exit((uintptr_t)rc);
+	return rc;
+}
+
+/**
+ * Enable or disable provided CPU feature.
+ *
+ * @param[in] portLibrary The port library.
+ * @param[in] desc The struct that will contain the CPU type and features.
+ * @param[in] feature The feature to check (see omrport.h for list of features OMRPORT_FEATURE_{PPC,S390,PPC}_*)
+ *
+ * @return 0 on success, -1 on failure
+ */
+intptr_t
+omrsysinfo_processor_set_feature(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc, uint32_t feature, BOOLEAN enable)
+{
+	Trc_PRT_sysinfo_processor_set_feature_Entered(desc, feature, enable);
+	intptr_t rc = OMRPORT_ERROR_NOT_SUPPORTED_ON_THIS_PLATFORM;
+	Trc_PRT_sysinfo_processor_set_feature_Exit(rc);
+	return rc;
+}
+
 /**
  * Query the operating system for environment variables.
  *
@@ -419,6 +476,24 @@ omrsysinfo_get_groupname(struct OMRPortLibrary *portLibrary, char *buffer, uintp
 }
 
 /**
+ * Query the operating system for the name of the current host
+*
+* @param[in] portLibrary The port Library
+* @param[out] buffer Buffer for the name
+* @param[in,out] length The length of the buffer
+*
+* @return 0 on success, number of bytes required to hold the
+* information if the output buffer was too small, -1 on failure.
+*
+* @note buffer is undefined on error or when supplied buffer was too small.
+*/
+intptr_t
+omrsysinfo_get_hostname(struct OMRPortLibrary *portLibrary, char *buffer, uintptr_t length)
+{
+	return -1;
+}
+
+/**
  * Fetch the system limit associated with the specified resource.
  * This is roughly equivalent to the POSIX getrlimit API.
  *
@@ -527,6 +602,28 @@ omrsysinfo_get_load_average(struct OMRPortLibrary *portLibrary, struct J9PortSys
  */
 intptr_t
 omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9SysinfoCPUTime *cpuTimeStats)
+{
+	return OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED;
+}
+
+/**
+ * Obtain the cumulative CPU utilization of all CPUs on the system as a double in the [0.0, 1.0] interval. A value of
+ * 0.0 means all of the CPUs were idle in the recent period of time observed, while a value of 1.0 means that all CPUs
+ * were actively utilized 100% of the time during the recent period of time observed.
+ *
+ * All values in the interval are possible.
+ *
+ * @param[in] portLibrary The port library.
+ * @param[out] cpuLoad the cumulative CPU utilization of all CPUs on the system
+ *
+ * @return
+ * 	- 0 on success
+ *		- \arg OMRPORT_ERROR_OPFAILED on the first two invocations of this API
+ *		- \arg OMRPORT_ERROR_OPFAILED if less than 10ns have passed since the second call to this API
+ *		- negative portable error code on other failures
+ */
+intptr_t
+omrsysinfo_get_CPU_load(struct OMRPortLibrary *portLibrary, double *cpuLoad)
 {
 	return OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED;
 }
@@ -799,7 +896,7 @@ omrsysinfo_os_has_feature(struct OMRPortLibrary *portLibrary, struct OMROSDesc *
 		uint32_t featureIndex = feature / 32;
 		uint32_t featureShift = feature % 32;
 
-		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1 << featureShift);
+		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1u << featureShift);
 	}
 
 	Trc_PRT_sysinfo_os_has_feature_Exit((uintptr_t)rc);

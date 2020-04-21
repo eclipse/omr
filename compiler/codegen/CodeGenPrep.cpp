@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
  * before actual code generation should go in this file.
  */
 
-#include "codegen/OMRCodeGenerator.hpp" // IWYU pragma: keep
+#include "codegen/CodeGenerator.hpp" // IWYU pragma: keep
 
 #include <stddef.h>
 #include <stdint.h>
@@ -33,9 +33,7 @@
 #include <algorithm>                           // For std::find
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
-#include "codegen/FrontEnd.hpp"
-#include "codegen/Linkage.hpp"
-#include "codegen/LinkageConventionsEnum.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/TreeEvaluator.hpp"
@@ -48,33 +46,30 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
-#include "cs2/hashtab.h"
 #include "il/AliasSetInterface.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/ObjectModel.hpp"
-#ifdef J9_PROJECT_SPECIFIC
-#include "runtime/RuntimeAssumptions.hpp"
-#include "env/PersistentCHTable.hpp"
-#endif
 #include "env/PersistentInfo.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "env/TypeLayout.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
+#include "il/IL.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -110,21 +105,17 @@ OMR::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * 
 
       if (secondChild->getOpCode().isLoadConst())
          {
-         bool isInteger = (parent->getOpCodeValue() == TR::imul) ? true : false;
-         int64_t value;
-         if (isInteger)
-            value = secondChild->getInt();
-         else
-            value = secondChild->getLongInt();
+         bool is32BitOp = parent->getOpCode().is4Byte();
+         int64_t value = is32BitOp ? secondChild->getInt() : secondChild->getLongInt();
 
-         int32_t shftAmnt = -1;
-         if ((shftAmnt = TR::TreeEvaluator::checkPositiveOrNegativePowerOfTwo(value)) > 0)
+         int32_t shftAmnt = TR::TreeEvaluator::checkPositiveOrNegativePowerOfTwo(value);
+         if (shftAmnt > 0)
             {
             if (value > 0)
                {
                if (secondChild->getReferenceCount()==1)
                   {
-                  if (isInteger)
+                  if (is32BitOp)
                      {
                      TR::Node::recreate(parent, TR::ishl);
                      }
@@ -141,24 +132,20 @@ OMR::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * 
                   parent->getSecondChild()->decReferenceCount();
                   parent->setSecond(newChild);
                   parent->getSecondChild()->incReferenceCount();
-                  isInteger ? TR::Node::recreate(parent, TR::ishl) : TR::Node::recreate(parent, TR::lshl);
+                  TR::Node::recreate(parent, is32BitOp ? TR::ishl : TR::lshl);
                   }
                }
             else //negative value of the multiply constant
                {
-               if (secondChild->getReferenceCount()==1)
+               if (secondChild->getReferenceCount() == 1)
                   {
-                  TR::Node * newChild;
-                  if (isInteger)
-                     newChild = TR::Node::create(parent, TR::ishl, 2);
-                  else
-                     newChild = TR::Node::create(parent, TR::lshl, 2);
+                  TR::Node * newChild = TR::Node::create(parent, is32BitOp ? TR::ishl : TR::lshl, 2);;
 
                   newChild->setVisitCount(parent->getVisitCount());
                   newChild->incReferenceCount();
                   newChild->setFirst(firstChild);
                   newChild->setSecond(secondChild);
-                  if (isInteger)
+                  if (is32BitOp)
                      {
                      TR::Node::recreate(parent, TR::ineg);
                      }
@@ -171,11 +158,10 @@ OMR::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * 
                   parent->setNumChildren(1);
                   parent->setFirst(newChild);
                   }
-               else if (secondChild->getReferenceCount()>1)
+               else if (secondChild->getReferenceCount() > 1)
                   {
                   TR::Node * newChild = TR::Node::create(parent, TR::iconst, 0, shftAmnt);
-                  TR::Node * newChild2;
-                  isInteger ? newChild2 = TR::Node::create(parent, TR::ishl, 2) : newChild2 = TR::Node::create(parent, TR::lshl, 2);
+                  TR::Node * newChild2 = TR::Node::create(parent, is32BitOp ? TR::ishl : TR::lshl, 2);
                   newChild2->setFirst(parent->getFirstChild());
                   newChild2->setSecond(newChild);
                   newChild2->getFirstChild()->incReferenceCount();
@@ -183,7 +169,7 @@ OMR::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * 
                   parent->getFirstChild()->decReferenceCount();
                   parent->getSecondChild()->decReferenceCount();
                   parent->setNumChildren(1);
-                  isInteger ? TR::Node::recreate(parent, TR::ineg) : TR::Node::recreate(parent, TR::lneg);
+                  TR::Node::recreate(parent, is32BitOp ? TR::ineg : TR::lneg);
                   parent->setFirst(newChild2);
                   parent->getFirstChild()->incReferenceCount();
                   }
@@ -191,6 +177,127 @@ OMR::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * 
             }
          }
       }
+   }
+
+/**
+ * @brief Lower newvalue into a new
+ *
+ * The `newvalue` opcode is primarely useful to the optimizer for
+ * representing fused allocation an initialization. However, it's
+ * functionality can also be implemented using the `new` opcode
+ * (although doing so makes analyses more difficult in the optimizer).
+ *
+ * This function takes a `newvalue` tree and lowers it to an equivalent
+ * sequence of trees using a `new` opcode. For example, the following
+ * tree:
+ *
+ *    treetop
+ *      newvalue jitNewValueObject (identityless)
+ *        loadaddr Vec3
+ *        fload x
+ *        fload y
+ *        fload z
+ *
+ * will turned into:
+ *
+ *    treetop
+ *      fload x
+ *    treetop
+ *      fload y
+ *    treetop
+ *      fload z
+ *    treetop
+ *      new jitNewValueObject (skipZeroInit)
+ *        loadaddr Vec3
+ *    istorei Vec3.x
+ *      ==>new
+ *      ==>fload x
+ *    istorei Vec3.y
+ *      ==>new
+ *      ==>fload y
+ *    istorei Vec3.z
+ *      ==>new
+ *      ==>fload z
+ *    fence
+ *
+ * Note that the (helper) symbol reference for the `new` node is be
+ * the same as the symbol reference for the `newvalue` node.
+ *
+ * The fence at the end is needed for platforms with weak memory ordering
+ * such as POWER. It may appear anywhere after allocation + initialization
+ * but before any operation that could publish the resulting reference to
+ * other threads.
+ *
+ * @param comp pointer to the compilation object
+ * @param node the node being lowered
+ * @param tt the TreeTop anchoring the node
+ */
+static void
+lowerNewValue(TR::Compilation *comp, TR::Node *node, TR::TreeTop *tt)
+   {
+   // Transmute newvalue node into new.
+   // Importantly, the helper symref of the newvalue node is preserved.
+   TR::Node::recreate(node, TR::New);
+   node->setCanSkipZeroInitialization(true);
+   node->setIdentityless(false);
+
+   auto* valueClass = static_cast<TR_OpaqueClassBlock *>(node->getFirstChild()->getSymbol()->getStaticSymbol()->getStaticAddress());
+   const TR::TypeLayout* typeLayout = comp->typeLayout(valueClass);
+   TR::IL il;
+
+   // cursors to iterate over the treetops that compute field values and store those values into fields
+   auto* fieldValueTreeTopCursor = tt->getPrevTreeTop();
+   auto* fieldStoreTreeTopCursor = tt;
+
+   // cache the treetop that must go at the end of the new sequence
+   auto* nextTreeTop = tt->getNextTreeTop();
+
+   // Iterate over very child that sets a field, anchoring computations
+   // before the allocation node and anchoring stores to fields after.
+   //
+   // The first child is skipped as it's only used to specify the type
+   // of the value being constructed. The second child is the one that
+   // actually initializes the first field.
+   for (int i = 1; i < node->getNumChildren(); ++i)
+      {
+      TR::Node* fieldValueNode = node->getChild(i);
+      node->setChild(i, NULL);
+
+      // anchor calculation of the field's value
+      auto* ttNode = TR::Node::create(TR::treetop, 1);
+      ttNode->setFirst(fieldValueNode);
+      fieldValueTreeTopCursor->join(TR::TreeTop::create(comp, ttNode));
+      fieldValueTreeTopCursor = fieldValueTreeTopCursor->getNextTreeTop();
+
+      // generate store to the field
+      const TR::TypeLayoutEntry& fieldEntry = typeLayout->entry(i - 1);
+      auto* symref = comp->getSymRefTab()->findOrFabricateShadowSymbol(valueClass,
+                                                                       fieldEntry._datatype,
+                                                                       fieldEntry._offset,
+                                                                       fieldEntry._isVolatile,
+                                                                       fieldEntry._isPrivate,
+                                                                       fieldEntry._isFinal,
+                                                                       fieldEntry._fieldname,
+                                                                       fieldEntry._typeSignature
+                                                                       );
+      const auto storeOpCode = il.opCodeForIndirectStore(fieldValueNode->getDataType());
+      auto* storeNode = TR::Node::createWithSymRef(storeOpCode, 2, symref);
+      storeNode->setAndIncChild(0, node);
+      storeNode->setAndIncChild(1, fieldValueNode);
+      fieldStoreTreeTopCursor->join(TR::TreeTop::create(comp, storeNode));
+      fieldStoreTreeTopCursor = fieldStoreTreeTopCursor->getNextTreeTop();
+      }
+   node->setNumChildren(1);
+
+   // link anchord values to allocation treetop
+   fieldValueTreeTopCursor->join(tt);
+
+   // add memory fence
+   auto* allocFenceTreeTop = TR::TreeTop::create(comp, TR::Node::createAllocationFence(NULL, node));
+   fieldStoreTreeTopCursor->join(allocFenceTreeTop);
+
+   // finish by linking to the next TreeTop
+   allocFenceTreeTop->join(nextTreeTop);
    }
 
 void
@@ -341,6 +448,10 @@ OMR::CodeGenerator::lowerTreeIfNeeded(
       else
          self()->lowerTree(node, tt);
       }
+   else if (node->getOpCodeValue() == TR::newvalue)
+      {
+      lowerNewValue(self()->comp(), node, tt);
+      }
 
    if (node->getOpCodeValue() == TR::loadaddr || node->getOpCode().isLoadVarDirect())
      {
@@ -351,9 +462,9 @@ OMR::CodeGenerator::lowerTreeIfNeeded(
        node->getSymbol()->isParm() && node->getSymbol()->isCollectedReference())
       node->getSymbol()->setParmHasToBeOnStack();
 
-   if (node->getOpCode().isTernary())
+   if (node->getOpCode().isSelect())
       {
-      self()->rematerializeCmpUnderTernary(node);
+      self()->rematerializeCmpUnderSelect(node);
       }
 
    }
@@ -724,7 +835,7 @@ OMR::CodeGenerator::insertDebugCounters()
 
 
 
-void OMR::CodeGenerator::rematerializeCmpUnderTernary(TR::Node *node)
+void OMR::CodeGenerator::rematerializeCmpUnderSelect(TR::Node *node)
    {
    if (node->getFirstChild()->getOpCode().isBooleanCompare() && node->getFirstChild()->getReferenceCount() > 1)
       {

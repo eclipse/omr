@@ -52,10 +52,12 @@ ALL_TESTS = \
             simple \
             structarray \
             switch \
+            tableswitch \
             thunks \
             toiltype \
             transactionaloperations \
             union \
+            vmregister \
             worklist \
 
 # Compile all the tests by default
@@ -93,6 +95,7 @@ all_goal: common_goal
 	./thunks
 	./toiltype
 	./union
+	./vmregister
 
 # Tests that are still on the experimental side
 # If you add to this list and want them to be built under "make", please
@@ -277,6 +280,13 @@ Switch.o: $(SAMPLE_SRC)/Switch.cpp $(SAMPLE_SRC)/Switch.hpp
 	$(CXX) -o $@ $(CXXFLAGS) $<
 
 
+tableswitch : $(LIBJITBUILDER) TableSwitch.o
+	$(CXX) -g -fno-rtti -o $@ TableSwitch.o -L$(LIBJITBUILDERDIR) -ljitbuilder -ldl
+
+TableSwitch.o: $(SAMPLE_SRC)/TableSwitch.cpp $(SAMPLE_SRC)/TableSwitch.hpp
+	$(CXX) -o $@ $(CXXFLAGS) $<
+
+
 toiltype : $(LIBJITBUILDER) ToIlType.o
 	$(CXX) -g -fno-rtti -o $@ ToIlType.o -L$(LIBJITBUILDERDIR) -ljitbuilder -ldl
 
@@ -293,6 +303,12 @@ union : $(LIBJITBUILDER) Union.o
 	$(CXX) -g -fno-rtti -o $@ Union.o -L$(LIBJITBUILDERDIR) -ljitbuilder -ldl
 
 Union.o: $(SAMPLE_SRC)/Union.cpp $(SAMPLE_SRC)/Union.hpp
+	$(CXX) -o $@ $(CXXFLAGS) $<
+	
+vmregister : $(LIBJITBUILDER) VMRegister.o
+	$(CXX) -g -fno-rtti -o $@ VMRegister.o -L$(LIBJITBUILDERDIR) -ljitbuilder -ldl
+
+VMRegister.o: $(SAMPLE_SRC)/VMRegister.cpp $(SAMPLE_SRC)/VMRegister.hpp
 	$(CXX) -o $@ $(CXXFLAGS) $<
 
 worklist : $(LIBJITBUILDER) Worklist.o

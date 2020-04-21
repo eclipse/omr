@@ -20,16 +20,12 @@
  *******************************************************************************/
 
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
+#include "il/ParameterSymbol.hpp"
 
-TR::Linkage *
-OMR::Linkage::self()
-   {
-   return static_cast<TR::Linkage*>(this);
-   }
 
 bool
 OMR::Linkage::hasToBeOnStack(TR::ParameterSymbol *parm)
@@ -44,7 +40,7 @@ OMR::Linkage::hasToBeOnStack(TR::ParameterSymbol *parm)
    // be.  Once we move that facility to TR::Linkage, and this function could be
    // more selective.
    //
-   return(parm->getAllocatedIndex()>=0       &&
+   return(parm->getAssignedGlobalRegisterIndex()>=0       &&
           ( (  parm->getLinkageRegisterIndex()==0 &&
                parm->isCollectedReference()
             ) ||

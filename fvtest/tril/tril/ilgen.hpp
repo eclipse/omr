@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,9 +30,52 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <type_traits>
+
+#include "omrcfg.h"
+#include "compiler_util.hpp"
+#include "state.hpp"
+#include "converter.hpp"
+#include "CallConverter.hpp"
+#include "GenericNodeConverter.hpp"
+
+#include "compile/ResolvedMethod.hpp"
+#include "il/Block.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+
+#include <string>
 
 namespace Tril {
+
+class OpCodeTable : public TR::ILOpCode {
+   public:
+      explicit OpCodeTable(TR::ILOpCodes opcode) : TR::ILOpCode(opcode) {}
+      explicit OpCodeTable(const std::string& name) : TR::ILOpCode(getOpCodeFromName(name)) {}
+
+      /**
+       * @brief Given an opcode name, returns the corresponding TR::OpCodes value
+       */
+      static TR::ILOpCodes getOpCodeFromName(const std::string& name) {
+         auto opcode = _opcodeNameMap.find(name);
+         if (opcode == _opcodeNameMap.end()) {
+            for (int i = TR::FirstOMROp; i< TR::NumIlOps; i++) {
+               const auto p_opCode = static_cast<TR::ILOpCodes>(i);
+               const auto& p = TR::ILOpCode::_opCodeProperties[p_opCode];
+               if (name == p.name) {
+                  _opcodeNameMap[name] = p.opcode;
+                  return p.opcode;
+               }
+            }
+            return TR::BadILOp;
+         }
+         else {
+            return opcode->second;
+         }
+      }
+
+   private:
+      static std::map<std::string, TR::ILOpCodes> _opcodeNameMap;
+};
 
 /**
  * @brief IL generator for Tril
@@ -46,32 +89,33 @@ class TRLangBuilder : public TR::IlInjector {
          * @brief Constructs a Tril IL Generator
          * @param trees is the list of AST nodes representing the TR::Node instances to be generated
          * @param d is the type dictionary to be used this IL generator
+         * @param converter is the root of the ASTNode that needed to be converted into TRNode
          */
-        TRLangBuilder(const ASTNode* trees, TR::TypeDictionary* d)
-              : TR::IlInjector(d), _trees(trees) {}
+        TRLangBuilder(const ASTNode* trees, TR::TypeDictionary* d, ASTToTRNode* converter)
+              : TR::IlInjector(d), _converter(converter), _trees(trees) {}
 
         bool injectIL(); /* override */
 
         /**
-         * @brief Given an AST structure, returns a TR::Node represented by the AST
+         * @brief Given an AST structure and corresponding IlGenState, returns a TR::Node represented by the AST
          * @param tree the AST structure
+         * @param state the IlGenState storing AST details
          * @return TR::Node represented by the AST
          */
-        TR::Node* toTRNode(const ASTNode* const tree);
+        TR::Node* toTRNode(const ASTNode* const tree, IlGenState* state);
 
         /**
-         * @brief Given an AST structure, generates a corresponding CFG
+         * @brief Given an AST structure and corresponding IlGenState, generates a corresponding CFG
          * @param tree the AST structure that the CFG will be generated from
+         * @param state the IlGenState storing AST details
          * @return true if a fall-through edge needs to be added, false otherwise
          */
-        bool cfgFor(const ASTNode* const tree);
+        bool cfgFor(const ASTNode* const tree, IlGenState* state);
 
     private:
+        ASTToTRNode* _converter;
         TR::TypeDictionary _types;
         const ASTNode* _trees;    // pointer to the AST node list representing Trees
-        std::map<std::string, TR::SymbolReference*> _symRefMap; // mapping of string names to symrefs
-        std::map<std::string, int> _blockMap;   // mapping of string names to basic block numbers
-        std::map<std::string, TR::Node*> _nodeMap;
 };
 
 } // namespace Tril

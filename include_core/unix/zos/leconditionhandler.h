@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@
 #include "edcwccwi.h"
 #include "omrport.h"
 
-typedef struct J9ZOSLEConditionHandlerRecord {
+typedef struct OMRZOSLEConditionHandlerRecord {
 	struct OMRPortLibrary *portLibrary;
 	omrsig_handler_fn handler;
 	void *handler_arg;
@@ -37,6 +37,6 @@ typedef struct J9ZOSLEConditionHandlerRecord {
 	struct __jumpinfo farJumpInfo;
 	uint32_t flags;
 	uint32_t recursiveCheck; /* if this is set to 1, the handler corresponding to this record has been invoked recursively */
-} J9ZOSLEConditionHandlerRecord;
+} OMRZOSLEConditionHandlerRecord;
 
 #endif /* leconditionhandler_h */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,12 +72,17 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrsysinfo_get_OS_version, /* sysinfo_get_OS_version */
 	omrsysinfo_get_env, /* sysinfo_get_env */
 	omrsysinfo_get_CPU_architecture, /* sysinfo_get_CPU_architecture */
+	omrsysinfo_get_processor_description, /* omrsysinfo_get_processor_description */
+	omrsysinfo_processor_has_feature, /* omrsysinfo_processor_has_feature */
+	omrsysinfo_processor_set_feature, /* omrsysinfo_processor_set_feature */
 	omrsysinfo_get_OS_type, /* sysinfo_get_OS_type */
 	omrsysinfo_get_executable_name, /* sysinfo_get_executable_name */
 	omrsysinfo_get_username, /* sysinfo_get_username */
 	omrsysinfo_get_groupname, /* sysinfo_get_groupname */
+	omrsysinfo_get_hostname, /* sysinfo_get_hostname */
 	omrsysinfo_get_load_average, /* sysinfo_get_load_average */
 	omrsysinfo_get_CPU_utilization, /* omrsysinfo_get_CPU_utilization */
+	omrsysinfo_get_CPU_load, /* omrsysinfo_get_CPU_load */
 	omrsysinfo_limit_iterator_init, /* sysinfo_limit_iterator_next */
 	omrsysinfo_limit_iterator_hasNext, /* sysinfo_limit_iterator_hasNext */
 	omrsysinfo_limit_iterator_next, /* sysinfo_limit_iterator_next */
@@ -171,6 +176,7 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrvmem_vmem_params_init, /* vmem_vmem_params_init */
 	omrvmem_reserve_memory, /* vmem_reserve_memory */
 	omrvmem_reserve_memory_ex, /* vmem_reserve_memory_ex */
+	omrvmem_get_contiguous_region_memory, /* vmem_get_contiguous_region_memory */
 	omrvmem_get_page_size, /* vmem_get_page_size */
 	omrvmem_get_page_flags, /* omrvmem_get_page_flags */
 	omrvmem_supported_page_sizes, /* vmem_supported_page_sizes */
@@ -297,6 +303,27 @@ static OMRPortLibrary MasterPortLibraryTable = {
 	omrmem_categories_decrement_counters, /* mem_categories_decrement_counters */
 	omrheap_query_size, /* heap_query_size */
 	omrheap_grow, /* heap_grow*/
+#if defined(OMR_PORT_SOCKET_SUPPORT)
+	omrsock_startup, /* sock_startup */
+	omrsock_getaddrinfo_create_hints, /* sock_getaddrinfo_create_hints */
+	omrsock_getaddrinfo, /* sock_getaddrinfo */
+	omrsock_addrinfo_length, /* sock_addrinfo_length */
+	omrsock_addrinfo_family, /* sock_addrinfo_family */
+	omrsock_addrinfo_socktype, /* sock_addrinfo_socktype */
+	omrsock_addrinfo_protocol, /* sock_addrinfo_protocol */
+	omrsock_freeaddrinfo, /* sock_freeaddrinfo */
+	omrsock_socket, /* sock_socket */
+	omrsock_bind, /* sock_bind */
+	omrsock_listen, /* sock_listen */
+	omrsock_connect, /* sock_connect */
+	omrsock_accept, /* sock_accept */
+	omrsock_send, /* sock_send */
+	omrsock_sendto, /* sock_sendto */
+	omrsock_recv, /* sock_recv */
+	omrsock_recvfrom, /* sock_recvfrom */
+	omrsock_close, /* sock_close */
+	omrsock_shutdown, /* sock_shutdown */
+#endif /* defined(OMR_PORT_SOCKET_SUPPORT) */
 #if defined(OMR_OPT_CUDA)
 	NULL, /* cuda_configData */
 	omrcuda_startup, /* cuda_startup */
@@ -423,6 +450,9 @@ omrport_shutdown_library(struct OMRPortLibrary *portLibrary)
 #if defined(OMR_OPT_CUDA)
 	portLibrary->cuda_shutdown(portLibrary);
 #endif /* OMR_OPT_CUDA */
+#if defined(OMR_PORT_SOCKET_SUPPORT)
+	portLibrary->sock_shutdown(portLibrary);
+#endif /* defined(OMR_PORT_SOCKET_SUPPORT) */
 	portLibrary->introspect_shutdown(portLibrary);
 	portLibrary->sig_shutdown(portLibrary);
 	portLibrary->str_shutdown(portLibrary);
@@ -623,6 +653,13 @@ omrport_startup_library(struct OMRPortLibrary *portLibrary)
 	if (0 != rc) {
 		goto cleanup;
 	}
+
+#if defined(OMR_PORT_SOCKET_SUPPORT)
+	rc = portLibrary->sock_startup(portLibrary);
+	if (0 != rc) {
+		goto cleanup;
+	}
+#endif /* defined(OMR_PORT_SOCKET_SUPPORT) */
 
 #if defined(OMR_OPT_CUDA)
 	rc = portLibrary->cuda_startup(portLibrary);

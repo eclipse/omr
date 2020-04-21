@@ -41,7 +41,7 @@
 void
 OMR::Z::CodeGenPhase::performMarkLoadAsZeroOrSignExtensionPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase)
    {
-   if (TR::Compiler->target.cpu.isZ() && cg->getOptimizationPhaseIsComplete())
+   if (cg->comp()->target().cpu.isZ() && cg->getOptimizationPhaseIsComplete())
       {
       TR::Compilation* comp = cg->comp();
       TR::OptimizationManager *manager = comp->getOptimizer()->getOptimization(OMR::loadExtensions);

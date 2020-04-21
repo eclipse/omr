@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -200,15 +200,19 @@ MM_TLHAllocationInterface::allocateObject(MM_EnvironmentBase *env, MM_AllocateDe
 
 	}
 
-	if ((NULL != result) && !allocDescription->isCompletedFromTlh()) {
+	if (NULL != result) {
+		uintptr_t sizeInBytesAllocated = allocDescription->getContiguousBytes();
+		/* Increment by bytes allocated */
+		env->_traceAllocationBytes += sizeInBytesAllocated;
+
+		if (!allocDescription->isCompletedFromTlh()) {
 #if defined(OMR_GC_OBJECT_ALLOCATION_NOTIFY)
-		env->objectAllocationNotify((omrobjectptr_t)result);
+			env->objectAllocationNotify((omrobjectptr_t)result);
 #endif /* OMR_GC_OBJECT_ALLOCATION_NOTIFY */
-		_stats._allocationBytes += allocDescription->getContiguousBytes();
-		_stats._allocationCount += 1;
-
+			_stats._allocationBytes += sizeInBytesAllocated;
+			_stats._allocationCount += 1;
+		}
 	}
-
 	env->_oolTraceAllocationBytes += (_stats.bytesAllocated() - _bytesAllocatedBase); /* Increment by bytes allocated */
 
 	return result;
@@ -220,7 +224,6 @@ MM_TLHAllocationInterface::allocateArray(MM_EnvironmentBase *env, MM_AllocateDes
 	return allocateObject(env, allocateDescription, memorySpace, shouldCollectOnFailure);
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 void *
 MM_TLHAllocationInterface::allocateArrayletSpine(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, MM_MemorySpace *memorySpace, bool shouldCollectOnFailure)
 {
@@ -251,7 +254,6 @@ MM_TLHAllocationInterface::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_Allo
 
 	return result;
 }
-#endif /* OMR_GC_ARRAYLETS */
 
 /**
  * Replenish the allocation interface TLH cache with new storage.

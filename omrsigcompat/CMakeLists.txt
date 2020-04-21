@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,63 +34,41 @@ if(OMR_ENHANCED_WARNINGS)
 	target_compile_options(omrsig PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
 endif()
 
-#TODO need more comprehensive symbols
-set(exportedSyms
+if(OMR_HOST_OS STREQUAL "win")
+	target_compile_definitions(omrsig PRIVATE -DMSVC_RUNTIME_DLL="${OMR_MSVC_CRT}")
+endif()
+
+omr_add_exports(omrsig
 	omrsig_primary_signal
 	omrsig_handler
 	signal
 )
-
-#for now only export symbols on windows
-if(OMR_HOST_OS STREQUAL "win")
-
-	file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/omrsig.exportlist" "EXPORTS\n" )
-	foreach(exportSymbol ${exportedSyms})
-		file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/omrsig.exportlist" "${exportSymbol}\n" )
-	endforeach()
-
-	set_target_properties(omrsig
-		PROPERTIES LINK_FLAGS "-def:${CMAKE_CURRENT_BINARY_DIR}/omrsig.exportlist")
-
-	target_compile_definitions(omrsig PRIVATE -DMSVC_RUNTIME_DLL="${OMR_MSVC_CRT}")
+if(NOT OMR_OS_WINDOWS)
+	omr_add_exports(omrsig
+		omrsig_primary_sigaction
+		sigaction
+		sigset
+		sigignore
+		bsd_signal
+		sysv_signal
+	)
 endif()
-
-#Symbols exported from source makefile:
-#EXPORT_FUNCTIONS_FILE := omrsig.exportlist
-#$(EXPORT_FUNCTIONS_FILE):
-	#@# all
-	#@echo omrsig_primary_signal >>$@
-	#@echo omrsig_handler >>$@
-	#@echo signal >>$@
-#ifeq (,$(findstring win,$(OMR_HOST_OS)))
-	#@# !windows
-	#@echo omrsig_primary_sigaction >>$@
-	#@echo sigaction >>$@
-	#@echo sigset >>$@
-	#@echo sigignore >>$@
-	#@echo bsd_signal >>$@
-	#@echo sysv_signal >>$@
-#endif
-#ifneq (,$(findstring linux,$(OMR_HOST_OS)))
-	#@# linux
-	#@echo __sysv_signal >>$@
-	#@echo ssignal >>$@
-#endif
-#ifneq (,$(findstring osx,$(OMR_HOST_OS)))
-	#@# osx
-	#@echo __sysv_signal >>$@
-	#@echo ssignal >>$@
-#endif
-#ifneq (,$(findstring zos,$(OMR_HOST_OS)))
-	#@# z/os
-	#@echo __sigactionset >>$@
-#endif
-#ifeq (,$(findstring win,$(OMR_HOST_OS)))
-#ifeq (,$(findstring zos,$(OMR_HOST_OS)))
-	#@# !win && !zos
-	#@echo sigvec >>$@
-#endif
-#endif
+if(OMR_OS_LINUX OR OMR_OS_OSX)
+	omr_add_exports(omrsig
+		__sysv_signal
+		ssignal
+	)
+endif()
+if(OMR_OS_ZOS)
+	omr_add_exports(omrsig
+		__sigactionset
+	)
+endif()
+if((NOT OMR_OS_WINDOWS) AND (NOT OMR_OS_ZOS))
+	omr_add_exports(omrsig
+		sigvec
+	)
+endif()
 
 target_link_libraries(omrsig
 	PRIVATE
@@ -126,3 +104,5 @@ install(
 	LIBRARY DESTINATION ${OMR_INSTALL_LIB_DIR}/
 )
 
+target_enable_ddr(omrsig)
+ddr_set_add_targets(omrddr omrsig)

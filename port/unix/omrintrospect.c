@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,9 @@
 
 #if defined(LINUX)
 /* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatability */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #endif /* defined(LINUX) */
 
 #include <pthread.h>
@@ -221,7 +223,7 @@ barrier_block_until_poked(barrier_r *barrier, uintptr_t deadline)
 	struct timespec spec;
 
 	fds[0].fd = barrier->descriptor_pair[0];
-	fds[0].events = POLLHUP | POLLERR | POLLNVAL | POLLIN;
+	fds[0].events = (short)(POLLHUP | POLLERR | POLLNVAL | POLLIN);
 	fds[0].revents = 0;
 
 	if (deadline == 0) {
@@ -494,7 +496,7 @@ sem_timedwait_r(sem_t_r *sem, uintptr_t seconds)
 	int deadline = 0;
 	int interval = seconds;
 	fds[0].fd = sem->descriptor_pair[0];
-	fds[0].events = POLLHUP | POLLERR | POLLNVAL | POLLIN;
+	fds[0].events = (short)(POLLHUP | POLLERR | POLLNVAL | POLLIN);
 	fds[0].revents = 0;
 
 	if (seconds == 0) {
@@ -862,7 +864,11 @@ count_threads(struct PlatformWalkData *data)
 		 */
 		while ((file = readdir(proc)) != NULL) {
 			/* we need a directory who's name starts with a '.' - we filter out '.' and '..' */
-			if (file->d_type == DT_DIR && file->d_name[0] == '.' && file->d_name[1] != '\0' && file->d_name[1] != '.') {
+			if ((file->d_type == DT_DIR)
+				&& (file->d_name[0] == '.')
+				&& (file->d_name[1] != '\0')
+				&& (file->d_name[1] != '.'))
+			{
 				FILE *status = NULL;
 				/* The needed buffer size to store the path to status is calculated as:
 				 *  /proc/.<pid>/status\0
@@ -871,9 +877,10 @@ count_threads(struct PlatformWalkData *data)
 				 */
 				char buf[6 + 11 + 7 + 1];
 
-				strcpy(buf, "/proc/");
-				/* If d_name is longer than 11 characters, it will be truncated */
-				strncat(buf, file->d_name, 11);
+				memcpy(&buf[0], "/proc/", 6);
+				memcpy(&buf[6], file->d_name, 11);
+				/* Add a NUL-terminator in case d_name is longer than 11 characters. */
+				buf[6 + 11] = '\0';
 				strcat(buf, "/status");
 
 				status = fopen(buf, "r");
@@ -1042,7 +1049,7 @@ suspend_all_preemptive(struct PlatformWalkData *data)
 	 */
 	do {
 		int i = 0;
-		sigval_t val;
+		union sigval val;
 		val.sival_ptr = data;
 
 		/* fire off enough signals to pause all threads in the process barring us */
@@ -1740,7 +1747,7 @@ omrintrospect_threads_nextDo(J9ThreadWalkState *state)
 			} else if (timedOut(data->state->deadline1) || data->error) {
 				break;
 			} else {
-				sigval_t val;
+				union sigval val;
 				val.sival_ptr = data;
 
 				/*

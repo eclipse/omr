@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Instruction.hpp"
-#include "codegen/Linkage.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
@@ -47,13 +46,13 @@
 #include "il/Block.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "ras/Debug.hpp"
@@ -154,59 +153,59 @@ TR::RealRegister *assignGPRegister(TR::Instruction   *instr,
 ////////////////////////////////////////////////////////////////////////////////
 // TR::X86LabelInstruction:: member functions
 ////////////////////////////////////////////////////////////////////////////////
-
-TR::X86LabelInstruction::X86LabelInstruction(TR_X86OpCodes    op,
-                                                 TR::Node          *node,
-                                                 TR::LabelSymbol    *sym,
-                                                 TR::CodeGenerator *cg,
-                                                 bool b)
-  : TR::Instruction(node, op, cg), _symbol(sym),_needToClearFPStack(b), _outlinedInstructionBranch(NULL), _reloType(TR_NoRelocation), _permitShortening(true)
+void TR::X86LabelInstruction::initialize(TR::LabelSymbol* sym, bool b)
    {
-   if (sym && op == LABEL)
+   _symbol = sym;
+   _needToClearFPStack = b;
+   _outlinedInstructionBranch = NULL;
+   _reloType = TR_NoRelocation;
+   _permitShortening = true;
+   if (sym && self()->getOpCodeValue() == LABEL)
       sym->setInstruction(this);
    else if (sym)
       sym->setDirectlyTargeted();
    }
 
-TR::X86LabelInstruction::X86LabelInstruction(TR::Instruction   *precedingInstruction,
-                                                 TR_X86OpCodes    op,
-                                                 TR::LabelSymbol    *sym,
-                                                 TR::CodeGenerator *cg,
-                                                 bool b)
-  : TR::Instruction(op, precedingInstruction, cg), _symbol(sym), _needToClearFPStack(b), _outlinedInstructionBranch(NULL), _reloType(TR_NoRelocation), _permitShortening(true)
+TR::X86LabelInstruction::X86LabelInstruction(TR_X86OpCodes      op,
+                                             TR::Node*          node,
+                                             TR::LabelSymbol*   sym,
+                                             TR::CodeGenerator* cg,
+                                             bool               b)
+  : TR::Instruction(node, op, cg)
    {
-   if (sym && op == LABEL)
-      sym->setInstruction(this);
-   else if (sym)
-      sym->setDirectlyTargeted();
+   initialize(sym, b);
    }
 
-TR::X86LabelInstruction::X86LabelInstruction(TR_X86OpCodes                       op,
-                                                 TR::Node                             *node,
-                                                 TR::LabelSymbol                       *sym,
-                                                 TR::RegisterDependencyConditions  *cond,
-                                                 TR::CodeGenerator                    *cg,
-                                                 bool b)
-  : TR::Instruction(cond, node, op, cg), _symbol(sym), _needToClearFPStack(b), _outlinedInstructionBranch(NULL), _reloType(TR_NoRelocation), _permitShortening(true)
+TR::X86LabelInstruction::X86LabelInstruction(TR::Instruction*   precedingInstruction,
+                                             TR_X86OpCodes      op,
+                                             TR::LabelSymbol*   sym,
+                                             TR::CodeGenerator* cg,
+                                             bool               b)
+  : TR::Instruction(op, precedingInstruction, cg)
    {
-   if (sym && op == LABEL)
-      sym->setInstruction(this);
-   else if (sym)
-      sym->setDirectlyTargeted();
+   initialize(sym, b);
    }
 
-TR::X86LabelInstruction::X86LabelInstruction(TR::Instruction                      *precedingInstruction,
-                                                 TR_X86OpCodes                       op,
-                                                 TR::LabelSymbol                       *sym,
-                                                 TR::RegisterDependencyConditions  *cond,
-                                                 TR::CodeGenerator                    *cg,
-                                                 bool b)
-  : TR::Instruction(cond, op, precedingInstruction, cg), _symbol(sym), _needToClearFPStack(b), _outlinedInstructionBranch(NULL), _reloType(TR_NoRelocation), _permitShortening(true)
+TR::X86LabelInstruction::X86LabelInstruction(TR_X86OpCodes                     op,
+                                             TR::Node*                         node,
+                                             TR::LabelSymbol*                  sym,
+                                             TR::RegisterDependencyConditions* cond,
+                                             TR::CodeGenerator*                cg,
+                                             bool                              b)
+  : TR::Instruction(cond, node, op, cg)
    {
-   if (sym && op == LABEL)
-      sym->setInstruction(this);
-   else if (sym)
-      sym->setDirectlyTargeted();
+   initialize(sym, b);
+   }
+
+TR::X86LabelInstruction::X86LabelInstruction(TR::Instruction*                  precedingInstruction,
+                                             TR_X86OpCodes                     op,
+                                             TR::LabelSymbol*                  sym,
+                                             TR::RegisterDependencyConditions* cond,
+                                             TR::CodeGenerator*                cg,
+                                             bool                              b)
+  : TR::Instruction(cond, op, precedingInstruction, cg)
+   {
+   initialize(sym, b);
    }
 
 TR::X86LabelInstruction  *TR::X86LabelInstruction::getX86LabelInstruction()
@@ -1499,7 +1498,7 @@ void insertUnresolvedReferenceInstructionMemoryBarrier(TR::CodeGenerator *cg, in
       TR::Register *indexReg = mr->getIndexRegister();
       TR::Register *addressReg = NULL;
 
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          addressReg = mr->getAddressRegister();
 
 
@@ -1528,7 +1527,7 @@ void insertUnresolvedReferenceInstructionMemoryBarrier(TR::CodeGenerator *cg, in
          addressReg = NULL;
          baseReg = anotherMr->getBaseRegister();
          indexReg = anotherMr->getIndexRegister();
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             addressReg = anotherMr->getAddressRegister();
 
          if (baseReg && baseReg->getKind() != TR_X87)
@@ -3387,7 +3386,7 @@ void TR::X86FPCompareEvalInstruction::assignRegisters(TR_RegisterKinds kindsToBe
          case TR::fcmpg:
          case TR::dcmpl:
          case TR::dcmpg:
-            TR_ASSERT(TR::Compiler->target.is32Bit(), "AMD64 doesn't support SAHF");
+            TR_ASSERT(cg()->comp()->target().is32Bit(), "AMD64 doesn't support SAHF");
             cursor = new (cg()->trHeapMemory()) TR::Instruction(SAHF, cursor, cg());
             break;
 
@@ -3923,6 +3922,12 @@ TR::AMD64RegImm64SymInstruction::autoSetReloKind()
 ////////////////////////////////////////////////////////////////////////////////
 
 TR::Instruction  *
+generateInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::Instruction(op, prev, cg);
+   }
+
+TR::Instruction  *
 generateInstruction(TR_X86OpCodes op, TR::Node * node, TR::CodeGenerator *cg)
    {
    return new (cg->trHeapMemory()) TR::Instruction(node, op, cg);
@@ -4028,6 +4033,12 @@ TR::X86RegInstruction  *
 generateRegInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::Register * reg1, TR::CodeGenerator *cg)
    {
    return new (cg->trHeapMemory()) TR::X86RegInstruction(reg1, op, prev, cg);
+   }
+
+TR::X86RegInstruction  *
+generateRegInstruction(TR::Instruction *prev, TR_X86OpCodes op, TR::Register *reg1, TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::X86RegInstruction(cond, reg1, op, prev, cg);
    }
 
 TR::X86BoundaryAvoidanceInstruction  *
@@ -4160,18 +4171,6 @@ generateLongLabelInstruction(TR_X86OpCodes                       op,
    }
 
 TR::X86LabelInstruction  *
-generateLongLabelInstruction(TR_X86OpCodes     op,
-                             TR::Node          *node,
-                             TR::LabelSymbol    *sym,
-                             bool              needsVMThreadRegister,
-                             TR::CodeGenerator *cg)
-   {
-   TR::X86LabelInstruction *instr = new (cg->trHeapMemory()) TR::X86LabelInstruction(op, node, sym, cg);
-   instr->prohibitShortening();
-   return instr;
-   }
-
-TR::X86LabelInstruction  *
 generateLabelInstruction(TR_X86OpCodes     opCode,
                          TR::Node           *node,
                          TR::LabelSymbol     *label,
@@ -4265,7 +4264,7 @@ generateConditionalJumpInstruction(
       }
    else
       {
-      inst = generateLabelInstruction(opCode, ifNode, destinationLabel, false, cg);
+      inst = generateLabelInstruction(opCode, ifNode, destinationLabel, cg);
       }
 
    return inst;
@@ -4470,6 +4469,18 @@ generateImmSymInstruction(TR_X86OpCodes                       op,
    return new (cg->trHeapMemory()) TR::X86ImmSymInstruction(op, node, imm, sr, cond, cg);
    }
 
+TR::X86ImmSymInstruction  *
+generateImmSymInstruction(TR::Instruction *prev, TR_X86OpCodes op, int32_t imm, TR::SymbolReference * sr, TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::X86ImmSymInstruction(prev, op, imm, sr, cg);
+   }
+
+TR::X86ImmSymInstruction  *
+generateImmSymInstruction(TR::Instruction *prev, TR_X86OpCodes op, int32_t imm, TR::SymbolReference *sr, TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::X86ImmSymInstruction(prev, op, imm, sr, cond, cg);
+   }
+
 TR::X86ImmSnippetInstruction  *
 generateImmSnippetInstruction(TR_X86OpCodes op, TR::Node * node, int32_t imm, TR::UnresolvedDataSnippet * snippet, TR::CodeGenerator *cg)
    {
@@ -4505,12 +4516,22 @@ generateCallMemInstruction(TR_X86OpCodes                       op,
    return new (cg->trHeapMemory()) TR::X86CallMemInstruction(op, node, mr, cg);
    }
 
+TR::X86CallMemInstruction  *
+generateCallMemInstruction(TR::Instruction *prevInstr,
+                           TR_X86OpCodes op,
+                           TR::MemoryReference *mr,
+                           TR::RegisterDependencyConditions *cond,
+                           TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::X86CallMemInstruction(prevInstr, op, mr, cond, cg);
+   }
+
 TR::X86ImmSymInstruction  *
 generateHelperCallInstruction(TR::Instruction * cursor, TR_RuntimeHelper index, TR::CodeGenerator *cg)
    {
    TR::SymbolReference * helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(index, false, false, false);
    cg->resetIsLeafMethod();
-   return new (cg->trHeapMemory()) TR::X86ImmSymInstruction(cursor, CALLImm4, (uintptrj_t)helperSymRef->getMethodAddress(), helperSymRef, cg);
+   return new (cg->trHeapMemory()) TR::X86ImmSymInstruction(cursor, CALLImm4, (uintptr_t)helperSymRef->getMethodAddress(), helperSymRef, cg);
    }
 
 TR::X86ImmSymInstruction  *
@@ -4521,7 +4542,7 @@ generateHelperCallInstruction(TR::Node * node, TR_RuntimeHelper index, TR::Regis
    return generateImmSymInstruction(
          CALLImm4,
          node,
-         (uintptrj_t)helperSymRef->getMethodAddress(),
+         (uintptr_t)helperSymRef->getMethodAddress(),
          helperSymRef,
          dependencies,
          cg);

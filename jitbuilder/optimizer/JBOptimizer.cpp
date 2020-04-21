@@ -28,7 +28,7 @@
 #include "compile/Method.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 
 #include "optimizer/Optimization.hpp"
 #include "optimizer/OptimizationManager.hpp"
@@ -65,6 +65,7 @@
 #include "optimizer/GlobalValuePropagation.hpp"
 #include "optimizer/LocalValuePropagation.hpp"
 #include "optimizer/Inliner.hpp"
+#include "optimizer/SwitchAnalyzer.hpp"
 
 
 static const OptimizationStrategy tacticalGlobalRegisterAllocatorOpts[] =
@@ -118,6 +119,7 @@ static const OptimizationStrategy JBwarmStrategyOpts[] =
 
    { OMR::globalValuePropagation,                    OMR::IfMoreThanOneBlock       },
    { OMR::localValuePropagation,                     OMR::IfOneBlock               },
+   { OMR::switchAnalyzer,                                                          },
    { OMR::localCSE                                                                 },
    { OMR::treeSimplification                                                       },
    { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                },
@@ -133,6 +135,7 @@ static const OptimizationStrategy JBwarmStrategyOpts[] =
    { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup                                },
    { OMR::globalDeadStoreGroup,                                                    },
+   { OMR::redundantGotoElimination,                  OMR::IfEnabled                }, // if global register allocator created new block
    { OMR::rematerialization                                                        },
    { OMR::deadTreesElimination,                      OMR::IfEnabled                }, // remove dead anchors created by check/store removal
    { OMR::deadTreesElimination,                      OMR::IfEnabled                }, // remove dead RegStores produced by previous deadTrees pass
@@ -150,8 +153,6 @@ Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymb
    : OMR::Optimizer(comp, methodSymbol, isIlGen, strategy, VNType)
    {
    // Initialize individual optimizations
-   _opts[OMR::trivialStoreSinking] =
-      new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialSinkStores::create, OMR::trivialStoreSinking);
    _opts[OMR::trivialDeadBlockRemover] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialDeadBlockRemover::create, OMR::trivialDeadBlockRemover);
    _opts[OMR::deadTreesElimination] =
@@ -194,6 +195,8 @@ Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymb
       new (comp->allocator()) TR::OptimizationManager(self(), TR::RegDepCopyRemoval::create, OMR::regDepCopyRemoval);
    _opts[OMR::inlining] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialInliner::create, OMR::inlining);
+   _opts[OMR::switchAnalyzer] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::SwitchAnalyzer::create, OMR::switchAnalyzer);
 
    // Initialize optimization groups
    _opts[OMR::cheapTacticalGlobalRegisterAllocatorGroup] =

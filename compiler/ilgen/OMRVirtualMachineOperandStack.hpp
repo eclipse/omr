@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,7 @@ class VirtualMachineOperandStack : public TR::VirtualMachineState
     * @param other operand stack for the builder object control is merging into
     * @param b builder object where the operations will be added to make the current operand stack the same as the other
     */
-   virtual void MergeInto(TR::VirtualMachineOperandStack *other, TR::IlBuilder *b);
+   virtual void MergeInto(TR::VirtualMachineState *o, TR::IlBuilder *b);
 
    /**
     * @brief update the values used to read and write the virtual machine stack

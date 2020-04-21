@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,48 +35,27 @@ namespace OMR { typedef OMR::ARM64::Linkage LinkageConnector; }
 
 #include <stddef.h>
 #include <stdint.h>
-#include "codegen/CodeGenerator.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
-#include "codegen/RegisterDependency.hpp"
 #include "env/TRMemory.hpp"
 
-class TR_FrontEnd;
 namespace TR { class AutomaticSymbol; }
+namespace TR { class CodeGenerator; }
 namespace TR { class Compilation; }
 namespace TR { class Instruction; }
 namespace TR { class MemoryReference; }
 namespace TR { class Node; }
 namespace TR { class ParameterSymbol; }
+namespace TR { class RegisterDependencyConditions; }
 namespace TR { class ResolvedMethodSymbol; }
-
-/**
- * @brief Adds dependency
- */
-inline void
-addDependency(
-      TR::RegisterDependencyConditions *dep,
-      TR::Register *vreg,
-      TR::RealRegister::RegNum rnum,
-      TR_RegisterKinds rk,
-      TR::CodeGenerator *cg)
-   {
-   if (vreg == NULL)
-      {
-      vreg = cg->allocateRegister(rk);
-      }
-
-   dep->addPreCondition(vreg, rnum);
-   dep->addPostCondition(vreg, rnum);
-   }
 
 namespace TR {
 
 class ARM64MemoryArgument
    {
    public:
-   // @@ TR_ALLOC(TR_Memory::ARM64MemoryArgument)
+   TR_ALLOC(TR_Memory::ARM64MemoryArgument)
 
    TR::Register *argRegister;
    TR::MemoryReference *argMemory;
@@ -113,9 +92,13 @@ struct ARM64LinkageProperties
    TR::RealRegister::RegNum _returnRegisters[TR::RealRegister::NumRegisters];
    uint8_t _numAllocatableIntegerRegisters;
    uint8_t _numAllocatableFloatRegisters;
+   uint32_t _preservedRegisterMapForGC;
    TR::RealRegister::RegNum _methodMetaDataRegister;
    TR::RealRegister::RegNum _stackPointerRegister;
    TR::RealRegister::RegNum _framePointerRegister;
+   TR::RealRegister::RegNum _computedCallTargetRegister; // for icallVMprJavaSendPatchupVirtual
+   TR::RealRegister::RegNum _vtableIndexArgumentRegister; // for icallVMprJavaSendPatchupVirtual
+   TR::RealRegister::RegNum _j9methodArgumentRegister; // for icallVMprJavaSendStatic
    uint8_t _numberOfDependencyGPRegisters;
    int8_t _offsetToFirstParm;
    int8_t _offsetToFirstLocal;
@@ -240,6 +223,11 @@ struct ARM64LinkageProperties
       return _numAllocatableFloatRegisters;
       }
 
+   uint32_t getPreservedRegisterMapForGC() const
+      {
+      return _preservedRegisterMapForGC;
+      }
+
    TR::RealRegister::RegNum getMethodMetaDataRegister() const
       {
       return _methodMetaDataRegister;
@@ -253,6 +241,21 @@ struct ARM64LinkageProperties
    TR::RealRegister::RegNum getFramePointerRegister() const
       {
       return _framePointerRegister;
+      }
+
+   TR::RealRegister::RegNum getComputedCallTargetRegister() const
+      {
+      return _computedCallTargetRegister;
+      }
+
+   TR::RealRegister::RegNum getVTableIndexArgumentRegister() const
+      {
+      return _vtableIndexArgumentRegister;
+      }
+
+   TR::RealRegister::RegNum getJ9MethodArgumentRegister() const
+      {
+      return _j9methodArgumentRegister;
       }
 
    int32_t getOffsetToFirstParm() const {return _offsetToFirstParm;}
@@ -274,13 +277,9 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
 
    /**
     * @brief Constructor
-    */
-   Linkage () : OMR::Linkage() {}
-   /**
-    * @brief Constructor
     * @param[in] cg : CodeGenerator
     */
-   Linkage (TR::CodeGenerator *cg) : _cg(cg) {}
+   Linkage (TR::CodeGenerator *cg) : OMR::Linkage(cg) {}
 
    /**
     * @brief Parameter has to be on stack or not
@@ -394,41 +393,6 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
     */
    virtual TR::Register *buildIndirectDispatch(TR::Node *callNode) = 0;
 
-   /**
-    * @brief Gets the CodeGenerator
-    * @return CodeGenerator
-    */
-   TR::CodeGenerator *cg() {return _cg;}
-   /**
-    * @brief Gets the Compilation
-    * @return Compilation
-    */
-   TR::Compilation *comp() {return _cg->comp();}
-   /**
-    * @brief Gets the FrontEnd
-    * @return FrontEnd
-    */
-   TR_FrontEnd *fe() {return _cg->fe();}
-
-   /**
-    * @brief Gets the TR_Memory
-    * @return TR_Memory
-    */
-   TR_Memory *trMemory() {return _cg->trMemory();}
-   /**
-    * @brief Gets the Heap Memory
-    * @return Heap Memory
-    */
-   TR_HeapMemory trHeapMemory();
-   /**
-    * @brief Gets the Stack Memory
-    * @return Stack Memory
-    */
-   TR_StackMemory trStackMemory();
-
-   protected:
-
-   TR::CodeGenerator*_cg;
    };
 } // ARM64
 } // TR

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2017 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,8 +36,8 @@
 #include "runtime/Runtime.hpp"
 #include "runtime/JBJitConfig.hpp"
 
-#if defined(TR_TARGET_S390)
-#include "z/codegen/TRSystemLinkage.hpp"
+#if defined(AIXPPC)
+#include "p/codegen/PPCTableOfConstants.hpp"
 #endif
 
 extern TR_RuntimeHelperTable runtimeHelpers;
@@ -187,7 +187,27 @@ internal_initializeJit()
 int32_t
 internal_compileMethodBuilder(TR::MethodBuilder *m, void **entry)
    {
-   return m->Compile(entry);
+   auto rc = m->Compile(entry);
+
+#if defined(AIXPPC)
+   struct FunctionDescriptor
+      {
+      void* func;
+      void* toc;
+      void* environment;
+      };
+
+   FunctionDescriptor* fd = new FunctionDescriptor();
+   fd->func = *entry;
+   // TODO: There should really be a better way to get this. Usually, we would use
+   // cg->getTOCBase(), but the code generator has already been destroyed by now...
+   fd->toc = toPPCTableOfConstants(TR_PersistentMemory::getNonThreadSafePersistentInfo()->getPersistentTOC())->getTOCBase();
+   fd->environment = NULL;
+
+   *entry = (uint8_t*) fd;
+#endif
+
+   return rc;
    }
 
 void
@@ -197,4 +217,6 @@ internal_shutdownJit()
 
    TR::CodeCacheManager &codeCacheManager = fe->codeCacheManager();
    codeCacheManager.destroy();
+
+   TR::CompilationController::shutdown();
    }

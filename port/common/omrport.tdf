@@ -1,4 +1,4 @@
-// Copyright (c) 1998, 2018 IBM Corp. and others
+// Copyright (c) 1998, 2020 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -659,13 +659,13 @@ TraceEvent=Trc_PRT_signal_omrsig_asynchSignalReporter_woken_up_for_SIGXFSZ Group
 
 // sl trace points
 
-TraceEntry=Trc_PRT_sl_close_shared_library_Entry Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_close_shared_library descriptor=%d"
-TraceExit=Trc_PRT_sl_close_shared_library_Exit Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_close_shared_library result=%d"
-TraceEntry=Trc_PRT_sl_lookup_name_Entry Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name descriptor=%d, name=%s, argSignature=%s"
-TraceExit=Trc_PRT_sl_lookup_name_Exit1 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name descriptor=%d"
-TraceExit=Trc_PRT_sl_lookup_name_Exit2 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name %s(%s) not found in %d, result=%d"
-TraceExit=Trc_PRT_sl_lookup_name_Exit3 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name could not allocate buffer of length=%d, result=%d"
-TraceEntry=Trc_PRT_sl_open_shared_library_Entry Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_open_shared_library name=%s, flags=%d"
+TraceEntry=Trc_PRT_sl_close_shared_library_Entry Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_close_shared_library descriptor=%p"
+TraceExit=Trc_PRT_sl_close_shared_library_Exit Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_close_shared_library result=%zd"
+TraceEntry=Trc_PRT_sl_lookup_name_Entry Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name descriptor=%p, name=%s, argSignature=%s"
+TraceExit=Trc_PRT_sl_lookup_name_Exit1 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name function=%p"
+TraceExit=Trc_PRT_sl_lookup_name_Exit2 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name %s(%s) not found in %p, result=%d"
+TraceExit=Trc_PRT_sl_lookup_name_Exit3 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_lookup_name could not allocate buffer of length=%p, result=%d"
+TraceEntry=Trc_PRT_sl_open_shared_library_Entry Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_open_shared_library name=%s, flags=%zx"
 TraceEvent=Trc_PRT_sl_open_shared_library_Event1 Group=sl Overhead=1 Level=1 NoEnv Template="omrsl_open_shared_library using mangledName %s"
 TraceExit=Trc_PRT_sl_open_shared_library_Exit1 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_open_shared_library handle=%p"
 TraceExit=Trc_PRT_sl_open_shared_library_Exit2 Group=sl Overhead=1 Level=10 NoEnv Template="omrsl_open_shared_library result=%d"
@@ -1076,7 +1076,7 @@ TraceExit=Trc_PRT_signal_omrsig_is_master_signal_handler_exiting Group=signal Ov
 TraceException=Trc_PRT_readCgroupFile_fgets_failed Group=sysinfo Overhead=1 Level=3 NoEnv Template="readCgroupFile: fgets failed for %s with errno=%d"
 TraceException=Trc_PRT_isRunningInContainer_fgets_failed Group=sysinfo Overhead=1 Level=3 NoEnv Template="isRunningInContainer: unexpected format of file %s with errno=%d"
 
-TraceException=Trc_PRT_signal_mapPortLibSignalToOSSignal_ERROR_unknown_signal Group=signal Overhead=1 Level=3 NoEnv Template="omrsignal: mapPortLibSignalToOSSignal: ERROR, unknown signal, portLibSignal=0x%X" 
+TraceException=Trc_PRT_signal_mapPortLibSignalToOSSignal_ERROR_unknown_signal Group=signal Overhead=1 Level=3 NoEnv Template="omrsignal: mapPortLibSignalToOSSignal: ERROR, unknown signal, portLibSignal=0x%X"
 
 TraceException=Trc_PRT_retrieveLinuxCgroupMemoryStats_invalidValue Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxCgroupMemoryStats: Value of field \"%s\" in file %s is invalid"
 TraceEvent=Trc_PRT_retrieveLinuxMemoryStats_CgroupMemoryStatsFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxMemoryStats: Failed to retrieve memory stats of cgroup with error code=%d"
@@ -1089,3 +1089,51 @@ TraceException=Trc_PRT_signal_unblockSignals_sigaddset_failed Group=signal Overh
 TraceException=Trc_PRT_signal_unblockSignals_pthread_sigmask_failed Group=signal Overhead=1 Level=1 NoEnv Template="omrsignal unblockSignals: pthread_sigmask failed with rc=%d and errno=%d"
 
 TraceException=Trc_PRT_sysinfo_get_open_file_count_memAllocFailed Group=sysinfo Overhead=1 Level=1 NoEnv Template="omrsysinfo_get_open_file_count: Error: memory allocation for proc_fdinfo failed."
+
+TraceException=Trc_PRT_sysinfo_gethostname_error Group=sysinfo Overhead=1 Level=1 NoEnv Template="gethostname failed: errno=%d"
+
+TraceExit-Exception=Trc_PRT_omrsig_ambiguous_signal_flag_failed_exiting Group=signal Overhead=1 Level=1 NoEnv Template="%s failed: Ambiguous port library signal flag(s) received, flags=0x%X."
+
+TraceException=Trc_PRT_vmem_omrvmem_findAvailableMemoryBlockNoMalloc_fileOpenFailed Group=mem Overhead=1 Level=1 NoEnv Template="findAvailableMemoryBlockNoMalloc failed to open file %s, portable error code %d"
+TraceException=Trc_PRT_vmem_omrvmem_findAvailableMemoryBlockNoMalloc_fileReadFailed Group=mem Overhead=1 Level=1 NoEnv Template="findAvailableMemoryBlockNoMalloc failed to read from file %s, portable error code %d"
+
+TraceException=Trc_PRT_vmem_omrvmem_findAvailableMemoryBlockNoMalloc_parseFirstAddressFailed Group=mem Overhead=1 Level=5 NoEnv Template="findAvailableMemoryBlockNoMalloc parser failed to get first address from line (%s)"
+TraceException=Trc_PRT_vmem_omrvmem_findAvailableMemoryBlockNoMalloc_parseDashFailed Group=mem Overhead=1 Level=5 NoEnv Template="findAvailableMemoryBlockNoMalloc parser failed to get dash from line (%s)"
+TraceException=Trc_PRT_vmem_omrvmem_findAvailableMemoryBlockNoMalloc_parseSecondAddressFailed Group=mem Overhead=1 Level=5 NoEnv Template="findAvailableMemoryBlockNoMalloc parser failed to get second address from line (%s)"
+TraceException=Trc_PRT_vmem_omrvmem_findAvailableMemoryBlockNoMalloc_addressesMismatch Group=mem Overhead=1 Level=5 NoEnv Template="findAvailableMemoryBlockNoMalloc parser found addresses mismatch from line (%s)"
+
+TraceEntry=Trc_PRT_sysinfo_get_processor_description_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_get_processor_description: desc = %p"
+TraceExit=Trc_PRT_sysinfo_get_processor_description_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_get_processor_description: returning with %zd"
+
+TraceEntry=Trc_PRT_sysinfo_processor_has_feature_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_has_feature: desc = %p, feature = %d"
+TraceExit=Trc_PRT_sysinfo_processor_has_feature_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_has_feature: returning with %zu"
+
+TraceEntry=Trc_PRT_sysinfo_processor_disable_feature_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_disable_feature: desc = %p, feature = %d"
+TraceExit=Trc_PRT_sysinfo_processor_disable_feature_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_disable_feature: returning with %zd"
+
+TraceEntry=Trc_PRT_sysinfo_processor_set_feature_Entered Group=sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_set_feature: desc = %p, feature = %d, enable = %d"
+TraceExit=Trc_PRT_sysinfo_processor_set_feature_Exit Group=sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_set_feature: returning with %zd"
+
+TraceEvent=Trc_PRT_vmem_omrvmem_free_memory_UpdateRegions Overhead=1 Level=1 Group=arraylet NoEnv Template="About to close file descriptor and free leaves. fd: %d, leafAddresses: %p, leafCount: %zu, address: %p, byteAmount: %zu"
+
+TraceEntry=Trc_PRT_vmem_reserve_entry Group=mem Overhead=1 Level=5 NoEnv Template="reserve_memory requestedAddress=%p byteAmount=%u"
+TraceEvent=Trc_PRT_vmem_reserve_doubleMapAPI_available Group=mem Overhead=1 Level=5 NoEnv Template="reserve_memory double map API (memfd_create) found, address: %p, byteAmount: %zu"
+TraceEvent=Trc_PRT_vmem_reserve_doubleMapAPI_not_available Group=mem Overhead=1 Level=5 NoEnv Template="reserve_memory double map API (memfd_create) NOT found, address: %p, byteAmount: %zu"
+TraceException=Trc_PRT_vmem_reserve_failed Group=mem Overhead=1 Level=1 NoEnv Template="reserve_memory FAILED requestedAddress=%p byteAmount=%u"
+TraceExit=Trc_PRT_vmem_reserve_exit Group=mem Overhead=1 Level=5 NoEnv Template="reserve_memory returns %p requestedAddress=%p byteAmount=%u"
+
+TraceEntry=Trc_PRT_double_map_getContiguousMem_Entry Overhead=1 Level=3 Group=arraylet NoEnv Template="omrvmem_get_contiguous_region_memory. Entered addresses: %p, addressesCount: %zu, addressSize: %zu, byteAmount: %zu, pageSize: %zu"
+TraceException=Trc_PRT_double_map_getContiguousMem_fdFailure Group=mem Overhead=1 Level=1 NoEnv Template="Failed to create file descriptor for double mapping"
+TraceEvent=Trc_PRT_double_map_getContiguousMem_Success Overhead=1 Level=1 Group=arraylet NoEnv Template="mmap contiguous region of memory created successfully at: %p"
+TraceException=Trc_PRT_double_map_getContiguousMem_Failure Overhead=1 Level=1 Group=arraylet NoEnv Template="Failed to mmap contiguous region of memory"
+TraceException=Trc_PRT_double_map_getContiguousMem_CheckFailure Overhead=1 Level=1 Group=arraylet NoEnv Template="Not enough shared memory to double map arraylet. Expected index: %zu, returned: %zu"
+TraceException=Trc_PRT_double_map_getContiguousMem_Failure2 Overhead=1 Level=1 Group=arraylet NoEnv Template="Double map failed while double mapping individual leaves."
+TraceException=Trc_PRT_double_map_getContiguousMem_Failure3 Overhead=1 Level=1 Group=arraylet NoEnv Template="Address returned by mmap dpes not match expected. Expected: %p, returned: %p"
+TraceException=Trc_PRT_double_map_getContiguousMem_Failure4 Overhead=1 Level=1 Group=arraylet NoEnv Template="Double map failed. Clean up phase."
+TraceExit=Trc_PRT_double_map_getContiguousMem_Exit Overhead=1 Level=3 Group=arraylet NoEnv Template="omrvmem_get_contiguous_region_memory. result=%d"
+
+TraceEntry=Trc_PRT_double_map_UpdateRegions_Entry Overhead=1 Level=3 Group=arraylet NoEnv Template="updateDoubleMappedRegions. regionSize: %zu, byteAmount=%zu"
+TraceException=Trc_PRT_double_map_UpdateRegions_mmap_Failure Overhead=1 Level=2 Group=arraylet NoEnv Template="Failed to mmap regions back to private"
+TraceException=Trc_PRT_double_map_UpdateRegions_mmap_Failure2 Overhead=1 Level=2 Group=arraylet NoEnv Template="Address returned by mmap did not match expected. Requested: %p, returned: %p"
+TraceEvent=Trc_PRT_double_map_UpdateRegions_unexpectedNullLeaves Overhead=1 Level=2 Group=arraylet NoEnv Template="Unexpected null regions found when trying to update them"
+TraceExit=Trc_PRT_double_map_UpdateRegions_Exit Overhead=1 Level=3 Group=arraylet NoEnv Template="updateDoubleMappedRegions. result=%d"

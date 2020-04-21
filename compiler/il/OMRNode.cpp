@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,13 +19,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "il/OMRNode.hpp"
+#include "il/Node.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/RecognizedMethods.hpp"
@@ -36,8 +36,7 @@
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
-#include "cs2/allocator.h"
-#include "cs2/sparsrbit.h"
+#include "cs2/hashtab.h"
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/Environment.hpp"
@@ -46,25 +45,25 @@
 #include "env/VMEnv.hpp"
 #include "env/defines.h"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/IL.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/NodeExtension.hpp"
 #include "il/NodePool.hpp"
 #include "il/NodeUtils.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "ilgen/IlGen.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -537,6 +536,7 @@ OMR::Node::recreateWithSymRef(TR::Node *originalNode, TR::ILOpCodes op, TR::Symb
 TR::Node *
 OMR::Node::recreateAndCopyValidPropertiesImpl(TR::Node *originalNode, TR::ILOpCodes op, TR::SymbolReference *newSymRef)
    {
+   TR_ASSERT_FATAL(TR::Node::isNotDeprecatedUnsigned(op), "Trying to use a deprecated unsigned opcode: #%d \n", op);
    TR_ASSERT(originalNode != NULL, "trying to recreate node from a NULL originalNode.");
    if (originalNode->getOpCodeValue() == op)
       {
@@ -600,6 +600,7 @@ OMR::Node::recreateAndCopyValidPropertiesImpl(TR::Node *originalNode, TR::ILOpCo
 TR::Node *
 OMR::Node::createInternal(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uint16_t numChildren, TR::Node *originalNode)
    {
+   TR_ASSERT_FATAL(TR::Node::isNotDeprecatedUnsigned(op), "Trying to use a deprecated unsigned opcode: #%d \n", op);
    if (!originalNode)
       return new (TR::comp()->getNodePool()) TR::Node(originatingByteCodeNode, op, numChildren);
    else
@@ -648,7 +649,7 @@ OMR::Node::create(TR::Node * originatingByteCodeNode, TR::ILOpCodes op, uint16_t
 TR::Node *
 OMR::Node::create(TR::Node * originatingByteCodeNode, TR::ILOpCodes op, uint16_t numChildren, int32_t intValue, TR::TreeTop * dest)
    {
-   TR_ASSERT(op != TR::bconst && op != TR::cconst && op != TR::sconst, "Invalid constructor for 8/16-bit constants");
+   TR_ASSERT(op != TR::bconst && op != TR::sconst, "Invalid constructor for 8/16-bit constants");
    TR::Node * node = TR::Node::create(originatingByteCodeNode, op, numChildren, dest);
    if (op == TR::lconst)
       {
@@ -1240,6 +1241,16 @@ OMR::Node::createOSRFearPointHelperCall(TR::Node* originatingByteCodeNode)
    return callNode;
    }
 
+TR::Node *
+OMR::Node::createEAEscapeHelperCall(TR::Node* originatingByteCodeNode, int32_t numChildren)
+   {
+   TR::Compilation* comp = TR::comp();
+
+   TR_ASSERT(!comp->isPeekingMethod(), "Can not generate the helper call during peeking");
+
+   TR::Node* callNode = TR::Node::createWithSymRef(originatingByteCodeNode, TR::call, numChildren, TR::comp()->getSymRefTab()->findOrCreateEAEscapeHelperSymbolRef());
+   return callNode;
+   }
 
 TR::Node *
 OMR::Node::createLoad(TR::SymbolReference * symRef)
@@ -1307,7 +1318,7 @@ OMR::Node::createRelative32BitFenceNode(TR::Node * originatingByteCodeNode, void
 
 
 TR::Node *
-OMR::Node::createAddressNode(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uintptrj_t address, uint8_t precision)
+OMR::Node::createAddressNode(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uintptr_t address, uint8_t precision)
    {
    TR::Node *node = TR::Node::create(originatingByteCodeNode, op, 0, 0);
    node->setAddress(address);
@@ -1315,7 +1326,7 @@ OMR::Node::createAddressNode(TR::Node *originatingByteCodeNode, TR::ILOpCodes op
    }
 
 TR::Node *
-OMR::Node::createAddressNode(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uintptrj_t address)
+OMR::Node::createAddressNode(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uintptr_t address)
    {
    TR::Node *node = TR::Node::create(originatingByteCodeNode, op, 0, 0);
    node->setAddress(address);
@@ -1328,7 +1339,7 @@ TR::Node *
 OMR::Node::createAllocationFence(TR::Node *originatingByteCodeNode, TR::Node *fenceNode)
    {
    TR::Node *node = TR::Node::create(originatingByteCodeNode, TR::allocationFence, 0, 0);
-   node->setChild(0, fenceNode);
+   node->setAllocation(fenceNode);
    return node;
    }
 
@@ -1350,21 +1361,6 @@ OMR::Node::bconst(int8_t val)
 
 
 
-TR::Node *
-OMR::Node::buconst(TR::Node *originatingByteCodeNode, uint8_t val)
-   {
-   TR::Node *r = TR::Node::create(originatingByteCodeNode, TR::buconst);
-   r->setUnsignedByte(val);
-   return r;
-   }
-
-TR::Node *
-OMR::Node::buconst(uint8_t val)
-   {
-   return TR::Node::buconst(0, val);
-   }
-
-
 
 TR::Node *
 OMR::Node::sconst(TR::Node *originatingByteCodeNode, int16_t val)
@@ -1380,24 +1376,6 @@ OMR::Node::sconst(int16_t val)
    return TR::Node::sconst(0, val);
    }
 
-
-
-TR::Node *
-OMR::Node::cconst(TR::Node *originatingByteCodeNode, uint16_t val)
-   {
-   TR::Node *r = TR::Node::create(originatingByteCodeNode, TR::cconst);
-   r->setUnsignedShortInt(val);
-   return r;
-   }
-
-TR::Node *
-OMR::Node::cconst(uint16_t val)
-   {
-   return TR::Node::cconst(0, val);
-   }
-
-
-
 TR::Node *
 OMR::Node::iconst(TR::Node *originatingByteCodeNode, int32_t val)
    {
@@ -1409,21 +1387,6 @@ OMR::Node::iconst(int32_t val)
    {
    return TR::Node::iconst(0, val);
    }
-
-
-TR::Node *
-OMR::Node::iuconst(TR::Node *originatingByteCodeNode, uint32_t val)
-   {
-   return TR::Node::create(originatingByteCodeNode, TR::iuconst, 0, (int32_t)val);
-   }
-
-TR::Node *
-OMR::Node::iuconst(uint32_t val)
-   {
-   return TR::Node::iuconst(0, val);
-   }
-
-
 
 TR::Node *
 OMR::Node::lconst(TR::Node *originatingByteCodeNode, int64_t val)
@@ -1442,35 +1405,19 @@ OMR::Node::lconst(int64_t val)
 
 
 TR::Node *
-OMR::Node::luconst(TR::Node *originatingByteCodeNode, uint64_t val)
-   {
-   TR::Node *r = TR::Node::create(originatingByteCodeNode, TR::luconst);
-   r->setUnsignedLongInt(val);
-   return r;
-   }
-
-TR::Node *
-OMR::Node::luconst(uint64_t val)
-   {
-   return TR::Node::luconst(0, val);
-   }
-
-
-
-TR::Node *
-OMR::Node::aconst(TR::Node *originatingByteCodeNode, uintptrj_t val)
+OMR::Node::aconst(TR::Node *originatingByteCodeNode, uintptr_t val)
    {
    return TR::Node::createAddressNode(originatingByteCodeNode, TR::aconst, val);
    }
 
 TR::Node *
-OMR::Node::aconst(TR::Node *originatingByteCodeNode, uintptrj_t val, uint8_t precision)
+OMR::Node::aconst(TR::Node *originatingByteCodeNode, uintptr_t val, uint8_t precision)
    {
    return TR::Node::createAddressNode(originatingByteCodeNode, TR::aconst, val, precision);
    }
 
 TR::Node *
-OMR::Node::aconst(uintptrj_t val)
+OMR::Node::aconst(uintptr_t val)
    {
    return TR::Node::aconst(0, val);
    }
@@ -1553,7 +1500,7 @@ OMR::Node::createConstOne(TR::Node *originatingByteCodeNode, TR::DataType dt)
    }
 
 TR::Node *
-OMR::Node::createConstDead(TR::Node *originatingByteCodeNode, TR::DataType dt, intptrj_t extraData)
+OMR::Node::createConstDead(TR::Node *originatingByteCodeNode, TR::DataType dt, intptr_t extraData)
    {
    TR::Node *result = NULL;
    const int8_t dead8 = (int8_t)((extraData << 4) | 0xD);
@@ -1614,7 +1561,7 @@ OMR::Node::createAddConstantToAddress(TR::Node * addr, intptr_t value, TR::Node 
 
    if (value == 0) return addr;
 
-   if (TR::Compiler->target.is64Bit())
+   if (TR::comp()->target().is64Bit())
       {
       TR::Node *lconst = TR::Node::lconst(parentOfNewNode, (int64_t)value);
       ret = TR::Node::create(parentOfNewNode, TR::aladd, 2);
@@ -2067,7 +2014,7 @@ OMR::Node::isThisPointer()
  *        pairFirstChild
  *        pairSecondChild
  *
- * and the opcodes for highOp/adjunctOp are lumulh/lmul, luaddh/luadd, or lusubh/lusub.
+ * and the opcodes for highOp/adjunctOp are lumulh/lmul, luaddh/ladd, or lusubh/lsub.
  */
 bool
 OMR::Node::isDualHigh()
@@ -2076,15 +2023,15 @@ OMR::Node::isDualHigh()
       {
       TR::ILOpCodes pairOpValue = self()->getChild(2)->getOpCodeValue();
       if (((self()->getOpCodeValue() == TR::lumulh) && (pairOpValue == TR::lmul))
-          || ((self()->getOpCodeValue() == TR::luaddh) && (pairOpValue == TR::luadd))
-          || ((self()->getOpCodeValue() == TR::lusubh) && (pairOpValue == TR::lusub)))
+          || ((self()->getOpCodeValue() == TR::luaddh) && (pairOpValue == TR::ladd))
+          || ((self()->getOpCodeValue() == TR::lusubh) && (pairOpValue == TR::lsub)))
          return true;
       }
    return false;
    }
 
 /**
- * Whether this node is high part of a ternary subtract or addition, like a dual this
+ * Whether this node is high part of a select subtract or addition, like a dual this
  * is a composite operator, made from a high order part and its adjunct operator
  * which is the first child of its third child. It returns true if the node has the form:
  *
@@ -2096,10 +2043,10 @@ OMR::Node::isDualHigh()
  *          pairFirstChild
  *          pairSecondChild
  *
- * and the opcodes for highOp/adjunctOp are luaddc/luadd, or lusubb/lusub.
+ * and the opcodes for highOp/adjunctOp are luaddc/ladd, or lsubb/lsub.
  */
 bool
-OMR::Node::isTernaryHigh()
+OMR::Node::isSelectHigh()
    {
    if (((self()->getOpCodeValue() == TR::luaddc) || (self()->getOpCodeValue() == TR::lusubb))
        && (self()->getNumChildren() == 3) && self()->getChild(2)
@@ -2108,11 +2055,21 @@ OMR::Node::isTernaryHigh()
       TR::ILOpCodes ccOpValue = self()->getChild(2)->getOpCodeValue();
       TR::ILOpCodes pairOpValue = self()->getChild(2)->getFirstChild()->getOpCodeValue();
       if ((ccOpValue == TR::computeCC) &&
-          (((self()->getOpCodeValue() == TR::luaddc) && (pairOpValue == TR::luadd))
-           || ((self()->getOpCodeValue() == TR::lusubb) && (pairOpValue == TR::lusub))))
+          (((self()->getOpCodeValue() == TR::luaddc) && (pairOpValue == TR::ladd))
+           || ((self()->getOpCodeValue() == TR::luaddc) && (pairOpValue == TR::ladd))
+           || ((self()->getOpCodeValue() == TR::lusubb) && (pairOpValue == TR::lsub))))
          return true;
       }
    return false;
+   }
+
+/**
+ * isTernaryHigh is now deprecated. Use isSelectHigh instead.
+ */
+bool
+OMR::Node::isTernaryHigh()
+   {
+   return self()->isSelectHigh();
    }
 
 /**
@@ -2393,7 +2350,7 @@ OMR::Node::isNotCollected()
  *
  * \note
  *    This query currently only works on opcodes that can have a pinning array pointer,
- *    i.e. aiadd, aiuadd, aladd, aluadd. Suppport for other opcodes can be added if necessary.
+ *    i.e. aiadd, aladd. Suppport for other opcodes can be added if necessary.
  */
 bool
 OMR::Node::computeIsInternalPointer()
@@ -2416,14 +2373,64 @@ OMR::Node::computeIsInternalPointer()
 bool
 OMR::Node::computeIsCollectedReference()
    {
+   TR::Compilation * comp = TR::comp();
+   TR::NodeChecklist processedNodesCollected(comp);
+   TR::NodeChecklist processedNodesNotCollected(comp);
+   return (self()->computeIsCollectedReferenceImpl(processedNodesCollected, processedNodesNotCollected) != TR_no);
+   }
+
+static TR_YesNoMaybe
+recordProcessedNodeResult(TR::Node *node, TR_YesNoMaybe collectedness, TR::NodeChecklist &processedNodesCollected, TR::NodeChecklist &processedNodesNotCollected)
+   {
+   switch (collectedness)
+      {
+      case TR_yes:
+         processedNodesCollected.add(node);
+         break;
+      case TR_no:
+         processedNodesNotCollected.add(node);
+         break;
+      case TR_maybe:
+         processedNodesCollected.add(node);
+         processedNodesNotCollected.add(node);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Invalid collectedness result for Node %p\n", node);
+         break;
+      }
+   return collectedness;
+   }
+
+TR_YesNoMaybe
+OMR::Node::computeIsCollectedReferenceImpl(TR::NodeChecklist &processedNodesCollected, TR::NodeChecklist &processedNodesNotCollected)
+   {
    TR::Node *curNode = self();
+   TR::Node *receiverNode = curNode;
    if (curNode->getOpCode().isTreeTop())
-      return false;
+      return TR_no;
+
+   // In order to prevent from walking the same node repeatedly when
+   // one is referenced multiple times in a very deep tree structure
+   // (e.g. select whose child is a select and so on),
+   // Use 2 checklists to record following states:
+   // -- The node is not contained in either collected or uncollected checklists - first time encounter, process the node
+   //    and add it to the appropriate checklist(s) based on the result.
+   // -- Node is seen in both checklitsts - previously processed with result of TR_maybe
+   // -- Node is seen in processedNodesCollected - previously processed with result of TR_yes
+   // -- Node is seen in processedNodesNotCollected - previously processed with result of TR_no
+   bool selectSeenCollected = processedNodesCollected.contains(receiverNode);
+   bool selectSeenNotCollected = processedNodesNotCollected.contains(receiverNode);
+   if (selectSeenCollected && selectSeenNotCollected)
+      return TR_maybe;
+   else if (selectSeenCollected)
+      return TR_yes;
+   else if (selectSeenNotCollected)
+      return TR_no;
 
    while (curNode)
       {
       if (curNode->isInternalPointer())
-         return true;
+         return recordProcessedNodeResult(receiverNode, TR_yes, processedNodesCollected, processedNodesNotCollected);
 
       TR::ILOpCode op = curNode->getOpCode();
       TR::ILOpCodes opValue = curNode->getOpCodeValue();
@@ -2431,16 +2438,28 @@ OMR::Node::computeIsCollectedReference()
       // If a language can handle a collected reference going via a non-address type,
       // then the logic would need to be augmented to handle that
       if (op.isConversion())
-         return false;
+         return recordProcessedNodeResult(receiverNode, TR_no, processedNodesCollected, processedNodesNotCollected);
 
       if (op.getDataType() != TR::Address)
-         return false;
+         return recordProcessedNodeResult(receiverNode, TR_no, processedNodesCollected, processedNodesNotCollected);
       // The following are all opcodes that are address type, non-TreeTop and non-conversion
 
       if (op.isAdd())
          {
          curNode = curNode->getFirstChild();
          continue;
+         }
+
+      if (op.isSelect())
+         {
+         TR_YesNoMaybe secondChildResult = curNode->getSecondChild()->computeIsCollectedReferenceImpl(processedNodesCollected, processedNodesNotCollected);
+         if (TR_maybe == secondChildResult)
+            {
+            TR_YesNoMaybe thirdChildResult = curNode->getThirdChild()->computeIsCollectedReferenceImpl(processedNodesCollected, processedNodesNotCollected);
+            return recordProcessedNodeResult(receiverNode, thirdChildResult, processedNodesCollected, processedNodesNotCollected);
+            }
+         else
+            return recordProcessedNodeResult(receiverNode, secondChildResult, processedNodesCollected, processedNodesNotCollected);
          }
 
       // opcodes associated with a symref, we should
@@ -2452,16 +2471,17 @@ OMR::Node::computeIsCollectedReference()
          // isCollectedReference() responds false to generic int shadows because their type
          // is int. However, address type generic int shadows refer to collected slots.
          if (opValue == TR::aloadi && symbol == TR::comp()->getSymRefTab()->findGenericIntShadowSymbol())
-            return true;
+            return recordProcessedNodeResult(receiverNode, TR_yes, processedNodesCollected, processedNodesNotCollected);
          else
-            return symbol->isCollectedReference();
+            return recordProcessedNodeResult(receiverNode, (symbol->isCollectedReference() ? TR_yes : TR_no),
+                  processedNodesCollected, processedNodesNotCollected);
          }
 
       // Symbols for calls and news does not contain collectedness information.
       // Current implementation treats all object references collectable, and also
       // assumes that the return of an acall* is an object reference.
       if (op.isNew() || op.isCall() || opValue == TR::variableNew || opValue == TR::variableNewArray)
-         return true;
+         return recordProcessedNodeResult(receiverNode, TR_yes, processedNodesCollected, processedNodesNotCollected);
 
       switch (opValue)
          {
@@ -2472,15 +2492,33 @@ OMR::Node::computeIsCollectedReference()
             // only problem is: we might mark an aladd/aiadd on a temp whose value is null as
             // an internal pointer, thus creating a temp, pinning array and internal pointer
             // map for it.
-            return self() == curNode && curNode->getAddress() == 0;
+
+            // Preserve the existing logic which is as follows:
+            // true iff not under aladd and null,
+            // if non-null, always false.
+            // if under aladd, always false.
+
+            // non-null constant return false.
+            if (curNode->getAddress() != 0)
+               return recordProcessedNodeResult(receiverNode, TR_no, processedNodesCollected, processedNodesNotCollected);
+            else
+               {
+               // null constant under aladd, return false.
+               // Null constant under select (i.e. we reached here via recursive calls), return maybe
+               // to indicate need to check the other child.
+               if (self() != curNode)
+                  return recordProcessedNodeResult(receiverNode, TR_no, processedNodesCollected, processedNodesNotCollected);
+               else
+                  return recordProcessedNodeResult(receiverNode, TR_maybe, processedNodesCollected, processedNodesNotCollected);
+               }
          case TR::getstack:
-            return false;
+            return recordProcessedNodeResult(receiverNode, TR_no, processedNodesCollected, processedNodesNotCollected);
          default:
             TR_ASSERT(false, "Unsupported opcode %s on node " POINTER_PRINTF_FORMAT, op.getName(), curNode);
-            return false;
+            return TR_no;
          }
       }
-   return false;
+   return TR_no;
    }
 
 bool
@@ -3159,13 +3197,6 @@ OMR::Node::getFirstArgumentIndex()
    if (self()->getOpCodeValue() == TR::ZEROCHK)
       return 1; // First argument is the int to compare with zero, not an arg to the helper
 
-   // commented out because a fair amount of code has assumptions on this function returning 0 for
-   // static JNI
-   //
-   //TR::MethodSymbol * methodSymbol = getSymbol()->castToMethodSymbol();
-   //if (isPreparedForDirectJNI() && methodSymbol->isStatic())
-   //   return 1;
-
    return 0;
    }
 
@@ -3328,6 +3359,60 @@ OMR::Node::getOwningMethod()
 
 
 
+/** \brief
+ *  Used to get the ram method from the Bytecode Info.
+ * 
+ *  \param *comp
+ *  _compilation of type TR::Compilation 
+ *  
+ *  @return 
+ *  Returns the ram method (TR_OpaqueMethodBlock) from function call getOwningMethod(TR::Compilation *comp, TR_ByteCodeInfo &bcInfo)
+ */
+TR_OpaqueMethodBlock* 
+OMR::Node::getOwningMethod(TR::Compilation *comp)
+   {
+   return TR::Node::getOwningMethod(comp, self()->getByteCodeInfo());
+   }
+
+
+
+/** \brief
+ *  Used to get the ram method from the Bytecode Info.
+ * 
+ *  \param *comp
+ *  _compilation of type TR::Compilation
+ * 
+ *  \param &bcInfo 
+ *  _byteCodeInfo of a node of type TR::Node  
+ *  
+ *  @return 
+ *  Returns the ram method (TR_OpaqueMethodBlock)
+ */
+TR_OpaqueMethodBlock* 
+OMR::Node::getOwningMethod(TR::Compilation *comp, TR_ByteCodeInfo &bcInfo)
+   {
+   TR_OpaqueMethodBlock *method = NULL; 
+  
+   if (comp->compileRelocatableCode()) 
+      { 
+      if (0 <= bcInfo.getCallerIndex()) 
+         method = (TR_OpaqueMethodBlock *)(((TR_AOTMethodInfo *)comp->getInlinedCallSite(bcInfo.getCallerIndex())._vmMethodInfo)->resolvedMethod->getPersistentIdentifier()); 
+      else 
+         method = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getPersistentIdentifier()); 
+      } 
+   else  
+      { 
+      if (0 <= bcInfo.getCallerIndex()) 
+         method = (TR_OpaqueMethodBlock *)(comp->getInlinedCallSite(bcInfo.getCallerIndex())._vmMethodInfo); 
+      else 
+         method = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getNonPersistentIdentifier()); 
+      } 
+  
+   return method; 
+   }
+
+
+
 void *
 OMR::Node::getAOTMethod()
    {
@@ -3432,11 +3517,6 @@ OMR::Node::nodeMightKillCondCode()
         && (self()->getSize() == 4 || self()->getSize() == 8) )
       return false;
 
-   // at this point, we will assume that the CC is killed if we at not on Trex or higher
-   // (we don't have LAY for long dispacement among others)
-   if (!TR::Compiler->target.cpu.getS390SupportsZ990())
-      return true;
-
    // this conversion will be a no-op -> CC is not killed unless the child kills it
    if (self()->isUnneededConversion() || (opcode.isConversion() && (self()->getSize() == self()->getFirstChild()->getSize())))
       return false;
@@ -3444,7 +3524,7 @@ OMR::Node::nodeMightKillCondCode()
    // the rest were determined empirically not to kill the CC
    if (((opcode.isLoad() || opcode.isStore() || opcode.isLoadReg() || opcode.isStoreDirectOrReg() || opcode.isLoadAddr())
           && (self()->getSize() == 4 || self()->getSize() == 8 || self()->getSize() == 2 ||
-          (self()->getSize() == 1 && TR::Compiler->target.cpu.getS390SupportsZ9() ) || self()->getSize() == 0 ) ))
+          self()->getSize() == 1 || self()->getSize() == 0 ) ))
       return false;
 
    if (opcode.isArrayRef() && self()->getSecondChild()->getOpCode().isLoadConst() &&
@@ -3634,9 +3714,9 @@ OMR::Node::exceptionsRaised()
       default:
        if (node->getOpCode().isCall() && !node->isOSRFearPointHelperCall())
             {
-            possibleExceptions |= TR::Block::CanCatchOSR;
-            if (node->getSymbolReference()->canGCandExcept()
-               )
+            if (!((TR::MethodSymbol*)node->getSymbolReference()->getSymbol())->functionCallDoesNotYieldOSR())
+               possibleExceptions |= TR::Block::CanCatchOSR;
+            if (!node->isPureCall() && node->getSymbolReference()->canGCandExcept())
                possibleExceptions |= TR::Block::CanCatchUserThrows;
             }
          break;
@@ -3666,7 +3746,7 @@ TR::Node *
 OMR::Node::createLongIfNeeded()
    {
    TR::Compilation * comp = TR::comp();
-   bool usingAladd = TR::Compiler->target.is64Bit();
+   bool usingAladd = comp->target().is64Bit();
    TR::Node *retNode = NULL;
 
    if (usingAladd)
@@ -4260,7 +4340,7 @@ OMR::Node::countChildren(TR::ILOpCodes opcode)
 bool
 OMR::Node::requiresRegisterPair(TR::Compilation *comp)
    {
-   return (self()->getType().isInt64() && TR::Compiler->target.is32Bit() && !comp->cg()->use64BitRegsOn32Bit());
+   return (self()->getType().isInt64() && comp->target().is32Bit() && !comp->cg()->use64BitRegsOn32Bit());
    }
 
 
@@ -4532,7 +4612,7 @@ OMR::Node::get64bitIntegralValue()
    else if (type.isInt64())
       return self()->getLongInt();
    else if (type.isAddress())
-      return self()->getAddress(); //TR::Compiler->target.is64Bit() ? getUnsignedLongInt() : getUnsignedInt();
+      return self()->getAddress();
    else
       {
       TR_ASSERT(false, "Must be an integral or address but it is type %s on node %p\n", self()->getDataType().toString(), self());
@@ -4557,7 +4637,7 @@ OMR::Node::set64bitIntegralValue(int64_t value)
       self()->setLongInt(value);
    else if (type.isAddress())
       {
-      if (TR::Compiler->target.is64Bit())
+      if (TR::comp()->target().is64Bit())
          self()->setLongInt(value);
       else
          self()->setInt((int32_t)value);
@@ -4582,7 +4662,7 @@ OMR::Node::get64bitIntegralValueAsUnsigned()
    else if (type.isInt64())
       return self()->getUnsignedLongInt();
    else if (type.isAddress())
-      return TR::Compiler->target.is64Bit() ? self()->getUnsignedLongInt() : self()->getUnsignedInt();
+      return TR::comp()->target().is64Bit() ? self()->getUnsignedLongInt() : self()->getUnsignedInt();
    else
       {
       TR_ASSERT(false, "Must be an integral or address but it is type %s", self()->getDataType().toString());
@@ -5061,6 +5141,8 @@ TR::SymbolReference *
 OMR::Node::getSymbolReference()
    {
 #if !defined(REMOVE_REGLS_SYMREFS_FROM_GETSYMREF)
+   // Issue #4647 was created to track the investigation and removal of this guarded code.
+   //
    // This code is to be removed, once all illegal accesses of _regLoadStoreSymbolReference are removed
    if (self()->hasRegLoadStoreSymbolReference())
       return self()->getRegLoadStoreSymbolReference();
@@ -5074,6 +5156,8 @@ TR::SymbolReference    *
 OMR::Node::setSymbolReference(TR::SymbolReference * p)
    {
 #if !defined(REMOVE_REGLS_SYMREFS_FROM_SETSYMREF)
+   // Issue #4647 was created to track the investigation and removal of this guarded code.
+   //
    if (self()->hasRegLoadStoreSymbolReference())
       {
       p = self()->setRegLoadStoreSymbolReference(p);
@@ -5395,109 +5479,6 @@ OMR::Node::printIsInvalid8BitGlobalRegister()
    return self()->isInvalid8BitGlobalRegister() ? "invalid8BitGlobalRegister " : "";
    }
 
-
-
-const char *
-OMR::Node::printIsHPREligible ()
-   {
-   return self()->getIsHPREligible() ? "canBeAssignedToHPR " : "";
-   }
-
-/**
- * Call this after all of the node's children are simulated during GRA
- */
-bool
-OMR::Node::isEligibleForHighWordOpcode()
-   {
-   if (self()->getNumChildren() >2)
-      {
-      self()->resetIsHPREligible();
-      return false;
-      }
-
-   TR::Node * firstChild = NULL;
-   TR::Node * secondChild = NULL;
-
-   if (self()->getNumChildren() >= 1)
-      {
-      firstChild = self()->getFirstChild();
-      }
-   if (self()->getNumChildren() == 2)
-      {
-      secondChild = self()->getSecondChild();
-      }
-
-   switch (self()->getOpCodeValue())
-      {
-      case TR::iconst:
-         self()->setIsHPREligible();
-         return true;
-         break;
-      case TR::iadd:
-      case TR::isub:
-         if (firstChild->getIsHPREligible())
-            {
-            self()->setIsHPREligible();
-            return true;
-            }
-         break;
-      case TR::imul:
-      case TR::idiv:
-         if (firstChild->getIsHPREligible())
-            {
-            if (secondChild->isPowerOfTwo() ||
-                (secondChild->getOpCodeValue() == TR::iconst &&
-                 ((secondChild->getInt() % 2) == 0)))
-               {
-               // this guy can actually stay in either low or high word
-               self()->resetIsHPREligible();
-               return true;
-               }
-            }
-         break;
-      case TR::ificmpeq:
-      case TR::ificmpne:
-      case TR::ificmpge:
-      case TR::ificmpgt:
-      case TR::ificmple:
-      case TR::ificmplt:
-         if (firstChild->getIsHPREligible())
-            {
-            self()->resetIsHPREligible();
-            return true;
-            }
-         break;
-      case TR::iload:
-         self()->setIsHPREligible();
-         return true;
-      case TR::istore:
-         if (firstChild->getIsHPREligible())
-            {
-            self()->resetIsHPREligible();
-            return true;
-            }
-         break;
-      case TR::istorei:
-         if (secondChild->getIsHPREligible())
-            {
-            self()->resetIsHPREligible();
-            return true;
-            }
-         break;
-      case TR::treetop:
-         self()->resetIsHPREligible();
-         return true;
-      default:
-         self()->resetIsHPREligible();
-         return false;
-         break;
-      }
-   self()->resetIsHPREligible();
-   return false;
-   }
-
-
-
 bool
 OMR::Node::isDirectMemoryUpdate()
    {
@@ -5806,6 +5787,35 @@ const char *
 OMR::Node::printIsHeapificationAlloc()
    {
    return self()->chkHeapificationAlloc() ? "HeapificationAlloc " : "";
+   }
+
+
+bool
+OMR::Node::isIdentityless()
+   {
+   TR_ASSERT(self()->getOpCode().isNew(), "Opcode must be isNew");
+   return _flags.testAny(Identityless);
+   }
+
+void
+OMR::Node::setIdentityless(bool v)
+   {
+   TR::Compilation * c = TR::comp();
+   TR_ASSERT(self()->getOpCode().isNew(), "Opcode must be isNew");
+   if (performNodeTransformation2(c,"O^O NODE FLAGS: Setting Identityless flag on node %p to %d\n", self(), v))
+      _flags.set(Identityless, v);
+   }
+
+bool
+OMR::Node::chkIdentityless()
+   {
+   return self()->getOpCode().isNew() && _flags.testAny(Identityless);
+   }
+
+const char *
+OMR::Node::printIsIdentityless()
+   {
+   return self()->chkIdentityless() ? "Identityless " : "";
    }
 
 
@@ -6989,7 +6999,7 @@ OMR::Node::setSkipWrtBar(bool v)
 bool
 OMR::Node::chkSkipWrtBar()
    {
-   return self()->getOpCode().isWrtBar() && debug("useHeapObjectFlags") && _flags.testAny(SkipWrtBar);
+   return self()->getOpCode().isWrtBar() && _flags.testAny(SkipWrtBar);
    }
 
 const char *
@@ -8183,13 +8193,15 @@ OMR::Node::printCanSkipZeroInitialization()
 bool
 OMR::Node::isAdjunct()
    {
-   return (self()->getOpCodeValue() == TR::lmul || self()->getOpCodeValue() == TR::luadd || self()->getOpCodeValue() == TR::lusub) && _flags.testAny(adjunct);
+   return (self()->getOpCodeValue() == TR::lmul
+   || self()->getOpCodeValue() == TR::ladd || self()->getOpCodeValue() == TR::lsub) && _flags.testAny(adjunct);
    }
 
 void
 OMR::Node::setIsAdjunct(bool v)
    {
-   TR_ASSERT(self()->getOpCodeValue() == TR::lmul || self()->getOpCodeValue() == TR::luadd || self()->getOpCodeValue() == TR::lusub, "Opcode must be lmul, lusub, or luadd");
+   TR_ASSERT(self()->getOpCodeValue() == TR::lmul
+   || self()->getOpCodeValue() == TR::ladd || self()->getOpCodeValue() == TR::lsub, "Opcode must be lmul, ladd or lsub");
    _flags.set(adjunct, v);
    }
 
@@ -8714,6 +8726,19 @@ OMR::Node::isPotentialOSRPointHelperCall()
    if (self()->getOpCode().isCall()
        && self()->getSymbol()->isMethod()
        && c->getSymRefTab()->isNonHelper(self()->getSymbolReference(), TR::SymbolReferenceTable::potentialOSRPointHelperSymbol))
+      return true;
+
+   return false;
+   }
+
+bool
+OMR::Node::isEAEscapeHelperCall()
+   {
+   TR::Compilation *c = TR::comp();
+
+   if (self()->getOpCode().isCall()
+       && self()->getSymbol()->isMethod()
+       && c->getSymRefTab()->isNonHelper(self()->getSymbolReference(), TR::SymbolReferenceTable::eaEscapeHelperSymbol))
       return true;
 
    return false;

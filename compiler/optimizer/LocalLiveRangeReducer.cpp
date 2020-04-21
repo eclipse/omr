@@ -23,7 +23,7 @@
 
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
@@ -69,7 +69,7 @@ void TR_LocalLiveRangeReduction::postPerformOnBlocks()
 
 int32_t TR_LocalLiveRangeReduction::perform()
    {
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp()->target().cpu.isZ())
       return false;
 
    TR::TreeTop * exitTT, * nextTT;
@@ -491,7 +491,7 @@ bool TR_LocalLiveRangeReduction::isAnySymInDefinedOrUsedBy(TR_TreeRefInfo *curre
       return true;
       }
 
-   if (TR::Compiler->target.cpu.isPower() && opCode.getOpCodeValue() == TR::allocationFence)
+   if (comp()->target().cpu.isPower() && opCode.getOpCodeValue() == TR::allocationFence)
       {
       // Can't move allocations past flushes
       if (movingNode->getOpCodeValue() == TR::treetop &&
@@ -561,7 +561,7 @@ bool TR_LocalLiveRangeReduction::isAnySymInDefinedOrUsedBy(TR_TreeRefInfo *curre
             return true;
             }
 
-    	 else if (TR::Compiler->target.is64Bit() &&
+       else if (comp()->target().is64Bit() &&
     		  movingNode->getOpCode().isBndCheck() &&
     		  ((opCode.getOpCodeValue() == TR::i2l) || (opCode.getOpCodeValue() == TR::iu2l)) &&
     		  !child->isNonNegative())

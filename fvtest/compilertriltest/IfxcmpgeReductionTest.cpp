@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 
 // C++11 upgrade (Issue #1916).
 template <typename ValType>
-class IfxcmpgeReductionTest : public ::testing::TestWithParam<std::tuple<ValType, ValType, int32_t (*)(ValType, ValType)>>
+class IfxcmpgeReductionTest : public TRTest::TestWithPortLib, public ::testing::WithParamInterface<std::tuple<ValType, ValType, int32_t (*)(ValType, ValType)>>
    {
    public:
 
@@ -92,6 +92,8 @@ class Int8ReductionTest : public IfxcmpgeReductionTest<int8_t> {};
 
 TEST_P(Int8ReductionTest, Reduction)
    {
+   SKIP_ON_RISCV(MissingImplementation);
+
    auto param = to_struct(GetParam());
 
    char inputTrees[600] = {0};
@@ -117,7 +119,7 @@ TEST_P(Int8ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -136,6 +138,8 @@ class UInt8ReductionTest : public IfxcmpgeReductionTest<uint8_t> {};
 
 TEST_P(UInt8ReductionTest, Reduction)
    {
+   SKIP_ON_RISCV(MissingImplementation);
+
    auto param = to_struct(GetParam());
 
    char inputTrees[600] = {0};
@@ -161,7 +165,7 @@ TEST_P(UInt8ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -180,6 +184,8 @@ class Int16ReductionTest : public IfxcmpgeReductionTest<int16_t> {};
 
 TEST_P(Int16ReductionTest, Reduction)
    {
+   SKIP_ON_RISCV(MissingImplementation);
+
    auto param = to_struct(GetParam());
 
    char inputTrees[600] = {0};
@@ -205,7 +211,7 @@ TEST_P(Int16ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -224,6 +230,8 @@ class UInt16ReductionTest : public IfxcmpgeReductionTest<uint16_t> {};
 
 TEST_P(UInt16ReductionTest, Reduction)
    {
+   SKIP_ON_RISCV(MissingImplementation);
+
    auto param = to_struct(GetParam());
 
    char inputTrees[600] = {0};
@@ -249,7 +257,7 @@ TEST_P(UInt16ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -292,7 +300,7 @@ TEST_P(Int32ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -335,7 +343,7 @@ TEST_P(UInt32ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -378,7 +386,7 @@ TEST_P(Int64ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -421,7 +429,7 @@ TEST_P(UInt64ReductionTest, Reduction)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler{trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 

@@ -26,9 +26,10 @@
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/Machine_inlines.hpp"
@@ -1709,7 +1710,7 @@ OMR::X86::Machine::cloneRegisterFile(TR::RealRegister **registerFile, TR_Allocat
    for (i = TR::RealRegister::FirstGPR; i <= endReg; i = ((i==TR::RealRegister::LastAssignableGPR) ? TR::RealRegister::FirstXMMR : i+1))
       {
       registerFileClone[i] = (TR::RealRegister *)self()->cg()->trMemory()->allocateMemory(sizeof(TR::RealRegister), allocKind);
-      memcpy(registerFileClone[i], registerFile[i], sizeof(TR::RealRegister));
+      *registerFileClone[i] = *registerFile[i];
       }
 
    // the vfp entry is a real register and it must always point to the same _frameRegister pointer so the memRef assignRegisters check
@@ -1858,12 +1859,12 @@ TR::RealRegister **OMR::X86::Machine::captureRegisterFile()
       {
       registerFileClone[i] =
          (TR::RealRegister *)self()->cg()->trMemory()->allocateMemory(sizeof(TR::RealRegister), heapAlloc);
-      memcpy(registerFileClone[i], _registerFile[i], sizeof(TR::RealRegister));
+      *registerFileClone[i] = *_registerFile[i];
       }
 
    registerFileClone[TR::RealRegister::vfp] =
       (TR::RealRegister *)self()->cg()->trMemory()->allocateMemory(sizeof(TR::RealRegister), heapAlloc);
-   memcpy(registerFileClone[TR::RealRegister::vfp], _registerFile[TR::RealRegister::vfp], sizeof(TR::RealRegister));
+   *registerFileClone[TR::RealRegister::vfp] = *_registerFile[TR::RealRegister::vfp];
 
    return registerFileClone;
    }
@@ -1901,7 +1902,7 @@ void OMR::X86::Machine::installRegisterFile(TR::RealRegister **registerFileCopy)
       //
       bool wasAssigned = _registerFile[i]->getHasBeenAssignedInMethod();
 
-      memcpy(_registerFile[i], registerFileCopy[i], sizeof(TR::RealRegister));
+      *_registerFile[i] = *registerFileCopy[i];
 
       // Copy the sticky bits.
       //
@@ -1918,7 +1919,7 @@ void OMR::X86::Machine::installRegisterFile(TR::RealRegister **registerFileCopy)
          }
       }
 
-   memcpy(_registerFile[TR::RealRegister::vfp], registerFileCopy[TR::RealRegister::vfp], sizeof(TR::RealRegister));
+   *_registerFile[TR::RealRegister::vfp] = *registerFileCopy[TR::RealRegister::vfp];
    }
 
 TR::Register **OMR::X86::Machine::captureRegisterAssociations()
@@ -1935,7 +1936,7 @@ TR::Register **OMR::X86::Machine::captureRegisterAssociations()
          {
          registerAssociationsClone[i] =
             (TR::Register *)self()->cg()->trMemory()->allocateMemory(sizeof(TR::Register), heapAlloc);
-         memcpy(registerAssociationsClone[i], _registerAssociations[i], sizeof(TR::Register));
+         *registerAssociationsClone[i] = *_registerAssociations[i];
          }
       else
          {
@@ -1947,7 +1948,7 @@ TR::Register **OMR::X86::Machine::captureRegisterAssociations()
       {
       registerAssociationsClone[TR::RealRegister::vfp] =
          (TR::Register *)self()->cg()->trMemory()->allocateMemory(sizeof(TR::Register), heapAlloc);
-      memcpy(registerAssociationsClone[TR::RealRegister::vfp], _registerAssociations[TR::RealRegister::vfp], sizeof(TR::Register));
+      *registerAssociationsClone[TR::RealRegister::vfp] = *_registerAssociations[TR::RealRegister::vfp];
       }
    else
       {

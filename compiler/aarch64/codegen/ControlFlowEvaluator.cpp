@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,14 +20,19 @@
  *******************************************************************************/
 
 #include "codegen/ARM64ConditionCode.hpp"
+#include "codegen/ARM64HelperCallSnippet.hpp"
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+
+static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg);
 
 TR::Register *
 genericReturnEvaluator(TR::Node *node, TR::RealRegister::RegNum rnum, TR_RegisterKinds rk, TR_ReturnInfo i,  TR::CodeGenerator *cg)
@@ -45,18 +50,22 @@ genericReturnEvaluator(TR::Node *node, TR::RealRegister::RegNum rnum, TR_Registe
    return NULL;
    }
 
-// also handles iureturn
 TR::Register *
 OMR::ARM64::TreeEvaluator::ireturnEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return genericReturnEvaluator(node, cg->getProperties().getIntegerReturnRegister(), TR_GPR, TR_IntReturn, cg);
    }
 
-// also handles lureturn, areturn
 TR::Register *
 OMR::ARM64::TreeEvaluator::lreturnEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return genericReturnEvaluator(node, cg->getProperties().getLongReturnRegister(), TR_GPR, TR_LongReturn, cg);
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::areturnEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return genericReturnEvaluator(node, cg->getProperties().getLongReturnRegister(), TR_GPR, TR_ObjectReturn, cg);
    }
 
 // void return
@@ -88,11 +97,36 @@ TR::Register *OMR::ARM64::TreeEvaluator::gotoEvaluator(TR::Node *node, TR::CodeG
 
 static TR::Instruction *ificmpHelper(TR::Node *node, TR::ARM64ConditionCode cc, bool is64bit, TR::CodeGenerator *cg)
    {
+   if (virtualGuardHelper(node, cg))
+      return NULL;
+
+   TR::Compilation *comp = cg->comp();
    TR::Node *firstChild = node->getFirstChild();
    TR::Node *secondChild = node->getSecondChild();
    TR::Node *thirdChild = NULL;
    TR::Register *src1Reg = cg->evaluate(firstChild);
    bool useRegCompare = true;
+
+#ifdef J9_PROJECT_SPECIFIC
+if (cg->profiledPointersRequireRelocation() && secondChild->getOpCodeValue() == TR::aconst &&
+   (secondChild->isClassPointerConstant() || secondChild->isMethodPointerConstant()))
+   {
+   if (node->isProfiledGuard())
+      {
+      TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
+      TR_AOTGuardSite *site = comp->addAOTNOPSite();
+      site->setType(TR_ProfiledGuard);
+      site->setGuard(virtualGuard);
+      site->setNode(node);
+      site->setAconstNode(secondChild);
+      }
+   else
+      {
+      TR_ASSERT(!(node->isNopableInlineGuard()),"Should not evaluate class or method pointer constants underneath NOPable guards as they are runtime assumptions handled by virtualGuardHelper");
+      cg->evaluate(secondChild);
+      }
+   }
+#endif
 
    if (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)
       {
@@ -136,7 +170,6 @@ static TR::Instruction *ificmpHelper(TR::Node *node, TR::ARM64ConditionCode cc, 
    return result;
    }
 
-// also handles ifiucmpeq
 TR::Register *
 OMR::ARM64::TreeEvaluator::ificmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -144,7 +177,6 @@ OMR::ARM64::TreeEvaluator::ificmpeqEvaluator(TR::Node *node, TR::CodeGenerator *
    return NULL;
    }
 
-// also handles ifiucmpne
 TR::Register *
 OMR::ARM64::TreeEvaluator::ificmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -216,7 +248,7 @@ OMR::ARM64::TreeEvaluator::iflcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *
    return NULL;
    }
 
-// also handles iflucmpne, ifacmpne
+// also handles ifacmpne
 TR::Register *
 OMR::ARM64::TreeEvaluator::iflcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -376,14 +408,14 @@ OMR::ARM64::TreeEvaluator::iucmpgtEvaluator(TR::Node *node, TR::CodeGenerator *c
    return icmpHelper(node, TR::CC_HI, false, cg);
    }
 
-// also handles lucmpeq
+// also handles lucmpeq, acmpeq
 TR::Register *
 OMR::ARM64::TreeEvaluator::lcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(node, TR::CC_EQ, true, cg);
    }
 
-// also handles lucmpne
+// also handles lucmpne, acmpne
 TR::Register *
 OMR::ARM64::TreeEvaluator::lcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -414,24 +446,28 @@ OMR::ARM64::TreeEvaluator::lcmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg
    return icmpHelper(node, TR::CC_LE, true, cg);
    }
 
+// also handles acmplt
 TR::Register *
 OMR::ARM64::TreeEvaluator::lucmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(node, TR::CC_CC, true, cg);
    }
 
+// also handles acmpge
 TR::Register *
 OMR::ARM64::TreeEvaluator::lucmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(node, TR::CC_CS, true, cg);
    }
 
+// also handles acmpgt
 TR::Register *
 OMR::ARM64::TreeEvaluator::lucmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(node, TR::CC_HI, true, cg);
    }
 
+// also handles acmple
 TR::Register *
 OMR::ARM64::TreeEvaluator::lucmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -470,36 +506,144 @@ OMR::ARM64::TreeEvaluator::acmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::lookupEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::lookupEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   int32_t numChildren = node->getNumChildren();
+   TR::Node *selectorNode = node->getFirstChild();
+   TR::Register *selectorReg = cg->evaluate(selectorNode);
+   TR::Node *defaultChild = node->getSecondChild();
+   TR::RegisterDependencyConditions *conditions;
+   TR::Register *tmpRegister = NULL;
+
+   if (!constantIsUnsignedImm12(node->getChild(2)->getCaseConstant())
+       || !constantIsUnsignedImm12(node->getChild(numChildren-1)->getCaseConstant()))
+      {
+      conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+      tmpRegister = cg->allocateRegister();
+      TR::addDependency(conditions, tmpRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+      }
+   else
+      {
+      conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
+      }
+   TR::addDependency(conditions, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   for (int32_t i = 2; i < numChildren; i++)
+      {
+      TR::Node *child = node->getChild(i);
+      int32_t caseValue = child->getCaseConstant();
+
+      if (!constantIsUnsignedImm12(caseValue))
+         {
+         loadConstant32(cg, node, caseValue, tmpRegister);
+         generateCompareInstruction(cg, node, selectorReg, tmpRegister);
+         }
+      else
+         {
+         generateCompareImmInstruction(cg, node, selectorReg, caseValue);
+         }
+
+      TR::RegisterDependencyConditions *cond = conditions;
+      if (child->getNumChildren() > 0)
+         {
+         // GRA
+         cg->evaluate(child->getFirstChild());
+         cond = cond->clone(cg, generateRegisterDependencyConditions(cg, child->getFirstChild(), 0));
+         }
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, child->getBranchDestination()->getNode()->getLabel(), TR::CC_EQ, cond);
+      }
+
+   // Branch to default
+   if (defaultChild->getNumChildren() > 0)
+      {
+      // GRA
+      cg->evaluate(defaultChild->getFirstChild());
+      conditions = conditions->clone(cg, generateRegisterDependencyConditions(cg, defaultChild->getFirstChild(), 0));
+      }
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, defaultChild->getBranchDestination()->getNode()->getLabel(), conditions);
+
+   if (tmpRegister)
+      {
+      cg->stopUsingRegister(tmpRegister);
+      }
+
+   cg->decReferenceCount(selectorNode);
+   return NULL;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::tableEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   int32_t numBranchTableEntries = node->getNumChildren() - 2;
+   TR::Node *defaultChild = node->getSecondChild();
+   TR::Register *selectorReg = cg->evaluate(node->getFirstChild());
+   TR::Register *tmpRegister = NULL;
+   TR::RegisterDependencyConditions *conditions;
+   int32_t i;
 
-TR::Register *
-OMR::ARM64::TreeEvaluator::NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::NULLCHKEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   if (5 <= numBranchTableEntries)
+      {
+      conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+      tmpRegister = cg->allocateRegister();
+      TR::addDependency(conditions, tmpRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+      }
+   else
+      {
+      conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
+      }
+
+   TR::addDependency(conditions, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   if (0 < defaultChild->getNumChildren())
+      {
+      cg->evaluate(defaultChild->getFirstChild());
+      conditions = conditions->clone(cg, generateRegisterDependencyConditions(cg, defaultChild->getFirstChild(), 0));
+      }
+
+   if (5 > numBranchTableEntries)
+      {
+      for (i = 0; i < numBranchTableEntries; i++)
+         {
+         generateCompareImmInstruction(cg, node, selectorReg, i);
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, node->getChild(2+i)->getBranchDestination()->getNode()->getLabel(), TR::CC_EQ);
+         }
+
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, defaultChild->getBranchDestination()->getNode()->getLabel(), conditions);
+      }
+   else
+      {
+      if (!constantIsUnsignedImm12(numBranchTableEntries))
+         {
+         loadConstant32(cg, node, numBranchTableEntries, tmpRegister);
+         generateCompareInstruction(cg, node, selectorReg, tmpRegister);
+         }
+      else
+         {
+         generateCompareImmInstruction(cg, node, selectorReg, numBranchTableEntries);
+         }
+
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, defaultChild->getBranchDestination()->getNode()->getLabel(), TR::CC_CS);
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::adr, node, tmpRegister, 12); // distance between this instruction to the jump table
+      generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, tmpRegister, tmpRegister, selectorReg, TR::SH_LSL, 2);
+      generateRegBranchInstruction(cg, TR::InstOpCode::br, node, tmpRegister);
+
+      for (i = 2; i < node->getNumChildren()-1; i++)
+         {
+         generateLabelInstruction(cg, TR::InstOpCode::b, node, node->getChild(i)->getBranchDestination()->getNode()->getLabel());
+         }
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, node->getChild(i)->getBranchDestination()->getNode()->getLabel(), conditions);
+      }
+
+   if (NULL != tmpRegister)
+      cg->stopUsingRegister(tmpRegister);
+
+   cg->decReferenceCount(node->getFirstChild());
+   return NULL;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
 	// TODO:ARM64: Enable TR::TreeEvaluator::ZEROCHKEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
-
-TR::Register *
-OMR::ARM64::TreeEvaluator::ResolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::ResolveAndNULLCHKEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
 	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
 	}
 
@@ -537,3 +681,154 @@ OMR::ARM64::TreeEvaluator::ArrayCHKEvaluator(TR::Node *node, TR::CodeGenerator *
 	// TODO:ARM64: Enable TR::TreeEvaluator::ArrayCHKEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
 	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
 	}
+
+static TR::Register *
+commonMinMaxEvaluator(TR::Node *node, bool is64bit, TR::ARM64ConditionCode cc, TR::CodeGenerator *cg)
+   {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Register *src1Reg = cg->evaluate(firstChild);
+   TR::Register *trgReg;
+
+   if (cg->canClobberNodesRegister(firstChild))
+      {
+      trgReg = src1Reg; // use the first child as the target
+      }
+   else
+      {
+      trgReg = cg->allocateRegister();
+      }
+
+   TR_ASSERT(node->getNumChildren() == 2, "The number of children for imax/imin/lmax/lmin must be 2.");
+
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *src2Reg = cg->evaluate(secondChild);
+
+   // ToDo:
+   // Optimize the code by using generateCompareImmInstruction() when possible
+   generateCompareInstruction(cg, node, src1Reg, src2Reg, is64bit);
+
+   TR::InstOpCode::Mnemonic op = is64bit ? TR::InstOpCode::cselx : TR::InstOpCode::cselw;
+   generateCondTrg1Src2Instruction(cg, op, node, trgReg, src1Reg, src2Reg, cc);
+
+   node->setRegister(trgReg);
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+
+   return trgReg;
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::imaxEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return commonMinMaxEvaluator(node, false, TR::CC_GT, cg);
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::lmaxEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return commonMinMaxEvaluator(node, true, TR::CC_GT, cg);
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::iminEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return commonMinMaxEvaluator(node, false, TR::CC_LT, cg);
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::lminEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return commonMinMaxEvaluator(node, true, TR::CC_LT, cg);
+   }
+
+static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
+   {
+#ifdef J9_PROJECT_SPECIFIC
+   if (!cg->willGenerateNOPForVirtualGuard(node))
+      {
+      return false;
+      }
+
+   TR::Compilation *comp = cg->comp();
+   TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
+
+   TR_VirtualGuardSite *site = NULL;
+
+   if (cg->comp()->compileRelocatableCode())
+      {
+      site = (TR_VirtualGuardSite *)comp->addAOTNOPSite();
+      TR_AOTGuardSite *aotSite = (TR_AOTGuardSite *)site;
+      aotSite->setType(virtualGuard->getKind());
+      aotSite->setNode(node);
+
+      switch (virtualGuard->getKind())
+         {
+         case TR_DirectMethodGuard:
+         case TR_NonoverriddenGuard:
+         case TR_InterfaceGuard:
+         case TR_MethodEnterExitGuard:
+         case TR_HCRGuard:
+         case TR_AbstractGuard:
+            aotSite->setGuard(virtualGuard);
+            break;
+
+         case TR_ProfiledGuard:
+            break;
+
+         default:
+            TR_ASSERT(0, "got AOT guard in node but virtual guard not one of known guards supported for AOT. Guard: %d", virtualGuard->getKind());
+            break;
+         }
+      }
+   else if (!node->isSideEffectGuard())
+      {
+      site = virtualGuard->addNOPSite();
+      }
+   else
+      site = comp->addSideEffectNOPSite();
+
+   TR::RegisterDependencyConditions *deps;
+   if (node->getNumChildren() == 3)
+      {
+      TR::Node *third = node->getChild(2);
+      cg->evaluate(third);
+      deps = generateRegisterDependencyConditions(cg, third, 0);
+      }
+   else
+      deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 0, cg->trMemory());
+
+   if(virtualGuard->shouldGenerateChildrenCode())
+      cg->evaluateChildrenWithMultipleRefCount(node);
+
+   TR::LabelSymbol *label = node->getBranchDestination()->getNode()->getLabel();
+   generateVirtualGuardNOPInstruction(cg, node, site, deps, label);
+   cg->recursivelyDecReferenceCount(node->getFirstChild());
+   cg->recursivelyDecReferenceCount(node->getSecondChild());
+
+   return true;
+#else
+   return false;
+#endif
+   }
+
+TR::Register *OMR::ARM64::TreeEvaluator::igotoEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *labelAddr = node->getFirstChild();
+   TR::Register *addrReg = cg->evaluate(labelAddr);
+   TR::RegisterDependencyConditions *deps = NULL;
+   if (node->getNumChildren() > 1)
+      {
+      TR_ASSERT(node->getNumChildren() == 2 && node->getChild(1)->getOpCodeValue() == TR::GlRegDeps, "igoto has maximum of two children and second one must be global register dependency");
+      TR::Node *glregdep = node->getChild(1);
+      cg->evaluate(glregdep);
+      deps = generateRegisterDependencyConditions(cg, glregdep, 0);
+      cg->decReferenceCount(glregdep);
+      }
+   if (deps)
+      generateRegBranchInstruction(cg, TR::InstOpCode::br, node, addrReg, deps);
+   else
+      generateRegBranchInstruction(cg, TR::InstOpCode::br, node, addrReg);
+   cg->decReferenceCount(labelAddr);
+   node->setRegister(NULL);
+   return NULL;
+   }

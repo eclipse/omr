@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1898,7 +1898,6 @@ TEST(PortFileStreamTest, omrfilestream_test_text)
 	/*
 	 * This string is the sequence U+0024, U+00A2, U+20AC followed by newlines.
 	 * They are 1 byte, 2 byte, and 3 byte characters, respectively.
-	 * "$\n¢\n€\n"
 	 */
 
 	/* modified utf-8 */

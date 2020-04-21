@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,7 @@ MM_MemoryPoolAggregatedCellList::preAllocateCells(MM_EnvironmentBase* env, uintp
 {
 	uintptr_t desiredCellCount = desiredBytes / cellSize;
 	uintptr_t adjustedDesiredBytes = desiredBytes;
+	bool const compressed = compressObjectReferences();
 	
 	/* It's possible that the desiredBytes is less than the cellSize because the desiredBytes grows
 	 * irrespective of the size class.
@@ -79,7 +80,7 @@ MM_MemoryPoolAggregatedCellList::preAllocateCells(MM_EnvironmentBase* env, uintp
 		*preAllocatedBytes = desiredCellCount * cellSize;
 		_heapCurrent = (uintptr_t *)((uintptr_t)_heapCurrent + desiredCellCount * cellSize);
 		/* Make the remainder walkable */
-		MM_HeapLinkedFreeHeader::fillWithHoles(_heapCurrent, (uintptr_t)_heapTop - (uintptr_t)_heapCurrent);
+		MM_HeapLinkedFreeHeader::fillWithHoles(_heapCurrent, (uintptr_t)_heapTop - (uintptr_t)_heapCurrent, compressed);
 	} else {
 		/* Take the whole free chunk */
 		*preAllocatedBytes = (uintptr_t)_heapTop - (uintptr_t)_heapCurrent;
@@ -100,10 +101,11 @@ MM_MemoryPoolAggregatedCellList::reset(MM_EnvironmentBase *env, uintptr_t sizeCl
 {
 	uintptr_t numCells = env->getExtensions()->defaultSizeClasses->getNumCells(sizeClass);
 	uintptr_t cellSize = env->getExtensions()->defaultSizeClasses->getCellSize(sizeClass);
+	bool const compressed = compressObjectReferences();
 
 	_freeListHead = NULL;
-	MM_HeapLinkedFreeHeader *freeListEntry = MM_HeapLinkedFreeHeader::fillWithHoles((uintptr_t*)lowAddress, cellSize * numCells);
-	MM_HeapLinkedFreeHeader::linkInAsHead((volatile uintptr_t *)(&_freeListHead), freeListEntry);
+	MM_HeapLinkedFreeHeader *freeListEntry = MM_HeapLinkedFreeHeader::fillWithHoles((uintptr_t*)lowAddress, cellSize * numCells, compressed);
+	MM_HeapLinkedFreeHeader::linkInAsHead((volatile uintptr_t *)(&_freeListHead), freeListEntry, compressed);
 	resetCurrentEntry();
 
 	return numCells;
@@ -129,13 +131,14 @@ uintptr_t
 MM_MemoryPoolAggregatedCellList::debugCountFreeBytes()
 {
 	uintptr_t freeBytes = 0;
+	bool const compressed = compressObjectReferences();
 
 	/* The region lock will prevent allocation, but not sweeping. */
 	_lock.acquire();
 	MM_HeapLinkedFreeHeader *chunk = _freeListHead;
 	while (NULL != chunk) {
 		freeBytes += chunk->getSize();
-		chunk = chunk->getNext();
+		chunk = chunk->getNext(compressed);
 	}
 	_lock.release();
 	return freeBytes + (_heapTop - _heapCurrent);
@@ -145,6 +148,8 @@ MM_MemoryPoolAggregatedCellList::debugCountFreeBytes()
 void
 MM_MemoryPoolAggregatedCellList::updateCounts(MM_EnvironmentBase *env, bool fromFlush)
 {
+	bool const compressed = compressObjectReferences();
+
 	/* reserve the region so that nobody allocates while we flush */
 	_lock.acquire();
 	
@@ -164,7 +169,7 @@ MM_MemoryPoolAggregatedCellList::updateCounts(MM_EnvironmentBase *env, bool from
 	if (_heapCurrent < _heapTop) {
 		MM_HeapLinkedFreeHeader *chunk = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(_heapCurrent);
 		chunk->setSize((uintptr_t)_heapTop - (uintptr_t)_heapCurrent);
-		MM_HeapLinkedFreeHeader::linkInAsHead((volatile uintptr_t *)(&_freeListHead), chunk);
+		MM_HeapLinkedFreeHeader::linkInAsHead((volatile uintptr_t *)(&_freeListHead), chunk, compressed);
 		_heapCurrent = _heapTop = (uintptr_t *)_freeListHead;
 	}
 	
@@ -174,7 +179,7 @@ MM_MemoryPoolAggregatedCellList::updateCounts(MM_EnvironmentBase *env, bool from
 	MM_HeapLinkedFreeHeader *chunk = _freeListHead;
 	while (NULL != chunk) {
 		addFreeCount(chunk->getSize() / cellSize);
-		chunk = chunk->getNext();
+		chunk = chunk->getNext(compressed);
 	}
 
 	_lock.release();
@@ -183,12 +188,14 @@ MM_MemoryPoolAggregatedCellList::updateCounts(MM_EnvironmentBase *env, bool from
 void 
 MM_MemoryPoolAggregatedCellList::returnCell(MM_EnvironmentBase *env, uintptr_t *cell)
 {
+	bool const compressed = compressObjectReferences();
+
 	/* reserve the region so that nobody allocates while we return this cell to the free list */
 	_lock.acquire();
 
 	MM_HeapLinkedFreeHeader *cellHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(cell);
 	cellHeader->setSize(_region->getCellSize());
-	MM_HeapLinkedFreeHeader::linkInAsHead((volatile uintptr_t *)(&_freeListHead), cellHeader);
+	MM_HeapLinkedFreeHeader::linkInAsHead((volatile uintptr_t *)(&_freeListHead), cellHeader, compressed);
 	
 	_lock.release();
 }

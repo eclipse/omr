@@ -107,10 +107,8 @@ MM_SweepSchemeSegregated::sweep(MM_EnvironmentBase *env, MM_MemoryPoolSegregated
 		env->_currentTask->releaseSynchronizedGCThreads(env);
 	}
 	
-#if defined(OMR_GC_ARRAYLETS)
 	incrementalSweepArraylet(env);
 	env->_currentTask->synchronizeGCThreads(env, UNIQUE_ID);
-#endif /* OMR_GC_ARRAYLETS */
 	incrementalSweepLarge(env);
 	
 	MM_RegionPoolSegregated *regionPool = _memoryPool->getRegionPool();
@@ -157,12 +155,10 @@ MM_SweepSchemeSegregated::sweepRegion(MM_EnvironmentBase *env, MM_HeapRegionDesc
 		addBytesFreedAfterSweep(env, region);
 		break;
 
-#if defined(OMR_GC_ARRAYLETS)
 	case MM_HeapRegionDescriptor::ARRAYLET_LEAF:
 		sweepArrayletRegion(env, region);
 		addBytesFreedAfterSweep(env, region);
 		break;
-#endif /* defined(OMR_GC_ARRAYLETS) */
 
 	case MM_HeapRegionDescriptor::SEGREGATED_LARGE:
 		sweepLargeRegion(env, region);
@@ -302,7 +298,6 @@ MM_SweepSchemeSegregated::sweepSmallRegion(MM_EnvironmentBase *env, MM_HeapRegio
 	_memoryPool->getRegionPool()->addDarkMatterCellsAfterSweepForSizeClass(region->getSizeClass(), numCells - memoryPoolACL->getMarkCount() - memoryPoolACL->getFreeCount());
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 void
 MM_SweepSchemeSegregated::sweepArrayletRegion(MM_EnvironmentBase *env, MM_HeapRegionDescriptorSegregated *region)
 {
@@ -330,7 +325,6 @@ MM_SweepSchemeSegregated::sweepArrayletRegion(MM_EnvironmentBase *env, MM_HeapRe
 		}
 	}
 }
-#endif /* defined(OMR_GC_ARRAYLETS) */
 
 void
 MM_SweepSchemeSegregated::sweepLargeRegion(MM_EnvironmentBase *env, MM_HeapRegionDescriptorSegregated *region)
@@ -358,10 +352,8 @@ MM_SweepSchemeSegregated::addBytesFreedAfterSweep(MM_EnvironmentBase *env, MM_He
 	uintptr_t currentFreeBytes = memoryPoolACL->getFreeCount();
 	if (region->isSmall()) {
 		currentFreeBytes *= region->getCellSize();
-#if defined(OMR_GC_ARRAYLETS)
 	} else if (region->isArraylet()) {
 		currentFreeBytes *= env->getOmrVM()->_arrayletLeafSize;
-#endif /* defined(OMR_GC_ARRAYLETS) */
 	} else {
 		Assert_MM_unreachable();
 	}

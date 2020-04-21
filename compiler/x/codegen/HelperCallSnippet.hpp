@@ -86,23 +86,6 @@ class X86HelperCallSnippet : public TR::X86RestartSnippet
    int32_t _offset; // special field for the jitReportMethodEnter helper
    };
 
-
-class X86CheckAsyncMessagesSnippet : public TR::X86HelperCallSnippet
-   {
-   public:
-
-   X86CheckAsyncMessagesSnippet(
-      TR::Node            *node,
-      TR::LabelSymbol      *restartLabel,
-      TR::LabelSymbol      *snippetLabel,
-      TR::CodeGenerator   *cg) :
-         TR::X86HelperCallSnippet(cg, node, restartLabel, snippetLabel, node->getSymbolReference())
-      {
-      }
-
-   virtual uint8_t *genHelperCall(uint8_t *buffer);
-   };
-
 }
 
 #endif

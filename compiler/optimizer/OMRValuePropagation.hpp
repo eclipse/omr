@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,6 +90,9 @@ template <class T> class TR_Stack;
 typedef TR::Node* (* ValuePropagationPtr)(OMR::ValuePropagation *, TR::Node *);
 extern const ValuePropagationPtr constraintHandlers[];
 
+typedef TR::typed_allocator<std::pair<TR::CFGEdge * const, TR_BitVector*>, TR::Region &> DefinedOnAllPathsMapAllocator;
+typedef std::map<TR::CFGEdge *, TR_BitVector *, std::less<TR::CFGEdge *>, DefinedOnAllPathsMapAllocator> DefinedOnAllPathsMap;
+
 namespace TR {
 
 class ArraycopyTransformation : public TR::Optimization
@@ -116,7 +119,7 @@ class ArraycopyTransformation : public TR::Optimization
 
    TR::TreeTop* createMultipleArrayNodes(TR::TreeTop* arrayTreeTop, TR::Node* node);
    TR::TreeTop* tryToSpecializeForLength(TR::TreeTop *tt, TR::Node *arraycopyNode);
-   TR::TreeTop* specializeForLength(TR::TreeTop *tt, TR::Node *arraycopyNode, uintptrj_t lengthInBytes,
+   TR::TreeTop* specializeForLength(TR::TreeTop *tt, TR::Node *arraycopyNode, uintptr_t lengthInBytes,
          TR::SymbolReference *srcRef,
          TR::SymbolReference *dstRef,
          TR::SymbolReference *lenRef,
@@ -487,23 +490,6 @@ class ValuePropagation : public TR::Optimization
    };
 
 
-   struct VPStringCached
-      {
-
-      TR_ALLOC(TR_Memory::ValuePropagation)
-
-      VPStringCached(TR::TreeTop *append1, TR::TreeTop *append2, TR::Node *appendString1, TR::Node *appendString2, TR::TreeTop *newTree, TR::TreeTop *toStringTree)
-         : _treetop1(append1), _treetop2(append2), _appendedString1(appendString1), _appendedString2(appendString2), _newTree(newTree), _toStringTree(toStringTree)
-         {}
-      TR::TreeTop                    *_treetop1;
-      TR::TreeTop                    *_treetop2;
-      TR::Node						 *_appendedString1;
-      TR::Node						 *_appendedString2;
-      TR::TreeTop					 *_newTree;
-      TR::TreeTop					 *_toStringTree;
-
-      };
-
    struct TR_TreeTopWrtBarFlag
       {
       TR_ALLOC(TR_Memory::ValuePropagation)
@@ -582,9 +568,6 @@ class ValuePropagation : public TR::Optimization
 
 
    void removeArrayCopyNode(TR::TreeTop *);
-   TR::SymbolReference * getStringCacheRef();
-   void transformStringConcats(VPStringCached *vcall);
-   void transformStringCtors(VPTreeTopPair *vcall2);
    void transformUnknownTypeArrayCopy(TR_TreeTopWrtBarFlag *);
    void transformReferenceArrayCopy(TR_TreeTopWrtBarFlag *);
    void transformReferenceArrayCopyWithoutCreatingStoreTrees(TR_TreeTopWrtBarFlag *arrayTree, TR::SymbolReference *srcObjRef, TR::SymbolReference *dstObjRef, TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, TR::SymbolReference *lenRef);
@@ -637,6 +620,16 @@ class ValuePropagation : public TR::Optimization
 
    int32_t getValueNumber(TR::Node *node);
 
+   /**
+    * @brief Supplemental functionality for constraining an acall node.  Projects
+    *        consuming OMR can implement this function to provide project-specific
+    *        functionality.
+    *
+    * @param[in] node : TR::Node of the call to constrain
+    *
+    * @return Resulting node with constraints applied.
+    */
+   virtual TR::Node *innerConstrainAcall(TR::Node *node) { return node; }
 
    void printStructureInfo(TR_Structure *structure, bool starting, bool lastTimeThrough);
    void printParentStructure(TR_Structure *structure);
@@ -672,6 +665,9 @@ class ValuePropagation : public TR::Optimization
    int32_t                         _firstInductionVariableValueNumber;
 
    ValueConstraints                _curConstraints;
+   TR_BitVector                    *_curDefinedOnAllPaths;
+   TR_BitVector                    *_defMergedNodes;
+   DefinedOnAllPathsMap            *_definedOnAllPaths;
    ValueConstraintHandler          _vcHandler;
 
    vcount_t                        _visitCount;
@@ -792,6 +788,7 @@ class ValuePropagation : public TR::Optimization
       bool _versionBucket;
       bool _notToVersionBucket;
       TR_ScratchList<TR::Node> *_bndChecks;
+      TR_OpaqueClassBlock *_instanceOfClass;
       };
    struct ArrayLengthToVersion : public TR_Link<ArrayLengthToVersion>
       {
@@ -818,7 +815,7 @@ class ValuePropagation : public TR::Optimization
    void removeBndChecksFromFastVersion(BlockVersionInfo *);
    TR::Node * findVarOfSimpleForm(TR::Node *);
    TR::Node * findVarOfSimpleFormOld(TR::Node *);
-   void createNewBucketForArrayIndex(ArrayLengthToVersion *,TR_LinkHead<ArrayLengthToVersion> *, int32_t , TR::Node *, TR::Node *, TR_OpaqueClassBlock *);
+   void createNewBucketForArrayIndex(ArrayLengthToVersion *,TR_LinkHead<ArrayLengthToVersion> *, int32_t , TR::Node *, TR::Node *, TR_OpaqueClassBlock *, TR_OpaqueClassBlock *);
    void collectDefSymRefs(TR::Node *,TR::Node *);
    bool prepareForBlockVersion(TR_LinkHead<ArrayLengthToVersion> *);
    void addToSortedList(TR_LinkHead<ArrayLengthToVersion> *,ArrayLengthToVersion *);
@@ -908,8 +905,6 @@ class ValuePropagation : public TR::Optimization
    List<TR_ArrayCopySpineCheck> _arrayCopySpineCheck;
    List<TR::TreeTop> _multiLeafCallsToInline;
    List<TR_TreeTopNodePair> _scalarizedArrayCopies;
-   List<VPStringCached> _cachedStringBufferVcalls;
-   List<VPTreeTopPair> _cachedStringPeepHolesVcalls;
    List<TR::TreeTop> _converterCalls;
    List<TR::TreeTop> _objectCloneCalls;
    List<TR::TreeTop> _arrayCloneCalls;

@@ -65,9 +65,8 @@ jit_cleanobjs::
 jit_cleandll::
 	rm -f $(JIT_PRODUCT_SONAME)
 
-$(call RULE.cpp,$(JIT_PRODUCT_BUILDNAME_OBJ),$(JIT_PRODUCT_BUILDNAME_SRC))    
-    
-.PHONY: $(JIT_PRODUCT_BUILDNAME_SRC)
+$(call RULE.cpp,$(JIT_PRODUCT_BUILDNAME_OBJ),$(JIT_PRODUCT_BUILDNAME_SRC))
+
 $(JIT_PRODUCT_BUILDNAME_SRC): | jit_createdirs
 	$(PERL_PATH) $(GENERATE_VERSION_SCRIPT) $(PRODUCT_RELEASE) $@
 
@@ -88,7 +87,7 @@ $(foreach SRCFILE,$(JIT_PRODUCT_BACKEND_SOURCES),\
 $(foreach SRCFILE,$(JIT_PRODUCT_SOURCE_FILES),\
     $(call RULE$(suffix $(SRCFILE)),$(FIXED_OBJBASE)/$(basename $(SRCFILE))$(OBJSUFF),$(FIXED_SRCBASE)/$(SRCFILE)) \
  )
- 
+
 #
 # Generate a rule that will create every directory before the build starts
 #

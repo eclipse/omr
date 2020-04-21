@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@
 #include "omrcomp.h"
 #include "omrutilbase.h"
 
-#if defined(LINUX) && defined(OMR_ARCH_ARM)
+#if defined(LINUX) && (defined(OMR_ARCH_ARM) || defined(OMR_ARCH_RISCV) || defined(RISCV64))
 #include <time.h>
 #endif
 
@@ -81,7 +81,7 @@ getTimebase(void)
 	asm("stck %0" : "=m" (tsc));
 #elif defined(J9ZOS390)
 	__stck(&tsc);
-#elif defined(LINUX) && defined(OMR_ARCH_ARM)
+#elif defined(LINUX) && (defined(OMR_ARCH_ARM) || defined(OMR_ARCH_RISCV) || defined(RISCV64))
 	/* For now, use the system nano clock */
 #define J9TIME_NANOSECONDS_PER_SECOND	J9CONST_U64(1000000000)
 	struct timespec ts;

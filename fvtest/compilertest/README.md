@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2017 IBM Corp. and others
+Copyright (c) 2016, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,7 @@ its corresponding test group.
 
 Each OpCode test need to be paired with an ILInjector. ILInjectors should
 be put in `<omr_root_folder>/fvtest/compilertest/ilgen/`. Examples can be
-found in *`BinaryOpIlInjector`*, *`TernaryOpIlInjector`* and *`UnaryOpIlInjector`*.
+found in *`BinaryOpIlInjector`*, *`SelectOpIlInjector`* and *`UnaryOpIlInjector`*.
 
 Coding style in Test compiler is mostly using Whitesmiths format and Camel case.  
 Some guidelines for naming convention:

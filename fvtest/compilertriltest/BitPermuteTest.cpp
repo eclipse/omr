@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 #include "JitTest.hpp"
 #include "default_compiler.hpp"
+#include "omrformatconsts.h"
 
 uint8_t byteValues[] = {
    0x00,
@@ -146,10 +147,10 @@ TEST_P(lBitPermuteTest, ConstAddressLengthTest)
       "  (lreturn                         "
       "  (lbitpermute                     "
       "   (lload parm=0)                  "
-      "   (aconst %llu)                   "
-      "   (iconst %llu)                   "
+      "   (aconst %" OMR_PRIuPTR ")       "
+      "   (iconst %" OMR_PRIu32 ")        "
       "  ))))                             ",
-      param.arrayAddress,
+      reinterpret_cast<uintptr_t>(param.arrayAddress),
       param.arrayLength
       );
 
@@ -157,7 +158,7 @@ TEST_P(lBitPermuteTest, ConstAddressLengthTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -178,17 +179,17 @@ TEST_P(lBitPermuteTest, ConstAddressTest)
       "  (lreturn                                "
       "  (lbitpermute                            "
       "   (lload parm=0)                         "
-      "   (aconst %llu)                          "
+      "   (aconst %" OMR_PRIuPTR ")              "
       "   (iload parm=1)                         "
       "  ))))                                    ",
-      param.arrayAddress
+      reinterpret_cast<uintptr_t>(param.arrayAddress)
       );
 
    auto trees = parseString(inputTrees);
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -218,7 +219,7 @@ TEST_P(lBitPermuteTest, NoConstTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -245,10 +246,10 @@ TEST_P(iBitPermuteTest, ConstAddressLengthTest)
       "  (ireturn                         "
       "  (ibitpermute                     "
       "   (iload parm=0)                  "
-      "   (aconst %llu)                   "
-      "   (iconst %llu)                   "
+      "   (aconst %" OMR_PRIuPTR ")       "
+      "   (iconst %" OMR_PRIu32 ")        "
       "  ))))                             ",
-      maskedIndices,
+      reinterpret_cast<uintptr_t>(maskedIndices),
       param.arrayLength
       );
 
@@ -256,7 +257,7 @@ TEST_P(iBitPermuteTest, ConstAddressLengthTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -281,17 +282,17 @@ TEST_P(iBitPermuteTest, ConstAddressTest)
       "  (ireturn                                "
       "  (ibitpermute                            "
       "   (iload parm=0)                         "
-      "   (aconst %llu)                          "
+      "   (aconst %" OMR_PRIuPTR ")              "
       "   (iload parm=1)                         "
       "  ))))                                    ",
-      maskedIndices
+      reinterpret_cast<uintptr_t>(maskedIndices)
       );
 
    auto trees = parseString(inputTrees);
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -325,7 +326,7 @@ TEST_P(iBitPermuteTest, NoConstTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -339,9 +340,6 @@ class sBitPermuteTest : public BitPermuteTest<uint16_t> {};
 
 TEST_P(sBitPermuteTest, ConstAddressLengthTest)
    {
-   std::string arch = omrsysinfo_get_CPU_architecture();
-   SKIP_IF(OMRPORT_ARCH_S390 == arch || OMRPORT_ARCH_S390X == arch, KnownBug)
-      << "The Z code generator incorrectly spills sub-integer types arguments (see issue #3525)";
    auto param = to_struct(GetParam());
 
    uint8_t maskedIndices[16];
@@ -356,10 +354,10 @@ TEST_P(sBitPermuteTest, ConstAddressLengthTest)
       "  (su2i                            "
       "  (sbitpermute                     "
       "   (sload parm=0)                  "
-      "   (aconst %llu)                   "
-      "   (iconst %llu)                   "
+      "   (aconst %" OMR_PRIuPTR ")       "
+      "   (iconst %" OMR_PRIu32 ")        "
       "  )))))                            ",
-      maskedIndices,
+      reinterpret_cast<uintptr_t>(maskedIndices),
       param.arrayLength
       );
 
@@ -367,7 +365,7 @@ TEST_P(sBitPermuteTest, ConstAddressLengthTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -379,9 +377,6 @@ TEST_P(sBitPermuteTest, ConstAddressLengthTest)
 
 TEST_P(sBitPermuteTest, ConstAddressTest)
    {
-   std::string arch = omrsysinfo_get_CPU_architecture();
-   SKIP_IF(OMRPORT_ARCH_S390 == arch || OMRPORT_ARCH_S390X == arch, KnownBug)
-      << "The Z code generator incorrectly spills sub-integer types arguments (see issue #3525)";
    auto param = to_struct(GetParam());
 
    uint8_t maskedIndices[16];
@@ -396,17 +391,17 @@ TEST_P(sBitPermuteTest, ConstAddressTest)
       "  (su2i                                   "
       "  (sbitpermute                            "
       "   (sload parm=0)                         "
-      "   (aconst %llu)                          "
+      "   (aconst %" OMR_PRIuPTR ")              "
       "   (iload parm=1)                         "
       "  )))))                                   ",
-      maskedIndices
+      reinterpret_cast<uintptr_t>(maskedIndices)
       );
 
    auto trees = parseString(inputTrees);
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -418,9 +413,6 @@ TEST_P(sBitPermuteTest, ConstAddressTest)
 
 TEST_P(sBitPermuteTest, NoConstTest)
    {
-   std::string arch = omrsysinfo_get_CPU_architecture();
-   SKIP_IF(OMRPORT_ARCH_S390 == arch || OMRPORT_ARCH_S390X == arch, KnownBug)
-      << "The Z code generator incorrectly spills sub-integer types arguments (see issue #3525)";
    auto param = to_struct(GetParam());
 
    uint8_t maskedIndices[16];
@@ -444,7 +436,7 @@ TEST_P(sBitPermuteTest, NoConstTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -458,9 +450,6 @@ class bBitPermuteTest : public BitPermuteTest<uint8_t> {};
 
 TEST_P(bBitPermuteTest, ConstAddressLengthTest)
    {
-   std::string arch = omrsysinfo_get_CPU_architecture();
-   SKIP_IF(OMRPORT_ARCH_S390 == arch || OMRPORT_ARCH_S390X == arch, KnownBug)
-      << "The Z code generator incorrectly spills sub-integer types arguments (see issue #3525)";
    auto param = to_struct(GetParam());
 
    uint8_t maskedIndices[8];
@@ -475,10 +464,10 @@ TEST_P(bBitPermuteTest, ConstAddressLengthTest)
       "  (bu2i                          "
       "  (bbitpermute                   "
       "   (bload parm=0)                "
-      "   (aconst %llu)                 "
-      "   (iconst %llu)                 "
+      "   (aconst %" OMR_PRIuPTR ")     "
+      "   (iconst %" OMR_PRIu32 ")      "
       "  )))))                          ",
-      maskedIndices,
+      reinterpret_cast<uintptr_t>(maskedIndices),
       param.arrayLength
       );
 
@@ -486,7 +475,7 @@ TEST_P(bBitPermuteTest, ConstAddressLengthTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -498,9 +487,6 @@ TEST_P(bBitPermuteTest, ConstAddressLengthTest)
 
 TEST_P(bBitPermuteTest, ConstAddressTest)
    {
-   std::string arch = omrsysinfo_get_CPU_architecture();
-   SKIP_IF(OMRPORT_ARCH_S390 == arch || OMRPORT_ARCH_S390X == arch, KnownBug)
-      << "The Z code generator incorrectly spills sub-integer types arguments (see issue #3525)";
    auto param = to_struct(GetParam());
 
    uint8_t maskedIndices[8];
@@ -515,17 +501,17 @@ TEST_P(bBitPermuteTest, ConstAddressTest)
       "  (bu2i                                 "
       "  (bbitpermute                          "
       "   (bload parm=0)                       "
-      "   (aconst %llu)                        "
+      "   (aconst %" OMR_PRIuPTR ")            "
       "   (iload parm=1)                       "
       "  )))))                                 ",
-      maskedIndices
+      (uintptr_t)maskedIndices
       );
 
    auto trees = parseString(inputTrees);
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -537,9 +523,6 @@ TEST_P(bBitPermuteTest, ConstAddressTest)
 
 TEST_P(bBitPermuteTest, NoConstTest)
    {
-   std::string arch = omrsysinfo_get_CPU_architecture();
-   SKIP_IF(OMRPORT_ARCH_S390 == arch || OMRPORT_ARCH_S390X == arch, KnownBug)
-      << "The Z code generator incorrectly spills sub-integer types arguments (see issue #3525)";
    auto param = to_struct(GetParam());
 
    uint8_t maskedIndices[8];
@@ -563,7 +546,7 @@ TEST_P(bBitPermuteTest, NoConstTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 

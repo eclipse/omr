@@ -98,6 +98,7 @@ class OMR_EXTENSIBLE CodeGenPhase
    static void performRemoveUnusedLocalsPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performCleanUpFlagsPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase);
    static void performInsertDebugCountersPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase);
+   static void performExpandInstructionsPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase);
 
    protected:
 

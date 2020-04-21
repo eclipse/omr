@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2016 IBM Corp. and others
+# Copyright (c) 2015, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,12 +38,9 @@ ifeq (linux_390-64_cmprssptrs_codecov, $(SPEC))
     --enable-OMRTHREAD_LIB_UNIX \
     --enable-OMR_ARCH_S390 \
     --enable-OMR_ENV_DATA64 \
-    --enable-OMR_GC_COMPRESSED_POINTERS \
-    --enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-    --enable-OMR_INTERP_SMALL_MONITOR_SLOT \
     --enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
     --enable-OMR_THR_FORK_SUPPORT \
-    --enable-OMR_GC_ARRAYLETS
+    OMR_GC_POINTER_MODE=compressed
 endif
 
 ifeq (linux_390-64_cmprssptrs, $(SPEC))
@@ -51,12 +48,9 @@ ifeq (linux_390-64_cmprssptrs, $(SPEC))
     --enable-OMRTHREAD_LIB_UNIX \
     --enable-OMR_ARCH_S390 \
     --enable-OMR_ENV_DATA64 \
-    --enable-OMR_GC_COMPRESSED_POINTERS \
-    --enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-    --enable-OMR_INTERP_SMALL_MONITOR_SLOT \
     --enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
     --enable-OMR_THR_FORK_SUPPORT \
-    --enable-OMR_GC_ARRAYLETS
+    OMR_GC_POINTER_MODE=compressed
 endif
 
 ifeq (linux_390-64_codecov, $(SPEC))
@@ -65,8 +59,7 @@ ifeq (linux_390-64_codecov, $(SPEC))
     --enable-OMR_ARCH_S390 \
     --enable-OMR_ENV_DATA64 \
     --enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-    --enable-OMR_THR_FORK_SUPPORT \
-    --enable-OMR_GC_ARRAYLETS
+    --enable-OMR_THR_FORK_SUPPORT
 endif
 
 ifeq (linux_390-64, $(SPEC))
@@ -75,8 +68,7 @@ ifeq (linux_390-64, $(SPEC))
     --enable-OMR_ARCH_S390 \
     --enable-OMR_ENV_DATA64 \
     --enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-    --enable-OMR_THR_FORK_SUPPORT \
-    --enable-OMR_GC_ARRAYLETS
+    --enable-OMR_THR_FORK_SUPPORT
 endif
 
 ifeq (linux_390, $(SPEC))
@@ -84,8 +76,7 @@ ifeq (linux_390, $(SPEC))
     --enable-OMRTHREAD_LIB_UNIX \
     --enable-OMR_ARCH_S390 \
     --enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-    --enable-OMR_THR_FORK_SUPPORT \
-    --enable-OMR_GC_ARRAYLETS
+    --enable-OMR_THR_FORK_SUPPORT
 endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@
 #define ASM_CALL
 #endif
 
-#if defined(TR_HOST_S390) || defined(TR_HOST_X86) || defined(TR_HOST_ARM)
+#if defined(TR_HOST_S390) || defined(TR_HOST_X86) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
 // on these platforms, _patchVirtualGuard is written in C++
 extern "C" void _patchVirtualGuard(uint8_t *locationAddr, uint8_t *destinationAddr, int32_t smpFlag);
 #else

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,12 +40,12 @@
 #include "ParallelSweepScheme.hpp"
 
 /* Declaration of "C" style Read Barrier Verifier specific methods */
-#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 void poisonReferenceSlots(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region, omrobjectptr_t object, void *userData);
 void poisonReferenceSlot(MM_EnvironmentBase *env, GC_SlotObject *slotObject);
 void healReferenceSlot(MM_EnvironmentBase *env, GC_SlotObject *slotObject);
 void healReferenceSlots(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region, omrobjectptr_t object, void *userData);
-#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 
 class MM_CollectionStatisticsStandard;
 class MM_CompactScheme;
@@ -240,6 +240,12 @@ protected:
 	 */
 	virtual void processLargeAllocateStatsAfterSweep(MM_EnvironmentBase *env);
 
+	/**
+	 * compaction would change freeEntries stats, merge FreeEntryAllocateStats after compaction.
+	 * currently processLargeAllocateStatsAfterCompact() is same as processLargeAllocateStatsAfterSweep()
+	 */
+	void processLargeAllocateStatsAfterCompact(MM_EnvironmentBase *env);
+
 	virtual void postMark(MM_EnvironmentBase *env);
 
 	MM_ParallelSweepScheme*
@@ -268,10 +274,10 @@ public:
 	virtual bool collectorStartup(MM_GCExtensionsBase* extensions);
 	virtual void collectorShutdown(MM_GCExtensionsBase *extensions);
 
-#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 	void poisonHeap(MM_EnvironmentBase *env);
 	void healHeap(MM_EnvironmentBase *env);
-#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 
 	/**
 	 *  Fixes up all unloaded objects so that the heap can be walked and only live objects returned
@@ -283,7 +289,7 @@ public:
 
 	virtual bool heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress);
 	virtual bool heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress, void *lowValidAddress, void *highValidAddress);
-	virtual void heapReconfigured(MM_EnvironmentBase *env);
+	virtual void heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress);
 
 	virtual	uint32_t getGCTimePercentage(MM_EnvironmentBase *env);
 
@@ -318,6 +324,11 @@ public:
 #endif /* OMR_GC_MODRON_COMPACTION */
 
 	virtual void completeExternalConcurrentCycle(MM_EnvironmentBase *env);
+	/**
+	 * Notify any (concurrent) collector (like Concurrent Scavenger) that might block and hold VM access
+	 * that an Exclusive VM Access is to be requested so that VM access can be released
+	 */	
+	virtual void notifyAcquireExclusiveVMAccess(MM_EnvironmentBase *env);
 
 	MM_ParallelGlobalGC(MM_EnvironmentBase *env)
 		: MM_GlobalCollector()

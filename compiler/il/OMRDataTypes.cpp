@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -229,7 +229,7 @@ static int32_t OMRDataTypeSizes[] =
    8,                 // TR::Int64
    4,                 // TR::Float
    8,                 // TR::Double
-   sizeof(intptrj_t), // TR::Address
+   sizeof(intptr_t), // TR::Address
    16,                // TR::VectorInt8
    16,                // TR::VectorInt16
    16,                // TR::VectorInt32

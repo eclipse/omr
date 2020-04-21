@@ -26,8 +26,22 @@ MODULE_NAME := omrgctest
 ARTIFACT_TYPE := cxx_executable
 
 # source files in this directory
-SRCS := $(wildcard *.cpp)
-OBJECTS := $(SRCS:%.cpp=%) main_function
+SRCS := \
+  GCConfigObjectTable.cpp \
+  GCConfigTest.cpp \
+  gcTestHelpers.cpp \
+  main.cpp \
+  StartupManagerTestExample.cpp \
+  main_function.cpp
+
+ifeq (1, $(OMR_GC_VLHGC))
+ifeq (1, $(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD))
+SRCS += \
+  TestHeapRegionStateTable.cpp
+endif
+endif
+
+OBJECTS := $(SRCS:%.cpp=%)
 OBJECTS := $(addsuffix $(OBJEXT),$(OBJECTS))
 
 vpath main_function.cpp $(top_srcdir)/util/main_function

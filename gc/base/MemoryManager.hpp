@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,15 +94,6 @@ private:
 		return result;
 	}
 
-	/**
-	 * Check is provided page size larger then default page size from port library
-	 *
-	 * @param env environment
-	 * @param pageSize requested page size
-	 * @return true if page size is larger then default
-	 */
-	bool isLargePage(MM_EnvironmentBase* env, uintptr_t pageSize);
-
 protected:
 	/**
 	 * Provide an initialization for the class
@@ -126,6 +117,15 @@ public:
 	 * @return pointer to created instance of class
 	 */
 	static MM_MemoryManager* newInstance(MM_EnvironmentBase* env);
+
+	/**
+	 * Check is provided page size larger then default page size from port library
+	 *
+	 * @param env environment
+	 * @param pageSize requested page size
+	 * @return true if page size is larger then default
+	 */
+	bool isLargePage(MM_EnvironmentBase* env, uintptr_t pageSize);
 
 	/**
 	 * Kill this instance of the class
@@ -176,6 +176,23 @@ public:
 	 */
 	void destroyVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryHandle* handle);
 	
+	/**
+ 	 * Double maps arraylets, arrays that does not fit into one region are split into leaves, 
+ 	 * which are then double mapped by this function 
+ 	 *
+ 	 * @param pointer to memory handle
+ 	 * @param env environment
+ 	 * @param arrayletLeaveAddrs, list of arraylet leaves addresses
+ 	 * @param arrayletLeafCount, number of arraylet leaves
+ 	 * @param arrayletLeafSize, size of each arraylet leaf
+ 	 * @param byteAmount, total byte amount to be allocate contiguous block of meory to double map 
+ 	 * @param newIdentifier, hold information of newly created contiguous block of memory
+ 	 * @param pageSize
+ 	 * @param category
+  	 */
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+	void *doubleMapArraylet(MM_MemoryHandle* handle, MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize);
+#endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 
 	/**
 	 * Commit memory for range for specified virtual memory instance

@@ -337,3 +337,18 @@ bindThreadToNode(omrthread_t thread, uintptr_t nodeNumber)
 	}
 	return result;
 }
+
+uintptr_t
+omrthread_numa_get_current_node(){
+	sradid_t sradid = SRADID_ANY;
+	if (NULL != PTR_rs_get_homesrad) {
+		sradid = PTR_rs_get_homesrad();
+	}
+
+	/* if we couldn't find the home SRADID return 0, meaning no affinity */
+	if (sradid == SRADID_ANY) {
+		return 0;
+	} else {
+		return sradid + 1;
+	}
+}

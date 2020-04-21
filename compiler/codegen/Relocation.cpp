@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Instruction.hpp"
-#include "codegen/Linkage.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
@@ -34,7 +33,7 @@
 #include "env/IO.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Flags.hpp"
 #include "infra/Link.hpp"
@@ -94,15 +93,75 @@ void TR::LabelRelative32BitRelocation::apply(TR::CodeGenerator *codeGen)
 
 void TR::LabelAbsoluteRelocation::apply(TR::CodeGenerator *codeGen)
    {
-   intptrj_t *cursor = (intptrj_t *)getUpdateLocation();
+   intptr_t *cursor = (intptr_t *)getUpdateLocation();
    AOTcgDiag2(codeGen->comp(), "TR::LabelAbsoluteRelocation::apply cursor=" POINTER_PRINTF_FORMAT " label=" POINTER_PRINTF_FORMAT "\n", cursor, getLabel());
-   *cursor = (intptrj_t)getLabel()->getCodeLocation();
+   *cursor = (intptr_t)getLabel()->getCodeLocation();
+   }
+
+TR::InstructionLabelRelative16BitRelocation::InstructionLabelRelative16BitRelocation(TR::Instruction* cursor, int32_t offset, TR::LabelSymbol* l, int32_t divisor)
+   :
+      TR::LabelRelocation(NULL, l),
+      _cursor(cursor),
+      _offset(offset),
+      _divisor(divisor)
+   {
+   }
+
+uint8_t*
+TR::InstructionLabelRelative16BitRelocation::getUpdateLocation()
+   {
+   uint8_t* updateLocation = TR::LabelRelocation::getUpdateLocation();
+
+   if (updateLocation == NULL && _cursor->getBinaryEncoding() != NULL)
+      {
+      updateLocation = setUpdateLocation(_cursor->getBinaryEncoding() + _offset);
+      }
+
+   return updateLocation;
+   }
+
+void
+TR::InstructionLabelRelative16BitRelocation::apply(TR::CodeGenerator* cg)
+   {
+   uint8_t* p = getUpdateLocation();
+
+   *reinterpret_cast<int16_t*>(p) = static_cast<int16_t>(getLabel()->getCodeLocation() - p) / _divisor;
+   }
+
+TR::InstructionLabelRelative32BitRelocation::InstructionLabelRelative32BitRelocation(TR::Instruction* cursor, int32_t offset, TR::LabelSymbol* l, int32_t divisor)
+   :
+      TR::LabelRelocation(NULL, l),
+      _cursor(cursor),
+      _offset(offset),
+      _divisor(divisor)
+   {
+   }
+
+uint8_t*
+TR::InstructionLabelRelative32BitRelocation::getUpdateLocation()
+   {
+   uint8_t* updateLocation = TR::LabelRelocation::getUpdateLocation();
+
+   if (updateLocation == NULL && _cursor->getBinaryEncoding() != NULL)
+      {
+      updateLocation = setUpdateLocation(_cursor->getBinaryEncoding() + _offset);
+      }
+
+   return updateLocation;
+   }
+
+void
+TR::InstructionLabelRelative32BitRelocation::apply(TR::CodeGenerator* cg)
+   {
+   uint8_t* p = getUpdateLocation();
+
+   *reinterpret_cast<int32_t*>(p) = static_cast<int32_t>(getLabel()->getCodeLocation() - p) / _divisor;
    }
 
 void TR::InstructionAbsoluteRelocation::apply(TR::CodeGenerator *codeGen)
    {
-   intptrj_t *cursor = (intptrj_t*)getUpdateLocation();
-   intptrj_t address = (intptrj_t)getInstruction()->getBinaryEncoding();
+   intptr_t *cursor = (intptr_t*)getUpdateLocation();
+   intptr_t address = (intptr_t)getInstruction()->getBinaryEncoding();
    if (useEndAddress())
       address += getInstruction()->getBinaryLength();
    AOTcgDiag2(codeGen->comp(), "TR::InstructionAbsoluteRelocation::apply cursor=" POINTER_PRINTF_FORMAT " instruction=" POINTER_PRINTF_FORMAT "\n", cursor, address);
@@ -150,7 +209,7 @@ void TR::ExternalRelocation::addExternalRelocation(TR::CodeGenerator *codeGen)
 
    TR::Compilation *comp = codeGen->comp();
    AOTcgDiag0(comp, "TR::ExternalRelocation::addExternalRelocation\n");
-  
+
    TR_LinkHead<TR::IteratedExternalRelocation>& aot = codeGen->getAheadOfTimeCompile()->getAOTRelocationTargets();
    uint32_t narrowSize = getNarrowSize();
    uint32_t wideSize = getWideSize();
@@ -233,7 +292,7 @@ void TR::ExternalRelocation::addExternalRelocation(TR::CodeGenerator *codeGen)
       AOTcgDiag5(comp, "temp=" POINTER_PRINTF_FORMAT " full=%x target=" POINTER_PRINTF_FORMAT " kind=%x modifier=%x\n",
          temp, temp->full(), temp->getTargetAddress(), temp->getTargetKind(), temp->getModifierValue());
    AOTcgDiag2(comp, "#sites=%x size=%x\n", temp->getNumberOfRelocationSites(), temp->getSizeOfRelocationData());
-      
+
    }
 
 void TR::ExternalRelocation::apply(TR::CodeGenerator *codeGen)
@@ -299,7 +358,7 @@ uint8_t TR::ExternalOrderedPair32BitRelocation::collectModifier()
    uint8_t * updateLocation2;
    TR_ExternalRelocationTargetKind kind = getTargetKind();
 
-   if (TR::Compiler->target.cpu.isPower() &&
+   if (comp->target().cpu.isPower() &&
           (kind == TR_ArrayCopyHelper || kind == TR_ArrayCopyToc || kind == TR_RamMethod || kind == TR_GlobalValue || kind == TR_BodyInfoAddressLoad || kind == TR_DataAddress || kind == TR_DebugCounter))
       {
       TR::Instruction *instr = (TR::Instruction *)getUpdateLocation();
@@ -331,7 +390,7 @@ void TR::ExternalOrderedPair32BitRelocation::apply(TR::CodeGenerator *codeGen)
    TR::IteratedExternalRelocation *rec = getRelocationRecord();
    uint8_t *codeStart = (uint8_t *)comp->getRelocatableMethodCodeStart();
    TR_ExternalRelocationTargetKind kind = getRelocationRecord()->getTargetKind();
-   if (TR::Compiler->target.cpu.isPower() &&
+   if (comp->target().cpu.isPower() &&
       (kind == TR_ArrayCopyHelper || kind == TR_ArrayCopyToc || kind == TR_RamMethodSequence || kind == TR_GlobalValue || kind == TR_BodyInfoAddressLoad || kind == TR_DataAddress || kind == TR_DebugCounter))
       {
       TR::Instruction *instr = (TR::Instruction *)getUpdateLocation();

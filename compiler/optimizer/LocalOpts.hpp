@@ -63,8 +63,8 @@ bool collectSymbolReferencesInNode(TR::Node *node,
  * Class TR_HoistBlocks
  * ====================
  *
- * Block hoisting duplicates code in a block and places it into its predecessors 
- * that only have the block as a unique successor. This would enable better/more 
+ * Block hoisting duplicates code in a block and places it into its predecessors
+ * that only have the block as a unique successor. This would enable better/more
  * commoning or other optimizations to occur.
  */
 
@@ -134,8 +134,8 @@ public:
  * Class TR_EliminateRedundantGotos
  * ================================
  *
- * Redundant goto elimination changes a conditional branch that branches to 
- * a block containing only a goto to branch directly to the destination 
+ * Redundant goto elimination changes a conditional branch that branches to
+ * a block containing only a goto to branch directly to the destination
  * of the goto.
  */
 
@@ -165,8 +165,8 @@ private:
  * Class TR_CleanseTrees
  * =====================
  *
- * Cleanse Trees changes the textual order in which blocks are laid down to 
- * catch some specific patterns that are created by optimizations like 
+ * Cleanse Trees changes the textual order in which blocks are laid down to
+ * catch some specific patterns that are created by optimizations like
  * loop canonicalizer. T
  */
 
@@ -208,12 +208,12 @@ public:
  * Class TR_CompactNullChecks
  * ==========================
  *
- * Minimizes the cases where an explicit null check needs to be performed 
- * (null checks are implicit, i.e. no code is generated for performing null checks; 
- * instead we use hardware trap on IA32). Sometimes (say as a result of dead 
- * store removal of a store to a field) an explicit null check node may need to 
- * be created in the IL trees (if the original dead store was responsible for 
- * checking nullness implicitly); this pass attempts to find another expression 
+ * Minimizes the cases where an explicit null check needs to be performed
+ * (null checks are implicit, i.e. no code is generated for performing null checks;
+ * instead we use hardware trap on IA32). Sometimes (say as a result of dead
+ * store removal of a store to a field) an explicit null check node may need to
+ * be created in the IL trees (if the original dead store was responsible for
+ * checking nullness implicitly); this pass attempts to find another expression
  * in the same block that can be used to perform the null check implicitly again.
  */
 
@@ -244,27 +244,27 @@ public:
  * Class TR_SimplifyAnds
  * =====================
  *
- * And simplification is an optimization that is aimed at simplifying the 
- * control flow created primarily by the loop versioning optimization 
- * (block versioning emits similar trees as well though it usually 
- * does transformations in far fewer cases than loop versioning). It is 
- * also possible that other optimizations or indeed the original user 
- * program results in similar opportunities but its most common coming 
+ * And simplification is an optimization that is aimed at simplifying the
+ * control flow created primarily by the loop versioning optimization
+ * (block versioning emits similar trees as well though it usually
+ * does transformations in far fewer cases than loop versioning). It is
+ * also possible that other optimizations or indeed the original user
+ * program results in similar opportunities but its most common coming
  * from loop versioning. Here is an example loop:
- * 
+ *
  * i=0;
  * while (i < N)
  *    {
  *    a[i] = a[i] + b[i];
  *    i++;
  *    }
- * 
- * This loop has 3 null checks and 3 bound checks in Java, one for each of 
- * the 3 array accesses. Each of these checks gets considered in isolation 
- * by the loop versioner and the following tests are done outside the loop 
- * to decide if the fast loop (without any null check or bound check) or 
+ *
+ * This loop has 3 null checks and 3 bound checks in Java, one for each of
+ * the 3 array accesses. Each of these checks gets considered in isolation
+ * by the loop versioner and the following tests are done outside the loop
+ * to decide if the fast loop (without any null check or bound check) or
  * the slow loop (with all the checks) should be executed.
- * 
+ *
  * if (a == null)     goto blockA; // test emitted for the null check on the read of a[i]
  * if (a.length <= N) goto blockA; // test emitted for the bound check on the read of a[i]
  * if (i < 0)         goto blockA; // second test emitted for the bound check on the read of a[i]
@@ -274,42 +274,42 @@ public:
  * if (a == null)     goto blockA; // test emitted for the null check on the write of a[i]
  * if (a.length <= N) goto blockA; // test emitted for the bound check on the write of a[i]
  * if (i < 0)         goto blockA; // second test emitted for the bound check on the write of a[i]
- * 
- * There are obviously some redundant tests emitted here by the loop versioner 
- * but that optimization simply relies on later cleanup passes to eliminate those 
- * redundant tests. This is where and simplification comes in. The above control flow 
- * construct is similar to a "logical and" of all those conditions and this is 
+ *
+ * There are obviously some redundant tests emitted here by the loop versioner
+ * but that optimization simply relies on later cleanup passes to eliminate those
+ * redundant tests. This is where and simplification comes in. The above control flow
+ * construct is similar to a "logical and" of all those conditions and this is
  * where the name of the optimization comes from.
- * 
- * And simplification runs after basic block extension has been done and a long 
- * extended block created containing the above cascade of tests and local CSE has 
- * commoned up expressions within that extended block. This means that there 
- * are several pairs of "obvious" semantically equivalent trees in the above 
- * extended block, namely, nodes with the same IL opcode and the same children. 
- * This is the exact pattern that and simplification looks for and optimizes in 
- * a manner such that a given test (opcode) will only be done once in an 
- * extended block with the exact same children. e.g. in the above example we 
- * will not test if (a == null) more than once and ditto for if (i < 0). Note 
- * it may be possible for other optimizations to do this cleanup, in particular 
- * value propagation knows about relations between expressions but and 
- * simplification is a very simple cheap pass compared to value propagation 
+ *
+ * And simplification runs after basic block extension has been done and a long
+ * extended block created containing the above cascade of tests and local CSE has
+ * commoned up expressions within that extended block. This means that there
+ * are several pairs of "obvious" semantically equivalent trees in the above
+ * extended block, namely, nodes with the same IL opcode and the same children.
+ * This is the exact pattern that and simplification looks for and optimizes in
+ * a manner such that a given test (opcode) will only be done once in an
+ * extended block with the exact same children. e.g. in the above example we
+ * will not test if (a == null) more than once and ditto for if (i < 0). Note
+ * it may be possible for other optimizations to do this cleanup, in particular
+ * value propagation knows about relations between expressions but and
+ * simplification is a very simple cheap pass compared to value propagation
  * and can be run more times if deemed appropriate.
- * 
- * There was also another unrelated transformation that was subsequently 
+ *
+ * There was also another unrelated transformation that was subsequently
  * added to and simplification to optimize:
- * 
+ *
  * t = rhs1;
  * if (cond)
  *   t = t + rhs2;
- * 
+ *
  * to:
- * 
+ *
  * t = rhs1;
  * t = t + (rhs2 & ~(cond-1));
- * 
- * which is a branch free but equivalent code sequence that was beneficial 
- * on one of the important Java benchmarks. This minor control flow simplifying 
- * transformation could be separated into a different pass strictly speaking 
+ *
+ * which is a branch free but equivalent code sequence that was beneficial
+ * on one of the important Java benchmarks. This minor control flow simplifying
+ * transformation could be separated into a different pass strictly speaking
  * but is done as part of the pass as it stands.
  */
 
@@ -332,53 +332,53 @@ public:
  * Class TR_Rematerialization
  * ==========================
  *
- * Rematerialization is an optimization that aims to avoid register spills by 
- * un-commoning certain nodes that would be cheaper to simply re-evaluate. A 
- * simple example is if we have a load of a parm commoned across a range of 
- * code that has very high register pressure. The commoned load obviously 
- * adds to register pressure and could be the trigger for spills occurring 
- * across the area of high register pressure if the local register allocator 
+ * Rematerialization is an optimization that aims to avoid register spills by
+ * un-commoning certain nodes that would be cheaper to simply re-evaluate. A
+ * simple example is if we have a load of a parm commoned across a range of
+ * code that has very high register pressure. The commoned load obviously
+ * adds to register pressure and could be the trigger for spills occurring
+ * across the area of high register pressure if the local register allocator
  * simply cannot fit in all the values into available registers.
- * 
- * Rematerialization keeps track of the number of commoned expressions at 
- * every point as it walks over the IL trees and if it sees that the number 
- * of commoned expressions is more than the available registers on that platform, 
- * it un-commons one of the expressions if possible (after making sure this 
- * will not change the program's behaviour). This would cause the expression to 
- * be evaluated again (i.e. the expression must be "rematerialized") and in the 
- * case of our load of an auto this should be cheaper than spilling to a stack 
- * slot and reloading from that slot. Some cheap arithmetic operations are also 
+ *
+ * Rematerialization keeps track of the number of commoned expressions at
+ * every point as it walks over the IL trees and if it sees that the number
+ * of commoned expressions is more than the available registers on that platform,
+ * it un-commons one of the expressions if possible (after making sure this
+ * will not change the program's behaviour). This would cause the expression to
+ * be evaluated again (i.e. the expression must be "rematerialized") and in the
+ * case of our load of an auto this should be cheaper than spilling to a stack
+ * slot and reloading from that slot. Some cheap arithmetic operations are also
  * considered cheap enough to re-evaluate instead of spilling, e.g. iadd.
- * 
- * Finally there are some expressions that can be un-commoned regardless of 
- * register pressure. One example is some addressing expressions that can be 
- * folded into a memory reference on some platforms depending on the addressing 
- * modes that are available. e.g. a shift and add can be folded into the memory 
- * reference on X86...so we do not need to common those operations under 
- * aiadd/aladd on that platform since it need never be evaluated into a register 
+ *
+ * Finally there are some expressions that can be un-commoned regardless of
+ * register pressure. One example is some addressing expressions that can be
+ * folded into a memory reference on some platforms depending on the addressing
+ * modes that are available. e.g. a shift and add can be folded into the memory
+ * reference on X86...so we do not need to common those operations under
+ * aiadd/aladd on that platform since it need never be evaluated into a register
  * if we did not common the aiadd/aladd or any of its children.
- * 
- * One question might be: Why do we have rematerialization un-common when we 
- * could have simply taught local CSE to avoid commoning in the first place? 
- * This goes back to the insight that commoning of nodes has more than just 
- * the benefit of keeping the value in a register; a commoned node also helps 
- * simplify some node pattern matching in places like simplifier. Such places 
- * do not need to check for two different nodes being the same semantically, 
- * they can just check for the same node on the assumption that if they were 
- * semantically equivalent then local CSE would have commoned them up anyway. 
- * Thus we rarely stop local CSE from commoning (though there are occasional 
- * cases in which this is the best option); we usually want to let it do its 
- * job and we also let downstream optimizations benefit from that commoning 
- * in the above manner. Rematerialization runs late enough in the optimization 
- * strategy that it no longer matters as much if un-commoning happens at 
- * that point; there are not very many pattern matching optimizations 
+ *
+ * One question might be: Why do we have rematerialization un-common when we
+ * could have simply taught local CSE to avoid commoning in the first place?
+ * This goes back to the insight that commoning of nodes has more than just
+ * the benefit of keeping the value in a register; a commoned node also helps
+ * simplify some node pattern matching in places like simplifier. Such places
+ * do not need to check for two different nodes being the same semantically,
+ * they can just check for the same node on the assumption that if they were
+ * semantically equivalent then local CSE would have commoned them up anyway.
+ * Thus we rarely stop local CSE from commoning (though there are occasional
+ * cases in which this is the best option); we usually want to let it do its
+ * job and we also let downstream optimizations benefit from that commoning
+ * in the above manner. Rematerialization runs late enough in the optimization
+ * strategy that it no longer matters as much if un-commoning happens at
+ * that point; there are not very many pattern matching optimizations
  * to follow anyway.
- * 
- * Generalizing this point, one should keep an open mind about creating an 
- * optimization pass to "undo" what an earlier optimization pass did 
- * rather than simply limit the earlier optimization to not do something; 
- * this is especially relevant when the "opportunity for undoing" could 
- * have arisen not just from an earlier optimization pass but also from 
+ *
+ * Generalizing this point, one should keep an open mind about creating an
+ * optimization pass to "undo" what an earlier optimization pass did
+ * rather than simply limit the earlier optimization to not do something;
+ * this is especially relevant when the "opportunity for undoing" could
+ * have arisen not just from an earlier optimization pass but also from
  * the user having written their code in a particular suboptimal manner.
  */
 
@@ -413,7 +413,6 @@ public:
    bool examineNode(TR::TreeTop *, TR::Node *, TR::Node *, vcount_t, TR_RematState *, TR_RematAdjustments &);
    void rematerializeNode(TR::TreeTop *, TR::Node *, TR::Node *, vcount_t, List<TR::Node> *, List<TR::Node> *, List< List<TR::Node> > *, List<TR::Node> *, List< List<TR::Node> > *, List<TR::Node> *, List<TR::Node> *, bool);
 
-   void rematerializeSSAddress(TR::Node *parent, int32_t addrChildIndex);
    void rematerializeAddresses(TR::Node *indirectNode, TR::TreeTop *treeTop, vcount_t visitCount);
    bool isRematerializable(TR::Node *parent, TR::Node *node,  bool onlyConsiderOpCode = false);
    bool isRematerializableLoad(TR::Node *node, TR::Node *parent);
@@ -702,6 +701,9 @@ class TR_InvariantArgumentPreexistence : public TR::Optimization
       void     setClassIsRefined()         { _classIsRefined = true; }
       bool     classIsRefined()            { return _classIsRefined; }
 
+      void     setClassIsPreexistent()         { _classIsPreexistent = true; }
+      bool     classIsPreexistent()            { return _classIsPreexistent; }
+
       void     setClass(TR_OpaqueClassBlock *clazz) { _clazz = clazz; }
       TR_OpaqueClassBlock *getClass() { return _clazz; }
 
@@ -718,12 +720,16 @@ class TR_InvariantArgumentPreexistence : public TR::Optimization
       bool     _classIsFixed;
       bool     _classIsCurrentlyFinal;
       bool     _classIsRefined;
+      bool     _classIsPreexistent;
       };
 
    void processNode        (TR::Node *node, TR::TreeTop *treeTop, vcount_t visitCount);
    void processIndirectCall(TR::Node *node, TR::TreeTop *treeTop, vcount_t visitCount);
    void processIndirectLoad(TR::Node *node, TR::TreeTop *treeTop, vcount_t visitCount);
    bool convertCall(TR::Node *node, TR::TreeTop *treeTop);
+   bool devirtualizeVirtualCall(TR::Node *node, TR::TreeTop *treeTop, TR_OpaqueClassBlock* clazz);
+   bool classIsCurrentlyFinal(TR_OpaqueClassBlock* clazz);
+   TR_YesNoMaybe classIsCompatibleWithMethod(TR_OpaqueClassBlock* thisClazz, TR_ResolvedMethod* method);
 
    ParmInfo *getSuitableParmInfo(TR::Node *node);
 

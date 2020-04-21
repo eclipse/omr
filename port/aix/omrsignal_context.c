@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,9 +31,9 @@
  * Note: mcontext_t is a typedeffed __jmpbuf structure
  */
 void
-fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *j9Info)
+fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *signalInfo)
 {
-	j9Info->platformSignalInfo.context = (ucontext_t *)contextInfo;
+	signalInfo->platformSignalInfo.context = (ucontext_t *)contextInfo;
 	/* module info is filled on demand */
 }
 

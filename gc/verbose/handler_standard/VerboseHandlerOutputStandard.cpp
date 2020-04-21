@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -401,7 +401,7 @@ MM_VerboseHandlerOutputStandard::handleCompactEndInternal(MM_EnvironmentBase* en
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 void
-MM_VerboseHandlerOutputStandard::handleScavengeEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData)
+MM_VerboseHandlerOutputStandard::handleScavengeEndNoLock(J9HookInterface** hook, uintptr_t eventNum, void* eventData)
 {
 	MM_ScavengeEndEvent* event = (MM_ScavengeEndEvent*)eventData;
 	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(event->currentThread);
@@ -414,7 +414,6 @@ MM_VerboseHandlerOutputStandard::handleScavengeEnd(J9HookInterface** hook, uintp
 	uint64_t duration = 0;
 	bool deltaTimeSuccess = getTimeDeltaInMicroSeconds(&duration, scavengerStats->_startTime, scavengerStats->_endTime);
 
-	enterAtomicReportingBlock();
 	handleGCOPOuterStanzaStart(env, "scavenge", env->_cycleState->_verboseContextID, duration, deltaTimeSuccess);
 
 	if (event->cycleEnd) {
@@ -461,6 +460,13 @@ MM_VerboseHandlerOutputStandard::handleScavengeEnd(J9HookInterface** hook, uintp
 
 	handleGCOPOuterStanzaEnd(env);
 	writer->flush(env);
+}
+
+void
+MM_VerboseHandlerOutputStandard::handleScavengeEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData)
+{
+	enterAtomicReportingBlock();
+	handleScavengeEndNoLock(hook, eventNum, eventData);
 	exitAtomicReportingBlock();
 }
 
@@ -477,7 +483,7 @@ MM_VerboseHandlerOutputStandard::handleConcurrentGCOpEnd(J9HookInterface** hook,
 	scavengeEndEvent.subSpace = NULL; //unknown info
 	scavengeEndEvent.cycleEnd = false;
 
-	handleScavengeEnd(hook, J9HOOK_MM_PRIVATE_SCAVENGE_END, &scavengeEndEvent);
+	handleScavengeEndNoLock(hook, J9HOOK_MM_PRIVATE_SCAVENGE_END, &scavengeEndEvent);
 }
 
 
@@ -814,6 +820,11 @@ MM_VerboseHandlerOutputStandard::handleConcurrentAborted(J9HookInterface** hook,
 	case ABORT_COLLECTION_PREPARE_HEAP_FOR_WALK:
 		reason = "prepare heap for walk";
 		break;
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
+	case ABORT_COLLECTION_IDLE_GC:
+		reason = "restart cycle for idle gc";
+		break;
+#endif /* OMR_GC_IDLE_HEAP_MANAGER */
 	default:
 		reason = "unknown";
 		break;

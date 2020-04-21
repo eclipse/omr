@@ -25,7 +25,7 @@
 #include "codegen/OMRInstOpCode.hpp"
 
 #ifndef OPS_MAX
-#define OPS_MAX    TR::InstOpCode::PPCNumOpCodes
+#define OPS_MAX    TR::InstOpCode::NumOpCodes
 #endif
 
 namespace TR

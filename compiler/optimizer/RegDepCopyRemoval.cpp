@@ -108,7 +108,7 @@ const char *
 TR::RegDepCopyRemoval::registerName(TR_GlobalRegisterNumber reg)
    {
    // this defaultSize only works for GPRs
-   TR_RegisterSizes defaultSize = TR::Compiler->target.is64Bit() ? TR_DoubleWordReg : TR_WordReg;
+   TR_RegisterSizes defaultSize = comp()->target().is64Bit() ? TR_DoubleWordReg : TR_WordReg;
    return comp()->getDebug()->getGlobalRegisterName(reg, defaultSize);
    }
 

@@ -92,6 +92,10 @@ public:
 	uint64_t _workStallTime; /**< The time, in hi-res ticks, the thread spent stalled waiting to receive more work */
 	uint64_t _completeStallTime; /**< The time, in hi-res ticks, the thread spent stalled waiting for all other threads to complete working */
 	uint64_t _syncStallTime; /**< The time, in hi-res ticks, the thread spent stalled at a sync point */
+	uintptr_t _totalDeepStructures; /**<  The number of deep structures that are scanned with priority (number of deepScanOutline function calls) */
+	uintptr_t _totalObjsDeepScanned; /**< The total number of deep structure objects that are special treated (number of copyAndForward with priority)*/
+	uintptr_t _depthDeepestStructure; /**< Length of longest deep structure that is special treated */
+	uintptr_t _copyScanUpdates;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
 	/* Average (weighted) number of bytes free after a collection and
@@ -100,6 +104,7 @@ public:
 	 */ 
 	uintptr_t _avgInitialFree;
 	uintptr_t _avgTenureBytes;
+	uintptr_t _avgTenureBytesDeviation; /**< The average, weighted deviation of the tenureBytes*/
 	
 	uintptr_t _tiltRatio;	/**< use to pass tiltRatio to verbose */
 
@@ -107,7 +112,6 @@ public:
 	
 #if defined(OMR_GC_LARGE_OBJECT_AREA)	
 	uintptr_t _avgTenureLOABytes;
-	uintptr_t _avgTenureSOABytes;
 #endif /* OMR_GC_LARGE_OBJECT_AREA */
 
 	uintptr_t _flipDiscardBytes;		/**< Bytes of survivor discarded by copy scan cache */
@@ -224,6 +228,12 @@ public:
 	}
 
 	void clear(bool firstIncrement);
+	
+	/**
+	 * @return true if at least one full Scavenge cycle is complete (stats are calculated once, at the end of each cycle)
+	 */
+	bool isAvailable(MM_EnvironmentBase *env);
+	
 	MM_ScavengerStats();
 
 	struct FlipHistory* getFlipHistory(uintptr_t lookback);

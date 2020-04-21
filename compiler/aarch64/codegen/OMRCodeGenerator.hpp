@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,10 +37,11 @@ namespace OMR { typedef OMR::ARM64::CodeGenerator CodeGeneratorConnector; }
 
 #include "codegen/RegisterConstants.hpp"
 #include "infra/Annotations.hpp"
+#include "runtime/Runtime.hpp"
 
 class TR_ARM64OutOfLineCodeSection;
 namespace TR { class ARM64LinkageProperties; }
-namespace TR { class ConstantDataSnippet; }
+namespace TR { class ARM64ConstantDataSnippet; }
 
 /**
  * @brief Generates instructions for loading 32-bit integer value to a register
@@ -60,6 +61,57 @@ extern TR::Instruction *loadConstant32(TR::CodeGenerator *cg, TR::Node *node, in
  * @param[in] cursor : instruction cursor
  */
 extern TR::Instruction *loadConstant64(TR::CodeGenerator *cg, TR::Node *node, int64_t value, TR::Register *trgReg, TR::Instruction *cursor = NULL);
+
+extern TR::Instruction *loadAddressConstant(TR::CodeGenerator *cg, TR::Node *node, intptr_t value, TR::Register *trgReg, TR::Instruction *cursor=NULL, bool isPicSite=false, int16_t typeAddress=-1);
+
+ /* @brief Generates instruction for loading address constant to register using constant data snippet
+ * @param[in] cg : CodeGenerator
+ * @param[in] node: node
+ * @param[in] address : address
+ * @param[in] trgReg : target register
+ * @param[in] reloKind : relocation kind
+ * @param[in] cursor : instruction cursor
+ * @return generated instruction
+ */
+extern TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg, TR::Node *node, intptr_t address, TR::Register *trgReg, TR_ExternalRelocationTargetKind reloKind, TR::Instruction *cursor=NULL);
+
+/**
+ * @brief Helper function for encoding immediate value of logic instructions.
+ * @param[in] value : immediate value to encode
+ * @param[in] is64Bit : true if 64bit instruction
+ * @param[out] n : N bit
+ * @param[out] immEncoded : immr and imms encoded in 12bit field
+ * @return true if value can be encoded as immediate operand
+ */
+extern bool logicImmediateHelper(uint64_t value, bool is64Bit, bool &n, uint32_t &immEncoded);
+
+/**
+ * Decodes bitmask for 32bit variants of logic op codes
+ * @param[in] Nbit: N bit
+ * @param[in] immr : immr part of immediate
+ * @param[in] imms : imms part of immediate
+ * @param[out] wmask : returned immediate
+ * @return true if successfully decoded
+ */
+extern bool decodeBitMasks(bool Nbit, uint32_t immr, uint32_t imms, uint32_t &wmask);
+
+/**
+ * Decodes bitmask for 64bit variants of logic op codes
+ * @param[in] Nbit: N bit
+ * @param[in] immr : immr part of immediate
+ * @param[in] imms : imms part of immediate
+ * @param[out] wmask : returned immediate
+ * @return true if successfully decoded
+ */
+extern bool decodeBitMasks(bool Nbit, uint32_t immr, uint32_t imms, uint64_t &wmask);
+
+struct TR_ARM64BinaryEncodingData : public TR_BinaryEncodingData
+   {
+   int32_t estimate;
+   TR::Instruction *cursorInstruction;
+   TR::Instruction *i2jEntryInstruction;
+   TR::Recompilation *recomp;
+   };
 
 namespace OMR
 {
@@ -111,7 +163,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
     * @brief Has data snippets or not
     * @return true if it has data snippets, false otherwise
     */
-   bool hasDataSnippets();
+   bool hasDataSnippets() { return !_dataSnippetList.empty();}
 
    /**
     * @brief Sets estimated locations for data snippet labels
@@ -120,13 +172,11 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
     */
    int32_t setEstimatedLocationsForDataSnippetLabels(int32_t estimatedSnippetStart);
 
-#ifdef DEBUG
    /**
     * @brief Dumps data snippets
     * @param[in] outFile : FILE for output
     */
    void dumpDataSnippets(TR::FILE *outFile);
-#endif
 
    /**
     * @brief Generates switch-to-interpreter pre-prologue
@@ -187,6 +237,27 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
     * @param[in] label : label
     */
    void apply32BitLabelRelativeRelocation(int32_t *cursor, TR::LabelSymbol *label);
+
+   /**
+    * @brief find or create a constant data snippet for 8 byte constant.
+    *
+    * @param[in] node : the node which this constant data snippet belongs to
+    * @param[in] c    : 8 byte constant
+    *
+    * @return : a constant data snippet
+    */
+   TR::ARM64ConstantDataSnippet *findOrCreate8ByteConstant(TR::Node *node, int64_t c);
+
+   /**
+    * @brief find or create a constant data snippet.
+    *
+    * @param[in] node : the node which this constant data snippet belongs to
+    * @param[in] data : a pointer to initial data or NULL for skipping initialization
+    * @param[in] size : the size of this constant data snippet
+    *
+    * @return : a constant data snippet with specified size
+    */
+   TR::ARM64ConstantDataSnippet* findOrCreateConstantDataSnippet(TR::Node* node, void* data, size_t size);
 
    /**
     * @brief Status of IsOutOfLineHotPath flag
@@ -295,7 +366,39 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
     *
     * @return : true if a trampoline is required; false otherwise.
     */
-   bool directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress);
+   bool directCallRequiresTrampoline(intptr_t targetAddress, intptr_t sourceAddress);
+
+   // OutOfLineCodeSection List functions
+   TR::list<TR_ARM64OutOfLineCodeSection*> &getARM64OutOfLineCodeSectionList() {return _outOfLineCodeSectionList;}
+
+   // We need to provide an implementation to avoid an unimplemented assert. See issue #4446.
+   int32_t arrayTranslateMinimumNumberOfElements(bool isByteSource, bool isByteTarget) { return 8; }
+   // We need to provide an implementation to avoid an unimplemented assert. See issue #4446.
+   int32_t arrayTranslateAndTestMinimumNumberOfIterations() { return 8; }
+
+   /**
+    * @return Retrieves the cached returnTypeInfo instruction
+    */
+   TR::ARM64ImmInstruction *getReturnTypeInfoInstruction() { return _returnTypeInfoInstruction; }
+
+   /**
+    * @brief Caches the returnTypeInfo instruction
+    * @param[in] rtii : the returnTypeInfo instruction
+    */
+   void setReturnTypeInfoInstruction(TR::ARM64ImmInstruction *rtii) { _returnTypeInfoInstruction = rtii; }
+
+   /**
+    * @brief Generates pre-prologue
+    * @param[in] data : binary encoding data
+    */
+   void generateBinaryEncodingPrePrologue(TR_ARM64BinaryEncodingData &data);
+
+   /**
+    * @brief Generates nop
+    * @param[in] node: node
+    * @param[in] preced : preceding instruction
+    */
+   TR::Instruction *generateNop(TR::Node *node, TR::Instruction *preced = 0);
 
    private:
 
@@ -313,9 +416,9 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    TR::RealRegister *_stackPtrRegister;
    TR::RealRegister *_methodMetaDataRegister;
    TR::ARM64ImmInstruction *_returnTypeInfoInstruction;
-   TR::ConstantDataSnippet *_constantData;
    const TR::ARM64LinkageProperties *_linkageProperties;
    TR::list<TR_ARM64OutOfLineCodeSection*> _outOfLineCodeSectionList;
+   TR::vector<TR::ARM64ConstantDataSnippet*> _dataSnippetList;
 
    };
 

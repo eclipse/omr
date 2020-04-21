@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,23 +58,6 @@
       FPR13Mask = 0x0000000000002000,
       FPR14Mask = 0x0000000000004000,
       FPR15Mask = 0x0000000000008000,
-
-      HPR0Mask = 0x0000000000010000,
-      HPR1Mask = 0x0000000000020000,
-      HPR2Mask = 0x0000000000040000,
-      HPR3Mask = 0x0000000000080000,
-      HPR4Mask = 0x0000000000100000,
-      HPR5Mask = 0x0000000000200000,
-      HPR6Mask = 0x0000000000400000,
-      HPR7Mask = 0x0000000000800000,
-      HPR8Mask = 0x0000000001000000,
-      HPR9Mask = 0x0000000002000000,
-      HPR10Mask = 0x0000000004000000,
-      HPR11Mask = 0x0000000008000000,
-      HPR12Mask = 0x0000000010000000,
-      HPR13Mask = 0x0000000020000000,
-      HPR14Mask = 0x0000000040000000,
-      HPR15Mask = 0x0000000080000000,
 
       VRF0Mask = FPR0Mask,
       VRF1Mask = FPR1Mask,

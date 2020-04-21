@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,16 +85,17 @@ protected:
 		/* Determine if the heap chunk belongs in the free list */
 		uintptr_t freeEntrySize = ((uintptr_t)addrTop) - ((uintptr_t)addrBase);
 		Assert_MM_true((uintptr_t)addrTop >= (uintptr_t)addrBase);
+		bool const compressed = compressObjectReferences();
 
 #if defined(OMR_VALGRIND_MEMCHECK)
 		valgrindMakeMemUndefined((uintptr_t) addrBase, freeEntrySize);
 #endif /* defined(OMR_VALGRIND_MEMCHECK) */
 
-		MM_HeapLinkedFreeHeader *freeEntry = MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, freeEntrySize);
+		MM_HeapLinkedFreeHeader *freeEntry = MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, freeEntrySize, compressed);
 		if ((NULL != freeEntry) && (freeEntrySize >= _minimumFreeEntrySize)) {
 			Assert_MM_true(freeEntry == addrBase);
 			Assert_MM_true((NULL == next) || (freeEntry < next));
-			freeEntry->setNext(next);
+			freeEntry->setNext(next, compressed);
 			return true;
 		} else {
 			return false;
@@ -126,14 +127,15 @@ protected:
 
 	MMINLINE bool appendToList(MM_EnvironmentBase* env, void* addrBase, void* addrTop, uintptr_t minimumSize, MM_HeapLinkedFreeHeader*& freeListHead, MM_HeapLinkedFreeHeader*& freeListTail)
 	{
+		bool const compressed = compressObjectReferences();
 		uintptr_t freeEntrySize = ((uint8_t*)addrTop - (uint8_t*)addrBase);
 
-		MM_HeapLinkedFreeHeader* freeEntry = MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, freeEntrySize);
+		MM_HeapLinkedFreeHeader* freeEntry = MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, freeEntrySize, compressed);
 		if ((NULL != freeEntry) && (freeEntrySize >= minimumSize)) {
 			/* If the list is not empty, add the entry to the tail. */
 			if (NULL != freeListHead) {
 				Assert_MM_true(freeListTail < freeEntry);
-				freeListTail->setNext(freeEntry);
+				freeListTail->setNext(freeEntry, compressed);
 			} else {
 				freeListHead = freeEntry;
 			}
@@ -148,22 +150,23 @@ protected:
 
 	MMINLINE bool insertToList(MM_EnvironmentBase* env, void* addrBase, void* addrTop, uintptr_t minimumSize, MM_HeapLinkedFreeHeader*& freeListHead, MM_HeapLinkedFreeHeader*& freeListTail)
 	{
+		bool const compressed = compressObjectReferences();
 		uintptr_t freeEntrySize = ((uint8_t*)addrTop - (uint8_t*)addrBase);
 
-		MM_HeapLinkedFreeHeader* freeEntry = MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, freeEntrySize);
+		MM_HeapLinkedFreeHeader* freeEntry = MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, freeEntrySize, compressed);
 		if ((NULL != freeEntry) && (freeEntrySize >= minimumSize)) {
 			/* If the list is not empty, add the entry to the tail. */
 			if (NULL != freeListHead) {
 				if (freeListTail < freeEntry) {
-					freeListTail->setNext(freeEntry);
+					freeListTail->setNext(freeEntry, compressed);
 					freeListTail = freeEntry;
 				} else {
 					MM_HeapLinkedFreeHeader* cur = freeListHead;
 					while (cur > freeEntry) {
-						cur = cur->getNext();
+						cur = cur->getNext(compressed);
 					}
-					freeEntry->setNext(cur->getNext());
-					cur->setNext(freeEntry);
+					freeEntry->setNext(cur->getNext(compressed), compressed);
+					cur->setNext(freeEntry, compressed);
 				}
 			} else {
 				freeListHead = freeEntry;

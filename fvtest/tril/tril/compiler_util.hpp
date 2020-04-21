@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 #include "il/DataTypes.hpp"
 #include "ast.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
+#include "infra/Flags.hpp"
 
 namespace Tril { 
 /**
@@ -48,7 +49,7 @@ static TR::DataTypes getTRDataTypes(const std::string& name) {
    else if (name == "VectorDouble") return TR::VectorDouble;
    else if (name == "NoType") return TR::NoType;
    else {
-      throw std::runtime_error{static_cast<const std::string&>(std::string{"Unknown type name: "}.append(name))};
+      throw std::runtime_error(static_cast<const std::string&>(std::string("Unknown type name: ").append(name)));
    }
 }
 
@@ -72,6 +73,29 @@ static std::vector<TR::DataTypes> parseArgTypes(const ASTNode* node) {
    }
 
    return argTypes;
+}
+
+/**
+ * @brief Return a parsed 32-bit flags value from a node with a
+ *        "flags" list.
+ * @param node is the node being processed.
+ * @return a flags32_t representing the flags that the ASTNode's
+ *         "flags" list specified should be set.
+ */
+static OMR::flags32_t parseFlags(const ASTNode* node) {
+   OMR::flags32_t flags = 0;
+
+   auto flagsArg = node->getArgByName("flags");
+   if (flagsArg != NULL) {
+      auto flagsValue = flagsArg->getValue();
+      while (flagsValue != NULL) {
+         if (flagsValue->getInteger() >= 0 && flagsValue->getInteger() < 32)
+            flags.set(1u << flagsValue->getInteger());
+         flagsValue = flagsValue->next;
+      }
+   }
+
+   return flags;
 }
 
 /**

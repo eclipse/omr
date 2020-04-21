@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,11 @@
 #include <stdio.h>
 #include <windows.h>
 #include <WinSDKVer.h>
+/* Undefine the winsockapi because winsock2 defines it.  Removes warnings. */
+#if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
+#undef _WINSOCKAPI_
+#endif
+#include <winsock2.h>
 
 #if defined(_WIN32_WINNT_WINBLUE) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE)
 #include <VersionHelpers.h>
@@ -39,6 +44,7 @@
 #include "omrportpg.h"
 #include "omrportptb.h"
 #include "ut_omrport.h"
+#include "omrsysinfo_helpers.h"
 
 static int32_t copyEnvToBuffer(struct OMRPortLibrary *portLibrary, void *args);
 
@@ -83,6 +89,61 @@ omrsysinfo_get_CPU_architecture(struct OMRPortLibrary *portLibrary)
 #else
 	return "unknown";
 #endif
+}
+
+intptr_t
+omrsysinfo_get_processor_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
+{
+	intptr_t rc = -1;
+	Trc_PRT_sysinfo_get_processor_description_Entered(desc);
+	
+	if (NULL != desc) {
+		memset(desc, 0, sizeof(OMRProcessorDesc));
+		rc = omrsysinfo_get_x86_description(portLibrary, desc);
+	}
+	
+	Trc_PRT_sysinfo_get_processor_description_Exit(rc);
+	return rc;
+}
+
+BOOLEAN
+omrsysinfo_processor_has_feature(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc, uint32_t feature)
+{
+	BOOLEAN rc = FALSE;
+	Trc_PRT_sysinfo_processor_has_feature_Entered(desc, feature);
+
+	if ((NULL != desc) && (feature < (OMRPORT_SYSINFO_OS_FEATURES_SIZE * 32))) {
+		uint32_t featureIndex = feature / 32;
+		uint32_t featureShift = feature % 32;
+
+		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1u << featureShift);
+	}
+
+	Trc_PRT_sysinfo_processor_has_feature_Exit((uintptr_t)rc);
+	return rc;
+}
+
+intptr_t
+omrsysinfo_processor_set_feature(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc, uint32_t feature, BOOLEAN enable)
+{
+	intptr_t rc = -1;
+	Trc_PRT_sysinfo_processor_set_feature_Entered(desc, feature, enable);
+
+	if ((NULL != desc) && (feature < (OMRPORT_SYSINFO_OS_FEATURES_SIZE * 32))) {
+		uint32_t featureIndex = feature / 32;
+		uint32_t featureShift = feature % 32;
+
+		if (enable) {
+			desc->features[featureIndex] |= (1u << featureShift);
+		}
+		else {
+			desc->features[featureIndex] &= ~(1u << featureShift);
+		}
+		rc = 0;
+	}
+
+	Trc_PRT_sysinfo_processor_set_feature_Exit(rc);
+	return rc;
 }
 
 #define ENVVAR_VALUE_BUFFER_LENGTH 512
@@ -164,7 +225,7 @@ omrsysinfo_get_env(struct OMRPortLibrary *portLibrary, const char *envVar, char 
 const char *
 omrsysinfo_get_OS_type(struct OMRPortLibrary *portLibrary)
 {
-
+BOOLEAN isServerMajorVersion10 = FALSE;
 /*
 WIN32_WINNT version constants :
 
@@ -185,18 +246,22 @@ WIN32_WINNT version constants :
 
 	if (NULL == PPG_si_osType) {
 		char *defaultTypeName = "Windows";
-#if !defined(_WIN32_WINNT_WINBLUE) || !(_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE)
+#if !defined(_WIN32_WINNT_WINBLUE) || (_WIN32_WINNT_MAXVER < _WIN32_WINNT_WINBLUE)
+		/* Windows 8 or earlier */
 		OSVERSIONINFOEX versionInfo;
 #endif
 		PPG_si_osType = defaultTypeName; /* by default, use the "unrecognized version" string */
 		PPG_si_osTypeOnHeap = NULL;
 
 #if defined(_WIN32_WINNT_WINBLUE) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE)
+		/* Windows 8.1 or later */
 		/* OS Versions:  https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx */
 		if (IsWindowsServer()) {
 #if defined(_WIN32_WINNT_WIN10) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WIN10)
 			if (IsWindows10OrGreater()) {
-				PPG_si_osType = "Windows Server 2016";
+				/* Starting with major version 10, use the registry to get the version */
+				PPG_si_osType = defaultTypeName;
+				isServerMajorVersion10 = TRUE;
 			} else
 #endif /* defined(_WIN32_WINNT_WIN10) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WIN10) */
 			if (IsWindows8Point1OrGreater()) {
@@ -213,6 +278,7 @@ WIN32_WINNT version constants :
 		} else {
 #if defined(_WIN32_WINNT_WIN10) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WIN10)
 			if (IsWindows10OrGreater()) {
+				/* May need to check ReleaseId when next Windows version is released */
 				PPG_si_osType = "Windows 10";
 			} else
 #endif /* defined(_WIN32_WINNT_WIN10) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WIN10) */
@@ -245,10 +311,13 @@ WIN32_WINNT version constants :
 				case 0:
 					PPG_si_osType = "Windows 2000";
 					break;
+				case 1:
+					PPG_si_osType = "Windows XP"; /* 32-bit */
+					break;
 				case 2:
 					switch (versionInfo.wProductType) {
 					case VER_NT_WORKSTATION:
-						PPG_si_osType = "Windows XP";
+						PPG_si_osType = "Windows XP"; /* 64-bit */
 						break;
 					case VER_NT_DOMAIN_CONTROLLER: /* FALLTHROUGH */
 					case VER_NT_SERVER:
@@ -257,9 +326,9 @@ WIN32_WINNT version constants :
 						break;
 					}
 					break;
-				default:
-					PPG_si_osType = defaultTypeName;
-					break;
+					default:
+						PPG_si_osType = defaultTypeName;
+						break;
 				}
 				break;
 			}
@@ -324,14 +393,9 @@ WIN32_WINNT version constants :
 				}
 				break;
 				default: {
-					switch (versionInfo.dwMinorVersion) {
-					case 0:
-						PPG_si_osType = "Windows Server 2016";
-						break;
-					default:
-						PPG_si_osType = defaultTypeName;
-						break;
-					}
+					/* Starting with major version 10, use the registry to get the version */
+					PPG_si_osType = defaultTypeName;
+					isServerMajorVersion10 = TRUE;
 				}
 				break;
 				}
@@ -344,25 +408,57 @@ WIN32_WINNT version constants :
 
 		}
 #endif /* defined(_WIN32_WINNT_WINBLUE) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE) */
-
+#define PRODUCT_NAME_KEY "ProductName"
+#define RELEASE_ID_KEY "ReleaseId"
+#define WINDOWS_SERVER_PREFIX "Windows Server version "
 		if (defaultTypeName == PPG_si_osType) {
 			HKEY hKey;
-			if (ERROR_SUCCESS == RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey)) {
-				DWORD nameSize = 0;
-				/* query the first time to get the content size of the value. */
-				if (ERROR_SUCCESS == RegQueryValueExA(hKey, "ProductName", NULL, NULL, NULL, &nameSize)) {
-					char *productNameBuffer = portLibrary->mem_allocate_memory(portLibrary, nameSize, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
-					if (NULL != productNameBuffer) {
-						/* query the second time to get the value */
-						if (ERROR_SUCCESS == RegQueryValueExA(hKey, "ProductName", NULL, NULL, (LPBYTE)productNameBuffer, &nameSize)) {
-							PPG_si_osType = PPG_si_osTypeOnHeap = productNameBuffer;
-						} else {
-							portLibrary->mem_free_memory(portLibrary, productNameBuffer);
+			if (ERROR_SUCCESS == RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+					"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey)) {
+				DWORD valueSize = 0;
+				if (isServerMajorVersion10
+						&& (ERROR_SUCCESS == RegQueryValueExA(hKey, RELEASE_ID_KEY, NULL, NULL, NULL, &valueSize))) {
+					char ridBuffer[5]; /* the ReleaseId string format is YYMM */
+					if (sizeof(ridBuffer) >= valueSize) {
+						if (ERROR_SUCCESS == RegQueryValueExA(hKey, RELEASE_ID_KEY, NULL, NULL, (LPBYTE)ridBuffer, &valueSize)) {
+							if (0 == strcmp(ridBuffer, "1607")) {
+								PPG_si_osType = "Windows Server 2016";
+							} else if (0 == strcmp(ridBuffer, "1809")) {
+								PPG_si_osType = "Windows Server 2019";
+							} else {
+								size_t bufferSize = sizeof(WINDOWS_SERVER_PREFIX) + valueSize + 1;
+								char *productNameBuffer = portLibrary->mem_allocate_memory(portLibrary,
+										valueSize, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+								if (NULL != productNameBuffer) {
+									/* Print the version string using the format used by Microsoft */
+									portLibrary->str_printf(portLibrary, productNameBuffer, bufferSize,
+											"%s%s", WINDOWS_SERVER_PREFIX, ridBuffer);
+									PPG_si_osTypeOnHeap = productNameBuffer;
+									PPG_si_osType = PPG_si_osTypeOnHeap;
+								}
+							}
+						}
+					}
+				}
+				if (defaultTypeName == PPG_si_osType) {
+					/* query the first time to get the content size of the value. */
+					if (ERROR_SUCCESS == RegQueryValueExA(hKey, PRODUCT_NAME_KEY, NULL, NULL, NULL, &valueSize)) {
+						char *productNameBuffer = portLibrary->mem_allocate_memory(portLibrary, valueSize, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+						if (NULL != productNameBuffer) {
+							/* query the second time to get the value */
+							if (ERROR_SUCCESS == RegQueryValueExA(hKey, PRODUCT_NAME_KEY, NULL, NULL, (LPBYTE)productNameBuffer, &valueSize)) {
+								PPG_si_osType = PPG_si_osTypeOnHeap = productNameBuffer;
+							} else {
+								portLibrary->mem_free_memory(portLibrary, productNameBuffer);
+							}
 						}
 					}
 				}
 			}
 		}
+#undef PRODUCT_NAME_KEY
+#undef RELEASE_ID_KEY
+#undef WINDOWS_SERVER_PREFIX
 		if (defaultTypeName == PPG_si_osType) {
 #if defined(_WIN32_WINNT_WINBLUE) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE)
 			Trc_PRT_sysinfo_failed_to_get_os_type();
@@ -952,6 +1048,16 @@ omrsysinfo_get_groupname(struct OMRPortLibrary *portLibrary, char *buffer, uintp
 	return -1;
 }
 
+intptr_t
+omrsysinfo_get_hostname(struct OMRPortLibrary *portLibrary, char *buffer, size_t length)
+{
+	if (0 != gethostname(buffer, (int) length)) {
+		Trc_PRT_sysinfo_gethostname_error(OMRPORT_ERROR_SYSINFO_OPFAILED);
+		return OMRPORT_ERROR_SYSINFO_OPFAILED;
+	}
+	return 0;
+}
+
 uint32_t
 omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, uint64_t *limit)
 {
@@ -1022,6 +1128,50 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	cpuTime->numberOfCpus = (int32_t) portLibrary->sysinfo_get_number_CPUs_by_type(portLibrary, OMRPORT_CPU_ONLINE);
 
 	return 0;
+}
+
+intptr_t
+omrsysinfo_get_CPU_load(struct OMRPortLibrary *portLibrary, double *cpuLoad)
+{
+	J9SysinfoCPUTime currentCPUTime;
+	J9SysinfoCPUTime *oldestCPUTime = &portLibrary->portGlobals->oldestCPUTime;
+	J9SysinfoCPUTime *latestCPUTime = &portLibrary->portGlobals->latestCPUTime;
+
+	intptr_t portLibraryStatus = omrsysinfo_get_CPU_utilization(portLibrary, &currentCPUTime);
+	
+	if (portLibraryStatus < 0) {
+		return portLibraryStatus;
+	}
+
+	if (oldestCPUTime->timestamp == 0) {
+		*oldestCPUTime = currentCPUTime;
+		*latestCPUTime = currentCPUTime;
+		return OMRPORT_ERROR_OPFAILED;
+	}
+
+	/* Calculate using the most recent value in the history */
+	if (((currentCPUTime.timestamp - latestCPUTime->timestamp) >= 10000000) && (currentCPUTime.numberOfCpus != 0)) {
+		*cpuLoad = OMR_MIN((currentCPUTime.cpuTime - latestCPUTime->cpuTime) / ((double)currentCPUTime.numberOfCpus * (currentCPUTime.timestamp - latestCPUTime->timestamp)), 1.0);
+		if (*cpuLoad >= 0.0) {
+			*oldestCPUTime = *latestCPUTime;
+			*latestCPUTime = currentCPUTime;
+			return 0;
+		} else {
+			/* Either the latest or the current time are bogus, so discard the latest value and try with the oldest value */
+			*latestCPUTime = currentCPUTime;
+		}
+	}
+	
+	if (((currentCPUTime.timestamp - oldestCPUTime->timestamp) >= 10000000) && (currentCPUTime.numberOfCpus != 0)) {
+		*cpuLoad = OMR_MIN((currentCPUTime.cpuTime - oldestCPUTime->cpuTime) / ((double)currentCPUTime.numberOfCpus * (currentCPUTime.timestamp - oldestCPUTime->timestamp)), 1.0);
+		if (*cpuLoad >= 0.0) {
+			return 0;
+		} else {
+			*oldestCPUTime = currentCPUTime;
+		}
+	}
+
+	return OMRPORT_ERROR_OPFAILED;
 }
 
 int32_t
@@ -1612,7 +1762,7 @@ omrsysinfo_os_has_feature(struct OMRPortLibrary *portLibrary, struct OMROSDesc *
 		uint32_t featureIndex = feature / 32;
 		uint32_t featureShift = feature % 32;
 
-		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1 << featureShift);
+		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1u << featureShift);
 	}
 
 	Trc_PRT_sysinfo_os_has_feature_Exit((uintptr_t)rc);

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2018 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,6 +55,7 @@ AC_DEFUN([OMRCFG_CATEGORIZE_ARCH],
 		[i686],[$1=x86],
 		[ia64],[$1=x86],
 		[x86_64],[$1=x86],
+		[riscv64],[$1=riscv],
 		[AC_MSG_ERROR([Unable to derive $1 from $2: $$2])]
 	)]
 )

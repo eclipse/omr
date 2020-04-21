@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
 
 #include "omrcfg.h"
 #include "omr.h"
-#include "ModronAssertions.h"
 #include "GlobalCollector.hpp"
 
 #include <string.h>
@@ -301,7 +300,7 @@ MM_MarkingScheme::scanObject(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
 		bool isLeafSlot = false;
 		GC_SlotObject *slotObject;
 #if defined(OMR_GC_LEAF_BITS)
-		while (NULL != (slotObject = objectScanner->getNextSlot(isLeafSlot))) {
+		while (NULL != (slotObject = objectScanner->getNextSlot(&isLeafSlot))) {
 #else /* OMR_GC_LEAF_BITS */
 		while (NULL != (slotObject = objectScanner->getNextSlot())) {
 #endif /* OMR_GC_LEAF_BITS */
@@ -412,27 +411,11 @@ MM_MarkingScheme::createWorkPackets(MM_EnvironmentBase *env)
 }
 
 void
-MM_MarkingScheme::assertNotForwardedPointer(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
-{
-	/* This is an expensive assert - fetching class slot during marking operation, thus invalidating benefits of leaf optimization.
-	 * TODO: after some soaking remove it!
-	 */
-	if (_extensions->isConcurrentScavengerEnabled()) {
-		MM_ForwardedHeader forwardHeader(objectPtr);
-		omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
-		/* It is ok to encounter a forwarded object during overlapped concurrent scavenger/marking (or even root scanning),
-		 * but we must do nothing about it (if in backout, STW global phase will recover them).
-		 */
-		Assert_GC_true_with_message3(env, ((NULL == forwardPtr) || (!_extensions->getGlobalCollector()->isStwCollectionInProgress() && _extensions->isConcurrentScavengerInProgress())),
-			"Encountered object %p forwarded to %p (header %p) while Concurrent Scavenger/Marking not in progress\n", objectPtr, forwardPtr, &forwardHeader);
-	}
-}
-
-void
 MM_MarkingScheme::fixupForwardedSlotOutline(GC_SlotObject *slotObject) {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	bool const compressed = _extensions->compressObjectReferences();
 	if (_extensions->getGlobalCollector()->isStwCollectionInProgress()) {
-		MM_ForwardedHeader forwardHeader(slotObject->readReferenceFromSlot());
+		MM_ForwardedHeader forwardHeader(slotObject->readReferenceFromSlot(), compressed);
 		omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 
 		if (NULL != forwardPtr) {

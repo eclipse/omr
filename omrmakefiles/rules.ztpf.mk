@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ endif
 ### Global Flags
 ###
 
-GLOBAL_CPPFLAGS += -DLINUX -D_REENTRANT -DJ9ZTPF -DOMRZTPF -DOMRPORT_JSIG_SUPPORT
+GLOBAL_CPPFLAGS += -DLINUX -D_REENTRANT -DJ9ZTPF -DOMRZTPF -DOMRPORT_JSIG_SUPPORT -DIBMLOCKS
 GLOBAL_CPPFLAGS += -D_GNU_SOURCE -DIBM_ATOE -D_TPF_SOURCE -D_TPF_THREADS -DZTPF_POSIX_SOCKET
 
 ifeq (s390,$(OMR_HOST_ARCH))
@@ -96,7 +96,7 @@ endif
 ifeq (s390,$(OMR_HOST_ARCH))
     GLOBAL_CFLAGS+=$(J9M31) -fno-strict-aliasing
     GLOBAL_CXXFLAGS+=$(J9M31) -fno-strict-aliasing
-    GLOBAL_CPPFLAGS+=-DS390 -D_LONG_LONG -DJ9VM_TIERED_CODE_CACHE
+    GLOBAL_CPPFLAGS+=-DS390 -D_LONG_LONG
     ifeq (1,$(OMR_ENV_DATA64))
         GLOBAL_CPPFLAGS+=-DS39064
     endif
@@ -108,7 +108,7 @@ ifneq (,$(findstring executable,$(ARTIFACT_TYPE)))
     GLOBAL_LDFLAGS+=$(DEFAULT_LIBS)
 endif
 
-TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /ztpf/svtcur/redhat/all /ztpf/commit
+TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /zbld/svtcur/gnu/all /ztpf/commit
 
 ###
 ### Shared Libraries
@@ -136,6 +136,7 @@ ifeq (gcc,$(OMR_TOOLCHAIN))
     GLOBAL_LDFLAGS+=-Wl,--as-needed
     GLOBAL_LDFLAGS+=-Wl,--eh-frame-hdr
     GLOBAL_LDFLAGS+=$(foreach d,$(TPF_ROOT),-L$d/base/lib)
+    GLOBAL_LDFLAGS+=$(foreach d,$(TPF_ROOT),-L$d/base/stdlib)
     GLOBAL_LDFLAGS+=$(foreach d,$(TPF_ROOT),-L$d/opensource/stdlib)
     GLOBAL_LDFLAGS+=-lgcc
     GLOBAL_LDFLAGS+=-lCTOE
@@ -199,9 +200,14 @@ TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d/noship/include)
 TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d)
 
 TPF_FLAGS += -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -ffloat-store -gdwarf-2 -Wno-format-extra-args -Wno-int-to-pointer-cast -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-write-strings
-TPF_FLAGS += -Wno-unused
+###
+### Add for gcc7 builds.
+###
+TPF_FLAGS += -Wno-unused -fno-tree-dse -fno-optimize-strlen -fabi-version=2
+TPF_FLAGS += -fno-delete-null-pointer-checks -fno-lifetime-dse -fno-optimize-strlen
+TPF_C_FLAGS := -std=gnu90
 
-GLOBAL_CFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES) -Wa,-alshd=$*.lst
+GLOBAL_CFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES) $(TPF_C_FLAGS) -Wa,-alshd=$*.lst
 GLOBAL_CXXFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES) -Wa,-alshd=$*.lst
 
 ###

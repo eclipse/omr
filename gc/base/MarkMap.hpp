@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@
 
 #include "omrcfg.h"
 #include "omr.h"
+#include "omrmodroncore.h"
 
 #include "HeapMap.hpp"
 
@@ -100,6 +101,20 @@ public:
 	getFirstCellByMarkSlotIndex(uintptr_t slotIndex)
 	{
 		return _heapMapBaseDelta + (slotIndex << _heapMapIndexShift);
+	}
+
+	/**
+	 * check MarkMap if there is any liveObjects in the Card
+	 * this function assumes that card covers exactly 512 bytes.
+	 * @param heapAddress has to be card size aligned
+	 */
+	MMINLINE bool
+	areAnyLiveObjectsInCard(void* heapAddress) const
+	{
+#if (8 != BITS_PER_BYTE) || (9 != CARD_SIZE_SHIFT)
+#error Card size has to be exactly 512 bytes
+#endif
+		return 0 != *(uint64_t*)getSlotPtrForAddress((omrobjectptr_t) heapAddress);
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
@@ -41,17 +41,17 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Flags.hpp"
@@ -74,7 +74,7 @@ namespace TR { class Register; }
 static TR_BitVector * addVeryRefinedCallAliasSets(TR::ResolvedMethodSymbol *, TR_BitVector *, List<void> *);
 #endif
 
-OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab, TR::SymbolReference& sr, intptrj_t o, TR::KnownObjectTable::Index knownObjectIndex)
+OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab, TR::SymbolReference& sr, intptr_t o, TR::KnownObjectTable::Index knownObjectIndex)
    {
    _referenceNumber = symRefTab->assignSymRefNumber(self());
    _symbol = sr._symbol;
@@ -132,6 +132,17 @@ OMR::SymbolReference::getUseonlyAliasesBV(TR::SymbolReferenceTable * symRefTab)
             return &symRefTab->aliasBuilder.defaultMethodUseAliases();
             }
 
+         // Aliases for eaEscapeHelper
+         // Ensure EA sees the method as causing an escape for all arguments passed
+         if (symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::eaEscapeHelperSymbol))
+            {
+            return &symRefTab->aliasBuilder.defaultMethodUseAliases();
+            }
+         if (symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
+            {
+            return &symRefTab->aliasBuilder.defaultMethodUseAliases();
+            }
+
          if (!methodSymbol->isHelper())
             {
             return &symRefTab->aliasBuilder.defaultMethodUseAliases();
@@ -176,6 +187,9 @@ OMR::SymbolReference::getUseonlyAliasesBV(TR::SymbolReferenceTable * symRefTab)
             case TR_transactionExit:
             case TR_newObject:
             case TR_newObjectNoZeroInit:
+            case TR_acmpHelper:
+            case TR_newValue:
+            case TR_newValueNoZeroInit:
             case TR_newArray:
             case TR_multiANewArray:
             default:
@@ -271,13 +285,13 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
          case TR::Symbol::IsShadow:
          case TR::Symbol::IsStatic:
             {
-            // For unresolved constant dynamic, we need to invoke a Java bootstrap method, 
+            // For unresolved constant dynamic, we need to invoke a Java bootstrap method,
             // which can have arbitrary side effects, so the aliasing should be conservative here.
-            // isConstObjectRef now returns true for condy, so we add an explicit condition, 
-            // more like a short-circuit, to say if we are unresolved and not isConstObjectRef 
-            // (this is the same as before), or if we are unresolved and condy 
+            // isConstObjectRef now returns true for condy, so we add an explicit condition,
+            // more like a short-circuit, to say if we are unresolved and not isConstObjectRef
+            // (this is the same as before), or if we are unresolved and condy
             // (this is the extra condition added), we would return conservative aliases.
-            if ((self()->isUnresolved() && (_symbol->isConstantDynamic() || !_symbol->isConstObjectRef())) || 
+            if ((self()->isUnresolved() && (_symbol->isConstantDynamic() || !_symbol->isConstObjectRef())) ||
 	        _symbol->isVolatile() || self()->isLiteralPoolAddress() ||
                 self()->isFromLiteralPool() || _symbol->isUnsafeShadowSymbol() ||
                 (_symbol->isArrayShadowSymbol() && comp->getMethodSymbol()->hasVeryRefinedAliasSets()))
@@ -305,9 +319,6 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
       {
       case TR::Symbol::IsMethod:
          {
-         if (comp->getCurrentMethod()->isRuby())
-            return _useDefAliases;         // FIXME: what about non-method symbols??
-
          TR::MethodSymbol * methodSymbol = _symbol->castToMethodSymbol();
 
          if (!methodSymbol->isHelper())
@@ -315,7 +326,9 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
 
          if (symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::arraySetSymbol) ||
              symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::osrFearPointHelperSymbol) ||
-             symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::potentialOSRPointHelperSymbol))
+             symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::potentialOSRPointHelperSymbol) ||
+             symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::eaEscapeHelperSymbol) ||
+             symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
             {
             return &symRefTab->aliasBuilder.defaultMethodDefAliases();
             }
@@ -361,6 +374,9 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
             case TR_writeBarrierClassStoreRealTimeGC:
             case TR_writeBarrierStoreRealTimeGC:
             case TR_aNewArray:
+            case TR_acmpHelper:
+            case TR_newValue:
+            case TR_newValueNoZeroInit:
             case TR_newObject:
             case TR_newObjectNoZeroInit:
             case TR_newArray:
@@ -381,7 +397,6 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
             case TR_transactionExit:
             case TR_transactionEntry:
 
-            case TR_emilyCallGlue:
             default:
                // The following is the place to check for
                // a use of killsAllMethodSymbolRef... However,
@@ -471,9 +486,9 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
                case TR::com_ibm_dataaccess_DecimalData_setflags:
                   if (!(
 #ifdef TR_TARGET_S390
-                     TR::Compiler->target.cpu.getS390SupportsDFP() ||
+                     comp->target().cpu.getSupportsDecimalFloatingPointFacility() ||
 #endif
-                      TR::Compiler->target.cpu.supportsDecimalFloatingPoint()) ||
+                      comp->target().cpu.supportsDecimalFloatingPoint()) ||
                       comp->getOption(TR_DisableDFP))
                      return NULL;
 #endif //J9_PROJECT_SPECIFIC
@@ -484,7 +499,7 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
 
 #ifdef J9_PROJECT_SPECIFIC
          TR_ResolvedMethod * method = resolvedMethodSymbol->getResolvedMethod();
-         TR_PersistentMethodInfo * methodInfo = TR_PersistentMethodInfo::get(method);
+         TR_PersistentMethodInfo * methodInfo = comp->getRecompilationInfo() ? TR_PersistentMethodInfo::get(method) : NULL;
          if (methodInfo && (methodInfo->hasRefinedAliasSets() ||
                             comp->getMethodHotness() >= veryHot ||
                             resolvedMethodSymbol->hasVeryRefinedAliasSets()) &&
@@ -749,7 +764,7 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
          // more like a short-circuit, to say if we are unresolved and not isConstObjectRef
          // (this is the same as before), or if we are unresolved and condy
          // (this is the extra condition added), we would return conservative aliases.
-         if ((self()->isUnresolved() && (_symbol->isConstantDynamic() || !_symbol->isConstObjectRef())) || 
+         if ((self()->isUnresolved() && (_symbol->isConstantDynamic() || !_symbol->isConstObjectRef())) ||
 	     self()->isLiteralPoolAddress() || self()->isFromLiteralPool() || _symbol->isVolatile())
             {
             return &comp->getSymRefTab()->aliasBuilder.defaultMethodDefAliases();
@@ -819,7 +834,7 @@ OMR::SymbolReference::sharesSymbol(bool includingGCSafePoint)
          // more like a short-circuit, to say if we are unresolved and not isConstObjectRef
          // (this is the same as before), or if we are unresolved and condy
          // (this is the extra condition added), we would return conservative aliases.
-         if ((self()->isUnresolved() && (_symbol->isConstantDynamic() || !_symbol->isConstObjectRef())) || 
+         if ((self()->isUnresolved() && (_symbol->isConstantDynamic() || !_symbol->isConstObjectRef())) ||
 	       _symbol->isVolatile() || self()->isLiteralPoolAddress() ||
                self()->isFromLiteralPool() || _symbol->isUnsafeShadowSymbol() ||
                (_symbol->isArrayShadowSymbol() && c->getMethodSymbol()->hasVeryRefinedAliasSets()))
@@ -1001,7 +1016,7 @@ addVeryRefinedCallAliasSets(TR::ResolvedMethodSymbol * methodSymbol, TR_BitVecto
    // This can't be allocated into the alias region as it must be accessed across optimizations
    TR_BitVector *heapAliases = new (comp->trHeapMemory()) TR_BitVector(comp->getSymRefCount(), comp->trMemory(), heapAlloc, growable);
    *heapAliases |= *aliases;
-   return heapAliases; 
+   return heapAliases;
    }
 #endif
 

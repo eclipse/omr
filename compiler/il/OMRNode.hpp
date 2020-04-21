@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,8 +50,8 @@ namespace OMR { typedef OMR::Node NodeConnector; }
 class TR_BitVector;
 class TR_Debug;
 class TR_DebugExt;
-class TR_NodeKillAliasSetInterface;
-class TR_NodeUseAliasSetInterface;
+class TR_UseOnlyAliasSetInterface;
+class TR_UseDefAliasSetInterface;
 class TR_OpaqueClassBlock;
 class TR_OpaqueMethodBlock;
 class TR_ResolvedMethod;
@@ -67,6 +67,7 @@ namespace TR { class Symbol; }
 namespace TR { class SymbolReference; }
 namespace TR { class TreeTop; }
 namespace TR { class NodeExtension; }
+namespace TR { class NodeChecklist; }
 template <class T> class List;
 
 #define NUM_DEFAULT_CHILDREN    2
@@ -297,6 +298,13 @@ public:
     *
     */
    static TR::Node *createOSRFearPointHelperCall(TR::Node* originatingByteCodeNode);
+   /**
+    * \brief
+    *    Create a call to eaEscapeHelperSymbol
+    * 
+    * \parm originatingByteCodeNode The node whose bytecode info is used to create the call
+    */
+   static TR::Node *createEAEscapeHelperCall(TR::Node *originatingByteCodeNode, int32_t numChildren);
 
    static TR::Node *createLoad(TR::SymbolReference * symRef);
    static TR::Node *createLoad(TR::Node *originatingByteCodeNode, TR::SymbolReference *);
@@ -309,42 +317,30 @@ public:
    static TR::Node *createRelative32BitFenceNode(void * relocationAddress);
    static TR::Node *createRelative32BitFenceNode(TR::Node *originatingByteCodeNode, void *);
 
-   static TR::Node *createAddressNode(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uintptrj_t address);
-   static TR::Node *createAddressNode(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uintptrj_t address, uint8_t precision);
+   static TR::Node *createAddressNode(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uintptr_t address);
+   static TR::Node *createAddressNode(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uintptr_t address, uint8_t precision);
 
    static TR::Node *createAllocationFence(TR::Node *originatingByteCodeNode, TR::Node *fenceNode);
 
    static TR::Node *bconst(TR::Node *originatingByteCodeNode, int8_t val);
    static TR::Node *bconst(int8_t val);
 
-   static TR::Node *buconst(TR::Node *originatingByteCodeNode, uint8_t val);
-   static TR::Node *buconst(uint8_t val);
-
    static TR::Node *sconst(TR::Node *originatingByteCodeNode, int16_t val);
    static TR::Node *sconst(int16_t val);
-
-   static TR::Node *cconst(TR::Node *originatingByteCodeNode, uint16_t val);
-   static TR::Node *cconst(uint16_t val);
 
    static TR::Node *iconst(TR::Node *originatingByteCodeNode, int32_t val);
    static TR::Node *iconst(int32_t val);
 
-   static TR::Node *iuconst(TR::Node *originatingByteCodeNode, uint32_t val);
-   static TR::Node *iuconst(uint32_t val);
-
    static TR::Node *lconst(TR::Node *originatingByteCodeNode, int64_t val);
    static TR::Node *lconst(int64_t val);
 
-   static TR::Node *luconst(TR::Node *originatingByteCodeNode, uint64_t val);
-   static TR::Node *luconst(uint64_t val);
-
-   static TR::Node *aconst(TR::Node *originatingByteCodeNode, uintptrj_t val);
-   static TR::Node *aconst(TR::Node *originatingByteCodeNode, uintptrj_t val, uint8_t precision);
-   static TR::Node *aconst(uintptrj_t val);
+   static TR::Node *aconst(TR::Node *originatingByteCodeNode, uintptr_t val);
+   static TR::Node *aconst(TR::Node *originatingByteCodeNode, uintptr_t val, uint8_t precision);
+   static TR::Node *aconst(uintptr_t val);
 
    static TR::Node *createConstZeroValue(TR::Node *originatingByteCodeNode, TR::DataType dt);
    static TR::Node *createConstOne(TR::Node *originatingByteCodeNode, TR::DataType dt);
-   static TR::Node *createConstDead(TR::Node *originatingByteCodeNode, TR::DataType dt, intptrj_t extraData=0);
+   static TR::Node *createConstDead(TR::Node *originatingByteCodeNode, TR::DataType dt, intptr_t extraData=0);
 
    static TR::Node *createCompressedRefsAnchor(TR::Node *firstChild);
 
@@ -371,6 +367,89 @@ private:
       TR_ASSERT(opvalue != TR::v2v, "use createVectorConversion to create node: %s", opcode.getName());
       TR_ASSERT(opvalue != TR::vconst, "use createVectorConst to create node: %s", opcode.getName());
       return true;
+      }
+      
+   static bool isNotDeprecatedUnsigned(TR::ILOpCodes opvalue)
+      {
+      switch (opvalue) 
+         {
+         //Equality compare
+         case TR::bucmpeq:
+         case TR::bucmpne:   
+         case TR::iucmpeq:
+         case TR::iucmpne:
+         case TR::lucmpeq:
+         case TR::lucmpne:
+         case TR::sucmpeq:
+         case TR::sucmpne:
+         
+         //Equality compare and branch
+         case TR::ifiucmpeq:
+         case TR::ifiucmpne:
+         case TR::iflucmpeq:
+         case TR::iflucmpne:
+         case TR::ifbucmpeq:
+         case TR::ifbucmpne:
+         case TR::ifsucmpeq:
+         case TR::ifsucmpne:
+
+         //Constant
+         case TR::buconst:
+         case TR::iuconst:
+         case TR::luconst:
+         case TR::cconst:
+
+         //Call and Return
+         case TR::iucall:
+         case TR::iucalli:
+         case TR::iureturn: 
+         case TR::lucall: 
+         case TR::lucalli: 
+         case TR::lureturn: 
+
+         //Add and Subtract
+         case TR::aiuadd: 
+         case TR::aluadd: 
+         case TR::buadd: 
+         case TR::busub: 
+         case TR::cadd:
+         case TR::csub: 
+         case TR::iuadd: 
+         case TR::iuneg: 
+         case TR::iusub: 
+         case TR::luadd: 
+         case TR::luneg: 
+         case TR::lusub:
+
+         //Load
+         case TR::buload:
+         case TR::buloadi:
+         case TR::cload:
+         case TR::cloadi:
+         case TR::iuload:
+         case TR::iuloadi:
+         case TR::iuRegLoad:
+         case TR::luload:
+         case TR::luloadi:
+         case TR::luRegLoad:
+
+         //Store
+         case TR::bustore:
+         case TR::bustorei:
+         case TR::cstore:
+         case TR::cstorei:
+         case TR::iuRegStore:
+         case TR::iustore:
+         case TR::iustorei:
+         case TR::luRegStore:
+         case TR::lustore:
+         case TR::lustorei:
+         
+            return false;
+            
+         default: 
+            return true;
+         }
       }
 
 
@@ -435,11 +514,11 @@ public:
    ///         pairFirstChild
    ///         pairSecondChild
    ///
-   /// and the opcodes for highOp/adjunctOp are lumulh/lmul, luaddh/luadd, or lusubh/lusub.
+   /// and the opcodes for highOp/adjunctOp are lumulh/lmul, luaddh/ladd, or lusubh/lsub.
    ///
    bool                   isDualHigh();
 
-   /// Whether this node is high part of a ternary subtract or addition, like a dual this
+   /// Whether this node is high part of a select subtract or addition, like a dual this
    /// is a composite operator, made from a high order part and its adjunct operator
    /// which is the first child of its third child. It returns true if the node has the form:
    ///
@@ -451,10 +530,14 @@ public:
    ///           pairFirstChild
    ///           pairSecondChild
    ///
-   /// and the opcodes for highOp/adjunctOp are luaddc/luadd, or lusubb/lusub.
+   /// and the opcodes for highOp/adjunctOp are luaddc/ladd, or lusubb/lsub.
+   ///
+   bool                   isSelectHigh();
+
+   /// isTernaryHigh is now deprecated. Use isSelectHigh instead.
    ///
    bool                   isTernaryHigh();
-
+   
    /// Whether this node is the high or low part of a "dual", in cyclic representation.
    /// ie it represents a composite operator, together with its pair.
    /// The node and its pair have each other as its third child, completing the cycle.
@@ -543,6 +626,11 @@ public:
     *    Return true if the node is a call with potentialOSRPointHelperSymbol
     */
    bool                   isPotentialOSRPointHelperCall();
+   /**
+    * \brief
+    *    Return true if the node is a call with eaEscapeHelperSymbol
+    */
+   bool                   isEAEscapeHelperCall();
 
    // A common query used by the optimizer
    inline bool            isSingleRef();
@@ -584,6 +672,31 @@ public:
    TR::Node *             getVirtualCallNodeForGuard();
 
    TR_OpaqueMethodBlock * getOwningMethod();
+
+   /** \brief
+    *  Used to get the ram method from the Bytecode Info.
+    * 
+    *  \param *comp
+    *  _compilation of type TR::Compilation
+    * 
+    *  @return 
+    *  Returns the ram method (TR_OpaqueMethodBlock)  from function call getOwningMethod(TR::Compilation *comp, TR_ByteCodeInfo &bcInfo)
+    */
+   TR_OpaqueMethodBlock* getOwningMethod(TR::Compilation *comp);
+
+   /** \brief
+    *  Used to get the ram method from the Bytecode Info.
+    * 
+    *  \param *comp
+    *  _compilation of type TR::Compilation
+    * 
+    *  \param &bcInfo 
+    *  _byteCodeInfo of a node of type TR::Node  
+    * 
+    *  @return 
+    *  Returns the ram method (TR_OpaqueMethodBlock)
+    */
+   static TR_OpaqueMethodBlock* getOwningMethod(TR::Compilation *comp, TR_ByteCodeInfo &bcInfo);
 
    inline TR::DataType    getType();
 
@@ -633,8 +746,8 @@ public:
 
    // CS2 Alias Interface:
    // implemented in base/AliasSetInterface.hpp right now.
-   inline                 TR_NodeUseAliasSetInterface mayUse();
-   inline                 TR_NodeKillAliasSetInterface mayKill(bool gcSafe = false);
+   inline                 TR_UseOnlyAliasSetInterface mayUse();
+   inline                 TR_UseDefAliasSetInterface mayKill(bool gcSafe = false);
 
    /** \brief
     *     Determines whether this node should be sign/zero extended to 32-bit at the point of evaluation (source) by
@@ -1005,16 +1118,6 @@ public:
    bool isNonNull();
    void setIsNonNull(bool v);
 
-   bool pointsToNull();
-   void setPointsToNull(bool v);
-   bool chkPointsToNull();
-   const char * printPointsToNull();
-
-   bool pointsToNonNull();
-   void setPointsToNonNull(bool v);
-   bool chkPointsToNonNull();
-   const char * printPointsToNonNull();
-
    // Only used during local analysis
    bool containsCall();
    void setContainsCall(bool v);
@@ -1023,13 +1126,6 @@ public:
    bool isInvalid8BitGlobalRegister();
    void setIsInvalid8BitGlobalRegister(bool v);
    const char * printIsInvalid8BitGlobalRegister();
-
-   // 390 zGryphon Highword register GRA
-   bool getIsHPREligible() { return _flags.testAny(isHPREligible); }
-   void setIsHPREligible() { _flags.set(isHPREligible); }
-   void resetIsHPREligible() { _flags.reset(isHPREligible); }
-   const char * printIsHPREligible();
-   bool isEligibleForHighWordOpcode();
 
    // Result of this node is being stored into the same location as its left child
    bool isDirectMemoryUpdate();
@@ -1088,10 +1184,16 @@ public:
    bool chkHeapificationStore();
    const char * printIsHeapificationStore();
 
+   // Flags only used for isNew() opcodes
    bool isHeapificationAlloc();
    void setHeapificationAlloc(bool v);
    bool chkHeapificationAlloc();
    const char * printIsHeapificationAlloc();
+
+   bool isIdentityless();
+   void setIdentityless(bool v);
+   bool chkIdentityless();
+   const char * printIsIdentityless();
 
    bool isLiveMonitorInitStore();
    void setLiveMonitorInitStore(bool v);
@@ -1518,6 +1620,16 @@ public:
    void setIsAdjunct(bool v);
 
    // Flags used by TR::loadaddr
+   bool pointsToNull();
+   void setPointsToNull(bool v);
+   bool chkPointsToNull();
+   const char * printPointsToNull();
+
+   bool pointsToNonNull();
+   void setPointsToNonNull(bool v);
+   bool chkPointsToNonNull();
+   const char * printPointsToNonNull();
+
    bool cannotTrackLocalUses();
    void setCannotTrackLocalUses(bool v);
    bool chkCannotTrackLocalUses();
@@ -1830,6 +1942,7 @@ protected:
 // Private functionality.
 private:
    TR::Node * getExtendedChild(int32_t c);
+   TR_YesNoMaybe computeIsCollectedReferenceImpl(TR::NodeChecklist &processedNodesCollected, TR::NodeChecklist &processedNodesNotCollected);
 
    friend class ::TR_DebugExt;
    friend class TR::NodePool;
@@ -1857,7 +1970,6 @@ protected:
       nodePointsToNonNull                   = 0x00000004,
       nodeContainsCall                      = 0x00000008, ///< Only used during local analysis
       invalid8BitGlobalRegister             = 0x00000010, ///< value is in a global register which cannot be used on an 8 bit instruction
-      isHPREligible                         = 0x00000010, ///< 390 zGryphon Highword register GRA
       nodeHasExtension                      = 0x00000020,
       directMemoryUpdate                    = 0x00000040, ///< Result of this node is being stored into the same
                                                           ///< location as its left child
@@ -2053,13 +2165,14 @@ protected:
       // Flags only used for isNew() opcodes
       //
       HeapificationAlloc                    = 0x00001000,
+      Identityless                          = 0x00002000,
 
       // Flag used by TR::newarray and TR::anewarray
       //
       allocationCanBeRemoved                = 0x00004000,
       skipZeroInit                          = 0x00008000,
 
-      // Flag used by TR::lmul (possibly TR::luadd, TR::lusub)
+      // Flag used by TR::lmul
       // Whether this node is the adjunct node of a dual high node
       adjunct                               = 0x00010000,
 

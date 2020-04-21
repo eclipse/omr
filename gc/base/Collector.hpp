@@ -30,6 +30,7 @@
 
 #include "BaseVirtual.hpp"
 #include "EnvironmentBase.hpp"
+#include "ModronAssertions.h"
 
 class MM_AllocateDescription;
 class MM_AllocationContext;
@@ -194,8 +195,8 @@ public:
 	 * moved from one subspace to another.
 	 * @param env[in] The thread which performed the change in heap geometry 
 	 */
-	virtual void heapReconfigured(MM_EnvironmentBase* env) = 0;
-
+	virtual void heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress) {}
+	
 	/**
 	 * Post collection broadcast event, indicating that the collection has been completed.
 	 * @param subSpace the memory subspace where the collection occurred
@@ -285,6 +286,11 @@ public:
 	virtual	void postConcurrentUpdateStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats, UDATA bytesConcurrentlyScanned) {}
 	virtual void forceConcurrentFinish() {}
 	virtual void completeExternalConcurrentCycle(MM_EnvironmentBase *env) {}
+	/**
+	 * Notify any (concurrent) collector that might block and hold VM access
+	 * that an Exclusive VM Access is to be requested so that VM access can be released
+	 */
+	virtual void notifyAcquireExclusiveVMAccess(MM_EnvironmentBase *env) {}
 	virtual bool isDisabled(MM_EnvironmentBase *env) { return _disableGC; }
 	/**
 	 * @return pointer to collector/phase specific concurrent stats structure

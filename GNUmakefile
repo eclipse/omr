@@ -1,66 +1,82 @@
 ###############################################################################
-# Copyright (c) 2015, 2018 IBM Corp. and others
-# 
+# Copyright (c) 2015, 2019 IBM Corp. and others
+#
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
 # distribution and is available at https://www.eclipse.org/legal/epl-2.0/
 # or the Apache License, Version 2.0 which accompanies this distribution and
 # is available at https://www.apache.org/licenses/LICENSE-2.0.
-#      
+#
 # This Source Code may also be made available under the following
 # Secondary Licenses when the conditions for such availability set
 # forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
 # General Public License, version 2 with the GNU Classpath
 # Exception [1] and GNU General Public License, version 2 with the
 # OpenJDK Assembly Exception [2].
-#    
+#
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
-# 
+#
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-top_srcdir:=.
+top_srcdir := .
+
 include $(top_srcdir)/omrmakefiles/configure.mk
 
 ###
 ### Global targets
 ###
 
-all: postbuild
-.DEFAULT: all
-clean:
-.PHONY: all clean
+all : postbuild
+.DEFAULT : all
+clean :
+.PHONY : all clean
 
-help:
+help :
 	@echo "help   Display this help message."
 	@echo "all    Build OMR."
 	@echo "clean  Clean OMR build artifacts."
 	@echo "test   Run functional verification tests."
 	@echo "lint   Run the OMR linter."
-.PHONY: help
+.PHONY : help
+
+# recursively find files in directory $1 matching the pattern $2
+FindAllFiles = \
+	$(wildcard $1/$2) \
+	$(foreach i,$(wildcard $1/*),$(call FindAllFiles,$i,$2))
 
 ###
 ### Tracegen
 ###
 ifeq (yes,$(ENABLE_TRACEGEN))
-define TRACEGEN_COMMAND
-cd $(exe_output_dir) && ./tracegen -treatWarningAsError -generatecfiles -threshold 1 -root $(top_srcdir)
-endef
 
-define TRACEMERGE_COMMAND
-cd $(exe_output_dir) && ./tracemerge -majorversion 5 -minorversion 1 -root $(top_srcdir)
-endef
-else
-define TRACEGEN_COMMAND
-@echo Skipping tracegen
-endef
+TRACEGEN_DEFINITION_TDF_FILES := $(patsubst ./%,%,$(call FindAllFiles,$(top_srcdir),*.tdf))
 
-define TRACEMERGE_COMMAND
-@echo Skipping tracemerge
-endef
-endif
+tracegen.sentinel : $(TRACEGEN_DEFINITION_TDF_FILES)
+	cd $(exe_output_dir) && ./tracegen -treatWarningAsError -generatecfiles -threshold 1 -root $(top_srcdir)
+	touch $@
 
+# re-run tracegen if the executable has changed
+tracegen.sentinel : $(exe_output_dir)/tracegen$(EXEEXT)
+
+TRACEGEN_COMMAND := $(MAKE) -f GNUmakefile tracegen.sentinel
+
+tracemerge.sentinel : tracegen.sentinel
+	cd $(exe_output_dir) && ./tracemerge -majorversion 5 -minorversion 1 -root $(top_srcdir)
+	touch $@
+
+# re-run tracemerge if the executable has changed
+tracemerge.sentinel : $(exe_output_dir)/tracemerge$(EXEEXT)
+
+TRACEMERGE_COMMAND := $(MAKE) -f GNUmakefile tracemerge.sentinel
+
+else # ENABLE_TRACEGEN
+
+TRACEGEN_COMMAND :=
+TRACEMERGE_COMMAND :=
+
+endif # ENABLE_TRACEGEN
 
 # ASCII To EBCDIC Targets
 ifeq (zos,$(OMR_HOST_OS))
@@ -77,15 +93,12 @@ convertPath = $1
 endif
 
 HOOK_DEFINITION_FILES = $(call convertPath,$(abspath ./gc/base/omrmmprivate.hdf ./gc/include/omrmm.hdf ./fvtest/algotest/hooksample.hdf))
-HOOK_DEFINITION_SENTINEL = $(patsubst %.hdf,%.sentinel, $(HOOK_DEFINITION_FILES))
-define HOOKGEN_COMMAND
-cd $(exe_output_dir) && ./hookgen $<
-endef
+HOOK_DEFINITION_SENTINELS = $(patsubst %.hdf,%.sentinel, $(HOOK_DEFINITION_FILES))
 
 # Trace Build Tools
 ifeq (yes,$(ENABLE_TRACEGEN))
 tool_targets += tools/tracegen
-main_targets += tools/tracemerge
+tool_targets += tools/tracemerge
 endif
 
 # FVTest Helper Libraries
@@ -93,7 +106,7 @@ test_prereqs := third_party/pugixml-1.5 fvtest/util fvtest/omrGtestGlue
 test_targets += $(test_prereqs)
 
 # Utility Libraries
-main_targets +=  util/omrutil util/pool util/avl util/hashtable util/hookable
+main_targets += util/omrutil util/pool util/avl util/hashtable util/hookable
 test_targets += \
   fvtest/algotest \
   fvtest/utiltest
@@ -173,7 +186,10 @@ endif
 
 ifeq (yes,$(ENABLE_DDR))
   postbuild_targets += ddr
-  ddr:: staticlib
+  ddr :: staticlib
+ifeq (zos,$(OMR_HOST_OS))
+  ddr :: util/a2e
+endif
 endif
 
 DO_TEST_TARGET := yes
@@ -193,7 +209,7 @@ postbuild_targets += tests
 main_targets := $(sort $(main_targets))
 test_targets := $(sort $(test_targets))
 
-targets += $(tool_targets) $(prebuild_targets) $(main_targets) omr_static_lib $(test_targets) ddr
+targets += $(tool_targets) $(main_targets) omr_static_lib $(test_targets) ddr
 targets_clean := $(addsuffix _clean,$(targets))
 targets_ddrgen := $(addsuffix _ddrgen,$(filter-out omr_static_lib jitbuilder/% fvtest/% perftest/% third_party/% tools/% ddr ddr/% example/%,$(targets)))
 
@@ -201,130 +217,132 @@ targets_ddrgen := $(addsuffix _ddrgen,$(filter-out omr_static_lib jitbuilder/% f
 ### Rules
 ###
 
-postbuild: $(postbuild_targets)
+postbuild : $(postbuild_targets)
 	$(TRACEMERGE_COMMAND)
 
-tests: staticlib
+tests : staticlib
 ifeq (yes,$(DO_TEST_TARGET))
 	@$(MAKE) -f GNUmakefile $(test_targets)
 endif
 
-staticlib: mainbuild
+staticlib : mainbuild
 	@$(MAKE) -f GNUmakefile omr_static_lib
 
-mainbuild: prebuild
+mainbuild : prebuild
 	@$(MAKE) -f GNUmakefile $(main_targets)
 
-prebuild: tools
-	@$(MAKE) -f GNUmakefile $(prebuild_targets) $(HOOK_DEFINITION_SENTINEL)
+prebuild : tools
+	@$(MAKE) -f GNUmakefile hook_definition_sentinel_all
 	$(TRACEGEN_COMMAND)
 
-tools:
+tools :
 	@$(MAKE) -f GNUmakefile $(tool_targets)
 
-.PHONY: tools prebuild mainbuild staticlib tests postbuild
+.PHONY : hook_definition_sentinel_all tools prebuild mainbuild staticlib tests postbuild
 
 ###
 ### Inter-target Dependencies
 ###
 
-# These rules must be specified before $(targets)::
+# These rules must be specified before $(targets) ::
 
 # If a prereq directory is not also defined in $(targets),
 # then we won't execute 'make' in the prereq directory.
 
 ifeq (zos,$(OMR_HOST_OS))
-tools/tracegen:: util/a2e
-tools/tracemerge:: util/a2e
-tools/hookgen:: util/a2e
+tools/hookgen :: util/a2e
+tools/tracegen :: util/a2e
+tools/tracemerge :: util/a2e
 endif
 
-$(HOOK_DEFINITION_SENTINEL): $(exe_output_dir)/hookgen$(EXEEXT)
-%.sentinel: %.hdf
-	$(HOOKGEN_COMMAND)
+hook_definition_sentinel_all : $(HOOK_DEFINITION_SENTINELS)
+
+# re-run hookgen if the executable has changed
+$(HOOK_DEFINITION_SENTINELS) : $(exe_output_dir)/hookgen$(EXEEXT)
+
+%.sentinel : %.hdf
+	cd $(exe_output_dir) && ./hookgen $<
 	touch $@
 
-hook_definition_sentinel_clean:
-	rm -f $(HOOK_DEFINITION_SENTINEL)
+hook_definition_sentinel_clean :
+	rm -f $(HOOK_DEFINITION_SENTINELS)
 
-omrsigcompat:: util/omrutil
+omrsigcompat :: util/omrutil
 
-example:: $(test_prereqs)
+example :: $(test_prereqs)
 
-fvtest/algotest::$(test_prereqs)
-fvtest/gctest:: $(test_prereqs)
-fvtest/jitbuildertest:: $(test_prereqs)
-fvtest/porttest:: $(test_prereqs)
-fvtest/rastest:: $(test_prereqs)
-fvtest/sigtest:: $(test_prereqs)
-fvtest/threadextendedtest:: $(test_prereqs)
-fvtest/threadtest:: $(test_prereqs)
-fvtest/utiltest:: $(test_prereqs)
-fvtest/vmtest:: $(test_prereqs)
+fvtest/algotest ::$(test_prereqs)
+fvtest/gctest :: $(test_prereqs)
+fvtest/jitbuildertest :: $(test_prereqs)
+fvtest/porttest :: $(test_prereqs)
+fvtest/rastest :: $(test_prereqs)
+fvtest/sigtest :: $(test_prereqs)
+fvtest/threadextendedtest :: $(test_prereqs)
+fvtest/threadtest :: $(test_prereqs)
+fvtest/utiltest :: $(test_prereqs)
+fvtest/vmtest :: $(test_prereqs)
 
-perftest/gctest:: $(test_prereqs)
+perftest/gctest :: $(test_prereqs)
 
 # Test Compiler dependencies
 ifeq (1,$(OMR_TEST_COMPILER))
-  fvtest/compilertest:: $(compiler_prereqs)
+  fvtest/compilertest :: $(compiler_prereqs)
 endif
 
 # JitBuilder dependencies
 ifeq (1,$(OMR_JITBUILDER))
-  fvtest/jitbuildertest:: $(compiler_prereqs)
-  jitbuilder:: $(compiler_prereqs)
-  jitbuilder/release/cpp:: $(compiler_prereqs)
+  fvtest/jitbuildertest :: $(compiler_prereqs)
+  jitbuilder :: $(compiler_prereqs)
+  jitbuilder/release/cpp :: $(compiler_prereqs)
 endif
 
 ###
 ### Targets
 ###
 
-$(targets)::
+$(targets) ::
 	$(MAKE) -C $@ all
-.PHONY: $(targets)
+.PHONY : $(targets)
 
-%:
+% :
 	@echo Error, No rule to build target $@
 	@exit -1
 
-clean: $(targets_clean) hook_definition_sentinel_clean
-$(targets_clean)::
+clean : $(targets_clean) hook_definition_sentinel_clean
+$(targets_clean) ::
 	$(MAKE) -C $(patsubst %_clean,%,$@) clean
-.PHONY: $(targets_clean)
+.PHONY : $(targets_clean)
 
-lint:
+lint :
 	$(MAKE) -C fvtest/compilertest -f linter.mk
-.PHONY: lint
+.PHONY : lint
 
-test:
+test :
 ifeq (yes,$(ENABLE_FVTEST))
 	$(MAKE) -f fvtest/omrtest.mk test
 else
 	@echo Functional verification tests are disabled.
 	@echo Enable by configuring with --enable-fvtest
 endif
-.PHONY: test
-
+.PHONY : test
 
 # preprocess ddrgen-annotated source code
 
-ddrgen:
+ddrgen :
 	$(MAKE) -f GNUmakefile $(targets_ddrgen)
 
-$(targets_ddrgen):
+$(targets_ddrgen) :
 	$(MAKE) -C $(patsubst %_ddrgen,%,$@) ddrgen
 
-.PHONY: ddrgen $(targets_ddrgen)
-
+.PHONY : ddrgen $(targets_ddrgen)
 
 # Rerunning configure
 
-configure.mk: config.status configure.mk.in
+configure.mk : config.status configure.mk.in
 	config.status
 
-config.status: $(top_srcdir)/configure
+config.status : $(top_srcdir)/configure
 	$(top_srcdir)/configure -C
 
-$(top_srcdir)/configure: $(top_srcdir)/configure.ac
+$(top_srcdir)/configure : $(top_srcdir)/configure.ac
 	cd $(top_srcdir) && autoconf

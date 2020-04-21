@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,9 +24,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/RegisterConstants.hpp"
@@ -41,14 +42,14 @@
 #include "env/jittypes.h"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "ras/Debug.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -130,10 +131,10 @@ TR::X86HelperCallSnippet::addMetaDataForLoadAddrArg(
        && (!child->getSymbol()->isClassObject()
            || cg()->wantToPatchClassPointer((TR_OpaqueClassBlock*)sym->getStaticAddress(), buffer)))
       {
-      if (TR::Compiler->target.is64Bit())
-         cg()->jitAddPicToPatchOnClassRedefinition(((void *) (uintptrj_t)sym->getStaticAddress()), (void *) buffer);
+      if (cg()->comp()->target().is64Bit())
+         cg()->jitAddPicToPatchOnClassRedefinition(((void *) (uintptr_t)sym->getStaticAddress()), (void *) buffer);
       else
-         cg()->jitAdd32BitPicToPatchOnClassRedefinition(((void *) (uintptrj_t)sym->getStaticAddress()), (void *) buffer);
+         cg()->jitAdd32BitPicToPatchOnClassRedefinition(((void *) (uintptr_t)sym->getStaticAddress()), (void *) buffer);
       }
 
    }
@@ -145,7 +146,7 @@ uint8_t *TR::X86HelperCallSnippet::genHelperCall(uint8_t *buffer)
    //
    if (_stackPointerAdjustment < -128 || _stackPointerAdjustment > 127)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          *buffer++ = 0x48; // Rex
          }
@@ -156,7 +157,7 @@ uint8_t *TR::X86HelperCallSnippet::genHelperCall(uint8_t *buffer)
       }
    else if (_stackPointerAdjustment != 0)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          *buffer++ = 0x48; // Rex
          }
@@ -168,7 +169,7 @@ uint8_t *TR::X86HelperCallSnippet::genHelperCall(uint8_t *buffer)
    if (_callNode)
       {
       if(!debug("amd64unimplemented"))
-         TR_ASSERT(TR::Compiler->target.is32Bit(), "AMD64 genHelperCall with _callNode not yet implemented");
+         TR_ASSERT(cg()->comp()->target().is32Bit(), "AMD64 genHelperCall with _callNode not yet implemented");
       int32_t i = 0;
 
       if (_offset != -1)
@@ -225,7 +226,7 @@ uint8_t *TR::X86HelperCallSnippet::genHelperCall(uint8_t *buffer)
                TR::StaticSymbol *sym = child->getSymbol()->getStaticSymbol();
                TR_ASSERT(sym, "Bad argument to helper call");
                *buffer++ = 0x68; // push   imm4   argValue
-               *(uint32_t *)buffer = (uint32_t)(uintptrj_t)sym->getStaticAddress();
+               *(uint32_t *)buffer = (uint32_t)(uintptr_t)sym->getStaticAddress();
 
                addMetaDataForLoadAddrArg(buffer, child);
 
@@ -265,9 +266,9 @@ uint8_t *TR::X86HelperCallSnippet::genHelperCall(uint8_t *buffer)
 
    // Insert alignment padding if the instruction might be patched dynamically.
    //
-   if (_alignCallDisplacementForPatching && TR::Compiler->target.isSMP())
+   if (_alignCallDisplacementForPatching && cg()->comp()->target().isSMP())
       {
-      uintptrj_t mod = (uintptrj_t)(buffer) % cg()->getInstructionPatchAlignmentBoundary();
+      uintptr_t mod = (uintptr_t)(buffer) % cg()->getInstructionPatchAlignmentBoundary();
       mod = cg()->getInstructionPatchAlignmentBoundary() - mod;
 
       if (mod <= 4)
@@ -297,7 +298,7 @@ uint8_t *TR::X86HelperCallSnippet::genHelperCall(uint8_t *buffer)
    //
    if (_stackPointerAdjustment < -128 || _stackPointerAdjustment > 127)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          *buffer++ = 0x48; // Rex
          }
@@ -308,7 +309,7 @@ uint8_t *TR::X86HelperCallSnippet::genHelperCall(uint8_t *buffer)
       }
    else if (_stackPointerAdjustment != 0)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          *buffer++ = 0x48; // Rex
          }
@@ -341,9 +342,9 @@ TR_Debug::printBody(TR::FILE *pOutFile, TR::X86HelperCallSnippet  * snippet, uin
 
    if (snippet->getStackPointerAdjustment() != 0)
       {
-      uint8_t size = 5 + (TR::Compiler->target.is64Bit()? 1 : 0);
+      uint8_t size = 5 + (comp()->target().is64Bit()? 1 : 0);
       printPrefix(pOutFile, NULL, bufferPos, size);
-      trfprintf(pOutFile, "add \t%s, %d\t\t\t%s Temporarily deallocate stack frame", TR::Compiler->target.is64Bit()? "rsp":"esp", snippet->getStackPointerAdjustment(),
+      trfprintf(pOutFile, "add \t%s, %d\t\t\t%s Temporarily deallocate stack frame", comp()->target().is64Bit()? "rsp":"esp", snippet->getStackPointerAdjustment(),
                     commentString());
       bufferPos += size;
       }
@@ -414,9 +415,9 @@ TR_Debug::printBody(TR::FILE *pOutFile, TR::X86HelperCallSnippet  * snippet, uin
 
    if (snippet->getStackPointerAdjustment() != 0)
       {
-      uint8_t size = 5 + (TR::Compiler->target.is64Bit()? 1 : 0);
+      uint8_t size = 5 + (comp()->target().is64Bit()? 1 : 0);
       printPrefix(pOutFile, NULL, bufferPos, size);
-      trfprintf(pOutFile, "sub \t%s, %d\t\t\t%s Reallocate stack frame", TR::Compiler->target.is64Bit()? "rsp":"esp", snippet->getStackPointerAdjustment(),
+      trfprintf(pOutFile, "sub \t%s, %d\t\t\t%s Reallocate stack frame", comp()->target().is64Bit()? "rsp":"esp", snippet->getStackPointerAdjustment(),
                     commentString());
       bufferPos += size;
       }
@@ -473,7 +474,7 @@ uint32_t TR::X86HelperCallSnippet::getLength(int32_t estimatedSnippetStart)
 
    // Conservatively assume that 4 NOPs might be required for alignment.
    //
-   if (_alignCallDisplacementForPatching && TR::Compiler->target.isSMP())
+   if (_alignCallDisplacementForPatching && cg()->comp()->target().isSMP())
       {
       length += 4;
       }
@@ -487,27 +488,16 @@ int32_t TR::X86HelperCallSnippet::branchDisplacementToHelper(
    TR::SymbolReference *helper,
    TR::CodeGenerator   *cg)
    {
-   intptrj_t helperAddress = (intptrj_t)helper->getMethodAddress();
-   intptrj_t nextInstructionAddress = (intptrj_t)(callInstructionAddress + 5);
+   intptr_t helperAddress = (intptr_t)helper->getMethodAddress();
+   intptr_t nextInstructionAddress = (intptr_t)(callInstructionAddress + 5);
 
-   if (cg->directCallRequiresTrampoline(helperAddress, (intptrj_t)callInstructionAddress))
+   if (cg->directCallRequiresTrampoline(helperAddress, (intptr_t)callInstructionAddress))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(helper->getReferenceNumber(), (void *)(callInstructionAddress+1));
 
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinRIPRange(helperAddress, nextInstructionAddress),
+      TR_ASSERT_FATAL(cg->comp()->target().cpu.isTargetWithinRIPRange(helperAddress, nextInstructionAddress),
                       "Local helper trampoline should be reachable directly");
       }
 
    return (int32_t)(helperAddress - nextInstructionAddress);
-   }
-
-
-uint8_t *TR::X86CheckAsyncMessagesSnippet::genHelperCall(uint8_t *buffer)
-   {
-   // This code assumes that the superclass' genHelperCall() will only emit
-   // the call and nothing more.  This should always be true for the asynccheck
-   // helpers.
-   //
-   uint8_t *cursor = TR::X86HelperCallSnippet::genHelperCall(buffer);
-   return cursor;
    }

@@ -101,7 +101,7 @@ const char* TypedTestCasePState::VerifyRegisteredTestNames(
     }
   }
 
-  const std::string& errors_str = errors.GetString();
+  const std::string errors_str = errors.GetString();
   if (errors_str != "") {
     fprintf(stderr, "%s %s", FormatFileLocation(file, line).c_str(),
             errors_str.c_str());

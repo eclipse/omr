@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,6 +122,26 @@ validate_executable_name(const char *expected, const char *found)
 	return FALSE;
 }
 
+#define CPU_BURNER_BUFF_SIZE 10000
+static uintptr_t
+cpuBurner(OMRPortLibrary *portLibrary, const char *myText)
+{
+	/* burn up CPU */
+	uintptr_t counter = 0;
+	char buffer[CPU_BURNER_BUFF_SIZE];
+	char *result = NULL;
+	for (counter = 0; counter < CPU_BURNER_BUFF_SIZE; ++counter) {
+		buffer[counter] = 0;
+	}
+	for (counter = 0; (strlen(buffer) + strlen(myText) + 1) < CPU_BURNER_BUFF_SIZE; ++counter) {
+		result = strcat(buffer, myText);
+		if (NULL != strstr(result, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab")) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 TEST(PortSysinfoTest, sysinfo_test0)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
@@ -136,6 +156,14 @@ TEST(PortSysinfoTest, sysinfo_test0)
 	/* Remove extra "./" from the front of executable name. */
 	if (0 == strncmp(argv0, "./", 2)) {
 		argv0 = &argv0[2];
+	}
+	/* When this test is invoked from a Windows machine, the input in `argv` may have forward or back slashes. To avoid false
+	 * negatives we normalize the path names to use forward slashes always.
+	 */
+	for (char* cursor = argv0; *cursor != '\0'; ++cursor) {
+		if (*cursor == '/') {
+			*cursor = '\\';
+		}
 	}
 #endif /* defined(OMR_OS_WINDOWS) */
 
@@ -243,6 +271,32 @@ TEST(PortSysinfoTest, sysinfo_test1)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Error if username buffer is too short: rc= %d, Expecting %d\n", rc, 1);
 	}
 
+	reportTestExit(OMRPORTLIB, testName);
+}
+
+TEST(PortSysinfoTest, hostname_test)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+#define J9SYSINFO_HOSTNAME_LENGTH 1024
+	const char *testName = "omrsysinfo_hostname_test";
+	char hostname[J9SYSINFO_HOSTNAME_LENGTH];
+	intptr_t rc = 0;
+
+	reportTestEntry(OMRPORTLIB, testName);
+
+	rc = omrsysinfo_get_hostname(hostname, J9SYSINFO_HOSTNAME_LENGTH);
+	if (rc == -1) {
+		portTestEnv->log(LEVEL_ERROR, "omrsysinfo_get_hostname returned -1.\n");
+		reportTestExit(OMRPORTLIB, testName);
+		return;
+	} else {
+		char msg[256] = "";
+		omrstr_printf(msg, sizeof(msg), "Host name returned = \"%s\"\n", hostname);
+		portTestEnv->log(msg);
+	}
+	/* Don't check for buffers that are too small, since the call to gethostname() will
+	 * silently truncate the name and return 0 on some platforms, e.g. MacOS.
+	 */
 	reportTestExit(OMRPORTLIB, testName);
 }
 
@@ -806,9 +860,14 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_set_limit_CORE_FILE)
 	{
 		OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 		const char *testName = "omrsysinfo_test_sysinfo_set_limit_FILE_DESCRIPTORS";
-		intptr_t rc = -1;
+#if defined(OSX)
+		portTestEnv->log("Skipping test: sysinfo_test_sysinfo_set_limit_FILE_DESCRIPTORS: resource limits unsupported on macOS, see issue #4990 for more details\n");
+		reportTestExit(OMRPORTLIB, testName);
+#else /* defined(OSX) */
+		uint32_t rc = OMRPORT_LIMIT_UNKNOWN;
 		uint64_t originalSoftLimit = 0;
 		uint64_t finalSoftLimit = 0;
+		uint64_t softSetToHardLimit = 0;
 		uint64_t originalHardLimit = 0;
 		uint64_t currentLimit = 0;
 		const uint64_t descriptorLimit = 256;
@@ -822,6 +881,7 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_set_limit_CORE_FILE)
 			reportTestExit(OMRPORTLIB, testName);
 			return;
 		}
+		portTestEnv->log(LEVEL_ERROR, "originalSoftLimit=%llu\n", originalSoftLimit);
 		finalSoftLimit = originalSoftLimit;
 
 		rc = omrsysinfo_set_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS, descriptorLimit);
@@ -854,18 +914,54 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_set_limit_CORE_FILE)
 			reportTestExit(OMRPORTLIB, testName);
 			return;
 		}
+		portTestEnv->log(LEVEL_ERROR, "originalHardLimit=%llu\n", originalHardLimit);
+
+		/* set soft limit to hard limit */
+		rc = omrsysinfo_set_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS, originalHardLimit);
+		if (0 != rc) {
+			outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_set_limit soft = hard FAILED rc=%d\n", rc);
+			reportTestExit(OMRPORTLIB, testName);
+			return;
+		}
+
+		/* get new soft limit */
+		rc = omrsysinfo_get_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS, &softSetToHardLimit);
+		if (OMRPORT_LIMIT_UNKNOWN == rc) {
+			outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_get_limit FAILED: OMRPORT_LIMIT_UNKNOWN\n");
+			reportTestExit(OMRPORTLIB, testName);
+			return;
+		}
+		portTestEnv->log(LEVEL_ERROR, "soft set to hard limit=%llu\n", softSetToHardLimit);
+
+		/* set soft limit to old value */
+		rc = omrsysinfo_set_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS, originalSoftLimit);
+		if (0 != rc) {
+			outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_set_limit reset soft FAILED rc=%d\n", rc);
+			reportTestExit(OMRPORTLIB, testName);
+			return;
+		}
+
+		rc = omrsysinfo_get_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS | OMRPORT_LIMIT_HARD, &currentLimit);
+		if (currentLimit != originalHardLimit) {
+			outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_get_limit FAILED: hard limit changed\n");
+			reportTestExit(OMRPORTLIB, testName);
+			return;
+		}
 
 		/* lowering the hard limit is irreversible unless privileged */
 		if (0 != geteuid()) { /* normal user */
 			/* setting the hard limit from unlimited to a finite value has unpredictable results:
 			 * the actual value may be much smaller than requested.
-			 * In that case, just try setting it to the same value.
+			 * In that case, just try setting it to its current value (softSetToHardLimit) or a value slightly lower.
+			 * Ensure that we don't try to set the hard limit to a value less than the current soft limit
+			 * (i.e. originalSoftLimit).
 			 */
-			uint64_t newHardLimit =  (OMRPORT_LIMIT_UNLIMITED == rc) ? originalHardLimit: originalHardLimit - 1;
+			uint64_t newHardLimit =  ((OMRPORT_LIMIT_UNLIMITED == rc) || (originalSoftLimit == softSetToHardLimit))
+					? softSetToHardLimit: softSetToHardLimit - 1;
 
 			rc = omrsysinfo_set_limit(OMRPORT_RESOURCE_FILE_DESCRIPTORS | OMRPORT_LIMIT_HARD, newHardLimit);
 			if (0 != rc) {
-				outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_set_limit set hard limit FAILED rc=%d\n", rc);
+				outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_set_limit set hard limit=%lld FAILED rc=%d\n", rc, newHardLimit);
 				reportTestExit(OMRPORTLIB, testName);
 				return;
 			}
@@ -931,6 +1027,7 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_set_limit_CORE_FILE)
 	}
 
 	reportTestExit(OMRPORTLIB, testName);
+#endif /* defined(OSX) */
 }
 
 #if defined(AIXPPC)
@@ -1259,25 +1356,6 @@ onlineProcessorCount(const struct J9ProcessorInfos *procInfo)
 	return n_onln;
 }
 
-#define CPU_BURNER_BUFF_SIZE 10000
-static uintptr_t
-cpuBurner(OMRPortLibrary *portLibrary, const char *myText)
-{
-	/* burn up CPU */
-	uintptr_t counter = 0;
-	char buffer[CPU_BURNER_BUFF_SIZE];
-	char *result = NULL;
-	for (counter = 0; counter < CPU_BURNER_BUFF_SIZE; ++counter) {
-		buffer[counter] = 0;
-	}
-	for (counter = 0; (strlen(buffer) + strlen(myText) + 1) < CPU_BURNER_BUFF_SIZE; ++counter) {
-		result = strcat(buffer, myText);
-		if (NULL != strstr(result, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab")) {
-			return 0;
-		}
-	}
-	return 1;
-}
 /**
  * Test for omrsysinfo_get_processor_info() port library API. Ensure that we are
  * able to obtain processor usage data as also, that it is consistent.
@@ -1577,6 +1655,34 @@ TEST(PortSysinfoTest, sysinfo_test_get_CPU_utilization)
 
 #endif /* !defined(J9ZOS390) */
 
+TEST(PortSysinfoTest, sysinfo_test_get_CPU_load)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+
+	/* As per the API specification the first two calls to this API will return a negative portable error code. However
+	 * for the purposes of this test we will not be testing this. This is because the test infrastructure is setup such
+	 * that we cannot guarantee that no other test has called omrsysinfo_get_CPU_utlization or omrsysinfo_get_CPU_load
+	 * up to this point. If some other test did call these APIs then the internal buffers would have been populated and
+	 * as such the omrsysinfo_get_CPU_load could return a zero return code on the very first invocation within this
+	 * test.
+	 *
+	 * To avoid inter-test dependencies we do not assert on the return value of the first two calls here, and only test
+	 * that the API returns valid numbers within the range outlined in the API specification.
+	 */
+	double cpuLoad;
+	omrsysinfo_get_CPU_load(&cpuLoad);
+	omrsysinfo_get_CPU_load(&cpuLoad);
+	
+	/* Sleep for 100ms before re-sampling processor usage stats. This allows other processes and the operating system to
+	 * use the CPU and drive up the user and kernel utilization. The call to cpuBurner probably won't be optimized out,
+	 * but use the result to make absolutely sure that it isn't.
+	 */
+	omrthread_sleep(100 + cpuBurner(OMRPORTLIB, "a"));
+
+	ASSERT_EQ(omrsysinfo_get_CPU_load(&cpuLoad), 0);
+	ASSERT_GE(cpuLoad, 0.0);
+	ASSERT_LE(cpuLoad, 1.0);
+}
 
 /*
  * Test omrsysinfo_get_tmp when the buffer size == 0
@@ -1995,11 +2101,11 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 	} else {
 		portTestEnv->log("mkdir %s\n", utf8);
 	}
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	rc = atoe_chdir(utf8);
-#else
+#else /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	rc = chdir(utf8);
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	if (0 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "cd %s failed rc: %d\n", utf8, rc);
 	} else {
@@ -2023,7 +2129,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 
 #if defined(OMR_OS_WINDOWS)
 	_chdir(orig_cwd); /* we need to exit current directory before deleting it*/
-#elif defined(J9ZOS390)
+#elif defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	atoe_chdir(orig_cwd);
 #else /* defined(OMR_OS_WINDOWS) */
 	rc = chdir(orig_cwd);
@@ -2278,4 +2384,35 @@ TEST(PortSysinfoTest, sysinfo_cgroup_get_memlimit)
 
 	reportTestExit(OMRPORTLIB, testName);
 	return;
+}
+
+/**
+ * Test GetProcessorDescription.
+ */
+TEST(PortSysinfoTest, GetProcessorDescription)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+	OMRProcessorDesc desc;
+
+	ASSERT_NE(omrsysinfo_get_processor_description(&desc), -1);
+
+#if defined(J9X86) || defined(J9HAMMER)
+	ASSERT_GE(desc.processor, OMR_PROCESSOR_X86_UNKNOWN);
+	ASSERT_GE(desc.physicalProcessor, OMR_PROCESSOR_X86_UNKNOWN);
+#elif defined(AIXPPC) || defined(LINUXPPC)
+	ASSERT_GE(desc.processor, OMR_PROCESSOR_PPC_UNKNOWN);
+	ASSERT_LT(desc.processor, OMR_PROCESSOR_X86_UNKNOWN);
+	ASSERT_GE(desc.physicalProcessor, OMR_PROCESSOR_PPC_UNKNOWN);
+	ASSERT_LT(desc.physicalProcessor, OMR_PROCESSOR_X86_UNKNOWN);
+#elif defined(S390) || defined(J9ZOS390)
+	ASSERT_GE(desc.processor, OMR_PROCESSOR_S390_UNKNOWN);
+	ASSERT_LT(desc.processor, OMR_PROCESSOR_PPC_UNKNOWN);
+	ASSERT_GE(desc.physicalProcessor, OMR_PROCESSOR_S390_UNKNOWN);
+	ASSERT_LT(desc.physicalProcessor, OMR_PROCESSOR_PPC_UNKNOWN);
+#endif
+	
+	for (int i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE * 32; i++) {
+		BOOLEAN feature = omrsysinfo_processor_has_feature(&desc, i);
+		ASSERT_TRUE(feature == TRUE || feature == FALSE);
+	}
 }

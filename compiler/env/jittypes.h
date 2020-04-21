@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,28 +34,8 @@
 #define IS_32BIT_SIGNED(x)   ((x) == ( int32_t)(x))
 #define IS_32BIT_UNSIGNED(x) ((x) == (uint32_t)(x))
 
-/*
- * -----------------------------------------------------------------------------
- * Generated code TARGET pointer types and limits
- * -----------------------------------------------------------------------------
- * FIXME: Note that the concept of a static target pointer type is deprecated
- * and should be removed from the code going forward.
- */
-
-#if (TR_TARGET_64BIT && TR_HOST_64BIT) || (TR_HOST_32BIT && TR_TARGET_32BIT) || defined(XCOMPILE)
-   typedef uintptr_t uintptrj_t;
-   typedef  intptr_t  intptrj_t;
-#else
- #ifdef TR_TARGET_64BIT
-    typedef uint64_t uintptrj_t;
-    typedef  int64_t  intptrj_t;
- #else
-    typedef uint32_t uintptrj_t;
-    typedef  int32_t  intptrj_t;
- #endif
-#endif
-
-#define MAX_UINTPTRJ (~(uintptrj_t)0)
+#define MAX_UINTPTRJ (~(uintptr_t)0)
+#define MAX_UINTPTR (~(uintptr_t)0)
 
 #ifdef __cplusplus
 namespace TR { class Compilation; }
@@ -154,6 +134,8 @@ typedef struct TR_InlinedCallSite
    #if defined(TR_HOST_ARM)
       //dmb
       #define FLUSH_MEMORY(smp) if ( smp ) __asm__(".word 0xf57ff05f");
+   #elif defined(TR_HOST_ARM64)
+      #define FLUSH_MEMORY(smp) if ( smp ) __asm__("dmb sy");
    #else
       #define FLUSH_MEMORY(smp)
    #endif

@@ -57,5 +57,5 @@ set_property(TARGET triltest PROPERTY FOLDER fvtest/tril)
 
 add_test(
 	NAME triltest
-	COMMAND triltest
+	COMMAND triltest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/triltest-results.xml
 )

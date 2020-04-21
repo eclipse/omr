@@ -96,75 +96,10 @@ OMR::Z::RealRegister::setRegister4Field(uint32_t *instruction)
    TR::RealRegister::setRegister4Field(instruction, _registerNumber);
    }
 
-
-TR::RealRegister *
-OMR::Z::RealRegister::getHighWordRegister()
-   {
-   if (_registerNumber>=FirstGPR && _registerNumber<=LastGPR)
-      {
-      return _highWordRegister;
-      }
-   if (_registerNumber>=FirstHPR && _registerNumber<=LastHPR)
-      {
-      return self();
-      }
-   else
-      {
-      return NULL;
-      }
-   }
-
-TR::RealRegister *
-OMR::Z::RealRegister::getLowWordRegister()
-      {
-      if (_registerNumber>=FirstGPR && _registerNumber<=LastGPR)
-         {
-         return self();
-         }
-      if (_registerNumber>=FirstHPR && _registerNumber<=LastHPR)
-         {
-         return _lowWordRegister;
-         }
-      else
-         {
-         return NULL;
-         }
-      }
-
-TR::RealRegister *
-OMR::Z::RealRegister::getSiblingWordRegister()
-      {
-      if (_registerNumber>=FirstGPR && _registerNumber<=LastGPR)
-         {
-         return _highWordRegister;
-         }
-      if (_registerNumber>=FirstHPR && _registerNumber<=LastHPR)
-         {
-         return _lowWordRegister;
-         }
-      else
-         return NULL;
-      }
-
 bool
 OMR::Z::RealRegister::setHasBeenAssignedInMethod(bool b)
    {
-   if (self()->getAssignedRegister() && self()->getAssignedRegister()->isUpperBitsAreDirty())
-      (b)? self()->setAssignedHigh(true) : self()->setAssignedHigh(false);
-
    return OMR::RealRegister::setHasBeenAssignedInMethod(b); //call base class
-   }
-
-bool
-OMR::Z::RealRegister::isHighWordRegister()
-   {
-   return self() == self()->getHighWordRegister();
-   }
-
-bool
-OMR::Z::RealRegister::isLowWordRegister()
-   {
-   return self() == self()->getLowWordRegister();
    }
 
 
@@ -304,14 +239,14 @@ OMR::Z::RealRegister::setRegister4Field(uint32_t *instruction,RegNum reg)
 bool
 OMR::Z::RealRegister::isPseudoRealReg(RegNum reg)
   {
-  return (reg < FirstGPR || reg > LastHPR);
+  return (reg < FirstGPR || reg > LastVRF);
   }
 
 // static method
 bool
 OMR::Z::RealRegister::isRealReg(RegNum reg)
    {
-   return (reg >= FirstGPR && reg <= LastHPR);
+   return (reg >= FirstGPR && reg <= LastVRF);
    }
 
 // static method
@@ -332,16 +267,6 @@ OMR::Z::RealRegister::isFPR(RegNum reg)
      return true;
    else
      return false;
-   }
-
-// static method
-bool
-OMR::Z::RealRegister::isHPR(RegNum reg)
-   {
-   if(reg >= FirstHPR && reg <= LastHPR)
-      return true;
-   else
-      return false;
    }
 
 // static method
@@ -424,21 +349,4 @@ const uint8_t OMR::Z::RealRegister::_fullRegBinaryEncodings[TR::RealRegister::Nu
    0x1D,        // VRF29
    0x1E,        // VRF30
    0x1F,        // VRF31
-
-   0x00,        // HPR0
-   0x01,        // HPR1
-   0x02,        // HPR2
-   0x03,        // HPR3
-   0x04,        // HPR4
-   0x05,        // HPR5
-   0x06,        // HPR6
-   0x07,        // HPR7
-   0x08,        // HPR8
-   0x09,        // HPR9
-   0x0A,        // HPR10
-   0x0B,        // HPR11
-   0x0C,        // HPR12
-   0x0D,        // HPR13
-   0x0E,        // HPR14
-   0x0F,        // HPR15
    };

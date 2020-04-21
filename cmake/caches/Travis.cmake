@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,12 +20,16 @@
 #############################################################################
 
 set(OMR_COMPILER ON CACHE BOOL "")
+set(OMR_DDR ON CACHE BOOL "")
 set(OMR_TEST_COMPILER ON CACHE BOOL "")
 set(OMR_JITBUILDER ON CACHE BOOL "")
 
 set(OMR_GC_SEGREGATED_HEAP ON CACHE BOOL "")
 set(OMR_GC_MODRON_SCAVENGER ON CACHE BOOL "")
 set(OMR_GC_MODRON_CONCURRENT_MARK ON CACHE BOOL "")
+set(OMR_GC_VLHGC ON CACHE BOOL "")
+set(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD ON CACHE BOOL "")
+set(OMR_PORT_SOCKET_SUPPORT ON CACHE BOOL "")
 
 set(OMR_NOTIFY_POLICY_CONTROL ON CACHE BOOL "")
 set(OMR_THR_CUSTOM_SPIN_OPTIONS ON CACHE BOOL "")

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -261,7 +261,9 @@ public:
    TR::IlValue *Mul(TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *MulWithOverflow(TR::IlBuilder **handler, TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *Div(TR::IlValue *left, TR::IlValue *right);
+   TR::IlValue *UnsignedDiv(TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *Rem(TR::IlValue *left, TR::IlValue *right);
+   TR::IlValue *UnsignedRem(TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *And(TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *Or(TR::IlValue *left, TR::IlValue *right);
    TR::IlValue *Xor(TR::IlValue *left, TR::IlValue *right);
@@ -511,31 +513,64 @@ public:
       }
 
    /**
-    * @brief Generates a switch-case control flow structure.
+    * @brief Generates a lookup switch-case control flow structure
     *
-    * @param selectionVar the variable to switch on.
+    * @param selectorValue the IlValue to switch on.
     * @param defaultBuilder the builder for the default case.
     * @param numCases the number of cases.
     * @param cases array of pointers to JBCase instances corresponding to each case.
     */
-   void Switch(const char *selectionVar,
+   void Switch(TR::IlValue *selectorValue,
                TR::IlBuilder **defaultBuilder,
                uint32_t numCases,
                JBCase** cases);
 
    /**
-    * @brief Generates a switch-case control flow structure (vararg overload).
+    * @brief Generates a lookup switch-case control flow structure (vararg overload).
     *
     * Instead of taking an array of pointers to JBCase instances, this overload
     * takes a pointer to each instance as a separate varargs argument.
     *
-    * @param selectionVar the variable to switch on.
+    * @param selectorValue the IlValue to switch on.
     * @param defaultBuilder the builder for the default case.
     * @param numCases the number of cases.
     * @param ... the list of pointers to JBCase instances corresponding to each case.
     */
-   void Switch(const char *selectionVar,
+   void Switch(TR::IlValue *selectorValue,
                TR::IlBuilder **defaultBuilder,
+               uint32_t numCases,
+               ...);
+
+   /**
+    * @brief Generates a table switch-case control flow structure.
+    *
+    * @param selectorValue the IlValue to switch on.
+    * @param defaultBuilder the builder for the default case.
+    * @param generateBoundsCheck generate the bounds check or not for the range of the cases
+    * @param numCases the number of cases.
+    * @param cases array of pointers to JBCase instances corresponding to each case.
+    */
+   void TableSwitch(TR::IlValue * selectorValue,
+               TR::IlBuilder **defaultBuilder,
+               bool generateBoundsCheck,
+               uint32_t numCases,
+               JBCase** cases);
+
+   /**
+    * @brief Generates a table switch-case control flow structure (IlValue and vararg overload).
+    *
+    * Instead of taking an array of pointers to JBCase instances, this overload
+    * takes a pointer to each instance as a separate varargs argument.
+    *
+    * @param selectorValue the IlValue to switch on.
+    * @param defaultBuilder the builder for the default case.
+    * @param generateBoundsCheck generate the bounds check or not for the range of the cases
+    * @param numCases the number of cases.
+    * @param ... the list of pointers to JBCase instances corresponding to each case.
+    */
+   void TableSwitch(TR::IlValue * selectorValue,
+               TR::IlBuilder **defaultBuilder,
+               bool generateBoundsCheck,
                uint32_t numCases,
                ...);
 
@@ -550,6 +585,17 @@ public:
    JBCase * MakeCase(int32_t caseValue,
                      TR::IlBuilder **caseBuilder,
                      int32_t caseFallsThrough);
+
+   // select
+   /**
+    * @brief Service to select a value based on a condition without branching
+    *
+    * @param condition the condition value
+    * @param trueValue value to select if true
+    * @param falseValue value to select if false
+    * @return TR::IlValue* IlValue corresponding to the selected value
+    */
+   TR::IlValue * Select(TR::IlValue * condition, TR::IlValue * trueValue, TR::IlValue * falseValue);
 
    /**
     * @brief associates this object with a particular client object
@@ -705,6 +751,7 @@ protected:
    TR::IlValue *unaryOp(TR::ILOpCodes op, TR::IlValue *v);
    void doVectorConversions(TR::Node **leftPtr, TR::Node **rightPtr);
    TR::IlValue *widenIntegerTo32Bits(TR::IlValue *v);
+   TR::IlValue *widenIntegerTo32BitsUnsigned(TR::IlValue *v);
    TR::IlValue *binaryOpFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode);
    TR::Node *binaryOpNodeFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode);
    TR::IlValue *binaryOpFromOpMap(OpCodeMapper mapOp, TR::IlValue *left, TR::IlValue *right);
@@ -749,6 +796,8 @@ protected:
    TR::IlValue *genOperationWithOverflowCHK(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode, TR::IlBuilder **handler, TR::ILOpCodes overflow);
    virtual void setHandlerInfo(uint32_t catchType);
    TR::IlValue **processCallArgs(TR::Compilation *comp, int numArgs, va_list args);
+   JBCase **createCaseArray(uint32_t numCases, va_list arg);
+   void generateSwitchCases(TR::Node *switchNode, TR::Node *defaultNode, TR::IlBuilder **defaultBuilder, uint32_t numCases, JBCase **cases);
    };
 
 } // namespace OMR

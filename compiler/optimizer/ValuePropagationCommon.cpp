@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
@@ -49,16 +49,16 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -79,7 +79,7 @@
 #include "optimizer/UseDefInfo.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
 #include "optimizer/VPConstraint.hpp"
-#include "optimizer/OMRValuePropagation.hpp"
+#include "optimizer/ValuePropagation.hpp"
 #include "optimizer/LocalValuePropagation.hpp"
 #include "ras/Debug.hpp"
 #include "ras/DebugCounter.hpp"
@@ -119,8 +119,6 @@ OMR::ValuePropagation::ValuePropagation(TR::OptimizationManager *manager)
      _javaLangClassGetComponentTypeCalls(trMemory()),
      _unknownTypeArrayCopyTrees(trMemory()),
      _scalarizedArrayCopies(trMemory()),
-     _cachedStringBufferVcalls(trMemory()),
-     _cachedStringPeepHolesVcalls(trMemory()),
      _predictedThrows(trMemory()),
      _prexClasses(trMemory()),
      _prexMethods(trMemory()),
@@ -252,6 +250,12 @@ void OMR::ValuePropagation::initialize()
 
    _edgesToBeRemoved = new (trStackMemory()) TR_Array<TR::CFGEdge *>(trMemory(), 8, false, stackAlloc);
    _blocksToBeRemoved = new (trStackMemory()) TR_Array<TR::CFGNode*>(trMemory(), 8, false, stackAlloc);
+   _curDefinedOnAllPaths = NULL;
+   if (_isGlobalPropagation)
+      _definedOnAllPaths = new (trStackMemory()) DefinedOnAllPathsMap(std::less<TR::CFGEdge *>(), trMemory()->currentStackRegion());
+   else
+      _definedOnAllPaths = NULL;
+   _defMergedNodes = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
    _vcHandler.setRoot(_curConstraints, NULL);
 
    _relationshipCache.setFirst(NULL);
@@ -854,7 +858,7 @@ void OMR::ValuePropagation::removeArrayCopyNode(TR::TreeTop *arraycopyTree)
 TR::Node * createHdrSizeNode(TR::Compilation *comp, TR::Node *n)
    {
    TR::Node *hdrSize = NULL;
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       hdrSize = TR::Node::create(n, TR::lconst);
       hdrSize->setLongInt((int64_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
@@ -867,7 +871,7 @@ TR::Node * createHdrSizeNode(TR::Compilation *comp, TR::Node *n)
 
 TR::Node* generateLenForArrayCopy(TR::Compilation *comp, int32_t elementSize, TR::Node *stride,TR::Node *srcObjNode,TR::Node *copyLenNode,TR::Node *n)
    {
-   bool is64BitTarget = TR::Compiler->target.is64Bit() ? true : false;
+   bool is64BitTarget = comp->target().is64Bit() ? true : false;
 
    TR::Node *len = NULL;
    if (elementSize == 1)
@@ -987,7 +991,7 @@ bool OMR::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNod
          copyLenLow  = copyLenConstraint   ? copyLenConstraint->getLowInt() : TR::getMinSigned<TR::Int32>();
          copyLenHigh = copyLenConstraint   ? copyLenConstraint->getHighInt() : TR::getMaxSigned<TR::Int32>();
 
-         if (TR::Compiler->target.is64Bit())
+         if (comp()->target().is64Bit())
             {
             src  = TR::Node::create(TR::aladd, 2, src, srcOffset);
             dest = TR::Node::create(TR::aladd, 2, dest, destOffset);
@@ -1030,7 +1034,7 @@ bool OMR::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNod
 
 void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
    {
-   bool is64BitTarget = TR::Compiler->target.is64Bit();
+   bool is64BitTarget = comp()->target().is64Bit();
 
    // Check to see if this is a call to java/lang/System.arraycopy
    if (!node->isArrayCopyCall())
@@ -1069,7 +1073,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
    bool needArrayCheck = true;
    bool needArrayStoreCheck = true;
    bool needWriteBarrier = true;
-   bool needReadBarrier = TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads();
+   bool needReadBarrier = TR::Compiler->om.readBarrierType() != gc_modron_readbar_none;
 
    bool primitiveTransform = cg()->getSupportsPrimitiveArrayCopy();
    bool referenceTransform = cg()->getSupportsReferenceArrayCopy();
@@ -1097,12 +1101,29 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
    if (srcVN == dstVN)
       {
       needArrayStoreCheck = false;
-      if (!comp()->getOptions()->gcIsUsingConcurrentMark())
-         needWriteBarrier = false;
+      switch (TR::Compiler->om.writeBarrierType())
+         {
+         case gc_modron_wrtbar_cardmark:
+         case gc_modron_wrtbar_cardmark_and_oldcheck:
+         case gc_modron_wrtbar_cardmark_incremental:
+            break;
+         default:
+            needWriteBarrier = false;
+            break;
+         }
       }
 
-   if (!comp()->getOptions()->needWriteBarriers())
-      needWriteBarrier = false;
+   switch (TR::Compiler->om.writeBarrierType())
+      {
+      case gc_modron_wrtbar_oldcheck:
+      case gc_modron_wrtbar_cardmark:
+      case gc_modron_wrtbar_cardmark_and_oldcheck:
+      case gc_modron_wrtbar_cardmark_incremental:
+         break;
+      default:
+         needWriteBarrier = false;
+         break;
+      }
 
    TR::VPArrayInfo *srcArrayInfo;
    TR::VPArrayInfo *dstArrayInfo;
@@ -1268,7 +1289,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
                // Array types are different types so the arraycopy will fail
                transformTheCall = false;
                }
-            else if (comp()->getOptions()->alwaysCallWriteBarrier())
+            else if (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_always)
                {
                transformTheCall = false;
                }
@@ -1947,7 +1968,7 @@ TR::Node *generateArrayAddressTree(
    TR::Node *hdrSize)
    {
 
-   bool is64BitTarget = TR::Compiler->target.is64Bit() ? true : false;
+   bool is64BitTarget = comp->target().is64Bit() ? true : false;
 
    TR::Node *array;
 
@@ -2185,7 +2206,7 @@ TR::TreeTop *createStoresForArraycopyChildren(TR::Compilation *comp, TR::TreeTop
 void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR::TreeTop *arrayTranslateTree, TR::SymbolReference *srcRef, TR::SymbolReference *dstRef, TR::SymbolReference *srcOffRef, TR::SymbolReference *dstOffRef, TR::SymbolReference *lenRef,TR::SymbolReference *tableRef, bool hasTable )
    {
 
-   bool is64BitTarget = TR::Compiler->target.is64Bit();
+   bool is64BitTarget = comp()->target().is64Bit();
    TR::Node* callNode = callTree->getNode()->getFirstChild();
    TR::MethodSymbol *symbol = callNode->getSymbol()->castToMethodSymbol();
    const TR::RecognizedMethod rm = symbol->getRecognizedMethod();
@@ -2536,7 +2557,7 @@ TR::TreeTop *OMR::ValuePropagation::buildSameLeafTest(TR::Node *offset,TR::Node 
    TR::Node *ifNode;
    TR::Node *child1 = NULL, *child2 = NULL;
 
-   bool is64BitTarget = TR::Compiler->target.is64Bit();
+   bool is64BitTarget = comp()->target().is64Bit();
 
    child1 = TR::Node::create(is64BitTarget ? TR::lshr : TR::ishr, 2, offset, spineShiftNode);
    child2 = TR::Node::create(is64BitTarget ? TR::ladd : TR::iadd, 2, offset, len);
@@ -2552,7 +2573,7 @@ TR::TreeTop *OMR::ValuePropagation::buildSameLeafTest(TR::Node *offset,TR::Node 
 
 TR::Node *generateArrayletAddressTree(TR::Compilation* comp, TR::Node *vcallNode, TR::DataType type, TR::Node *off,TR::Node *obj, TR::Node *spineShiftNode,TR::Node *shiftNode, TR::Node *strideShiftNode, TR::Node *hdrSize)
    {
-   bool is64BitTarget = TR::Compiler->target.is64Bit() ? true : false;
+   bool is64BitTarget = comp->target().is64Bit() ? true : false;
 
    uint32_t elementSize = TR::Symbol::convertTypeToSize(type);
    if (comp->useCompressedPointers() && (type == TR::Address))
@@ -3128,7 +3149,7 @@ void OMR::ValuePropagation::transformRealTimeArrayCopy(TR_RealTimeArrayCopy *rtA
          }
 
       TR::Node *fragmentParent = TR::Node::createWithSymRef(vcallNode, TR::aload, 0, comp()->getSymRefTab()->findOrCreateFragmentParentSymbolRef());
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          TR::Node *globalFragment = TR::Node::createWithSymRef(TR::lloadi, 1, 1, fragmentParent, comp()->getSymRefTab()->findOrCreateGlobalFragmentSymbolRef());
          ifTree = TR::TreeTop::create(comp(), TR::Node::createif(TR::iflcmpne, globalFragment,TR::Node::create(vcallNode, TR::lconst, 0, 0)));
@@ -3361,8 +3382,8 @@ void OMR::ValuePropagation::transformRTMultiLeafArrayCopy(TR_RealTimeArrayCopy *
 
    TR::TreeTop *prevTree = vcallTree->getPrevTreeTop();
    TR::DataType type = rtArrayCopyTree->_type;
-   intptrj_t elementSize = TR::Symbol::convertTypeToSize(type);
-   intptrj_t leafSize = comp()->fe()->getArrayletMask(elementSize) + 1;
+   intptr_t elementSize = TR::Symbol::convertTypeToSize(type);
+   intptr_t leafSize = comp()->fe()->getArrayletMask(elementSize) + 1;
 
    TR_ResolvedMethod *method = comp()->getCurrentMethod();
    TR::ResolvedMethodSymbol *methodSymbol = comp()->getOwningMethodSymbol(method);
@@ -3514,8 +3535,8 @@ void OMR::ValuePropagation::transformObjectCloneCall(TR::TreeTop *callTree, OMR:
          comp()->getSymRefTab()->methodSymRefFromName(
             comp()->getMethodSymbol(),
             "com/ibm/jit/JITHelpers",
-            const_cast<char*>(TR::Compiler->target.is64Bit() ? "unsafeObjectShallowCopy64" : "unsafeObjectShallowCopy32"),
-            const_cast<char*>(TR::Compiler->target.is64Bit() ? "(Ljava/lang/Object;Ljava/lang/Object;J)V" : "(Ljava/lang/Object;Ljava/lang/Object;I)V"),
+            const_cast<char*>(comp()->target().is64Bit() ? "unsafeObjectShallowCopy64" : "unsafeObjectShallowCopy32"),
+            const_cast<char*>(comp()->target().is64Bit() ? "(Ljava/lang/Object;Ljava/lang/Object;J)V" : "(Ljava/lang/Object;Ljava/lang/Object;I)V"),
             TR::MethodSymbol::Static);
    TR::Node *getHelpers = TR::Node::createWithSymRef(callNode, TR::acall, 0, helperAccessor);
    callTree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(callNode, TR::treetop, 1, getHelpers)));
@@ -3523,7 +3544,7 @@ void OMR::ValuePropagation::transformObjectCloneCall(TR::TreeTop *callTree, OMR:
    objCopy->setAndIncChild(0, getHelpers);
    objCopy->setAndIncChild(1, objNode);
    objCopy->setAndIncChild(2, callNode);
-   objCopy->setAndIncChild(3, TR::Node::create(callNode, (TR::Compiler->target.is64Bit() ? TR::a2l : TR::a2i), 1, loadaddr));
+   objCopy->setAndIncChild(3, TR::Node::create(callNode, (comp()->target().is64Bit() ? TR::a2l : TR::a2i), 1, loadaddr));
 
    callTree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(callNode, TR::treetop, 1, callNode)));
    callTree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(callNode, TR::treetop, 1, objCopy)));
@@ -3546,13 +3567,22 @@ void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, OMR::
    if (method->getRecognizedMethod() == TR::java_lang_J9VMInternals_primitiveClone)
       objNode = callNode->getLastChild();
 
+   TR_OpaqueClassBlock *j9arrayClass = cloneInfo->_clazz;
+   TR_OpaqueClassBlock *j9class = comp()->fe()->getComponentClassFromArrayClass(j9arrayClass);
+   bool isPrimitiveClass = TR::Compiler->cls.isPrimitiveClass(comp(), j9class);
+
+   if ((isPrimitiveClass && !cg()->getSupportsPrimitiveArrayCopy())
+       || (!isPrimitiveClass && !cg()->getSupportsReferenceArrayCopy()))
+      {
+      if (trace())
+         traceMsg(comp(), "\nNot transforming array clone call [%p] because %s array copy is not supported\n",
+                  callNode, isPrimitiveClass ? "primitive" : "reference");
+
+      return;
+      }
+
    if (!performTransformation(comp(), "%sInlining array clone call [%p] as new array and arraycopy\n", OPT_DETAILS, callNode))
       return;
-
-   TR_OpaqueClassBlock *j9arrayClass = cloneInfo->_clazz;
-   bool isFixedClass = cloneInfo->_isFixed;
-
-   TR_OpaqueClassBlock *j9class = comp()->fe()->getComponentClassFromArrayClass(j9arrayClass);
 
    TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "inlineClone.location/array/(%s)", comp()->signature()), callTree);
    int32_t classNameLength;
@@ -3573,7 +3603,7 @@ void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, OMR::
 
    callTree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(callNode, TR::treetop, 1, lenNode)));
 
-   if (TR::Compiler->cls.isPrimitiveClass(comp(), j9class))
+   if (isPrimitiveClass)
       {
       TR::Node *typeConst = TR::Node::iconst(callNode, comp()->fe()->getNewArrayTypeFromClass(j9arrayClass));
       static char *disableSkipZeroInitInVP = feGetEnv("TR_disableSkipZeroInitInVP");
@@ -3592,6 +3622,7 @@ void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, OMR::
    else
       {
       TR::Node *classNode;
+      bool isFixedClass = cloneInfo->_isFixed;
       if (isFixedClass)
          {
          classNode = TR::Node::createWithSymRef(callNode, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateClassSymbol(callNode->getSymbolReference()->getOwningMethodSymbol(comp()), 0, j9class));
@@ -3609,19 +3640,19 @@ void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, OMR::
    newArray->setIsNonNull(true);
 
    int32_t elementSize = TR::Compiler->om.getSizeOfArrayElement(newArray);
-   TR::Node *lengthInBytes = TR::Compiler->target.is64Bit() ?
+   TR::Node *lengthInBytes = comp()->target().is64Bit() ?
       TR::Node::create(callNode, TR::lmul, 2, TR::Node::create(callNode, TR::i2l, 1, lenNode), TR::Node::lconst(lenNode, elementSize)) :
       TR::Node::create(callNode, TR::imul, 2, lenNode, TR::Node::iconst(lenNode, elementSize));
 
 
-   TR::Node *srcStart = TR::Compiler->target.is64Bit() ?
+   TR::Node *srcStart = comp()->target().is64Bit() ?
       TR::Node::create(callNode, TR::aladd, 2, objNode, TR::Node::lconst(objNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes())) :
       TR::Node::create(callNode, TR::aiadd, 2, objNode, TR::Node::iconst(objNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
-   TR::Node *destStart = TR::Compiler->target.is64Bit() ?
+   TR::Node *destStart = comp()->target().is64Bit() ?
       TR::Node::create(callNode, TR::aladd, 2, newArray, TR::Node::lconst(newArray, TR::Compiler->om.contiguousArrayHeaderSizeInBytes())) :
       TR::Node::create(callNode, TR::aiadd, 2, newArray, TR::Node::iconst(newArray, TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
    TR::Node *arraycopy = NULL;
-   if (TR::Compiler->cls.isPrimitiveClass(comp(), j9class))
+   if (isPrimitiveClass)
       arraycopy = TR::Node::createArraycopy(srcStart, destStart, lengthInBytes);
    else
       arraycopy = TR::Node::createArraycopy(objNode, newArray, srcStart, destStart, lengthInBytes);
@@ -3630,7 +3661,7 @@ void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, OMR::
    arraycopy->getByteCodeInfo().setDoNotProfile(1);
    arraycopy->setNoArrayStoreCheckArrayCopy(true);
    arraycopy->setForwardArrayCopy(true);
-   if (TR::Compiler->cls.isPrimitiveClass(comp(), j9class))
+   if (isPrimitiveClass)
       {
       switch (elementSize)
          {
@@ -3682,7 +3713,6 @@ void OMR::ValuePropagation::transformConverterCall(TR::TreeTop *callTree)
    if (!performTransformation(comp(), "%sChanging call %s [%p] to %s \n", OPT_DETAILS, callNode->getOpCode().getName(), callNode, transformedTargetName(rm)))
       return;
 
-   //bool is64BitTarget = TR::Compiler->target.is64Bit() ? true : false;
    TR::CFG *cfg = comp()->getFlowGraph();
 
     //dup call
@@ -3829,7 +3859,7 @@ void OMR::ValuePropagation::transformConverterCall(TR::TreeTop *callTree)
    TR::TreeTop *ifTreed = TR::TreeTop::create(comp(), TR::Node::createif(TR::ifacmpeq, TR::Node::createLoad(callNode, dstRef), TR::Node::aconst(callNode,0)));
    createAndInsertTestBlock(comp(), ifTreed, callTree, origCallBlock, slowArraytranslateBlock);
 
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp()->target().cpu.isZ())
       {
       // Task 110060:
       //

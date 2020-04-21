@@ -585,7 +585,7 @@ OperandStackTestUsingStructMethod::OperandStackTestUsingStructMethod(OMR::JitBui
    : OperandStackTestMethod(d)
    {
    d->DefineStruct("Thread");
-   d->DefineField("Thread", "sp", d->PointerTo(d->PointerTo(STACKVALUEILTYPE)), offsetof(Thread, sp));
+   d->DefineField("Thread", "sp", d->PointerTo(STACKVALUEILTYPE), offsetof(Thread, sp));
    d->CloseStruct("Thread");
 
    DefineParameter("thread", d->PointerTo("Thread"));

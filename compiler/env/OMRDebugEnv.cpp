@@ -36,6 +36,6 @@ OMR::DebugEnv::breakPoint()
 #if defined(LINUX) || defined(AIXPPC)
    raise(SIGTRAP);
 #else
-   TR_ASSERT(0, "Not implemented yet: OMR::DebugEnv::breakPoint");
+   TR_UNIMPLEMENTED();
 #endif
    }

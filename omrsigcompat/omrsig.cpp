@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -324,7 +324,7 @@ omrsig_signalOS_internal(int signum, const struct sigaction *act, struct sigacti
 	if (NULL == sigactionOS) {
 		sigactionOS = (SIGACTION)dlsym(RTLD_NEXT, "sigaction");
 		if (NULL == sigactionOS) {
-			char *lib = NULL;
+			const char *lib = NULL;
 #if defined(AIXPPC)
 #if defined(OMR_ENV_DATA64)
 			lib = "/usr/lib/libc.a(shr_64.o)";

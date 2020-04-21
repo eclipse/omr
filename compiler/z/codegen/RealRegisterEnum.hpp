@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,26 +112,4 @@
       FirstAssignableVRF= VRF0, /* Need this until we complete overlapping FPR/VRF implementation */
       LastAssignableVRF = VRF31,
       FirstOverlapVRF   = VRF0,
-      LastOverlapVRF    = VRF15,
-
-      HPRBase           = LastVRF,
-
-      HPR0              = HPRBase + 1,
-      HPR1              = HPRBase + 2,
-      HPR2              = HPRBase + 3,
-      HPR3              = HPRBase + 4,
-      HPR4              = HPRBase + 5,
-      HPR5              = HPRBase + 6,
-      HPR6              = HPRBase + 7,
-      HPR7              = HPRBase + 8,
-      HPR8              = HPRBase + 9,
-      HPR9              = HPRBase + 10,
-      HPR10             = HPRBase + 11,
-      HPR11             = HPRBase + 12,
-      HPR12             = HPRBase + 13,
-      HPR13             = HPRBase + 14,
-      HPR14             = HPRBase + 15,
-      HPR15             = HPRBase + 16,
-
-      FirstHPR          = HPR0,
-      LastHPR           = HPR15
+      LastOverlapVRF    = VRF15

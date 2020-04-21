@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include "codegen/Analyser.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/Register.hpp"
@@ -929,7 +929,9 @@ TR::Register *TR_X86BinaryCommutativeAnalyser::integerAddAnalyserImpl(TR::Node  
 //
 static bool isVolatileMemoryOperand(TR::Node *node)
    {
-   if (TR::Compiler->target.isSMP() && node->getOpCode().isMemoryReference())
+   TR::Compilation *comp = TR::comp();
+   TR_ASSERT_FATAL(comp, "isVolatileMemoryOperand should only be called during a compilation!");
+   if (comp->target().isSMP() && node->getOpCode().isMemoryReference())
       {
       TR_ASSERT(node->getSymbolReference(), "expecting a symbol reference\n");
       TR::Symbol *sym = node->getSymbolReference()->getSymbol();
@@ -1894,7 +1896,7 @@ void TR_X86BinaryCommutativeAnalyser::longMultiplyAnalyser(TR::Node *root)
       }
    else if (getCopyRegs())
       {
-      // Ah:Al=Al*Bl notation means that Ah:Al contains the result of the MUL instructon between Al and Bl
+      // Ah:Al=Al*Bl notation means that Ah:Al contains the result of the MUL instruction between Al and Bl
       //
       // both high zero: compute                               Ah:Al=Al*Bl            (clobber Ah,Al)
       // Ah zero:        compute Bh=Bh*Al,                     Ah:Al=Al*Bl, Ah=Ah+Bh  (clobber Ah,Al,Bh)

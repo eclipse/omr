@@ -26,6 +26,7 @@ extern "C" {
 
 #include "thrtypes.h"
 #include "threaddef.h"
+#include "ut_j9thr.h"
 
 void
 omrthread_monitor_pin(omrthread_monitor_t monitor, omrthread_t self)
@@ -194,6 +195,291 @@ omrthread_spinlock_swapState(omrthread_monitor_t monitor, uintptr_t newState)
 	}
 	return oldState;
 }
+
+#if defined(OMR_THR_MCS_LOCKS)
+/**
+ * Acquire the MCS lock.
+ *
+ * @param[in] self the current omrthread_t
+ * @param[in] monitor the monitor to be acquired
+ * @param[in] mcsNode the MCS node belonging to self
+ * @param[in] retry specifies if a MCS node is reused in which case the MCS lock queue
+ * and MCS node characteristics should not be updated. Only spinning should be performed
+ * against mcsNode->blocked.
+ *
+ * @return 0 on success, -1 on failure
+ */
+intptr_t
+omrthread_mcs_lock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_node_t mcsNode, BOOLEAN retry)
+{
+#if defined(THREAD_ASSERTS)
+	ASSERT(mcsNode != NULL);
+#endif /* defined(THREAD_ASSERTS) */
+
+	intptr_t result = -1;
+	omrthread_mcs_node_t predecessor = NULL;
+
+#if defined(OMR_THR_SPIN_WAKE_CONTROL)
+	BOOLEAN spinning = FALSE;
+	omrthread_library_t const lib = self->library;
+#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
+
+	if (!retry) {
+		/* Initialize the MCS node. */
+		mcsNode->queueNext = NULL;
+		mcsNode->monitor = NULL;
+		mcsNode->thread = self;
+		mcsNode->blocked = OMRTHREAD_MCS_THREAD_BLOCKED;
+
+		/* Install the mcsNode at the tail of the MCS lock queue (monitor->queueTail). */
+		predecessor = (omrthread_mcs_node_t)VM_AtomicSupport::set(
+				(volatile uintptr_t *)&monitor->queueTail,
+				(uintptr_t)mcsNode);
+	}
+
+	if ((NULL != predecessor) || retry) {
+		/* If a predecessor MCS node exists, then the current thread blocks (waits) until it receives
+		 * a notification from the thread that owns the predecessor MCS node.
+		 */
+		if (!retry) {
+			/* Enqueue the mcsNode next to the predecessor node in the MCS lock queue. */
+			predecessor->queueNext = mcsNode;
+			VM_AtomicSupport::writeBarrier();
+		}
+
+		uintptr_t spinCount3Init = monitor->spinCount3;
+		uintptr_t spinCount2Init = monitor->spinCount2;
+		uintptr_t spinCount1Init = monitor->spinCount1;
+
+#if defined(OMR_THR_SPIN_WAKE_CONTROL)
+		spinning = TRUE;
+		if (OMRTHREAD_IGNORE_SPIN_THREAD_BOUND != lib->maxSpinThreads) {
+			if (monitor->spinThreads < lib->maxSpinThreads) {
+				VM_AtomicSupport::add(&monitor->spinThreads, 1);
+			} else {
+				spinCount1Init = 1;
+				spinCount2Init = 1;
+				spinCount3Init = 1;
+				spinning = FALSE;
+			}
+		}
+#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
+
+		/* Three-tier busy-wait loop checks if the mcsNode->blocked value is reset by the thread
+		 * that owns the predecessor node. A similar three-tier busy-wait loop is also used in
+		 * omrthread_spinlock_acquire, where the loop has a compare-and-swap operation.
+		 * TODO: Optimize the MCS lock's three-tier busy-wait loop to account for the absent
+		 * compare-and-swap operation; this corresponds to an increase in spin parameters.
+		 */
+		for (uintptr_t spinCount3 = spinCount3Init; spinCount3 > 0; spinCount3--) {
+			for (uintptr_t spinCount2 = spinCount2Init; spinCount2 > 0; spinCount2--) {
+				/* Check if the thread can acquire the lock. */
+				if (OMRTHREAD_MCS_THREAD_ACQUIRE == mcsNode->blocked) {
+					goto lockAcquired;
+				}
+				/* Stop spinning if adaptive spin heuristic disables spinning. */
+				if (OMR_ARE_ALL_BITS_SET(monitor->flags, J9THREAD_MONITOR_DISABLE_SPINNING)) {
+					goto exit;
+				}
+				VM_AtomicSupport::yieldCPU();
+				/* Begin tight loop. */
+				for (uintptr_t spinCount1 = spinCount1Init; spinCount1 > 0; spinCount1--) {
+					VM_AtomicSupport::nop();
+				} /* End tight loop. */
+			}
+#if defined(OMR_THR_YIELD_ALG)
+			omrthread_yield_new(spinCount3);
+#else /* OMR_THR_YIELD_ALG */
+			omrthread_yield();
+#endif /* OMR_THR_YIELD_ALG */
+		}
+	} else {
+		/* The lock can be acquired since no predecessor MCS node exists. */
+		mcsNode->blocked = OMRTHREAD_MCS_THREAD_ACQUIRE;
+lockAcquired:
+		/* monitor->spinlockState is maintained for compatibility with the existing omrthread API. */
+		monitor->spinlockState = J9THREAD_MONITOR_SPINLOCK_OWNED;
+		result = 0;
+
+		mcsNode->monitor = monitor;
+
+		if (NULL == self->mcsNodes->stackHead) {
+			self->mcsNodes->stackHead = mcsNode;
+			mcsNode->stackNext = NULL;
+		} else {
+			omrthread_mcs_node_t oldMCSNode = self->mcsNodes->stackHead;
+			self->mcsNodes->stackHead = mcsNode;
+			mcsNode->stackNext = oldMCSNode;
+		}
+	}
+
+exit:
+#if defined(OMR_THR_SPIN_WAKE_CONTROL)
+	if (spinning && (OMRTHREAD_IGNORE_SPIN_THREAD_BOUND != lib->maxSpinThreads)) {
+		VM_AtomicSupport::subtract(&monitor->spinThreads, 1);
+	}
+#endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
+	return result;
+}
+
+/**
+ * Try to acquire the MCS lock.
+ *
+ * @param[in] self the current omrthread_t
+ * @param[in] monitor the monitor to be acquired
+ * @param[in] mcsNode the MCS node belonging to self
+ *
+ * @return 0 on success, -1 on failure
+ */
+intptr_t
+omrthread_mcs_trylock(omrthread_t self, omrthread_monitor_t monitor, omrthread_mcs_node_t mcsNode)
+{
+#if defined(THREAD_ASSERTS)
+	ASSERT(mcsNode != NULL);
+#endif /* defined(THREAD_ASSERTS) */
+
+	intptr_t result = -1;
+	uintptr_t oldState = 0;
+
+	/* Initialize the MCS node. */
+	mcsNode->queueNext = NULL;
+	mcsNode->blocked = OMRTHREAD_MCS_THREAD_BLOCKED;
+	mcsNode->monitor = NULL;
+	mcsNode->thread = self;
+
+	/* If monitor->queueTail is NULL (no-one is waiting to acquire the lock), then it is
+	 * swapped with the mcsNode, and the lock is acquired. */
+	if (oldState == VM_AtomicSupport::lockCompareExchange(
+			(volatile uintptr_t *)&monitor->queueTail,
+			(uintptr_t)oldState,
+			(uintptr_t)mcsNode)
+	) {
+		/* monitor->spinlockState is maintained for compatibility with the existing omrthread API. */
+		monitor->spinlockState = J9THREAD_MONITOR_SPINLOCK_OWNED;
+
+		mcsNode->monitor = monitor;
+		mcsNode->blocked = OMRTHREAD_MCS_THREAD_ACQUIRE;
+
+		if (NULL == self->mcsNodes->stackHead) {
+			self->mcsNodes->stackHead = mcsNode;
+			mcsNode->stackNext = NULL;
+		} else {
+			omrthread_mcs_node_t oldMCSNode = self->mcsNodes->stackHead;
+			self->mcsNodes->stackHead = mcsNode;
+			mcsNode->stackNext = oldMCSNode;
+		}
+		result = 0;
+	}
+
+	return result;
+}
+
+/**
+ * Unlock the MCS lock.
+ *
+ * @param[in] self the current omrthread_t
+ * @param[in] monitor the monitor to be released
+ *
+ * @return the next thread which will acquire the lock
+ */
+omrthread_t
+omrthread_mcs_unlock(omrthread_t self, omrthread_monitor_t monitor)
+{
+	omrthread_t nextThread = NULL;
+
+	omrthread_mcs_node_t mcsNode = self->mcsNodes->stackHead;
+	omrthread_mcs_node_t prevMcsNode = mcsNode;
+	while (mcsNode->monitor != monitor) {
+		mcsNode = mcsNode->stackNext;
+		if (mcsNode->monitor != monitor) {
+			prevMcsNode = mcsNode;
+		}
+	}
+
+#if defined(THREAD_ASSERTS)
+	ASSERT(mcsNode != NULL);
+	ASSERT(mcsNode->monitor == monitor);
+	ASSERT(mcsNode->thread == self);
+#endif /* defined(THREAD_ASSERTS) */
+
+	/* Get the successor of the mcsNode. */
+	if (NULL == mcsNode->queueNext) {
+		/* If no successor exists, then the mcsNode is at the tail of the MCS lock queue.
+		 * Release the lock by replacing the mcsNode at the tail of the queue with NULL.
+		 */
+		uintptr_t newState = 0;
+		if ((uintptr_t)mcsNode == VM_AtomicSupport::lockCompareExchange((volatile uintptr_t *)&monitor->queueTail, (uintptr_t)mcsNode, newState)) {
+			monitor->spinlockState = J9THREAD_MONITOR_SPINLOCK_UNOWNED;
+			goto lockReleased;
+		}
+
+		/* Another thread is recording a successor in mcsNode->queueNext. Wait for the thread
+		 * to record the successor.
+		 */
+		while (NULL == mcsNode->queueNext) {
+			VM_AtomicSupport::yieldCPU();
+		}
+	}
+
+	/* monitor->spinlockState is maintained for compatibility with the existing omrthread API. */
+	monitor->spinlockState = J9THREAD_MONITOR_SPINLOCK_UNOWNED;
+
+	/* Allow the successor to acquire the lock. */
+	mcsNode->queueNext->blocked = OMRTHREAD_MCS_THREAD_ACQUIRE;
+
+	nextThread = mcsNode->queueNext->thread;
+lockReleased:
+	/* Pop the mcsNode from the thread's MCS node stack. */
+	if (mcsNode == self->mcsNodes->stackHead) {
+		self->mcsNodes->stackHead = mcsNode->stackNext;
+	} else {
+		prevMcsNode->stackNext = mcsNode->stackNext;
+	}
+
+	/* Return the MCS node to the thread's MCS node pool since it is no longer used. */
+	omrthread_mcs_node_free(self, mcsNode);
+
+	return nextThread;
+}
+
+/**
+ * Allocate memory and get an instance of OMRThreadMCSNode.
+ *
+ * @param[in] self the current omrthread_t
+ *
+ * @return a pointer to a new OMRThreadMCSNode on success and NULL on failure
+ */
+omrthread_mcs_node_t
+omrthread_mcs_node_allocate(omrthread_t self)
+{
+	/* An instance of J9Pool is used per thread to manage memory for a thread's
+	 * MCS nodes.
+	 */
+	return (omrthread_mcs_node_t)pool_newElement(self->mcsNodes->pool);
+}
+
+/**
+ * Free memory and return the instance of OMRThreadMCSNode.
+ *
+ * @param[in] self the current omrthread_t
+ * @param[in] mcsNode the MCS node belonging to self
+ *
+ * @return void
+ */
+void
+omrthread_mcs_node_free(omrthread_t self, omrthread_mcs_node_t mcsNode)
+{
+	if (NULL != mcsNode) {
+		/* Clear the fields of the mcsNode. */
+		mcsNode->stackNext = NULL;
+		mcsNode->queueNext = NULL;
+		mcsNode->thread = NULL;
+		mcsNode->blocked = OMRTHREAD_MCS_THREAD_BLOCKED;
+
+		pool_removeElement(self->mcsNodes->pool, mcsNode);
+	}
+}
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 #endif /* OMR_THR_THREE_TIER_LOCKING */
 

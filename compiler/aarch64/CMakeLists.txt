@@ -23,15 +23,18 @@ compiler_library(aarch64
 # Target files
 	${CMAKE_CURRENT_LIST_DIR}/codegen/ARM64BinaryEncoding.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/ARM64Debug.cpp
+	${CMAKE_CURRENT_LIST_DIR}/codegen/ARM64HelperCallSnippet.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/ARM64Instruction.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/ARM64OutOfLineCodeSection.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/ARM64SystemLinkage.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/BinaryEvaluator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/codegen/ConstantDataSnippet.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/ControlFlowEvaluator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/FPTreeEvaluator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/GenerateInstructions.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRCodeGenerator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRInstruction.cpp
+	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRInstructionDelegate.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRLinkage.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRMachine.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRMemoryReference.cpp
@@ -43,4 +46,5 @@ compiler_library(aarch64
 	${CMAKE_CURRENT_LIST_DIR}/codegen/UnaryEvaluator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/env/OMRCPU.cpp
 	${CMAKE_CURRENT_LIST_DIR}/env/OMRDebugEnv.cpp
+	${CMAKE_CURRENT_LIST_DIR}/runtime/CodeSync.cpp
 )

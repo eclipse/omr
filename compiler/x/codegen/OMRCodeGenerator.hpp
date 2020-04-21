@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,11 +39,14 @@ namespace OMR { typedef OMR::X86::CodeGenerator CodeGeneratorConnector; }
 #include "codegen/ScratchRegisterManager.hpp"
 #include "compile/Compilation.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/TRlist.hpp"
+#include "infra/Assert.hpp"
 #include "x/codegen/X86Ops.hpp"
 #include "x/codegen/X86Register.hpp"
 #include "env/CompilerEnv.hpp"
@@ -53,8 +56,6 @@ namespace OMR { typedef OMR::X86::CodeGenerator CodeGeneratorConnector; }
 #endif
 
 #include "codegen/Instruction.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "x/codegen/OutlinedInstructions.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/GCStackAtlas.hpp"
@@ -127,53 +128,54 @@ struct TR_X86ProcessorInfo
       TR_UnknownVendor                 = 0x04
       };
 
-   bool enabledXSAVE()                     {return _featureFlags2.testAny(TR_OSXSAVE);}
-   bool hasBuiltInFPU()                    {return _featureFlags.testAny(TR_BuiltInFPU);}
-   bool supportsVirtualModeExtension()     {return _featureFlags.testAny(TR_VirtualModeExtension);}
-   bool supportsDebuggingExtension()       {return _featureFlags.testAny(TR_DebuggingExtension);}
-   bool supportsPageSizeExtension()        {return _featureFlags.testAny(TR_PageSizeExtension);}
-   bool supportsRDTSCInstruction()         {return _featureFlags.testAny(TR_RDTSCInstruction);}
-   bool hasModelSpecificRegisters()        {return _featureFlags.testAny(TR_ModelSpecificRegisters);}
-   bool supportsPhysicalAddressExtension() {return _featureFlags.testAny(TR_PhysicalAddressExtension);}
-   bool supportsMachineCheckException()    {return _featureFlags.testAny(TR_MachineCheckException);}
-   bool supportsCMPXCHG8BInstruction()     {return _featureFlags.testAny(TR_CMPXCHG8BInstruction);}
-   bool supportsCMPXCHG16BInstruction()    {return _featureFlags2.testAny(TR_CMPXCHG16BInstruction);}
-   bool hasAPICHardware()                  {return _featureFlags.testAny(TR_APICHardware);}
-   bool hasMemoryTypeRangeRegisters()      {return _featureFlags.testAny(TR_MemoryTypeRangeRegisters);}
-   bool supportsPageGlobalFlag()           {return _featureFlags.testAny(TR_PageGlobalFlag);}
-   bool hasMachineCheckArchitecture()      {return _featureFlags.testAny(TR_MachineCheckArchitecture);}
-   bool supportsCMOVInstructions()         {return _featureFlags.testAny(TR_CMOVInstructions);}
-   bool supportsFCOMIInstructions()        {return _featureFlags.testAll(TR_BuiltInFPU | TR_CMOVInstructions);}
-   bool hasPageAttributeTable()            {return _featureFlags.testAny(TR_PageAttributeTable);}
-   bool has36BitPageSizeExtension()        {return _featureFlags.testAny(TR_36BitPageSizeExtension);}
-   bool hasProcessorSerialNumber()         {return _featureFlags.testAny(TR_ProcessorSerialNumber);}
-   bool supportsCLFLUSHInstruction()       {return _featureFlags.testAny(TR_CLFLUSHInstruction);}
-   bool supportsDebugTraceStore()          {return _featureFlags.testAny(TR_DebugTraceStore);}
-   bool hasACPIRegisters()                 {return _featureFlags.testAny(TR_ACPIRegisters);}
-   bool supportsMMXInstructions()          {return _featureFlags.testAny(TR_MMXInstructions);}
-   bool supportsFastFPSavesRestores()      {return _featureFlags.testAny(TR_FastFPSavesRestores);}
-   bool supportsSSE()                      {return _featureFlags.testAny(TR_SSE);}
-   bool supportsSSE2()                     {return _featureFlags.testAny(TR_SSE2);}
-   bool supportsSSE3()                     {return _featureFlags2.testAny(TR_SSE3);}
-   bool supportsSSSE3()                    {return _featureFlags2.testAny(TR_SSSE3);}
-   bool supportsSSE4_1()                   {return _featureFlags2.testAny(TR_SSE4_1);}
-   bool supportsSSE4_2()                   {return _featureFlags2.testAny(TR_SSE4_2);}
-   bool supportsAVX()                      {return _featureFlags2.testAny(TR_AVX) && enabledXSAVE();}
-   bool supportsAVX2()                     {return _featureFlags8.testAny(TR_AVX2) && enabledXSAVE();}
-   bool supportsBMI1()                     {return _featureFlags8.testAny(TR_BMI1) && enabledXSAVE();}
-   bool supportsBMI2()                     {return _featureFlags8.testAny(TR_BMI2) && enabledXSAVE();}
-   bool supportsFMA()                      {return _featureFlags2.testAny(TR_FMA) && enabledXSAVE();}
-   bool supportsCLMUL()                    {return _featureFlags2.testAny(TR_CLMUL);}
-   bool supportsAESNI()                    {return _featureFlags2.testAny(TR_AESNI);}
-   bool supportsPOPCNT()                   {return _featureFlags2.testAny(TR_POPCNT);}
-   bool supportsSelfSnoop()                {return _featureFlags.testAny(TR_SelfSnoop);}
-   bool supportsTM()                       {return _featureFlags8.testAny(TR_RTM);}
-   bool supportsHyperThreading()           {return _featureFlags.testAny(TR_HyperThreading);}
-   bool hasThermalMonitor()                {return _featureFlags.testAny(TR_ThermalMonitor);}
+   bool enabledXSAVE()                     {return testFeatureFlags2(TR_OSXSAVE);}
+   bool hasBuiltInFPU()                    {return testFeatureFlags(TR_BuiltInFPU);}
+   bool supportsVirtualModeExtension()     {return testFeatureFlags(TR_VirtualModeExtension);}
+   bool supportsDebuggingExtension()       {return testFeatureFlags(TR_DebuggingExtension);}
+   bool supportsPageSizeExtension()        {return testFeatureFlags(TR_PageSizeExtension);}
+   bool supportsRDTSCInstruction()         {return testFeatureFlags(TR_RDTSCInstruction);}
+   bool hasModelSpecificRegisters()        {return testFeatureFlags(TR_ModelSpecificRegisters);}
+   bool supportsPhysicalAddressExtension() {return testFeatureFlags(TR_PhysicalAddressExtension);}
+   bool supportsMachineCheckException()    {return testFeatureFlags(TR_MachineCheckException);}
+   bool supportsCMPXCHG8BInstruction()     {return testFeatureFlags(TR_CMPXCHG8BInstruction);}
+   bool supportsCMPXCHG16BInstruction()    {return testFeatureFlags2(TR_CMPXCHG16BInstruction);}
+   bool hasAPICHardware()                  {return testFeatureFlags(TR_APICHardware);}
+   bool hasMemoryTypeRangeRegisters()      {return testFeatureFlags(TR_MemoryTypeRangeRegisters);}
+   bool supportsPageGlobalFlag()           {return testFeatureFlags(TR_PageGlobalFlag);}
+   bool hasMachineCheckArchitecture()      {return testFeatureFlags(TR_MachineCheckArchitecture);}
+   bool supportsCMOVInstructions()         {return testFeatureFlags(TR_CMOVInstructions);}
+   bool supportsFCOMIInstructions()        {return testFeatureFlags(TR_BuiltInFPU | TR_CMOVInstructions);}
+   bool hasPageAttributeTable()            {return testFeatureFlags(TR_PageAttributeTable);}
+   bool has36BitPageSizeExtension()        {return testFeatureFlags(TR_36BitPageSizeExtension);}
+   bool hasProcessorSerialNumber()         {return testFeatureFlags(TR_ProcessorSerialNumber);}
+   bool supportsCLFLUSHInstruction()       {return testFeatureFlags(TR_CLFLUSHInstruction);}
+   bool supportsDebugTraceStore()          {return testFeatureFlags(TR_DebugTraceStore);}
+   bool hasACPIRegisters()                 {return testFeatureFlags(TR_ACPIRegisters);}
+   bool supportsMMXInstructions()          {return testFeatureFlags(TR_MMXInstructions);}
+   bool supportsFastFPSavesRestores()      {return testFeatureFlags(TR_FastFPSavesRestores);}
+   bool supportsSSE()                      {return testFeatureFlags(TR_SSE);}
+   bool supportsSSE2()                     {return testFeatureFlags(TR_SSE2);}
+   bool supportsSSE3()                     {return testFeatureFlags2(TR_SSE3);}
+   bool supportsSSSE3()                    {return testFeatureFlags2(TR_SSSE3);}
+   bool supportsSSE4_1()                   {return testFeatureFlags2(TR_SSE4_1);}
+   bool supportsSSE4_2()                   {return testFeatureFlags2(TR_SSE4_2);}
+   bool supportsAVX()                      {return testFeatureFlags2(TR_AVX) && enabledXSAVE();}
+   bool supportsAVX2()                     {return testFeatureFlags8(TR_AVX2) && enabledXSAVE();}
+   bool supportsBMI1()                     {return testFeatureFlags8(TR_BMI1) && enabledXSAVE();}
+   bool supportsBMI2()                     {return testFeatureFlags8(TR_BMI2) && enabledXSAVE();}
+   bool supportsFMA()                      {return testFeatureFlags2(TR_FMA) && enabledXSAVE();}
+   bool supportsCLMUL()                    {return testFeatureFlags2(TR_CLMUL);}
+   bool supportsAESNI()                    {return testFeatureFlags2(TR_AESNI);}
+   bool supportsPOPCNT()                   {return testFeatureFlags2(TR_POPCNT);}
+   bool supportsSelfSnoop()                {return testFeatureFlags(TR_SelfSnoop);}
+   bool supportsTM()                       {return testFeatureFlags8(TR_RTM);}
+   bool supportsHyperThreading()           {return testFeatureFlags(TR_HyperThreading);}
+   bool supportsHLE()                      {return testFeatureFlags8(TR_HLE);}
+   bool hasThermalMonitor()                {return testFeatureFlags(TR_ThermalMonitor);}
 
-   bool supportsMFence()                   {return _featureFlags.testAny(TR_SSE2);}
-   bool supportsLFence()                   {return _featureFlags.testAny(TR_SSE2);}
-   bool supportsSFence()                   {return _featureFlags.testAny(TR_SSE | TR_MMXInstructions);}
+   bool supportsMFence()                   {return testFeatureFlags(TR_SSE2);}
+   bool supportsLFence()                   {return testFeatureFlags(TR_SSE2);}
+   bool supportsSFence()                   {return testFeatureFlags(TR_SSE | TR_MMXInstructions);}
    bool prefersMultiByteNOP()              {return getX86Architecture() && isGenuineIntel() && !isIntelPentium();}
 
    uint32_t getCPUStepping(uint32_t signature)       {return (signature & CPUID_SIGNATURE_STEPPING_MASK);}
@@ -221,7 +223,69 @@ private:
 
    friend class OMR::X86::CodeGenerator;
 
-   void initialize(TR::Compilation *);
+   void initialize(TR::CodeGenerator *cg);
+
+   /**
+    * @brief testFlag Ensures that the feature being tested for exists in the mask
+    *                 and then checks whether the feature is set in the flag. The
+    *                 reason for this is to facilitate correctness checks for
+    *                 relocatable compilations. In order for the compiler to use a
+    *                 processor feature, the feature flag should be added to the
+    *                 mask so that the processor validation code also accounts for
+    *                 the use of said feature.
+    *
+    * @param flag     Either _featureFlags, _featureFlags2, or _featureFlags8
+    * @param feature  The feature being tested for
+    * @param mask     The mask returned by either getFeatureFlagsMask(),
+    *                 getFeatureFlags2Mask(), or getFeatureFlags8Mask()
+    *
+    * @return         The result of flag.testAny(feature)
+    */
+   bool testFlag(flags32_t &flag, uint32_t feature, uint32_t mask)
+      {
+      TR_ASSERT_FATAL(feature & mask, "The %x feature needs to be added to the "
+                                      "getFeatureFlagsMask (or variant) function "
+                                      "for correctness in relocatable compiles!\n",
+                      feature);
+
+      return flag.testAny(feature);
+      }
+
+   /**
+    * @brief testFeatureFlags Wrapper around testFlag
+    *
+    * @param feature          The feature being tested for
+    *
+    * @return                 The result of testFlag
+    */
+   bool testFeatureFlags(uint32_t feature)
+      {
+      return testFlag(_featureFlags, feature, getFeatureFlagsMask());
+      }
+
+   /**
+    * @brief testFeatureFlags2 Wrapper around testFlag
+    *
+    * @param feature           The feature being tested for
+    *
+    * @return                  The result of testFlag
+    */
+   bool testFeatureFlags2(uint32_t feature)
+      {
+      return testFlag(_featureFlags2, feature, getFeatureFlags2Mask());
+      }
+
+   /**
+    * @brief testFeatureFlags8 Wrapper around testFlag
+    *
+    * @param feature           The feature being tested for
+    *
+    * @return                  The result of testFlag
+    */
+   bool testFeatureFlags8(uint32_t feature)
+      {
+      return testFlag(_featureFlags8, feature, getFeatureFlags8Mask());
+      }
    };
 
 enum TR_PaddingProperties
@@ -468,7 +532,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    int32_t arrayInitMinimumNumberOfBytes()
       {
-      if (TR::Compiler->target.is64Bit()) return 12;
+      if (OMR::X86::CodeGenerator::comp()->target().is64Bit()) return 12;
       return 8;
       }
 
@@ -496,7 +560,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    // no-op instruction to be chosen based on the surrounding instructions.
    //
    virtual uint8_t *generatePadding(uint8_t              *cursor,
-                                    intptrj_t             length,
+                                    intptr_t             length,
                                     TR::Instruction    *neighborhood=NULL,
                                     TR_PaddingProperties  properties=TR_NoOpPadding,
                                     bool                  recursive=false);
@@ -506,14 +570,14 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    // Specifically, cursor + margin + alignment(cursor, boundary, margin) will
    // be a multiple of boundary.
    //
-   intptrj_t alignment(intptrj_t cursor, intptrj_t boundary, intptrj_t margin=0)
+   intptr_t alignment(intptr_t cursor, intptr_t boundary, intptr_t margin=0)
       {
       TR_ASSERT((boundary & (boundary-1)) == 0, "Can only align to powers of 2");
       return (-cursor - margin) & (boundary-1);
       }
-   intptrj_t alignment(void *cursor, intptrj_t boundary, intptrj_t margin=0);
+   intptr_t alignment(void *cursor, intptr_t boundary, intptr_t margin=0);
 
-   bool patchableRangeNeedsAlignment(void *cursor, intptrj_t length, intptrj_t boundary, intptrj_t margin=0);
+   bool patchableRangeNeedsAlignment(void *cursor, intptr_t length, intptr_t boundary, intptr_t margin=0);
 
    bool nopsAlsoProcessedByRelocations() { return false; }
 
@@ -613,7 +677,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
     *
     * @return : true if a trampoline is required; false otherwise.
     */
-   bool directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress);
+   bool directCallRequiresTrampoline(intptr_t targetAddress, intptr_t sourceAddress);
 
    protected:
 
@@ -824,13 +888,13 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 //
 
 #if defined(TR_TARGET_64BIT)
-#define NEEDS_TRAMPOLINE(target, rip, cg) (cg->directCallRequiresTrampoline((intptrj_t)target, (intptrj_t)rip))
+#define NEEDS_TRAMPOLINE(target, rip, cg) (cg->directCallRequiresTrampoline((intptr_t)target, (intptr_t)rip))
 #else
 // Give the C++ compiler a hand
 #define NEEDS_TRAMPOLINE(target, rip, cg) (0)
 #endif
 
-#define IS_32BIT_RIP(x,rip)  ((intptrj_t)(x) == (intptrj_t)(rip) + (int32_t)((intptrj_t)(x) - (intptrj_t)(rip)))
+#define IS_32BIT_RIP(x,rip)  ((intptr_t)(x) == (intptr_t)(rip) + (int32_t)((intptr_t)(x) - (intptr_t)(rip)))
 
 class TR_X86ScratchRegisterManager: public TR_ScratchRegisterManager
    {

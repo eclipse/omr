@@ -114,10 +114,6 @@ class OMR_EXTENSIBLE Register
    uint32_t getIndex()           { return _index; }
    void     setIndex(uint32_t i) { _index=i; }
 
-   TR::Register *getCCRegister() { return _cc; }
-   void setCCRegister(TR::Register *s) { _cc = s; }
-
-
    /*
     * Get/Set Flag Value
     */
@@ -209,9 +205,6 @@ class OMR_EXTENSIBLE Register
 
    TR_RegisterKinds _kind;
    uint32_t         _index;             // index into register table
-
-   // Holds the condition codes produced by the operation that produced the container register.
-   TR::Register     *_cc;
    };
 
 }

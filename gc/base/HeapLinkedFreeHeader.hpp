@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,25 +27,7 @@
 #include "modronbase.h"
 /* #include "ModronAssertions.h" -- removed for now because it causes a compile error in TraceOutput.cpp on xlC */
 
-#include"AtomicOperations.hpp"
-
-/* Split pointer for all compressed platforms */
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
-#define SPLIT_NEXT_POINTER
-#endif
-
-/**
- * For VMs using the new header shape (interp_newHeaderShape), _next lines
- * up instead object header fields. In this case, the picture on full 64-bit
- * resembles the compressed header:
- *
- * +-------+
- * + clazz |
- * +-------+-------+---------------+
- * + _next |_nextHi| _size         |
- * +-------+-------+---------------+
- *
- */
+#include "AtomicOperations.hpp"
 
 /**
  *  This class supercedes the J9GCModronLinkedFreeHeader struct used
@@ -58,12 +40,7 @@ class MM_HeapLinkedFreeHeader
 {
 public:
 protected:
-#if defined(SPLIT_NEXT_POINTER)
-	uint32_t _next; /**< tagged pointer to the next free list entry, or a tagged pointer to NULL */
-	uint32_t _nextHighBits; /**< the high 32 bits of the next pointer on 64-bit builds */
-#else /* defined(SPLIT_NEXT_POINTER) */
 	uintptr_t _next; /**< tagged pointer to the next free list entry, or a tagged pointer to NULL */
-#endif /* defined(SPLIT_NEXT_POINTER) */
 	uintptr_t _size; /**< size in bytes (including header) of the free list entry */
 
 private:
@@ -84,16 +61,17 @@ private:
 	 * @return the decoded next pointer, with any tag bits intact
 	 */
 	MMINLINE uintptr_t
-	getNextImpl()
+	getNextImpl(bool compressed)
 	{
-#if defined(SPLIT_NEXT_POINTER)		
-		uintptr_t lowBits = _next;
-		uintptr_t highBits = _nextHighBits;
-		uintptr_t result = (highBits << 32) | lowBits;
-#else /* defined(SPLIT_NEXT_POINTER) */
 		uintptr_t result = _next;
-#endif /* defined(SPLIT_NEXT_POINTER) */
-
+#if defined(OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN)
+		if (compressed) {
+			/* On big endian compressed, the pointer has been stored
+			 * endian-flipped, so flip it back. See MM_HeapLinkedFreeHeader::setNextImpl.
+			 */
+			result = (result >> 32) | (result << 32);
+		}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN) */
 		return result;
 	}
 
@@ -106,16 +84,17 @@ private:
 	 * @parm value the value to be stored
 	 */
 	MMINLINE void
-	setNextImpl(uintptr_t value)
+	setNextImpl(uintptr_t value, bool compressed)
 	{
-
-#if defined(SPLIT_NEXT_POINTER)
-		_next = (uint32_t)value;
-		_nextHighBits = (uint32_t)(value >> 32);
-#else /* defined(SPLIT_NEXT_POINTER) */
+#if defined(OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN)
+		if (compressed) {
+			/* On big endian compressed, endian flip the pointer so that the
+			 * tag bits appear in the compressed class slot.
+			 */
+			value = (value >> 32) | (value << 32);
+		}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN) */
 		_next = value;
-#endif /* defined(SPLIT_NEXT_POINTER) */
-
 	}
 
 public:
@@ -128,22 +107,22 @@ public:
 	 * Get the next free header in the linked list of free entries
 	 * @return the next entry or NULL
 	 */
-	MMINLINE MM_HeapLinkedFreeHeader *getNext() {
-		/* Assert_MM_true(0 != ((getNextImpl()) & J9_GC_OBJ_HEAP_HOLE)); */
-		return (MM_HeapLinkedFreeHeader*)((getNextImpl()) & ~((uintptr_t)J9_GC_OBJ_HEAP_HOLE_MASK));
+	MMINLINE MM_HeapLinkedFreeHeader *getNext(bool compressed) {
+		/* Assert_MM_true(0 != ((getNextImpl(compressed)) & J9_GC_OBJ_HEAP_HOLE)); */
+		return (MM_HeapLinkedFreeHeader*)((getNextImpl(compressed)) & ~((uintptr_t)J9_GC_OBJ_HEAP_HOLE_MASK));
 	}
 
 	/**
 	 * Set the next free header in the linked list and mark the receiver as a multi-slot hole
 	 * Set to NULL to terminate the list.
 	 */
-	MMINLINE void setNext(MM_HeapLinkedFreeHeader* freeEntryPtr) { setNextImpl( ((uintptr_t)freeEntryPtr) | ((uintptr_t)J9_GC_MULTI_SLOT_HOLE) ); }
+	MMINLINE void setNext(MM_HeapLinkedFreeHeader* freeEntryPtr, bool compressed) { setNextImpl(((uintptr_t)freeEntryPtr) | ((uintptr_t)J9_GC_MULTI_SLOT_HOLE), compressed); }
 
 	/**
 	 * Set the next free header in the linked list, preserving the type of the receiver
 	 * Set to NULL to terminate the list.
 	 */
-	MMINLINE void updateNext(MM_HeapLinkedFreeHeader* freeEntryPtr) { setNextImpl( ((uintptr_t)freeEntryPtr) | (getNextImpl() & (uintptr_t)J9_GC_OBJ_HEAP_HOLE_MASK) ); }
+	MMINLINE void updateNext(MM_HeapLinkedFreeHeader* freeEntryPtr, bool compressed) { setNextImpl(((uintptr_t)freeEntryPtr) | (getNextImpl(compressed) & (uintptr_t)J9_GC_OBJ_HEAP_HOLE_MASK), compressed); }
 
 	/**
 	 * Get the size in bytes of this free entry. The size is measured
@@ -179,46 +158,27 @@ public:
 	MMINLINE MM_HeapLinkedFreeHeader* afterEnd() { return (MM_HeapLinkedFreeHeader*)( ((uintptr_t)this) + getSize() ); }
 
 	/**
-	 * Mark the specified region of memory as all single slot holes
-	 * @param[in] addrBase the address to start marking from
-	 * @param freeEntrySize the number of bytes to be consumed
-	 */
-	MMINLINE static void
-	fillWithSingleSlotHoles(void* addrBase, uintptr_t freeEntrySize)
-	{
-#if defined(SPLIT_NEXT_POINTER)
-		uint32_t *freeSlot = (uint32_t *) addrBase;
-		while(freeEntrySize) {
-			*freeSlot++ = J9_GC_SINGLE_SLOT_HOLE;
-			freeEntrySize -= sizeof(uint32_t);
-		}
-#else /* defined(SPLIT_NEXT_POINTER) */
-		uintptr_t *freeSlot = (uintptr_t*) addrBase;
-		while(freeEntrySize) {
-			*freeSlot++ = J9_GC_SINGLE_SLOT_HOLE;
-			freeEntrySize -= sizeof(uintptr_t);
-		}
-#endif /* defined(SPLIT_NEXT_POINTER) */
-	}
-
-	/**
 	 * Mark the specified region of memory as walkable dark matter
 	 * @param[in] addrBase the address where the hole begins
 	 * @param[in] freeEntrySize the number of bytes to be consumed (must be a multiple of sizeof(uintptr_t))
 	 * @return The header written or null if the space was too small and was filled with single-slot holes
 	 */
 	MMINLINE static MM_HeapLinkedFreeHeader*
-	fillWithHoles(void* addrBase, uintptr_t freeEntrySize)
+	fillWithHoles(void* addrBase, uintptr_t freeEntrySize, bool compressed)
 	{
 		MM_HeapLinkedFreeHeader *freeEntry = NULL;
 		if (freeEntrySize < sizeof(MM_HeapLinkedFreeHeader)) {
-			/* Entry will be abandoned. Recycle the remainder as single slot entries */
-			fillWithSingleSlotHoles(addrBase, freeEntrySize);
+			/* Assert_MM_true(0 == (freeEntrySize % sizeof(uintptr_t))); */
+			while (0 != freeEntrySize) {
+				((MM_HeapLinkedFreeHeader*)addrBase)->setNextImpl(J9_GC_SINGLE_SLOT_HOLE, compressed);
+				addrBase = (void*)(((uintptr_t*)addrBase) + 1);
+				freeEntrySize -= sizeof(uintptr_t);
+			}
 		} else {
 			/* this is too big to use single slot holes so generate an AOL-style hole (note that this is not correct for other allocation schemes) */
 			freeEntry = (MM_HeapLinkedFreeHeader *)addrBase;
 
-			freeEntry->setNext(NULL);
+			freeEntry->setNext(NULL, compressed);
 			freeEntry->setSize(freeEntrySize);
 		}
 		return freeEntry;
@@ -231,7 +191,7 @@ public:
 	 * @note Caller must set nextHead->_size
 	 */
 	MMINLINE static void
-	linkInAsHead(volatile uintptr_t *currentHead, MM_HeapLinkedFreeHeader* nextHead)
+	linkInAsHead(volatile uintptr_t *currentHead, MM_HeapLinkedFreeHeader* nextHead, bool compressed)
 	{
 		uintptr_t oldValue, newValue;
 		do {
@@ -239,15 +199,13 @@ public:
 			newValue = MM_AtomicOperations::lockCompareExchange(currentHead, oldValue, (uintptr_t)nextHead);
 
 		} while (oldValue != newValue);
-		nextHead->setNext((MM_HeapLinkedFreeHeader *)newValue);
+		nextHead->setNext((MM_HeapLinkedFreeHeader *)newValue, compressed);
 	}
 
 protected:
 private:
 
 };
-
-#undef SPLIT_NEXT_POINTER
 
 #endif /* HEAPLINKEDFREEHEADER_HPP_ */
 

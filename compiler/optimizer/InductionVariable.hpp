@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 #include <deque>
 #include <map>
 #include <utility>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
@@ -253,12 +253,12 @@ class TR_LoopStrider : public TR_LoopTransformer
             return reservedForLoops;
          }
 
-   void    setAdditiveTermNode (TR::Node *node, int32_t k) { TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",k,_numberOfLinearExprs); _linearEquations[k][3] = (intptrj_t) node; }
-   TR::Node *getAdditiveTermNode(int32_t k) { TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",k,_numberOfLinearExprs); return (TR::Node*)(intptrj_t)_linearEquations[k][3]; }
+   void    setAdditiveTermNode (TR::Node *node, int32_t k) { TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",k,_numberOfLinearExprs); _linearEquations[k][3] = (intptr_t) node; }
+   TR::Node *getAdditiveTermNode(int32_t k) { TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",k,_numberOfLinearExprs); return (TR::Node*)(intptr_t)_linearEquations[k][3]; }
    TR::Node *duplicateAdditiveTermNode(int32_t k, TR::Node *node, TR::DataType type)
       {
       TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",k,_numberOfLinearExprs);
-      TR::Node *new_node = ((TR::Node*)(intptrj_t)_linearEquations[k][3])->duplicateTree();
+      TR::Node *new_node = ((TR::Node*)(intptr_t)_linearEquations[k][3])->duplicateTree();
       new_node->setByteCodeIndex(node->getByteCodeIndex());
       new_node->setInlinedSiteIndex(node->getInlinedSiteIndex());
 
@@ -272,20 +272,20 @@ class TR_LoopStrider : public TR_LoopTransformer
    bool isAdditiveTermConst(int32_t k)
         {
         TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",k,_numberOfLinearExprs);
-        return (((TR::Node*)(intptrj_t)_linearEquations[k][3]) == NULL ||
-               ((TR::Node*)(intptrj_t)_linearEquations[k][3])->getOpCode().isLoadConst());
+        return (((TR::Node*)(intptr_t)_linearEquations[k][3]) == NULL ||
+               ((TR::Node*)(intptr_t)_linearEquations[k][3])->getOpCode().isLoadConst());
         }
    int64_t getAdditiveTermConst(int32_t k);
    bool isAdditiveTermEquivalentTo(int32_t k, TR::Node * node);
 
-   void    setMulTermNode (TR::Node *node, int32_t k) { TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",k,_numberOfLinearExprs); _linearEquations[k][2] = (intptrj_t) node; }
-   TR::Node *getMulTermNode(int32_t k) { TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",k,_numberOfLinearExprs); return (TR::Node*)(intptrj_t)_linearEquations[k][2]; }
+   void    setMulTermNode (TR::Node *node, int32_t k) { TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",k,_numberOfLinearExprs); _linearEquations[k][2] = (intptr_t) node; }
+   TR::Node *getMulTermNode(int32_t k) { TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",k,_numberOfLinearExprs); return (TR::Node*)(intptr_t)_linearEquations[k][2]; }
    TR::Node *duplicateMulTermNode(int32_t k, TR::Node *node, TR::DataType type);
    bool isMulTermConst(int32_t k)
       {
       TR_ASSERT(k < _numberOfLinearExprs, "index k %d exceeds _numberOfLinearExprs %d!\n",
                                           k, _numberOfLinearExprs);
-      return ((TR::Node*)(intptrj_t)_linearEquations[k][2])->getOpCode().isLoadConst();
+      return ((TR::Node*)(intptr_t)_linearEquations[k][2])->getOpCode().isLoadConst();
       }
    int64_t getMulTermConst(int32_t k);
    bool isMulTermEquivalentTo(int32_t k, TR::Node * node);

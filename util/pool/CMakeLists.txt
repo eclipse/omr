@@ -44,3 +44,7 @@ if(OMR_ENHANCED_WARNINGS)
 endif()
 
 set_property(TARGET j9pool PROPERTY FOLDER util)
+
+target_enable_ddr(j9pool)
+ddr_add_headers(j9pool ${omr_SOURCE_DIR}/include_core/j9pool.h)
+ddr_set_add_targets(omrddr j9pool)

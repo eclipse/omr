@@ -166,7 +166,7 @@ static uint32_t	regions_used;
  * before reusing it.
  *
  * This E/P must be exported! File module.xml is therefore modified conditionally to 
- * export this label, and it will appear in j9prt.exp when it is created for z/TPF, 
+ * export this label, and it will appear in omrprt.exp when it is created for z/TPF,
  * when the buildtools are built. z/TPF is the only known system which needs this 
  * kind of allocation. It is used exclusively for the translation of z/TPF-ish data 
  * into UNIX-ish context & signal blocks.
@@ -401,14 +401,14 @@ translateInterruptContexts( args *argv ) {
  *
  * \param[in]	portLibrary		Pointer to the OMRPortLibrary in use
  * \param[in]	contextInfo		Pointer to context information
- * \param[out]	j9info			Pointer to a OMRUnixSignalInfo structure
+ * \param[out]	signalinfo		Pointer to a OMRUnixSignalInfo structure
  *
  * \returns		Not a thing.
  */
 void
-fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *j9Info)
+fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *signalInfo)
 {
-	j9Info->platformSignalInfo.context = (ucontext_t *)contextInfo;		/* module info is filled on demand */
+	signalInfo->platformSignalInfo.context = (ucontext_t *)contextInfo;		/* module info is filled on demand */
 }
 
 
@@ -417,13 +417,13 @@ fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, stru
  *
  * This routine stores the name and value attributes of a given signal 
  * described in a OMRUnixSignalInfo structure whose address is passed 
- * by the caller. The <TT>index</TT> parameter is the artificial J9
+ * by the caller. The <TT>index</TT> parameter is the artificial
  * signal value (or 'class type'?) associated with the kind of signal.
  *
  * \param[in]	portLibrary		The OMRPortLibrary in use
  * \param[in]	info			A pointer to the OMRUnixSignalInfo from which the information
  *								is taken
- * \param[in]	index			The J9 signal value assigned to the 'signal type'
+ * \param[in]	index			The signal value assigned to the 'signal type'
  * \param[out]	name			The name of the signal type class, double pointer to type char
  * \param[out]	value			The real (raw) signal number
  *
@@ -550,7 +550,7 @@ infoForFPR(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, i
  *			in z/TPF, no matter what it was. 
  * \note	This routine was unguarded as part of making the CP emulate kernel-space, UNIX-
  *			style implementations of reactions to program interrupts.
- * \note	There were guard macros here based on #ifndef J9VM_ENV_DATA64 which I've simply
+ * \note	There were guard macros here based on #ifndef OMR_ENV_DATA64 which I've simply
  *			removed. If the guard value were true, there were 16 more definition slots for
  *			the high parts of the general registers. All gone; we don't support 32-bit 
  *			hardware (even if we do grudgingly support AMODE=31).
@@ -591,7 +591,7 @@ infoForGPR(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, i
  *
  * \param[in]	portLibrary		Pointer to the portability library in use
  * \param[in]	info			Pointer to OMRUnixSignalInfo block
- * \param[in]	index			The J9 'type class' of the signal associated with this dump
+ * \param[in]	index			The 'type class' of the signal associated with this dump
  * \param[out]	name			Dbl pointer to a buffer large enough to hold an object name
  * \param[out]	value			Dbl pointer to a buffer large enough to hold an object value
  *

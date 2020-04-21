@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 1998, 2019 IBM Corp. and others
+// Copyright (c) 1998, 2020 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -914,3 +914,12 @@ TraceEvent=Trc_MM_LOAResize_contractWithRange Overhead=1 Level=1 Group=loaresize
 TraceEvent=Trc_MM_Scavenger_percolate_concurrentMarkExhausted Overhead=1 Level=1 Group=percolate Template="Percolating due to exhausted Concurrent Mark"
 TraceEvent=Trc_MM_Scavenger_percolate_preventTenureExpand Overhead=1 Level=1 Group=percolate Template="Percolating to prevent Tenure expand"
 TraceEvent=Trc_MM_Scavenger_percolate_tenureMaxFree Overhead=1 Level=1 Group=percolate Template="Percolating due to meeting Tenure max free"
+
+TraceAssert=Assert_MM_double_map_unreachable noEnv Overhead=1 Level=1 Assert="(false)"
+
+TraceEvent=Trc_ParallelGlobalGC_shouldCompactThisCycle Overhead=1 Level=1 Group=compact Template="Current page granularity fragmented ratio: %f  Threshold: %f"
+
+TraceEntry=Trc_MM_double_map_Entry Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. spine: %p, leafSize=%zu leavesCount=%zu"
+TraceException=Trc_MM_double_map_TraverseLeavesNULLPointer Overhead=1 Level=1 Group=arraylet Template="Found a NULL pointer as the last leaf in arraylet spine"
+TraceException=Trc_MM_double_map_Failed Overhead=1 Level=1 Group=arraylet Template="Failed to double map arraylets"
+TraceExit=Trc_MM_double_map_Exit Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. result=%p"

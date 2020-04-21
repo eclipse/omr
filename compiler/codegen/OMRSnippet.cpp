@@ -20,7 +20,7 @@
  *******************************************************************************/
 
 #include <stddef.h>
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "codegen/Snippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 
@@ -90,4 +90,23 @@ OMR::Snippet::prepareSnippetForGCSafePoint()
    self()->gcMap().setGCSafePoint();
    self()->setBlock(self()->cg()->getCurrentEvaluationBlock());
    self()->setNeedsExceptionTableEntry();
+   }
+
+void
+OMR::Snippet::print(TR::FILE* f, TR_Debug* debug)
+   {
+   uint8_t* cursor = self()->getSnippetLabel()->getCodeLocation();
+
+   debug->printSnippetLabel(f, self()->getSnippetLabel(), cursor, "<Unknown Snippet>");
+
+   for (auto i = 0; i < self()->getLength(0) / sizeof(uint64_t); ++i)
+      {
+      debug->printPrefix(f, NULL, cursor, sizeof(uint64_t));
+      cursor += sizeof(uint64_t);
+      }
+
+   if (self()->getLength(0) % sizeof(uint64_t) != 0)
+      {
+      debug->printPrefix(f, NULL, cursor, self()->getLength(0) % sizeof(uint64_t));
+      }
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,10 @@ inline TR_X86OpCodes SizeParameterizedOpCode(bool is64Bit =
 #define CMOVNERegMem   SizeParameterizedOpCode<CMOVNE8RegMem   , CMOVNE4RegMem   >
 #define CMOVNERegReg   SizeParameterizedOpCode<CMOVNE8RegReg   , CMOVNE4RegReg   >
 #define CMOVGERegMem   SizeParameterizedOpCode<CMOVGE8RegMem   , CMOVGE4RegMem   >
+#define CMOVGRegReg    SizeParameterizedOpCode<CMOVG8RegReg    , CMOVG4RegReg    >
 #define CMOVGERegReg   SizeParameterizedOpCode<CMOVGE8RegReg   , CMOVGE4RegReg   >
+#define CMOVLRegReg    SizeParameterizedOpCode<CMOVL8RegReg    , CMOVL4RegReg    >
+#define CMOVLERegReg   SizeParameterizedOpCode<CMOVLE8RegReg   , CMOVLE4RegReg   >
 #define CMOVPRegMem    SizeParameterizedOpCode<CMOVP8RegMem    , CMOVP4RegMem    >
 #define CMOVSRegReg    SizeParameterizedOpCode<CMOVS8RegReg    , CMOVS4RegReg    >
 #define CMPRegImms     SizeParameterizedOpCode<CMP8RegImms     , CMP4RegImms     >
@@ -166,6 +169,8 @@ inline TR_X86OpCodes SizeParameterizedOpCode(bool is64Bit =
 // Floating-point
 #define MOVSMemReg     SizeParameterizedOpCode<MOVSDMemReg     , MOVSSMemReg     >
 #define MOVSRegMem     SizeParameterizedOpCode<MOVSDRegMem     , MOVSSRegMem     >
+// FMA
+#define VFMADD231SRegRegReg  SizeParameterizedOpCode<VFMADD231SDRegRegReg, VFMADD231SSRegRegReg>
 
 // Size and carry-parameterized opcodes
 //
@@ -184,6 +189,38 @@ inline TR_X86OpCodes SubMemImm4 (bool is64Bit, bool isWithBorrow) { return isWit
 inline TR_X86OpCodes SubMemReg  (bool is64Bit, bool isWithBorrow) { return isWithBorrow  ? SBBMemReg(is64Bit)  : SUBMemReg(is64Bit)  ; }
 inline TR_X86OpCodes SubRegReg  (bool is64Bit, bool isWithBorrow) { return isWithBorrow  ? SBBRegReg(is64Bit)  : SUBRegReg(is64Bit)  ; }
 inline TR_X86OpCodes SubRegMem  (bool is64Bit, bool isWithBorrow) { return isWithBorrow  ? SBBRegMem(is64Bit)  : SUBRegMem(is64Bit)  ; }
+
+//Broader sized parameterized opcodes 
+template <TR_X86OpCodes Op64, TR_X86OpCodes Op32, TR_X86OpCodes Op16, TR_X86OpCodes Op8>
+inline TR_X86OpCodes SizedParameterizedOpCode(int size =
+#ifdef TR_TARGET_64BIT
+   8
+#else
+   4
+#endif
+)
+   {
+   TR_X86OpCodes op = BADIA32Op;
+   switch (size)
+      {
+      case 8:  op = Op64;      break;
+      case 4:  op = Op32;      break;
+      case 2:  op = Op16;      break;
+      case 1:  op = Op8;       break;
+      default: op = BADIA32Op; break;
+      }
+   TR_ASSERT(op != BADIA32Op , "Unsupported operand size %d", size);
+   return op;
+   }
+
+// Data type based opcodes
+#define MovRegReg      SizedParameterizedOpCode<MOV8RegReg      , MOV4RegReg      , MOV2RegReg      , MOV1RegReg  >
+#define IMulRegReg     SizedParameterizedOpCode<IMUL8RegReg     , IMUL4RegReg     , IMUL2RegReg     , IMUL1AccReg >
+#define IMulRegMem     SizedParameterizedOpCode<IMUL8RegMem     , IMUL4RegMem     , IMUL2RegMem     , IMUL1AccMem >
+#define IMulRegRegImms SizedParameterizedOpCode<IMUL8RegRegImms , IMUL4RegRegImms , IMUL2RegRegImms , BADIA32Op   >
+#define IMulRegRegImm4 SizedParameterizedOpCode<IMUL8RegRegImm4 , IMUL4RegRegImm4 , IMUL2RegRegImm2 , BADIA32Op   >
+#define IMulRegMemImms SizedParameterizedOpCode<IMUL8RegMemImms , IMUL4RegMemImms , IMUL2RegMemImms , BADIA32Op   >
+#define IMulRegMemImm4 SizedParameterizedOpCode<IMUL8RegMemImm4 , IMUL4RegMemImm4 , IMUL2RegMemImm2 , BADIA32Op   >
 
 // Property flags
 //

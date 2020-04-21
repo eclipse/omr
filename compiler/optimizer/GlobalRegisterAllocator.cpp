@@ -24,8 +24,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
-#include "codegen/Linkage.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "compile/Compilation.hpp"
@@ -41,20 +40,20 @@
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -424,16 +423,6 @@ TR_GlobalRegisterAllocator::perform()
                ++numLocals;
             }
 
-         ListIterator<TR::RegisterMappedSymbol> methodMetaDataSymbols(&comp()->getMethodSymbol()->getMethodMetaDataList());
-         if (comp()->allocateAtThisOptLevel())
-            {
-            for (auto mds = methodMetaDataSymbols.getFirst(); mds != NULL; mds = methodMetaDataSymbols.getNext())
-               {
-               TR_ASSERT(mds->isMethodMetaData(), "Should be method meta data");
-               ++numLocals;
-               }
-            }
-
          const uint64_t MAX_BITVECTOR_MEMORY_USAGE = 1000000000;
          uint64_t bitvectorMemoryUsage = numLocals * comp()->getFlowGraph()->getNextNodeNumber();
 
@@ -484,7 +473,7 @@ TR_GlobalRegisterAllocator::perform()
       _temp2 = new (trStackMemory()) TR_BitVector(_origSymRefCount, trMemory(), stackAlloc);
 
 
-      if (TR::Compiler->target.is64Bit() &&
+      if (comp()->target().is64Bit() &&
           optimizer()->getUseDefInfo())
          {
          _temp = new (trStackMemory()) TR_BitVector(optimizer()->getUseDefInfo()->getNumDefNodes(), trMemory(), stackAlloc);
@@ -1433,7 +1422,7 @@ TR_GlobalRegisterAllocator::transformNode(
          // internal pointer must always be present on the stack.
          //
          //
-         if (!fpStore && !symRef->storeCanBeRemoved()
+         if ((!fpStore && !symRef->storeCanBeRemoved())
              || (comp()->getOption(TR_MimicInterpreterFrameShape) && comp()->getOption(TR_FSDGRA)))
             {
             gr->setValue(0);
@@ -3071,7 +3060,7 @@ TR_GlobalRegister::createStoreToRegister(TR::TreeTop * prevTreeTop, TR::Node *no
    if (NULL != doit)
       enableSignExtGRA = true;
 
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp->target().cpu.isZ())
       {
       enableSignExtGRA = true;
       static char *doit2 = feGetEnv("TR_NSIGNEXTGRA");
@@ -3079,7 +3068,7 @@ TR_GlobalRegister::createStoreToRegister(TR::TreeTop * prevTreeTop, TR::Node *no
          enableSignExtGRA = false;
       }
 
-   if (TR::Compiler->target.is64Bit() &&
+   if (comp->target().is64Bit() &&
        (store->getOpCodeValue() == TR::iRegStore) &&
        gra->candidateCouldNeedSignExtension(rc->getSymbolReference()->getReferenceNumber()) &&
        enableSignExtGRA)
@@ -3889,338 +3878,31 @@ TR_GlobalRegisterAllocator::markAutosUsedIn(
    bool                   hasCatchBlock)
    {
    bool enableSignExtGRA = false; // enable for other platforms later
-   bool enableNewSignExtGRA = false;
 
    static char *doit = feGetEnv("TR_SIGNEXTGRA");
    if (NULL != doit)
       enableSignExtGRA = true;
 
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp()->target().cpu.isZ())
       {
       enableSignExtGRA = true;
       static char *doit2 = feGetEnv("TR_NSIGNEXTGRA");
       if (NULL != doit2)
          enableSignExtGRA = false;
-
-      static char *doit3 = feGetEnv("TR_NEWSIGNEXTGRA");
-      if (NULL != doit3)
-         enableNewSignExtGRA = true;
       }
 
    TR::Node *origNode = NULL;
    TR::Node *prevArrayAccess = NULL;
-   if (enableNewSignExtGRA)
-      {
-      prevArrayAccess = *currentArrayAccess;
-
-      if (node->getOpCode().hasSymbolReference() &&
-          (node->getSymbolReference()->getSymbol()->isArrayShadowSymbol()))
-         {
-         TR::Node *child = node->getFirstChild();
-         if (child->getOpCodeValue() == TR::aladd)
-            {
-            TR::Node *offsetChild = child->getSecondChild();
-            if (((offsetChild->getOpCodeValue() == TR::ladd) || (offsetChild->getOpCodeValue() == TR::lsub)) &&
-                (offsetChild->getSecondChild()->getOpCodeValue() == TR::lconst))
-               offsetChild = offsetChild->getFirstChild();
-
-            int32_t sizeOfElem;
-            if (node->getDataType() == TR::Address)
-               sizeOfElem = TR::Compiler->om.sizeofReferenceField();
-            else
-               sizeOfElem = node->getOpCode().getSize();
-
-            if ((offsetChild->getOpCodeValue() == TR::lmul) &&
-                (offsetChild->getSecondChild()->getOpCodeValue() == TR::lconst) &&
-                (sizeOfElem == offsetChild->getSecondChild()->getLongInt()))
-               {
-               TR::Node *longIndexNode = offsetChild->getFirstChild();
-               if (longIndexNode->getOpCodeValue() == TR::i2l)
-                  {
-                  *currentArrayAccess = longIndexNode;
-                  }
-               }
-            else if ((offsetChild->getOpCodeValue() == TR::i2l) &&
-                     (sizeOfElem == 1))
-               {
-               *currentArrayAccess = offsetChild;
-               }
-            }
-         }
-
-      bool canSkip = false;
-      if (0 && ((node->getOpCode().isLoadVarDirect() && node->getSymbolReference()->getSymbol()->isAuto()) ||
-          (((node->getOpCodeValue() == TR::iadd) || (node->getOpCodeValue() == TR::isub)) &&
-            node->getFirstChild()->getOpCode().isLoadVarDirect() &&
-            node->getFirstChild()->getSymbolReference()->getSymbol()->isAuto() &&
-            node->getSecondChild()->getOpCode().isLoadConst() /* &&
-                                                                 ((node->getSecondChild()->getInt() <= 32767) && (node->getSecondChild()->getInt() >= -32767)) */ )))
-         {
-         if (!_rejectedSignExtNodes.find(node))
-            canSkip = true;
-         }
-
-      if (!canSkip &&
-          ((node->getOpCodeValue() == TR::iadd) || (node->getOpCodeValue() == TR::isub) ||
-           (node->getOpCodeValue() == TR::iand) || (node->getOpCodeValue() == TR::iloadi) || (node->getOpCodeValue() == TR::ixor)) ||
-          ((node->getOpCodeValue() == TR::iload) /* && !node->getSymbolReference()->getSymbol()->isAutoOrParm() */))
-         {
-         TR::Node *storeNode = NULL;
-         TR::Node *loadNode = NULL;
-         if (*currentArrayAccess)
-            {
-            if (TR::Compiler->target.is64Bit() &&
-                !_rejectedSignExtNodes.find(node))
-               {
-               if ((node->getOpCodeValue() == TR::iload) &&
-                   (node->getSymbolReference()->getSymbol()->isAutoOrParm()
-                   ))
-                  {
-                  loadNode = node;
-                  canSkip = true;
-                  }
-               else if (false)
-                  {
-                  TR_ASSERT(comp()->getOptimizer()->cachedExtendedBBInfoValid(), "Incorrect value in _startOfExtendedBBForBB");
-                  TR::TreeTop *cursorTree = _candidates->_startOfExtendedBBForBB[block->getNumber()]->getEntry()->getNextTreeTop();
-                  while (cursorTree)
-                     {
-                     TR::Node *cursorNode = cursorTree->getNode();
-                     if (cursorNode->getOpCode().isStoreDirect() &&
-                         cursorNode->getSymbolReference()->getSymbol()->isAuto() &&
-                         (cursorNode->getFirstChild() == node))
-                        {
-                        storeNode = cursorNode;
-                        canSkip = true;
-                        break;
-                        }
-
-                      if (cursorNode->getOpCodeValue() == TR::BBStart)
-                         {
-                         if (!cursorNode->getBlock()->isExtensionOfPreviousBlock())
-                            break;
-                         }
-
-                      cursorTree = cursorTree->getNextTreeTop();
-                     }
-                  }
-               }
-            }
-
-         if (canSkip)
-            {
-            TR_BlockStructure *blockStructure = block->getStructureOf();
-            if (comp()->getFlowGraph()->getStructure() &&
-                blockStructure)
-               {
-               TR_Structure *containingLoop = blockStructure->getContainingLoop();
-
-               if (containingLoop)
-                  {
-                  TR::Block *loopInvariantBlock = NULL;
-                  TR_RegionStructure *parentStructure = containingLoop->getParent()->asRegion();
-                  TR_StructureSubGraphNode *subNode = NULL;
-                  TR_RegionStructure::Cursor si(*parentStructure);
-                  for (subNode = si.getCurrent(); subNode != NULL; subNode = si.getNext())
-                     {
-                     if (subNode->getNumber() == containingLoop->getNumber())
-                        break;
-                     }
-
-                  if ((subNode->getPredecessors().size() == 1))
-                     {
-                     TR_StructureSubGraphNode *loopInvariantNode = toStructureSubGraphNode(subNode->getPredecessors().front()->getFrom());
-                     if (loopInvariantNode->getStructure()->asBlock() &&
-                         loopInvariantNode->getStructure()->asBlock()->isLoopInvariantBlock())
-                        loopInvariantBlock = loopInvariantNode->getStructure()->asBlock()->getBlock();
-                     }
-
-                  if (loopInvariantBlock)
-                     {
-                     TR::SymbolReference *storeSymRef = NULL;
-                     if (loadNode)
-                        storeSymRef = loadNode->getSymbolReference();
-                     else
-                        storeSymRef = storeNode->getSymbolReference();
-
-                     TR::Node *signExtStore = NULL;
-
-                     if (_candidatesSignExtendedInThisLoop->get(storeSymRef->getReferenceNumber()))
-                        {
-                        TR::TreeTop *cursorTree = loopInvariantBlock->getExit();
-                        while (cursorTree)
-                           {
-                           TR::Node *cursorNode = cursorTree->getNode();
-                           if ((cursorNode->getOpCodeValue() == comp()->il.opCodeForDirectStore(node->getDataType())) &&
-                               (cursorNode->getSymbolReference() == storeSymRef))
-                              {
-                              if (cursorNode->getFirstChild()->getOpCode().isLoadVar() &&
-                                  (cursorNode->getFirstChild()->getSymbolReference() == cursorNode->getSymbolReference()) &&
-                                  cursorNode->needsSignExtension())
-                                 {
-                                 signExtStore = cursorNode;
-                                 break;
-                                 }
-                              }
-
-                           if (cursorNode->getOpCodeValue() == TR::BBStart)
-                              break;
-
-                           cursorTree = cursorTree->getPrevTreeTop();
-                           }
-                        }
-                     else
-                        {
-                        signExtStore = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(node->getDataType()), 1, 1,
-                                                             TR::Node::createWithSymRef(node, comp()->il.opCodeForDirectLoad(storeSymRef->getSymbol()->getDataType()), 0, storeSymRef),
-                                                             storeSymRef);
-
-                        TR::TreeTop *initTree = TR::TreeTop::create(comp(), signExtStore, 0, 0);
-
-                        TR::TreeTop *placeHolderTree = loopInvariantBlock->getLastRealTreeTop();
-                        TR::Node *placeHolderNode = placeHolderTree->getNode();
-                        if (placeHolderNode->getOpCode().isResolveOrNullCheck() ||
-                           (placeHolderNode->getOpCodeValue() == TR::treetop))
-                           placeHolderNode = placeHolderNode->getFirstChild();
-
-                        TR::ILOpCode &placeHolderOpCode = placeHolderNode->getOpCode();
-
-                        if (!placeHolderOpCode.isBranch() &&
-                            !placeHolderOpCode.isJumpWithMultipleTargets() &&
-                            !placeHolderOpCode.isReturn() &&
-                            (placeHolderOpCode.getOpCodeValue() != TR::athrow))
-                            placeHolderTree = loopInvariantBlock->getExit();
-
-                        TR::TreeTop *prevTree = placeHolderTree->getPrevTreeTop();
-                        prevTree->join(initTree);
-                        initTree->join(placeHolderTree);
-                        signExtStore->setNeedsSignExtension(true);
-                        }
-
-                     TR_ASSERT(signExtStore, "Store for sign extension must be found or created in loop pre-header\n");
-
-                     if (trace())
-                        {
-                        traceMsg(comp(), "Skip %p sign ext store %p load %p store %p\n", node, signExtStore, loadNode, storeNode);
-                        traceMsg(comp(), "loop invariant block_%d loop %p\n", loopInvariantBlock->getNumber(), containingLoop);
-                        }
-
-                     node->setSkipSignExtension(true);
-                     int32_t childNum = -1;
-                     if (parent)
-                        {
-                        int32_t i = 0;
-                        while (i < parent->getNumChildren())
-                           {
-                           if (parent->getChild(i) == node)
-                              {
-                              childNum = i;
-                              break;
-                              }
-                           i++;
-                           }
-                        }
-
-                     TR_NodeTriple *nodeTriple = new (comp()->trHeapMemory()) TR_NodeTriple(parent, signExtStore, (loadNode ? parent : storeNode), childNum);                                    _nodeTriplesToBeChecked.add(nodeTriple);
-                     _candidatesNeedingSignExtension->set(storeSymRef->getReferenceNumber());
-                     _candidatesSignExtendedInThisLoop->set(storeSymRef->getReferenceNumber());
-                     }
-                  }
-               }
-
-            canSkip = false;
-            }
-         }
-
-      origNode = node;
-      if (0 && *currentArrayAccess &&
-          canSkip)
-         {
-         TR_UseDefInfo *info = optimizer()->getUseDefInfo();
-         if (TR::Compiler->target.is64Bit() && info &&
-             (parent->getOpCodeValue() == TR::i2l) /* && node->isNonNegative() */ &&
-             (*currentArrayAccess == parent) &&
-             enableSignExtGRA)
-            {
-             TR_BlockStructure *blockStructure = block->getStructureOf();
-            node->setSkipSignExtension(true);
-            if (!node->getOpCode().isLoadVarDirect())
-               node = node->getFirstChild();
-
-            _nodesToBeChecked.add(origNode);
-
-            _candidatesNeedingSignExtension->set(node->getSymbolReference()->getReferenceNumber());
-            //_candidatesSignExtendedInThisLoop->set(node->getSymbolReference()->getReferenceNumber());
-
-            int32_t useIndex = node->getUseDefIndex();
-            TR_UseDefInfo::BitVector defs(comp()->allocator());
-            if (info->getUseDef(defs, useIndex))
-               {
-               TR_UseDefInfo::BitVector::Cursor cursor(defs);
-               for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
-                  {
-                  int32_t defIndex = info->getFirstDefIndex() + (int32_t) cursor;
-                  if (defIndex < info->getFirstRealDefIndex()) // def is  unseen--can't mark this node as skippable
-                     {
-                     origNode->setSkipSignExtension(false);
-                     break;
-                     }
-                  TR::Node *defNode = info->getNode(defIndex);
-                  if (defNode->getOpCode().isStore())
-                     {
-                     TR::Symbol *sym = defNode->getSymbolReference()->getSymbol();
-                     TR_ASSERT((sym == node->getSymbolReference()->getSymbol()), "Symbols must match between a use and a def\n");
-
-                     if (sym->isAuto())
-                        {
-                        bool seenLoad = false;
-                        bool dependentStore = isDependentStore(defNode, defs, node->getSymbolReference(), &seenLoad);
-                        if (dependentStore &&
-                            defNode->getFirstChild()->isNonNegative() &&
-                            seenLoad)
-                           {
-                           //printf("Skip sign extension at def node %p in %s\n", defNode, comp->getCurrentMethod()->signature());
-                           TR::TreeTop *defTree = info->getTreeTop(defIndex);
-                           TR::Block *defBlock = defTree->getEnclosingBlock();
-                           TR_BlockStructure *defBlockStructure = defBlock->getStructureOf();
-                           if (comp()->getFlowGraph()->getStructure() &&
-                               blockStructure && defBlockStructure &&
-                               (blockStructure->getContainingLoop() == defBlockStructure->getContainingLoop()))
-                              continue;
-                           }
-                           defNode->setNeedsSignExtension(true);
-                        }
-                      }
-                  }
-               }
-            }
-         }
-
-      if (TR::Compiler->target.is64Bit() &&
-          parent &&
-          (parent->getOpCodeValue() == TR::i2l) &&
-          ((*currentArrayAccess != parent) &&
-           (grandParent->getOpCodeValue() != TR::l2i)) &&
-          node->skipSignExtension())
-         {
-         _rejectedSignExtNodes.add(node);
-         node->setSkipSignExtension(false);
-         }
-      }
 
    if (node->getVisitCount() == visitCount)
       return;
 
    node->setVisitCount(visitCount);
 
-   if (enableNewSignExtGRA)
-      node = origNode;
-
-   if (!enableNewSignExtGRA && /* !hasCatchBlock && */ node->getOpCode().isLoadVarDirect() &&
-         (node->getSymbolReference()->getSymbol()->isAuto() ))
+   if (node->getOpCode().isLoadVarDirect() && node->getSymbolReference()->getSymbol()->isAuto())
       {
       TR_UseDefInfo *info = optimizer()->getUseDefInfo();
-      if (TR::Compiler->target.is64Bit() && info &&
+      if (comp()->target().is64Bit() && info &&
           (parent->getOpCodeValue() == TR::i2l) && node->isNonNegative() && enableSignExtGRA)
          {
          node->setSkipSignExtension(true);
@@ -4290,9 +3972,7 @@ TR_GlobalRegisterAllocator::markAutosUsedIn(
       TR::CFG *cfg = comp()->getFlowGraph();
 
       TR::SymbolReference *symRef = node->getSymbolReference();
-      if ((symRef->getSymbol()->isAutoOrParm() ||
-           (0) && symRef->getSymbol()->getDataType() != TR::NoType)
-          && isSymRefAvailable(symRef, blocksInLoop))
+      if (symRef->getSymbol()->isAutoOrParm() && isSymRefAvailable(symRef, blocksInLoop))
          {
          TR_RegisterCandidate *rc = registerCandidates[symRef->getReferenceNumber()];
          if (!rc)
@@ -4332,7 +4012,7 @@ TR_GlobalRegisterAllocator::markAutosUsedIn(
                }
             else
                {
-               if (TR::Compiler->target.cpu.isZ() &&
+               if (comp()->target().cpu.isZ() &&
                    rc->getSymbolReference()->getSymbol()->getDataType() == TR::Address &&
                    parent &&
                    (((parent->getOpCode().isStoreIndirect() ||
@@ -4403,11 +4083,6 @@ TR_GlobalRegisterAllocator::markAutosUsedIn(
         !(opCode.isAdd() || opCode.isSub() || opCode.isMul() ||
           opCode.isBooleanCompare() || opCode.isNullCheck() || opCode.isBndCheck())))
       findSymsUsedInIndirectAccesses(node, symsThatShouldNotBeAssignedInCurrentLoop, assignedAutosInCurrentLoop, true);
-
-   if (enableNewSignExtGRA && node->getOpCode().hasSymbolReference() &&
-       (node->getSymbolReference()->getSymbol()->isArrayShadowSymbol()))
-      *currentArrayAccess = prevArrayAccess;
-
    }
 
 
@@ -4636,160 +4311,20 @@ TR_GlobalRegisterAllocator::createStoresForSignExt(
    LexicalTimer t("TR_GlobalRegisterAllocator::createStoresForSignExt", comp()->phaseTimer());
 
    bool enableSignExtGRA = false; // enable for other platforms later
-   bool enableNewSignExtGRA = false;
 
    static char *doit = feGetEnv("TR_SIGNEXTGRA");
    if (NULL != doit)
       enableSignExtGRA = true;
 
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp()->target().cpu.isZ())
       {
       enableSignExtGRA = true;
       static char *doit2 = feGetEnv("TR_NSIGNEXTGRA");
       if (NULL != doit2)
          enableSignExtGRA = false;
-
-      static char *doit3 = feGetEnv("TR_NEWSIGNEXTGRA");
-      if (NULL != doit3)
-         enableNewSignExtGRA = true;
       }
 
    TR::Node *prevArrayAccess = NULL;
-   if (enableNewSignExtGRA)
-      {
-      prevArrayAccess = *currentArrayAccess;
-
-      if (node->getOpCode().hasSymbolReference() &&
-          (node->getSymbolReference()->getSymbol()->isArrayShadowSymbol()))
-         {
-         TR::Node *child = node->getFirstChild();
-         if (child->getOpCodeValue() == TR::aladd)
-            {
-            TR::Node *offsetChild = child->getSecondChild();
-            if (((offsetChild->getOpCodeValue() == TR::ladd) || (offsetChild->getOpCodeValue() == TR::lsub)) &&
-                (offsetChild->getSecondChild()->getOpCodeValue() == TR::lconst))
-               offsetChild = offsetChild->getFirstChild();
-
-            int32_t sizeOfElem;
-            if (node->getDataType() == TR::Address)
-               sizeOfElem = TR::Compiler->om.sizeofReferenceField();
-            else
-               sizeOfElem = node->getOpCode().getSize();
-
-            if ((offsetChild->getOpCodeValue() == TR::lmul) &&
-                (offsetChild->getSecondChild()->getOpCodeValue() == TR::lconst) &&
-                (sizeOfElem == offsetChild->getSecondChild()->getLongInt()))
-               {
-               TR::Node *longIndexNode = offsetChild->getFirstChild();
-               if (longIndexNode->getOpCodeValue() == TR::i2l)
-                  *currentArrayAccess = longIndexNode;
-               }
-            else if ((offsetChild->getOpCodeValue() == TR::i2l) &&
-                     (node->getOpCode().getSize() == 1))
-               {
-               *currentArrayAccess = offsetChild;
-               }
-            }
-         }
-
-      bool needStoreAndItExists = false;
-
-      if (!needStoreAndItExists &&
-          ((node->getOpCodeValue() == TR::iadd) || (node->getOpCodeValue() == TR::isub) ||
-           (node->getOpCodeValue() == TR::iand) || (node->getOpCodeValue() == TR::iloadi) || (node->getOpCodeValue() == TR::ixor) ||
-           ((node->getOpCodeValue() == TR::iload) && !node->getSymbolReference()->getSymbol()->isAutoOrParm())
-           ))
-         {
-         TR::Node *storeNode = NULL;
-         if (*currentArrayAccess)
-            {
-            if (TR::Compiler->target.is64Bit() &&
-                (parent->getOpCodeValue() == TR::i2l) /* && node->isNonNegative() */ &&
-                (*currentArrayAccess == parent) &&
-                !_rejectedSignExtNodes.find(node))
-               {
-               TR_ASSERT(comp()->getOptimizer()->cachedExtendedBBInfoValid(), "Incorrect value in _startOfExtendedBBForBB");
-               TR::TreeTop *cursorTree = _candidates->_startOfExtendedBBForBB[block->getNumber()]->getEntry()->getNextTreeTop();
-               while (cursorTree)
-                  {
-                  TR::Node *cursorNode = cursorTree->getNode();
-                  if (cursorNode->getOpCode().isStoreDirect() &&
-                      cursorNode->getSymbolReference()->getSymbol()->isAuto() &&
-                      (cursorNode->getFirstChild() == node))
-                     {
-                     storeNode = cursorNode;
-                     needStoreAndItExists = true;
-                     break;
-                     }
-
-                   if (cursorNode->getOpCodeValue() == TR::BBStart)
-                      {
-                      if (!cursorNode->getBlock()->isExtensionOfPreviousBlock())
-                         break;
-                      }
-
-                   cursorTree = cursorTree->getNextTreeTop();
-                   }
-
-               if (!needStoreAndItExists)
-                  {
-                  TR_BlockStructure *blockStructure = block->getStructureOf();
-                  if (comp()->getFlowGraph()->getStructure() &&
-                      blockStructure)
-                     {
-                     TR_Structure *containingLoop = blockStructure->getContainingLoop();
-
-                     if (containingLoop)
-                        {
-                        TR::Block *loopInvariantBlock = NULL;
-                        TR_RegionStructure *parentStructure = containingLoop->getParent()->asRegion();
-                        TR_StructureSubGraphNode *subNode = NULL;
-                        TR_RegionStructure::Cursor si(*parentStructure);
-                        for (subNode = si.getCurrent(); subNode != NULL; subNode = si.getNext())
-                           {
-                           if (subNode->getNumber() == containingLoop->getNumber())
-                              break;
-                           }
-
-                        if ((subNode->getPredecessors().size() == 1))
-                           {
-                           TR_StructureSubGraphNode *loopInvariantNode = toStructureSubGraphNode(subNode->getPredecessors().front()->getFrom());
-                           if (loopInvariantNode->getStructure()->asBlock() &&
-                               loopInvariantNode->getStructure()->asBlock()->isLoopInvariantBlock())
-                              loopInvariantBlock = loopInvariantNode->getStructure()->asBlock()->getBlock();
-                           }
-
-                        if (loopInvariantBlock)
-                           {
-                           if (!_storeSymRef)
-                              _storeSymRef = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), node->getDataType());
-                           TR::Node *signExtStore = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(node->getDataType()), 1, 1,
-                                                                   node,
-                                                                   _storeSymRef);
-
-                           TR::TreeTop *initTree = TR::TreeTop::create(comp(), signExtStore, 0, 0);
-                           TR::TreeTop *prevTree = treetop->getPrevTreeTop();
-                           prevTree->join(initTree);
-                           initTree->join(treetop);
-                           cg()->setLiveLocals(NULL);
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-         }
-
-      if (TR::Compiler->target.is64Bit() &&
-          parent &&
-          (parent->getOpCodeValue() == TR::i2l) &&
-          ((*currentArrayAccess != parent) &&
-           (grandParent->getOpCodeValue() != TR::l2i)) &&
-          node->skipSignExtension())
-         {
-         _rejectedSignExtNodes.add(node);
-         }
-      }
 
    if (node->getVisitCount() == visitCount)
       return;
@@ -4799,10 +4334,6 @@ TR_GlobalRegisterAllocator::createStoresForSignExt(
    int32_t childNum;
    for (childNum=0;childNum<node->getNumChildren();childNum++)
       createStoresForSignExt(node->getChild(childNum), node, parent, treetop, currentArrayAccess, block, blocksInLoop, visitCount, hasCatchBlock);
-
-   if (enableNewSignExtGRA && node->getOpCode().hasSymbolReference() &&
-       (node->getSymbolReference()->getSymbol()->isArrayShadowSymbol()))
-      *currentArrayAccess = prevArrayAccess;
    }
 
 const char *
@@ -5089,7 +4620,7 @@ TR_LiveRangeSplitter::splitLiveRanges(TR_StructureSubGraphNode *structureNode)
 #endif
                                   );
                   int32_t numRegsForCandidate = 1;
-                  if ((symRef->getSymbol()->getType().isInt64() && TR::Compiler->target.is32Bit())
+                  if ((symRef->getSymbol()->getType().isInt64() && comp()->target().is32Bit())
 #ifdef J9_PROJECT_SPECIFIC
                       || symRef->getSymbol()->getType().isLongDouble()
 #endif

@@ -283,7 +283,7 @@ OMR_GC_InitializeCollector(OMR_VMThread* omrVMThread)
 			}
 
 			/* Make sure sweep scheme is up-to-date with the heap configuration */
-			globalCollector->heapReconfigured(env);
+			globalCollector->heapReconfigured(env, HEAP_RECONFIG_EXPAND, NULL, NULL, NULL);
 		}
 	}
 

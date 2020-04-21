@@ -1,5 +1,5 @@
 #################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,12 +28,12 @@ compiler_library(p
 	${CMAKE_CURRENT_LIST_DIR}/codegen/FPTreeEvaluator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/GenerateInstructions.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRMemoryReference.cpp
-	${CMAKE_CURRENT_LIST_DIR}/codegen/OpBinary.cpp
-	${CMAKE_CURRENT_LIST_DIR}/codegen/OpProperties.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/PPCAOTRelocation.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/PPCBinaryEncoding.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRCodeGenerator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRInstOpCode.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRInstruction.cpp
+	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRInstructionDelegate.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/PPCDebug.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/PPCHelperCallSnippet.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/PPCInstruction.cpp

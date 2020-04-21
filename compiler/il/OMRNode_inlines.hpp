@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,18 +171,37 @@ OMR::Node::getType()
    return self()->getDataType();
    }
 
-TR_NodeUseAliasSetInterface
+TR_UseOnlyAliasSetInterface
 OMR::Node::mayUse()
    {
-   TR_NodeUseAliasSetInterface aliasSetInterface(self());
-   return aliasSetInterface;
+   if (self()->getOpCode().isLikeUse() && self()->getOpCode().hasSymbolReference())
+      {
+      TR_UseOnlyAliasSetInterface aliasSetInterface(self()->getSymbolReference());
+      return aliasSetInterface;
+      }
+   else 
+      {
+      //if there is no symbolreference, then return an empty aliseset
+       TR_UseOnlyAliasSetInterface aliasSetInterface(NULL);
+      return aliasSetInterface;
+      }
    }
 
-TR_NodeKillAliasSetInterface
+TR_UseDefAliasSetInterface
 OMR::Node::mayKill(bool gcSafe)
    {
-   TR_NodeKillAliasSetInterface aliasSetInterface(self(), self()->getOpCode().isCallDirect(), gcSafe);
-   return aliasSetInterface;
+   if (self()->getOpCode().hasSymbolReference() && (self()->getOpCode().isLikeDef() || self()->mightHaveVolatileSymbolReference())) //we want the old behavior in these cases
+      {
+      bool shares_symbol = self()->getSymbolReference()->sharesSymbol(gcSafe);
+      TR_UseDefAliasSetInterface aliasSetInterface(shares_symbol, self()->getSymbolReference(), self()->getOpCode().isCallDirect(), gcSafe);
+      return aliasSetInterface;
+      }
+   else
+      {
+      //if there is no symbolreference, then return an empty aliseset
+      TR_UseDefAliasSetInterface aliasSetInterface(NULL, self()->getOpCode().isCallDirect(), gcSafe);
+      return aliasSetInterface;
+      }
    }
 
 /**
@@ -613,7 +632,7 @@ OMR::Node::setAddress(uint64_t a)
    TR_ASSERT(self()->getOpCodeValue() == TR::aconst,"TR::Node::setAddress: used for a non aconst node");
    self()->freeExtensionIfExists();
 
-   if (TR::Compiler->target.is32Bit())
+   if (TR::comp()->target().is32Bit())
       a = a & 0x00000000ffffffff;
 
    return (uint64_t)(_unionBase._constValue = (int64_t)a);
@@ -651,22 +670,18 @@ OMR::Node::getIntegerNodeValue()
    TR::ILOpCodes opcode = self()->getOpCodeValue();
    if (opcode == TR::aconst)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (comp->target().is64Bit())
          opcode = TR::lconst;
       else
          opcode = TR::iconst;
       }
    switch(opcode)
       {
-      case TR::buconst:
       case TR::bconst: length = (T)self()->getUnsignedByte(); break;
-      case TR::cconst: length = (T)self()->getConst<uint16_t>(); break;
       case TR::sconst: length = (T)self()->getShortInt(); break;
       case TR::iconst:
-      case TR::iuconst:
          length = (T)self()->getUnsignedInt(); break;
       case TR::lconst:
-      case TR::luconst:
          length = (T)self()->getUnsignedLongInt(); break;
       case TR::iloadi:
          TR_ASSERT(false, "Invalid type for length node."); break;

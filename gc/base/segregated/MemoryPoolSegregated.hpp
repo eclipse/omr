@@ -85,9 +85,7 @@ public:
 	virtual void setFreeEntryCount(uintptr_t entryCount);
 	
 	virtual void *allocateObject(MM_EnvironmentBase *env, MM_AllocateDescription *allocDesc);
-#if defined(OMR_GC_ARRAYLETS)
 	virtual void *allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocDesc);
-#endif /* OMR_GC_ARRAYLETS */
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 	using MM_MemoryPool::allocateTLH;
 	virtual void *allocateTLH(MM_EnvironmentBase *env, uintptr_t maxSizeInBytesRequired, void * &addrBase, void * &addrTop);
@@ -130,9 +128,7 @@ protected:
 	
 private:
 	uintptr_t *allocateContiguous(MM_EnvironmentBase *env, MM_AllocateDescription *allocDesc, MM_AllocationContextSegregated *ac);
-#if defined(OMR_GC_ARRAYLETS)
 	void *allocateChunkedArray(MM_EnvironmentBase *env, MM_AllocateDescription *allocDesc, MM_AllocationContextSegregated *ac);
-#endif /* OMR_GC_ARRAYLETS */
 
 };
 

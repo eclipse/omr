@@ -33,7 +33,7 @@ function(omr_add_core_test testname)
 	)
 	add_test(
 		NAME    "${testname}"
-		COMMAND "${testname}"
+		COMMAND "${testname}" --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/${testname}-results.xml
 	)
 endfunction(omr_add_core_test)
 

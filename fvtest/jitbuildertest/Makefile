@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,19 +26,21 @@ MODULE_NAME := omrjitbuildertest
 ARTIFACT_TYPE := cxx_executable
 
 OBJECTS := \
-	main \
-	selftest \
-	UnionTest \
-	FieldAddressTest \
-	AnonymousTest \
-	ControlFlowTest \
-	SystemLinkageTest \
-	NegateTest \
-	WorklistTest \
-	IfThenElseTest \
-	CallReturnTest \
-	FieldNameTest \
-	ConvertBitsTest
+  main \
+  selftest \
+  UnionTest \
+  FieldAddressTest \
+  AnonymousTest \
+  ControlFlowTest \
+  SystemLinkageTest \
+  NegateTest \
+  WorklistTest \
+  IfThenElseTest \
+  CallReturnTest \
+  FieldNameTest \
+  ConvertBitsTest \
+  UnsignedDivRemTest \
+  SelectTest
 
 OBJECTS := $(addsuffix $(OBJEXT),$(OBJECTS))
 

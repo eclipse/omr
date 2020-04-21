@@ -22,10 +22,8 @@
 #ifndef OMR_ILVALUE_INCL
 #define OMR_ILVALUE_INCL
 
+#include "env/TRMemory.hpp"
 #include "il/DataTypes.hpp"
-#ifndef TR_ALLOC
-#define TR_ALLOC(x)
-#endif
 
 namespace TR { class Node; }
 namespace TR { class TreeTop; }

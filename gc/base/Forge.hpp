@@ -28,7 +28,6 @@
 #include "omrcomp.h"
 #include "thread_api.h"
 #include "omrport.h"
-#include "MemoryStatistics.hpp"
 #include "AllocationCategory.hpp"
 
 #include <new>
@@ -40,17 +39,13 @@ namespace OMR {
 namespace GC {
 
 class Forge {
-/* Friend Declarations */
-friend class ::MM_GCExtensionsBase;
 
 /* Data Members */
 private:
-	omrthread_monitor_t _mutex;
 	OMRPortLibrary* _portLibrary;
-	OMR_GC_MemoryStatistics _statistics[AllocationCategory::CATEGORY_COUNT];
 	
 /* Function Members */
-protected:
+public:
 	/**
 	 * Initialize internal structures of the memory forge.  An instance of Forge must be initialized before
 	 * the methods allocate or free are called.
@@ -67,8 +62,7 @@ protected:
 	 * 
 	 */
 	void tearDown();
-	
-public:
+
 	/**
 	 * Allocates the amount of memory requested in bytesRequested.  Returns a pointer to the allocated memory, 
 	 * or NULL if the request could not be performed.  This function is a wrapper of omrmem_allocate_memory.
@@ -89,15 +83,6 @@ public:
 	 * @param[in] memoryPointer - a pointer to the memory that will be freed
 	 */
 	void free(void* memoryPointer);
-
-	/**
-	 * Returns the current memory usage statistics for the garbage collector.  Each entry in the array corresponds
-	 * to a memory usage category type.  To locate memory usage statistics for a particular category, use the 
-	 * enumeration value as the array index (e.g. stats[REFERENCES]).
-	 *
-	 * @return an array of memory usage statistics indexed using the CategoryType enumeration
-	 */
-	OMR_GC_MemoryStatistics* getCurrentStatistics();
 };
 
 } // namespace GC

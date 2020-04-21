@@ -59,7 +59,6 @@ class OMR_EXTENSIBLE Register: public OMR::Register
    Register(TR_RegisterKinds rk);
    Register(TR_RegisterKinds rk, uint16_t ar);
 
-
    public:
 
    /*
@@ -75,9 +74,6 @@ class OMR_EXTENSIBLE Register: public OMR::Register
    TR::MemoryReference *getMemRef() { return _memRef; }
    void setMemRef(TR::MemoryReference *memRef) { _memRef = memRef; }
 
-
-
-
    /*
     * Methods for manipulating flags
     */
@@ -88,26 +84,13 @@ class OMR_EXTENSIBLE Register: public OMR::Register
    bool is64BitReg();
    void setIs64BitReg(bool b = true);
 
-   bool assignToHPR();
-   void setAssignToHPR(bool b = true)              {_flags.set(AssignToHPR, b);}
-   bool assignToGPR();
-
-   bool isHighWordUpgradable();
-   void setIsNotHighWordUpgradable(bool b = true){_flags.set(IsNotHighWordUpgradable, b);}
-
-   bool isSpilledToHPR() {return (_flags.testAny(SpilledToHPR));}
-   void setSpilledToHPR(bool b = true)             {_flags.set(SpilledToHPR, b);}
-
    bool isDependencySet()    {return _flags.testAny(DependencySet);}
    void setDependencySet(bool v) {if (v) _flags.set(DependencySet);}
 
    bool alreadySignExtended()           {return _flags.testAny(AlreadySignExtended);}
    void setAlreadySignExtended()        {_flags.set(AlreadySignExtended);}
    void resetAlreadySignExtended()      {_flags.reset(AlreadySignExtended);}
-
-   bool isUpperBitsAreDirty()                 {return _flags.testAny(UpperBitsAreDirty);}
-   void setIsUpperBitsAreDirty(bool b = true) {_flags.set(UpperBitsAreDirty, b);}
-
+   
    /*
     * Overriding Base Class Implementation of these methods
     */
@@ -118,12 +101,10 @@ class OMR_EXTENSIBLE Register: public OMR::Register
    bool containsCollectedReference();
    void setContainsCollectedReference();
 
-
    /*
     * Methods specialized in derived classes
     */
 
-   virtual int32_t             FlattenRegisterPairs(TR_Queue<TR::Register> * Pairs) {return 0;}
    virtual bool usesRegister(TR::Register* reg);  //ppc may duplicate this
    virtual bool usesAnyRegister(TR::Register* reg);
 
@@ -139,13 +120,9 @@ class OMR_EXTENSIBLE Register: public OMR::Register
       {
          IsUsedInMemRef                = 0x0800, // 390 cannot associate GPR0 to regs used in memrefs
          Is64Bit                       = 0x0002, // 390 flag indicates that this Register contained a 64-bit value
-         AssignToHPR                   = 0x0004, // 390 flag indicates that this virtual register needs to be assigned to an HPR
-         IsNotHighWordUpgradable       = 0x2000, // 390 flag indicates that this Reg can be upgraded to use HPR
-         SpilledToHPR                  = 0x4000, // 390 flag indicates that this virtual register is spilled to
          DependencySet                 = 0x0200,  // 390 flag, post dependancy was assigned
 
          AlreadySignExtended           = 0x1000, // determine whether i2l should be nops
-         UpperBitsAreDirty             = 0x8000, // Bits 63-32 were clobbered
       };
 
    //Both x and z have this field, but power has own specialization, may move to base
@@ -157,11 +134,8 @@ class OMR_EXTENSIBLE Register: public OMR::Register
 
    // Both x and z have this, but power doesn't, so duplicating in both x and z
    TR::MemoryReference *_memRef;
-
    };
-
 }
-
 }
 
 #endif /* OMR_Z_REGISTER_INCL */

@@ -25,7 +25,7 @@
 
 #include "omrcfg.h"
 
-#if defined(OMR_GC_MODRON_SCAVENGER) && defined(OMR_GC_SCAVENGER_DELEGATE)
+#if defined(OMR_GC_MODRON_SCAVENGER)
 
 #include "modronbase.h"
 #include "objectdescription.h"
@@ -56,10 +56,10 @@ public:
 	void kill(MM_EnvironmentBase *env);
 
 	/* Read Barrier Verifier specific methods */
-#if defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
 	void poisonSlots(MM_EnvironmentBase *env) {}
 	void healSlots(MM_EnvironmentBase *env) {}
-#endif /* defined(OMR_ENV_DATA64) && !defined(OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 
 	/**
 	 * This method will be called on the master GC thread after each scavenger cycle, successful or
@@ -211,7 +211,7 @@ public:
 	 */
 	void reverseForwardedObject(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedObject);
 
-#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+#if defined (OMR_GC_COMPRESSED_POINTERS)
 	/**
 	 * This method is similar to reverseForwardedObject() but is called from a different context. The implementation
 	 * must first determine whether or not the compressed slot adjacent to the scavenger forwarding slot may contain an object
@@ -229,7 +229,7 @@ public:
 	 * @param[in] subSpaceNew Pointer to new space
 	 */
 	void fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedObject, MM_MemorySubSpaceSemiSpace *subSpaceNew);
-#endif /* OMR_INTERP_COMPRESSED_OBJECT_HEADER */
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	/**
@@ -258,6 +258,6 @@ public:
 	}
 };
 
-#endif /* defined(OMR_GC_MODRON_SCAVENGER) && defined(OMR_GC_SCAVENGER_DELEGATE) */
+#endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
 #endif /* SCAVENGERDELEGATE_HPP_ */

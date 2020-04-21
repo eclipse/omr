@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,9 +23,7 @@
 
 #include "ddr/ir/NamespaceUDT.hpp"
 #include "ddr/ir/Symbol_IR.hpp"
-
-#include <fstream>
-#include <iostream>
+#include "ddr/ir/TextFile.hpp"
 
 #define FileBeginEyeCatcher "@DDRFILE_BEGIN "
 #define FileEndEyeCatcher "@DDRFILE_END "
@@ -43,31 +41,31 @@ startsWith(const string &str, const char *prefix, size_t prefix_len)
 /**
  * This function reads in a formatted file (fname) full of macro names, their
  * values and their associated types. This information is used to fill in a
- * vector of structure's (MacroInfo) amalgamating macros with their associated
- * type name. This vector is returned as an output parameter.
+ * vector of structures (MacroInfo) amalgamating macros with their associated
+ * type name.
+ *
  * @return DDR_RC_OK on failure, DDR_RC_ERROR if an error is encountered.
  */
 DDR_RC
-MacroTool::getMacros(const string &fname)
+MacroTool::getMacros(OMRPortLibrary *portLibrary, const char *filename)
 {
-	DDR_RC rc = DDR_RC_OK;
-
-	if (fname.size() == 0) {
-		ERRMSG("invalid macrolist filename");
+	if ('\0' == *filename) {
+		ERRMSG("invalid macrolist file name");
 		return DDR_RC_ERROR;
 	}
 
-	std::ifstream infile(fname.c_str());
+	TextFile macrolist(portLibrary);
 
-	if (!infile) {
-		ERRMSG("invalid macrolist filename");
+	if (!macrolist.openRead(filename)) {
+		ERRMSG("cannot open macrolist file %s", filename);
 		return DDR_RC_ERROR;
 	}
 
 	set<string> includeFileSet;
 	string line;
+
 	/* Parse the input file for macros with values. */
-	while (getline(infile, line)) {
+	while (macrolist.readLine(line)) {
 		if (startsWith(line, FileBeginEyeCatcher, LITERAL_STRLEN(FileBeginEyeCatcher))) {
 			const string fileName = line.substr(LITERAL_STRLEN(FileBeginEyeCatcher));
 			if (includeFileSet.end() == includeFileSet.find(fileName)) {
@@ -76,7 +74,7 @@ MacroTool::getMacros(const string &fname)
 				/* This include file was already processed.
 				 * Scan until the file end delimiter is found.
 				 */
-				while (getline(infile, line)) {
+				while (macrolist.readLine(line)) {
 					if (startsWith(line, FileEndEyeCatcher, LITERAL_STRLEN(FileEndEyeCatcher))) {
 						break;
 					}
@@ -108,7 +106,9 @@ MacroTool::getMacros(const string &fname)
 		}
 	}
 
-	return rc;
+	macrolist.close();
+
+	return DDR_RC_OK;
 }
 
 DDR_RC

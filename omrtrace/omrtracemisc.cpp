@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,62 +112,74 @@ expandString(char *returnBuffer, const char *original, BOOLEAN atRuntime)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(OMR_TRACEGLOBAL(portLibrary));
 
-	const char *pidTokenString = "%pid";
-	const char *dateTokenString = "%Y" "%m" "%d";
-	const char *timeTokenString = "%H" "%M" "%S";
 	char formatString[MAX_IMAGE_PATH_LENGTH];
 	char resultString[MAX_IMAGE_PATH_LENGTH];
-	size_t originalLen, originalCursor = 0, formatCursor = 0;
-	struct J9StringTokens *stringTokens;
-	int64_t curTime;
+	const char *originalCursor = original;
+	char *formatCursor = formatString;
+	size_t formatSpace = sizeof(formatString) - 1; /* leave room for trailing NUL */
 
-	if ((returnBuffer == NULL) || (original == NULL)) {
+	if ((NULL == returnBuffer) || (NULL == original)) {
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
 
-	originalLen = strlen(original);
+	for (;; originalCursor += 1) {
+		char originalChar = *originalCursor;
+		const char *replacement = originalCursor;
+		size_t replacementLength = 1;
 
-	for (; originalCursor < originalLen ; originalCursor++) {
-		if (original[originalCursor] == '%') {
-			originalCursor++;
-			if (original[originalCursor] == 'p') {
-				strncpy(&formatString[formatCursor], pidTokenString, strlen(pidTokenString));
-				formatCursor += strlen(pidTokenString);
-			} else if (original[originalCursor] == 'd') {
-				strncpy(&formatString[formatCursor], dateTokenString, strlen(dateTokenString));
-				formatCursor += strlen(dateTokenString);
-			} else if (original[originalCursor] == 't') {
-				strncpy(&formatString[formatCursor], timeTokenString, strlen(timeTokenString));
-				formatCursor += strlen(timeTokenString);
+		if ('\0' == originalChar) {
+			break;
+		}
+		if ('%' == originalChar) {
+			originalCursor += 1;
+			originalChar = *originalCursor;
+			if ('p' == originalChar) {
+				const char * const pidTokenString = "%pid";
+				replacement = pidTokenString;
+				replacementLength = strlen(pidTokenString);
+			} else if ('d' == originalChar) {
+				const char * const dateTokenString = "%Y%m%d";
+				replacement = dateTokenString;
+				replacementLength = strlen(dateTokenString);
+			} else if ('t' == originalChar) {
+				const char * const timeTokenString = "%H%M%S";
+				replacement = timeTokenString;
+				replacementLength = strlen(timeTokenString);
 			} else {
 				/* character following % was not 'p', 'd' or 't' */
-				reportCommandLineError(atRuntime, "Invalid special character '%%%c' in a trace filename. Only %%p, %%d and %%t are allowed.", original[originalCursor]);
+				reportCommandLineError(
+						atRuntime,
+						"Invalid special character '%%%c' in a trace filename. Only %%p, %%d and %%t are allowed.",
+						originalChar);
 				returnBuffer[0] = '\0';
 				return OMR_ERROR_ILLEGAL_ARGUMENT;
 			}
-		} else {
-			formatString[formatCursor] = original[originalCursor];
-			formatCursor++;
 		}
-		if (formatCursor >= MAX_IMAGE_PATH_LENGTH - 1) {
-			formatCursor = MAX_IMAGE_PATH_LENGTH - 1;
+		if (formatSpace < replacementLength) {
+			/* insufficient space for replacement */
 			break;
 		}
+		memcpy(formatCursor, replacement, replacementLength);
+		formatCursor += replacementLength;
+		formatSpace -= replacementLength;
 	}
-	formatString[formatCursor] = '\0';
-	curTime = omrtime_current_time_millis();
-	stringTokens = omrstr_create_tokens(curTime);
-	if (NULL == stringTokens) {
-		returnBuffer[0] = '\0';
-		return OMR_ERROR_ILLEGAL_ARGUMENT;
-	}
+	*formatCursor = '\0';
 
-	if (omrstr_subst_tokens(resultString, MAX_IMAGE_PATH_LENGTH, formatString, stringTokens) > MAX_IMAGE_PATH_LENGTH) {
-		returnBuffer[0] = '\0';
+	{
+		int64_t curTime = omrtime_current_time_millis();
+		struct J9StringTokens *stringTokens = omrstr_create_tokens(curTime);
+		if (NULL == stringTokens) {
+			returnBuffer[0] = '\0';
+			return OMR_ERROR_ILLEGAL_ARGUMENT;
+		}
+
+		if (omrstr_subst_tokens(resultString, MAX_IMAGE_PATH_LENGTH, formatString, stringTokens) > MAX_IMAGE_PATH_LENGTH) {
+			returnBuffer[0] = '\0';
+			omrstr_free_tokens(stringTokens);
+			return OMR_ERROR_ILLEGAL_ARGUMENT;
+		}
 		omrstr_free_tokens(stringTokens);
-		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
-	omrstr_free_tokens(stringTokens);
 
 	strncpy(returnBuffer, resultString, 255);
 	returnBuffer[255] = '\0';

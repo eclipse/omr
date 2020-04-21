@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "compile/Compilation.hpp"
@@ -35,7 +35,6 @@
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/TRMemory.hpp"
@@ -44,15 +43,15 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"
@@ -1721,7 +1720,7 @@ TR_Debug::printNodeInfo(TR::Node * node, TR_PrettyPrinterString& output, bool pr
    else if (!inDebugExtension() &&
             (node->getOpCode().isLoadReg() || node->getOpCode().isStoreReg()) )
       {
-      if ((node->getType().isInt64() && TR::Compiler->target.is32Bit() && !_comp->cg()->use64BitRegsOn32Bit()))
+      if ((node->getType().isInt64() && _comp->target().is32Bit() && !_comp->cg()->use64BitRegsOn32Bit()))
          output.append(" %s:%s ", getGlobalRegisterName(node->getHighGlobalRegisterNumber()), getGlobalRegisterName(node->getLowGlobalRegisterNumber()));
       else
          output.append(" %s ", getGlobalRegisterName(node->getGlobalRegisterNumber()));
@@ -1744,7 +1743,7 @@ TR_Debug::printNodeInfo(TR::Node * node, TR_PrettyPrinterString& output, bool pr
          else if (t == TR::Int32) size = TR_WordReg;
          else                    size = TR_DoubleWordReg;
          if ((node->getFirstChild()->getType().isInt64() &&
-              TR::Compiler->target.is32Bit()))
+              _comp->target().is32Bit()))
             output.append(" %s:%s ",
                           getGlobalRegisterName(node->getHighGlobalRegisterNumber(), size),
                           getGlobalRegisterName(node->getLowGlobalRegisterNumber(), size));
@@ -2368,7 +2367,6 @@ int32_t childTypes[] =
    TR::Double,                     // TR::dmul
    TR::Int8,                      // TR::bmul
    TR::Int16,                     // TR::smul
-   TR::Int32,                     // TR::iumul
    TR::Int32,                     // TR::idiv
    TR::Int64,                     // TR::ldiv
    TR::Float,                      // TR::fdiv
@@ -2672,13 +2670,13 @@ int32_t childTypes[] =
    TR::Int16,                      // TR::sRegStore
    TR::Int8,                       // TR::bRegStore
    TR::NoType,                     // TR::GlRegDeps
-   TR::Int32 | (TR::Int32<<8),    // TR::iternary
-   TR::Int64 | (TR::Int32<<8),    // TR::lternary
-   TR::Int8  | (TR::Int32<<8),    // TR::bternary
-   TR::Int16 | (TR::Int32<<8),    // TR::sternary
-   TR::Address | (TR::Int32<<8),   // TR::aternary
-   TR::Float | (TR::Int32<<8),     // TR::fternary
-   TR::Double | (TR::Int32<<8),    // TR::dternary
+   TR::Int32 | (TR::Int32<<8),    // TR::iselect
+   TR::Int64 | (TR::Int32<<8),    // TR::lselect
+   TR::Int8  | (TR::Int32<<8),    // TR::bselect
+   TR::Int16 | (TR::Int32<<8),    // TR::sselect
+   TR::Address | (TR::Int32<<8),   // TR::aselect
+   TR::Float | (TR::Int32<<8),     // TR::fselect
+   TR::Double | (TR::Int32<<8),    // TR::dselect
    TR::NoType,                     // TR::treetop
    TR::NoType,                     // TR::MethodEnterHook
    TR::NoType,                     // TR::MethodExitHook
@@ -2712,7 +2710,7 @@ int32_t childTypes[] =
    TR::VectorInt32,                     // TR_vianylt
    TR::VectorInt32,                     // TR_vianyle
    TR::VectorInt32,                     // TR::vnot
-   TR::VectorInt32,                     // TR::vselect
+   TR::VectorInt32,                     // TR::vbitselect
    TR::VectorInt32,                     // TR::vperm
 
    TR::VectorDouble | (TR::Address<<8),   // TR::dloadi
@@ -2783,7 +2781,7 @@ int32_t childTypes[] =
    TR::NoType,                           //TR::vreturn
    TR::NoType,                           //TR::vcall
    TR::NoType,                           //TR::vcalli
-   TR::NoType,                           //TR::vternary
+   TR::NoType,                           //TR::vselect
    TR::NoType,                           //TR::v2v
    TR::NoType,                           //TR::vl2vd
    TR::NoType,                           //TR::vconst
@@ -2833,8 +2831,6 @@ int32_t childTypes[] =
    TR::Int8,                      // TR::busub
    TR::Int32,                     // TR::iuneg
    TR::Int64,                     // TR::luneg
-   TR::Int32 | (TR::Int32<<16),   // TR::iushl
-   TR::Int64 | (TR::Int32<<16),   // TR::lushl
    TR::Float,                      // TR::f2iu
    TR::Float,                      // TR::f2lu
    TR::Float,                      // TR::f2bu
@@ -2847,10 +2843,6 @@ int32_t childTypes[] =
    TR::Int64,                     // TR::luRegLoad
    TR::Int32,                     // TR::iuRegStore
    TR::Int64,                     // TR::luRegStore
-   TR::Int32 | (TR::Int32<<8),    // TR::iuternary
-   TR::Int64 | (TR::Int32<<8),    // TR::luternary
-   TR::Int8  | (TR::Int32<<8),    // TR::buternary
-   TR::Int16 | (TR::Int32<<8),    // TR::suternary
    TR::Int16,                     // TR::cconst
    TR::Int16,                     // TR::cload
    TR::Int16 | (TR::Address<<8),   // TR::cloadi
@@ -2866,6 +2858,7 @@ int32_t childTypes[] =
    TR::Address,                    // TR::checkcast
    TR::Address,                    // TR::checkcastAndNULLCHK
    TR::Address,                    // TR::New
+   TR::NoType | (TR::Address<<8),  // TR::newvalue
    TR::Int32,                     // TR::newarray
    TR::Int32 | (TR::Address<<16),  // TR::anewarray
    TR::Address,                    // TR::variableNew
@@ -2895,10 +2888,8 @@ int32_t childTypes[] =
    TR::Int32,                     // TR::iumulh
    TR::Int64,                     // TR::lmulh
    TR::Int64,                     // TR::lumulh
-   // TR::Int16,                     // TR::cmul
    // TR::Int16,                     // TR::cdiv
    // TR::Int16,                     // TR::crem
-   // TR::Int16,                     // TR::cshl
    // TR::Int16 | (TR::Int32<<16),   // TR::cushr
 
    TR::Int32,                     // TR::ibits2f
@@ -3003,15 +2994,6 @@ int32_t childTypes[] =
    TR::NoType,                     // TR::getstack
    TR::Address,                    // TR::dealloca
 
-   TR::Int32,                     // TR::ishfl
-   TR::Int64,                     // TR::lshfl
-   TR::Int32,                     // TR::iushfl
-   TR::Int64,                     // TR::lushfl
-   TR::Int32,                     // TR::bshfl
-   TR::Int64,                     // TR::sshfl
-   TR::Int32,                     // TR::bushfl
-   TR::Int64,                     // TR::sushfl
-
    TR::Int32,                     // TR::idoz
 
    TR::Double,                     // TR::dcos
@@ -3030,7 +3012,6 @@ int32_t childTypes[] =
 
    TR::Double,                     // TR::dlog
 
-   TR::Int32,                     // TR::imulover
    TR::Double,                     // TR::dfloor
    TR::Float,                      // TR::ffloor
    TR::Double,                     // TR::dceil
@@ -3293,9 +3274,9 @@ int32_t childTypes[] =
    TR::DecimalDouble,                                        // TR::ddRegStore
    TR::DecimalLongDouble,                                    // TR::deRegStore
 
-   TR::DecimalDouble | (TR::Int32<<8),                       // TR::dfternary
-   TR::DecimalFloat | (TR::Int32<<8),                        // TR::ddternary
-   TR::DecimalLongDouble | (TR::Int32<<8),                   // TR::deternary
+   TR::DecimalDouble | (TR::Int32<<8),                       // TR::dfselect
+   TR::DecimalFloat | (TR::Int32<<8),                        // TR::ddselect
+   TR::DecimalLongDouble | (TR::Int32<<8),                   // TR::deselect
 
    TR::DecimalFloat,                                         // TR::dfexp
    TR::DecimalDouble,                                        // TR::ddexp

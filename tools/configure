@@ -2131,7 +2131,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 ###############################################################################
-# Copyright (c) 2015, 2016 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2297,6 +2297,8 @@ case $build_cpu in #(
     OMR_BUILD_ARCH=x86 ;; #(
   x86_64) :
     OMR_BUILD_ARCH=x86 ;; #(
+  riscv64) :
+    OMR_BUILD_ARCH=riscv ;; #(
   *) :
     as_fn_error $? "Unable to derive OMR_BUILD_ARCH from build_cpu: $build_cpu" "$LINENO" 5
 	 ;;

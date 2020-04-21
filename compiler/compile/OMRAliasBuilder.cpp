@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "compile/OMRAliasBuilder.hpp"
+#include "compile/AliasBuilder.hpp"
 
 #include "compile/AliasBuilder.hpp"
 #include "compile/Compilation.hpp"
@@ -145,10 +145,6 @@ OMR::AliasBuilder::createAliasInfo()
    defaultMethodDefAliases() |= unsafeSymRefNumbers();
    defaultMethodDefAliases() |= gcSafePointSymRefNumbers();
 
-#ifdef PYTHON_PROJECT_SPECIFIC
-   defaultMethodDefAliases() |= self()->pythonDefaultMethodDefAliasSymRefs();
-#endif
-
    defaultMethodDefAliasesWithoutImmutable().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
    defaultMethodDefAliasesWithoutUserField().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
 
@@ -159,10 +155,6 @@ OMR::AliasBuilder::createAliasInfo()
    defaultMethodUseAliases().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
    defaultMethodUseAliases() |= defaultMethodDefAliases();
    defaultMethodUseAliases() |= catchLocalUseSymRefs();
-
-#ifdef PYTHON_PROJECT_SPECIFIC
-   defaultMethodUseAliases() |= self()->pythonDefaultMethodUseAliasSymRefs();
-#endif
 
    if (symRefTab()->element(TR::SymbolReferenceTable::contiguousArraySizeSymbol))
       defaultMethodUseAliases().set(symRefTab()->element(TR::SymbolReferenceTable::contiguousArraySizeSymbol)->getReferenceNumber());

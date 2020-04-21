@@ -83,3 +83,6 @@ if(OMR_GC)
 			$<TARGET_PROPERTY:${OMR_GC_GLUE_TARGET},INTERFACE_INCLUDE_DIRECTORIES>
 	)
 endif(OMR_GC)
+
+target_enable_ddr(omrcore)
+ddr_set_add_targets(omrddr omrcore)

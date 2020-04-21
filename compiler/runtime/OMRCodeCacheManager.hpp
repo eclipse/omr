@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,6 +128,12 @@ public:
       RepositoryMonitorCriticalSection(TR::CodeCacheManager *mgr);
       };
 
+   class UsageMonitorCriticalSection : public CriticalSection
+      {
+      public:
+      UsageMonitorCriticalSection(TR::CodeCacheManager *mgr);
+      };
+
    TR::CodeCacheConfig & codeCacheConfig() { return _config; }
 
    /**
@@ -206,7 +212,7 @@ public:
     * @return The address of the helper trampoline in the same code cache as
     *         the call site address
     */
-   intptrj_t findHelperTrampoline(int32_t helperIndex, void *callSite);
+   intptr_t findHelperTrampoline(int32_t helperIndex, void *callSite);
 
    CodeCacheTrampolineCode * findMethodTrampoline(TR_OpaqueMethodBlock *method, void *callingPC);
    void synchronizeTrampolines();
@@ -274,6 +280,11 @@ public:
     */
    void freeCodeCacheSegment(TR::CodeCacheMemorySegment * memSegment) {}
 
+   void increaseCurrTotalUsedInBytes(size_t size);
+   void decreaseCurrTotalUsedInBytes(size_t size);
+   size_t getCurrTotalUsedInBytes() const { return _currTotalUsedInBytes; }
+   size_t getMaxUsedInBytes() const { return _maxUsedInBytes; }
+
 protected:
 
    TR::RawAllocator               _rawAllocator;
@@ -291,6 +302,9 @@ protected:
    bool                           _lowCodeCacheSpaceThresholdReached; /*!< true if close to exhausting available code cache */
    bool                           _codeCacheFull;
 
+   TR::Monitor                   *_usageMonitor;
+   size_t                         _currTotalUsedInBytes;
+   size_t                         _maxUsedInBytes;
 #if (HOST_OS == OMR_LINUX)
    public:
    /**

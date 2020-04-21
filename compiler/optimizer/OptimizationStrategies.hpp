@@ -61,6 +61,5 @@ extern const OptimizationStrategy methodHandleInvokeInliningOpts[];
 //arrays of optimizations
 
 extern const OptimizationStrategy * omrCompilationStrategies[];
-extern const OptimizationStrategy * rubyCompilationStrategies[];
 
 #endif

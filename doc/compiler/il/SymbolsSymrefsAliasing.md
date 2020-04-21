@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2018 IBM Corp. and others
+Copyright (c) 2016, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -247,7 +247,7 @@ is a shadow or static.
 
 gcSafePoint bit vector is created to handle balanced GC mode or real-time mode. During 
 these modes, we have pointers to arraylets (with no headers). Marking these pointers as 
-collected or not collected won’t work, i.e. collected will cause a crash in GC with no 
+collected or not collected won't work, i.e. collected will cause a crash in GC with no 
 header information and not collected means we might get garbage after GC. The 
 gcSafePoint bit vector is conservative and holds symbol references that need to be 
 killed at GC points, for instance at async checks, or allocations, or calls. 
@@ -257,7 +257,7 @@ This results in less commoning across GC points.
 
 Java has immutable types, i.e. integer, short, byte, long, float, double and string. 
 To change their values, you will have to create new ones except in their constructor 
-methods. We don’t want to include these symbol references across calls such as 
+methods. We don't want to include these symbol references across calls such as 
 StringBuilder.append(), allowing commoning across the call in this case. We can look 
 ahead in other classes and see if they are immutable under higher opt level.
 

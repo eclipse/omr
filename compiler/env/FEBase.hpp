@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #ifndef FEBASE_HPP_JniLXw
 #define FEBASE_HPP_JniLXw
 
-#include "codegen/FrontEnd.hpp"
+#include "compiler/env/FrontEnd.hpp"
 
 #include "compile/CompilationTypes.hpp"
 #include "env/JitConfig.hpp"
@@ -58,7 +58,7 @@ class FECommon : public ::TR_FrontEnd
    virtual const char *       sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufLen, TR_Memory *memory) { return NULL; }
 
    // need this so z codegen can create a sym ref to compare to another sym ref it cannot possibly be equal to
-   virtual uintptrj_t getOffsetOfIndexableSizeField() { return -1; }
+   virtual uintptr_t getOffsetOfIndexableSizeField() { return -1; }
    };
 
 template <class T> struct FETraits {};

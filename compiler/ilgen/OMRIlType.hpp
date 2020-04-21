@@ -22,13 +22,8 @@
 #ifndef OMR_ILTYPE_INCL
 #define OMR_ILTYPE_INCL
 
+#include "env/TRMemory.hpp"
 #include "il/DataTypes.hpp"
-
-class TR_Memory;
-#ifndef TR_ALLOC
-#define TR_ALLOC(x)
-#endif
-
 
 namespace TR { class IlType; }
 namespace TR { class TypeDictionary; }

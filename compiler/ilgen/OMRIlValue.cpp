@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,11 +20,11 @@
  *******************************************************************************/
 
 #include "compile/Compilation.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "ilgen/IlValue.hpp" // must follow include for compile/Compilation.hpp for TR_Memory
 #include "ilgen/MethodBuilder.hpp"

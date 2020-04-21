@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,7 +120,6 @@
    dmulSimplifier,          // TR::dmul
    bmulSimplifier,          // TR::bmul
    smulSimplifier,          // TR::smul
-   imulSimplifier,          // TR::iumul
    idivSimplifier,          // TR::idiv
    ldivSimplifier,          // TR::ldiv
    fdivSimplifier,          // TR::fdiv
@@ -423,13 +422,13 @@
    dftSimplifier,           // TR::bRegStore
    dftSimplifier,           // TR::GlRegDeps
 
-   ternarySimplifier,       // TR::iternary
-   ternarySimplifier,       // TR::lternary
-   ternarySimplifier,       // TR::bternary
-   ternarySimplifier,       // TR::sternary
-   ternarySimplifier,       // TR::aternary
-   ternarySimplifier,       // TR::fternary
-   ternarySimplifier,       // TR::dternary
+   selectSimplifier,       // TR::iselect
+   selectSimplifier,       // TR::lselect
+   selectSimplifier,       // TR::bselect
+   selectSimplifier,       // TR::sselect
+   selectSimplifier,       // TR::aselect
+   selectSimplifier,       // TR::fselect
+   selectSimplifier,       // TR::dselect
    treetopSimplifier,       // TR::treetop
    lowerTreeSimplifier,     // TR::MethodEnterHook
    lowerTreeSimplifier,     // TR::MethodExitHook
@@ -466,7 +465,7 @@
    dftSimplifier,           // TR::vicmpanyle
 
    dftSimplifier,           // TR::vnot
-   dftSimplifier,           // TR::vselect
+   dftSimplifier,           // TR::vbitselect
    dftSimplifier,           // TR::vperm
 
    dftSimplifier,           // TR::vsplats
@@ -537,7 +536,7 @@
    dftSimplifier,           // TR::vreturn
    dftSimplifier,           // TR::vcall
    dftSimplifier,           // TR::vcalli
-   dftSimplifier,           // TR::vternary
+   dftSimplifier,           // TR::vselect
    v2vSimplifier,           // TR::v2v
    dftSimplifier,           // TR::vl2vd
    dftSimplifier,           // TR::vconst
@@ -584,8 +583,6 @@
    bsubSimplifier,          // TR::busub
    inegSimplifier,          // TR::iuneg
    lnegSimplifier,          // TR::luneg
-   ishlSimplifier,          // TR::iushl
-   lshlSimplifier,          // TR::lushl
    f2iSimplifier,           // TR::f2iu
    f2lSimplifier,           // TR::f2iu
    f2bSimplifier,           // TR::f2bu
@@ -598,10 +595,6 @@
    dftSimplifier,           // TR::luRegLoad
    dftSimplifier,           // TR::iuRegStore
    dftSimplifier,           // TR::luRegStore
-   ternarySimplifier,       // TR::iuternary
-   ternarySimplifier,       // TR::luternary
-   ternarySimplifier,       // TR::buternary
-   ternarySimplifier,       // TR::suternary
    constSimplifier,         // TR::cconst
    directLoadSimplifier,    // TR::cload
    indirectLoadSimplifier,  // TR::cloadi
@@ -617,6 +610,7 @@
    checkcastSimplifier,     // TR::checkcast
    checkcastAndNULLCHKSimplifier,     // TR::checkcastAndNULLCHK
    NewSimplifier,           // TR::New
+   dftSimplifier,           // TR::newvalue
    dftSimplifier,           // TR::newarray
    dftSimplifier,           // TR::anewarray
    variableNewSimplifier,   // TR::variableNew
@@ -646,11 +640,9 @@
    dftSimplifier,           // TR::iumulh
    lmulhSimplifier,         // TR::lmulh
    lmulhSimplifier,         // TR::lumulh
-//   cmulSimplifier,          // TR::cmul
 //   cdivSimplifier,          // TR::cdiv
 //   cremSimplifier,          // TR::crem
 
-//   cshlSimplifier,          // TR::cshl
 //   cushrSimplifier,         // TR::cushr
 
    ibits2fSimplifier,       // TR::ibits2f
@@ -758,15 +750,6 @@
    dftSimplifier,           // TR::getstack
    dftSimplifier,           // TR::dealloca
 
-   dftSimplifier,           // TR::ishfl
-   dftSimplifier,           // TR::lshfl
-   dftSimplifier,           // TR::iushfl
-   dftSimplifier,           // TR::lushfl
-   dftSimplifier,           // TR::bshfl
-   dftSimplifier,           // TR::sshfl
-   dftSimplifier,           // TR::bushfl
-   dftSimplifier,           // TR::sushfl
-
    dftSimplifier,           // TR::idoz
 
    dftSimplifier,           // TR::dcos
@@ -785,7 +768,6 @@
 
    dftSimplifier,           // TR::dlog
 
-   dftSimplifier,           // TR::imulover
    dftSimplifier,           // TR::dfloor
    dftSimplifier,           // TR::ffloor
    dftSimplifier,           // TR::dceil

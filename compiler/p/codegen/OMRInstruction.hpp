@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,6 @@ namespace OMR { typedef OMR::Power::Instruction InstructionConnector; }
 #include "infra/Assert.hpp"
 
 namespace TR { class PPCConditionalBranchInstruction; }
-namespace TR { class PPCDepImmInstruction;            }
 namespace TR { class PPCImmInstruction;               }
 namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
@@ -162,13 +161,6 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
 
    virtual bool dependencyRefsRegister(TR::Register *reg);
 
-   virtual bool isNopCandidate();
-
-   //This function stores a env. variable and returns it upon call.
-   virtual int MAX_LOOP_ALIGN_NOPS();
-
-   virtual TR::PPCDepImmInstruction *getPPCDepImmInstruction();
-
    virtual TR::PPCConditionalBranchInstruction *getPPCConditionalBranchInstruction();
 
    virtual TR::Register *getPrimaryTargetRegister()               {return NULL;}
@@ -201,6 +193,10 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
 
    bool      willBePatched() {return (_index & WillBePatched) != 0; }
    void      setWillBePatched(bool v = true) { v? _index |= WillBePatched : _index &= ~WillBePatched; }
+
+   protected:
+
+   virtual void fillBinaryEncodingFields(uint32_t *cursor);
 
 
    private:

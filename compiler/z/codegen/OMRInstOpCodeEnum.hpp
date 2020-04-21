@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,7 +60,6 @@
    XHHR,                // Exclusive OR High (High <- High)
    XHLR,                // Exclusive OR High (High <- Low)
    XLHR,                // Exclusive OR High (Low <- High)
-   XPCALLDESC,          // zOS-31 LE Call Descriptor.
 
    /* z900 Instructions */
 
@@ -1171,4 +1170,35 @@
    VTP,                 // vector test decimal
    VUPKZ,               // vector unpack zoned
 
-   S390LastOp = VUPKZ,
+   /* z15 Instructions */
+   MVCRL,               // move right to left
+   NCGRK,               // and with complement (64)
+   NCRK,                // and with complement (32)
+   NNGRK,               // nand (64)
+   NNRK,                // nand (32)
+   NOGRK,               // nor (64)
+   NORK,                // nor (32)
+   NXGRK,               // not exclusive or (64)
+   NXRK,                // not exclusive or (32)
+   OCGRK,               // or with complement (64)
+   OCRK,                // or with complement (32)
+   SELGR,               // select (64)
+   SELHHHR,             // select high (32)
+   SELR,                // select (32)
+   VLBR,                // vector load byte reversed elements
+   VLBRREP,             // vector load byte reversed element and replicate
+   VLEBRF,              // vector load byte reversed element (32)
+   VLEBRG,              // vector load byte reversed element (64)
+   VLEBRH,              // vector load byte reversed element (16)   
+   VLER,                // vector load elements reversed
+   VLLEBRZ,             // vector load byte reversed element and zero
+   VSTBR,               // vector store byte reversed elements
+   VSTEBRF,             // vector store byte reversed element (32)
+   VSTEBRG,             // vector store byte reversed element (64)
+   VSTEBRH,             // vector store byte reversed element (16)
+   VSTER,               // vector store elements reversed
+   VSLD,                // vector shift left double by bit
+   VSRD,                // vector shift right double by bit
+   VSTRS,               // vector string search
+
+   S390LastOp = VSTRS,

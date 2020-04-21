@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,7 @@ GC_ObjectHeapIteratorAddressOrderedList::shouldReturnCurrentObject() {
 			_deadObjectSize = computeDeadObjectSize();
 			return _includeDeadObjects;
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-		} else if (MM_ForwardedHeader(_scanPtr).isStrictlyForwardedPointer()) {
+		} else if (MM_ForwardedHeader(_scanPtr, _extensions->compressObjectReferences()).isStrictlyForwardedPointer()) {
 			return _includeForwardedObjects;
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 		} else {
@@ -104,7 +104,7 @@ GC_ObjectHeapIteratorAddressOrderedList::nextObjectNoAdvance() {
 		
 		if(!_isDeadObject) {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-			MM_ForwardedHeader header(_scanPtr);
+			MM_ForwardedHeader header(_scanPtr, _extensions->compressObjectReferences());
 			if (header.isStrictlyForwardedPointer()) {
 				uintptr_t sizeInBytesBeforeMove = _extensions->objectModel.getConsumedSizeInBytesWithHeaderBeforeMove(header.getForwardedObject());
 				_scanPtr = (omrobjectptr_t) ( ((uintptr_t)_scanPtr) + sizeInBytesBeforeMove );

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,20 +26,37 @@
 
 #include "JitBuilder.hpp"
 
-typedef int32_t (CallFunctionType)(int32_t);
+typedef int32_t (CallFunctionType1Arg)(int32_t);
+typedef int32_t (CallFunctionType2Arg)(int32_t, int32_t);
 
-class CallMethod : public OMR::JitBuilder::MethodBuilder
+class JitToNativeCallMethod : public OMR::JitBuilder::MethodBuilder
    {
    public:
-   CallMethod(OMR::JitBuilder::TypeDictionary *types);
+   JitToNativeCallMethod(OMR::JitBuilder::TypeDictionary *types);
    virtual bool buildIL();
    };
 
-class ComputedCallMethod : public OMR::JitBuilder::MethodBuilder
+class JitToNativeComputedCallMethod : public OMR::JitBuilder::MethodBuilder
    {
    public:
-   ComputedCallMethod(OMR::JitBuilder::TypeDictionary *types);
+   JitToNativeComputedCallMethod(OMR::JitBuilder::TypeDictionary *types);
    virtual bool buildIL();
+   };
+
+class NativeToJitCallMethod : public OMR::JitBuilder::MethodBuilder
+   {
+   public:
+   NativeToJitCallMethod(OMR::JitBuilder::TypeDictionary *types);
+   virtual bool buildIL();
+   };
+
+class JitToJitCallMethod : public OMR::JitBuilder::MethodBuilder
+   {
+   public:
+   JitToJitCallMethod(OMR::JitBuilder::TypeDictionary *types, OMR::JitBuilder::MethodBuilder *jitMethodBuilder);
+   virtual bool buildIL();
+
+   OMR::JitBuilder::MethodBuilder *jitMethodBuilder;
    };
 
 #endif // !defined(CALL_INCL)

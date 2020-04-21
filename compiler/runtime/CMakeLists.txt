@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
 compiler_library(runtime
 	${CMAKE_CURRENT_LIST_DIR}/Runtime.cpp
 	${CMAKE_CURRENT_LIST_DIR}/Trampoline.cpp
-	${CMAKE_CURRENT_LIST_DIR}/Alignment.cpp
 	${CMAKE_CURRENT_LIST_DIR}/CodeCacheTypes.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRCodeCache.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRCodeCacheManager.cpp

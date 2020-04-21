@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,22 +29,22 @@ set(OMR_COMPILER_SUPPORT_ 1)
 # component.
 #
 # One of the building blocks of this support is the notion that each compiler
-# you may want to build has an associated 'name'. For example jitbuilder is
+# you may want to build has an associated 'name'. For example, jitbuilder is
 # the name of one.
 
-## Tools and helpers:
+# Tools and helpers:
 
 Find_package(Perl)
 include(OmrUtility)
 
-if (NOT PERL_FOUND )
+if(NOT PERL_FOUND )
 	message(FATAL_ERROR "Perl not found")
 endif()
 
-# Currently not doing cross, so assume HOST == TARGET
-set(TR_TARGET_ARCH    ${TR_HOST_ARCH})
+# currently not doing cross compiles, so assume HOST == TARGET
+set(TR_TARGET_ARCH ${TR_HOST_ARCH})
 set(TR_TARGET_SUBARCH ${TR_HOST_SUBARCH})
-set(TR_TARGET_BITS    ${TR_HOST_BITS})
+set(TR_TARGET_BITS ${TR_HOST_BITS})
 
 set(MASM2GAS_PATH ${omr_SOURCE_DIR}/tools/compiler/scripts/masm2gas.pl)
 
@@ -53,17 +53,17 @@ set(MASM2GAS_PATH ${omr_SOURCE_DIR}/tools/compiler/scripts/masm2gas.pl)
 # This supplements the compile definitions, options and
 # include directories.
 #
-# Call as make_compiler_target(<target> <scope> COMPILER <compiler name>)
+# call as make_compiler_target(<target> <scope> COMPILER <compiler name>)
 function(make_compiler_target TARGET_NAME SCOPE)
 	cmake_parse_arguments(TARGET
-		"" # Optional Arguments
-		"COMPILER" # One value arguments
+		"" # optional arguments
+		"COMPILER" # single-value arguments
 		""
 		${ARGN}
 		)
 
-	set(COMPILER_DEFINES  ${${TARGET_COMPILER}_DEFINES})
-	set(COMPILER_ROOT     ${${TARGET_COMPILER}_ROOT})
+	set(COMPILER_DEFINES ${${TARGET_COMPILER}_DEFINES})
+	set(COMPILER_ROOT ${${TARGET_COMPILER}_ROOT})
 	set(COMPILER_INCLUDES ${${TARGET_COMPILER}_INCLUDES})
 
 	target_include_directories(${TARGET_NAME} BEFORE ${SCOPE}
@@ -77,26 +77,23 @@ function(make_compiler_target TARGET_NAME SCOPE)
 		${COMPILER_DEFINES}
 	)
 
-	message("Made ${TARGET_NAME} into a compiler target,for ${TARGET_COMPILER}.")
-	message("Defines are ${COMPILER_DEFINES} and ${TR_COMPILE_DEFINITIONS}, arch is ${TR_TARGET_ARCH} and ${TR_TARGET_SUBARCH}, compile options are ${TR_COMPILE_OPTIONS} ")
+	message(STATUS "Adding ${SCOPE} compiler options to ${TARGET_NAME} for ${TARGET_COMPILER}.")
 endfunction(make_compiler_target)
 
 # Filter through the provided list, and rewrite any
 # .pasm files to .asm files, and add the .asm file to the list
 # in lieu of the .pasm file.
-#
 function(pasm2asm_files out_var compiler)
-
 	set(PASM_INCLUDES ${${compiler}_INCLUDES} $ENV{J9SRC}/oti)
 	omr_add_prefix(PASM_INCLUDES "-I" ${PASM_INCLUDES})
 
 	set(result "")
 	foreach(in_f ${ARGN})
 		get_filename_component(extension ${in_f} EXT)
-		if (extension STREQUAL ".pasm") # Requires preprocessing
+		if(extension STREQUAL ".pasm") # requires preprocessing
 			get_filename_component(absolute_in_f ${in_f} ABSOLUTE)
 
-			string(REGEX REPLACE ".pasm" ".asm" out_f ${in_f})
+			string(REGEX REPLACE ".pasm$" ".asm" out_f ${in_f})
 
 			set(out_f "${CMAKE_CURRENT_BINARY_DIR}/${out_f}")
 			get_filename_component(out_dir ${out_f} DIRECTORY)
@@ -112,7 +109,7 @@ function(pasm2asm_files out_var compiler)
 
 			list(APPEND result ${out_f})
 		else()
-			list(APPEND result ${in_f}) # No change required. Not masm2gas target
+			list(APPEND result ${in_f}) # no change required - not masm2gas target
 		endif()
 	endforeach()
 	set(${out_var} "${result}" PARENT_SCOPE)
@@ -122,11 +119,10 @@ endfunction()
 # .asm files to .s files, and add the .s file to the list
 # in lieu of the .asm file.
 #
-# Inspired by this post:  https://cmake.org/pipermail/cmake/2010-June/037733.html
+# Inspired by this post: https://cmake.org/pipermail/cmake/2010-June/037733.html
 function(masm2gas_asm_files out_var compiler)
-
 	# This portion should be abstracted away, and the ATT_INCLUDES below should be made
-	# into target properties to avoid polluting the rest of the info
+	# into target properties to avoid polluting the rest of the info.
 	set(MASM2GAS_INCLUDES ${${compiler}_INCLUDES} $ENV{J9SRC}/oti)
 	omr_add_prefix(MASM2GAS_INCLUDES "-I" ${MASM2GAS_INCLUDES})
 	set(MASM2GAS_FLAGS --64 )
@@ -135,17 +131,16 @@ function(masm2gas_asm_files out_var compiler)
 	set(result "")
 	foreach(in_f ${ARGN})
 		get_filename_component(extension ${in_f} EXT)
-		if (extension STREQUAL ".asm") # Requires masm2gas
+		if(extension STREQUAL ".asm") # Requires masm2gas
 			get_filename_component(absolute_in_f ${in_f} ABSOLUTE)
 
 			# From the masm2gas documentation:
 			#
-			# Output file names follow these rules (.x is any extension besides these two)
-			# foo.asm  -> GAS: (outdir)/foo.s           DEPEND: (outdir)/foo.d
+			# Output file names follow these rules:
+			# foo.asm -> GAS: (outdir)/foo.s DEPEND: (outdir)/foo.d
 
-			# Note: This support doesn't handle dependencies generated by masm2gas
-			#       unfortunately.
-			string(REGEX REPLACE ".asm" ".s" out_f ${in_f})
+			# Note: This support doesn't handle dependencies generated by masm2gas unfortunately.
+			string(REGEX REPLACE ".asm$" ".s" out_f ${in_f})
 			set(out_f "${CMAKE_CURRENT_BINARY_DIR}/${out_f}")
 			get_filename_component(out_dir ${out_f} DIRECTORY)
 			file(MAKE_DIRECTORY ${out_dir})
@@ -161,7 +156,7 @@ function(masm2gas_asm_files out_var compiler)
 		list(APPEND result ${out_f})
 		else()
 			list(APPEND result ${in_f}) # No change required. Not masm2gas target
-	endif()
+		endif()
 	endforeach()
 	set(${out_var} "${result}" PARENT_SCOPE)
 endfunction()
@@ -173,26 +168,25 @@ function(spp2s_files out_var compiler)
 	# Convert an SPP file to an IPP using the pre-processor.
 	# Rewrite the IPP file to a .s file using sed.
 
-	# Get the definitions already set in this directory
-	# - A concern would be how this would interact with target_compile_definitions
+	# Get the definitions already set in this directory.
+	# - A concern would be how this would interact with target_compile_definitions.
 	get_property(compile_defs DIRECTORY PROPERTY COMPILE_DEFINITIONS)
 
 	set(SPP_INCLUDES ${${compiler}_INCLUDES})
-	set(SPP_DEFINES  ${${compiler}_DEFINES} ${compile_defs})
+	set(SPP_DEFINES ${${compiler}_DEFINES} ${compile_defs})
 
-	message(STATUS "Set SPP defines to ${SPP_DEFINES}")
 	omr_add_prefix(SPP_INCLUDES "-I" ${SPP_INCLUDES})
-	omr_add_prefix(SPP_DEFINES  "-D" ${SPP_DEFINES})
+	omr_add_prefix(SPP_DEFINES "-D" ${SPP_DEFINES})
 	set(result "")
 	foreach(in_f ${ARGN})
 		get_filename_component(extension ${in_f} EXT)
 		if(extension STREQUAL ".spp") # Requires conversion!
 			get_filename_component(absolute_in_f ${in_f} ABSOLUTE)
 
-			string(REGEX REPLACE ".spp" ".ipp" ipp_out_f ${in_f})
+			string(REGEX REPLACE ".spp$" ".ipp" ipp_out_f ${in_f})
 			set(ipp_out_f "${CMAKE_CURRENT_BINARY_DIR}/${ipp_out_f}")
 			get_filename_component(out_dir ${ipp_out_f} DIRECTORY)
-			file(MAKE_DIRECTORY ${out_dir}) # Just in case it doesn't exist already
+			file(MAKE_DIRECTORY ${out_dir}) # just in case it doesn't exist already
 
 			add_custom_command(OUTPUT ${ipp_out_f}
 				COMMAND ${SPP_CMD} ${SPP_FLAGS} ${SPP_DEFINES} ${SPP_INCLUDES} -E -P ${absolute_in_f} > ${ipp_out_f}
@@ -202,13 +196,13 @@ function(spp2s_files out_var compiler)
 				VERBATIM
 			)
 
-			string(REGEX REPLACE ".ipp" ".s" s_out_f ${ipp_out_f})
+			string(REGEX REPLACE ".ipp$" ".s" s_out_f ${ipp_out_f})
 
 			add_custom_command(OUTPUT ${s_out_f}
 				COMMAND sed s/\!/\#/g ${ipp_out_f} > ${s_out_f}
 				DEPENDS ${ipp_out_f}
 				WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-				COMMENT "Replacing comment tokens in  ${ipp_out_f} to create  ${s_out_f}"
+				COMMENT "Replacing comment tokens in ${ipp_out_f} to create ${s_out_f}"
 				VERBATIM
 			)
 
@@ -230,10 +224,10 @@ function(omr_inject_object_modification_targets result compiler_name)
 	# asm files subsequently get picked up.
 	pasm2asm_files(arg ${compiler_name} ${arg})
 
-	# Run masm2gas on contained .asm files
+	# Run masm2gas on contained .asm files.
 	masm2gas_asm_files(arg ${compiler_name} ${arg})
 
-	# COnvert SPP files to .s files
+	# Convert SPP files to .s files.
 	spp2s_files(arg ${compiler_name} ${arg})
 
 	set(${result} ${arg} PARENT_SCOPE)
@@ -241,9 +235,8 @@ endfunction(omr_inject_object_modification_targets)
 
 # make_gnu_asm_defines(output_var <define> ...)
 # Make output_var a string which will define each <define>
-# as an assembler define (rather than a c pre-processor define)
+# as an assembler define (rather than a C preprocessor macro).
 function(make_gnu_asm_defines output)
-
 	foreach(arg IN LISTS ARGN)
 		set(clean_arg)
 		string(REGEX REPLACE "^-D" "" clean_arg "${arg}")
@@ -261,14 +254,14 @@ function(make_gnu_asm_defines output)
 	endif()
 
 	# if we actually generated any string
-	# ie we were passed in any <define> values
+	# i.e. we were passed in any <define> values
 	if(arg_str)
 		set(${output} "-Wa${arg_str}" PARENT_SCOPE)
 	endif()
 endfunction(make_gnu_asm_defines)
 
 # Setup the current scope for compiling the Testarossa compiler technology. Used in
-# conjunction with make_compiler_target -- Only can infect add_directory scope.
+# conjunction with make_compiler_target -- only can infect add_directory scope.
 macro(set_tr_compile_options)
 	omr_append_flags(CMAKE_CXX_FLAGS ${TR_COMPILE_OPTIONS} ${TR_CXX_COMPILE_OPTIONS})
 	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} PARENT_SCOPE)
@@ -279,15 +272,19 @@ macro(set_tr_compile_options)
 
 	set(TR_ASM_FLAGS "")
 	foreach(def IN LISTS TR_COMPILE_DEFINITIONS)
-		#  Prepend leading '-D' only if required
+		# prepend leading '-D' only if required
 		if(def MATCHES "^-D")
 			set(TR_ASM_FLAGS "${TR_ASM_FLAGS} ${def}")
+			list(APPEND SPP_FLAGS "${def}")
 		else()
 			set(TR_ASM_FLAGS "${TR_ASM_FLAGS} -D${def}")
+			list(APPEND SPP_FLAGS "-D${def}")
 		endif()
 	endforeach()
 
-	# We need special handling on x86 because we could be gnu or NASM assembler
+	set(SPP_FLAGS ${SPP_FLAGS} PARENT_SCOPE)
+
+	# We need special handling on x86 because we could be GNU or NASM assembler.
 	if(OMR_ARCH_X86)
 		make_gnu_asm_defines(gnu_defines ${TR_COMPILE_DEFINITIONS})
 		set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${gnu_defines}" PARENT_SCOPE)
@@ -297,32 +294,32 @@ macro(set_tr_compile_options)
 	endif()
 endmacro(set_tr_compile_options)
 
-# Create an OMR Compiler component
+# Create an OMR Compiler component.
 #
 # call like this:
-#  create_omr_compiler_library(NAME <compilername>
-#                              OBJECTS  <list of objects to add to the glue>
-#                              DEFINES  <DEFINES for building library
-#                              FILTER   <list of default objects to remove from the compiler library.>
-#                              INCLUDES <Additional includes for building the library>
-#                              SHARED   <True if you want a shared object, false if you want a static archive>
+# create_omr_compiler_library(
+#     NAME     <compilername>
+#     OBJECTS  <list of objects to add to the glue>
+#     DEFINES  <DEFINES for building library
+#     FILTER   <list of default objects to remove from the compiler library>
+#     INCLUDES <additional includes for building the library>
+#     SHARED   <true if you want a shared object, false if you want a static archive>
 #
 # FILTER exists to allow compiler subprojects to opt-out of functionality
 #        that they would prefer to replace.
-#
 function(create_omr_compiler_library)
 	cmake_parse_arguments(COMPILER
-		"SHARED" # Optional Arguments
-		"NAME" # One value arguments
-		"OBJECTS;DEFINES;FILTER;INCLUDES" # Multi value args
+		"SHARED" # optional arguments
+		"NAME" # single-value arguments
+		"OBJECTS;DEFINES;FILTER;INCLUDES" # multi-value arguments
 		${ARGV}
 		)
 
 	if(COMPILER_SHARED)
-		message("Creating shared library for ${COMPILER_NAME}")
+		message(STATUS "Creating shared library for ${COMPILER_NAME}")
 		set(LIB_TYPE SHARED)
 	else()
-		message("Creating static library for ${COMPILER_NAME}")
+		message(STATUS "Creating static library for ${COMPILER_NAME}")
 		set(LIB_TYPE STATIC)
 	endif()
 
@@ -331,8 +328,8 @@ function(create_omr_compiler_library)
 	get_filename_component(abs_root ${CMAKE_CURRENT_LIST_DIR} ABSOLUTE)
 	# We use the cache to allow passing information about compiler targets
 	# from function to function without having to use lots of temps.
-	set(${COMPILER_NAME}_ROOT    ${abs_root}               CACHE INTERNAL "Root for compiler ${COMPILER_NAME}")
-	set(${COMPILER_NAME}_DEFINES ${COMPILER_DEFINES}       CACHE INTERNAL "Defines for compiler ${COMPILER_NAME}")
+	set(${COMPILER_NAME}_ROOT ${abs_root} CACHE INTERNAL "Root for compiler ${COMPILER_NAME}")
+	set(${COMPILER_NAME}_DEFINES ${COMPILER_DEFINES} CACHE INTERNAL "Defines for compiler ${COMPILER_NAME}")
 	set(${COMPILER_NAME}_INCLUDES
 		${${COMPILER_NAME}_ROOT}/${TR_TARGET_ARCH}/${TR_TARGET_SUBARCH}
 		${${COMPILER_NAME}_ROOT}/${TR_TARGET_ARCH}
@@ -345,12 +342,10 @@ function(create_omr_compiler_library)
 		CACHE INTERNAL "Include header list for ${COMPILER}"
 	)
 
-	message("${COMPILER_NAME}_ROOT = ${${COMPILER_NAME}_ROOT}")
-
 	# Generate a build name file.
 	set(BUILD_NAME_FILE "${CMAKE_BINARY_DIR}/${COMPILER_NAME}Name.cpp")
 	add_custom_command(OUTPUT ${BUILD_NAME_FILE}
-		COMMAND perl ${omr_SOURCE_DIR}/tools/compiler/scripts/generateVersion.pl ${COMPILER_NAME} ${BUILD_NAME_FILE}
+		COMMAND ${PERL_EXECUTABLE} ${omr_SOURCE_DIR}/tools/compiler/scripts/generateVersion.pl ${COMPILER_NAME} ${BUILD_NAME_FILE}
 		VERBATIM
 		COMMENT "Generate ${BUILD_NAME_FILE}"
 	)
@@ -368,7 +363,7 @@ function(create_omr_compiler_library)
 	)
 
 	# Grab the list of core compiler objects from the global property.
-	# Note: the property is initialized by compiler/CMakeLists.txt
+	# Note: the property is initialized by compiler/CMakeLists.txt.
 	get_property(core_compiler_objects GLOBAL PROPERTY OMR_CORE_COMPILER_OBJECTS)
 
 	# Filter out objects requested to be removed by
@@ -380,7 +375,7 @@ function(create_omr_compiler_library)
 
 	omr_inject_object_modification_targets(core_compiler_objects ${COMPILER_NAME} ${core_compiler_objects})
 
-	# Append to the compiler sources list
+	# Append to the compiler sources list.
 	target_sources(${COMPILER_NAME} PRIVATE ${core_compiler_objects})
 
 	# Set include paths and defines.

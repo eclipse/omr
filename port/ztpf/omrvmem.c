@@ -582,6 +582,8 @@ omrvmem_startup(struct OMRPortLibrary *portLibrary)
 
 	/* set default value to advise OS about vmem that is no longer needed */
 	portLibrary->portGlobals->vmemAdviseOSonFree = 1;
+	/* set default value to advise OS about vmem to consider for Transparent HugePage (Only for Linux) */
+	portLibrary->portGlobals->vmemEnableMadvise = 0;
 
 	return 0;
 }
@@ -973,6 +975,11 @@ default_pageSize_reserve_memory(struct OMRPortLibrary *portLibrary,
 	void *result = NULL;
 	int protectionFlags = PROT_NONE;
 
+	if(mode & OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN) {
+		portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
+		return result;
+	}
+
 	Trc_PRT_vmem_default_reserve_entry(address, byteAmount);
 
 #if defined(MAP_ANONYMOUS)
@@ -1051,6 +1058,11 @@ default_pageSize_reserve_memory_32bit(struct OMRPortLibrary *portLibrary,
 	int flags = MAP_PRIVATE;
 	void *result = NULL;
 	int protectionFlags = PROT_NONE;
+
+	if(mode & OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN) {
+		portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
+		return result;
+	}
 
 	Trc_PRT_vmem_default_reserve_entry(address, byteAmount);
 
@@ -1867,4 +1879,11 @@ omrvmem_get_process_memory_size(struct OMRPortLibrary *portLibrary,
 	Trc_PRT_vmem_get_process_memory_exit(result, *memorySize);
 
 	return result;
+}
+
+void *
+omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
+{
+	portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
+	return NULL;
 }

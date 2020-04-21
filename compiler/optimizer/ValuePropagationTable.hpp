@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,6 @@ TR::Node *constrainIfcmplt(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainIfcmpne(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainIiload(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainImul(OMR::ValuePropagation *vp, TR::Node *node);
-TR::Node *constrainIumul(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainIneg(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainIabs(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainInstanceOf(OMR::ValuePropagation *vp, TR::Node *node);
@@ -260,7 +259,6 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,        // TR::dmul
    constrainChildren,        // TR::bmul
    constrainChildren,        // TR::smul
-   constrainIumul,           // TR::iumul
    constrainIdiv,            // TR::idiv
    constrainLdiv,            // TR::ldiv
    constrainChildren,        // TR::fdiv
@@ -565,13 +563,13 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,        // TR::bRegStore
    constrainChildren,        // TR::GlRegDeps
 
-   constrainChildrenFirstToLast,        // TR::iternary
-   constrainChildrenFirstToLast,        // TR::lternary
-   constrainChildrenFirstToLast,        // TR::bternary
-   constrainChildrenFirstToLast,        // TR::sternary
-   constrainChildrenFirstToLast,        // TR::aternary
-   constrainChildrenFirstToLast,        // TR::fternary
-   constrainChildrenFirstToLast,        // TR::dternary
+   constrainChildrenFirstToLast,        // TR::iselect
+   constrainChildrenFirstToLast,        // TR::lselect
+   constrainChildrenFirstToLast,        // TR::bselect
+   constrainChildrenFirstToLast,        // TR::sselect
+   constrainChildrenFirstToLast,        // TR::aselect
+   constrainChildrenFirstToLast,        // TR::fselect
+   constrainChildrenFirstToLast,        // TR::dselect
    constrainChildren,        // TR::treetop
    constrainChildren,        // TR::MethodEnterHook
    constrainChildren,        // TR::MethodExitHook
@@ -608,7 +606,7 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,        // TR::vicmpanyle
 
    constrainChildren,        // TR::vnot
-   constrainChildren,        // TR::vselect
+   constrainChildren,        // TR::vbitselect
    constrainChildren,        // TR::vperm
 
    constrainChildren,        // TR::vsplats
@@ -677,7 +675,7 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainReturn,          // TR::vreturn
    constrainCall,            // TR::vcall
    constrainCall,            // TR::vcalli
-   constrainChildrenFirstToLast,        // TR::vternary
+   constrainChildrenFirstToLast,        // TR::vselect
    constrainChildren,        // TR::v2v
    constrainChildren,        // TR::vl2vd
    constrainChildren,        // TR::vconst
@@ -728,8 +726,6 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainSubtract,        // TR::busub
    constrainIneg,            // TR::iuneg
    constrainLneg,            // TR::luneg
-   constrainIshl,            // TR::iushl
-   constrainLshl,            // TR::lushl
    constrainChildren,        // TR::f2iu
    constrainChildren,        // TR::f2lu
    constrainChildren,        // TR::f2bu   todo
@@ -742,10 +738,6 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,        // TR::luRegLoad
    constrainChildren,        // TR::iuRegStore
    constrainChildren,        // TR::luRegStore
-   constrainChildrenFirstToLast,        // TR::iuternary
-   constrainChildrenFirstToLast,        // TR::luternary
-   constrainChildrenFirstToLast,        // TR::buternary
-   constrainChildrenFirstToLast,        // TR::suternary
    constrainShortConst,      // TR::cconst
    constrainIntLoad,         // TR::cload
    constrainIntLoad,         // TR::cloadi
@@ -761,6 +753,7 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainCheckcast,       // TR::checkcast
    constrainCheckcastNullChk,// TR::checkcastAndNULLCHK
    constrainNew,             // TR::New
+   constrainChildren,        // TR::newvalue
    constrainNewArray,        // TR::newarray
    constrainANewArray,       // TR::anewarray
    constrainVariableNew,     // TR::variableNew
@@ -790,11 +783,9 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,        // TR::iumulh
    constrainChildren,        // TR::lmulh
    constrainChildren,        // TR::lumulh
-//   constrainChildren,        // TR::cmul
 //   constrainChildren,        // TR::cdiv
 //   constrainChildren,        // TR::crem
 
-   //   constrainChildren,        // TR::cshl
 //   constrainChildren,        // TR::cushr
 
    constrainChildren,        // TR::ibits2f
@@ -900,16 +891,6 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,        // TR::getstack
    constrainChildren,        // TR::dealloca
 
-
-   constrainChildren,        // TR::ishfl
-   constrainChildren,        // TR::lshfl
-   constrainChildren,        // TR::iushfl
-   constrainChildren,        // TR::lushfl
-   constrainChildren,        // TR::bshfl
-   constrainChildren,        // TR::sshfl
-   constrainChildren,        // TR::bushfl
-   constrainChildren,        // TR::sushfl
-
    constrainChildren,        // TR::idoz
 
    constrainChildren,        // TR::dcos
@@ -928,7 +909,6 @@ const ValuePropagationPtr constraintHandlers[] =
 
    constrainChildren,        // TR::dlog
 
-   constrainChildren,        // TR::imulover
    constrainChildren,        // TR::dfloor
    constrainChildren,        // TR::ffloor
    constrainChildren,        // TR::dceil
@@ -1196,9 +1176,9 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainChildren,           // TR::ddRegStore
    constrainChildren,           // TR::deRegStore
 
-   constrainChildrenFirstToLast,        // TR::dfternary
-   constrainChildrenFirstToLast,        // TR::ddternary
-   constrainChildrenFirstToLast,        // TR::deternary
+   constrainChildrenFirstToLast,        // TR::dfselect
+   constrainChildrenFirstToLast,        // TR::ddselect
+   constrainChildrenFirstToLast,        // TR::deselect
 
    constrainChildren,           // TR::dfexp
    constrainChildren,           // TR::ddexp

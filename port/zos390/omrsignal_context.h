@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #define NUM_REGS 16
 #define NUM_VECTOR_REGS 32
 
-typedef struct J9PlatformSignalInfo {
+typedef struct OMRPlatformSignalInfo {
 	__mcontext_t_ *context;
 	uintptr_t breakingEventAddr;
 #if !defined(J9ZOS39064)
@@ -41,14 +41,14 @@ typedef struct J9PlatformSignalInfo {
 	char entry_name[MAX_NAME];
 	_INT4 entry_address;
 #endif
-} J9PlatformSignalInfo;
+} OMRPlatformSignalInfo;
 
 typedef struct OMRUnixSignalInfo {
 	uint32_t portLibrarySignalType;
 	void *handlerAddress;
 	void *handlerAddress2;
 	siginfo_t *sigInfo;
-	struct J9PlatformSignalInfo platformSignalInfo;
+	struct OMRPlatformSignalInfo platformSignalInfo;
 } OMRUnixSignalInfo;
 
 uint32_t infoForFPR(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, int32_t index, const char **name, void **value);
@@ -57,6 +57,6 @@ uint32_t infoForVR(struct OMRPortLibrary *portLibrary, OMRUnixSignalInfo *info, 
 uint32_t infoForModule(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, int32_t index, const char **name, void **value);
 uint32_t infoForControl(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, int32_t index, const char **name, void **value);
 uint32_t infoForSignal(struct OMRPortLibrary *portLibrary, struct OMRUnixSignalInfo *info, int32_t index, const char **name, void **value);
-void fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *j9Info);
+void fillInUnixSignalInfo(struct OMRPortLibrary *portLibrary, void *contextInfo, struct OMRUnixSignalInfo *signalInfo);
 BOOLEAN checkIfResumableTrapsSupported(struct OMRPortLibrary *portLibrary);
 

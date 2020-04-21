@@ -41,21 +41,32 @@ void TR_CallStackIterator::printStackBacktrace(TR::Compilation *comp)
    }
 
 #if defined(AIXPPC)
+#if defined(__clang__)
+#include <cxxabi.h>
+#else
 #include <demangle.h>
+#endif
 #include <sys/debug.h>
 
-void * getCurrPC();
-#pragma mc_func getCurrPC \
-   { \
-   "48000005"  /* bl .+4   */ \
-   "7C6802A6"  /* mfspr r3,lr */ \
-   }
+#define GET_CURR_PC(dst) \
+   do                    \
+   {                     \
+   asm("bl $+4;" /*branch and link to next instruction*/ \
+        "mflr %0;" /*copy contents of link register (which now contains address of this instruction) to dst*/ \
+      : "=r" (dst)       \
+      : /*no inputs*/    \
+      : "lr");           \
+   }                     \
+   while (0)
 
-void * getCurrTos();
-#pragma mc_func getCurrTos \
-   { \
-   "38610000"  /* mr r3, r1   */ \
-   }
+
+#define GET_CURR_TOS(dst) \
+   do                     \
+   {                      \
+   /*copy current stack pointer to dst*/ \
+   asm("la %0, 0(r1)" : "=r" (dst)); \
+   }                      \
+   while (0)             
 
 void TR_PPCCallStackIterator::_set_tb_table()
    {
@@ -98,8 +109,8 @@ void TR_PPCCallStackIterator::_set_tb_table()
 
 TR_PPCCallStackIterator::TR_PPCCallStackIterator() : TR_CallStackIterator(), _num_next(0)
    {
-   _pc = getCurrPC();
-   _tos = getCurrTos();
+   GET_CURR_PC(_pc);
+   GET_CURR_TOS(_tos);
    _set_tb_table();
    _done = (_tb_table == NULL);
    getNext();     // Skip this constructor
@@ -160,9 +171,16 @@ const char *TR_PPCCallStackIterator::getProcedureName()
     char *z = (char*) TR::globalAllocator().allocate(name_len+4);
     strncpy(z, x, name_len);
     z[name_len] = '\0';
+#if defined (__clang__)
+    int status = 0;
+    size_t demangled_name_length = 0;
+    char *n = abi::__cxa_demangle(z, NULL, &demangled_name_length, &status);
+    return n;
+#else
     char *ptoc;
     Name *n = Demangle(z, ptoc); // Probably does a new...which is bad!
     return n == NULL ? z : n->Text();
+#endif
     }
       else
     {
@@ -182,7 +200,7 @@ void TR_LinuxCallStackIterator::printSymbol(int32_t frame, char *sig, TR::Compil
    intptr_t offset;
    intptr_t address;
 
-   int rc = sscanf(sig, "%255[^(](%255[^+]+%llx) [%llx]", lib, func, &offset, &address);
+   int rc = sscanf(sig, "%255[^(](%255[^+]+%lx) [%lx]", lib, func, &offset, &address);
    if (rc == 4)
       {
       char *funcToPrint = func;
@@ -192,13 +210,13 @@ void TR_LinuxCallStackIterator::printSymbol(int32_t frame, char *sig, TR::Compil
       char *demangled = abi::__cxa_demangle(func, buffer, &length, &status);
       if (status == 0) funcToPrint = demangled;
       if (comp)
-         traceMsg(comp, "#%d: function %s+%#x [%#p]\n",
+         traceMsg(comp, "#%d: function %s+%#lx [%#p]\n",
               frame,
               funcToPrint,
               offset,
               address);
       else
-         fprintf(stderr, "#%d: function %s+%#x [%#p]\n",
+         fprintf(stderr, "#%d: function %s+%#lx [%#p]\n",
                  frame,
                  funcToPrint,
                  offset,

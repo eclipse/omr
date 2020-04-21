@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,14 +19,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "runtime/OMRCodeCacheManager.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 #include <algorithm>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/IO.hpp"
@@ -37,6 +37,7 @@
 #include "infra/Assert.hpp"
 #include "infra/CriticalSection.hpp"
 #include "infra/Monitor.hpp"
+#include "omrformatconsts.h"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheMemorySegment.hpp"
@@ -55,7 +56,9 @@ TR::CodeCacheSymbolContainer * OMR::CodeCacheManager::_symbolContainer = NULL;
 OMR::CodeCacheManager::CodeCacheManager(TR::RawAllocator rawAllocator) :
    _rawAllocator(rawAllocator),
    _initialized(false),
-   _codeCacheFull(false)
+   _codeCacheFull(false),
+   _currTotalUsedInBytes(0),
+   _maxUsedInBytes(0)
    {
    }
 
@@ -77,6 +80,10 @@ OMR::CodeCacheManager::RepositoryMonitorCriticalSection::RepositoryMonitorCritic
    {
    }
 
+OMR::CodeCacheManager::UsageMonitorCriticalSection::UsageMonitorCriticalSection(TR::CodeCacheManager *mgr)
+   : CriticalSection(mgr->_usageMonitor)
+   {
+   }
 
 TR::CodeCache *
 OMR::CodeCacheManager::initialize(
@@ -129,9 +136,9 @@ OMR::CodeCacheManager::initialize(
       }
 
    mcc_printf("mcc_initialize: initializing %d code cache(s)\n", numberOfCodeCachesToCreateAtStartup);
-   mcc_printf("mcc_initialize: code cache size = %u kb\n",  config.codeCacheKB());
-   mcc_printf("mcc_initialize: code cache pad size = %u kb\n",  config.codeCachePadKB());
-   mcc_printf("mcc_initialize: code cache total size = %u kb\n",  config.codeCacheTotalKB());
+   mcc_printf("mcc_initialize: code cache size = %" OMR_PRIuSIZE " kb\n",  config.codeCacheKB());
+   mcc_printf("mcc_initialize: code cache pad size = %" OMR_PRIuSIZE " kb\n",  config.codeCachePadKB());
+   mcc_printf("mcc_initialize: code cache total size = %" OMR_PRIuSIZE " kb\n",  config.codeCacheTotalKB());
 
    // Initialize the list of code caches
    //
@@ -140,8 +147,13 @@ OMR::CodeCacheManager::initialize(
    if (_codeCacheList._mutex == NULL)
       return NULL;
 
+   if (!(_usageMonitor = TR::Monitor::create("CodeCacheUsageMonitor")))
+      return NULL;
+
 #if defined(TR_HOST_POWER)
    #define REACHEABLE_RANGE_KB (32*1024)
+#elif defined(TR_HOST_ARM64)
+   #define REACHEABLE_RANGE_KB (128*1024)
 #else
    #define REACHEABLE_RANGE_KB (2048*1024)
 #endif
@@ -492,7 +504,7 @@ OMR::CodeCacheManager::findMethodTrampoline(TR_OpaqueMethodBlock *method, void *
    }
 
 
-intptrj_t
+intptr_t
 OMR::CodeCacheManager::findHelperTrampoline(int32_t helperIndex, void *callSite)
    {
    /* does the platform need trampolines at all? */
@@ -504,7 +516,7 @@ OMR::CodeCacheManager::findHelperTrampoline(int32_t helperIndex, void *callSite)
    if (!codeCache)
       return 0;
 
-   return (intptrj_t)codeCache->findTrampoline(helperIndex);
+   return (intptr_t)codeCache->findTrampoline(helperIndex);
    }
 
 
@@ -954,6 +966,31 @@ OMR::CodeCacheManager::chooseCacheStartAddress(size_t repositorySize)
    {
    // default: NULL means don't try to pick a starting address
    return NULL;
+   }
+
+
+void
+OMR::CodeCacheManager::increaseCurrTotalUsedInBytes(size_t size)
+   {
+   self()->decreaseFreeSpaceInCodeCacheRepository(size);
+
+      {
+      UsageMonitorCriticalSection updateCodeCacheUsage(self());
+      _currTotalUsedInBytes += size;
+      _maxUsedInBytes = std::max(_maxUsedInBytes, _currTotalUsedInBytes);
+      }
+   }
+
+
+void
+OMR::CodeCacheManager::decreaseCurrTotalUsedInBytes(size_t size)
+   {
+   self()->increaseFreeSpaceInCodeCacheRepository(size);
+
+      {
+      UsageMonitorCriticalSection updateCodeCacheUsage(self());
+      _currTotalUsedInBytes = (size < _currTotalUsedInBytes) ? (_currTotalUsedInBytes - size) : 0;
+      }
    }
 
 

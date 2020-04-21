@@ -79,7 +79,7 @@ public:
    uint32_t setAssociation(TR_RegisterMask realRegMask, TR::Compilation * c)
 #endif
       {
-      if (TR::Compiler->target.cpu.isX86())
+      if (c->target().cpu.isX86())
          _association &= 0x80000000;
       else
          _association = 0;
@@ -98,7 +98,7 @@ public:
       {
       if (realRegMask && (_association & realRegMask))
          {
-         if (TR::Compiler->target.cpu.isX86())
+         if (compilation->target().cpu.isX86())
             _association &= 0x80000000;
          else
             _association = 0;

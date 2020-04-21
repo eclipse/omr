@@ -83,7 +83,7 @@ OMR::X86::Instruction::initialize(TR::CodeGenerator *cg, TR::RegisterDependencyC
 
 void OMR::X86::Instruction::assumeValidInstruction()
    {
-   TR_ASSERT(!(TR::Compiler->target.is64Bit() && self()->getOpCode().isIA32Only()), "Cannot use invalid AMD64 instructions");
+   TR_ASSERT(!(self()->cg()->comp()->target().is64Bit() && self()->getOpCode().isIA32Only()), "Cannot use invalid AMD64 instructions");
    }
 
 bool OMR::X86::Instruction::isRegRegMove()
@@ -345,7 +345,7 @@ OMR::X86::Instruction::rexRepeatCount()
 
 void TR_X86OpCode::trackUpperBitsOnReg(TR::Register *reg, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       if (clearsUpperBits())
          {

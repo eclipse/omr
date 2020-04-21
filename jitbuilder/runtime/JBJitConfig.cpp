@@ -23,8 +23,6 @@
 #include "runtime/JBJitConfig.hpp"
 #include "env/FrontEnd.hpp"
 #include "runtime/CodeCache.hpp"
-#include <sys/mman.h>
-#include <unistd.h>
 
 #if defined(TR_HOST_POWER)
 //#include "p/codegen/PPCTableOfConstants.hpp"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -480,6 +480,14 @@ INSTRUCTION(BSWAP8Reg, bswap,
             BINARY(VEX_L___, VEX_vNONE, PREFIX___, REX_W, ESCAPE_0F__, 0xc8, 0, ModRM_NONE, Immediate_0),
             PROPERTY0(IA32OpProp_ModifiesTarget | IA32OpProp_TargetRegisterInOpcode | IA32OpProp_UsesTarget),
             PROPERTY1(IA32OpProp1_LongTarget)),
+INSTRUCTION(BTR4RegImm1, btr,
+            BINARY(VEX_L___, VEX_vNONE, PREFIX___, REX__, ESCAPE_0F__, 0xba, 6, ModRM_MR__, Immediate_1),
+            PROPERTY0(IA32OpProp_ModifiesTarget | IA32OpProp_TargetRegisterInModRM | IA32OpProp_ByteImmediate | IA32OpProp_IntTarget | IA32OpProp_ModifiesOverflowFlag | IA32OpProp_ModifiesSignFlag | IA32OpProp_ModifiesParityFlag | IA32OpProp_ModifiesCarryFlag | IA32OpProp_UsesTarget),
+            PROPERTY1(IA32OpProp1_SetsCCForTest)),
+INSTRUCTION(BTR8RegImm1, btr,
+            BINARY(VEX_L___, VEX_vNONE, PREFIX___, REX_W, ESCAPE_0F__, 0xba, 6, ModRM_MR__, Immediate_1),
+            PROPERTY0(IA32OpProp_TargetRegisterInModRM | IA32OpProp_ByteImmediate | IA32OpProp_ModifiesOverflowFlag | IA32OpProp_ModifiesSignFlag | IA32OpProp_ModifiesParityFlag | IA32OpProp_ModifiesCarryFlag | IA32OpProp_UsesTarget),
+            PROPERTY1(IA32OpProp1_SetsCCForTest | IA32OpProp1_LongTarget)),
 INSTRUCTION(BTS4RegReg, bts,
             BINARY(VEX_L___, VEX_vNONE, PREFIX___, REX__, ESCAPE_0F__, 0xab, 0, ModRM_MR__, Immediate_0),
             PROPERTY0(IA32OpProp_ModifiesTarget | IA32OpProp_TargetRegisterInModRM | IA32OpProp_IntSource | IA32OpProp_IntTarget | IA32OpProp_ModifiesOverflowFlag | IA32OpProp_ModifiesSignFlag | IA32OpProp_ModifiesZeroFlag | IA32OpProp_ModifiesParityFlag | IA32OpProp_ModifiesCarryFlag | IA32OpProp_UsesTarget),
@@ -2101,6 +2109,14 @@ INSTRUCTION(CMOVL4RegReg, cmovl,
 INSTRUCTION(CMOVL8RegReg, cmovl,
             BINARY(VEX_L___, VEX_vNONE, PREFIX___, REX_W, ESCAPE_0F__, 0x4c, 0, ModRM_RM__, Immediate_0),
             PROPERTY0(IA32OpProp_ModifiesTarget | IA32OpProp_SourceRegisterInModRM | IA32OpProp_TestsOverflowFlag | IA32OpProp_TestsSignFlag),
+            PROPERTY1(IA32OpProp1_LongSource | IA32OpProp1_LongTarget)),
+INSTRUCTION(CMOVLE4RegReg, cmovle,
+            BINARY(VEX_L___, VEX_vNONE, PREFIX___, REX__, ESCAPE_0F__, 0x4e, 0, ModRM_RM__, Immediate_0),
+            PROPERTY0(IA32OpProp_ModifiesTarget | IA32OpProp_SourceRegisterInModRM | IA32OpProp_IntSource | IA32OpProp_IntTarget | IA32OpProp_TestsOverflowFlag | IA32OpProp_TestsSignFlag | IA32OpProp_TestsZeroFlag),
+            PROPERTY1(0)),
+INSTRUCTION(CMOVLE8RegReg, cmovle,
+            BINARY(VEX_L___, VEX_vNONE, PREFIX___, REX_W, ESCAPE_0F__, 0x4e, 0, ModRM_RM__, Immediate_0),
+            PROPERTY0(IA32OpProp_ModifiesTarget | IA32OpProp_SourceRegisterInModRM | IA32OpProp_TestsOverflowFlag | IA32OpProp_TestsSignFlag | IA32OpProp_TestsZeroFlag),
             PROPERTY1(IA32OpProp1_LongSource | IA32OpProp1_LongTarget)),
 INSTRUCTION(CMOVE4RegReg, cmove,
             BINARY(VEX_L___, VEX_vNONE, PREFIX___, REX__, ESCAPE_0F__, 0x44, 0, ModRM_RM__, Immediate_0),

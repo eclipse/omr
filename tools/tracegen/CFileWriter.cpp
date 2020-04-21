@@ -45,7 +45,9 @@ CFileWriter::writeOutputFiles(J9TDFOptions *options, J9TDFFile *tdf, J9TDFGroup 
 	time_t targetFileMtime = FileUtils::getMtime(fileName);
 
 	if ((false == options->force) && (targetFileMtime > sourceFileMtime)) {
-		printf("C file is already up-to-date: %s\n", fileName);
+		if (options->verboseOutput) {
+			printf("C file is already up-to-date: %s\n", fileName);
+		}
 		Port::omrmem_free((void **)&fileName);
 		return RC_OK;
 	}

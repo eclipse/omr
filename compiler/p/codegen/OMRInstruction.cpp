@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -37,7 +37,6 @@
 #include "runtime/CodeCacheManager.hpp"
 
 namespace TR { class PPCConditionalBranchInstruction; }
-namespace TR { class PPCDepImmInstruction;            }
 namespace TR { class PPCImmInstruction;               }
 namespace TR { class Register; }
 
@@ -126,12 +125,6 @@ OMR::Power::Instruction::dependencyRefsRegister(TR::Register * reg)
    return OMR::Power::Instruction::getDependencyConditions() ? OMR::Power::Instruction::getDependencyConditions()->refsRegister(reg) : false;
    }
 
-TR::PPCDepImmInstruction *
-OMR::Power::Instruction::getPPCDepImmInstruction()
-   {
-   return NULL;
-   }
-
 TR::PPCConditionalBranchInstruction *
 OMR::Power::Instruction::getPPCConditionalBranchInstruction()
    {
@@ -157,28 +150,6 @@ OMR::Power::Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
       OMR::Power::Instruction::getDependencyConditions()->assignPostConditionRegisters(self(), kindToBeAssigned, self()->cg());
       OMR::Power::Instruction::getDependencyConditions()->assignPreConditionRegisters(self()->getPrev(), kindToBeAssigned, self()->cg());
       }
-   }
-
-bool
-OMR::Power::Instruction::isNopCandidate()
-   {
-   return (self()->getNode() != NULL
-        && self()->getNode()->getOpCodeValue() == TR::BBStart
-        && self()->getNode()->getBlock() != NULL
-        && self()->getNode()->getBlock()->firstBlockInLoop()
-        && !self()->getNode()->getBlock()->isCold());
-   }
-
-int
-OMR::Power::Instruction::MAX_LOOP_ALIGN_NOPS()
-   {
-   static int LOCAL_MAX_LOOP_ALIGN_NOPS = -1;
-   if (LOCAL_MAX_LOOP_ALIGN_NOPS == -1)
-      {
-      static char *TR_LoopAlignNops = feGetEnv("TR_LoopAlignNops");
-      LOCAL_MAX_LOOP_ALIGN_NOPS = (TR_LoopAlignNops == NULL ? 7 : atoi(TR_LoopAlignNops));
-      }
-   return LOCAL_MAX_LOOP_ALIGN_NOPS;
    }
 
 bool
@@ -226,24 +197,21 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
    {
    uint8_t   *instructionStart = cg()->getBinaryBufferCursor();
    uint8_t   *cursor = getOpCode().copyBinaryToBuffer(instructionStart);
-   intptrj_t  distance;
+   intptr_t  distance;
 
    if (getOpCodeValue() == TR::InstOpCode::bl || getOpCodeValue() == TR::InstOpCode::b)
       {
-      TR::ResolvedMethodSymbol *sym = getSymbolReference()->getSymbol()->getResolvedMethodSymbol();
-      TR_ResolvedMethod *resolvedMethod = sym == NULL ? NULL : sym->getResolvedMethod();
-
-      if (resolvedMethod != NULL && resolvedMethod->isSameMethod(cg()->comp()->getCurrentMethod()))
+      if (cg()->comp()->isRecursiveMethodTarget(getSymbolReference()->getSymbol()))
          {
          uint8_t *jitTojitStart = cg()->getCodeStart();
          jitTojitStart += ((*(int32_t *)(jitTojitStart - 4)) >> 16) & 0x0000ffff;
-         distance = (intptrj_t)(jitTojitStart - cursor);
+         distance = (intptr_t)(jitTojitStart - cursor);
          }
       else
          {
-         intptrj_t targetAddress = getAddrImmediate();
+         intptr_t targetAddress = getAddrImmediate();
 
-         if (cg()->directCallRequiresTrampoline(targetAddress, (intptrj_t)cursor))
+         if (cg()->directCallRequiresTrampoline(targetAddress, (intptr_t)cursor))
             {
             int32_t refNum = getSymbolReference()->getReferenceNumber();
             if (refNum < TR_PPCnumRuntimeHelpers)
@@ -256,17 +224,17 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
                }
             }
 
-         TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),
+         TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(targetAddress, (intptr_t)cursor),
                          "Target address is out of range");
 
-         distance = targetAddress - (intptrj_t)cursor;
+         distance = targetAddress - (intptr_t)cursor;
          }
       }
    else
       {
       // Place holder only: non-TR::InstOpCode::b[l] usage of this instruction doesn't
       // exist at this moment.
-      distance = getAddrImmediate() - (intptrj_t)cursor;
+      distance = getAddrImmediate() - (intptr_t)cursor;
       }
 
    *(int32_t *)cursor |= distance & 0x03fffffc;

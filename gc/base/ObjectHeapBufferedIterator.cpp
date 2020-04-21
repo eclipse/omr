@@ -92,9 +92,7 @@ GC_ObjectHeapBufferedIterator::getPopulator()
 	case MM_HeapRegionDescriptor::ADDRESS_ORDERED_IDLE:
 	case MM_HeapRegionDescriptor::BUMP_ALLOCATED_IDLE:
 		/* (for all intents and purposes, an IDLE region is the same as a FREE region) */
-#if defined(OMR_GC_ARRAYLETS)
 	case MM_HeapRegionDescriptor::ARRAYLET_LEAF:
-#endif /* defined(OMR_GC_ARRAYLETS) */
 		populator = &_emptyListPopulator;
 		break;
 	case MM_HeapRegionDescriptor::BUMP_ALLOCATED:

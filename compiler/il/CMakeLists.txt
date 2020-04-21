@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,14 +20,14 @@
 #############################################################################
 
 compiler_library(il
-	${CMAKE_CURRENT_LIST_DIR}/symbol/OMRSymbol.cpp
-	${CMAKE_CURRENT_LIST_DIR}/symbol/OMRAutomaticSymbol.cpp
-	${CMAKE_CURRENT_LIST_DIR}/symbol/OMRLabelSymbol.cpp
-	${CMAKE_CURRENT_LIST_DIR}/symbol/OMRMethodSymbol.cpp
-	${CMAKE_CURRENT_LIST_DIR}/symbol/OMRParameterSymbol.cpp
-	${CMAKE_CURRENT_LIST_DIR}/symbol/OMRRegisterMappedSymbol.cpp
-	${CMAKE_CURRENT_LIST_DIR}/symbol/OMRResolvedMethodSymbol.cpp
-	${CMAKE_CURRENT_LIST_DIR}/symbol/OMRStaticSymbol.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRSymbol.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRAutomaticSymbol.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRLabelSymbol.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRMethodSymbol.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRParameterSymbol.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRRegisterMappedSymbol.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRResolvedMethodSymbol.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRStaticSymbol.cpp
 
 	${CMAKE_CURRENT_LIST_DIR}/Aliases.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRBlock.cpp

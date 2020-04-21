@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,32 +59,32 @@ typedef struct UNWIND_INFO {
 	OPTIONAL uint32_t ExceptionData[];
 } UNWIND_INFO;
 
-typedef struct J9CurrentSignal {
+typedef struct OMRCurrentSignal {
 	EXCEPTION_POINTERS *exceptionInfo;
 	uint32_t portLibSignalType;
-} J9CurrentSignal;
+} OMRCurrentSignal;
 
 /* key to get the current synchronous signal */
 static omrthread_tls_key_t tlsKeyCurrentSignal;
-static RUNTIME_FUNCTION *j9SigProtectFunction = NULL;
+static RUNTIME_FUNCTION *sigProtectFunction = NULL;
 
-struct J9SignalHandlerRecord {
-	struct J9SignalHandlerRecord *previous;
+struct OMRSignalHandlerRecord {
+	struct OMRSignalHandlerRecord *previous;
 	struct OMRPortLibrary *portLibrary;
 	omrsig_handler_fn handler;
 	void *handler_arg;
 	jmp_buf returnBuf;
 	uint32_t flags;
 	BOOLEAN deferToTryExcept;
-};
+} OMRSignalHandlerRecord;
 
-typedef struct J9WinAMD64AsyncHandlerRecord {
+typedef struct OMRWinAMD64AsyncHandlerRecord {
 	OMRPortLibrary *portLib;
 	omrsig_handler_fn handler;
 	void *handler_arg;
 	uint32_t flags;
-	struct J9WinAMD64AsyncHandlerRecord *next;
-} J9WinAMD64AsyncHandlerRecord;
+	struct OMRWinAMD64AsyncHandlerRecord *next;
+} OMRWinAMD64AsyncHandlerRecord;
 
 static struct {
 	uint32_t portLibSignalNo;
@@ -122,7 +122,7 @@ static uint32_t vectoredExceptionHandlerInstalled;
 /* Thread to invoke signal handlers for asynchronous signals. */
 static omrthread_t asynchSignalReporterThread;
 
-static J9WinAMD64AsyncHandlerRecord *asyncHandlerList;
+static OMRWinAMD64AsyncHandlerRecord *asyncHandlerList;
 static omrthread_monitor_t asyncMonitor;
 static uint32_t asyncThreadCount;
 static uint32_t attachedPortLibraries;
@@ -147,16 +147,16 @@ static uint32_t shutDownASynchReporter;
 #endif /* defined(OMR_PORT_ASYNC_HANDLER) */
 
 static uint32_t mapWin32ExceptionToPortlibType(uint32_t exceptionCode);
-static uint32_t infoForGPR(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value);
-static uint32_t infoForFPR(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value);
-static uint32_t infoForSignal(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value);
-static uint32_t infoForModule(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value);
-static uint32_t infoForOther(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value);
+static uint32_t infoForGPR(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value);
+static uint32_t infoForFPR(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value);
+static uint32_t infoForSignal(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value);
+static uint32_t infoForModule(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value);
+static uint32_t infoForOther(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value);
 static uint32_t countInfoInCategory(struct OMRPortLibrary *portLibrary, void *info, uint32_t category);
 static BOOL WINAPI consoleCtrlHandler(DWORD dwCtrlType);
 static LONG WINAPI masterVectoredExceptionHandler(EXCEPTION_POINTERS *exceptionInfo);
-static uint32_t infoForControl(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value);
-static void fillInWinAMD64SignalInfo(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, EXCEPTION_POINTERS *exceptionInfo, struct J9Win32SignalInfo *j9info);
+static uint32_t infoForControl(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value);
+static void fillInWinAMD64SignalInfo(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, EXCEPTION_POINTERS *exceptionInfo, struct OMRWin32SignalInfo *signalInfo);
 static void sig_full_shutdown(struct OMRPortLibrary *portLibrary);
 static void destroySignalTools(OMRPortLibrary *portLibrary);
 static uint32_t addMasterVectoredExceptionHandler(struct OMRPortLibrary *portLibrary);
@@ -180,7 +180,7 @@ static void runHandlers(uint32_t asyncSignalFlag, int osSignal);
 static int32_t registerMasterHandlers(OMRPortLibrary *portLibrary, uint32_t flags, uint32_t allowedSubsetOfFlags, void **oldOSHandler);
 static int32_t setReporterPriority(OMRPortLibrary *portLibrary, uintptr_t priority);
 
-static J9WinAMD64AsyncHandlerRecord *createAsyncHandlerRecord(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, void *handler_arg, uint32_t flags);
+static OMRWinAMD64AsyncHandlerRecord *createAsyncHandlerRecord(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, void *handler_arg, uint32_t flags);
 
 uint32_t
 omrsig_info(struct OMRPortLibrary *portLibrary, void *info, uint32_t category, int32_t index, const char **name, void **value)
@@ -228,7 +228,7 @@ runInTryExcept(struct OMRPortLibrary *portLibrary,
 int32_t
 omrsig_protect(struct OMRPortLibrary *portLibrary, omrsig_protected_fn fn, void *fn_arg, omrsig_handler_fn handler, void *handler_arg, uint32_t flags, uintptr_t *result)
 {
-	struct J9SignalHandlerRecord thisRecord;
+	struct OMRSignalHandlerRecord thisRecord;
 	uintptr_t rc = 0;
 	omrthread_t thisThread = omrthread_self();
 
@@ -269,7 +269,7 @@ omrsig_protect(struct OMRPortLibrary *portLibrary, omrsig_protected_fn fn, void 
 	/* We can not use setjmp/longjmp to jump out of a VectoredExceptionHandler (CMVC 175576), so use _try/_except semantics instead */
 	if (OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SIG_FLAG_MAY_RETURN)) {
 
-		J9CurrentSignal *currentSignal = omrthread_tls_get(thisThread, tlsKeyCurrentSignal);
+		OMRCurrentSignal *currentSignal = omrthread_tls_get(thisThread, tlsKeyCurrentSignal);
 		int32_t exceptionStatus = OMRPORT_SIG_NO_EXCEPTION;
 
 		/* The VectoredExceptionHandler will get notified before the _except clause/block below,
@@ -303,8 +303,8 @@ int32_t
 omrsig_set_async_signal_handler(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, void *handler_arg, uint32_t flags)
 {
 	int32_t rc = 0;
-	J9WinAMD64AsyncHandlerRecord *cursor = NULL;
-	J9WinAMD64AsyncHandlerRecord **previousLink = NULL;
+	OMRWinAMD64AsyncHandlerRecord *cursor = NULL;
+	OMRWinAMD64AsyncHandlerRecord **previousLink = NULL;
 
 	Trc_PRT_signal_omrsig_set_async_signal_handler_entered(handler, handler_arg, flags);
 
@@ -349,7 +349,7 @@ omrsig_set_async_signal_handler(struct OMRPortLibrary *portLibrary, omrsig_handl
 
 	/* Cursor will only be NULL if we failed to find it in the list. */
 	if ((NULL == cursor) && (0 != flags)) {
-		J9WinAMD64AsyncHandlerRecord *record = createAsyncHandlerRecord(portLibrary, handler, handler_arg, flags);
+		OMRWinAMD64AsyncHandlerRecord *record = createAsyncHandlerRecord(portLibrary, handler, handler_arg, flags);
 		if (NULL != record) {
 			/* Add the new record to the end of the list. */
 			Trc_PRT_signal_omrsig_set_async_signal_handler_user_handler_added_2(handler, handler_arg, flags);
@@ -369,8 +369,8 @@ int32_t
 omrsig_set_single_async_signal_handler(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, void *handler_arg, uint32_t portlibSignalFlag, void **oldOSHandler)
 {
 	int32_t rc = 0;
-	J9WinAMD64AsyncHandlerRecord *cursor = NULL;
-	J9WinAMD64AsyncHandlerRecord **previousLink = NULL;
+	OMRWinAMD64AsyncHandlerRecord *cursor = NULL;
+	OMRWinAMD64AsyncHandlerRecord **previousLink = NULL;
 	BOOLEAN foundHandler = FALSE;
 
 	Trc_PRT_signal_omrsig_set_single_async_signal_handler_entered(handler, handler_arg, portlibSignalFlag);
@@ -429,7 +429,7 @@ omrsig_set_single_async_signal_handler(struct OMRPortLibrary *portLibrary, omrsi
 	}
 
 	if (!foundHandler && (0 != portlibSignalFlag)) {
-		J9WinAMD64AsyncHandlerRecord *record = createAsyncHandlerRecord(portLibrary, handler, handler_arg, portlibSignalFlag);
+		OMRWinAMD64AsyncHandlerRecord *record = createAsyncHandlerRecord(portLibrary, handler, handler_arg, portlibSignalFlag);
 		if (NULL != record) {
 			/* Add the new record to the end of the list. */
 			Trc_PRT_signal_omrsig_set_single_async_signal_handler_user_handler_added_2(handler, handler_arg, portlibSignalFlag);
@@ -519,19 +519,19 @@ omrsig_can_protect(struct OMRPortLibrary *portLibrary,  uint32_t flags)
 {
 	uint32_t supportedFlags = OMRPORT_SIG_FLAG_MAY_RETURN | OMRPORT_SIG_FLAG_MAY_CONTINUE_EXECUTION;
 
-	if (0 == (signalOptions & OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS)) {
+	Trc_PRT_signal_omrsig_can_protect_entered(flags);
+
+	if (OMR_ARE_NO_BITS_SET(signalOptions, OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS)) {
 		supportedFlags |= OMRPORT_SIG_FLAG_SIGALLSYNC;
 	}
 
-	if (0 == (signalOptions & OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS)) {
-		supportedFlags |= OMRPORT_SIG_FLAG_SIGALLASYNC;
+	if (OMR_ARE_ALL_BITS_SET(supportedFlags, flags)) {
+		Trc_PRT_signal_omrsig_can_protect_exiting_is_able_to_protect(supportedFlags);
+		return 1;
 	}
 
-	if ((flags & supportedFlags) == flags) {
-		return 1;
-	} else {
-		return 0;
-	}
+	Trc_PRT_signal_omrsig_can_protect_exiting_is_not_able_to_protect(supportedFlags);
+	return 0;
 }
 
 
@@ -576,7 +576,7 @@ omrsig_startup(struct OMRPortLibrary *portLibrary)
 	}
 
 	memset(&unwindHistoryTable, 0, sizeof(UNWIND_HISTORY_TABLE));
-	j9SigProtectFunction = RtlLookupFunctionEntry((ULONG64)omrsig_protect, &imageBase, &unwindHistoryTable);
+	sigProtectFunction = RtlLookupFunctionEntry((ULONG64)omrsig_protect, &imageBase, &unwindHistoryTable);
 
 	omrthread_monitor_exit(globalMonitor);
 
@@ -646,7 +646,7 @@ intptr_t
 omrsig_get_current_signal(struct OMRPortLibrary *portLibrary)
 {
 	omrthread_t thisThread = omrthread_self();
-	struct J9CurrentSignal *currentSignal = omrthread_tls_get(thisThread, tlsKeyCurrentSignal);
+	struct OMRCurrentSignal *currentSignal = omrthread_tls_get(thisThread, tlsKeyCurrentSignal);
 
 	if (currentSignal != NULL) {
 		return currentSignal->portLibSignalType;
@@ -746,7 +746,7 @@ tryExceptHandlerExistsOnStack(OMRPortLibrary *portLibrary, CONTEXT *originalCont
 			unwindInfo = (UNWIND_INFO *)(runtimeFunction->UnwindData + imageBase);
 			flags = unwindInfo->Flags;
 
-			if (runtimeFunction == j9SigProtectFunction) {
+			if (runtimeFunction == sigProtectFunction) {
 				return FALSE;
 			} else if (UNW_FLAG_EHANDLER == flags) {
 				/* we found a try/except handler */
@@ -773,7 +773,7 @@ tryExceptHandlerExistsOnStack(OMRPortLibrary *portLibrary, CONTEXT *originalCont
 }
 
 static uint32_t
-infoForOther(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value)
+infoForOther(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value)
 {
 	*name = "";
 
@@ -796,7 +796,7 @@ infoForOther(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info,
 
 
 static uint32_t
-infoForSignal(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value)
+infoForSignal(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value)
 {
 	*name = "";
 
@@ -855,7 +855,7 @@ infoForSignal(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info
 }
 
 static uint32_t
-infoForGPR(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value)
+infoForGPR(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value)
 {
 	*name = "";
 
@@ -956,7 +956,7 @@ infoForGPR(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, i
 }
 
 static uint32_t
-infoForControl(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value)
+infoForControl(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value)
 {
 	*name = "";
 
@@ -1007,7 +1007,7 @@ infoForControl(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *inf
 }
 
 static uint32_t
-infoForModule(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value)
+infoForModule(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value)
 {
 	if (info->moduleBaseAddress == NULL) {
 		MEMORY_BASIC_INFORMATION mbi;
@@ -1060,7 +1060,7 @@ countInfoInCategory(struct OMRPortLibrary *portLibrary, void *info, uint32_t cat
 }
 
 static uint32_t
-infoForFPR(struct OMRPortLibrary *portLibrary, struct J9Win32SignalInfo *info, int32_t index, const char **name, void **value)
+infoForFPR(struct OMRPortLibrary *portLibrary, struct OMRWin32SignalInfo *info, int32_t index, const char **name, void **value)
 {
 	*name = "";
 
@@ -1142,9 +1142,9 @@ static LONG WINAPI
 masterVectoredExceptionHandler(EXCEPTION_POINTERS *exceptionInfo)
 {
 	uint32_t portLibType;
-	struct J9SignalHandlerRecord *thisRecord;
-	struct J9CurrentSignal currentSignal;
-	struct J9CurrentSignal *previousSignal;
+	struct OMRSignalHandlerRecord *thisRecord;
+	struct OMRCurrentSignal currentSignal;
+	struct OMRCurrentSignal *previousSignal;
 	omrthread_t thisThread = NULL;
 
 	if ((exceptionInfo->ExceptionRecord->ExceptionCode & (ERROR_SEVERITY_ERROR | APPLICATION_ERROR_MASK)) != ERROR_SEVERITY_ERROR) {
@@ -1183,16 +1183,16 @@ masterVectoredExceptionHandler(EXCEPTION_POINTERS *exceptionInfo)
 	/* walk the stack of registered handlers from top to bottom searching for one which handles this type of exception */
 	while (thisRecord) {
 		if (thisRecord->flags & portLibType) {
-			struct J9Win32SignalInfo j9info;
+			struct OMRWin32SignalInfo signalInfo;
 			uintptr_t result;
 
 			/* found a suitable handler */
-			fillInWinAMD64SignalInfo(thisRecord->portLibrary, thisRecord->handler, exceptionInfo, &j9info);
+			fillInWinAMD64SignalInfo(thisRecord->portLibrary, thisRecord->handler, exceptionInfo, &signalInfo);
 
 			/* remove the handler we are about to invoke, now, in case the handler crashes */
 			omrthread_tls_set(thisThread, tlsKey, thisRecord->previous);
 
-			result = thisRecord->handler(thisRecord->portLibrary, portLibType, &j9info, thisRecord->handler_arg);
+			result = thisRecord->handler(thisRecord->portLibrary, portLibType, &signalInfo, thisRecord->handler_arg);
 
 			/* The only case in which we don't want the previous handler back on top is if it just returned OMRPORT_SIG_EXCEPTION_RETURN
 			 * 		In this case we will remove it from the top */
@@ -1239,11 +1239,11 @@ structuredExceptionHandler(struct OMRPortLibrary *portLibrary, omrsig_handler_fn
 {
 	uintptr_t result;
 	uint32_t type;
-	struct J9Win32SignalInfo j9info;
+	struct OMRWin32SignalInfo signalInfo;
 	omrthread_t thisThread;
-	struct J9SignalHandlerRecord *thisRecord;
-	struct J9CurrentSignal currentSignal;
-	struct J9CurrentSignal *previousSignal;
+	struct OMRSignalHandlerRecord *thisRecord;
+	struct OMRCurrentSignal currentSignal;
+	struct OMRCurrentSignal *previousSignal;
 
 	if ((exceptionInfo->ExceptionRecord->ExceptionCode & (ERROR_SEVERITY_ERROR | APPLICATION_ERROR_MASK)) != ERROR_SEVERITY_ERROR) {
 		return EXCEPTION_CONTINUE_SEARCH;
@@ -1257,7 +1257,7 @@ structuredExceptionHandler(struct OMRPortLibrary *portLibrary, omrsig_handler_fn
 	thisThread = omrthread_self();
 	thisRecord = omrthread_tls_get(thisThread, tlsKey);
 
-	fillInWinAMD64SignalInfo(portLibrary, handler, exceptionInfo, &j9info);
+	fillInWinAMD64SignalInfo(portLibrary, handler, exceptionInfo, &signalInfo);
 
 	previousSignal = omrthread_tls_get(thisThread, tlsKeyCurrentSignal);
 
@@ -1267,7 +1267,7 @@ structuredExceptionHandler(struct OMRPortLibrary *portLibrary, omrsig_handler_fn
 	omrthread_tls_set(thisThread, tlsKeyCurrentSignal, &currentSignal);
 
 	__try {
-		result = handler(portLibrary, j9info.portLibType, &j9info, handler_arg);
+		result = handler(portLibrary, signalInfo.portLibType, &signalInfo, handler_arg);
 	} __except (EXCEPTION_EXECUTE_HANDLER) {
 		/* if a recursive exception occurs, ignore it and pass control to the next handler */
 		omrthread_tls_set(thisThread, tlsKeyCurrentSignal, previousSignal);
@@ -1281,7 +1281,7 @@ structuredExceptionHandler(struct OMRPortLibrary *portLibrary, omrsig_handler_fn
 		 * if it finds a handler on the stack.  Setting tryExceptHandlerIgnore=TRUE
 		 * forces it to ignore try/except handlers.
 		 */
-		j9info.tryExceptHandlerIgnore = TRUE;
+		signalInfo.tryExceptHandlerIgnore = TRUE;
 		thisRecord = thisRecord->previous;
 		while (thisRecord) {
 			if (thisRecord->flags & type) {
@@ -1289,7 +1289,7 @@ structuredExceptionHandler(struct OMRPortLibrary *portLibrary, omrsig_handler_fn
 				/* remove the handler we are about to invoke, now, in case the handler crashes */
 				omrthread_tls_set(thisThread, tlsKey, thisRecord->previous);
 
-				result = thisRecord->handler(thisRecord->portLibrary, type, &j9info, thisRecord->handler_arg);
+				result = thisRecord->handler(thisRecord->portLibrary, type, &signalInfo, thisRecord->handler_arg);
 
 				/* The only case in which we don't want the previous handler back on top is if it just returned OMRPORT_SIG_EXCEPTION_RETURN
 				 * 		In this case we will remove it from the top */
@@ -1469,18 +1469,18 @@ sig_full_shutdown(struct OMRPortLibrary *portLibrary)
 }
 
 static void
-fillInWinAMD64SignalInfo(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, EXCEPTION_POINTERS *exceptionInfo, struct J9Win32SignalInfo *j9info)
+fillInWinAMD64SignalInfo(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, EXCEPTION_POINTERS *exceptionInfo, struct OMRWin32SignalInfo *signalInfo)
 {
-	memset(j9info, 0, sizeof(*j9info));
+	memset(signalInfo, 0, sizeof(*signalInfo));
 
-	j9info->systemType = exceptionInfo->ExceptionRecord->ExceptionCode;
-	j9info->portLibType = mapWin32ExceptionToPortlibType(exceptionInfo->ExceptionRecord->ExceptionCode);
-	j9info->handlerAddress = (void *)handler;
-	j9info->handlerAddress2 = (void *)masterVectoredExceptionHandler;
-	j9info->ExceptionRecord = exceptionInfo->ExceptionRecord;
-	j9info->ContextRecord = exceptionInfo->ContextRecord;
-	j9info->deferToTryExcept = FALSE;
-	j9info->tryExceptHandlerIgnore = FALSE;
+	signalInfo->systemType = exceptionInfo->ExceptionRecord->ExceptionCode;
+	signalInfo->portLibType = mapWin32ExceptionToPortlibType(exceptionInfo->ExceptionRecord->ExceptionCode);
+	signalInfo->handlerAddress = (void *)handler;
+	signalInfo->handlerAddress2 = (void *)masterVectoredExceptionHandler;
+	signalInfo->ExceptionRecord = exceptionInfo->ExceptionRecord;
+	signalInfo->ContextRecord = exceptionInfo->ContextRecord;
+	signalInfo->deferToTryExcept = FALSE;
+	signalInfo->tryExceptHandlerIgnore = FALSE;
 
 	/* module info is filled on demand */
 }
@@ -1661,8 +1661,8 @@ static void
 removeAsyncHandlers(OMRPortLibrary *portLibrary)
 {
 	/* clean up the list of async handlers */
-	J9WinAMD64AsyncHandlerRecord *cursor = NULL;
-	J9WinAMD64AsyncHandlerRecord **previousLink = NULL;
+	OMRWinAMD64AsyncHandlerRecord *cursor = NULL;
+	OMRWinAMD64AsyncHandlerRecord **previousLink = NULL;
 
 	omrthread_monitor_enter(asyncMonitor);
 
@@ -1694,7 +1694,7 @@ removeAsyncHandlers(OMRPortLibrary *portLibrary)
 #if defined(OMR_PORT_ASYNC_HANDLER)
 /**
  * Given a port library signal flag, execute the associated handlers stored
- * within asyncHandlerList (list of J9WinAMD64AsyncHandlerRecord).
+ * within asyncHandlerList (list of OMRWinAMD64AsyncHandlerRecord).
  *
  * @param asyncSignalFlag port library signal flag
  *
@@ -1703,7 +1703,7 @@ removeAsyncHandlers(OMRPortLibrary *portLibrary)
 static void
 runHandlers(uint32_t asyncSignalFlag, int osSignal)
 {
-	J9WinAMD64AsyncHandlerRecord *cursor = NULL;
+	OMRWinAMD64AsyncHandlerRecord *cursor = NULL;
 
 	/* incrementing the asyncThreadCount will prevent the list from being modified while we use it */
 	omrthread_monitor_enter(asyncMonitor);
@@ -1736,7 +1736,7 @@ runHandlers(uint32_t asyncSignalFlag, int osSignal)
 
 /**
  * This is the main body of the asynchSignalReporterThread. It executes handlers
- * (J9WinAMD64AsyncHandlerRecord->handler) associated to a signal once a signal
+ * (OMRWinAMD64AsyncHandlerRecord->handler) associated to a signal once a signal
  * is raised.
  *
  * @param[in] userData the user data provided during thread creation
@@ -1835,7 +1835,7 @@ registerMasterHandlers(OMRPortLibrary *portLibrary, uint32_t flags, uint32_t all
 		 * or all asynchronous signal flags (OMRPORT_SIG_FLAG_SIGALLASYNC).
 		 */
 		omrthread_monitor_enter(registerHandlerMonitor);
-		for (portSignalType = OMRPORT_SIG_SMALLEST_SIGNAL_FLAG; portSignalType < allowedSubsetOfFlags; portSignalType = portSignalType << 1) {
+		for (portSignalType = OMRPORT_SIG_SMALLEST_SIGNAL_FLAG; ((portSignalType < allowedSubsetOfFlags) && (portSignalType != 0)); portSignalType = portSignalType << 1) {
 			/* Iterate through all the  signals and register the master handler for the signals
 			 * specified in flagsSignalsOnly.
 			 */
@@ -1883,10 +1883,10 @@ setReporterPriority(OMRPortLibrary *portLibrary, uintptr_t priority)
  *
  * @return pointer to the new async handler record on success and NULL on failure.
  */
-static J9WinAMD64AsyncHandlerRecord *
+static OMRWinAMD64AsyncHandlerRecord *
 createAsyncHandlerRecord(struct OMRPortLibrary *portLibrary, omrsig_handler_fn handler, void *handler_arg, uint32_t flags)
 {
-	J9WinAMD64AsyncHandlerRecord *record = (J9WinAMD64AsyncHandlerRecord *)portLibrary->mem_allocate_memory(portLibrary, sizeof(*record), OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+	OMRWinAMD64AsyncHandlerRecord *record = (OMRWinAMD64AsyncHandlerRecord *)portLibrary->mem_allocate_memory(portLibrary, sizeof(*record), OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
 
 	if (NULL != record) {
 		record->portLib = portLibrary;

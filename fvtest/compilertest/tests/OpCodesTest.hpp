@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,13 +23,12 @@
 
 #include <cmath>
 #include <stdint.h>
-#include "compile/ResolvedMethod.hpp"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
-#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "env/jittypes.h"
 #include "gtest/gtest.h"
 #include "il/DataTypes.hpp"
@@ -42,11 +41,15 @@
 #include "tests/injectors/IndirectLoadIlInjector.hpp"
 #include "tests/injectors/IndirectStoreIlInjector.hpp"
 #include "tests/injectors/StoreOpIlInjector.hpp"
-#include "tests/injectors/TernaryOpIlInjector.hpp"
+#include "tests/injectors/SelectOpIlInjector.hpp"
 #include "tests/injectors/UnaryOpIlInjector.hpp"
 
-
-namespace TR { class ResolvedMethod; }
+#if defined(J9ZOS390) || defined(AIXPPC)
+namespace std
+{
+   using ::isnan;
+}
+#endif
 
 #define OMR_CT_EXPECT_EQ(compilee, a, b) if (compilee != NULL) EXPECT_EQ(a, b)
 #define OMR_CT_EXPECT_DOUBLE_EQ(compilee, a, b) if (compilee != NULL) EXPECT_DOUBLE_EQ(a, b)
@@ -134,32 +137,32 @@ typedef float (signatureCharIFF_F_testMethodType)(int32_t, float, float);
 typedef double (signatureCharIDD_D_testMethodType)(int32_t, double, double);
 
 //address signatureChars
-typedef int8_t (signatureCharL_B_testMethodType)(uintptrj_t);
-typedef int16_t (signatureCharL_S_testMethodType)(uintptrj_t);
-typedef int32_t (signatureCharL_I_testMethodType)(uintptrj_t);
-typedef int64_t (signatureCharL_J_testMethodType)(uintptrj_t);
-typedef double (signatureCharL_D_testMethodType)(uintptrj_t);
-typedef float (signatureCharL_F_testMethodType)(uintptrj_t);
-typedef uintptrj_t (signatureCharB_L_testMethodType)(int8_t);
-typedef uintptrj_t (signatureCharS_L_testMethodType)(int16_t);
-typedef uintptrj_t (signatureCharI_L_testMethodType)(int32_t);
-typedef uintptrj_t (signatureCharJ_L_testMethodType)(int64_t);
-typedef uintptrj_t (unsignedSignatureCharB_L_testMethodType)(uint8_t);
-typedef uintptrj_t (unsignedSignatureCharS_L_testMethodType)(uint16_t);
-typedef uintptrj_t (unsignedSignatureCharI_L_testMethodType)(uint32_t);
-typedef uintptrj_t (unsignedSignatureCharJ_L_testMethodType)(uint64_t);
-typedef uintptrj_t (signatureCharL_L_testMethodType)(uintptrj_t);
-typedef int32_t (signatureCharLL_I_testMethodType)(uintptrj_t, uintptrj_t);
-typedef uintptrj_t (signatureCharILL_L_testMethodType)(int32_t, uintptrj_t, uintptrj_t);
+typedef int8_t (signatureCharL_B_testMethodType)(uintptr_t);
+typedef int16_t (signatureCharL_S_testMethodType)(uintptr_t);
+typedef int32_t (signatureCharL_I_testMethodType)(uintptr_t);
+typedef int64_t (signatureCharL_J_testMethodType)(uintptr_t);
+typedef double (signatureCharL_D_testMethodType)(uintptr_t);
+typedef float (signatureCharL_F_testMethodType)(uintptr_t);
+typedef uintptr_t (signatureCharB_L_testMethodType)(int8_t);
+typedef uintptr_t (signatureCharS_L_testMethodType)(int16_t);
+typedef uintptr_t (signatureCharI_L_testMethodType)(int32_t);
+typedef uintptr_t (signatureCharJ_L_testMethodType)(int64_t);
+typedef uintptr_t (unsignedSignatureCharB_L_testMethodType)(uint8_t);
+typedef uintptr_t (unsignedSignatureCharS_L_testMethodType)(uint16_t);
+typedef uintptr_t (unsignedSignatureCharI_L_testMethodType)(uint32_t);
+typedef uintptr_t (unsignedSignatureCharJ_L_testMethodType)(uint64_t);
+typedef uintptr_t (signatureCharL_L_testMethodType)(uintptr_t);
+typedef int32_t (signatureCharLL_I_testMethodType)(uintptr_t, uintptr_t);
+typedef uintptr_t (signatureCharILL_L_testMethodType)(int32_t, uintptr_t, uintptr_t);
 
 
-typedef int32_t (signatureCharLI_I_testMethodType)(uintptrj_t, int32_t);
-typedef int64_t (signatureCharLJ_J_testMethodType)(uintptrj_t, int64_t);
-typedef double (signatureCharLD_D_testMethodType)(uintptrj_t, double);
-typedef float (signatureCharLF_F_testMethodType)(uintptrj_t, float);
-typedef int8_t (signatureCharLB_B_testMethodType)(uintptrj_t, int8_t);
-typedef int16_t (signatureCharLS_S_testMethodType)(uintptrj_t, int16_t);
-typedef uintptrj_t (signatureCharLL_L_testMethodType)(uintptrj_t, uintptrj_t);
+typedef int32_t (signatureCharLI_I_testMethodType)(uintptr_t, int32_t);
+typedef int64_t (signatureCharLJ_J_testMethodType)(uintptr_t, int64_t);
+typedef double (signatureCharLD_D_testMethodType)(uintptr_t, double);
+typedef float (signatureCharLF_F_testMethodType)(uintptr_t, float);
+typedef int8_t (signatureCharLB_B_testMethodType)(uintptr_t, int8_t);
+typedef int16_t (signatureCharLS_S_testMethodType)(uintptr_t, int16_t);
+typedef uintptr_t (signatureCharLL_L_testMethodType)(uintptr_t, uintptr_t);
 
 class OpCodesTest : public TestDriver
    {
@@ -172,7 +175,7 @@ class OpCodesTest : public TestDriver
    virtual void compileUnaryTestMethods();
    virtual void compileBitwiseMethods();
    virtual void compileCompareTestMethods();
-   virtual void compileTernaryTestMethods();
+   virtual void compileSelectTestMethods();
    virtual void compileAddressTestMethods();
    virtual void compileDisabledOpCodesTests();
 
@@ -181,7 +184,7 @@ class OpCodesTest : public TestDriver
    virtual void invokeUnaryTests();
    virtual void invokeBitwiseTests();
    virtual void invokeCompareTests();
-   virtual void invokeTernaryTests();
+   virtual void invokeSelectTests();
    virtual void invokeAddressTests();
    virtual void invokeDisabledOpCodesTests();
 
@@ -192,8 +195,8 @@ class OpCodesTest : public TestDriver
    //Unsupported OpCodes are tested in this function
    virtual void UnsupportedOpCodesTests();
 
-   template <typename functiontype> 
-   int32_t  
+   template <typename functiontype>
+   int32_t
    compileOpCodeMethod(functiontype& resultpointer,
          int32_t opCodeArgsNum,
          TR::ILOpCodes opCode,
@@ -218,7 +221,7 @@ class OpCodesTest : public TestDriver
    CmpBranchOpIlInjector        cmpBranchIlInjector(&types, this, opCode);
    BinaryOpIlInjector           opCodeBinaryIlInjector(&types, this, opCode);
    UnaryOpIlInjector            opCodeUnaryInjector(&types, this, opCode);
-   TernaryOpIlInjector          ternaryOpIlInjector(&types, this, opCode);
+   SelectOpIlInjector          selectOpIlInjector(&types, this, opCode);
    ChildlessUnaryOpIlInjector   childlessUnaryOpIlInjector(&types, this, opCode);
    StoreOpIlInjector            storeOpIlInjector(&types, this, opCode);
    IndirectLoadIlInjector       indirectLoadIlInjector(&types, this, opCode);
@@ -228,9 +231,9 @@ class OpCodesTest : public TestDriver
       {
       opCodeInjector = &cmpBranchIlInjector;
       }
-   else if (op.isTernary())
+   else if (op.isSelect())
       {
-      opCodeInjector = &ternaryOpIlInjector;
+      opCodeInjector = &selectOpIlInjector;
       }
    else if (op.isStoreIndirect())
       {
@@ -250,7 +253,7 @@ class OpCodesTest : public TestDriver
       }
    else
       {
-      switch (opCodeArgsNum) 
+      switch (opCodeArgsNum)
          {
          case 1:
             opCodeInjector = &opCodeUnaryInjector;
@@ -264,7 +267,7 @@ class OpCodesTest : public TestDriver
          }
       }
 
-   TR_ASSERT(opCodeInjector, "Didn't select an injector!"); 
+   TR_ASSERT(opCodeInjector, "Didn't select an injector!");
 
    TR::IlType **argIlTypes = new TR::IlType*[opCodeArgsNum];
    for (uint32_t a=0;a < opCodeArgsNum;a++)
@@ -320,7 +323,7 @@ class OpCodesTest : public TestDriver
                 }
              case TR::Address:
                 {
-                uintptrj_t * addressValue = (uintptrj_t *) value;
+                uintptr_t * addressValue = (uintptr_t *) value;
                 opCodeInjector->aconstParm(pos, *addressValue);
                 break;
                 }
@@ -333,16 +336,16 @@ class OpCodesTest : public TestDriver
    TR::ResolvedMethod opCodeCompilee(__FILE__, LINETOSTR(__LINE__), resolvedMethodName, opCodeArgsNum, argIlTypes, types.PrimitiveType(returnType), 0, opCodeInjector);
    TR::IlGeneratorMethodDetails opCodeDetails(&opCodeCompilee);
    uint8_t *startPC= compileMethod(opCodeDetails, warm, returnCode);
-   EXPECT_TRUE(COMPILATION_SUCCEEDED == returnCode || 
-               COMPILATION_IL_GEN_FAILURE == returnCode || 
-               COMPILATION_REQUESTED == returnCode) 
+   EXPECT_TRUE(COMPILATION_SUCCEEDED == returnCode ||
+               COMPILATION_IL_GEN_FAILURE == returnCode ||
+               COMPILATION_REQUESTED == returnCode)
       << "compileOpCodeMethod: Compiling method " << resolvedMethodName << " failed unexpectedly";
    resultpointer = reinterpret_cast<functiontype>(startPC);
    return returnCode;
    }
 
    template <typename functiontype>
-   int32_t 
+   int32_t
    compileDirectCallOpCodeMethod(functiontype& resultpointer,
          int32_t opCodeArgsNum,
          TR::ILOpCodes opCodeCompilee,
@@ -392,14 +395,14 @@ class OpCodesTest : public TestDriver
          default:
             TR_ASSERT(0, "compilee dataType should be int32, int64, double, float or address");
          }
-      EXPECT_TRUE(COMPILATION_SUCCEEDED == returnCode || COMPILATION_REQUESTED == returnCode) 
+      EXPECT_TRUE(COMPILATION_SUCCEEDED == returnCode || COMPILATION_REQUESTED == returnCode)
          << "Compiling callee method " << compileeResolvedMethodName << " failed unexpectedly";
 
       CallIlInjector callIlInjector(&types, this, opCode);
       TR::ResolvedMethod callCompilee(__FILE__, LINETOSTR(__LINE__), testResolvedMethodName, opCodeArgsNum, argIlTypes, types.PrimitiveType(returnType), 0, &callIlInjector);
       TR::IlGeneratorMethodDetails callDetails(&callCompilee);
       uint8_t *startPC = compileMethod(callDetails, warm, returnCode);
-      EXPECT_TRUE(COMPILATION_SUCCEEDED == returnCode || COMPILATION_REQUESTED == returnCode) 
+      EXPECT_TRUE(COMPILATION_SUCCEEDED == returnCode || COMPILATION_REQUESTED == returnCode)
          << "Compiling test method " << testResolvedMethodName << " failed unexpectedly";
       resultpointer = reinterpret_cast<functiontype>(startPC);
       return returnCode;;
@@ -418,7 +421,7 @@ class OpCodesTest : public TestDriver
    static const int32_t RESOLVED_METHOD_NAME_LENGTH = 50;
    static const int32_t _numberOfUnaryArgs = 1;
    static const int32_t _numberOfBinaryArgs = 2;
-   static const int32_t _numberOfTernaryArgs = 3;
+   static const int32_t _numberOfSelectArgs = 3;
 
    //commonly used variables
    static const int64_t LONG_NEG;
@@ -497,9 +500,9 @@ class OpCodesTest : public TestDriver
    static const double DOUBLE_PLACEHOLDER_2;
    static const double DOUBLE_PLACEHOLDER_3;
 
-   static const uintptrj_t ADDRESS_PLACEHOLDER_1;
-   static const uintptrj_t ADDRESS_PLACEHOLDER_2;
-   static const uintptrj_t ADDRESS_PLACEHOLDER_3;
+   static const uintptr_t ADDRESS_PLACEHOLDER_1;
+   static const uintptr_t ADDRESS_PLACEHOLDER_2;
+   static const uintptr_t ADDRESS_PLACEHOLDER_3;
 
    protected:
    static signatureCharI_I_testMethodType *_iByteswap;
@@ -712,26 +715,19 @@ class OpCodesTest : public TestDriver
    static signatureCharSS_I_testMethodType *_sCmpge;
    static signatureCharBB_I_testMethodType *_bCmpge;
 
-   static unsignedCompareSignatureCharII_I_testMethodType *_iuCmpeq;
-   static unsignedCompareSignatureCharII_I_testMethodType *_iuCmpne;
    static unsignedCompareSignatureCharII_I_testMethodType *_iuCmplt;
    static unsignedCompareSignatureCharII_I_testMethodType *_iuCmpge;
    static unsignedCompareSignatureCharII_I_testMethodType *_iuCmpgt;
    static unsignedCompareSignatureCharII_I_testMethodType *_iuCmple;
-   static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmpeq;
-   static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmpne;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmplt;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmpge;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmpgt;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_luCmple;
-   static unsignedCompareSignatureCharBB_I_testMethodType *_buCmpeq;
-   static unsignedCompareSignatureCharBB_I_testMethodType *_buCmpne;
    static unsignedCompareSignatureCharBB_I_testMethodType *_buCmplt;
    static unsignedCompareSignatureCharBB_I_testMethodType *_buCmpge;
    static unsignedCompareSignatureCharBB_I_testMethodType *_buCmpgt;
    static unsignedCompareSignatureCharBB_I_testMethodType *_buCmple;
-   static unsignedCompareSignatureCharSS_I_testMethodType *_suCmpeq;
-   static unsignedCompareSignatureCharSS_I_testMethodType *_suCmpne;
+
    static unsignedCompareSignatureCharSS_I_testMethodType *_suCmplt;
    static unsignedCompareSignatureCharSS_I_testMethodType *_suCmpge;
    static unsignedCompareSignatureCharSS_I_testMethodType *_suCmpgt;
@@ -780,38 +776,30 @@ class OpCodesTest : public TestDriver
    static signatureCharBB_I_testMethodType *_ifBcmplt;
    static signatureCharBB_I_testMethodType *_ifBcmpge;
    static signatureCharBB_I_testMethodType *_ifBcmple;
-   static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmpeq;
-   static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmpne;
    static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmplt;
    static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmpge;
    static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmpgt;
    static unsignedCompareSignatureCharII_I_testMethodType *_ifIuCmple;
-   static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmpeq;
-   static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmpne;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmplt;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmpge;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmpgt;
    static unsignedCompareSignatureCharJJ_I_testMethodType *_ifLuCmple;
-   static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmpeq;
-   static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmpne;
    static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmplt;
    static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmpge;
    static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmpgt;
    static unsignedCompareSignatureCharBB_I_testMethodType *_ifBuCmple;
-   static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmpeq;
-   static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmpne;
    static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmplt;
    static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmpge;
    static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmpgt;
    static unsignedCompareSignatureCharSS_I_testMethodType *_ifSuCmple;
 
-   //Ternary operators
-   static signatureCharIBB_B_testMethodType *_bternary;
-   static signatureCharISS_S_testMethodType *_sternary;
-   static signatureCharIII_I_testMethodType *_iternary;
-   static signatureCharIJJ_J_testMethodType *_lternary;
-   static signatureCharIFF_F_testMethodType *_fternary;
-   static signatureCharIDD_D_testMethodType *_dternary;
+   //Select operators
+   static signatureCharIBB_B_testMethodType *_bselect;
+   static signatureCharISS_S_testMethodType *_sselect;
+   static signatureCharIII_I_testMethodType *_iselect;
+   static signatureCharIJJ_J_testMethodType *_lselect;
+   static signatureCharIFF_F_testMethodType *_fselect;
+   static signatureCharIDD_D_testMethodType *_dselect;
 
    static signatureCharI_I_testMethodType *_int32CompiledMethod;
    static signatureCharJ_J_testMethodType *_int64CompiledMethod;
@@ -874,7 +862,7 @@ class OpCodesTest : public TestDriver
    static signatureCharLL_I_testMethodType *_ifacmpge;
    static signatureCharLL_I_testMethodType *_ifacmple;
    static signatureCharLL_I_testMethodType *_ifacmpgt;
-   static signatureCharILL_L_testMethodType *_aternary;
+   static signatureCharILL_L_testMethodType *_aselect;
 
    static TR::DataType _argTypesUnaryByte[_numberOfUnaryArgs];
    static TR::DataType _argTypesUnaryShort[_numberOfUnaryArgs];
@@ -892,13 +880,13 @@ class OpCodesTest : public TestDriver
    static TR::DataType _argTypesBinaryDouble[_numberOfBinaryArgs];
    static TR::DataType _argTypesBinaryAddress[_numberOfBinaryArgs];
 
-   static TR::DataType _argTypesTernaryByte[_numberOfTernaryArgs];
-   static TR::DataType _argTypesTernaryShort[_numberOfTernaryArgs];
-   static TR::DataType _argTypesTernaryInt[_numberOfTernaryArgs];
-   static TR::DataType _argTypesTernaryLong[_numberOfTernaryArgs];
-   static TR::DataType _argTypesTernaryFloat[_numberOfTernaryArgs];
-   static TR::DataType _argTypesTernaryDouble[_numberOfTernaryArgs];
-   static TR::DataType _argTypesTernaryAddress[_numberOfTernaryArgs];
+   static TR::DataType _argTypesSelectByte[_numberOfSelectArgs];
+   static TR::DataType _argTypesSelectShort[_numberOfSelectArgs];
+   static TR::DataType _argTypesSelectInt[_numberOfSelectArgs];
+   static TR::DataType _argTypesSelectLong[_numberOfSelectArgs];
+   static TR::DataType _argTypesSelectFloat[_numberOfSelectArgs];
+   static TR::DataType _argTypesSelectDouble[_numberOfSelectArgs];
+   static TR::DataType _argTypesSelectAddress[_numberOfSelectArgs];
 
    static TR::DataType _argTypesBinaryAddressByte[_numberOfBinaryArgs];
    static TR::DataType _argTypesBinaryAddressShort[_numberOfBinaryArgs];
@@ -968,7 +956,7 @@ class OpCodesTest : public TestDriver
    template <typename T> static int32_t compareLE(T a, T b) { return a <= b;}
    template <typename T> static int32_t comparel(T a, T b) { return std::isnan(static_cast<long double>(a)) ? -1 : std::isnan(static_cast<long double>(b)) ? -1 : a > b ? 1 : a == b ? 0 : -1 ; }
    template <typename T> static int32_t compareg(T a, T b) { return std::isnan(static_cast<long double>(a)) ? 1 :  std::isnan(static_cast<long double>(b)) ? 1 : a > b ? 1 : a == b ? 0 : -1 ; }
-   template <typename C, typename T> static T ternary(C a, T b, T c) {return a ? b : c;}
+   template <typename C, typename T> static T select(C a, T b, T c) {return a ? b : c;}
    };
 
 } // namespace TestCompiler

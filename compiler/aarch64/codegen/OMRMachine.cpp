@@ -126,6 +126,7 @@ TR::RealRegister *OMR::ARM64::Machine::freeBestRegister(TR::Instruction *current
             candidates[numCandidates++] = realReg->getAssignedRegister();
             }
          }
+      TR_ASSERT(numCandidates != 0, "All registers are blocked");
 
       cursor = currentInstruction;
       while (numCandidates > 1 &&
@@ -538,8 +539,6 @@ void OMR::ARM64::Machine::coerceRegisterAssignment(TR::Instruction *currentInstr
    TR::RealRegister *realReg = virtualRegister->getAssignedRealRegister();
    TR::RealRegister *currentAssignedRegister = realReg ? toRealRegister(realReg) : NULL;
    TR_RegisterKinds rk = virtualRegister->getKind();
-   TR::RealRegister *spareReg;
-   TR::Register *currentTargetVirtual;
 
    if (comp->getOption(TR_TraceCG))
       {
@@ -556,6 +555,7 @@ void OMR::ARM64::Machine::coerceRegisterAssignment(TR::Instruction *currentInstr
 
    if (currentAssignedRegister == targetRegister)
        return;
+
    if (  targetRegister->getState() == TR::RealRegister::Free
       || targetRegister->getState() == TR::RealRegister::Unlatched)
       {
@@ -578,108 +578,123 @@ void OMR::ARM64::Machine::coerceRegisterAssignment(TR::Instruction *currentInstr
          currentAssignedRegister->setAssignedRegister(NULL);
          }
       }
-   else if (targetRegister->getState() == TR::RealRegister::Blocked)
+   else
       {
-      currentTargetVirtual = targetRegister->getAssignedRegister();
-#ifdef DEBUG
-      if (comp->getOption(TR_TraceCG))
-         diagnostic(", which is blocked and assigned to %s",
-                     currentTargetVirtual->getRegisterName(comp));
-#endif
-      if (!currentAssignedRegister || rk != TR_GPR)
-         {
-         spareReg = self()->findBestFreeRegister(rk);
-         if (spareReg == NULL)
-            {
-            self()->cg()->setRegisterAssignmentFlag(TR_RegisterSpilled);
-            virtualRegister->block();
-            spareReg = self()->freeBestRegister(currentInstruction, currentTargetVirtual);
-            virtualRegister->unblock();
-            }
-         }
+      TR::RealRegister *spareReg = NULL;
+      TR::Register *currentTargetVirtual = targetRegister->getAssignedRegister();
 
-      if (currentAssignedRegister)
-         {
-         self()->cg()->traceRegAssigned(currentTargetVirtual, currentAssignedRegister);
-         registerExchange(currentInstruction, rk, targetRegister, currentAssignedRegister, spareReg, self()->cg());
-         currentAssignedRegister->setState(TR::RealRegister::Blocked);
-         currentAssignedRegister->setAssignedRegister(currentTargetVirtual);
-         currentTargetVirtual->setAssignedRegister(currentAssignedRegister);
-         // For Non-GPR, spareReg remains FREE.
-         }
-      else
-         {
-         self()->cg()->traceRegAssigned(currentTargetVirtual, spareReg);
-         registerCopy(currentInstruction, rk, targetRegister, spareReg, self()->cg());
-         spareReg->setState(TR::RealRegister::Blocked);
-         currentTargetVirtual->setAssignedRegister(spareReg);
-         spareReg->setAssignedRegister(currentTargetVirtual);
-         if (virtualRegister->getTotalUseCount() != virtualRegister->getFutureUseCount())
-            {
-            self()->cg()->setRegisterAssignmentFlag(TR_RegisterReloaded);
-            self()->reverseSpillState(currentInstruction, virtualRegister, targetRegister);
-            }
-         // spareReg is assigned.
-         }
-      }
-   else if (targetRegister->getState() == TR::RealRegister::Assigned)
-      {
-      currentTargetVirtual = targetRegister->getAssignedRegister();
-#ifdef DEBUG
-      if (comp->getOption(TR_TraceCG))
-         diagnostic(", which is assigned to %s",
-                     currentTargetVirtual->getRegisterName(comp));
-#endif
-      spareReg = self()->findBestFreeRegister(rk);
+      bool needTemp = (rk == TR_FPR); // xor is unavailable for register exchange
 
-      self()->cg()->setRegisterAssignmentFlag(TR_IndirectCoercion);
-      if (currentAssignedRegister != NULL)
+      if (targetRegister->getState() == TR::RealRegister::Blocked)
          {
-         if ((rk != TR_GPR) && (spareReg == NULL))
+#ifdef DEBUG
+         if (comp->getOption(TR_TraceCG))
+            diagnostic(", which is blocked and assigned to %s",
+                       currentTargetVirtual->getRegisterName(comp));
+#endif
+         if (!currentAssignedRegister || needTemp)
             {
-            self()->freeBestRegister(currentInstruction, currentTargetVirtual, targetRegister);
+            spareReg = self()->findBestFreeRegister(rk);
+            self()->cg()->setRegisterAssignmentFlag(TR_IndirectCoercion);
+            if (spareReg == NULL)
+               {
+               self()->cg()->setRegisterAssignmentFlag(TR_RegisterSpilled);
+               virtualRegister->block();
+               spareReg = self()->freeBestRegister(currentInstruction, currentTargetVirtual);
+               virtualRegister->unblock();
+               }
             }
-         else
+
+         if (currentAssignedRegister)
             {
             self()->cg()->traceRegAssigned(currentTargetVirtual, currentAssignedRegister);
-            registerExchange(currentInstruction, rk, targetRegister,
-                 currentAssignedRegister, spareReg, self()->cg());
-            currentAssignedRegister->setState(TR::RealRegister::Assigned);
+            registerExchange(currentInstruction, rk, targetRegister, currentAssignedRegister, spareReg, self()->cg());
+            currentAssignedRegister->setState(TR::RealRegister::Blocked);
             currentAssignedRegister->setAssignedRegister(currentTargetVirtual);
             currentTargetVirtual->setAssignedRegister(currentAssignedRegister);
-            // spareReg is still FREE.
-            }
-         }
-      else
-         {
-         if (spareReg == NULL)
-            {
-            self()->cg()->setRegisterAssignmentFlag(TR_RegisterSpilled);
-            self()->freeBestRegister(currentInstruction, currentTargetVirtual, targetRegister);
+            // For Non-GPR, spareReg remains FREE.
             }
          else
             {
             self()->cg()->traceRegAssigned(currentTargetVirtual, spareReg);
             registerCopy(currentInstruction, rk, targetRegister, spareReg, self()->cg());
-            spareReg->setState(TR::RealRegister::Assigned);
-            spareReg->setAssignedRegister(currentTargetVirtual);
+            spareReg->setState(TR::RealRegister::Blocked);
             currentTargetVirtual->setAssignedRegister(spareReg);
+            spareReg->setAssignedRegister(currentTargetVirtual);
             // spareReg is assigned.
-            }
-         if (virtualRegister->getTotalUseCount() != virtualRegister->getFutureUseCount())
-            {
-            self()->cg()->setRegisterAssignmentFlag(TR_RegisterReloaded);
-            self()->reverseSpillState(currentInstruction, virtualRegister, targetRegister);
+
+            if (virtualRegister->getTotalUseCount() != virtualRegister->getFutureUseCount())
+               {
+               self()->cg()->setRegisterAssignmentFlag(TR_RegisterReloaded);
+               self()->reverseSpillState(currentInstruction, virtualRegister, targetRegister);
+               }
             }
          }
-      self()->cg()->resetRegisterAssignmentFlag(TR_IndirectCoercion);
-      }
-   else
-      {
+      else if (targetRegister->getState() == TR::RealRegister::Assigned)
+         {
 #ifdef DEBUG
-      if (comp->getOption(TR_TraceCG))
-         diagnostic(", which is in an unknown state %d", targetRegister->getState());
+         if (comp->getOption(TR_TraceCG))
+            diagnostic(", which is assigned to %s",
+                       currentTargetVirtual->getRegisterName(comp));
 #endif
+         if (!currentAssignedRegister || needTemp)
+            spareReg = self()->findBestFreeRegister(rk);
+
+         self()->cg()->setRegisterAssignmentFlag(TR_IndirectCoercion);
+         if (currentAssignedRegister)
+            {
+            if (!needTemp || (spareReg != NULL))
+               {
+               self()->cg()->traceRegAssigned(currentTargetVirtual, currentAssignedRegister);
+               registerExchange(currentInstruction, rk, targetRegister,
+                                currentAssignedRegister, spareReg, self()->cg());
+               currentAssignedRegister->setState(TR::RealRegister::Assigned);
+               currentAssignedRegister->setAssignedRegister(currentTargetVirtual);
+               currentTargetVirtual->setAssignedRegister(currentAssignedRegister);
+               // spareReg is still FREE.
+               }
+            else
+               {
+               self()->freeBestRegister(currentInstruction, currentTargetVirtual, targetRegister);
+               self()->cg()->traceRegAssigned(currentTargetVirtual, currentAssignedRegister);
+               self()->cg()->setRegisterAssignmentFlag(TR_RegisterSpilled);
+               registerCopy(currentInstruction, rk, currentAssignedRegister, targetRegister, self()->cg());
+               currentAssignedRegister->setState(TR::RealRegister::Free);
+               currentAssignedRegister->setAssignedRegister(NULL);
+               }
+            }
+         else
+            {
+            if (spareReg == NULL)
+               {
+               self()->cg()->setRegisterAssignmentFlag(TR_RegisterSpilled);
+               self()->freeBestRegister(currentInstruction, currentTargetVirtual, targetRegister);
+               }
+            else
+               {
+               self()->cg()->traceRegAssigned(currentTargetVirtual, spareReg);
+               registerCopy(currentInstruction, rk, targetRegister, spareReg, self()->cg());
+               spareReg->setState(TR::RealRegister::Assigned);
+               spareReg->setAssignedRegister(currentTargetVirtual);
+               currentTargetVirtual->setAssignedRegister(spareReg);
+               // spareReg is assigned.
+               }
+
+            if (virtualRegister->getTotalUseCount() != virtualRegister->getFutureUseCount())
+               {
+               self()->cg()->setRegisterAssignmentFlag(TR_RegisterReloaded);
+               self()->reverseSpillState(currentInstruction, virtualRegister, targetRegister);
+               }
+            }
+         self()->cg()->resetRegisterAssignmentFlag(TR_IndirectCoercion);
+         }
+      else
+         {
+#ifdef DEBUG
+         if (comp->getOption(TR_TraceCG))
+            diagnostic(", which is in an unknown state %d", targetRegister->getState());
+#endif
+         }
       }
 
    targetRegister->setState(TR::RealRegister::Assigned);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,13 +20,18 @@
  *******************************************************************************/
 
 #include "env/CompilerEnv.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "codegen/ARMInstruction.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/ARMSystemLinkage.hpp"
 #include "codegen/GCStackAtlas.hpp"
@@ -36,8 +41,6 @@
 #include "codegen/CallSnippet.hpp"
 #endif
 #include "codegen/StackCheckFailureSnippet.hpp"
-#include "il/Node.hpp"
-#include "il/Node_inlines.hpp"
 
 struct UnsupportedParameterType : public virtual TR::CompilationException
    {
@@ -598,6 +601,17 @@ TR::Register *TR::ARMSystemLinkage::buildDirectDispatch(TR::Node *callNode)
 
 TR::Register *TR::ARMSystemLinkage::buildIndirectDispatch(TR::Node *callNode)
    {
-   TR_ASSERT(0, "unimplemented");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
+
+intptr_t TR::ARMSystemLinkage::entryPointFromCompiledMethod()
+   {
+   return reinterpret_cast<intptr_t>(cg()->getCodeStart());
+   }
+
+intptr_t TR::ARMSystemLinkage::entryPointFromInterpretedMethod()
+   {
+   return reinterpret_cast<intptr_t>(cg()->getCodeStart());
+   }
+

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "runtime/Runtime.hpp"
 
 void TR::PPCPairedRelocation::mapRelocation(TR::CodeGenerator *cg)
@@ -64,9 +64,9 @@ void TR::PPCPairedRelocation::mapRelocation(TR::CodeGenerator *cg)
 
 void TR::PPCPairedLabelAbsoluteRelocation::apply(TR::CodeGenerator *cg)
    {
-   intptrj_t p = (intptrj_t)getLabel()->getCodeLocation();
+   intptr_t p = (intptr_t)getLabel()->getCodeLocation();
 
-   if (TR::Compiler->target.is32Bit())
+   if (cg->comp()->target().is32Bit())
       {
       _instr1->updateImmediateField(cg->hiValue(p) & 0x0000ffff);
       _instr2->updateImmediateField(LO_VALUE(p) & 0x0000ffff);

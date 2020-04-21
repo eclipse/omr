@@ -237,6 +237,8 @@ JITBUILDER_FILES=$(RELEASE_DIR)/Makefile \
              $(RELEASE_SRC)/Simple.cpp \
              $(RELEASE_SRC)/Switch.hpp \
              $(RELEASE_SRC)/Switch.cpp \
+             $(RELEASE_SRC)/TableSwitch.hpp \
+             $(RELEASE_SRC)/TableSwitch.cpp \
              $(RELEASE_SRC)/Pow2.hpp \
              $(RELEASE_SRC)/Pow2.cpp \
 

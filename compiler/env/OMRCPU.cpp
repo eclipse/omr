@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#pragma csect(CODE,"OMRCPUBase#C")
+#pragma csect(STATIC,"OMRCPUBase#S")
+#pragma csect(TEST,"OMRCPUBase#T")
+
 #include "env/CPU.hpp"
 #include "env/CompilerEnv.hpp"
 #include "infra/Assert.hpp"
@@ -31,6 +35,14 @@ OMR::CPU::self()
    return static_cast<TR::CPU*>(this);
    }
 
+TR::CPU
+OMR::CPU::detect(OMRPortLibrary * const omrPortLib)
+   {
+   OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
+   OMRProcessorDesc processorDescription;
+   omrsysinfo_get_processor_description(&processorDescription);
+   return TR::CPU(processorDescription);
+   }
 
 void
 OMR::CPU::initializeByHostQuery()
@@ -71,9 +83,25 @@ OMR::CPU::initializeByHostQuery()
    _majorArch = TR::arch_z;
 #elif defined(TR_HOST_ARM64)
    _majorArch = TR::arch_arm64;
+#elif defined(TR_HOST_RISCV)
+   _majorArch = TR::arch_riscv;
+   #if defined (TR_HOST_64BIT)
+   _minorArch = TR::m_arch_riscv64;
+   #else
+   _minorArch = TR::m_arch_riscv32;
+   #endif
 #else
    TR_ASSERT(0, "unknown host architecture");
    _majorArch = TR::arch_unknown;
 #endif
 
    }
+
+bool
+OMR::CPU::supportsFeature(uint32_t feature)
+   {
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+   BOOLEAN supported = omrsysinfo_processor_has_feature(&_processorDescription, feature);
+   return (TRUE == supported);
+   }
+

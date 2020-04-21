@@ -50,10 +50,7 @@ if(OMR_GC)
 		${OMR_PORT_LIB}
 	)
 
-	# TODO: The example is currently broken.
-	# Hashtable iteration appears to be broken, which in turn breaks root
-	# marking, and causes the example to spin forever.
-	# add_test(gcexample gcexample)
+	add_test(NAME gcexample COMMAND gcexample)
 endif(OMR_GC)
 
 add_subdirectory(glue)

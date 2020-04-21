@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,8 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "omravl.h"
-#include "avl_internal.h"
+#include "avl_api.h"
 #include "ut_avl.h"
 
 static J9AVLTreeNode *deleteNode(J9AVLTree *tree, J9AVLTreeNode **walkPtr, J9WSRP *walkSRPPtr, J9AVLTreeNode *node, intptr_t *heightChange);
@@ -43,7 +42,7 @@ static J9AVLTreeNode *insertNode(J9AVLTree *tree, J9AVLTreeNode **walkPtr, J9WSR
 J9AVLTreeNode *
 avl_insert(J9AVLTree *tree, J9AVLTreeNode *nodeToInsert)
 {
-	intptr_t heightChange;
+	intptr_t heightChange = 0;
 
 	return insertNode(tree, &tree->rootNode, NULL, nodeToInsert, &heightChange);
 }
@@ -59,7 +58,7 @@ avl_insert(J9AVLTree *tree, J9AVLTreeNode *nodeToInsert)
 J9AVLTreeNode *
 avl_delete(J9AVLTree *tree, J9AVLTreeNode *nodeToDelete)
 {
-	intptr_t heightChange;
+	intptr_t heightChange = 0;
 
 	return deleteNode(tree, &tree->rootNode, NULL, nodeToDelete, &heightChange);
 }
@@ -90,7 +89,7 @@ avl_search(J9AVLTree *tree, uintptr_t searchValue)
 static J9AVLTreeNode *
 findRightMostLeaf(J9AVLTree *tree, J9WSRP *walkSRPPtr, intptr_t *heightChange)
 {
-	J9AVLTreeNode *find;
+	J9AVLTreeNode *find = NULL;
 	J9AVLTreeNode *walk = NULL;
 
 	Trc_AVL_findRightMostLeaf_Entry(tree, walkSRPPtr, heightChange);
@@ -134,9 +133,9 @@ findRightMostLeaf(J9AVLTree *tree, J9WSRP *walkSRPPtr, intptr_t *heightChange)
 static J9AVLTreeNode *
 rotate(J9AVLTree *tree, J9AVLTreeNode *walk, intptr_t direction, intptr_t *heightChange)
 {
-	J9WSRP *heavyNodePtr;
-	J9WSRP *graftNodePtr;
-	J9AVLTreeNode *heavyNode;
+	J9WSRP *heavyNodePtr = NULL;
+	J9WSRP *graftNodePtr = NULL;
+	J9AVLTreeNode *heavyNode = NULL;
 
 	Trc_AVL_rotate_Entry(tree, walk, direction, heightChange);
 
@@ -199,12 +198,12 @@ rotate(J9AVLTree *tree, J9AVLTreeNode *walk, intptr_t direction, intptr_t *heigh
 static J9AVLTreeNode *
 doubleRotate(J9AVLTree *tree, J9AVLTreeNode *walk, intptr_t direction, intptr_t *heightChange)
 {
-	J9WSRP *heavyNodePtr;
-	J9WSRP *graft1NodePtr;
-	J9WSRP *graft2NodePtr;
-	J9WSRP *newrootNodePtr;
-	J9AVLTreeNode *heavyNode;
-	J9AVLTreeNode *newrootNode;
+	J9WSRP *heavyNodePtr = NULL;
+	J9WSRP *graft1NodePtr = NULL;
+	J9WSRP *graft2NodePtr = NULL;
+	J9WSRP *newrootNodePtr = NULL;
+	J9AVLTreeNode *heavyNode = NULL;
+	J9AVLTreeNode *newrootNode = NULL;
 
 	Trc_AVL_doubleRotate_Entry(tree, walk, direction, heightChange);
 
@@ -283,7 +282,7 @@ static void
 rebalance(J9AVLTree *tree, J9AVLTreeNode **walkPtr, J9WSRP *walkSRPPtr, intptr_t direction, intptr_t *heightChange)
 {
 	J9AVLTreeNode *walk = NULL;
-	uintptr_t walkBalance;
+	uintptr_t walkBalance = 0;
 
 	if (!(*heightChange)) {
 		return;
@@ -363,8 +362,8 @@ static J9AVLTreeNode *
 insertNode(J9AVLTree *tree, J9AVLTreeNode **walkPtr, J9WSRP *walkSRPPtr, J9AVLTreeNode *node, intptr_t *heightChange)
 {
 	J9AVLTreeNode *find = NULL;
-	J9AVLTreeNode *walk;
-	intptr_t dir;
+	J9AVLTreeNode *walk = NULL;
+	intptr_t dir = 0;
 
 	Trc_AVL_insertNode_Entry(tree, walkPtr, walkSRPPtr, node, heightChange);
 
@@ -431,13 +430,12 @@ _done :
 static J9AVLTreeNode *
 findNode(J9AVLTree *tree, J9AVLTreeNode *node, uintptr_t search)
 {
-	intptr_t dir;
 	J9AVLTreeNode *walk = node;
 
 	Trc_AVL_findNode_Entry(tree, walk, search);
 
 	while (walk) {
-		dir = tree->searchComparator(tree, search, walk);
+		intptr_t dir = tree->searchComparator(tree, search, walk);
 		if (dir == 0) {
 			break;
 		}
@@ -469,9 +467,9 @@ findNode(J9AVLTree *tree, J9AVLTreeNode *node, uintptr_t search)
 static J9AVLTreeNode *
 deleteNode(J9AVLTree *tree, J9AVLTreeNode **walkPtr, J9WSRP *walkSRPPtr, J9AVLTreeNode *node, intptr_t *heightChange)
 {
-	J9AVLTreeNode *find;
-	J9AVLTreeNode *walk;
-	intptr_t dir;
+	J9AVLTreeNode *find = NULL;
+	J9AVLTreeNode *walk = NULL;
+	intptr_t dir = 0;
 
 	Trc_AVL_deleteNode_Entry(tree, walkPtr, walkSRPPtr, node, heightChange);
 
@@ -491,10 +489,8 @@ deleteNode(J9AVLTree *tree, J9AVLTreeNode **walkPtr, J9WSRP *walkSRPPtr, J9AVLTr
 
 	dir = tree->insertionComparator(tree, node, walk);
 	if (!dir) {
-		J9AVLTreeNode *walkLeftChild, *walkRightChild;
-
-		walkLeftChild = AVL_SRP_GETNODE(walk->leftChild);
-		walkRightChild = AVL_SRP_GETNODE(walk->rightChild);
+		J9AVLTreeNode *walkLeftChild = AVL_SRP_GETNODE(walk->leftChild);
+		J9AVLTreeNode *walkRightChild = AVL_SRP_GETNODE(walk->rightChild);
 
 		if (!walkLeftChild) {
 			if (!walkSRPPtr) {

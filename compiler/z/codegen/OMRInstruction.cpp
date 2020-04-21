@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,10 +35,11 @@
 #include "codegen/CodeGenPhase.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
@@ -60,15 +61,15 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/deque.hpp"
 #include "ras/Debug.hpp"
@@ -85,7 +86,7 @@ OMR::Z::Instruction::Instruction(TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic
    OMR::Instruction(cg, op, node),
    CTOR_INITIALIZER_LIST
    {
-   TR_ASSERT(cg->getS390ProcessorInfo()->supportsArch(_opcode.getMinimumALS()), "Processor detected does not support instruction %s\n", _opcode.getMnemonicName());
+   TR_ASSERT_FATAL(cg->comp()->target().cpu.getSupportsArch(_opcode.getMinimumALS()), "Processor detected does not support instruction %s\n", _opcode.getMnemonicName());
 
    self()->initialize();
    }
@@ -95,7 +96,7 @@ OMR::Z::Instruction::Instruction(TR::CodeGenerator*cg, TR::Instruction* precedin
    OMR::Instruction(cg, precedingInstruction, op, node),
    CTOR_INITIALIZER_LIST
    {
-   TR_ASSERT(cg->getS390ProcessorInfo()->supportsArch(_opcode.getMinimumALS()), "Processor detected does not support instruction %s\n", _opcode.getMnemonicName());
+   TR_ASSERT_FATAL(cg->comp()->target().cpu.getSupportsArch(_opcode.getMinimumALS()), "Processor detected does not support instruction %s\n", _opcode.getMnemonicName());
 
    self()->initialize(precedingInstruction, true);
    }
@@ -340,33 +341,8 @@ OMR::Z::Instruction::matchesAnyRegister(TR::Register * reg, TR::Register * instR
    TR::RealRegister * realInstReg1 = NULL;
    TR::RealRegister * realInstReg2 = NULL;
 
-   bool enableHighWordRA =
-      self()->cg()->supportsHighWordFacility() &&
-      (reg->getKind()!=TR_FPR)                       &&
-      (instReg->getKind()!=TR_FPR) &&
-      (reg->getKind()!=TR_VRF) &&
-      (instReg->getKind()!=TR_VRF);
-
-   if (enableHighWordRA && reg->getRealRegister())
-      {
-      realReg = (TR::RealRegister *)reg;
-      if (realReg->isHighWordRegister())
-         {
-         // Highword aliasing low word regs
-         realReg = realReg->getLowWordRegister();
-         }
-      }
-
    if (regPair)
       {
-      // if we are matching real regs
-      if (enableHighWordRA && regPair->getHighOrder()->getRealRegister())
-         {
-         // reg pairs do not use HPRs
-         realInstReg1 = (TR::RealRegister *)(regPair->getHighOrder());
-         realInstReg2 = toRealRegister(regPair->getLowOrder());
-         return realReg == realInstReg1 || realReg == realInstReg2;
-         }
       // if we are matching virt regs
       if ((reg == regPair->getHighOrder()) || reg == regPair->getLowOrder())
          {
@@ -375,12 +351,6 @@ OMR::Z::Instruction::matchesAnyRegister(TR::Register * reg, TR::Register * instR
       }
    else
       {
-      // if we are matching real regs
-      if (enableHighWordRA && instReg->getRealRegister())
-         {
-         realInstReg1 = (TR::RealRegister *)instReg;
-         return realReg == realInstReg1;
-         }
       // if we are matching virt regs
       if (reg == instReg)
          {
@@ -425,22 +395,11 @@ OMR::Z::Instruction::useRegister(TR::Register * reg, bool isDummy)
             "[%p] Register Pairs should be allocated using allocateConsecutivePair.\n", self());
          }
 
-      if (_opcode.is64bit() || _opcode.is32to64bit())
-         {
-         firstRegister->setIsUpperBitsAreDirty(true);
-         lastRegister->setIsUpperBitsAreDirty(true);
-         }
-
       OMR::Instruction::useRegister(firstRegister);
       OMR::Instruction::useRegister(lastRegister);
       }
    else
       {
-      if (_opcode.is64bit() || _opcode.is32to64bit())
-         {
-         reg->setIsUpperBitsAreDirty(true);
-         }
-
       OMR::Instruction::useRegister(reg);
 
       // If an instruction uses a dummy register, that register should no longer be considered dummy.
@@ -764,17 +723,6 @@ OMR::Z::Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
                }
             }
 
-         if (self()->cg()->supportsHighWordFacility())
-            {
-            for (int32_t i = TR::RealRegister::FirstHPR; i <= TR::RealRegister::LastHPR; i++)
-               {
-               TR::Register * virtReg = machine->getVirtualAssociatedWithReal((TR::RealRegister::RegNum) (i));
-               if (virtReg)
-                  {
-                  virtReg->setAssociation(TR::RealRegister::NoReg);
-                  }
-               }
-            }
       // Step 2 : loop through and set up the new associations (both on the machine and by associating the virtual
       // registers with their real dependencies)
          TR_S390RegisterDependencyGroup * depGroup = self()->getDependencyConditions()->getPostConditions();
@@ -784,14 +732,6 @@ OMR::Z::Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
             machine->setVirtualAssociatedWithReal((TR::RealRegister::RegNum) (j + 1), virtReg);
             }
 
-         if(self()->cg()->supportsHighWordFacility())
-            {
-            for (int32_t j = 0; j < TR::RealRegister::LastHPR-TR::RealRegister::FirstHPR; ++j)
-               {
-               TR::Register * virtReg = depGroup->getRegisterDependency(j+last)->getRegister();
-               machine->setVirtualAssociatedWithReal((TR::RealRegister::RegNum) (j + TR::RealRegister::FirstHPR), virtReg);
-               }
-            }
          machine->setRegisterWeightsFromAssociations();
          }
       }
@@ -880,109 +820,6 @@ OMR::Z::Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
 
    }
 
-
-
-/////  registerSets utilities for generic register assignment
-
-bool
-OMR::Z::Instruction::isHPRUpgradable(uint16_t operandNumber)
-   {
-   if (_opcode.is64bit())
-      return false;
-
-   switch (self()->getOpCodeValue())
-      {
-      case TR::InstOpCode::AR:
-      case TR::InstOpCode::ALR:
-         //AHHHR, AHHLR,
-         //ALHHHR, ALHHLR
-         //Target Reg cannot be low word
-         if (operandNumber == 0) return true;
-         break;
-      case TR::InstOpCode::AHI:
-         //AIH
-         return true;
-         break;
-      case TR::InstOpCode::BRCT:
-         //BRCTH
-         return true;
-         break;
-      case TR::InstOpCode::CR:
-      case TR::InstOpCode::CLR:
-         //CHHR, CHLR
-         //CLHHR, CLHLR
-         if (operandNumber == 0)
-            return true;
-         break;
-      case TR::InstOpCode::C:
-      case TR::InstOpCode::CY:
-      case TR::InstOpCode::CL:
-      case TR::InstOpCode::CLY:
-         //CHF, CIH
-         if (operandNumber == 0) return true;
-         break;
-      case TR::InstOpCode::CFI:
-      case TR::InstOpCode::CLFI:
-         //CLHF, CLIH
-         return true;
-         break;
-      case TR::InstOpCode::LB:
-      case TR::InstOpCode::LH:
-      case TR::InstOpCode::LHY:
-      case TR::InstOpCode::L:
-      case TR::InstOpCode::LY:
-      case TR::InstOpCode::LLC:
-      case TR::InstOpCode::LLH:
-         //LBH LHH LFH LLCH LLHH
-         if (operandNumber == 0) return true;
-         break;
-      case TR::InstOpCode::LR:
-      case TR::InstOpCode::LLCR:
-      case TR::InstOpCode::LLHR:
-         //LHHR, LHLR, LLHFR
-         //LLCHHR, LLCHLR, LLCLHR
-         //LLHHR, LLHHLR, LLHLHR
-         return true;
-         break;
-      case TR::InstOpCode::LHI:
-         //IIHF need to manually sign-extend
-         return true;
-         break;
-         /* --- RNSBG etc are cracked, not worth it
-      case TR::InstOpCode::NR:
-      case TR::InstOpCode::OR:
-      case TR::InstOpCode::XR:
-         //NHHR, NHLR, NLHR
-         //OHHR, OHLR, OLHR
-         //XHHR, XHLR, XLHR
-         return true;
-         break;
-         */
-      case TR::InstOpCode::ST:
-      case TR::InstOpCode::STY:
-      case TR::InstOpCode::STC:
-      case TR::InstOpCode::STCY:
-      case TR::InstOpCode::STH:
-      case TR::InstOpCode::STHY:
-         //STFH, STCH, STHH
-         if (operandNumber == 0) return true;
-         break;
-      case TR::InstOpCode::SR:
-      case TR::InstOpCode::SLR:
-         //SHHHR, SHHLR
-         //SLHHHR, SLHHR
-         if (operandNumber == 0) return true;
-         break;
-      case TR::InstOpCode::SLFI:
-         //ALSIH
-         return true;
-         break;
-      default:
-         return false;
-      }
-   return false;
-   }
-
 uint32_t
 OMR::Z::Instruction::useSourceRegister(TR::Register * reg)
    {
@@ -1011,22 +848,6 @@ OMR::Z::Instruction::useSourceRegister(TR::Register * reg)
          }
       }
 
-   // mark used bit for HW/LW virtual regs
-   if (self()->cg()->supportsHighWordFacility())
-      {
-      if (!self()->isHPRUpgradable(_targetRegSize+_sourceRegSize-1))
-         {
-         reg->setIsNotHighWordUpgradable(true);
-         }
-
-      if (reg->getRegisterPair())
-         {
-         reg->setIsNotHighWordUpgradable(true);
-         reg->getLowOrder()->setIsNotHighWordUpgradable(true);
-         reg->getHighOrder()->setIsNotHighWordUpgradable(true);
-         }
-      }
-
    return _sourceRegSize-1;   // index into the source register array
    }
 
@@ -1049,13 +870,13 @@ OMR::Z::Instruction::recordOperand(void *operand, int8_t &operandCount)
 
    if(_operands==NULL)
       {
-      ((uintptrj_t** )p)[0]=(uintptrj_t *)operand;
+      ((uintptr_t** )p)[0]=(uintptr_t *)operand;
       _operands=p;
       }
    else
       {
-      for (int i=0; i < n; i++) ((uintptrj_t**)p)[i] = ((uintptrj_t **) _operands)[i];
-      ((uintptrj_t** )p)[n]= (uintptrj_t *) operand;
+      for (int i=0; i < n; i++) ((uintptr_t**)p)[i] = ((uintptr_t **) _operands)[i];
+      ((uintptr_t** )p)[n]= (uintptr_t *) operand;
 
       comp->allocator().deallocate(_operands, sizeof(void *) * n);
       _operands = p;
@@ -1139,11 +960,11 @@ OMR::Z::Instruction::useTargetRegister(TR::Register* reg)
    self()->useRegister(reg);
 
    if (reg->getKind() == TR_GPR && (_opcode.is64bit() || _opcode.is32to64bit() ||
-         (TR::Compiler->target.is64Bit() &&
-            (self()->getOpCodeValue() == TR::InstOpCode::LA || 
-             self()->getOpCodeValue() == TR::InstOpCode::LAY || 
+         (comp->target().is64Bit() &&
+            (self()->getOpCodeValue() == TR::InstOpCode::LA ||
+             self()->getOpCodeValue() == TR::InstOpCode::LAY ||
              self()->getOpCodeValue() == TR::InstOpCode::LARL ||
-             self()->getOpCodeValue() == TR::InstOpCode::BASR || 
+             self()->getOpCodeValue() == TR::InstOpCode::BASR ||
              self()->getOpCodeValue() == TR::InstOpCode::BRASL))))
          {
          reg->setIs64BitReg(true);
@@ -1154,22 +975,6 @@ OMR::Z::Instruction::useTargetRegister(TR::Register* reg)
             reg->getHighOrder()->setIs64BitReg(true);
             }
          }
-
-   // mark used bit for HW/LW virtual regs
-   if (self()->cg()->supportsHighWordFacility())
-      {
-      if (!self()->isHPRUpgradable(_targetRegSize+_sourceRegSize-1))
-         {
-         reg->setIsNotHighWordUpgradable(true);
-         }
-
-      if (reg->getRegisterPair())
-         {
-         reg->setIsNotHighWordUpgradable(true);
-         reg->getLowOrder()->setIsNotHighWordUpgradable(true);
-         reg->getHighOrder()->setIsNotHighWordUpgradable(true);
-         }
-      }
 
    return _targetRegSize-1;      // index into the target register array
    }
@@ -1260,12 +1065,7 @@ OMR::Z::Instruction::assignRegisterNoDependencies(TR::Register * reg)
          virtReg->setAssignedRegister(NULL);
          realReg->setAssignedRegister(NULL);
          realReg->setState(TR::RealRegister::Free);
-         if (virtReg->getKind() != TR_FPR && virtReg->is64BitReg() && virtReg->getKind() != TR_VRF)
-            {
-            toRealRegister(realReg)->getHighWordRegister()->setAssignedRegister(NULL);
-            toRealRegister(realReg)->getHighWordRegister()->setState(TR::RealRegister::Free);
-            self()->cg()->traceRegFreed(virtReg, toRealRegister(realReg)->getHighWordRegister());
-            }
+
          self()->cg()->traceRegFreed(virtReg, realReg);
          }
 
@@ -1287,12 +1087,7 @@ OMR::Z::Instruction::assignRegisterNoDependencies(TR::Register * reg)
          virtRegHigh->setAssignedRegister(NULL);
          realRegHigh->setAssignedRegister(NULL);
          realRegHigh->setState(TR::RealRegister::Free);
-         if (virtRegHigh->getKind() != TR_FPR && virtRegHigh->is64BitReg() && virtRegHigh->getKind() != TR_VRF)
-            {
-            toRealRegister(realRegHigh)->getHighWordRegister()->setAssignedRegister(NULL);
-            toRealRegister(realRegHigh)->getHighWordRegister()->setState(TR::RealRegister::Free);
-            self()->cg()->traceRegFreed(virtRegHigh, toRealRegister(realRegHigh)->getHighWordRegister());
-            }
+
          self()->cg()->traceRegFreed(virtRegHigh, realRegHigh);
          }
 
@@ -1302,19 +1097,17 @@ OMR::Z::Instruction::assignRegisterNoDependencies(TR::Register * reg)
          virtRegLow->setAssignedRegister(NULL);
          realRegLow->setAssignedRegister(NULL);
          realRegLow->setState(TR::RealRegister::Free);
-         if (virtRegLow->getKind() != TR_FPR && virtRegLow->is64BitReg() && virtRegLow->getKind() != TR_VRF)
-            {
-            toRealRegister(realRegLow)->getHighWordRegister()->setAssignedRegister(NULL);
-            toRealRegister(realRegLow)->getHighWordRegister()->setState(TR::RealRegister::Free);
-            self()->cg()->traceRegFreed(virtRegLow, toRealRegister(realRegLow)->getHighWordRegister());
-            }
+
          self()->cg()->traceRegFreed(virtRegLow, realRegLow);
          }
 
       return reg;
       }
 
-   return self()->cg()->machine()->assignBestRegister(reg, self(), BOOKKEEPING);
+   uint64_t regMask = 0xffffffff;
+   if (reg->isUsedInMemRef())
+      regMask = ~TR::RealRegister::GPR0Mask;
+   return self()->cg()->machine()->assignBestRegister(reg, self(), BOOKKEEPING, regMask);
    }
 
 // Make sure reg life is really ended.
@@ -1478,32 +1271,6 @@ OMR::Z::Instruction::assignOrderedRegisters(TR_RegisterKinds kindToBeAssigned)
      postInstrFreeReg = _targetReg[0];
      }
 
-   // Keep track of the first and second non-pair source registers for later
-   // when determining if "setAssignToHPR" should be called.
-   TR::Register *  firstNonPairSourceRegister = 0;
-   TR::Register * secondNonPairSourceRegister = 0;
-
-   for (i = 0; i < _sourceRegSize; i++)
-      {
-      if (_sourceReg[i]->getRegisterPair())
-         continue;
-
-      if (firstNonPairSourceRegister == 0)
-         {
-         firstNonPairSourceRegister = _sourceReg[i];
-         }
-      else if (secondNonPairSourceRegister == 0)
-         {
-         secondNonPairSourceRegister = _sourceReg[i];
-         break;
-         }
-      }
-
-   if (firstNonPairSourceRegister == secondNonPairSourceRegister)
-      {
-      secondNonPairSourceRegister = 0;
-      }
-
    //  If there is only 1 target register we don't need to block
    //
    if (numTrgtPairs==0 && _targetReg &&
@@ -1527,42 +1294,22 @@ OMR::Z::Instruction::assignOrderedRegisters(TR_RegisterKinds kindToBeAssigned)
       if (!_targetReg[i]->getRegisterPair())
          continue;
 
-      if (self()->cg()->supportsHighWordFacility())
-         _targetReg[i]->setAssignToHPR(false);
       TR::Register *virtReg=_targetReg[i];
       _targetReg[i] = self()->assignRegisterNoDependencies(virtReg);
       _targetReg[i]->block();
 
       tgtAssigned[i] = 2;
-
-      if (self()->cg()->supportsHighWordFacility())
-         {
-         // don't need to block HPR here beacuse no Highword instruction uses register pair
-         // but make sure we do not spill to the targetReg's HPR (even if it became free) while assigning sourceReg
-         if (_targetReg[i]->getRegisterPair() &&
-             _targetReg[i]->getRegisterPair()->getHighOrder()->getKind() != TR_FPR &&
-             _targetReg[i]->getRegisterPair()->getHighOrder()->getKind() != TR_VRF)
-            {
-            uint32_t availHPRMask = self()->cg()->getAvailableHPRSpillMask();
-            availHPRMask &= ~(toRealRegister(_targetReg[i]->getRegisterPair()->getHighOrder())->getHighWordRegister()->getRealRegisterMask());
-            availHPRMask &= ~(toRealRegister(_targetReg[i]->getRegisterPair()->getLowOrder())->getHighWordRegister()->getRealRegisterMask());
-            self()->cg()->setAvailableHPRSpillMask(availHPRMask);
-            }
-         }
       }
    for (i = 0; i < _sourceRegSize; ++i)
       {
       if (!_sourceReg[i]->getRegisterPair())
          continue;
 
-      if (self()->cg()->supportsHighWordFacility())
-         (_sourceReg[i])->setAssignToHPR(false);
       (_sourceReg[i]) = self()->assignRegisterNoDependencies(_sourceReg[i]);
       (_sourceReg[i])->block();
 
       srcAssigned[i] = 2;
       }
-   bool blockTargetHighword = false;
    bool targetRegIs64Bit = false;
    // Assign all registers, blocking assignments as you go
    //
@@ -1575,44 +1322,12 @@ OMR::Z::Instruction::assignOrderedRegisters(TR_RegisterKinds kindToBeAssigned)
 
          registerOperandNum = (_targetReg < _sourceReg) ? i+1 : _sourceRegSize+i+1;
 
-         if (self()->cg()->supportsHighWordFacility())
-            {
-            if ((self()->getOpCodeValue() == TR::InstOpCode::RISBLG || self()->getOpCodeValue() == TR::InstOpCode::RISBHG) &&
-                ((TR::S390RIEInstruction *)self())->getExtendedHighWordOpCode().getOpCodeValue() != TR::InstOpCode::BAD)
-               {
-               if (((TR::S390RIEInstruction *)self())->getExtendedHighWordOpCode().isOperandHW(registerOperandNum))
-                  _targetReg[i]->setAssignToHPR(true);
-               else
-                  _targetReg[i]->setAssignToHPR(false);
-               }
-            else if (_opcode.isOperandHW(registerOperandNum))
-               _targetReg[i]->setAssignToHPR(true);
-            else
-               _targetReg[i]->setAssignToHPR(false);
-            }
-
          if (_targetReg[i]->is64BitReg() && _targetReg[i]->getRealRegister() == NULL &&
              _targetReg[i]->getKind() != TR_FPR && _targetReg[i]->getKind() != TR_VRF)
             {
             targetRegIs64Bit = true;
             }
          _targetReg[i] = self()->assignRegisterNoDependencies(_targetReg[i]);
-
-         if (self()->cg()->supportsHighWordFacility() &&
-             _targetReg[i]->getKind() != TR_FPR && _targetReg[i]->getKind() != TR_VRF)
-            {
-            if (toRealRegister(_targetReg[i])->getState() == TR::RealRegister::Free && targetRegIs64Bit)
-               {
-               blockTargetHighword = true;
-               toRealRegister(_targetReg[i])->getHighWordRegister()->setState(TR::RealRegister::Blocked);
-               TR_ASSERT(i==0, "more than 1 HPR target regs need to be blocked?");
-               }
-
-            // make sure we do not spill to the targetReg's HPR later (even if it's free)
-            uint32_t availHPRMask = self()->cg()->getAvailableHPRSpillMask();
-            availHPRMask &= ~(toRealRegister(_targetReg[i])->getHighWordRegister()->getRealRegisterMask());
-            self()->cg()->setAvailableHPRSpillMask(availHPRMask);
-            }
 
          if (_targetReg[i]->getAssignedRegister())
             {
@@ -1669,24 +1384,6 @@ OMR::Z::Instruction::assignOrderedRegisters(TR_RegisterKinds kindToBeAssigned)
    if (_sourceReg)
       {
       registerOperandNum = (_targetReg < _sourceReg) ? _targetRegSize+1 : 1;
-      if (self()->cg()->supportsHighWordFacility())
-         {
-         if (firstNonPairSourceRegister)
-            {
-            if ((self()->getOpCodeValue() == TR::InstOpCode::RISBLG || self()->getOpCodeValue() == TR::InstOpCode::RISBHG) &&
-                ((TR::S390RIEInstruction *)self())->getExtendedHighWordOpCode().getOpCodeValue() != TR::InstOpCode::BAD)
-               {
-               firstNonPairSourceRegister->setAssignToHPR(((TR::S390RIEInstruction *)self())->getExtendedHighWordOpCode().isOperandHW(registerOperandNum));
-               }
-            else
-               firstNonPairSourceRegister->setAssignToHPR(_opcode.isOperandHW(registerOperandNum));
-            }
-
-         if (secondNonPairSourceRegister)
-            {
-            secondNonPairSourceRegister->setAssignToHPR(_opcode.isOperandHW(registerOperandNum+1));
-            }
-         }
 
       for (i = 0; i < _sourceRegSize; ++i)
          {
@@ -1705,17 +1402,6 @@ OMR::Z::Instruction::assignOrderedRegisters(TR_RegisterKinds kindToBeAssigned)
       {
       for (i = 0; i < _sourceMemSize; ++i)
          {
-         if (self()->cg()->supportsHighWordFacility())
-            {
-            if (_sourceMem[i]->getBaseRegister())
-               {
-               _sourceMem[i]->getBaseRegister()->setAssignToHPR(false);
-               }
-            if (_sourceMem[i]->getIndexRegister())
-               {
-               _sourceMem[i]->getIndexRegister()->setAssignToHPR(false);
-               }
-            }
          _sourceMem[i]->assignRegisters(self(), self()->cg());
          _sourceMem[i]->blockRegisters();
          }
@@ -1724,36 +1410,13 @@ OMR::Z::Instruction::assignOrderedRegisters(TR_RegisterKinds kindToBeAssigned)
       {
       for (i = 0; i < _targetMemSize; ++i)
          {
-         if (self()->cg()->supportsHighWordFacility())
-            {
-            if (_targetMem[i]->getBaseRegister())
-               {
-               _targetMem[i]->getBaseRegister()->setAssignToHPR(false);
-               }
-            if (_targetMem[i]->getIndexRegister())
-               {
-               _targetMem[i]->getIndexRegister()->setAssignToHPR(false);
-               }
-            }
          _targetMem[i]->assignRegisters(self(), self()->cg());
          _targetMem[i]->blockRegisters();
          }
       }
 
-
-   if (blockTargetHighword)
-      {
-      toRealRegister(_targetReg[0])->getHighWordRegister()->setState(TR::RealRegister::Free);
-      }
    // Unblock everything, as we are done assigning for this instr
    self()->unblock(_sourceReg, _sourceRegSize,  _targetReg, _targetRegSize, _sourceMem, _targetMem);
-   /* Unblock registers that were Assigned and then Blocked in deeper stack frames of RA (src/target is HPR/GPR). */
-   TR::RealRegister * reg = NULL;
-   while(reg = self()->cg()->machine()->getNextRegFromUpgradedBlockedList())
-      {
-      self()->cg()->traceRegisterAssignment("Restoring blocked register %R (0x%p) to previous state", reg, reg);
-      reg->unblock();
-      }
    }
 
 void
@@ -1871,7 +1534,7 @@ OMR::Z::Instruction::renameRegister(TR::Register *from, TR::Register *to)
     }
 
   TR::RegisterDependencyConditions *conds = self()->getDependencyConditions();
-  if (conds && !conds->getConflictsResolved())
+  if (conds)
     {
     TR_S390RegisterDependencyGroup *preConds = conds->getPreConditions();
     TR_S390RegisterDependencyGroup *postConds = conds->getPostConditions();
@@ -1903,51 +1566,6 @@ OMR::Z::Instruction::renameRegister(TR::Register *from, TR::Register *to)
   return numReplaced;
   }
 
-
-void
-OMR::Z::Instruction::blockHPR(TR::Register * reg)
-   {
-   TR::Compilation *comp = self()->cg()->comp();
-
-   if (reg->getKind() != TR_FPR && reg->getKind() != TR_VRF)
-      {
-      if (reg->is64BitReg() && reg->getAssignedRegister() != NULL)
-         {
-         TR::RealRegister *assignedReg = reg->getAssignedRegister()->getRealRegister();
-
-         if (assignedReg != NULL)
-            {
-            if (toRealRegister(assignedReg)->getHighWordRegister()->getState() == TR::RealRegister::Assigned)
-               {
-               toRealRegister(assignedReg)->getHighWordRegister()->setState(TR::RealRegister::Blocked);
-               }
-            }
-         }
-      }
-   }
-
-void
-OMR::Z::Instruction::unblockHPR(TR::Register * reg)
-   {
-   TR::Compilation *comp = self()->cg()->comp();
-
-   if (reg->getKind() != TR_FPR && reg->getKind() != TR_VRF)
-      {
-      if (reg->is64BitReg() && reg->getAssignedRegister() != NULL)
-         {
-         TR::RealRegister *assignedReg = reg->getAssignedRegister()->getRealRegister();
-
-         if (assignedReg != NULL)
-            {
-            if (toRealRegister(assignedReg)->getHighWordRegister()->getState() == TR::RealRegister::Blocked)
-               {
-               toRealRegister(assignedReg)->getHighWordRegister()->setState(TR::RealRegister::Assigned, reg->isPlaceholderReg());
-               }
-            }
-         }
-      }
-   }
-
 void
 OMR::Z::Instruction::block(TR::Register **sourceReg, int sourceRegSize, TR::Register** targetReg, int targetRegSize,
    TR::MemoryReference ** sourceMem, TR::MemoryReference ** targetMem)
@@ -1958,39 +1576,21 @@ OMR::Z::Instruction::block(TR::Register **sourceReg, int sourceRegSize, TR::Regi
    for (i = 0; i < targetRegSize; ++i)
       {
       (targetReg[i])->block();
-      self()->blockHPR(targetReg[i]);
       }
 
    for (i = 0; i < sourceRegSize; ++i)
       {
       (sourceReg[i])->block();
-      self()->blockHPR(sourceReg[i]);
       }
 
    for (i = 0; i < _targetMemSize; ++i)
       {
       targetMem[i]->blockRegisters();
-      if (targetMem[i]->getBaseRegister())
-         {
-         self()->blockHPR(targetMem[i]->getBaseRegister());
-         }
-      if (targetMem[i]->getIndexRegister())
-         {
-         self()->blockHPR(targetMem[i]->getIndexRegister());
-         }
       }
 
    for (i = 0; i < _sourceMemSize; ++i)
       {
       sourceMem[i]->blockRegisters();
-      if (sourceMem[i]->getBaseRegister())
-         {
-         self()->blockHPR(sourceMem[i]->getBaseRegister());
-         }
-      if (sourceMem[i]->getIndexRegister())
-         {
-         self()->blockHPR(sourceMem[i]->getIndexRegister());
-         }
       }
    }
 
@@ -2006,39 +1606,21 @@ OMR::Z::Instruction::unblock(TR::Register **sourceReg, int sourceRegSize, TR::Re
    for (i = 0; i < targetRegSize; ++i)
       {
       targetReg[i]->unblock();
-      self()->unblockHPR(targetReg[i]);
       }
 
    for (i = 0; i < sourceRegSize; ++i)
       {
       (sourceReg[i])->unblock();
-      self()->unblockHPR(sourceReg[i]);
       }
 
    for (i = 0; i < _targetMemSize; ++i)
       {
       targetMem[i]->unblockRegisters();
-      if (targetMem[i]->getBaseRegister())
-         {
-         self()->unblockHPR(targetMem[i]->getBaseRegister());
-         }
-      if (targetMem[i]->getIndexRegister())
-         {
-         self()->unblockHPR(targetMem[i]->getIndexRegister());
-         }
       }
 
    for (i = 0; i < _sourceMemSize; ++i)
       {
       sourceMem[i]->unblockRegisters();
-      if (sourceMem[i]->getBaseRegister())
-         {
-         self()->unblockHPR(sourceMem[i]->getBaseRegister());
-         }
-      if (sourceMem[i]->getIndexRegister())
-         {
-         self()->unblockHPR(sourceMem[i]->getIndexRegister());
-         }
       }
    }
 
@@ -2328,35 +1910,6 @@ OMR::Z::Instruction::setUseDefRegisters(bool updateDependencies)
              tempRegister=postConditions->getRegisterDependency(i)->getRegister();
               if (tempRegister && tempRegister->getRegisterPair()==NULL)
                 (*_defRegs)[indexTarget++]=tempRegister;
-               }
-            }
-         }
-      }
-
-   // set all HPRs to alias GPRs
-   if (self()->cg()->supportsHighWordFacility())
-      {
-      if (_useRegs)
-         {
-         for (i=0;i<_useRegs->size();i++)
-            {
-            if (((*_useRegs)[i])->getRealRegister())
-               {
-               TR::RealRegister * realReg = toRealRegister((*_useRegs)[i]);
-               if (realReg && realReg->isHighWordRegister())
-                  (*_useRegs)[i] = realReg->getLowWordRegister();
-               }
-            }
-         }
-      if (_defRegs)
-         {
-         for (i=0;i<_defRegs->size();i++)
-            {
-            if (((*_defRegs)[i])->getRealRegister())
-               {
-               TR::RealRegister * realReg = toRealRegister((*_defRegs)[i]);
-               if (realReg && realReg->isHighWordRegister())
-                  (*_defRegs)[i] = realReg->getLowWordRegister();
                }
             }
          }

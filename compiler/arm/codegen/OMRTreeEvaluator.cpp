@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +29,10 @@
 #include "codegen/CallSnippet.hpp"
 #endif
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
 #include "codegen/RegisterPair.hpp"
@@ -41,9 +43,9 @@
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
 #include "infra/Annotations.hpp"
 #include "infra/Bit.hpp"
 
@@ -194,7 +196,7 @@ TR::Instruction *fixedSeqMemAccess(TR::CodeGenerator *cg, TR::Node *node, int32_
    return cursor;
    }
 
-TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg, TR::Node * node, intptrj_t address, TR::Register *trgReg, bool isUnloadablePicSite, TR::Instruction *cursor)
+TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg, TR::Node * node, intptr_t address, TR::Register *trgReg, bool isUnloadablePicSite, TR::Instruction *cursor)
    {
    TR::Instruction *q[5];
    TR::Instruction *c = fixedSeqMemAccess(cg, node, 0, q, trgReg, cursor);
@@ -202,7 +204,7 @@ TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg, TR::Node * 
    return c;
    }
 
-TR::Instruction *loadAddressConstantFixed(TR::CodeGenerator *cg, TR::Node * node, intptrj_t value, TR::Register *trgReg, TR::Instruction *cursor, uint8_t *targetAddress, uint8_t *targetAddress2, int16_t typeAddress, bool doAOTRelocation)
+TR::Instruction *loadAddressConstantFixed(TR::CodeGenerator *cg, TR::Node * node, intptr_t value, TR::Register *trgReg, TR::Instruction *cursor, uint8_t *targetAddress, uint8_t *targetAddress2, int16_t typeAddress, bool doAOTRelocation)
    {
    TR::Compilation *comp = cg->comp();
    bool isAOT = comp->compileRelocatableCode();
@@ -313,7 +315,7 @@ TR::Instruction *loadAddressConstantFixed(TR::CodeGenerator *cg, TR::Node * node
    return(cursor);
    }
 
-TR::Instruction *loadAddressConstant(TR::CodeGenerator *cg, TR::Node * node, intptrj_t value, TR::Register *trgReg, TR::Instruction *cursor, bool isPicSite, int16_t typeAddress, uint8_t *targetAddress, uint8_t *targetAddress2)
+TR::Instruction *loadAddressConstant(TR::CodeGenerator *cg, TR::Node * node, intptr_t value, TR::Register *trgReg, TR::Instruction *cursor, bool isPicSite, int16_t typeAddress, uint8_t *targetAddress, uint8_t *targetAddress2)
    {
    if (cg->comp()->compileRelocatableCode())
       return loadAddressConstantFixed(cg, node, value, trgReg, cursor, targetAddress, targetAddress2, typeAddress);
@@ -325,7 +327,7 @@ TR::Instruction *loadAddressConstant(TR::CodeGenerator *cg, TR::Node * node, int
 TR::Register *OMR::ARM::TreeEvaluator::iloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Register *tempReg;
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
 
    tempReg = cg->allocateRegister();
    if (node->getSymbolReference()->getSymbol()->isInternalPointer())
@@ -338,9 +340,9 @@ TR::Register *OMR::ARM::TreeEvaluator::iloadEvaluator(TR::Node *node, TR::CodeGe
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, 4, cg);
    generateTrg1MemInstruction(cg, ARMOp_ldr, node, tempReg, tempMR);
 
-   if (needSync && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (needSync && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      generateInstruction(cg, (TR::Compiler->target.cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
+      generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
       }
    tempMR->decNodeReferenceCounts();
 
@@ -430,7 +432,7 @@ TR::Register *OMR::ARM::TreeEvaluator::aloadEvaluator(TR::Node *node, TR::CodeGe
       }
 
    TR::Register *tempReg;
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
 
    if (!node->getSymbolReference()->getSymbol()->isInternalPointer())
       {
@@ -457,9 +459,9 @@ TR::Register *OMR::ARM::TreeEvaluator::aloadEvaluator(TR::Node *node, TR::CodeGe
       }
 #endif
 
-   if (needSync && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (needSync && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      generateInstruction(cg, (TR::Compiler->target.cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
+      generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
       }
    tempMR->decNodeReferenceCounts();
 
@@ -473,18 +475,18 @@ TR::Register *OMR::ARM::TreeEvaluator::lloadEvaluator(TR::Node *node, TR::CodeGe
    TR::Register           *highReg = cg->allocateRegister();
    TR::RegisterPair       *trgReg = cg->allocateRegisterPair(lowReg, highReg);
    TR::Compilation *comp = cg->comp();
-   bool bigEndian = TR::Compiler->target.cpu.isBigEndian();
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   bool bigEndian = cg->comp()->target().cpu.isBigEndian();
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
 
-   if (needSync && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (needSync && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, 8, cg);
       TR::SymbolReference *vrlRef = comp->getSymRefTab()->findOrCreateVolatileReadLongSymbolRef(comp->getMethodSymbol());
 
       generateTrg1MemInstruction(cg, ARMOp_add, node, bigEndian ? highReg: lowReg, tempMR);
       TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-      addDependency(deps, lowReg, bigEndian ? TR::RealRegister::gr1 : TR::RealRegister::gr0, TR_GPR, cg);
-      addDependency(deps, highReg, bigEndian ? TR::RealRegister::gr0 : TR::RealRegister::gr1, TR_GPR, cg);
+      TR::addDependency(deps, lowReg, bigEndian ? TR::RealRegister::gr1 : TR::RealRegister::gr0, TR_GPR, cg);
+      TR::addDependency(deps, highReg, bigEndian ? TR::RealRegister::gr0 : TR::RealRegister::gr1, TR_GPR, cg);
 
       generateImmSymInstruction(cg, ARMOp_bl,
                                 node, (uintptr_t)vrlRef->getMethodAddress(),
@@ -532,11 +534,11 @@ TR::Register *OMR::ARM::TreeEvaluator::commonLoadEvaluator(TR::Node *node,  TR_A
    {
    TR::Register *tempReg = node->setRegister(cg->allocateRegister());
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, memSize, cg);
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
    generateTrg1MemInstruction(cg, memToRegOp, node, tempReg, tempMR);
-   if (needSync && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (needSync && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      generateInstruction(cg, (TR::Compiler->target.cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
+      generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
       }
    tempMR->decNodeReferenceCounts();
    return tempReg;
@@ -550,7 +552,7 @@ TR::Register *OMR::ARM::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::Code
    TR::Node                *firstChild = node->getFirstChild();
    TR::Register            *sourceRegister;
    bool killSource = false;
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
 
    if (firstChild->getReferenceCount() > 1 && firstChild->getRegister() != NULL)
       {
@@ -568,9 +570,9 @@ TR::Register *OMR::ARM::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::Code
    else
       sourceRegister = cg->evaluate(firstChild);
 
-   if (needSync && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (needSync && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      generateInstruction(cg, (TR::Compiler->target.cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
+      generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
       }
 
    generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, sourceRegister);
@@ -596,7 +598,7 @@ TR::Register *OMR::ARM::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Cod
    TR::Node                *secondChild = node->getSecondChild();
    TR::Register            *sourceRegister;
    bool killSource = false;
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
 
    /* comp->useCompressedPointers() is false for 32bit environment, leaving the compressed pointer support unimplemented. */
    if (secondChild->getReferenceCount() > 1 && secondChild->getRegister() != NULL)
@@ -615,9 +617,9 @@ TR::Register *OMR::ARM::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Cod
    else
       sourceRegister = cg->evaluate(secondChild);
 
-   if (needSync && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (needSync && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      generateInstruction(cg, (TR::Compiler->target.cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
+      generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
       }
 
    generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, sourceRegister);
@@ -650,11 +652,11 @@ TR::Register *OMR::ARM::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR::CodeG
       {
       valueChild = node->getFirstChild();
       }
-   bool bigEndian = TR::Compiler->target.cpu.isBigEndian();
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   bool bigEndian = cg->comp()->target().cpu.isBigEndian();
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
    TR::Register *valueReg = cg->evaluate(valueChild);
 
-   if (needSync && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (needSync && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
       TR::Register           *addrReg  = cg->allocateRegister();
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, 8, cg);
@@ -662,9 +664,9 @@ TR::Register *OMR::ARM::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR::CodeG
 
       generateTrg1MemInstruction(cg, ARMOp_add, node, addrReg, tempMR);
       TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
-      addDependency(deps, addrReg, TR::RealRegister::gr0, TR_GPR, cg);
-      addDependency(deps, valueReg->getLowOrder(), TR::RealRegister::gr1, TR_GPR, cg);
-      addDependency(deps, valueReg->getHighOrder(), TR::RealRegister::gr2, TR_GPR, cg);
+      TR::addDependency(deps, addrReg, TR::RealRegister::gr0, TR_GPR, cg);
+      TR::addDependency(deps, valueReg->getLowOrder(), TR::RealRegister::gr1, TR_GPR, cg);
+      TR::addDependency(deps, valueReg->getHighOrder(), TR::RealRegister::gr2, TR_GPR, cg);
 
       generateImmSymInstruction(cg, ARMOp_bl,
                                 node, (uintptr_t)vwlRef->getMethodAddress(),
@@ -716,7 +718,7 @@ TR::Register *OMR::ARM::TreeEvaluator::istoreEvaluator(TR::Node *node, TR::CodeG
 TR::Register *OMR::ARM::TreeEvaluator::commonStoreEvaluator(TR::Node *node, TR_ARMOpCodes memToRegOp, int32_t memSize, TR::CodeGenerator *cg)
    {
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, memSize, cg);
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
    TR::Node *valueChild;
    if (node->getOpCode().isIndirect())
       {
@@ -727,14 +729,14 @@ TR::Register *OMR::ARM::TreeEvaluator::commonStoreEvaluator(TR::Node *node, TR_A
       valueChild = node->getFirstChild();
       }
 
-   if (needSync && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (needSync && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      generateInstruction(cg, (TR::Compiler->target.cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb_st, node);
+      generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb_st, node);
       }
    generateMemSrc1Instruction(cg, memToRegOp, node, tempMR, cg->evaluate(valueChild));
-   if (needSync && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (needSync && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      generateInstruction(cg, (TR::Compiler->target.cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
+      generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
       }
    valueChild->decReferenceCount();
    tempMR->decNodeReferenceCounts();
@@ -753,55 +755,50 @@ TR::Register *OMR::ARM::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::Code
    }
 #endif
 
-TR::Register *OMR::ARM::TreeEvaluator::monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return NULL;         //this op code does not evaluate to anything
-   }
-
-TR::Register *OMR::ARM::TreeEvaluator::integerHighestOneBit(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::integerLowestOneBit(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::integerNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::integerNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::integerBitCount(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::longHighestOneBit(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::longLowestOneBit(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::longNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::longNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
-TR::Register *OMR::ARM::TreeEvaluator::longBitCount(TR::Node *node, TR::CodeGenerator *cg){ TR_ASSERT(0, "not implemented!"); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::integerHighestOneBit(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::integerLowestOneBit(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::integerNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::integerNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::integerBitCount(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::longHighestOneBit(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::longLowestOneBit(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::longNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::longNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
+TR::Register *OMR::ARM::TreeEvaluator::longBitCount(TR::Node *node, TR::CodeGenerator *cg) { TR_UNIMPLEMENTED(); return NULL; }
 
 TR::Register *OMR::ARM::TreeEvaluator::reverseLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "reverseLoad not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::reverseStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "reverseStore not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::arraytranslateAndTestEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "arraytranslateAndTest not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "arraytranslate not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "arrayset not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::arraycmpEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_ASSERT(0, "arraycmp not implemented yet for this platform");
+   TR_UNIMPLEMENTED();
    return NULL;
    }
 
@@ -847,10 +844,10 @@ static void constLengthArrayCopyEvaluator(TR::Node *node, int32_t byteLen, TR::R
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(7,7, cg->trMemory());
 
-   addDependency(deps, src, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, src, TR::RealRegister::NoReg, TR_GPR, cg);
    deps->getPreConditions()->getRegisterDependency(0)->setExcludeGPR0();
    deps->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
-   addDependency(deps, dst, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, dst, TR::RealRegister::NoReg, TR_GPR, cg);
    deps->getPreConditions()->getRegisterDependency(1)->setExcludeGPR0();
    deps->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0();
 
@@ -861,15 +858,15 @@ static void constLengthArrayCopyEvaluator(TR::Node *node, int32_t byteLen, TR::R
       }
 
    regs[0] = cg->allocateRegister(TR_GPR); //as byteLen > 0 here, will need at least one register
-   addDependency(deps, regs[0], TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, regs[0], TR::RealRegister::NoReg, TR_GPR, cg);
    if (groups != 0)
       {
       regs[1] = cg->allocateRegister(TR_GPR);
       regs[2] = cg->allocateRegister(TR_GPR);
       regs[3] = cg->allocateRegister(TR_GPR);
-      addDependency(deps, regs[1], TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(deps, regs[2], TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(deps, regs[3], TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, regs[1], TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, regs[2], TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(deps, regs[3], TR::RealRegister::NoReg, TR_GPR, cg);
 
       TR::Register *countReg = cg->allocateRegister();
       if (groups <= UPPER_IMMED12)
@@ -970,9 +967,9 @@ TR::Register *OMR::ARM::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Co
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3,3, cg->trMemory());
    // Build up the dependency conditions
    // r0 is length in bytes, r1 is srcAddr, r2 is dstAddr
-   addDependency(deps, lengthReg, TR::RealRegister::gr0, TR_GPR, cg);
-   addDependency(deps, srcAddrReg, TR::RealRegister::gr1, TR_GPR, cg);
-   addDependency(deps, dstAddrReg, TR::RealRegister::gr2, TR_GPR, cg);
+   TR::addDependency(deps, lengthReg, TR::RealRegister::gr0, TR_GPR, cg);
+   TR::addDependency(deps, srcAddrReg, TR::RealRegister::gr1, TR_GPR, cg);
+   TR::addDependency(deps, dstAddrReg, TR::RealRegister::gr2, TR_GPR, cg);
 
    arrayCopyHelper = cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMarrayCopy, false, false, false);
 
@@ -1346,7 +1343,7 @@ TR::Register *OMR::ARM::TreeEvaluator::BBStartEvaluator(TR::Node *node, TR::Code
             TR::ParameterSymbol *sym = child->getChild(i)->getSymbolReference()->getSymbol()->getParmSymbol();
             if (sym != NULL)
                {
-               sym->setAllocatedIndex(cg->getGlobalRegister(child->getChild(i)->getGlobalRegisterNumber()));
+               sym->setAssignedGlobalRegisterIndex(cg->getGlobalRegister(child->getChild(i)->getGlobalRegisterNumber()));
                }
             }
          }
@@ -1432,7 +1429,7 @@ TR::Register *OMR::ARM::TreeEvaluator::conversionAnalyser(TR::Node          *nod
    if (child->getReferenceCount() == 1 && child->getRegister() == NULL && child->getOpCode().isMemoryReference())
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, dstBits >> 3, cg);
-      if (TR::Compiler->target.cpu.isBigEndian() && node->getSize() < child->getSize())
+      if (cg->comp()->target().cpu.isBigEndian() && node->getSize() < child->getSize())
          {
          tempMR->addToOffset(node, child->getSize() - (dstBits>>3), cg);
          }
@@ -1457,7 +1454,7 @@ static void generateSignOrZeroExtend(TR::Node *node, TR::Register *dst, TR::Regi
    {
    TR_ARMOpCodes opcode = ARMOp_bad;
 
-   if (TR::Compiler->target.cpu.id() >= TR_ARMv6)
+   if (cg->comp()->target().cpu.id() >= TR_ARMv6)
       {
       // sxtb/sxth/uxtb/uxth instructions are unavailable in ARMv5 and older
       if (needSignExtend)

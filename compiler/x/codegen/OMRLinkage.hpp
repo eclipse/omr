@@ -36,14 +36,12 @@ namespace OMR { typedef OMR::X86::Linkage LinkageConnector; }
 #include <algorithm>
 #include <stddef.h>
 #include <stdint.h>
-#include "codegen/CodeGenerator.hpp"
-#include "codegen/Machine.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
+#include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "il/DataTypes.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
 #include "infra/Annotations.hpp"
 #include "infra/Assert.hpp"
 #include "x/codegen/X86Ops.hpp"
@@ -75,10 +73,12 @@ namespace OMR { typedef OMR::X86::Linkage LinkageConnector; }
 
 class TR_FrontEnd;
 namespace TR { class AutomaticSymbol; }
+namespace TR { class CodeGenerator; }
 namespace TR { class Compilation; }
 namespace TR { class Instruction; }
 namespace TR { class MethodSymbol; }
 namespace TR { class Node; }
+namespace TR { class ParameterSymbol; }
 namespace TR { class RegisterDependencyConditions; }
 namespace TR { class ResolvedMethodSymbol; }
 
@@ -360,7 +360,7 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
          case TR::Int64:
             return TR_MovDataTypes::Int8;
          case TR::Address:
-            return TR::Compiler->target.is64Bit() ? TR_MovDataTypes::Int8 : TR_MovDataTypes::Int4;
+            return OMR::X86::Linkage::getTargetFromComp().is64Bit() ? TR_MovDataTypes::Int8 : TR_MovDataTypes::Int4;
          default:
             return Int4;
          }
@@ -373,7 +373,7 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
       switch(reg->getKind())
          {
          case TR_GPR:
-            return TR::Compiler->target.is64Bit() ? TR_MovDataTypes::Int8 : TR_MovDataTypes::Int4;
+            return OMR::X86::Linkage::getTargetFromComp().is64Bit() ? TR_MovDataTypes::Int8 : TR_MovDataTypes::Int4;
          case TR_FPR:
             return Float8;
          default:
@@ -384,30 +384,16 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
 
    static inline TR_X86OpCodes movOpcodes(TR_MovOperandTypes operandType, TR_MovDataTypes dataType)
       {
-      TR_ASSERT(TR::Compiler->target.is64Bit() || dataType != TR_MovDataTypes::Int8, "MOV Int8 should not occur on X86-32");
+      TR_ASSERT(OMR::X86::Linkage::getTargetFromComp().is64Bit() || dataType != TR_MovDataTypes::Int8, "MOV Int8 should not occur on X86-32");
       return _movOpcodes[operandType][dataType];
       }
-
-   TR::Machine *machine() {return _cg->machine();}
-   TR::CodeGenerator *cg() {return _cg;}
-   TR::Compilation *comp() {return _cg->comp();}
-   TR_FrontEnd *fe() {return _cg->fe();}
-   TR_Memory *trMemory() {return _cg->trMemory(); }
-   TR_HeapMemory trHeapMemory();
-   TR_StackMemory trStackMemory();
 
    void alignLocalObjectWithCollectedFields(uint32_t & stackIndex) {}
    void alignLocalObjectWithoutCollectedFields(uint32_t & stackIndex) {}
 
    protected:
 
-   Linkage(TR::CodeGenerator *cg) : _cg(cg), _minimumFirstInstructionSize(0)
-      {
-      // Initialize the movOp table based on preferred load instructions for this target.
-      //
-      TR_X86OpCodes op = cg->getXMMDoubleLoadOpCode() ? cg->getXMMDoubleLoadOpCode() : MOVSDRegMem;
-      _movOpcodes[RegMem][Float8] = op;
-      }
+   Linkage(TR::CodeGenerator *cg);
 
    void stopUsingKilledRegisters(TR::RegisterDependencyConditions  *deps, TR::Register *returnRegister);
    void associatePreservedRegisters(TR::RegisterDependencyConditions  *deps, TR::Register *returnRegister);
@@ -442,8 +428,9 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
 
    private:
 
+   static TR::Environment& getTargetFromComp();
+
    static TR_X86OpCodes _movOpcodes[NumMovOperandTypes][NumMovDataTypes];
-   TR::CodeGenerator*   _cg;
    uint8_t              _minimumFirstInstructionSize;
 
    };

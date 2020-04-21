@@ -79,30 +79,6 @@ OMR::Z::Register::setPlaceholderReg()
    OMR::Register::setPlaceholderReg();
    }
 
-bool
-OMR::Z::Register::assignToHPR()
-   {
-   return (!(self()->is64BitReg()) && _flags.testAny(AssignToHPR));
-   }
-
-bool
-OMR::Z::Register::assignToGPR()
-   {
-   return (!(self()->is64BitReg()) && !_flags.testAny(AssignToHPR));
-   }
-
-bool
-OMR::Z::Register::isHighWordUpgradable()
-   {
-      return (!_flags.testAny(IsNotHighWordUpgradable) &&
-               !self()->isUsedInMemRef() &&
-               !self()->containsCollectedReference() &&
-               !self()->containsInternalPointer() &&
-               !self()->getRegisterPair() &&
-               (self()->getKind() == TR_GPR) &&
-               !self()->is64BitReg());
-   }
-
 ncount_t
 OMR::Z::Register::decFutureUseCount(ncount_t fuc)
    {

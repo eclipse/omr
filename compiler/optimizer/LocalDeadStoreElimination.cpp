@@ -25,25 +25,25 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/Block.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Checklist.hpp"
 #include "infra/List.hpp"
@@ -959,7 +959,7 @@ void TR::LocalDeadStoreElimination::eliminateDeadObjectInitializations()
                 int32_t offset = -1;
                 if (storeNode->getFirstChild()->getOpCode().isArrayRef())
                    {
-                   if (TR::Compiler->target.is64Bit())
+                   if (comp()->target().is64Bit())
                       {
                       if (storeNode->getFirstChild()->getSecondChild()->getLongInt() > INT_MAX)
                          removableZeroStore = false;

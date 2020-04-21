@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
@@ -42,11 +42,11 @@
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/List.hpp"
@@ -58,7 +58,6 @@
 #include "optimizer/UseDefInfo.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "ras/Debug.hpp"
-
 
 #define OPT_DETAILS "O^O COPY PROPAGATION: "
 
@@ -840,17 +839,6 @@ int32_t TR_CopyPropagation::perform()
          bool baseAddrAvail = false;
          TR::Node * baseAddr = NULL;
 
-         // Bail out if we're in a NOTEMPS method and we're going to create a temp.  This conditional should match
-         // the conditional that covers the anchoring code below.
-         if (!isRegLoad &&
-                         (loadNode->getOpCodeValue() != TR::loadaddr) &&                   // loadaddr doesn't need to be anchored
-                         (loadNode->getOpCode().hasSymbolReference()) &&
-                         (loadNode->getSymbolReference() == copySymbolReference) &&
-                         (rhsOfStoreDefNode != loadNode) &&
-                         comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-                         comp()->getJittedMethodSymbol()->isNoTemps())
-            continue;
-
          if (performTransformation(comp(), "%s   Copy2 Propagation replacing Copy symRef #%d \n",OPT_DETAILS, copySymbolReference->getReferenceNumber()))
             {
             comp()->setOsrStateIsReliable(false); // could check if the propagation was done to a child of the OSR helper call here
@@ -1390,6 +1378,17 @@ void TR_CopyPropagation::replaceCopySymbolReferenceByOriginalIn(TR::SymbolRefere
                {
                if (!origNode->getOpCode().isStore())
                   TR::Node::recreate(node, origNode->getOpCodeValue());
+
+               //Preserve flags for loadaddr
+               if (origNode->getOpCodeValue() == TR::loadaddr)
+                  {
+                  node->setPointsToNull(origNode->pointsToNull());
+                  node->setPointsToNonNull(origNode->pointsToNonNull());
+                  // The following flags are used by EA to determine if a local escapes
+                  node->setCannotTrackLocalUses(origNode->cannotTrackLocalUses());
+                  node->setEscapesInColdBlock(origNode->escapesInColdBlock());
+                  node->setCannotTrackLocalStringUses(origNode->cannotTrackLocalStringUses());
+                  }
 
                if (origNode->getOpCode().hasSymbolReference() && node->getOpCode().hasSymbolReference())
                   node->setSymbolReference(origNode->getSymbolReference());
@@ -2255,7 +2254,7 @@ bool TR_CopyPropagation::isCorrectToReplace(TR::Node *useNode, TR::Node *storeNo
 
 TR::Node * TR_CopyPropagation::isLoadVarWithConst(TR::Node *node)
    {
-   if (node->getOpCode().isLoadVarDirect() &&
+     if ((node->getOpCode().isLoadVarDirect() || (node->getOpCodeValue() == TR::loadaddr)) &&
        node->getSymbolReference()->getSymbol()->isAutoOrParm())
       {
       return node;

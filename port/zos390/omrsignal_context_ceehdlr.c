@@ -37,7 +37,7 @@
  * This was derived from fillInJumpInfo in port/zos390/omrsignal_context.c
  */
 void
-fillInLEJumpInfo(struct OMRPortLibrary *portLibrary, j9_31bit_mch *regs, void *jumpInfo)
+fillInLEJumpInfo(struct OMRPortLibrary *portLibrary, omr_31bit_mch *regs, void *jumpInfo)
 {
 	int i = 0;
 	struct __jumpinfo *farJumpInfo  = (struct __jumpinfo *)jumpInfo;
@@ -67,8 +67,8 @@ fillInLEJumpInfo(struct OMRPortLibrary *portLibrary, j9_31bit_mch *regs, void *j
 	farJumpInfo->__ji_fl_res1a = 0;
 
 #if !defined(OMR_ENV_DATA64)
-	if (0 != (regs->mch_flags & J9MCH_FLAGS_HGPRS_VALID)) {
-		/* The J9MCH_FLAGS_HGPRS_VALID bit was set */
+	if (0 != (regs->mch_flags & OMRPORT_MCH_FLAGS_HGPRS_VALID)) {
+		/* The OMRPORT_MCH_FLAGS_HGPRS_VALID bit was set */
 		farJumpInfo->__ji_fl_hr	= 1;
 	} else {
 		farJumpInfo->__ji_fl_hr	= 0;
@@ -120,7 +120,7 @@ fillInLEJumpInfo(struct OMRPortLibrary *portLibrary, j9_31bit_mch *regs, void *j
 
 /* infoForFPR_ceehdlr() follows the same convention as infoForFPR() in port/zos390/omrsignal_context.c */
 uint32_t
-infoForFPR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value)
+infoForFPR_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value)
 {
 	const char *n_fpr[NUM_REGS] = {
 		"fpr0",
@@ -140,7 +140,7 @@ infoForFPR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, 
 		"fpr14",
 		"fpr15"
 	};
-	j9_31bit_mch *j9mch = (j9_31bit_mch *)info->cib->cib_machine;
+	omr_31bit_mch *mchRegs = (omr_31bit_mch *)info->cib->cib_machine;
 	*name = "";
 
 
@@ -155,14 +155,14 @@ infoForFPR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, 
 
 		if (0 == (index % 2)) {
 			/* even index */
-			*value = &(j9mch->fprs_0246[index / 2]);
+			*value = &(mchRegs->fprs_0246[index / 2]);
 		} else {
 			/* odd index */
-			*value = &(j9mch->fprs_1357[(index - 1) / 2]);
+			*value = &(mchRegs->fprs_1357[(index - 1) / 2]);
 		}
 
 	} else if (8 <= index <= 15) {
-		*value = &(j9mch->fprs_8_15[index - 8]);
+		*value = &(mchRegs->fprs_8_15[index - 8]);
 	}
 
 	return OMRPORT_SIG_VALUE_64;
@@ -171,7 +171,7 @@ infoForFPR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, 
 
 /* infoForGPR_ceehdlr() follows the same convention as infoForGPR() in port/zos390/omrsignal_context.c */
 uint32_t
-infoForGPR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value)
+infoForGPR_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value)
 {
 
 	const char *n_gpr[NUM_REGS * 2] = {
@@ -211,19 +211,19 @@ infoForGPR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, 
 		"hgpr15"
 #endif
 	};
-	j9_31bit_mch *j9mch = (j9_31bit_mch *)info->cib->cib_machine;
+	omr_31bit_mch *mchRegs = (omr_31bit_mch *)info->cib->cib_machine;
 
 	*name = "";
 
 	if ((index >= 0) && (index < NUM_REGS)) {
 		*name = n_gpr[index];
-		*value = &(j9mch->gprs[index]);
+		*value = &(mchRegs->gprs[index]);
 		return OMRPORT_SIG_VALUE_ADDRESS;
 	}
 #if !defined(OMR_ENV_DATA64)
 	else if ((index >= NUM_REGS) && (index < NUM_REGS * 2)) {
 		*name = n_gpr[index];
-		*value = &(j9mch->hgprs[index - NUM_REGS]);
+		*value = &(mchRegs->hgprs[index - NUM_REGS]);
 		return OMRPORT_SIG_VALUE_ADDRESS;
 	}
 #endif
@@ -234,7 +234,7 @@ infoForGPR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, 
 
 /* infoForVR_ceehdlr() follows the same convention as infoForGPR() in port/zos390/omrsignal_context.c */
 uint32_t
-infoForVR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value)
+infoForVR_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value)
 {
 	const char *const n_vr[NUM_VECTOR_REGS] = {
 		"vr0",
@@ -271,16 +271,16 @@ infoForVR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, i
 		"vr31"
 	};
 
-	j9_31bit_mch *j9mch = (j9_31bit_mch *)info->cib->cib_machine;
+	omr_31bit_mch *mchRegs = (omr_31bit_mch *)info->cib->cib_machine;
 
 	*name = "";
 
-	if (0 == (j9mch->mch_flags & J9MCH_FLAGS_VR_VALID)) {
+	if (0 == (mchRegs->mch_flags & OMRPORT_MCH_FLAGS_VR_VALID)) {
 		return OMRPORT_SIG_VALUE_UNDEFINED;
 	}
 	if ((index >= 0) && (index < NUM_VECTOR_REGS)) {
 		*name = n_vr[index];
-		*value = &(j9mch->vr[index]);
+		*value = &(mchRegs->vr[index]);
 		return OMRPORT_SIG_VALUE_128;
 	}
 
@@ -293,31 +293,31 @@ infoForVR_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, i
  * for a specific register/attribute can requested.
  */
 uint32_t
-infoForControl_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value)
+infoForControl_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value)
 {
-	j9_31bit_mch *j9mch = (j9_31bit_mch *)info->cib->cib_machine;
+	omr_31bit_mch *mchRegs = (omr_31bit_mch *)info->cib->cib_machine;
 	*name = "";
 
 	switch (index) {
 	case OMRPORT_SIG_CONTROL_S390_FPC:
 	case 0:
 		*name = "fpc";
-		*value = &(j9mch->fpc);
+		*value = &(mchRegs->fpc);
 		return OMRPORT_SIG_VALUE_32;
 	case 1:
 		*name = "psw0";
-		*value = &(j9mch->psw0);
+		*value = &(mchRegs->psw0);
 		return OMRPORT_SIG_VALUE_ADDRESS;
 	case OMRPORT_SIG_CONTROL_PC:
 	case 2:
 		*name = "psw1";
-		*value = &(j9mch->psw1);
+		*value = &(mchRegs->psw1);
 		return OMRPORT_SIG_VALUE_ADDRESS;
 	case OMRPORT_SIG_CONTROL_SP:
 	case 3:
 		*name = "sp";
-		if (0 != (j9mch->mch_flags & J9MCH_FLAGS_INT_SF_VALID)) {
-			*value = &(j9mch->interrupt_stack_frame);
+		if (0 != (mchRegs->mch_flags & OMRPORT_MCH_FLAGS_INT_SF_VALID)) {
+			*value = &(mchRegs->interrupt_stack_frame);
 			return OMRPORT_SIG_VALUE_ADDRESS;
 		} else {
 			return OMRPORT_SIG_VALUE_UNDEFINED;
@@ -325,7 +325,7 @@ infoForControl_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *in
 	case OMRPORT_SIG_CONTROL_S390_BEA:
 	case 4:
 		*name = "bea";
-		*value = &(j9mch->bea);
+		*value = &(mchRegs->bea);
 		return OMRPORT_SIG_VALUE_ADDRESS;
 	/* Provide access to GPR7 when requested specifically, but
 	 * hide it from the iterator by only casing it with OMRPORT_SIG_CONTROL_S390_GPR7
@@ -333,7 +333,7 @@ infoForControl_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *in
 	 */
 	case OMRPORT_SIG_CONTROL_S390_GPR7:
 		*name = "gpr7";
-		*value = &(j9mch->gprs[7]);
+		*value = &(mchRegs->gprs[7]);
 		return OMRPORT_SIG_VALUE_ADDRESS;
 	default:
 		return OMRPORT_SIG_VALUE_UNDEFINED;
@@ -351,7 +351,7 @@ infoForControl_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *in
  *
  */
 uint32_t
-infoForModule_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value)
+infoForModule_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value)
 {
 
 #if defined(J9ZOS39064)
@@ -361,7 +361,7 @@ infoForModule_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *inf
 	return OMRPORT_SIG_VALUE_UNDEFINED;
 
 #else
-	j9_31bit_mch *j9mch = (j9_31bit_mch *)info->cib->cib_machine;
+	omr_31bit_mch *mchRegs = (omr_31bit_mch *)info->cib->cib_machine;
 
 	/* Input paramaters to CEETBCK
 	 * We don't know what the stack format was for the routine that triggered the condition,
@@ -459,9 +459,9 @@ infoForModule_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *inf
  * for a specific register/attribute can requested.
  */
 uint32_t
-infoForSignal_ceehdlr(struct OMRPortLibrary *portLibrary, J9LEConditionInfo *info, int32_t index, const char **name, void **value)
+infoForSignal_ceehdlr(struct OMRPortLibrary *portLibrary, OMRLEConditionInfo *info, int32_t index, const char **name, void **value)
 {
-	j9_31bit_mch *j9mch = (j9_31bit_mch *)info->cib->cib_machine;
+	omr_31bit_mch *mchRegs = (omr_31bit_mch *)info->cib->cib_machine;
 	*name = "";
 
 	switch (index) {

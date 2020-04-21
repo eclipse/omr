@@ -1,5 +1,5 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! Copyright (c) 2000, 2016 IBM Corp. and others
+!! Copyright (c) 2000, 2020 IBM Corp. and others
 !!
 !! This program and the accompanying materials are made available under
 !! the terms of the Eclipse Public License 2.0 which accompanies this
@@ -302,9 +302,6 @@
         .endm
         .macro stxvw4x  xt, ra, rb
         .int 0x7c000718 | (\xt & 31) << 21 | \ra << 16 | \rb << 11 | (\xt & 32) >> 5
-        .endm
-        .macro stxvw4ux xt, ra, rb
-        .int 0x7c000758 | (\xt & 31) << 21 | \ra << 16 | \rb << 11 | (\xt & 32) >> 5
         .endm
         .macro stxsdx   xs, ra, rb
         .int 0x7c000598 | (\xs & 31) << 21 | \ra << 16 | \rb << 11 | (\xs & 32) >> 5

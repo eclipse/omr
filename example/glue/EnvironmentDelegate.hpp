@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,6 +178,11 @@ public:
 	 * Release shared VM acccess.
 	 */
 	void releaseVMAccess();
+	
+	/**
+	 * Returns true if a mutator threads entered native code without releasing VM access
+	 */
+	bool inNative() { return false; }
 
 	/**
 	 * Check whether another thread is requesting exclusive VM access. This method must be
@@ -228,9 +233,7 @@ public:
 
 	void reacquireCriticalHeapAccess(uintptr_t data) {}
 
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	void forceOutOfLineVMAccess() {}
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 #if defined (OMR_GC_THREAD_LOCAL_HEAP)
 	/**

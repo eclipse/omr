@@ -27,8 +27,10 @@
 #include "codegen/CallSnippet.hpp"
 #endif
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/GenerateInstructions.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/GenerateInstructions.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
 #include "codegen/RegisterPair.hpp"
@@ -78,7 +80,7 @@ TR::Register *OMR::ARM::TreeEvaluator::ireturnEvaluator(TR::Node *node, TR::Code
    TR::Register *returnRegister = cg->evaluate(node->getFirstChild());
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
-   addDependency(deps, returnRegister, cg->getProperties().getIntegerReturnRegister(), TR_GPR, cg);
+   TR::addDependency(deps, returnRegister, cg->getProperties().getIntegerReturnRegister(), TR_GPR, cg);
 
    generateAdminInstruction(cg, ARMOp_ret, node, deps);
    cg->comp()->setReturnInfo(TR_IntReturn);
@@ -92,8 +94,8 @@ TR::Register *OMR::ARM::TreeEvaluator::lreturnEvaluator(TR::Node *node, TR::Code
    TR::Register *highReg                             = returnRegister->getHighOrder();
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-   addDependency(deps, lowReg, cg->getProperties().getLongLowReturnRegister(), TR_GPR, cg);
-   addDependency(deps, highReg, cg->getProperties().getLongHighReturnRegister(), TR_GPR, cg);
+   TR::addDependency(deps, lowReg, cg->getProperties().getLongLowReturnRegister(), TR_GPR, cg);
+   TR::addDependency(deps, highReg, cg->getProperties().getLongHighReturnRegister(), TR_GPR, cg);
 
    generateAdminInstruction(cg, ARMOp_ret, node, deps);
    cg->comp()->setReturnInfo(TR_LongReturn);
@@ -310,25 +312,14 @@ TR::Instruction *OMR::ARM::TreeEvaluator::compareIntsForEquality(TR_ARMCondition
 static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
    {
 #ifdef J9_PROJECT_SPECIFIC
-   TR::Compilation *comp = cg->comp();
-   if ((!node->isNopableInlineGuard() && !node->isHCRGuard() && !node->isBreakpointGuard()) ||
-       !cg->getSupportsVirtualGuardNOPing())
-      return false;
 
-   TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
-   if (!((comp->performVirtualGuardNOPing() || node->isHCRGuard()) &&
-         comp->isVirtualGuardNOPingRequired(virtualGuard)) &&
-       virtualGuard->canBeRemoved())
-      return false;
-
-   if (   node->getOpCodeValue() != TR::ificmpne
-       && node->getOpCodeValue() != TR::iflcmpne
-       && node->getOpCodeValue() != TR::ifacmpne)
+   if (!cg->willGenerateNOPForVirtualGuard(node))
       {
-      //TR_ASSERT(0, "virtualGuradHelper: not expecting reversed comparison");
       return false;
       }
 
+   TR::Compilation *comp = cg->comp();
+   TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
    TR_VirtualGuardSite *site = NULL;
 
    if (comp->compileRelocatableCode())
@@ -587,7 +578,7 @@ static TR::Register *compareLongsForOrder(TR_ARMConditionCode branchOp, TR::Node
       // Start OOL
       // The compare result has to be live until the end of the last instruction in the mainline, so put it as a dependency
       TR::RegisterDependencyConditions *tempDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
-      addDependency(tempDeps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(tempDeps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
       //tempDeps->addPreCondition(tempReg, TR::RealRegister::NoReg);
       if (deps)
          deps = deps->clone(cg, tempDeps);
@@ -597,8 +588,8 @@ static TR::Register *compareLongsForOrder(TR_ARMConditionCode branchOp, TR::Node
       // Need the two sources for compare to survive until the returnLabel.  Use a dependency to hold that, and hold
       // until the compare for them are done.
       TR::RegisterDependencyConditions *newDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-      addDependency(newDeps, src1Reg->getLowOrder(), TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(newDeps, src2Reg->getLowOrder(), TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(newDeps, src1Reg->getLowOrder(), TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(newDeps, src2Reg->getLowOrder(), TR::RealRegister::NoReg, TR_GPR, cg);
 
       TR::RegisterDependencyConditions *oolDeps = deps->clone(cg, newDeps);
 
@@ -1099,7 +1090,7 @@ static void lookupScheme1(TR::CodeGenerator *cg, TR::Node *node, bool unbalanced
    TR::Node     *defDepsNode = defaultNode->getNumChildren() > 0 ? defaultNode->getFirstChild() : NULL;
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
-   addDependency(deps, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
    TR::RegisterDependencyConditions *defaultDeps = deps;
    if (defDepsNode && !unbalanced)
@@ -1159,8 +1150,8 @@ static void lookupScheme2(TR::CodeGenerator *cg, TR::Node *node, bool unbalanced
    TR::Node     *defDepsNode  = defaultNode->getNumChildren() > 0 ? defaultNode->getFirstChild() : NULL;
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-   addDependency(deps, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(deps, caseConstReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, caseConstReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
    TR::RegisterDependencyConditions *defaultDeps = deps;
    if (defDepsNode && !unbalanced)
@@ -1230,9 +1221,9 @@ static void lookupScheme3(TR::CodeGenerator *cg, TR::Node *node, bool unbalanced
    TR::Node     *defaultNode = node->getSecondChild();
    TR::Node     *defDepsNode = defaultNode->getNumChildren() > 0 ? defaultNode->getFirstChild() : 0;
 
-   addDependency(deps, dataRegister, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(deps, addrRegister, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(deps, selector, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, dataRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, addrRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, selector, TR::RealRegister::NoReg, TR_GPR, cg);
 
    TR::RegisterDependencyConditions *defaultDeps = deps;
    if (defDepsNode && !unbalanced)
@@ -1321,13 +1312,13 @@ static void lookupScheme4(TR::Node *node, TR::CodeGenerator *cg)
    TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(7, 7);
 
    cg->machine()->setLinkRegisterKilled(true);
-   addDependency(conditions, dataRegister, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(conditions, addrRegister, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(conditions, selector, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(conditions, lowRegister, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(conditions, highRegister, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(conditions, pivotRegister, TR::RealRegister::NoReg, TR_GPR, cg);
-   addDependency(conditions, cndRegister, TR::RealRegister::NoReg, TR_CCR, cg);
+   TR::addDependency(conditions, dataRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, addrRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, selector, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, lowRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, highRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, pivotRegister, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, cndRegister, TR::RealRegister::NoReg, TR_CCR, cg);
    conditions->getPreConditions()->getRegisterDependency(5)->setExcludeGPR0();
    conditions->getPostConditions()->getRegisterDependency(5)->setExcludeGPR0();
 
@@ -1388,14 +1379,14 @@ TR::Register *OMR::ARM::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGe
       // the matching GlDepRegs free checks in OMRCodeGenerator.cpp#getMaximumNumberOfGPRsAllowedAcrossEdge(..) must be updated to synch.
       conditions  = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
       t1Register = cg->allocateRegister();
-      addDependency(conditions, t1Register, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(conditions, t1Register, TR::RealRegister::NoReg, TR_GPR, cg);
       }
    else
       {
       conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
       }
 
-   addDependency(conditions, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, selectorReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
    if (secondChild->getNumChildren() > 0)
       {
@@ -1445,100 +1436,6 @@ TR::Register *OMR::ARM::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGe
       }
 
    return NULL;
-   }
-
-static TR::Register *evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool needsResolve, TR::CodeGenerator *cg)
-   {
-   // NOTE:
-   // If no code is generated for the null check, just evaluate the
-   // child and decrement its use count UNLESS the child is a pass-through node
-   // in which case some kind of explicit test or indirect load must be generated
-   // to force the null check at this point.
-
-   // Generate the code for the null check
-   //
-   TR::Node     *firstChild = node->getFirstChild();
-   TR::ILOpCode &opCode     = firstChild->getOpCode();
-   TR::Node     *reference  = node->getNullCheckReference();
-
-   // Skip the NULLCHK for TR::loadaddr nodes.
-   //
-   if (reference->getOpCodeValue() == TR::loadaddr)
-      {
-      cg->evaluate(firstChild);
-      firstChild->decReferenceCount();
-      return NULL;
-      }
-
-   bool needCode = !(cg->canNullChkBeImplicit(node, true));
-
-   // nullchk is not implicit
-   //
-   if (needCode)
-      {
-      // TODO - If a resolve check is needed as well, the resolve must be done
-      // before the null check, so that exceptions are handled in the correct
-      // order.
-      //
-      ///// if (needsResolve)
-      /////    {
-      /////    ...
-      /////    }
-
-      TR::Register    *targetRegister = cg->evaluate(reference);
-
-#if (NULLVALUE==0)
-      generateSrc2Instruction(cg, ARMOp_tst, node, targetRegister, targetRegister);
-#else
-#error("NULL is not 0, must fix");
-#endif
-
-      TR::SymbolReference *NULLCHKException = node->getSymbolReference();
-      TR::Instruction *instr1 = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)NULLCHKException->getMethodAddress(), NULL, NULLCHKException, NULL, NULL, ARMConditionCodeEQ);
-      instr1->ARMNeedsGCMap(0xFFFFFFFF);
-      cg->machine()->setLinkRegisterKilled(true);
-      }
-
-      // For a load, if this is the only use decrement the use count on the
-      // grandchild since it has already been evaluated.
-      // Otherwise just evaluate the child.
-      //
-   if (needCode && opCode.isLoad() && firstChild->getReferenceCount() == 1
-       && firstChild->getSymbolReference() && !firstChild->getSymbolReference()->isUnresolved())
-      {
-      firstChild->decReferenceCount();
-      reference->decReferenceCount();
-      }
-   else
-      {
-      cg->evaluate(firstChild);
-      firstChild->decReferenceCount();
-      }
-
-      // If an explicit check has not been generated for the null check, there is
-      // an instruction that will cause a hardware trap if the exception is to be
-      // taken. If this method may catch the exception, a GC stack map must be
-      // created for this instruction. All registers are valid at this GC point
-      // TODO - if the method may not catch the exception we still need to note
-      // that the GC point exists, since maps before this point and after it cannot
-      // be merged.
-      //
-      /////if (!needCode && comp->getMethodSymbol()->isEHAwareMethod())
-   if (!needCode)
-      {
-      TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
-      if (faultingInstruction)
-         faultingInstruction->setNeedsGCMap();
-      }
-
-   reference->setIsNonNull(true);
-
-   return NULL;
-   }
-
-TR::Register *OMR::ARM::TreeEvaluator::NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return evaluateNULLCHKWithPossibleResolve(node, false, cg);
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -1616,23 +1513,6 @@ TR::Register *OMR::ARM::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::Code
       }
    generateLabelInstruction(cg, ARMOp_label, node, restartLabel);
 
-   return NULL;
-   }
-
-TR::Register *OMR::ARM::TreeEvaluator::resolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return evaluateNULLCHKWithPossibleResolve(node, true, cg);
-   }
-
-TR::Register *OMR::ARM::TreeEvaluator::resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   // No code is generated for the resolve check. The child will reference an
-   // unresolved symbol and all check handling is done via the corresponding
-   // snippet.
-   //
-   TR::Node *firstChild = node->getFirstChild();
-   cg->evaluate(firstChild);
-   firstChild->decReferenceCount();
    return NULL;
    }
 
@@ -1737,8 +1617,8 @@ static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register 
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
 
-   addDependency(deps, dstReg, TR::RealRegister::gr0, TR_GPR, cg);
-   addDependency(deps, srcReg, TR::RealRegister::gr1, TR_GPR, cg);
+   TR::addDependency(deps, dstReg, TR::RealRegister::gr0, TR_GPR, cg);
+   TR::addDependency(deps, srcReg, TR::RealRegister::gr1, TR_GPR, cg);
 
    TR::Instruction *gcPoint = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)arrayStoreChkHelper->getMethodAddress(), deps, arrayStoreChkHelper);
    gcPoint->ARMNeedsGCMap(0xFFFFFFFF);

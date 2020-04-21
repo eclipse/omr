@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,20 +22,26 @@
 #include <stdlib.h>
 
 #include "codegen/ARM64Instruction.hpp"
+#include "codegen/ARM64OutOfLineCodeSection.hpp"
 #include "codegen/ARM64SystemLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
+#include "codegen/ConstantDataSnippet.hpp"
+#include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/GenerateInstructions.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterIterator.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 
 OMR::ARM64::CodeGenerator::CodeGenerator() :
       OMR::CodeGenerator(),
-      _constantData(NULL),
+      _dataSnippetList(getTypedAllocator<TR::ARM64ConstantDataSnippet*>(TR::comp()->allocator())),
       _outOfLineCodeSectionList(getTypedAllocator<TR_ARM64OutOfLineCodeSection*>(self()->comp()->allocator()))
    {
    // Initialize Linkage for Code Generator
@@ -60,6 +66,8 @@ OMR::ARM64::CodeGenerator::CodeGenerator() :
    self()->setLastGlobalFPR(TR::Machine::getLastGlobalFPRRegisterNumber());
 
    self()->getLinkage()->initARM64RealRegisterLinkage();
+
+   self()->setSupportsVirtualGuardNOPing();
 
    _numberBytesReadInaccessible = 0;
    _numberBytesWriteInaccessible = 0;
@@ -116,6 +124,11 @@ OMR::ARM64::CodeGenerator::CodeGenerator() :
       self()->setGPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstGPR, TR::RealRegister::LastGPR));
       self()->setFPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstFPR, TR::RealRegister::LastFPR));
       }
+
+   self()->getLinkage()->setParameterLinkageRegisterIndex(self()->comp()->getJittedMethodSymbol());
+
+   if (self()->comp()->target().isSMP())
+      self()->setEnforceStoreOrder();
    }
 
 void
@@ -125,9 +138,7 @@ OMR::ARM64::CodeGenerator::beginInstructionSelection()
    TR::Node *startNode = comp->getStartTree()->getNode();
    if (comp->getMethodSymbol()->getLinkageConvention() == TR_Private)
       {
-      TR_ASSERT(false, "Not implemented yet.");
-
-      _returnTypeInfoInstruction = new (self()->trHeapMemory()) TR::ARM64ImmInstruction(TR::InstOpCode::dd, startNode, 0, self());
+      _returnTypeInfoInstruction = generateImmInstruction(self(), TR::InstOpCode::dd, startNode, 0);
       }
    else
       {
@@ -208,24 +219,34 @@ OMR::ARM64::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
    }
 
 void
+OMR::ARM64::CodeGenerator::generateBinaryEncodingPrePrologue(TR_ARM64BinaryEncodingData &data)
+   {
+   data.recomp = NULL;
+   data.cursorInstruction = self()->getFirstInstruction();
+   data.i2jEntryInstruction = data.cursorInstruction;
+   }
+
+void
 OMR::ARM64::CodeGenerator::doBinaryEncoding()
    {
+   TR_ARM64BinaryEncodingData data;
+   data.estimate = 0;
    TR::Compilation *comp = self()->comp();
-   int32_t estimate = 0;
-   TR::Instruction *cursorInstruction = self()->getFirstInstruction();
 
-   self()->getLinkage()->createPrologue(cursorInstruction);
+   self()->generateBinaryEncodingPrePrologue(data);
+   self()->getLinkage()->createPrologue(data.cursorInstruction);
 
+   data.cursorInstruction = self()->getFirstInstruction();
    bool skipOneReturn = false;
-   while (cursorInstruction)
+   while (data.cursorInstruction)
       {
-      if (cursorInstruction->getOpCodeValue() == TR::InstOpCode::retn)
+      if (data.cursorInstruction->getOpCodeValue() == TR::InstOpCode::retn)
          {
          if (skipOneReturn == false)
             {
-            TR::Instruction *temp = cursorInstruction->getPrev();
+            TR::Instruction *temp = data.cursorInstruction->getPrev();
             self()->getLinkage()->createEpilogue(temp);
-            cursorInstruction = temp->getNext();
+            data.cursorInstruction = temp->getNext();
             skipOneReturn = true;
             }
          else
@@ -233,15 +254,15 @@ OMR::ARM64::CodeGenerator::doBinaryEncoding()
             skipOneReturn = false;
             }
          }
-      estimate = cursorInstruction->estimateBinaryLength(estimate);
-      cursorInstruction = cursorInstruction->getNext();
+      data.estimate = data.cursorInstruction->estimateBinaryLength(data.estimate);
+      data.cursorInstruction = data.cursorInstruction->getNext();
       }
 
-   estimate = self()->setEstimatedLocationsForSnippetLabels(estimate);
+   data.estimate = self()->setEstimatedLocationsForSnippetLabels(data.estimate);
 
-   self()->setEstimatedCodeLength(estimate);
+   self()->setEstimatedCodeLength(data.estimate);
 
-   cursorInstruction = self()->getFirstInstruction();
+   data.cursorInstruction = self()->getFirstInstruction();
    uint8_t *coldCode = NULL;
    uint8_t *temp = self()->allocateCodeMemory(self()->getEstimatedCodeLength(), 0, &coldCode);
 
@@ -249,11 +270,43 @@ OMR::ARM64::CodeGenerator::doBinaryEncoding()
    self()->setBinaryBufferCursor(temp);
    self()->alignBinaryBufferCursor();
 
-   while (cursorInstruction)
+   while (data.cursorInstruction)
       {
-      self()->setBinaryBufferCursor(cursorInstruction->generateBinaryEncoding());
-      cursorInstruction = cursorInstruction->getNext();
+      self()->setBinaryBufferCursor(data.cursorInstruction->generateBinaryEncoding());
+      self()->addToAtlas(data.cursorInstruction);
+
+      if (data.cursorInstruction == data.i2jEntryInstruction)
+         {
+         self()->setPrePrologueSize(self()->getBinaryBufferCursor() - self()->getBinaryBufferStart());
+         self()->comp()->getSymRefTab()->findOrCreateStartPCSymbolRef()->getSymbol()->getStaticSymbol()->setStaticAddress(self()->getBinaryBufferCursor());
+         }
+
+      data.cursorInstruction = data.cursorInstruction->getNext();
       }
+
+   // Create exception table entries for outlined instructions.
+   //
+   if (!self()->comp()->getOption(TR_DisableOOL))
+      {
+      auto oiIterator = self()->getARM64OutOfLineCodeSectionList().begin();
+      while (oiIterator != self()->getARM64OutOfLineCodeSectionList().end())
+         {
+         uint32_t startOffset = (*oiIterator)->getFirstInstruction()->getBinaryEncoding() - self()->getCodeStart();
+         uint32_t endOffset   = (*oiIterator)->getAppendInstruction()->getBinaryEncoding() - self()->getCodeStart();
+
+         TR::Block * block = (*oiIterator)->getBlock();
+         bool needsETE = (*oiIterator)->getFirstInstruction()->getNode()->getOpCode().hasSymbolReference() &&
+                         (*oiIterator)->getFirstInstruction()->getNode()->getSymbolReference() &&
+                         (*oiIterator)->getFirstInstruction()->getNode()->getSymbolReference()->canCauseGC();
+
+         if (needsETE && block && !block->getExceptionSuccessors().empty())
+            block->addExceptionRangeForSnippet(startOffset, endOffset);
+
+         ++oiIterator;
+         }
+      }
+
+   self()->getLinkage()->performPostBinaryEncoding();
    }
 
 TR::Linkage *OMR::ARM64::CodeGenerator::createLinkage(TR_LinkageConventions lc)
@@ -274,47 +327,73 @@ TR::Linkage *OMR::ARM64::CodeGenerator::createLinkage(TR_LinkageConventions lc)
 
 void OMR::ARM64::CodeGenerator::emitDataSnippets()
    {
-   TR_ASSERT(false, "Not implemented yet.");
-   /*
-    * Commented out until TR::ConstantDataSnippet is implemented
-   self()->setBinaryBufferCursor(_constantData->emitSnippetBody());
-    */
-   }
-
-bool OMR::ARM64::CodeGenerator::hasDataSnippets()
-   {
-   return (_constantData == NULL) ? false : true;
+   for (auto iterator = _dataSnippetList.begin(); iterator != _dataSnippetList.end(); ++iterator)
+      {
+      self()->setBinaryBufferCursor((*iterator)->emitSnippetBody());
+      }
    }
 
 int32_t OMR::ARM64::CodeGenerator::setEstimatedLocationsForDataSnippetLabels(int32_t estimatedSnippetStart)
    {
-   TR_ASSERT(false, "Not implemented yet.");
-   return 0;
-   /*
-    * Commented out until TR::ConstantDataSnippet is implemented
-   return estimatedSnippetStart + _constantData->getLength();
-    */
+   // Assume constants should be aligned according to their size.
+   for (auto iterator = _dataSnippetList.begin(); iterator != _dataSnippetList.end(); ++iterator)
+      {
+      auto size = (*iterator)->getDataSize();
+      estimatedSnippetStart = ((estimatedSnippetStart+size-1)/size) * size;
+      (*iterator)->getSnippetLabel()->setEstimatedCodeLocation(estimatedSnippetStart);
+      estimatedSnippetStart += (*iterator)->getLength(estimatedSnippetStart);
+      }
+   return estimatedSnippetStart;
+   }
+
+TR::ARM64ConstantDataSnippet *OMR::ARM64::CodeGenerator::findOrCreateConstantDataSnippet(TR::Node * node, void * c, size_t s)
+   {
+   // A simple linear search should suffice for now since the number of data constants
+   // produced is typically very small.  Eventually, this should be implemented as an
+   // ordered list or a hash table.
+   for (auto iterator = _dataSnippetList.begin(); iterator != _dataSnippetList.end(); ++iterator)
+      {
+      if ((*iterator)->getKind() == TR::Snippet::IsConstantData &&
+          (*iterator)->getDataSize() == s)
+         {
+         // if pointers require relocation, then not all pointers may be relocated for the same reason
+         //   so be conservative and do not combine them (e.g. HCR versus profiled inlined site enablement)
+         if (!memcmp((*iterator)->getRawData(), c, s) &&
+                (!self()->profiledPointersRequireRelocation() || (*iterator)->getNode() == node))
+            {
+            return (*iterator);
+            }
+         }
+      }
+
+   // Constant was not found: create a new snippet for it and add it to the constant list.
+   //
+   auto snippet = new (self()->trHeapMemory()) TR::ARM64ConstantDataSnippet(self(), node, c, s);
+   _dataSnippetList.push_back(snippet);
+   return snippet;
+   }
+
+TR::ARM64ConstantDataSnippet *OMR::ARM64::CodeGenerator::findOrCreate8ByteConstant(TR::Node * n, int64_t c)
+   {
+   return self()->findOrCreateConstantDataSnippet(n, &c, 8);
    }
 
 
-#ifdef DEBUG
 void OMR::ARM64::CodeGenerator::dumpDataSnippets(TR::FILE *outFile)
    {
    if (outFile == NULL)
       return;
 
-   TR_ASSERT(false, "Not implemented yet.");
-   /*
-    * Commented out until TR::ConstantDataSnippet is implemented
-   _constantData->print(outFile);
-    */
+   for (auto iterator = _dataSnippetList.begin(); iterator != _dataSnippetList.end(); ++iterator)
+      {
+      (*iterator)->print(outFile, self()->getDebug());
+      }
    }
-#endif
 
 
 TR::Instruction *OMR::ARM64::CodeGenerator::generateSwitchToInterpreterPrePrologue(TR::Instruction *cursor, TR::Node *node)
    {
-   TR_ASSERT(false, "Not implemented yet.");
+   TR_UNIMPLEMENTED();
 
    return NULL;
    }
@@ -335,12 +414,41 @@ TR::Register *OMR::ARM64::CodeGenerator::gprClobberEvaluate(TR::Node *node)
       }
    }
 
+static uint32_t registerBitMask(int32_t reg)
+   {
+   return 1 << (reg-1);
+   }
 
 void OMR::ARM64::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap *map)
    {
-   TR_ASSERT(false, "Not implemented yet.");
-   }
+   TR_InternalPointerMap * internalPtrMap = NULL;
+   TR::GCStackAtlas *atlas = self()->getStackAtlas();
+   //
+   // Build the register map
+   //
+   for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i)
+      {
+      TR::RealRegister * reg = self()->machine()->getRealRegister((TR::RealRegister::RegNum)i);
+      if (reg->getHasBeenAssignedInMethod())
+         {
+         TR::Register *virtReg = reg->getAssignedRegister();
+         if (virtReg)
+            {
+            if (virtReg->containsInternalPointer())
+               {
+               if (!internalPtrMap)
+                  internalPtrMap = new (self()->trHeapMemory()) TR_InternalPointerMap(self()->trMemory());
+               internalPtrMap->addInternalPointerPair(virtReg->getPinningArrayPointer(), i);
+               atlas->addPinningArrayPtrForInternalPtrReg(virtReg->getPinningArrayPointer());
+               }
+            else if (virtReg->containsCollectedReference())
+               map->setRegisterBits(registerBitMask(i));
+            }
+         }
+      }
 
+   map->setInternalPointerMap(internalPtrMap);
+   }
 
 TR_GlobalRegisterNumber OMR::ARM64::CodeGenerator::pickRegister(TR_RegisterCandidate *regCan,
                                                           TR::Block **barr,
@@ -360,15 +468,13 @@ bool OMR::ARM64::CodeGenerator::allowGlobalRegisterAcrossBranch(TR_RegisterCandi
 
 int32_t OMR::ARM64::CodeGenerator::getMaximumNumberOfGPRsAllowedAcrossEdge(TR::Node *node)
    {
-   TR_ASSERT(false, "Not implemented yet.");
-
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
 int32_t OMR::ARM64::CodeGenerator::getMaximumNumberOfFPRsAllowedAcrossEdge(TR::Node *node)
    {
-   TR_ASSERT(false, "Not implemented yet.");
-
+   TR_UNIMPLEMENTED();
    return 0;
    }
 
@@ -389,9 +495,24 @@ bool OMR::ARM64::CodeGenerator::isGlobalRegisterAvailable(TR_GlobalRegisterNumbe
 
 TR_GlobalRegisterNumber OMR::ARM64::CodeGenerator::getLinkageGlobalRegisterNumber(int8_t linkageRegisterIndex, TR::DataType type)
    {
-   TR_ASSERT(false, "Not implemented yet.");
+   TR_GlobalRegisterNumber result;
 
-   return 0;
+   if (type == TR::Float || type == TR::Double)
+      {
+      if (linkageRegisterIndex >= self()->getProperties()._numFloatArgumentRegisters)
+         return -1;
+      else
+         result = _fprLinkageGlobalRegisterNumbers[linkageRegisterIndex];
+      }
+   else
+      {
+      if (linkageRegisterIndex >= self()->getProperties()._numIntegerArgumentRegisters)
+         return -1;
+      else
+         result = _gprLinkageGlobalRegisterNumbers[linkageRegisterIndex];
+      }
+
+   return result;
    }
 
 void OMR::ARM64::CodeGenerator::apply24BitLabelRelativeRelocation(int32_t *cursor, TR::LabelSymbol *label)
@@ -399,7 +520,7 @@ void OMR::ARM64::CodeGenerator::apply24BitLabelRelativeRelocation(int32_t *curso
    // for "b.cond" instruction
    TR_ASSERT(label->getCodeLocation(), "Attempt to relocate to a NULL label address!");
 
-   intptrj_t distance = (uintptrj_t)label->getCodeLocation() - (uintptrj_t)cursor;
+   intptr_t distance = (uintptr_t)label->getCodeLocation() - (uintptr_t)cursor;
    *cursor |= ((distance >> 2) & 0x7ffff) << 5; // imm19
    }
 
@@ -408,7 +529,7 @@ void OMR::ARM64::CodeGenerator::apply32BitLabelRelativeRelocation(int32_t *curso
    // for unconditional "b" instruction
    TR_ASSERT(label->getCodeLocation(), "Attempt to relocate to a NULL label address!");
 
-   intptrj_t distance = (uintptrj_t)label->getCodeLocation() - (uintptrj_t)cursor;
+   intptr_t distance = (uintptr_t)label->getCodeLocation() - (uintptr_t)cursor;
    *cursor |= ((distance >> 2) & 0x3ffffff); // imm26
    }
 
@@ -425,9 +546,18 @@ int64_t OMR::ARM64::CodeGenerator::getSmallestPosConstThatMustBeMaterialized()
    }
 
 bool
-OMR::ARM64::CodeGenerator::directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress)
+OMR::ARM64::CodeGenerator::directCallRequiresTrampoline(intptr_t targetAddress, intptr_t sourceAddress)
    {
    return
-      !TR::Compiler->target.cpu.isTargetWithinUnconditionalBranchImmediateRange(targetAddress, sourceAddress) ||
+      !self()->comp()->target().cpu.isTargetWithinUnconditionalBranchImmediateRange(targetAddress, sourceAddress) ||
       self()->comp()->getOption(TR_StressTrampolines);
+   }
+
+TR::Instruction *
+OMR::ARM64::CodeGenerator::generateNop(TR::Node *node, TR::Instruction *preced)
+   {
+   if (preced)
+      return new (self()->trHeapMemory()) TR::Instruction(TR::InstOpCode::nop, node, preced, self());
+   else
+      return new (self()->trHeapMemory()) TR::Instruction(TR::InstOpCode::nop, node, self());
    }

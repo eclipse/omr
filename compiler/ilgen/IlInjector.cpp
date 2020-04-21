@@ -234,7 +234,7 @@ OMR::IlInjector::sconst(int16_t value)
    }
 
 TR::Node *
-OMR::IlInjector::aconst(uintptrj_t value)
+OMR::IlInjector::aconst(uintptr_t value)
    {
    return TR::Node::aconst(value);
    }
@@ -258,7 +258,7 @@ OMR::IlInjector::fconst(float value)
 TR::Node *
 OMR::IlInjector::staticAddress(void *address)
    {
-   return TR::Node::aconst((uintptrj_t)address);
+   return TR::Node::aconst((uintptr_t)address);
    }
 
 void

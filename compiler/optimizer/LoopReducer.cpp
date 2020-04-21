@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
@@ -41,12 +41,12 @@
 #include "il/Node.hpp"
 #include "il/NodeUtils.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/List.hpp"
@@ -647,7 +647,7 @@ TR_ArrayLoop::checkLoopCmp(TR::Node * loopCmpNode, TR::Node * indVarStoreNode, T
    // if the comparison to leave the loop is equality, add (subtract) one to ind var
    // on exit
    if (compareOp == TR::ificmpeq || compareOp == TR::ificmpge || compareOp == TR::ificmple ||
-       compareOp == TR::ifiucmpeq || compareOp == TR::ifiucmpge || compareOp == TR::ifiucmple)
+       compareOp == TR::ifiucmpge || compareOp == TR::ifiucmple)
       {
       _addInc = true;
       }
@@ -786,7 +786,7 @@ TR_ArrayLoop::updateIndVarStore(TR_ParentOfChildNode * indVarNode, TR::Node * in
    //
    TR::Node * incMul = NULL;
    TR::Node * imul = NULL;
-   if (TR::Compiler->target.is64Bit())
+   if (comp()->target().is64Bit())
       {
       incMul = TR::Node::create(_finalNode, TR::lconst);
       incMul->setLongInt(endInc);
@@ -968,7 +968,18 @@ TR_LoopReducer::generateArraycopy(TR_InductionVariable * indVar, TR::Block * loo
       return false;
       }
 
-   bool needWriteBarrier = comp()->getOptions()->needWriteBarriers();;
+   bool needWriteBarrier = false;
+   switch (TR::Compiler->om.writeBarrierType())
+      {
+      case gc_modron_wrtbar_oldcheck:
+      case gc_modron_wrtbar_cardmark:
+      case gc_modron_wrtbar_cardmark_and_oldcheck:
+      case gc_modron_wrtbar_cardmark_incremental:
+         needWriteBarrier = true;
+         break;
+      default:
+         break;
+      }
    //FUTURE: can eliminate wrtbar when src and dest are equal. Currently we don't reduce arraycopy like this.
    if (arraycopyLoop.hasWriteBarrier() && needWriteBarrier && !comp()->cg()->getSupportsReferenceArrayCopy())
       {
@@ -1041,9 +1052,9 @@ TR_LoopReducer::generateArraycopy(TR_InductionVariable * indVar, TR::Block * loo
       //treat as primitive - create only 3 children
       TR::Node *src = loadAddr;
       TR::Node *dst = storeAddr;
-      intptrj_t offset;
-      TR::ILOpCodes op_add   = TR::Compiler->target.is64Bit() ? TR::aladd : TR::aiadd;
-      TR::ILOpCodes op_const = TR::Compiler->target.is64Bit() ? TR::lconst : TR::iconst;
+      intptr_t offset;
+      TR::ILOpCodes op_add   = comp()->target().is64Bit() ? TR::aladd : TR::aiadd;
+      TR::ILOpCodes op_const = comp()->target().is64Bit() ? TR::lconst : TR::iconst;
 
       offset = arraycopyLoop.getStoreNode()->getSymbolReference()->getOffset();
       if (offset != 0)
@@ -1242,9 +1253,9 @@ TR_LoopReducer::generateArrayset(TR_InductionVariable * indVar, TR::Block * loop
    arraysetLoop.getStoreAddress()->updateMultiply(arraysetLoop.getMultiplyNode());
 
    TR::Node *dst = storeNode->getFirstChild();
-   intptrj_t offset;
-   TR::ILOpCodes op_add   = TR::Compiler->target.is64Bit() ? TR::aladd : TR::aiadd;
-   TR::ILOpCodes op_const = TR::Compiler->target.is64Bit() ? TR::lconst : TR::iconst;
+   intptr_t offset;
+   TR::ILOpCodes op_add   = comp()->target().is64Bit() ? TR::aladd : TR::aiadd;
+   TR::ILOpCodes op_const = comp()->target().is64Bit() ? TR::lconst : TR::iconst;
    offset = storeNode->getSymbolReference()->getOffset();
    if (offset != 0)
       dst = TR::Node::create(op_add, 2, dst, TR::Node::create(dst, op_const, 0, offset));
@@ -1453,7 +1464,7 @@ TR_Arraytranslate::getMulChild(TR::Node * child)
    //   i2l
    //     <...>
    //   lconst 2
-   intptrj_t constValue;
+   intptr_t constValue;
    if ((child->getOpCodeValue() == TR::imul || child->getOpCodeValue() == TR::lmul) &&
       (child->getSecondChild()->getOpCodeValue() == TR::iconst || child->getSecondChild()->getOpCodeValue() == TR::lconst))
       {
@@ -1705,10 +1716,10 @@ TR_Arraytranslate::checkStore(TR::Node * storeNode)
 
       if (shrinkNode->getOpCodeValue() != TR::i2s &&
           shrinkNode->getOpCodeValue() != TR::i2b &&
-          shrinkNode->getOpCodeValue() != TR::cconst &&
+          shrinkNode->getOpCodeValue() != TR::sconst &&
           shrinkNode->getOpCodeValue() != TR::bconst)
          {
-         dumpOptDetails(comp(), "...store tree does not have i2c/i2b/cconst/bconst - no arraytranslate reduction\n");
+         dumpOptDetails(comp(), "...store tree does not have i2c/i2b/sconst/bconst - no arraytranslate reduction\n");
          return false;
          }
 
@@ -1800,7 +1811,7 @@ TR_Arraytranslate::checkBreak(TR::Block * breakBlock, TR::Node * breakNode, TR::
       //      we also conservatively ensure the range is inside the represented ranges such that we can
       //      add or subtract 1 from the value and still represent it in 2**16 bits for a default value
       //      if we need to generate a table.
-      dumpOptDetails(comp(), "...break tree does not have bconst/cconst/iconst, or not in range - no arraytranslate reduction\n");
+      dumpOptDetails(comp(), "...break tree does not have iconst, or not in range - no arraytranslate reduction\n");
       return false;
       }
 
@@ -1913,8 +1924,6 @@ TR_LoopReducer::convertIf(TR::ILOpCodes ifCmp)
          return TR::bcmpeq;
       case TR::ifscmpeq:
          return TR::scmpeq;
-      case TR::ifsucmpeq:
-         return TR::sucmpeq;
       case TR::ificmpeq:
          return TR::icmpeq;
       case TR::iflcmpeq:
@@ -1985,13 +1994,6 @@ TR_LoopReducer::generateArraycmp(TR_RegionStructure * whileLoop, TR_InductionVar
    if (!comp()->cg()->getSupportsArrayCmp())
       {
       dumpOptDetails(comp(), "arraycmp not enabled for this platform\n");
-      return false;
-      }
-
-   if (comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-       comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "arraycmp not safe to perform when NOTEMPS enabled\n");
       return false;
       }
 
@@ -2604,13 +2606,6 @@ TR_LoopReducer::generateArraytranslate(TR_RegionStructure * whileLoop, TR_Induct
    //
    //BBEnd <load/store-char>
 
-   if (comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-       comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "arraytranslate not safe to perform when NOTEMPS enabled\n");
-      return false;
-      }
-
    if (!cg()->getSupportsArrayTranslateTRxx())
       {
       dumpOptDetails(comp(), "arraytranslate not enabled for this platform\n");
@@ -3008,7 +3003,7 @@ TR_LoopReducer::generateArraytranslate(TR_RegionStructure * whileLoop, TR_Induct
    TR::TreeTop * branchNewOldExit = branchNewOldBlock->getExit();
 
    TR::Node * tableNode = arraytranslateLoop.getTableNode()->duplicateTree();
-   if (tableNode->getType().isInt64() && TR::Compiler->target.is32Bit())
+   if (tableNode->getType().isInt64() && comp()->target().is32Bit())
       {
       TR::Node * shrunkTableNode = TR::Node::create(TR::l2i, 1, tableNode);
       tableNode = shrunkTableNode;
@@ -3076,7 +3071,7 @@ TR_LoopReducer::generateArraytranslate(TR_RegionStructure * whileLoop, TR_Induct
       TR::Node * compareNode = NULL;
       if (arraytranslateLoop.tableBackedByRawStorage())
          {
-         if (TR::Compiler->target.is64Bit())
+         if (comp()->target().is64Bit())
             {
             TR::Node * zeroNode = TR::Node::create(loadNode, TR::lconst);
             zeroNode->setLongInt(0);
@@ -3743,13 +3738,6 @@ TR_LoopReducer::generateArraytranslateAndTest(TR_RegionStructure * whileLoop, TR
 bool
 TR_LoopReducer::generateByteToCharArraycopy(TR_InductionVariable * byteIndVar, TR_InductionVariable * charIndVar, TR::Block * loopHeader)
    {
-   if (comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-       comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "arraytranslate not safe to perform when NOTEMPS enabled\n");
-      return false;
-      }
-
    if (!comp()->cg()->getSupportsReferenceArrayCopy() && !comp()->cg()->getSupportsPrimitiveArrayCopy())
       {
       dumpOptDetails(comp(), "arraycopy not enabled for this platform\n");
@@ -3782,7 +3770,7 @@ TR_LoopReducer::generateByteToCharArraycopy(TR_InductionVariable * byteIndVar, T
    TR::TreeTop * arrayStoreTree = loopHeader->getFirstRealTreeTop();
    TR::Node * storeNode = arrayStoreTree->getNode();
 
-   TR_ByteToCharArraycopy arraycopyLoop(comp(), charIndVar, byteIndVar, TR::Compiler->target.cpu.isBigEndian());
+   TR_ByteToCharArraycopy arraycopyLoop(comp(), charIndVar, byteIndVar, comp()->target().cpu.isBigEndian());
 
    if (!arraycopyLoop.checkArrayStore(storeNode))
       {
@@ -3990,13 +3978,6 @@ TR_LoopReducer::generateByteToCharArraycopy(TR_InductionVariable * byteIndVar, T
 bool
 TR_LoopReducer::generateCharToByteArraycopy(TR_InductionVariable * byteIndVar, TR_InductionVariable * charIndVar, TR::Block * loopHeader)
    {
-   if (comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-         comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "arraytranslate not safe to perform when NOTEMPS enabled\n");
-      return false;
-      }
-
    if (!comp()->cg()->getSupportsReferenceArrayCopy() && !comp()->cg()->getSupportsPrimitiveArrayCopy())
       {
       dumpOptDetails(comp(), "arraycopy not enabled for this platform\n");
@@ -4038,7 +4019,7 @@ TR_LoopReducer::generateCharToByteArraycopy(TR_InductionVariable * byteIndVar, T
    lowStoreNode = lowArrayStoreTree->getNode();
    nextTreeTop = lowArrayStoreTree->getNextTreeTop();
 
-   TR_CharToByteArraycopy arraycopyLoop(comp(), charIndVar, byteIndVar, TR::Compiler->target.cpu.isBigEndian());
+   TR_CharToByteArraycopy arraycopyLoop(comp(), charIndVar, byteIndVar, comp()->target().cpu.isBigEndian());
 
    if (!arraycopyLoop.checkArrayStores(highStoreNode, lowStoreNode))
       {

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,4 +55,10 @@ endif()
 if(OMR_JITBUILDER_TEST)
 	add_subdirectory(tril)
 	add_subdirectory(compilertriltest)
+
+	# Currently, there are only unit tests for the Power codegen. To avoid unnecessarily compiling and running an
+	# executable with no tests, compilerunittest is thus disabled on other architectures.
+	if(OMR_ARCH_POWER)
+		add_subdirectory(compilerunittest)
+	endif()
 endif()

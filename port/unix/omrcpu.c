@@ -44,29 +44,6 @@
 #include <sys/sysctl.h>
 #endif
 
-#if (__IBMC__ || __IBMCPP__)
-void dcbf(unsigned char *);
-void dcbst(unsigned char *);
-void icbi(unsigned char *);
-void sync(void);
-void isync(void);
-void dcbz(void *);
-#pragma mc_func dcbf  {"7c0018ac"}
-#pragma mc_func dcbst {"7c00186c"}
-#pragma mc_func icbi  {"7c001fac"}
-#pragma mc_func sync  {"7c0004ac"}
-#pragma mc_func isync {"4c00012c"}
-#pragma mc_func dcbz {"7c001fec"}
-#pragma reg_killed_by dcbf
-#pragma reg_killed_by dcbst
-#pragma reg_killed_by dcbz
-#pragma reg_killed_by icbi
-#pragma reg_killed_by sync
-#pragma reg_killed_by isync
-#endif
-
-
-
 /**
  * PortLibrary startup.
  *
@@ -92,15 +69,10 @@ omrcpu_startup(struct OMRPortLibrary *portLibrary)
 	char buf[1024];
 	memset(buf, 255, 1024);
 
-#if (__IBMC__ || __IBMCPP__)
-	dcbz((void *) &buf[512]);
-#elif defined(LINUX) || defined(OSX)
 	__asm__(
 		"dcbz 0, %0"
 		: /* no outputs */
 		:"r"((void *) &buf[512]));
-#endif
-
 
 	for (i = 0, ppcCacheLineSize = 0; i < 1024; i++) {
 		if (buf[i] == 0) {
@@ -151,44 +123,24 @@ omrcpu_flush_icache(struct OMRPortLibrary *portLibrary, void *memoryPointer, uin
 
 	/* for each cache line, do a data cache block flush */
 	for (addr = (unsigned char *)memoryPointer ; addr < limit; addr += cacheLineSize) {
-
-
-#if (__IBMC__ || __IBMCPP__)
-		dcbst(addr);
-#elif defined(LINUX) || defined(OSX)
 		__asm__(
 			"dcbst 0,%0"
 			: /* no outputs */
 			: "r"(addr));
-#endif
 	}
 
-#if (__IBMC__ || __IBMCPP__)
-	sync();
-#elif defined(LINUX) || defined(OSX)
 	__asm__("sync");
-#endif
 
 	/* for each cache line  do an icache block invalidate */
 	for (addr = (unsigned char *)memoryPointer; addr < limit; addr += cacheLineSize) {
-
-#if (__IBMC__ || __IBMCPP__)
-		icbi(addr);
-#elif defined(LINUX) || defined(OSX)
 		__asm__(
 			"icbi 0,%0"
 			: /* no outputs */
 			: "r"(addr));
-#endif
 	}
 
-#if (__IBMC__ || __IBMCPP__)
-	sync();
-	isync();
-#elif defined(LINUX) || defined(OSX)
 	__asm__("sync");
 	__asm__("isync");
-#endif
 
 #endif /*  defined(RS6000) || defined (LINUXPPC) || defined (PPC) */
 

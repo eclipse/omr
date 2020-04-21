@@ -61,14 +61,18 @@ MM_ScavengerStats::MM_ScavengerStats()
 	,_workStallTime(0)
 	,_completeStallTime(0)
 	,_syncStallTime(0)
+	,_totalDeepStructures(0)
+	,_totalObjsDeepScanned(0)
+	,_depthDeepestStructure(0)
+	,_copyScanUpdates(0)
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 	,_avgInitialFree(0)
 	,_avgTenureBytes(0)
+	,_avgTenureBytesDeviation(0)
 	,_tiltRatio(0)
 	,_nextScavengeWillPercolate(false)
 #if defined(OMR_GC_LARGE_OBJECT_AREA)	
 	,_avgTenureLOABytes(0)
-	,_avgTenureSOABytes(0)
 #endif /* OMR_GC_LARGE_OBJECT_AREA */
 	,_flipDiscardBytes(0)
 	,_tenureDiscardBytes(0)
@@ -163,6 +167,10 @@ MM_ScavengerStats::clear(bool firstIncrement)
 	_workStallTime = 0;
 	_completeStallTime = 0;
 	_syncStallTime = 0;
+	_totalDeepStructures = 0;
+	_totalObjsDeepScanned = 0;
+	_depthDeepestStructure = 0;
+	_copyScanUpdates = 0;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 	/* NOTE: _startTime and _endTime are also not cleared
 	 * as they are recorded before/after all stat clearing/gathering.
@@ -194,4 +202,14 @@ MM_ScavengerStats::clear(bool firstIncrement)
 	_copy_cachesize_sum = 0;
 	memset(_copy_distance_counts, 0, sizeof(_copy_distance_counts));
 	memset(_copy_cachesize_counts, 0, sizeof(_copy_cachesize_counts));
+}
+
+bool
+MM_ScavengerStats::isAvailable(MM_EnvironmentBase *env) {
+	if (env->getExtensions()->isConcurrentScavengerEnabled()) {
+		/* with CS, we count STW increments (2 per each cycle) */
+		return (_gcCount > 1);
+	} else {
+		return (_gcCount > 0);
+	}
 }

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2018 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,7 @@ ifdef OMRGLUE
   CONFIG_INCL_DIR ?= $(firstword $(OMRGLUE))/configure_includes
 endif
 
-# If CONFIG_INCL_DIR is defined, we include platform specfic makefiles
+# If CONFIG_INCL_DIR is defined, we include platform specific makefiles
 # from that directory. These makefiles are expected to add extra configure
 # arguments to the variable CONFIGURE_ARGS.
 ifdef CONFIG_INCL_DIR
@@ -76,6 +76,9 @@ ifneq (,$(findstring linux_aarch64,$(SPEC)))
 endif
 ifneq (,$(findstring linux_ppc,$(SPEC)))
   include $(CONFIG_INCL_DIR)/configure_linux_ppc.mk
+endif
+ifneq (,$(findstring linux_riscv,$(SPEC)))
+  include $(CONFIG_INCL_DIR)/configure_linux_riscv.mk
 endif
 ifneq (,$(findstring linux_x86,$(SPEC)))
   include $(CONFIG_INCL_DIR)/configure_linux_x86.mk
@@ -133,7 +136,7 @@ sh configure --disable-auto-build-flag 'OMRGLUE=$(OMRGLUE)' 'SPEC=$(SPEC)' $(CON
 touch $(CONFIGURE_OUTPUT_FILES)
 endef
 
-CONFIGURE_DEPENDENCIES := SPEC config.guess config.sub configure tools/configure
+CONFIGURE_DEPENDENCIES := SPEC configure tools/configure
 CONFIGURE_OUTPUT_FILES := include_core/omrcfg.h include_core/omrversionstrings.h omrmakefiles/configure.mk ./omr.rc tools/toolconfigure.mk CONFIGURE_SENTINEL_FILE
 CONFIGURE_INPUT_FILES := include_core/omrcfg.h.in include_core/omrversionstrings.h.in omrmakefiles/configure.mk.in ./omr.rc.in tools/toolconfigure.mk.in
 CONFIGURE_BYPRODUCTS := config.cache config.status config.log autom4te.cache tools/config.cache tools/config.status toolconfig/config.log tools/autom4te.cache
@@ -153,12 +156,6 @@ ifeq ($(HAS_AUTOCONF),1)
 else
 	@echo "WARNING: autoconf needs to be re-run in $$PWD/tools.  You should do this by hand, or set HAS_AUTOCONF=1 to have this makefile do it for you."
 endif
-
-config.guess:
-	curl -o config.guess "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD"
-
-config.sub:
-	curl -o config.sub "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD"
 
 # Since configure has many output files, we are using a 'sentinel file' to make
 # sure that this recipe is only executed once when running configure in parallel.

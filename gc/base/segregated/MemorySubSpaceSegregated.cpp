@@ -57,7 +57,6 @@ MM_MemorySubSpaceSegregated::allocateObject(MM_EnvironmentBase *env, MM_Allocate
 	return result;
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 /**
  * Allocate an arraylet leaf.
  */
@@ -76,7 +75,6 @@ MM_MemorySubSpaceSegregated::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_Al
 	}
 	return leaf;
 }
-#endif /* OMR_GC_ARRAYLETS */
 
 void *
 MM_MemorySubSpaceSegregated::allocate(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, AllocateType allocType)
@@ -87,11 +85,9 @@ MM_MemorySubSpaceSegregated::allocate(MM_EnvironmentBase *env, MM_AllocateDescri
 	case arrayletSpine:
 		result = _memoryPoolSegregated->allocateObject(env, allocDescription);
 		break;
-#if defined(OMR_GC_ARRAYLETS)
 	case arrayletLeaf:
 		result = _memoryPoolSegregated->allocateArrayletLeaf(env, allocDescription);
 		break;
-#endif /* defined(OMR_GC_ARRAYLETS) */
 	default:
 		Assert_MM_unreachable();
 	}
@@ -203,13 +199,11 @@ MM_MemorySubSpaceSegregated::allocationRequestFailed(MM_EnvironmentBase *env, MM
 	return allocateGeneric(env, allocateDescription, allocationType, objectAllocationInterface, baseSubSpace);
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 uintptr_t
 MM_MemorySubSpaceSegregated::largestDesirableArraySpine()
 {
 	return OMR_SIZECLASSES_MAX_SMALL_SIZE_BYTES;
 }
-#endif /* defined(OMR_GC_ARRAYLETS) */
 
 void
 MM_MemorySubSpaceSegregated::abandonHeapChunk(void *addrBase, void *addrTop)
@@ -282,11 +276,9 @@ MM_MemorySubSpaceSegregated::expanded(
 	bool result = heapAddRange(env, this, region->getSize(), regionLowAddress, regionHighAddress);
 
 	/* Expand the valid range for arraylets. */
-#if defined(OMR_GC_ARRAYLETS)
 	if (result) {
 		_extensions->indexableObjectModel.expandArrayletSubSpaceRange(this, regionLowAddress, regionHighAddress, largestDesirableArraySpine());
 	}
-#endif /* defined(OMR_GC_ARRAYLETS) */
 
 	return result;
 }
@@ -318,9 +310,9 @@ MM_MemorySubSpaceSegregated::heapRemoveRange(MM_EnvironmentBase *env, MM_MemoryS
 }
 
 void
-MM_MemorySubSpaceSegregated::heapReconfigured(MM_EnvironmentBase *env)
+MM_MemorySubSpaceSegregated::heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress)
 {
-	MM_MemorySubSpaceUniSpace::heapReconfigured(env);
+	MM_MemorySubSpaceUniSpace::heapReconfigured(env, reason, subspace, lowAddress, highAddress);
 	if (_regionExpansionBase != _regionExpansionTop) {
 		expandRegionPool();
 	}

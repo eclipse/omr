@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
 #include "env/jittypes.h"
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "x/codegen/X86Ops.hpp"
 #include "x/codegen/X86Ops_inlines.hpp"
@@ -64,7 +64,7 @@ class X86RestartSnippet  : public TR::Snippet
       TR_X86OpCode  opcode(branchOp);
 
       uint8_t *destination = label->getCodeLocation();
-      intptrj_t  distance    = destination - (bufferCursor + 2);
+      intptr_t  distance    = destination - (bufferCursor + 2);
 
       TR_ASSERT((branchOp >= JA4) && (branchOp <= JMP4),
              "opcode must be a long branch for conditional restart in a restart snippet\n");
@@ -108,12 +108,12 @@ class X86RestartSnippet  : public TR::Snippet
                                       int32_t         estimatedSnippetLocation,
                                       TR::LabelSymbol *label)
       {
-      intptrj_t location = label->getEstimatedCodeLocation();
+      intptr_t location = label->getEstimatedCodeLocation();
       if (label->getCodeLocation() != 0)
          {
          location = label->getCodeLocation() - cg()->getBinaryBufferStart();
          }
-      intptrj_t distance = location - (estimatedSnippetLocation + 2); // 2 is size of short branch
+      intptr_t distance = location - (estimatedSnippetLocation + 2); // 2 is size of short branch
       if (distance >= -128 && distance <= 127 && !getForceLongRestartJump())
          {
          return 2;

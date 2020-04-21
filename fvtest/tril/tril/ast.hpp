@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,9 +79,9 @@ struct ASTValue {
      */
 
     // constructors
-    explicit ASTValue(Integer_t v) : _type{Integer}, next{NULL} { _value.integer = v; }
-    explicit ASTValue(FloatingPoint_t v) : _type{FloatingPoint}, next{NULL} { _value.floatingPoint = v; }
-    explicit ASTValue(String_t v) : _type{String}, next{NULL} { _value.str = v; }
+    explicit ASTValue(Integer_t v) : _type(Integer), next(NULL) { _value.integer = v; }
+    explicit ASTValue(FloatingPoint_t v) : _type(FloatingPoint), next(NULL) { _value.floatingPoint = v; }
+    explicit ASTValue(String_t v) : _type(String), next(NULL) { _value.str = v; }
 
     /**
      * @brief Return the contained value as the specified type
@@ -218,7 +218,7 @@ struct ASTNodeArg {
     ASTNodeArg* next;
 
     ASTNodeArg(const char* name, ASTValue* value, ASTNodeArg* next = NULL)
-        : _name{name}, _value{value}, next{next} {}
+        : _name(name), _value(value), next(next) {}
 
     const char* getName() const { return _name; }
     const ASTValue* getValue() const { return _value; }
@@ -245,7 +245,7 @@ struct ASTNode {
     ASTNode* next;
 
     ASTNode(const char* name, ASTNodeArg* args, ASTNode* children, ASTNode* next)
-        : _name{name}, _args{args}, _children{children}, next{next} {}
+        : _name(name), _args(args), _children(children), next(next) {}
 
     const char* getName() const { return _name; }
 

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,9 +43,9 @@ create_jitbuilder_test(pow2            cpp/samples/Pow2.cpp)
 create_jitbuilder_test(simple          cpp/samples/Simple.cpp)
 create_jitbuilder_test(worklist        cpp/samples/Worklist.cpp)
 
-# Additional Tests: These may not run properly on all platforms
-# Opt in by setting OMR_JITBUILDER_ADDITIONAL
-if(OMR_JITBUILDER_ADDITIONAL)
+# Extended JitBuilder Tests: These may not run properly on all platforms
+# Opt in by setting OMR_JITBUILDER_TEST_EXTENDED
+if(OMR_JITBUILDER_TEST_EXTENDED)
 	create_jitbuilder_test(call              cpp/samples/Call.cpp)
 	create_jitbuilder_test(conststring       cpp/samples/ConstString.cpp)
 	create_jitbuilder_test(dotproduct        cpp/samples/DotProduct.cpp)
@@ -59,8 +59,10 @@ if(OMR_JITBUILDER_ADDITIONAL)
 	create_jitbuilder_test(recfib            cpp/samples/RecursiveFib.cpp)
 	create_jitbuilder_test(structArray       cpp/samples/StructArray.cpp)
 	create_jitbuilder_test(switch            cpp/samples/Switch.cpp)
+	create_jitbuilder_test(tableswitch       cpp/samples/TableSwitch.cpp)
 	create_jitbuilder_test(toiltype          cpp/samples/ToIlType.cpp)
 	create_jitbuilder_test(union             cpp/samples/Union.cpp)
+	create_jitbuilder_test(vmregister        cpp/samples/VMRegister.cpp)
 endif()
 
 # Experimental Tests: These are still on the experimental side
@@ -72,6 +74,5 @@ endif()
 
 
 # Additional Tests: These may not run properly on all platforms
-# Mandelbrot takes arguments for its test
-# so will require we enhance create_jitbuilder_target.
-#create_jitbuilder_target(mandelbrot   cpp/samples/Mandelbrot.cpp)
+# Mandelbrot takes arguments for its test so will require we enhance create_jitbuilder_test
+#create_jitbuilder_test(mandelbrot cpp/samples/Mandelbrot.cpp)

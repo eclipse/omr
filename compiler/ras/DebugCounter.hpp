@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,7 @@ class DebugCounterBase
    {
 public:
    DebugCounterBase(const char *name) : _name(name), _reloData(NULL) {}
-   virtual intptrj_t getBumpCountAddress() = 0;
+   virtual intptr_t getBumpCountAddress() = 0;
    virtual TR::SymbolReference *getBumpCountSymRef(TR::Compilation *comp) = 0;
    TR::Node *createBumpCounterNode(TR::Compilation *comp, TR::Node *deltaNode);
    bool initializeReloData(TR::Compilation *comp, int32_t delta, int8_t fidelity, int32_t staticDelta);
@@ -187,7 +187,7 @@ class DebugCounter : public DebugCounterBase
    void             getInsertionCounterNames(TR::Compilation *comp, TR_OpaqueMethodBlock *method, int32_t bytecodeIndex, const char *(&counterNames)[3]);
 
    TR::SymbolReference *getBumpCountSymRef(TR::Compilation *comp);
-   intptrj_t getBumpCountAddress();
+   intptr_t getBumpCountAddress();
 
    // Commands
    //
@@ -261,7 +261,7 @@ public:
 
    bool hasAnyCounters() { return !_counterDeltas->isEmpty(); }
 
-   intptrj_t getBumpCountAddress();
+   intptr_t getBumpCountAddress();
    TR::SymbolReference *getBumpCountSymRef(TR::Compilation *comp);
 
    void accumulate();

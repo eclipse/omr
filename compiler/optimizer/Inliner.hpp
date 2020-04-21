@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,12 +76,12 @@ class TR_FrontEnd;
 class TR_HashTabInt;
 class TR_InlineBlocks;
 class TR_InnerAssumption;
-class TR_Method;
 class TR_PrexArgInfo;
 class TR_ResolvedMethod;
 class TR_TransformInlinedFunction;
 namespace TR { class Block; }
 namespace TR { class CFG; }
+namespace TR { class Method; }
 namespace TR { class Node; }
 namespace TR { class ParameterSymbol; }
 namespace TR { class ResolvedMethodSymbol; }
@@ -129,7 +129,6 @@ class TR_InlinerTracer : public TR_LogTracer
       void dumpCallTarget (TR_CallTarget *, const char *fmt, ...);
       void dumpInline (TR_LinkHead<TR_CallTarget> *targets, const char *fmt, ...);
       void dumpPartialInline (TR_InlineBlocks *partialInline);
-      void dumpPrexArgInfo(TR_PrexArgInfo* argInfo);
 
       void dumpDeadCalls(TR_LinkHead<TR_CallSite> *sites);
 
@@ -238,7 +237,7 @@ struct TR_VirtualGuardSelection
    TR_OpaqueClassBlock *_thisClass;
 
    // only for a MutableCallSiteTargetGuard
-   uintptrj_t                *_mutableCallSiteObject;
+   uintptr_t                *_mutableCallSiteObject;
    TR::KnownObjectTable::Index _mutableCallSiteEpoch;
 
    // this flag is used to signify a profiled guard for which
@@ -415,8 +414,6 @@ class TR_InlinerBase: public TR_HasRandomGenerator
       TR::Node *_storeToCachedPrivateStatic;
 
       TR_InlinerTracer*         _tracer;
-      List<TR::Block>                           _GlobalLabels;
-      List<TR::Block > * getSuccessorsWithGlobalLabels(){ return &_GlobalLabels; }
       OMR_InlinerPolicy *_policy;
       OMR_InlinerUtil*_util;
    };
@@ -446,12 +443,29 @@ class TR_InlineCall : public TR_DumbInliner
 struct TR_ParameterMapping : TR_Link<TR_ParameterMapping>
    {
    TR_ParameterMapping(TR::ParameterSymbol * ps)
-      : _parmSymbol(ps), _replacementSymRef(0), _parameterNode(0),
-       _parmIsModified(false), _addressTaken(false), _isConst(false)
-      { }
+      : _parmSymbol(ps),
+        _replacementSymRef(NULL),
+        _replacementSymRefForInlinedBody(NULL),
+        _parameterNode(NULL),
+        _parmIsModified(false),
+        _addressTaken(false),
+        _isConst(false)
+       { }
 
    TR::ParameterSymbol * _parmSymbol;
+
+   /*
+    * The symbol reference of the priv arg temp.
+    *
+    * Used for replacing both the parm symbol references in the inlined body and args on the taken side of the guard.
+    */
    TR::SymbolReference * _replacementSymRef;
+   /*
+    * Used for replacing parm symbol reference in the inlined body when this field not NULL.
+    * Otherwise, the \ref _replacementSymRef is used.
+    */
+   TR::SymbolReference * _replacementSymRefForInlinedBody;
+
    TR::Node *            _parameterNode;                 //The Node under the call which matches the argument at argIndex
    uint32_t             _argIndex;
    bool                 _parmIsModified;
@@ -464,7 +478,7 @@ class TR_ParameterToArgumentMapper
    public:
       TR_ALLOC(TR_Memory::Inliner)
 
-      TR_ParameterToArgumentMapper(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::Node *,
+      TR_ParameterToArgumentMapper(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::Node *, TR_PrexArgInfo *,
                                    List<TR::SymbolReference> &, List<TR::SymbolReference> &,
                                    List<TR::SymbolReference> &, TR_InlinerBase *);
 
@@ -504,6 +518,7 @@ class TR_ParameterToArgumentMapper
       List<TR::SymbolReference> &       _availableTemps2;
       TR_InlinerTracer *               _tracer;
       TR_InlinerBase *                 _inliner;
+      TR_PrexArgInfo *                 _argInfo;
    };
 
 class OMR_InlinerHelper
@@ -533,7 +548,16 @@ class OMR_InlinerUtil : public TR::OptimizationUtil, public OMR_InlinerHelper
       virtual void adjustCallerWeightLimit(TR::ResolvedMethodSymbol *callSymbol, int &callerWeightLimit){ return; }
       virtual void adjustMethodByteCodeSizeThreshold(TR::ResolvedMethodSymbol *callSymbol, int &methodByteCodeSizeThreshold){ return; }
       virtual TR_PrexArgInfo *computePrexInfo(TR_CallTarget *target);
+      virtual TR_PrexArgInfo *computePrexInfo(TR_CallTarget *target, TR_PrexArgInfo *callerArgInfo);
+      virtual void clearArgInfoForNonInvariantArguments(TR_CallTarget *target, TR_InlinerTracer* tracer);
       virtual void collectCalleeMethodClassInfo(TR_ResolvedMethod *calleeMethod);
+      /*
+       * Implemented by down stream projects to request for certain optimizations based on \parm target
+       *
+       * \parm calltarget
+       *       The calltarget got inlined
+       */
+      virtual void requestAdditionalOptimizations(TR_CallTarget *calltarget);
 
       /**
        * \brief
@@ -614,6 +638,13 @@ class OMR_InlinerPolicy : public TR::OptimizationPolicy, public OMR_InlinerHelpe
        */
       virtual bool isInlineableNativeMethod(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol) { return false; }
 
+      /**
+       * \brief sometimes we choose not to inline certain callsite because they will be handled specially in other optimizations or in codegen
+       *
+       * \return true if the method shouldn't be inlined in inliner
+       */
+      virtual bool supressInliningRecognizedInitialCallee(TR_CallSite* callsite, TR::Compilation* comp);
+
    protected:
       virtual bool tryToInlineTrivialMethod (TR_CallStack* callStack, TR_CallTarget* calltarget);
       virtual bool alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::Node *callNode);
@@ -621,7 +652,6 @@ class OMR_InlinerPolicy : public TR::OptimizationPolicy, public OMR_InlinerHelpe
       bool tryToInlineGeneral(TR_CallTarget *, TR_CallStack *, bool);
       virtual bool callMustBeInlined(TR_CallTarget *calltarget);
       bool mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR::TreeTop *callNodeTreeTop);
-      virtual bool supressInliningRecognizedInitialCallee(TR_CallSite* callsite, TR::Compilation* comp);
       virtual TR_InlinerFailureReason checkIfTargetInlineable(TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp);
       virtual bool suitableForRemat(TR::Compilation *comp, TR::Node *node, TR_VirtualGuardSelection *guard);
    };

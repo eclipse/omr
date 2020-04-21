@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2014, 2016 IBM Corp. and others
+# Copyright (c) 2014, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,12 @@ ifeq (1, $(OMR_GC_SEGREGATED_HEAP))
 OBJECTS += $(patsubst %.cpp,%$(OBJEXT),$(wildcard segregated/*.cpp))
 OBJECTS += $(patsubst %.c,%$(OBJEXT),$(wildcard segregated/*.c))
 MODULE_INCLUDES += segregated
+endif
+
+ifeq (1, $(OMR_GC_VLHGC))
+OBJECTS += $(patsubst %.cpp,%$(OBJEXT),$(wildcard vlhgc/*.cpp))
+OBJECTS += $(patsubst %.c,%$(OBJEXT),$(wildcard vlhgc/*.c))
+MODULE_INCLUDES += vlhgc
 endif
 
 ifeq (linux,$(OMR_HOST_OS))

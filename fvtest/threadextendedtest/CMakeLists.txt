@@ -43,4 +43,6 @@ endif()
 
 set_property(TARGET omrthreadextendedtest PROPERTY FOLDER fvtest)
 
-add_test(NAME threadextendedtest COMMAND omrthreadextendedtest)
+if (NOT OMR_HOST_OS STREQUAL "zos")
+	add_test(NAME threadextendedtest COMMAND omrthreadextendedtest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrthreadextendedtest-results.xml)
+endif()

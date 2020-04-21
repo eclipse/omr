@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,8 @@ MM_MarkStats::clear()
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 	_syncStallCount = 0;
 	_syncStallTime = 0;
+	_splitArraysProcessed = 0;
+	_splitArraysAmount = 0;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 }
 
@@ -55,6 +57,8 @@ MM_MarkStats::merge(MM_MarkStats *statsToMerge)
 	/* It may not ever be useful to merge these stats, but do it anyways */
 	_syncStallCount += statsToMerge->_syncStallCount;
 	_syncStallTime += statsToMerge->_syncStallTime;
+	_splitArraysProcessed += statsToMerge->_splitArraysProcessed;
+	_splitArraysAmount += statsToMerge->_splitArraysAmount;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 }
 

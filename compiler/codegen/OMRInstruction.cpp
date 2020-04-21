@@ -47,7 +47,6 @@ Instruction::Instruction(
    _cg(cg),
    _liveLocals(0),
    _liveMonitors(0),
-   _registerSaveDescription(0),
    _gc()
    {
    TR_ASSERT(node || !debug("checkByteCodeInfo"), "TR::Node * not passed to OMR::Instruction ctor");
@@ -112,7 +111,6 @@ Instruction::Instruction(
    _cg(cg),
    _liveLocals(0),
    _liveMonitors(0),
-   _registerSaveDescription(0),
    _gc()
    {
 
@@ -244,15 +242,15 @@ Instruction::useRegister(TR::Register *reg)
    {
 
    if (reg->getStartOfRange() == 0 ||
-       (reg->getStartOfRange()->getIndex() > self()->getIndex()) &&
-       !self()->cg()->getIsInOOLSection())
+       ((reg->getStartOfRange()->getIndex() > self()->getIndex()) &&
+        !self()->cg()->getIsInOOLSection()))
       {
       reg->setStartOfRange(self());
       }
 
    if (reg->getEndOfRange() == 0 ||
-       (reg->getEndOfRange()->getIndex() < self()->getIndex()) &&
-       !self()->cg()->getIsInOOLSection())
+       ((reg->getEndOfRange()->getIndex() < self()->getIndex()) &&
+        !self()->cg()->getIsInOOLSection()))
       {
       reg->setEndOfRange(self());
       }

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,12 +23,16 @@ set(OMR_WARNING_AS_ERROR_FLAG -Werror)
 
 set(OMR_ENHANCED_WARNING_FLAG -Wall)
 
+# disable builtin strncpy buffer length check for components that use variable length
+# array fields at the end of structs
+set(OMR_STRNCPY_FORTIFY_OPTIONS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1)
+
 list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -pthread -fno-strict-aliasing)
 
 list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -std=c++0x)
 
-if(OMR_ENV_DATA64)
-	if (NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64"))
+if(OMR_ARCH_X86)
+	if(OMR_ENV_DATA64)
 		list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
 			-m64
 		)
@@ -38,18 +42,18 @@ if(OMR_ENV_DATA64)
 		list(APPEND OMR_PLATFORM_SHARED_LINKER_OPTIONS
 			-m64
 		)
+	else()
+		list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
+			-m32
+			-msse2
+		)
+		list(APPEND OMR_PLATFORM_EXE_LINKER_OPTIONS
+			-m32
+		)
+		list(APPEND OMR_PLATFORM_SHARED_LINKER_OPTIONS
+			-m32
+		)
 	endif()
-else()
-	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
-		-m32
-		-msse2
-	)
-	list(APPEND OMR_PLATFORM_EXE_LINKER_OPTIONS
-		-m32
-	)
-	list(APPEND OMR_PLATFORM_SHARED_LINKER_OPTIONS
-		-m32
-	)
 endif()
 
 if(OMR_HOST_ARCH STREQUAL "s390")
@@ -57,8 +61,7 @@ if(OMR_HOST_ARCH STREQUAL "s390")
 endif()
 
 # Testarossa build variables. Longer term the distinction between TR and the rest
-# of the OMR code should be heavily reduced. In the mean time, we keep
-# the distinction
+# of the OMR code should be heavily reduced. In the meantime, we keep the distinction.
 
 # TR_COMPILE_OPTIONS are variables appended to CMAKE_{C,CXX}_FLAGS, and so
 # apply to both C and C++ compilations.
@@ -72,12 +75,57 @@ set(PASM_FLAGS -x assembler-with-cpp -E -P)
 set(SPP_CMD ${CMAKE_C_COMPILER})
 set(SPP_FLAGS -x assembler-with-cpp -E -P)
 
-# Configure the platform dependent library for multithreading
-# We dont actually have a clang config and use gnu on non-Windows,
-# so we have to detect Apple Clang here.
+# Configure the platform dependent library for multithreading.
+# We don't actually have a clang config and use gnu on non-Windows,
+# so we have to detect Apple clang here.
 # see ../../OmrDetectSystemInformation.cmake
 if(CMAKE_C_COMPILER_ID MATCHES "^(Apple)?Clang$")
 	set(OMR_PLATFORM_THREAD_LIBRARY pthread)
 else()
 	set(OMR_PLATFORM_THREAD_LIBRARY -pthread)
 endif()
+
+function(_omr_toolchain_separate_debug_symbols tgt)
+	set(exe_file "$<TARGET_FILE:${tgt}>")
+	set(dbg_file "$<TARGET_FILE:${tgt}>.dbg")
+	if(OMR_OS_OSX)
+		add_custom_command(
+			TARGET "${tgt}"
+			POST_BUILD
+			COMMAND dsymutil -f ${exe_file} -o ${dbg_file}
+		)
+	else()
+		add_custom_command(
+			TARGET "${tgt}"
+			POST_BUILD
+			COMMAND "${CMAKE_OBJCOPY}" --only-keep-debug "${exe_file}" "${dbg_file}"
+			COMMAND "${CMAKE_OBJCOPY}" --strip-debug "${exe_file}"
+			COMMAND "${CMAKE_OBJCOPY}" "--add-gnu-debuglink=${dbg_file}" "${exe_file}"
+		)
+	endif()
+	set_target_properties(${tgt} PROPERTIES OMR_DEBUG_FILE "${dbg_file}")
+endfunction()
+
+function(_omr_toolchain_process_exports TARGET_NAME)
+	# we only need to do something if we are dealing with a shared library
+	get_target_property(target_type ${TARGET_NAME} TYPE)
+	if(NOT target_type STREQUAL "SHARED_LIBRARY")
+		return()
+	endif()
+
+	# This does not work on OSX.
+	if(OMR_OS_OSX)
+		return()
+	endif()
+
+	set(exp_file "$<TARGET_PROPERTY:${TARGET_NAME},BINARY_DIR>/${TARGET_NAME}.exp")
+
+	omr_process_template(
+		"${omr_SOURCE_DIR}/cmake/modules/platform/toolcfg/gnu_exports.exp.in"
+		"${exp_file}"
+	)
+
+	target_link_libraries(${TARGET_NAME}
+		PRIVATE
+			"-Wl,--version-script,${exp_file}")
+endfunction()

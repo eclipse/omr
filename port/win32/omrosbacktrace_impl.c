@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -256,7 +256,7 @@ omrintrospect_backtrace_thread_raw(struct OMRPortLibrary *portLibrary, J9Platfor
 	CONTEXT threadContext = {0};
 	STACKFRAME64 stackFrame;
 	J9PlatformStackFrame **nextFrame;
-	struct J9Win32SignalInfo *sigInfo = (struct J9Win32SignalInfo *)signalInfo;
+	struct OMRWin32SignalInfo *sigInfo = (struct OMRWin32SignalInfo *)signalInfo;
 
 	if (threadInfo == NULL || (threadInfo->context == NULL && sigInfo == NULL)) {
 		return 0;

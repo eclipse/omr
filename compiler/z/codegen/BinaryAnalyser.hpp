@@ -65,10 +65,7 @@ class TR_S390BinaryAnalyser : public TR_Analyser
      {
 
      TR::InstOpCode::Mnemonic loadOp = TR::InstOpCode::getLoadRegOpCode();
-     if (cg()->supportsHighWordFacility())
-        {
-        loadOp = TR::InstOpCode::LR;
-        }
+
      genericAnalyser(root,regToRegOpCode,memToRegOpCode,loadOp);
      }
 

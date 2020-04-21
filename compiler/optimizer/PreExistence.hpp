@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,10 @@
 #include <string.h>
 #include "env/KnownObjectTable.hpp"
 #include "env/TRMemory.hpp"
+#include "ras/LogTracer.hpp"
+
+// Temporary macro to coordinate changes between omr and openj9.
+#define TR_PREXARGINFO_TRACER_CLASS TR_LogTracer
 
 class TR_CallSite;
 class TR_InlinerTracer;
@@ -50,13 +54,13 @@ class TR_PrexArgument
    TR_PrexArgument(
          ClassKind classKind,
          TR_OpaqueClassBlock *clazz = 0,
-         TR_OpaqueClassBlock *profiledClazz = 0,
-         bool p = false) :
+         TR_OpaqueClassBlock *profiledClazz = 0):
       _classKind(classKind),
       _class(clazz),
       _profiledClazz(profiledClazz),
-      _knownObjectIndex(TR::KnownObjectTable::UNKNOWN)
-      { }
+      _knownObjectIndex(TR::KnownObjectTable::UNKNOWN),
+      _isTypeInfoForInlinedBody(false)
+      { TR_ASSERT_FATAL(_classKind != ClassIsFixed || _class, "Fixed type must have a class"); }
 
    static const char *priorKnowledgeStrings[];
    static PrexKnowledgeLevel knowledgeLevel(TR_PrexArgument *pa);
@@ -82,6 +86,9 @@ class TR_PrexArgument
    TR::KnownObjectTable::Index getKnownObjectIndex() { return _knownObjectIndex; }
    bool hasKnownObjectIndex(){ return getKnownObjectIndex() != TR::KnownObjectTable::UNKNOWN; }
 
+   bool isTypeInfoForInlinedBody () { return _isTypeInfoForInlinedBody; }
+   void setTypeInfoForInlinedBody() { _isTypeInfoForInlinedBody = true; }
+
    private:
 
    ClassKind _classKind;
@@ -95,6 +102,7 @@ class TR_PrexArgument
    // optionally provided - when ObjectIsKnown
    //
    TR::KnownObjectTable::Index _knownObjectIndex;
+   bool _isTypeInfoForInlinedBody; // The prex arg info only apply to the inlined body but not on the taken side
    };
 
 class TR_PrexArgInfo
@@ -105,15 +113,23 @@ class TR_PrexArgInfo
    static TR_PrexArgInfo* enhance(TR_PrexArgInfo *dest, TR_PrexArgInfo *source, TR::Compilation *comp);
 
    static void propagateReceiverInfoIfAvailable (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite,
-                                              TR_PrexArgInfo * argInfo, TR_InlinerTracer *tracer);
+                                              TR_PrexArgInfo* argInfo, TR_LogTracer* tracer);
 
    static void propagateArgsFromCaller(TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite,
-      TR_PrexArgInfo * argInfo, TR_InlinerTracer *tracer);
+      TR_PrexArgInfo* argInfo, TR_LogTracer* tracer);
 
-   static bool validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* argsFromSymbol, TR_PrexArgInfo* argsFromTarget, TR_InlinerTracer *tracer);
+   static bool validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* argsFromSymbol, TR_PrexArgInfo* argsFromTarget, TR_LogTracer* tracer);
 
-   static TR_PrexArgInfo* buildPrexArgInfoForMethodSymbol(TR::ResolvedMethodSymbol* methodSymbol, TR_InlinerTracer* tracer);
-   void clearArgInfoForNonInvariantArguments(TR::ResolvedMethodSymbol* methodSymbol, TR_InlinerTracer* tracer);
+   static TR_PrexArgInfo* buildPrexArgInfoForMethodSymbol(TR::ResolvedMethodSymbol* methodSymbol, TR_LogTracer* tracer);
+   void clearArgInfoForNonInvariantArguments(TR::ResolvedMethodSymbol* methodSymbol, TR_LogTracer* tracer);
+   /**
+    * \brief
+    *    Get arg info for arguments of callNode that are parameters of the caller
+    *
+    * \return
+    *    TR_PrexArgInfo contianing arg info for arguments from caller parameters
+    */
+   static TR_PrexArgInfo* argInfoFromCaller(TR::Node* callNode, TR_PrexArgInfo* callerArgInfo);
 #endif
 
    TR_ALLOC(TR_Memory::LocalOpts);
@@ -128,13 +144,15 @@ class TR_PrexArgInfo
 
    int32_t getNumArgs() { return _numArgs; }
 
+   void dumpTrace();
+
    private:
 
    int32_t _numArgs;
    TR_PrexArgument **_args;
    //
 #ifdef J9_PROJECT_SPECIFIC
-   static TR::Node* getCallNode (TR::ResolvedMethodSymbol* methodSymbol, class TR_CallSite* callsite, class TR_InlinerTracer* tracer);
+   static TR::Node* getCallNode (TR::ResolvedMethodSymbol* methodSymbol, class TR_CallSite* callsite, class TR_LogTracer* tracer);
    static bool hasArgInfoForChild (TR::Node *child, TR_PrexArgInfo * argInfo);
    static TR_PrexArgument* getArgForChild(TR::Node *child, TR_PrexArgInfo* argInfo);
 #endif

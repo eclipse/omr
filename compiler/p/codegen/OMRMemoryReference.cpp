@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,8 @@
 #include <stdint.h>
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
@@ -47,14 +48,14 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
@@ -199,7 +200,7 @@ OMR::Power::MemoryReference::MemoryReference(TR::Node *rootLoadOrStore, uint32_t
          }
       }
 
-   if (TR::Compiler->target.is32Bit() || !symbol->isConstObjectRef())
+   if (cg->comp()->target().is32Bit() || !symbol->isConstObjectRef())
       self()->addToOffset(rootLoadOrStore, ref->getOffset(), cg);
    if (self()->getUnresolvedSnippet() != NULL)
       self()->adjustForResolution(cg);
@@ -213,7 +214,6 @@ OMR::Power::MemoryReference::MemoryReference(TR::Node *node, TR::SymbolReference
      _conditions(NULL), _length(len), _staticRelocation(NULL)
    {
    TR::Symbol *symbol = symRef->getSymbol();
-
 
    if (symbol->isStatic())
       {
@@ -232,7 +232,7 @@ OMR::Power::MemoryReference::MemoryReference(TR::Node *node, TR::SymbolReference
          }
       }
 
-   if (TR::Compiler->target.is32Bit() || !symbol->isConstObjectRef())
+   if (cg->comp()->target().is32Bit() || !symbol->isConstObjectRef())
       self()->addToOffset(0, symRef->getOffset(), cg);
    if (self()->getUnresolvedSnippet() != NULL)
       self()->adjustForResolution(cg);
@@ -287,12 +287,12 @@ int32_t OMR::Power::MemoryReference::getTOCOffset()
    // TODO: add checking for other type of TOC usages.
    if (self()->isUsingStaticTOC())
       {
-      return _symbolReference->getSymbol()->getStaticSymbol()->getTOCIndex() * sizeof(intptrj_t);
+      return _symbolReference->getSymbol()->getStaticSymbol()->getTOCIndex() * sizeof(intptr_t);
       }
    return 0;
    }
 
-void OMR::Power::MemoryReference::addToOffset(TR::Node * node, intptrj_t amount, TR::CodeGenerator *cg)
+void OMR::Power::MemoryReference::addToOffset(TR::Node * node, intptr_t amount, TR::CodeGenerator *cg)
    {
    // in compressedRefs mode, amount maybe heapBase constant, which in
    // most cases is quite large
@@ -312,16 +312,16 @@ void OMR::Power::MemoryReference::addToOffset(TR::Node * node, intptrj_t amount,
       {
       self()->consolidateRegisters(NULL, NULL, false, cg);
       }
-   intptrj_t displacement = self()->getOffset() + amount;
+   intptr_t displacement = self()->getOffset() + amount;
    if (displacement<LOWER_IMMED || displacement>UPPER_IMMED)
       {
       TR::Register  *newBase;
-      intptrj_t     upper, lower;
+      intptr_t     upper, lower;
 
       self()->setOffset(0);
-      lower = displacement & 0x0000ffff;
+      lower = (intptr_t)(int16_t)displacement;
       upper = displacement >> 16;
-      if (lower & (1<<15))
+      if (lower < 0)
          upper++;
       if (_baseRegister!=NULL && self()->isBaseModifiable())
          newBase = _baseRegister;
@@ -347,7 +347,7 @@ void OMR::Power::MemoryReference::addToOffset(TR::Node * node, intptrj_t amount,
             }
          else
             {
-            if (TR::Compiler->target.is64Bit() && (upper<LOWER_IMMED || upper>UPPER_IMMED))
+            if (cg->comp()->target().is64Bit() && (upper<LOWER_IMMED || upper>UPPER_IMMED))
                {
                TR::Register *tempReg = cg->allocateRegister();
                loadActualConstant(cg, node, upper<<16, tempReg);
@@ -402,7 +402,7 @@ void OMR::Power::MemoryReference::forceIndexedForm(TR::Node * node, TR::CodeGene
       }
 
    // true displacement available now
-   intptrj_t displacement = self()->getOffset();
+   intptr_t displacement = self()->getOffset();
 
    if (displacement == 0)
       {
@@ -437,7 +437,7 @@ void OMR::Power::MemoryReference::adjustForResolution(TR::CodeGenerator *cg)
    {
    _modBase = cg->allocateRegister();
    _conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
-   addDependency(_conditions, _modBase, TR::RealRegister::gr11, TR_GPR, cg);
+   TR::addDependency(_conditions, _modBase, TR::RealRegister::gr11, TR_GPR, cg);
    }
 
 void OMR::Power::MemoryReference::decNodeReferenceCounts(TR::CodeGenerator *cg)
@@ -483,7 +483,7 @@ void OMR::Power::MemoryReference::bookKeepingRegisterUses(TR::Instruction *instr
 
 static bool isLoadConstAndShift(TR::Node *subTree, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       if (subTree->getOpCodeValue() == TR::lshl)
          {
@@ -568,9 +568,9 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
          if (integerChild->getOpCode().isLoadConst())
             {
             self()->populateMemoryReference(addressChild, cg);
-            if (TR::Compiler->target.is64Bit())
+            if (cg->comp()->target().is64Bit())
                {
-               intptrj_t amount = (integerChild->getOpCodeValue() == TR::iconst) ?
+               intptr_t amount = (integerChild->getOpCodeValue() == TR::iconst) ?
                                    integerChild->getInt() :
                                    integerChild->getLongInt();
                self()->addToOffset(integerChild, amount, cg);
@@ -580,7 +580,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
             cg->decReferenceCount(integerChild);
             }
          else if (integerChild->getEvaluationPriority(cg)>addressChild->getEvaluationPriority(cg) &&
-                  !(subTree->getOpCode().isArrayRef() && TR::Compiler->target.cpu.id()==TR_PPCp6))
+                  !(subTree->getOpCode().isArrayRef() && cg->comp()->target().cpu.id()==TR_PPCp6))
             {
             self()->populateMemoryReference(integerChild, cg);
             self()->populateMemoryReference(addressChild, cg);
@@ -594,9 +594,9 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
          }
       else if (isLoadConstAndShift(subTree, cg))
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             { // 64-bit
-            intptrj_t amount = (subTree->getSecondChild()->getOpCodeValue() == TR::iconst) ?
+            intptr_t amount = (subTree->getSecondChild()->getOpCodeValue() == TR::iconst) ?
                                 subTree->getSecondChild()->getInt() :
                                 subTree->getSecondChild()->getLongInt();
             // lshl
@@ -662,7 +662,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
                _baseNode = NULL;
                }
             }
-         if (TR::Compiler->target.is32Bit() || !symbol->isConstObjectRef())
+         if (cg->comp()->target().is32Bit() || !symbol->isConstObjectRef())
             self()->addToOffset(subTree, subTree->getSymbolReference()->getOffset(), cg);
          // TODO: aliasing sets?
          cg->decReferenceCount(subTree); // need to decrement ref count because
@@ -672,7 +672,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
                subTree->getOpCodeValue() == TR::iconst || // subTree->getOpCode().isLoadConst ?
                subTree->getOpCodeValue() == TR::lconst)
          {
-         intptrj_t amount = (subTree->getOpCodeValue() == TR::iconst) ?
+         intptr_t amount = (subTree->getOpCodeValue() == TR::iconst) ?
                              subTree->getInt() : subTree->getLongInt();
          self()->addToOffset(subTree, amount, cg);
          }
@@ -1081,7 +1081,7 @@ uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
    base = (self()->getBaseRegister()==NULL)?cg->machine()->getRealRegister(TR::RealRegister::gr0):toRealRegister(self()->getBaseRegister());
    index=(self()->getIndexRegister()==NULL)?NULL:toRealRegister(self()->getIndexRegister());
 
-   if (TR::Compiler->target.is64Bit() && self()->isTOCAccess())
+   if (cg->comp()->target().is64Bit() && self()->isTOCAccess())
       {
       uint32_t preserve = *wcursor;
       TR::RealRegister *target = toRealRegister(currentInstruction->getMemoryDataRegister());
@@ -1175,18 +1175,37 @@ uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
                   (TR_RelocationRecordInformation*)comp->trMemory()->allocateMemory(
                      sizeof(TR_RelocationRecordInformation),
                      heapAlloc);
-               recordInfo->data1 = (uintptr_t)self()->getSymbolReference();
-               recordInfo->data2 = node == NULL ? -1 : node->getInlinedSiteIndex();
-               recordInfo->data3 = fixedSequence1;
-               cg->addExternalRelocation(
-                  new (cg->trHeapMemory()) TR::ExternalRelocation(
-                     cursor,
-                     (uint8_t*)recordInfo,
-                     TR_ClassAddress,
-                     cg),
-                  __FILE__,
-                  __LINE__,
-                  node);
+
+               if (comp->getOption(TR_UseSymbolValidationManager))
+                  {
+                  recordInfo->data1 = (uintptr_t)self()->getSymbolReference()->getSymbol()->getStaticSymbol()->getStaticAddress();
+                  recordInfo->data2 = (uintptr_t)TR::SymbolType::typeClass;
+                  recordInfo->data3 = fixedSequence1;
+                  cg->addExternalRelocation(
+                     new (cg->trHeapMemory()) TR::ExternalRelocation(
+                        cursor,
+                        (uint8_t*)recordInfo,
+                        TR_DiscontiguousSymbolFromManager,
+                        cg),
+                     __FILE__,
+                     __LINE__,
+                     node);
+                  }
+               else
+                  {
+                  recordInfo->data1 = (uintptr_t)self()->getSymbolReference();
+                  recordInfo->data2 = node == NULL ? -1 : node->getInlinedSiteIndex();
+                  recordInfo->data3 = fixedSequence1;
+                  cg->addExternalRelocation(
+                     new (cg->trHeapMemory()) TR::ExternalRelocation(
+                        cursor,
+                        (uint8_t*)recordInfo,
+                        TR_ClassAddress,
+                        cg),
+                     __FILE__,
+                     __LINE__,
+                     node);
+                  }
 
                // The relocation will OR its values into the immediates, so
                // they have to be zero beforehand
@@ -1358,7 +1377,8 @@ uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
          else if (displacement != 0)
             {
             *wcursor = 0x38000000 | (displacement & 0x0000ffff);
-            index->setRegisterFieldRT(wcursor);
+            base->setRegisterFieldRT(wcursor);
+            base->setRegisterFieldRA(wcursor);
             cursor += PPC_INSTRUCTION_LENGTH;
             wcursor++;                                  // addi Rb,Rb,disp
             }
@@ -1385,7 +1405,7 @@ uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
             {
             TR::RealRegister   *stackPtr = cg->getStackPointerRegister();
             TR::RealRegister *rX = cg->machine()->getRealRegister(choose_rX(currentInstruction, base));
-            *wcursor = (TR::Compiler->target.is64Bit())?0xf800fff8:0x9000fffc;
+            *wcursor = (cg->comp()->target().is64Bit())?0xf800fff8:0x9000fffc;
             rX->setRegisterFieldRS(wcursor);
             stackPtr->setRegisterFieldRA(wcursor);
             cursor += PPC_INSTRUCTION_LENGTH;
@@ -1403,7 +1423,7 @@ uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
             wcursor++;                                  // ld Rt, [rX, lower]
                                                         // st Rs, [rX, lower]
 
-            *wcursor = (TR::Compiler->target.is64Bit())?0xe800fff8:0x8000fffc;
+            *wcursor = (cg->comp()->target().is64Bit())?0xe800fff8:0x8000fffc;
             rX->setRegisterFieldRT(wcursor);
             stackPtr->setRegisterFieldRA(wcursor);
                                                        // lwz rX, [sp, -4] | ld rX, [sp, -8]
@@ -1531,7 +1551,7 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
       {
       TR_ASSERT(!comp->getOption(TR_AOT), "HCR: AOT is currently no supported");
       TR::Register *reg = _baseRegister = cg->allocateRegister();
-      intptrj_t address = (intptrj_t)symbol->getStaticSymbol()->getStaticAddress();
+      intptr_t address = (intptr_t)symbol->getStaticSymbol()->getStaticAddress();
       loadAddressConstantInSnippet(cg, node ? node : cg->getCurrentEvaluationTreeTop()->getNode(), address, reg, NULL, isStore?TR::InstOpCode::Op_st :TR::InstOpCode::Op_load, false, NULL);
       return;
       }
@@ -1551,56 +1571,63 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
          useUnresSnippetToAvoidRelo = false;
       }
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       TR::Node *topNode = cg->getCurrentEvaluationTreeTop()->getNode();
       TR::UnresolvedDataSnippet *snippet = NULL;
-      int32_t  tocIndex = symbol->getStaticSymbol()->getTOCIndex();
+      int32_t tocIndex = symbol->getStaticSymbol()->getTOCIndex();
+ 
+      /* don't want to trash node prematurely by the code for handling other symbols */
+      TR::Node *nodeForSymbol = node;
+      if (!nodeForSymbol)
+         nodeForSymbol = cg->getCurrentEvaluationTreeTop()->getNode();
 
-      if (cg->comp()->compileRelocatableCode())
+      if (symbol->isDebugCounter() && cg->comp()->compileRelocatableCode())
          {
-         /* don't want to trash node prematurely by the code for handling other symbols */
-         TR::Node *nodeForSymbol = node;
-         if (!nodeForSymbol)
-            nodeForSymbol = cg->getCurrentEvaluationTreeTop()->getNode();
-
-         if (symbol->isDebugCounter())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_DebugCounter);
-            return;
-            }
-         if (symbol->isCountForRecompile())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, TR_CountForRecompile, reg, NULL, false, TR_GlobalValue);
-            return;
-            }
-         else if (symbol->isRecompilationCounter())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_BodyInfoAddressLoad);
-            return;
-            }
-         else if (symbol->isCompiledMethod())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_RamMethodSequence);
-            return;
-            }
-         else if (symbol->isStartPC())
-            {
-            // use inSnippet, as the relocation mechanism is already set up there
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstantInSnippet(cg, nodeForSymbol, 0, reg, NULL, TR::InstOpCode::addi, false, NULL);
-            return;
-            }
-         else if (isStaticField && !ref->isUnresolved())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_DataAddress);
-            return;
-            }
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_DebugCounter);
+         return;
+         }
+      if (symbol->isCountForRecompile() && cg->needRelocationsForPersistentInfoData())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, TR_CountForRecompile, reg, NULL, false, TR_GlobalValue);
+         return;
+         }
+      else if (symbol->isRecompilationCounter() && cg->needRelocationsForBodyInfoData())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_BodyInfoAddressLoad);
+         return;
+         }
+      else if (symbol->isCompiledMethod() && cg->needRelocationsForCurrentMethodPC())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_RamMethodSequence);
+         return;
+         }
+      else if (symbol->isStartPC() && cg->needRelocationsForCurrentMethodPC())
+         {
+         // use inSnippet, as the relocation mechanism is already set up there
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstantInSnippet(cg, nodeForSymbol, 0, reg, NULL, TR::InstOpCode::addi, false, NULL);
+         return;
+         }
+      else if (isStaticField && !ref->isUnresolved() && cg->needRelocationsForStatics())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_DataAddress);
+         return;
+         }
+      else if (isClass && !ref->isUnresolved() && comp->getOption(TR_UseSymbolValidationManager) && cg->needClassAndMethodPointerRelocations())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, (intptr_t)ref, reg, NULL, false, TR_ClassAddress);
+         return;
+         }
+      else
+         {
+         TR_ASSERT_FATAL(!comp->getOption(TR_UseSymbolValidationManager) || ref->isUnresolved(), "SVM relocation unhandled");
          }
 
       // TODO: find a better default uninitialized value --- 0x80000000
@@ -1626,7 +1653,7 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
          }
 
       // TODO: Improve the code sequence for cases when we know pTOC is full.
-      TR::MemoryReference *tocRef = new (cg->trHeapMemory()) TR::MemoryReference(cg->getTOCBaseRegister(), 0, sizeof(uintptrj_t), cg);
+      TR::MemoryReference *tocRef = new (cg->trHeapMemory()) TR::MemoryReference(cg->getTOCBaseRegister(), 0, sizeof(uintptr_t), cg);
       tocRef->setSymbol(symbol, cg);
       tocRef->getSymbolReference()->copyFlags(ref);
       tocRef->setUsingStaticTOC();
@@ -1647,66 +1674,64 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
       }
    else
       {
-      if (ref->isUnresolved() || comp->compileRelocatableCode())
-         {
-         /* don't want to trash node prematurely by the code for handling other symbols */
-         TR::Node *nodeForSymbol = node;
-         if (!nodeForSymbol)
-            nodeForSymbol = cg->getCurrentEvaluationTreeTop()->getNode();
+      // don't want to trash node prematurely by the code for handling other symbols */
+      TR::Node *nodeForSymbol = node;
+      if (!nodeForSymbol)
+         nodeForSymbol = cg->getCurrentEvaluationTreeTop()->getNode();
+      bool refIsUnresolved = ref->isUnresolved();
 
-         if (symbol->isDebugCounter())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_DebugCounter);
-            return;
-            }
-         else if (symbol->isCountForRecompile())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, TR_CountForRecompile, reg, NULL, false, TR_GlobalValue);
-            return;
-            }
-         else if (symbol->isRecompilationCounter())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 0, reg, NULL, false, TR_BodyInfoAddressLoad);
-            return;
-            }
-         else if (symbol->isCompiledMethod())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 0, reg, NULL, false, TR_RamMethodSequence);
-            return;
-            }
-         else if (symbol->isStartPC())
-            {
-            // use inSnippet, as the relocation mechanism is already set up there
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstantInSnippet(cg, nodeForSymbol, 0, reg, NULL, TR::InstOpCode::addi, false, NULL);
-            return;
-            }
-         else if (isStaticField && !ref->isUnresolved())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_DataAddress);
-            return;
-            }
-         else if (ref->isUnresolved() || useUnresSnippetToAvoidRelo)
-            {
-            self()->setUnresolvedSnippet(new (cg->trHeapMemory()) TR::UnresolvedDataSnippet(cg, node, ref, isStore, false));
-            cg->addSnippet(self()->getUnresolvedSnippet());
-            return;
-            }
+      if ((refIsUnresolved || comp->compileRelocatableCode()) && symbol->isDebugCounter())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, comp->compileRelocatableCode(), nodeForSymbol, 1, reg, NULL, false, TR_DebugCounter);
+         return;
+         }
+      else if ((refIsUnresolved || cg->needRelocationsForPersistentInfoData()) && symbol->isCountForRecompile())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, cg->needRelocationsForPersistentInfoData(), nodeForSymbol, TR_CountForRecompile, reg, NULL, false, TR_GlobalValue);
+         return;
+         }
+      else if ((refIsUnresolved || cg->needRelocationsForBodyInfoData()) && symbol->isRecompilationCounter())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, cg->needRelocationsForBodyInfoData(), nodeForSymbol, 0, reg, NULL, false, TR_BodyInfoAddressLoad);
+         return;
+         }
+      else if (symbol->isCompiledMethod() && (ref->isUnresolved() || cg->needRelocationsForCurrentMethodPC()))
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, cg->needRelocationsForCurrentMethodPC(), nodeForSymbol, 0, reg, NULL, false, TR_RamMethodSequence);
+         return;
+         }
+      else if (symbol->isStartPC() && (ref->isUnresolved() || cg->needRelocationsForCurrentMethodPC()))
+         {
+         // use inSnippet, as the relocation mechanism is already set up there
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstantInSnippet(cg, nodeForSymbol, 0, reg, NULL, TR::InstOpCode::addi, false, NULL);
+         return;
+         }
+      else if (isStaticField && !refIsUnresolved && cg->needRelocationsForStatics())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_DataAddress);
+         return;
+         }
+      else if (refIsUnresolved || useUnresSnippetToAvoidRelo)
+         {
+         self()->setUnresolvedSnippet(new (cg->trHeapMemory()) TR::UnresolvedDataSnippet(cg, node, ref, isStore, false));
+         cg->addSnippet(self()->getUnresolvedSnippet());
+         return;
          }
 
       TR::Instruction                 *rel1;
       TR::PPCPairedRelocation         *staticRelocation;
       TR::Register                    *reg = _baseRegister = cg->allocateRegister();
       TR_ExternalRelocationTargetKind relocationKind;
-      intptrj_t                        addr;
+      intptr_t                        addr;
 
-      addr = symbol->isStatic() ? (intptrj_t)symbol->getStaticSymbol()->getStaticAddress() :
-                                  (intptrj_t)symbol->getMethodSymbol()->getMethodAddress();
+      addr = symbol->isStatic() ? (intptr_t)symbol->getStaticSymbol()->getStaticAddress() :
+                                  (intptr_t)symbol->getMethodSymbol()->getMethodAddress();
 
       if (!node) node = cg->getCurrentEvaluationTreeTop()->getNode();
 
@@ -1717,10 +1742,10 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
          }
 
       self()->setBaseModifiable();
-      rel1 = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, reg, cg->hiValue(addr)&0x0000ffff);
+      rel1 = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, reg, cg->hiValue(addr));
       self()->addToOffset(node, LO_VALUE(addr), cg);
 
-      if (comp->compileRelocatableCode())
+      if (cg->needClassAndMethodPointerRelocations())
          {
          TR_ASSERT_FATAL(
             symbol->isClassObject(),
@@ -1737,7 +1762,6 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
          }
       }
    }
-
 
 void
 OMR::Power::MemoryReference::setOffsetRequiresWordAlignment(
@@ -1775,4 +1799,14 @@ OMR::Power::MemoryReference::checkRegisters(TR::CodeGenerator *cg)
       {
       self()->consolidateRegisters(NULL, NULL, false, cg);
       }
+   }
+
+int32_t
+OMR::Power::MemoryReference::getOffset(TR::Compilation& comp)
+   {
+   int32_t displacement = _offset;
+   if (self()->hasDelayedOffset() && !self()->isDelayedOffsetDone())
+      displacement += _symbolReference->getSymbol()->getOffset();
+
+   return(displacement);
    }
