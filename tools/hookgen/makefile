@@ -36,7 +36,6 @@ ifeq ($(I5_VERSION),I5_V7R3)
   MODULE_LIBPATH += /osxpf/v7r2m0.cuep/bld/cmvc/pase.pgm/p5.cuep/lib
 endif
 
-
 vpath %.cpp $(OMR_PUGIXML_DIR)
 vpath %.c $(OMR_PUGIXML_DIR)
 
