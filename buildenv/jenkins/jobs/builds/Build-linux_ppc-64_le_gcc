@@ -1,73 +1,9 @@
-def setBuildStatus(String message, String state, String sha) {
-    context = "continuous-integration/eclipse-omr/branch/linux_ppc-64_le_gcc"
-    step([
-        $class: "GitHubCommitStatusSetter",
-        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
-        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-        commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
-        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: "${BUILD_URL}flowGraphTable/"],
-        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-    ]);
-}
 
-pipeline {
-    agent{label 'Linux && PPCLE'}
-    environment {
-        PATH = "/usr/lib/ccache/:$PATH"
-        GTEST_COLOR = "0"
-    }
-    stages {
-        stage('Get Sources') {
-            steps {
-                timestamps {
-                    checkout scm
-                    
-                    setBuildStatus("In Progress","PENDING","${env.GIT_COMMIT}")
-                }
-            }
-        }
-        stage('Build') {
-            steps {
-                timestamps {
-                    echo 'Output CCACHE stats before running and clear them'
-                    sh '''ccache -s -z'''
-                    
-                    dir('build') {
-                        echo 'Configure...'
-                        sh '''cmake -Wdev -C../cmake/caches/Travis.cmake ..''' 
-                       
-                        echo 'Compile...'
-                        sh '''make -j4'''
-                    }
-                    
-                    echo 'Output CCACHE stats after running'
-                    sh '''ccache -s'''
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                timestamps {
-                    dir('build') {
-                        echo "Sanity Test..."
-                        sh'''ctest -V'''
-                        junit '**/*results.xml'
-                    }
-                }
-            }
-        }
-    }
-    post {
-        success {
-            setBuildStatus("Complete","SUCCESS","${env.GIT_COMMIT}")
-        }
-        failure {
-            setBuildStatus("Complete","FAILURE","${env.GIT_COMMIT}")
-        }
-        always {
-            echo 'Cleanup workspace'
-            deleteDir()
-        }
+pipeline = null;
+node {
+    ws {
+        checkout scm
+        pipeline = load "buildenv/jenkins/omrbuild.groovy"
     }
 }
-
+pipeline.launch("linux_ppc-64_le_gcc")

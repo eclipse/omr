@@ -1,53 +1,9 @@
-pipeline {
-    agent{label 'Linux && 390'}
-    environment {
-        PATH = "/usr/lib/ccache/:$PATH"
-        GTEST_COLOR = "0"
-    }
-    stages {
-        stage('Get Sources') {
-            steps {
-                timestamps {
-                    checkout poll: false, scm: [$class: 'GitSCM', branches: [[name: '${sha1}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[name: 'origin', refspec: '+refs/pull/*:refs/remotes/origin/pr/*', url: 'https://github.com/eclipse/omr.git']]]
-                }
-            }
-        }
-        stage('Build') {
-            steps {
-                timestamps {
-                    echo 'Output CCACHE stats before running and clear them'
-                    sh '''ccache -s -z'''
-                    
-                    dir('build') {
-                        echo 'Configure...'
-                        sh '''cmake -Wdev -C../cmake/caches/Travis.cmake ..''' 
-                       
-                        echo 'Compile...'
-                        sh '''make -j4'''
-                    }
-                    
-                    echo 'Output CCACHE stats after running'
-                    sh '''ccache -s'''
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                timestamps {
-                    dir('build') {
-                        echo "Sanity Test..."
-                        sh'''ctest -V'''
-                        junit '**/*results.xml'
-                    }
-                }
-            }
-        }
-    }
-    post {
-        always {
-            echo 'Cleanup workspace'
-            deleteDir()
-        }
+
+pipeline = null;
+node {
+    ws {
+        checkout scm
+        pipeline = load "buildenv/jenkins/omrbuild.groovy"
     }
 }
-
+pipeline.launch("linux_390-64")

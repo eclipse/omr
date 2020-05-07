@@ -1,67 +1,9 @@
-def setBuildStatus(String message, String state, String sha) {
-    context = "continuous-integration/eclipse-omr/branch/win_x86-64"
-    step([
-        $class: "GitHubCommitStatusSetter",
-        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
-        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-        commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
-        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: "${BUILD_URL}flowGraphTable/"],
-        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-    ]);
-}
 
-pipeline {
-    agent{label 'Windows && x86'}
-    environment {
-        GTEST_FILTER="-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended:PortSysinfoTest.sysinfo_test_get_tmp3:ThreadExtendedTest.TestOtherThreadCputime"
-        GTEST_COLOR="0"
-    }
-    stages {
-        stage('Get Sources') {
-            steps {
-                timestamps {
-                    checkout scm
-                    
-                    setBuildStatus("In Progress","PENDING","${env.GIT_COMMIT}")
-                }
-            }
-        }
-        stage('Build') {
-            steps {
-                timestamps {
-                    dir('build') {
-                        echo 'Configure...'
-                        sh '''cmake -Wdev -G "Visual Studio 11 2012 Win64" -C../cmake/caches/AppVeyor.cmake ..''' 
-                       
-                        echo 'Compile...'
-                        sh '''cmake --build . -- /m'''
-                    }
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                timestamps {
-                    dir('build') {
-                        echo "Sanity Test..."
-                        sh'''ctest -V -C Debug -j1'''
-                        junit '**/*results.xml'
-                    }
-                }
-            }
-        }
-    }
-    post {
-        success {
-            setBuildStatus("Complete","SUCCESS","${env.GIT_COMMIT}")
-        }
-        failure {
-            setBuildStatus("Complete","FAILURE","${env.GIT_COMMIT}")
-        }
-        always {
-            echo 'Cleanup workspace'
-            deleteDir()
-        }
+pipeline = null;
+node {
+    ws {
+        checkout scm
+        pipeline = load "buildenv/jenkins/omrbuild.groovy"
     }
 }
-
+pipeline.launch("win_x86-64")

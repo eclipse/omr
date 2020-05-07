@@ -1,81 +1,9 @@
-def setBuildStatus(String message, String state, String sha) {
-    context = "continuous-integration/eclipse-omr/branch/linux_riscv64"
-    step([
-        $class: "GitHubCommitStatusSetter",
-        reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/eclipse/omr"],
-        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
-        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-        commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
-        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: "${BUILD_URL}flowGraphTable/"],
-        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-    ]);
-}
 
-pipeline {
-    agent{label 'linux && x86 && compile:riscv64'}
-    environment {
-        PATH = "/usr/lib/ccache/:$PATH"
-        GTEST_COLOR = "0"
-    }
-    stages {
-        stage('Get Sources') {
-            steps {
-                timestamps {
-                    checkout scm
-                    setBuildStatus("In Progress","PENDING","${env.GIT_COMMIT}")
-                }
-            }
-        }
-        stage('Build') {
-            steps {
-                timestamps {
-                    echo 'Output CCACHE stats before running and clear them'
-                    sh '''ccache -s -z'''
-
-                    dir('build_native') {
-                        echo 'Configure...'
-                        sh """cmake \
-                                    -DOMR_THREAD=OFF \
-                                    -DOMR_PORT=OFF \
-                                    -DOMR_OMRSIG=OFF \
-                                    -DOMR_GC=OFF \
-                                    -DOMR_FVTEST=OFF \
-                                    .."""
-
-
-                        echo 'Compile...'
-                        sh '''make -j4'''
-                    }
-
-                    dir('build') {
-                        echo 'Configure...'
-                        sh """cmake -Wdev -C../cmake/caches/Travis.cmake \
-                                    -DCMAKE_FIND_ROOT_PATH=${CROSS_SYSROOT_RISCV64} \
-                                    -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/riscv64-linux-cross.cmake \
-                                    -DOMR_TOOLS_IMPORTFILE=../build_native/tools/ImportTools.cmake \
-                                    .."""
-
-                        echo 'Compile...'
-                        sh '''make -j4'''
-                    }
-
-                    echo 'Output CCACHE stats after running'
-                    sh '''ccache -s'''
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            setBuildStatus("Complete","SUCCESS","${env.GIT_COMMIT}")
-        }
-        failure {
-            setBuildStatus("Complete","FAILURE","${env.GIT_COMMIT}")
-        }
-        always {
-            echo 'Cleanup workspace'
-            deleteDir()
-        }
+pipeline = null;
+node {
+    ws {
+        checkout scm
+        pipeline = load "buildenv/jenkins/omrbuild.groovy"
     }
 }
+pipeline.launch("linux_riscv64_cross")

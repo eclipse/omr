@@ -93,7 +93,30 @@ Eclipse admins must do this via a [Bugzilla](https://bugs.eclipse.org/bugs/enter
 	Which events would you like to trigger this webhook?: `Let me select individual events` -> `Issue comments`, `Pull requests`, `Pushes`<br>
 	Active: `true`<br>
 
-### Pipeline script from SCM subtleties with Rocket Git for z/OS
+### OS and arch specific setup
+
+#### Linux - x86_64
+
+##### Installing CUDA SDK
+
+1. Download CUDA 10.0 SDK from NVIDIA:
+
+   ```
+   wget https://developer.nvidia.com/compute/cuda/10.0/Prod/local_installers/cuda_10.0.130_410.48_linux
+   ```
+
+   **Please note** that you need CUDA 10.0 as of 2020-04-13, with newer versions port tests may fail.
+
+1. Install the SDK into `/usr/local/cuda` (this is where CI scripts will look):
+
+    ```
+    bash cuda_10.0.130_410.48_linux --toolkit --toolkitpath=/tmp/cuda --no-drm --override --silent
+    sudo mv /tmp/cuda /usr/local
+    ```
+
+#### z/OS
+
+##### Pipeline script from SCM subtleties with Rocket Git for z/OS
 
 Configuring Jenkins to pull the pipeline scripts from Git on z/OS is a non-trivial effort. The Rocket Git for z/OS [1] port does not support _https_ transport protocol, thus specifying the repository in the _Repository URL_ with an `https://` prefix will not work as Jenkins will encounter errors when trying to execute commands on the slave:
 

@@ -10,51 +10,73 @@ def setBuildStatus(String message, String state, String sha) {
     ]);
 }
 
-def defaultCompile = 'make -j4'
-def autoconfBuildDir = '.'
-def cmakeBuildDir = 'build'
-def workspaceName = 'Build'
+class CMake {
+    def buildDir = 'build'
+    def configureArgs = '-Wdev -C../cmake/caches/Travis.cmake'
 
-def SPECS = [
+    def configure = {
+        steps.sh "cmake ${configureArgs} .."
+    }
+
+    def compile = {
+        steps.sh "make -j4"
+    }
+
+    def test = {
+        steps.sh "ctest -V"
+        steps.junit '**/*results.xml'
+    }
+
+    def static steps = null;
+}
+
+CMake.steps = this;
+
+class Autotools {
+    def buildDir = '.'
+    def configureArgs = ''
+
+    def configure = {
+        steps.sh "make -f run_configure.mk OMRGLUE=./example/glue ${configureArgs}"
+    }
+
+    def compile = {
+        steps.sh "make -j4"
+    }
+
+    def test = {
+        steps.sh "make test"
+    }
+
+    def static steps = null;
+}
+
+Autotools.steps = this;
+
+SPECS = [
     'aix_ppc-64' : [
         'label' : 'aix && ppc',
         'environment' : [
             'PATH+TOOLS=/home/u0020236/tools',
-            'LIBPATH=.',
-            'CCACHE_CPP2=1',
-            'GTEST_COLOR=0'
+            'CCACHE_CPP2=1'
         ],
         'ccache' : true,
-        'buildSystem' : 'cmake',
         'builds' : [
-            [
-                'buildDir' : cmakeBuildDir,
-                'configureArgs' : '-Wdev -DCMAKE_C_COMPILER=xlc_r -DCMAKE_CXX_COMPILER=xlC_r -DCMAKE_XL_CreateExportList="/opt/IBM/xlC/13.1.3/bin/CreateExportList -X64" -DOMR_DDR=OFF -C../cmake/caches/Travis.cmake',
-                'compile' : 'export CCACHE_EXTRAFILES="$PWD/omrcfg.h" && make -j8'
-            ]
+            new CMake(
+                configureArgs: '-Wdev -DCMAKE_C_COMPILER=xlc_r -DCMAKE_CXX_COMPILER=xlC_r -DCMAKE_XL_CreateExportList="/opt/IBM/xlC/13.1.3/bin/CreateExportList -X64" -DOMR_DDR=OFF -C../cmake/caches/Travis.cmake',
+                compile: { sh 'export CCACHE_EXTRAFILES="$PWD/omrcfg.h" && make -j8' }
+            )
         ],
-        'test' : true,
-        'testArgs' : '',
-        'junitPublish' : true
     ],
     'linux_390-64' : [
         'label': 'Linux && 390',
         'environment' : [
-            'PATH+CCACHE=/usr/lib/ccache/',
-            'GTEST_COLOR=0'
+            'PATH+CCACHE=/usr/lib/ccache/'
         ],
         'ccache' : true,
-        'buildSystem' : 'cmake',
         'builds' : [
-            [
-                'buildDir' : cmakeBuildDir,
-                'configureArgs' : '-Wdev -C../cmake/caches/Travis.cmake',
-                'compile' : defaultCompile
-            ]
+            new CMake()
         ],
-        'test' : true,
-        'testArgs' : '',
-        'junitPublish' : true
     ],
     'linux_aarch64' : [
         'label' : 'Linux && x86 && compile:aarch64',
@@ -64,15 +86,12 @@ def SPECS = [
             'CHOST=aarch64-linux-gnu'
         ],
         'ccache' : true,
-        'buildSystem' : 'autoconf',
         'builds' : [
-            [
-                'buildDir' : autoconfBuildDir,
-                'configureArgs' : 'SPEC=linux_aarch64',
-                'compile' : defaultCompile
-            ]
+            new Autotools(
+                configureArgs: 'SPEC=linux_aarch64',
+                test: { echo "Skip tests as this is a cross-compilation" }
+            )
         ],
-        'test' : false
     ],
     'linux_arm' : [
         'label' : 'Linux && x86 && compile:arm',
@@ -82,34 +101,22 @@ def SPECS = [
             'CHOST=arm-linux-gnueabihf'
         ],
         'ccache' : true,
-        'buildSystem' : 'autoconf',
         'builds' : [
-            [
-                'buildDir' : autoconfBuildDir,
-                'configureArgs' : 'SPEC=linux_arm',
-                'compile' : defaultCompile
-            ]
+            new Autotools(
+                configureArgs: 'SPEC=linux_arm',
+                test: { echo "Skip tests as this is a cross-compilation" }
+            )
         ],
-        'test' : false
     ],
     'linux_ppc-64_le_gcc' : [
         'label' : 'Linux && PPCLE',
         'environment' : [
-            'PATH+CCACHE=/usr/lib/ccache/',
-            'GTEST_COLOR=0'
+            'PATH+CCACHE=/usr/lib/ccache/'
         ],
         'ccache' : true,
-        'buildSystem' : 'cmake',
         'builds' : [
-            [
-                'buildDir' : cmakeBuildDir,
-                'configureArgs' : '-Wdev -C../cmake/caches/Travis.cmake',
-                'compile' : defaultCompile
-            ]
+            new CMake()
         ],
-        'test' : true,
-        'testArgs' : '',
-        'junitPublish' : true
     ],
     'linux_riscv64' : [
         'label' : 'Linux && riscv64',
@@ -117,17 +124,9 @@ def SPECS = [
             'PATH+CCACHE=/usr/lib/ccache/'
         ],
         'ccache' : true,
-        'buildSystem' : 'cmake',
         'builds' : [
-            [
-                'buildDir' : autoconfBuildDir,
-                'configureArgs' : '-Wdev -C../cmake/caches/Travis.cmake',
-                'compile' : defaultCompile
-            ]
+            new CMake()
         ],
-        'test' : true,
-        'testArgs' : '',
-        'junitPublish' : true
     ],
     'linux_riscv64_cross' : [
         'label' : 'Linux && x86 && compile:riscv64',
@@ -135,58 +134,45 @@ def SPECS = [
             'PATH+CCACHE=/usr/lib/ccache/'
         ],
         'ccache' : true,
-        'buildSystem' : 'cmake',
         'builds' : [
-            [
-                'buildDir' : 'build_native',
-                'configureArgs' : '-DOMR_THREAD=OFF -DOMR_PORT=OFF -DOMR_OMRSIG=OFF -DOMR_GC=OFF -DOMR_FVTEST=OFF',
-                'compile' : defaultCompile
-            ],
-            [
-                'buildDir' : cmakeBuildDir,
-                'configureArgs' : '-Wdev -C../cmake/caches/Travis.cmake -DCMAKE_FIND_ROOT_PATH=${CROSS_SYSROOT_RISCV64} -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/riscv64-linux-cross.cmake -DOMR_TOOLS_IMPORTFILE=../build_native/tools/ImportTools.cmake',
-                'compile' : defaultCompile
-            ]
+            new CMake(
+                buildDir: 'build_native',
+                configureArgs: '-DOMR_THREAD=OFF -DOMR_PORT=OFF -DOMR_OMRSIG=OFF -DOMR_GC=OFF -DOMR_FVTEST=OFF',
+            ),
+            new CMake(
+                configureArgs: '-Wdev -C../cmake/caches/Travis.cmake -DCMAKE_FIND_ROOT_PATH=${CROSS_SYSROOT_RISCV64} -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/riscv64-linux-cross.cmake -DOMR_TOOLS_IMPORTFILE=../build_native/tools/ImportTools.cmake',
+                test: { echo "Skip tests as this is a cross-compilation" }
+            )
         ],
-        'test' : false
     ],
     'linux_x86' : [
         'label' : 'Linux && x86',
         'environment' : [
-            'PATH+CCACHE=/usr/lib/ccache/',
-            'GTEST_COLOR=0'
+            'PATH+CCACHE=/usr/lib/ccache/'
         ],
         'ccache' : true,
-        'buildSystem' : 'cmake',
         'builds' : [
-            [
-                'buildDir' : cmakeBuildDir,
-                'configureArgs' : '-Wdev -G Ninja -DOMR_ENV_DATA32=ON -DOMR_DDR=OFF -DOMR_JITBUILDER=OFF -C../cmake/caches/Travis.cmake',
-                'compile' : 'ninja'
-            ]
+            new CMake(
+                /*
+                 * Here we use ninja to build rather than make. The reason is
+                 * to test whether it works with ninja as it is more strict
+                 */
+                configureArgs: '-Wdev -G Ninja -DOMR_ENV_DATA32=ON -DOMR_DDR=OFF -DOMR_JITBUILDER=OFF -C../cmake/caches/Travis.cmake',
+                compile: { sh 'ninja' }
+            )
         ],
-        'test' : true,
-        'testArgs' : '',
-        'junitPublish' : true
     ],
     'linux_x86-64' : [
         'label' : 'Linux && x86',
         'environment' : [
-            'PATH+CCACHE=/usr/lib/ccache/',
-            'GTEST_COLOR=0'
+            'PATH+CCACHE=/usr/lib/ccache/'
         ],
         'ccache' : true,
-        'buildSystem' : 'cmake',
         'builds' : [
-            [
-                'buildDir' : cmakeBuildDir,
-                'configureArgs' : '-Wdev -C../cmake/caches/Travis.cmake -DOMR_OPT_CUDA=ON -DOMR_CUDA_HOME=/usr/local/cuda',
-                'compile' : defaultCompile
-            ]
+            new CMake(
+                configureArgs: '-Wdev -C../cmake/caches/Travis.cmake -DOMR_OPT_CUDA=ON -DOMR_CUDA_HOME=/usr/local/cuda'
+            )
         ],
-        'test' : true,
-        'testArgs' : '',
-        'junitPublish' : true
     ],
     'linux_x86-64_cmprssptrs' : [
         'label' : 'Linux && x86',
@@ -195,96 +181,73 @@ def SPECS = [
             'EXTRA_CONFIGURE_ARGS=--enable-DDR'
         ],
         'ccache' : true,
-        'buildSystem' : 'autoconf',
         'builds' : [
-            [
-                'buildDir' : autoconfBuildDir,
-                'configureArgs': 'SPEC=linux_x86-64_cmprssptrs PLATFORM=amd64-linux64-gcc HAS_AUTOCONF=1 all',
-                'compile' : defaultCompile
-            ]
+            new Autotools(
+                configureArgs: 'SPEC=linux_x86-64_cmprssptrs PLATFORM=amd64-linux64-gcc HAS_AUTOCONF=1 all'
+            )
         ],
-        'test' : true,
-        'testArgs' : '',
-        'junitPublish' : true
     ],
     'osx_x86-64' : [
         'label' : 'OSX && x86',
         'environment' : [
             'GTEST_FILTER=-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended:*DeathTest*',
-            'PATH+CCACHE=/usr/local/opt/ccache/libexec',
-            'GTEST_COLOR=0'
+            'PATH+CCACHE=/usr/local/opt/ccache/libexec'
         ],
         'ccache' : true,
-        'buildSystem' : 'cmake',
         'builds' : [
-            [
-                'buildDir' : cmakeBuildDir,
-                'configureArgs' : '-Wdev -C../cmake/caches/Travis.cmake',
-                'compile' : defaultCompile
-            ]
+            new CMake()
         ],
-        'test' : true,
-        'testArgs' : '',
-        'junitPublish' : true
     ],
     'win_x86-64' : [
         'label' : 'Windows && x86',
         'environment' : [
-            'GTEST_FILTER=-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended:PortSysinfoTest.sysinfo_test_get_tmp3:ThreadExtendedTest.TestOtherThreadCputime',
-            'GTEST_COLOR=0'
+            'GTEST_FILTER=-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended:PortSysinfoTest.sysinfo_test_get_tmp3:ThreadExtendedTest.TestOtherThreadCputime'
         ],
         'ccache' : false,
-        'buildSystem' : 'cmake',
         'builds' : [
-            [
-                'buildDir' : cmakeBuildDir,
-                'configureArgs' : '-Wdev -G "Visual Studio 11 2012 Win64" -C../cmake/caches/AppVeyor.cmake',
-                'compile' : 'cmake --build . -- /m'
-            ]
+            new CMake(
+                configureArgs: '-Wdev -G "Visual Studio 11 2012 Win64" -C../cmake/caches/AppVeyor.cmake',
+                compile: { sh 'cmake --build . -- /m' },
+                test: { sh "ctest -V -C Debug -j1" }
+            )
         ],
-        'test' : true,
-        'testArgs' : '-C Debug -j1',
-        'junitPublish' : true
     ],
     'zos_390-64' : [
         'label' : 'zOS && 390',
         'environment' : [
-            "LIBPATH+EXTRA=/openzdk/jenkins/workspace/${workspaceName}/build"
         ],
         'ccache' : false,
-        'buildSystem' : 'cmake',
         'builds' : [
-            [
-                'buildDir' : cmakeBuildDir,
-                'configureArgs' : '-Wdev -C../cmake/caches/Travis.cmake -DCMAKE_C_COMPILER=/bin/c89 -DCMAKE_CXX_COMPILER=/bin/xlc -DOMR_DDR=OFF -DOMR_THR_FORK_SUPPORT=0',
-                'compile' : defaultCompile
-            ]
+            new CMake(
+                configureArgs: '-Wdev -C../cmake/caches/Travis.cmake -DCMAKE_C_COMPILER=/bin/c89 -DCMAKE_CXX_COMPILER=/bin/xlc -DOMR_DDR=OFF -DOMR_THR_FORK_SUPPORT=0',
+                /*
+                 * Run tests but don't record results since files
+                 * are in ebcdic and need to be recoded. See PR #5060.
+                 */
+                test: { sh "ctest -V" }
+            )
         ],
-        'test' : true,
-        'testArgs' : '',
-        'junitPublish' : false
     ]
 ]
 
+def launch(target) {
+spec = SPECS[target]
 timestamps {
     timeout(time: 8, unit: 'HOURS') {
         stage('Queue') {
-            node(SPECS[params.BUILDSPEC].label) {
-                /*
-                 * Use a custom workspace name.
-                 * This is becasue the LIBPATH on z/os includes the build's workspace.
-                 * Since we cannot add a variable to the 'environment' in the SPECS, as
-                 * it will get evaluated early, we'll use a custom ws in order to
-                 * hardcode the value in the SPECS.
-                 */
-                def customWorkspace = WORKSPACE - "/${JOB_NAME}" + "/${workspaceName}"
-                ws(customWorkspace) {
+            node(spec.label) {
+                ws() {
                     try {
-                        timeout(time: 1, unit: 'HOURS') {
+                        timeout(time: 3, unit: 'HOURS') {
                             def tmpDesc = (currentBuild.description) ? currentBuild.description + "<br>" : ""
                             currentBuild.description = tmpDesc + "<a href=${JENKINS_URL}computer/${NODE_NAME}>${NODE_NAME}</a>"
-
-                            withEnv(SPECS[params.BUILDSPEC].environment) {
+                            /*
+                             * ZOS and AIX needs to to add workspace to LIBPATH. Here we add
+                             * it to LIBPATH unconditionally on all platforms on the
+                             * assumption that other platforms either don't use LIBPATH
+                             * (e.g, Linux, macOS).
+                             */
+                            withEnv(spec.environment + ["LIBPATH+WORKSPACE=${WORKSPACE}", 'GTEST_COLOR=0']) {
                                 sh 'printenv'
                                 stage('Get Sources') {
                                     if (params.ghprbPullId) {
@@ -304,55 +267,28 @@ timestamps {
                                     }
                                 }
                                 stage('Build') {
-                                    if (SPECS[params.BUILDSPEC].ccache) {
+                                    if (spec.ccache) {
                                         echo 'Output CCACHE stats before running and clear them'
                                         sh 'ccache -s -z'
                                     }
 
-                                    for (build in SPECS[params.BUILDSPEC].builds) {
+                                    for (build in spec.builds) {
                                         dir("${build.buildDir}") {
                                             echo 'Configure...'
-                                            switch (SPECS[params.BUILDSPEC].buildSystem) {
-                                                case 'cmake':
-                                                    sh "cmake ${build.configureArgs} .."
-                                                    break
-                                                case 'autoconf':
-                                                    sh "make -f run_configure.mk OMRGLUE=./example/glue ${build.configureArgs}"
-                                                    break
-                                                default:
-                                                    error("Unknown buildSystem type")
-                                            }
-
+                                            build.configure(this)
                                             echo 'Compile...'
-                                            sh "${build.compile}"
+                                            build.compile(this)
                                         }
                                     }
 
-                                    if (SPECS[params.BUILDSPEC].ccache) {
+                                    if (spec.ccache) {
                                         echo 'Output CCACHE stats after running'
                                         sh 'ccache -s'
                                     }
                                 }
                                 stage('Test') {
-                                    if (SPECS[params.BUILDSPEC].test) {
-                                        echo 'Sanity Test...'
-                                        switch (SPECS[params.BUILDSPEC].buildSystem) {
-                                            case 'cmake':
-                                                dir("${cmakeBuildDir}") {
-                                                    sh "ctest -V ${SPECS[params.BUILDSPEC].testArgs}"
-                                                    if (SPECS[params.BUILDSPEC].junitPublish) {
-                                                        junit '**/*results.xml'
-                                                    }
-                                                }
-                                                break
-                                            case 'autoconf':
-                                                sh "make test ${SPECS[params.BUILDSPEC].testArgs}"
-                                                break
-                                            default:
-                                                error("Unknown buildSystem type")
-                                        }
-                                    } else {
-                                        echo "Currently no sanity tests..."
+                                    dir("${spec.builds.last().buildDir}") {
+                                        spec.builds.last().test(this)
                                     }
                                 }
                             }
@@ -368,3 +304,15 @@ timestamps {
         }
     }
 }
+}
+
+/*
+ * Following is here to support both, old-style pipelines
+ * (buildenv/jenkins/jobs/builds/* and buildenv/jenkins/jobs/pull-requests/*)
+ * and new-style pipeline (omrbuild.groovy with BUILDSPEC param)
+ */
+if (params.BUILDSPEC != null) {
+    launch(params.BUILDSPEC)
+}
+
+return this

@@ -1,43 +1,9 @@
-pipeline {
-    agent{label 'zOS && 390'}
-    environment {
-        LIBPATH="/openzdk/jenkins/workspace/PullRequest-zos_390-64/build:$LIBPATH"
-    }
-    stages {
-        stage('Get Sources') {
-            steps {
-                timestamps {
-                    checkout poll: false, scm: [$class: 'GitSCM', branches: [[name: '${sha1}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[name: 'origin', refspec: '+refs/pull/*:refs/remotes/origin/pr/*', url: 'git://github.com/eclipse/omr.git']]]
-                }
-            }
-        }
-        stage('Build') {
-            steps {
-                timestamps {
-                    dir('build') {
-                        echo 'Configure...'
-                        sh '''cmake -Wdev -C../cmake/caches/Travis.cmake -DCMAKE_C_COMPILER=/bin/c89 -DCMAKE_CXX_COMPILER=/bin/xlc -DOMR_DDR=OFF -DOMR_THR_FORK_SUPPORT=0 -DOMR_JITBUILDER_TEST_EXTENDED=1 ..'''
-                        echo 'Compile...'
-                        sh '''make -j4'''
-                    }
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                timestamps {
-                    dir('build') {
-                        echo "Sanity Test..."
-                        sh'''ctest -V'''
-                    }
-                }
-            }
-        }
-    }
-    post {
-        always {
-            echo 'Cleanup workspace'
-            deleteDir()
-        }
+
+pipeline = null;
+node {
+    ws {
+        checkout scm
+        pipeline = load "buildenv/jenkins/omrbuild.groovy"
     }
 }
+pipeline.launch("zos_390-64")

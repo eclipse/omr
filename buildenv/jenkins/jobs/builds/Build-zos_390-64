@@ -1,64 +1,9 @@
-def setBuildStatus(String message, String state, String sha) {
-    context = "continuous-integration/eclipse-omr/branch/zos_390-64"
-    step([
-        $class: "GitHubCommitStatusSetter",
-        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
-        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-        commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
-        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: "${BUILD_URL}flowGraphTable/"],
-        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-    ]);
-}
 
-pipeline {
-    agent{label 'zOS && 390'}
-    environment {
-        LIBPATH="/openzdk/jenkins/workspace/Build-zos_390-64/build:$LIBPATH"
-    }
-    stages {
-        stage('Get Sources') {
-            steps {
-                timestamps {
-                    checkout scm
-                    
-                    setBuildStatus("In Progress","PENDING","${env.GIT_COMMIT}")
-                }
-            }
-        }
-        stage('Build') {
-            steps {
-                timestamps {
-                    dir('build') {
-                        echo 'Configure...'
-                        sh '''cmake -Wdev -C../cmake/caches/Travis.cmake -DCMAKE_C_COMPILER=/bin/c89 -DCMAKE_CXX_COMPILER=/bin/xlc -DOMR_DDR=OFF -DOMR_THR_FORK_SUPPORT=0 -DOMR_JITBUILDER_TEST_EXTENDED=1 ..'''
-                        echo 'Compile...'
-                        sh '''make -j4'''
-                    }
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                timestamps {
-                    dir('build') {
-                        echo "Sanity Test..."
-                        sh'''ctest -V'''
-                    }
-                }
-            }
-        }
-    }
-    post {
-        success {
-            setBuildStatus("Complete","SUCCESS","${env.GIT_COMMIT}")
-        }
-        failure {
-            setBuildStatus("Complete","FAILURE","${env.GIT_COMMIT}")
-        }
-        always {
-            echo 'Cleanup workspace'
-            deleteDir()
-        }
+pipeline = null;
+node {
+    ws {
+        checkout scm
+        pipeline = load "buildenv/jenkins/omrbuild.groovy"
     }
 }
-
+pipeline.launch("zos_390-64")
