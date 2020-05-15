@@ -28,6 +28,7 @@
 #include "env/TRMemory.hpp"
 #include "env/defines.h"
 #include "infra/Assert.hpp"
+#include "infra/Serializer.hpp"
 
 class TR_BitVector;
 class TR_BitVectorCursor;
@@ -162,6 +163,24 @@ class TR_BitVector
    //
    TR_BitVector() : _numChunks(0), _chunks(NULL), _firstChunkWithNonZero(0), _lastChunkWithNonZero(-1), _growable(growable), _region(0) { }
    TR_BitVector(TR::Region &region) : _numChunks(0), _chunks(NULL), _firstChunkWithNonZero(0), _lastChunkWithNonZero(-1), _growable(growable), _region(&region) { }
+
+   /**
+    * @brief Constructor to create a new BitVector by reading data from the serializer
+    * @param [in] serializer used for reading BitVector data
+    */
+   TR_BitVector(TR_Serializer &serializer)
+      {
+      _firstChunkWithNonZero = serializer.read<int32_t>();
+      _lastChunkWithNonZero = serializer.read<int32_t>();
+      _numChunks = serializer.read<int32_t>();
+      if (_numChunks > 0)
+         {
+         _chunks = (chunk_t*) TR_Memory::jitPersistentAlloc(_numChunks * sizeof(*_chunks), TR_Memory::BitVector);
+         serializer.readArray(_chunks, _numChunks);
+         }
+      _region = NULL;
+      }
+
 
    // Construct a bit vector with a certain number of bits pre-allocated.
    // All bits are initially off.
@@ -837,6 +856,34 @@ class TR_BitVector
       return _memoryUsed;
       }
    #endif
+
+   /**
+    * @brief Compute amount of bytes required for serializing this object
+    * @param [in] serializer used to compute the size required for serializing this object
+    * @return void
+    */
+   void getSerializedSize(TR_Serializer &serializer) const
+      {
+      serializer.addSize(_firstChunkWithNonZero, _lastChunkWithNonZero, _numChunks);
+      if (_numChunks > 0)
+         {
+         serializer.addArraySize(_chunks, _numChunks);
+         }
+      }
+
+   /**
+    * @brief Serialize this object
+    * @param [in] serializer used for serializing this object
+    * @return void
+    */
+   void serialize(TR_Serializer &serializer) const
+      {
+      serializer.write(_firstChunkWithNonZero, _lastChunkWithNonZero, _numChunks);
+      if (_numChunks > 0)
+         {
+         serializer.writeArray(_chunks, _numChunks);
+         }
+      }
 
    private:
 
