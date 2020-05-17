@@ -1525,18 +1525,9 @@ bool swapOperands(TR::Register * trueReg, TR::Register * compReg, TR::Instructio
       }
       return true;
    }
-
-void insertLoad(TR::Compilation * comp, TR::CodeGenerator * cg, TR::Instruction * i, TR::Register * r)
+void insertLoad(TR::CodeGenerator * cg, TR::Instruction * i, TR::Register * r)
    {
-   switch(r->getKind())
-     {
-     case TR_FPR:
-       new (comp->trHeapMemory()) TR::S390RRInstruction(TR::InstOpCode::LDR, i->getNode(), r, r, i, cg);
-       break;
-     default:
-       new (comp->trHeapMemory()) TR::S390RRInstruction(TR::InstOpCode::LR, i->getNode(), r, r, i, cg);
-       break;
-     }
+   generateRRInstruction(cg, r->getKind() == TR_FPR ? TR::InstOpCode::LDR : TR::InstOpCode::LR, i->getNode(), r, r, i);
    }
 
 bool hasDefineToRegister(TR::Instruction * curr, TR::Register * reg)
@@ -1644,7 +1635,7 @@ TR_S390PostRAPeephole::trueCompEliminationForCompare()
       if(performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for compare case 1 at %p.\n",curr))
          {
          swapOperands(trueReg, compReg, curr);
-         if(next && next->usesRegister(trueReg)) insertLoad (comp(), _cg, next->getPrev(), compReg);
+         if(next && next->usesRegister(trueReg)) insertLoad (_cg, next->getPrev(), compReg);
          TR::InstOpCode::S390BranchCondition branchCond = ((TR::S390BranchInstruction *) branchInst)->getBranchCondition();
          ((TR::S390BranchInstruction *) branchInst)->setBranchCondition(getReverseBranchCondition(branchCond));
          return true;
@@ -1665,7 +1656,7 @@ TR_S390PostRAPeephole::trueCompEliminationForCompare()
             }
          else
             {
-            insertLoad (comp(), _cg, next->getPrev(), compReg);
+            insertLoad (_cg, next->getPrev(), compReg);
             }
          return true;
          }
@@ -1679,7 +1670,7 @@ TR_S390PostRAPeephole::trueCompEliminationForCompare()
       if (comp()->getOption(TR_TraceCG)) { printInfo("\n"); }
       if(performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for compare case 3 at %p.\n",curr))
          {
-         insertLoad (comp(), _cg, prev, trueReg);
+         insertLoad (_cg, prev, trueReg);
          loadInserted = true;
          }
       }
@@ -1688,7 +1679,7 @@ TR_S390PostRAPeephole::trueCompEliminationForCompare()
       if (comp()->getOption(TR_TraceCG)) { printInfo("\n"); }
       if(performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for compare case 4 at %p.\n",curr))
          {
-         insertLoad (comp(), _cg, next->getPrev(), trueReg);
+         insertLoad (_cg, next->getPrev(), trueReg);
          loadInserted = true;
          }
       }
@@ -1774,7 +1765,7 @@ TR_S390PostRAPeephole::trueCompEliminationForCompareAndBranch()
          if(performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for compare and branch case 1 at %p.\n",curr))
             {
             swapOperands(trueReg, compReg, curr);
-            if (next && next->usesRegister(trueReg)) insertLoad (comp(), _cg, next->getPrev(), compReg);
+            if (next && next->usesRegister(trueReg)) insertLoad (_cg, next->getPrev(), compReg);
             return true;
             }
          else
@@ -1791,7 +1782,7 @@ TR_S390PostRAPeephole::trueCompEliminationForCompareAndBranch()
          if(!isWCodeCmpEqSwap && performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for compare and branch case 2 at %p.\n",curr))
             {
             swapOperands(trueReg, compReg, curr);
-            if (btar && btar->usesRegister(trueReg)) insertLoad (comp(), _cg, btar->getPrev(), compReg);
+            if (btar && btar->usesRegister(trueReg)) insertLoad (_cg, btar->getPrev(), compReg);
             return true;
             }
          else
@@ -1804,8 +1795,8 @@ TR_S390PostRAPeephole::trueCompEliminationForCompareAndBranch()
       if(!isWCodeCmpEqSwap && performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for compare and branch case 3 at %p.\n",curr))
          {
          swapOperands(trueReg, compReg, curr);
-         if (btar && btar->usesRegister(trueReg)) insertLoad (comp(), _cg, btar->getPrev(), compReg);
-         if (next && next->usesRegister(trueReg)) insertLoad (comp(), _cg, next->getPrev(), compReg);
+         if (btar && btar->usesRegister(trueReg)) insertLoad (_cg, btar->getPrev(), compReg);
+         if (next && next->usesRegister(trueReg)) insertLoad (_cg, next->getPrev(), compReg);
          return true;
          }
       else
@@ -1818,7 +1809,7 @@ TR_S390PostRAPeephole::trueCompEliminationForCompareAndBranch()
       if (comp()->getOption(TR_TraceCG)) { printInfo("\n"); }
       if(performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for compare and branch case 4 at %p.\n",curr) )
          {
-         insertLoad (comp(), _cg, prev, trueReg);
+         insertLoad (_cg, prev, trueReg);
          loadInserted = true;
          }
       }
@@ -1827,7 +1818,7 @@ TR_S390PostRAPeephole::trueCompEliminationForCompareAndBranch()
       if (comp()->getOption(TR_TraceCG)) { printInfo("\n"); }
       if(performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for compare and branch case 5 at %p.\n",curr) )
          {
-         insertLoad (comp(), _cg, btar->getPrev(), trueReg);
+         insertLoad (_cg, btar->getPrev(), trueReg);
          loadInserted = true;
          }
       }
@@ -1836,7 +1827,7 @@ TR_S390PostRAPeephole::trueCompEliminationForCompareAndBranch()
       if (comp()->getOption(TR_TraceCG)) { printInfo("\n"); }
       if(performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for compare and branch case 6 at %p.\n",curr) )
          {
-         insertLoad (comp(), _cg, next->getPrev(), trueReg);
+         insertLoad (_cg, next->getPrev(), trueReg);
          loadInserted = true;
          }
       }
@@ -1873,7 +1864,7 @@ TR_S390PostRAPeephole::trueCompEliminationForLoadComp()
       // used in the next instruction, if so, inject a load after the current insruction
       if (next && next->usesRegister(srcReg))
          {
-         insertLoad (comp(), _cg, curr, tempReg);
+         insertLoad (_cg, curr, tempReg);
          return true;
          }
       }
@@ -1892,7 +1883,7 @@ TR_S390PostRAPeephole::trueCompEliminationForLoadComp()
          if (comp()->getOption(TR_TraceCG)) { printInfo("\n"); }
          if(performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for load complement at %p.\n",curr))
             {
-            insertLoad (comp(), _cg, curr->getPrev(), tempReg);
+            insertLoad (_cg, curr->getPrev(), tempReg);
             return true;
             }
          else
@@ -1914,7 +1905,7 @@ TR_S390PostRAPeephole::trueCompEliminationForLoadComp()
          if (comp()->getOption(TR_TraceCG)) { printInfo("\n"); }
          if(performTransformation(comp(), "O^O S390 PEEPHOLE: true complement elimination for load complement at %p.\n",curr))
             {
-            insertLoad (comp(), _cg, curr->getPrev(), tempReg);
+            insertLoad (_cg, curr->getPrev(), tempReg);
             return true;
             }
          else
