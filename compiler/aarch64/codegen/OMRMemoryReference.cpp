@@ -750,6 +750,12 @@ static bool isImm12OffsetInstruction(uint32_t enc)
    return ((enc & 0x3b200000) == 0x39000000);
    }
 
+/* stp/ldp GPR */
+static bool isImm7OffsetGPRInstruction(uint32_t enc)
+   {
+   return ((enc & 0x3e000000) == 0x28000000);
+   }
+
 /* load/store exclusive */
 static bool isExclusiveMemAccessInstruction(TR::InstOpCode::Mnemonic op)
    {
@@ -850,6 +856,24 @@ uint8_t *OMR::ARM64::MemoryReference::generateBinaryEncoding(TR::Instruction *cu
                      {
                      TR_ASSERT_FATAL(false, "Offset is too large for specified instruction.");
                      }
+                  }
+               }
+            else if (isImm7OffsetGPRInstruction(enc))
+               {
+               uint32_t opc = ((enc >> 30) & 3); /* 32bit: 00, 64bit: 10 */
+               uint32_t size = ((opc >> 1) + 2);
+               uint32_t shifted = displacement >> size;
+
+               TR_ASSERT((displacement & ((1 << size) - 1)) == 0, "displacement must be 4/8-byte alligned");
+
+               if (constantIsImm7(shifted))
+                  {
+                  *wcursor |= (shifted & 0x7f) << 15; /* imm7 */
+                  cursor += ARM64_INSTRUCTION_LENGTH;
+                  }
+               else
+                  {
+                  TR_ASSERT_FATAL(false, "Offset is too large for specified instruction.");
                   }
                }
             else if (isExclusiveMemAccessInstruction(op.getMnemonic()))
@@ -993,6 +1017,23 @@ uint32_t OMR::ARM64::MemoryReference::estimateBinaryLength(TR::InstOpCode op)
                      {
                      TR_ASSERT_FATAL(false, "Offset is too large for specified instruction.");
                      }
+                  }
+               }
+            else if (isImm7OffsetGPRInstruction(enc))
+               {
+               uint32_t opc = ((enc >> 30) & 3); /* 32bit: 00, 64bit: 10 */
+               uint32_t size = ((opc >> 1) + 2);
+               uint32_t shifted = displacement >> size;
+
+               TR_ASSERT((displacement & ((1 << size) - 1)) == 0, "displacement must be 4/8-byte alligned");
+
+               if (constantIsImm7(shifted))
+                  {
+                  return ARM64_INSTRUCTION_LENGTH;
+                  }
+               else
+                  {
+                  TR_ASSERT_FATAL(false, "Offset is too large for specified instruction.");
                   }
                }
             else if (isExclusiveMemAccessInstruction(op.getMnemonic()))

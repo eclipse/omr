@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -280,6 +280,60 @@ void TR::ARM64MemSrc1Instruction::assignRegisters(TR_RegisterKinds kindToBeAssig
    sourceVirtual->block();
    mref->assignRegisters(this, cg());
    sourceVirtual->unblock();
+
+   if (getDependencyConditions())
+      getDependencyConditions()->assignPreConditionRegisters(this->getPrev(), kindToBeAssigned, cg());
+   }
+
+// TR::ARM64MemSrc2Instruction:: member functions
+
+bool TR::ARM64MemSrc2Instruction::refsRegister(TR::Register *reg)
+   {
+   return (reg == getSource2Register()) || TR::ARM64MemSrc1Instruction::refsRegister(reg);
+   }
+
+bool TR::ARM64MemSrc2Instruction::usesRegister(TR::Register *reg)
+   {
+   return (reg == getSource2Register()) || TR::ARM64MemSrc1Instruction::usesRegister(reg);
+   }
+
+bool TR::ARM64MemSrc2Instruction::defsRegister(TR::Register *reg)
+   {
+   return false;
+   }
+
+bool TR::ARM64MemSrc2Instruction::defsRealRegister(TR::Register *reg)
+   {
+   return false;
+   }
+
+void TR::ARM64MemSrc2Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
+   {
+   TR::Machine *machine = cg()->machine();
+   TR::MemoryReference *mref = getMemoryReference();
+   TR::Register *source1Virtual = getSource1Register();
+   TR::Register *source2Virtual = getSource2Register();
+
+   if (getDependencyConditions())
+      getDependencyConditions()->assignPostConditionRegisters(this, kindToBeAssigned, cg());
+
+   mref->blockRegisters();
+   source2Virtual->block();
+   setSource1Register(machine->assignOneRegister(this, source1Virtual));
+   source2Virtual->unblock();
+   mref->unblockRegisters();
+
+   mref->blockRegisters();
+   source1Virtual->block();
+   setSource2Register(machine->assignOneRegister(this, source2Virtual));
+   source1Virtual->unblock();
+   mref->unblockRegisters();
+
+   source1Virtual->block();
+   source2Virtual->block();
+   mref->assignRegisters(this, cg());
+   source2Virtual->unblock();
+   source1Virtual->unblock();
 
    if (getDependencyConditions())
       getDependencyConditions()->assignPreConditionRegisters(this->getPrev(), kindToBeAssigned, cg());

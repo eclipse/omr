@@ -525,6 +525,26 @@ TR::Instruction *generateMemSrc1Instruction(
                    TR::Instruction *preced = NULL);
 
 /*
+ * @brief Generates src2-to-mem instruction
+ * @param[in] cg : CodeGenerator
+ * @param[in] op : instruction opcode
+ * @param[in] node : node
+ * @param[in] mr : memory reference
+ * @param[in] s1reg : source register 1
+ * @param[in] s2reg : source register 2
+ * @param[in] preced : preceding instruction
+ * @return generated instruction
+ */
+TR::Instruction *generateMemSrc2Instruction(
+                   TR::CodeGenerator *cg,
+                   TR::InstOpCode::Mnemonic op,
+                   TR::Node *node,
+                   TR::MemoryReference *mr,
+                   TR::Register *s1reg,
+                   TR::Register *s2reg,
+                   TR::Instruction *preced = NULL);
+
+/*
  * @brief Generates "store exclusive" instruction
  * @param[in] cg : CodeGenerator
  * @param[in] op : instruction opcode

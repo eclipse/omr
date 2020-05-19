@@ -418,7 +418,8 @@ TR::Register *OMR::ARM64::CodeGenerator::gprClobberEvaluate(TR::Node *node)
       }
    }
 
-static uint32_t registerBitMask(int32_t reg)
+uint32_t
+OMR::ARM64::CodeGenerator::registerBitMask(int32_t reg)
    {
    return 1 << (reg-1);
    }
@@ -446,7 +447,7 @@ void OMR::ARM64::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap *ma
                atlas->addPinningArrayPtrForInternalPtrReg(virtReg->getPinningArrayPointer());
                }
             else if (virtReg->containsCollectedReference())
-               map->setRegisterBits(registerBitMask(i));
+               map->setRegisterBits(self()->registerBitMask(i));
             }
          }
       }

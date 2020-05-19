@@ -400,6 +400,14 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
     */
    TR::Instruction *generateNop(TR::Node *node, TR::Instruction *preced = 0);
 
+   /**
+    * @brief Returns bit mask for real register
+    * @param[in] reg: real register number
+    * 
+    * @return bit mask for real register
+    */
+   static uint32_t registerBitMask(int32_t reg);
+
    private:
 
    enum // flags
