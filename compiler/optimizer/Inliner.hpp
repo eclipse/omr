@@ -319,7 +319,6 @@ class TR_InlinerBase: public TR_HasRandomGenerator
       void getSymbolAndFindInlineTargets(TR_CallStack *, TR_CallSite *, bool findNewTargets=true);
 
       void applyPolicyToTargets(TR_CallStack *, TR_CallSite *);
-      bool callMustBeInlinedRegardlessOfSize(TR_CallSite *callsite);
 
       bool forceInline(TR_CallTarget *calltarget);
       

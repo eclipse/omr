@@ -4233,13 +4233,6 @@ void TR_InlinerBase::applyPolicyToTargets(TR_CallStack *callStack, TR_CallSite *
    return;
    }
 
-//return true if the call is dominated hot call
-bool TR_InlinerBase::callMustBeInlinedRegardlessOfSize(TR_CallSite *callsite)
-   {
-
-   return false;
-   }
-
 static bool traceIfMatchesPattern(TR::Compilation* comp)
    {
    static char* cRegex = feGetEnv ("TR_printIfRegex");
@@ -5467,7 +5460,7 @@ OMR_InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
 bool
 TR_InlinerBase::forceInline(TR_CallTarget *calltarget)
    {
-   if (getPolicy()->callMustBeInlined(calltarget) || callMustBeInlinedRegardlessOfSize(calltarget->_myCallSite))
+   if (getPolicy()->callMustBeInlined(calltarget))
       return true;
 
    return false;
