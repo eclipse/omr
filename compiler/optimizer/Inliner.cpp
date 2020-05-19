@@ -494,12 +494,6 @@ TR_InlinerBase::cleanup(TR::ResolvedMethodSymbol * callerSymbol, bool inlinedSit
    }
 
 bool
-OMR_InlinerPolicy::mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR::TreeTop *callNodeTreeTop)
-   {
-   return false;
-   }
-
-bool
 TR_InlinerBase::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::Node *callNode)
    {
    return getPolicy()->alwaysWorthInlining(calleeMethod, callNode);
@@ -5462,18 +5456,6 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
       }
    // printf("*****INLINERCALLSITE2: END*****\n");
    return true;
-   }
-
-bool
-TR_InlinerBase::forceVarInitInlining(TR_CallTarget *calltarget)
-   {
-   return false;
-   }
-
-bool
-TR_InlinerBase::forceCalcInlining(TR_CallTarget *calltarget)
-   {
-   return false;
    }
 
 bool

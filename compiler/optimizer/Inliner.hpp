@@ -322,9 +322,7 @@ class TR_InlinerBase: public TR_HasRandomGenerator
       bool callMustBeInlinedRegardlessOfSize(TR_CallSite *callsite);
 
       bool forceInline(TR_CallTarget *calltarget);
-      bool forceVarInitInlining(TR_CallTarget *calltarget);
-      bool forceCalcInlining(TR_CallTarget *calltarget);
-
+      
    protected:
 
       TR_InlinerBase(TR::Optimizer *, TR::Optimization *);
@@ -651,7 +649,6 @@ class OMR_InlinerPolicy : public TR::OptimizationPolicy, public OMR_InlinerHelpe
       virtual void determineInliningHeuristic(TR::ResolvedMethodSymbol *callerSymbol);
       bool tryToInlineGeneral(TR_CallTarget *, TR_CallStack *, bool);
       virtual bool callMustBeInlined(TR_CallTarget *calltarget);
-      bool mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR::TreeTop *callNodeTreeTop);
       virtual TR_InlinerFailureReason checkIfTargetInlineable(TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp);
       virtual bool suitableForRemat(TR::Compilation *comp, TR::Node *node, TR_VirtualGuardSelection *guard);
    };
