@@ -498,7 +498,7 @@ OMR_InlinerPolicy::mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR
    {
    return false;
    }
-
+   
 bool
 TR_InlinerBase::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::Node *callNode)
    {
