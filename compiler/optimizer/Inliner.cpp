@@ -494,6 +494,12 @@ TR_InlinerBase::cleanup(TR::ResolvedMethodSymbol * callerSymbol, bool inlinedSit
    }
 
 bool
+OMR_InlinerPolicy::mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR::TreeTop *callNodeTreeTop)
+   {
+   return false;
+   }
+
+bool
 TR_InlinerBase::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::Node *callNode)
    {
    return getPolicy()->alwaysWorthInlining(calleeMethod, callNode);
