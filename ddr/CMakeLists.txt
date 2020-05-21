@@ -37,4 +37,7 @@ target_include_directories(omr_ddr_base
 
 add_subdirectory(lib)
 add_subdirectory(tools)
-add_subdirectory(test)
+
+if(OMR_FVTEST)
+	add_subdirectory(test)
+endif()
