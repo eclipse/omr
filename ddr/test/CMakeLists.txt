@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,12 @@
 
 include(OmrDDRSupport)
 
+# We need to make sure that ddrgentest is built with debug info
+# regardless of our global compile flags
+omr_append_flags(CMAKE_C_FLAGS ${OMR_DEBUG_COMPILE_FLAG})
+omr_append_flags(CMAKE_CXX_FLAGS ${OMR_DEBUG_COMPILE_FLAG})
+omr_append_flags(CMAKE_EXE_LINKER_FLAGS ${OMR_DEBUG_LINK_FLAG})
+
 add_executable(ddrgentest
     test_subdir/testFileInSubDir.cpp
     sample1.cpp
@@ -31,5 +37,11 @@ add_executable(ddrgentest
 )
 
 make_ddr_set(ddr_testset)
+set_target_properties(ddr_testset PROPERTIES
+    BLOB ${CMAKE_CURRENT_BINARY_DIR}/blob.dat
+    SUPERSET ${CMAKE_CURRENT_BINARY_DIR}/superset.dat
+    BLACKLIST ${CMAKE_CURRENT_SOURCE_DIR}/blacklist
+    EXCLUDE_FROM_ALL FALSE
+)
 target_enable_ddr(ddrgentest GLOB_HEADERS_RECURSIVE)
 ddr_set_add_targets(ddr_testset ddrgentest)

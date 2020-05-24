@@ -19,6 +19,9 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
+set(OMR_DEBUG_COMPILE_FLAG "-g")
+set(OMR_DEBUG_LINK_FLAG)
+
 if(OMR_HOST_ARCH STREQUAL "ppc")
 	set(OMR_WARNING_AS_ERROR_FLAG -qhalt=w)
 

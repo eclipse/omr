@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,8 @@ include(OmrUtility)
 set(OMR_WARNING_AS_ERROR_FLAG /WX)
 
 set(OMR_ENHANCED_WARNING_FLAG /W3)
+set(OMR_DEBUG_COMPILE_FLAG "/Zi")
+set(OMR_DEBUG_LINK_FLAG "/debug")
 
 list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
 	/GR-    # Disable RTTI

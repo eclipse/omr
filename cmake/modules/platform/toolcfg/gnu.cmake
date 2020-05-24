@@ -23,6 +23,9 @@ set(OMR_WARNING_AS_ERROR_FLAG -Werror)
 
 set(OMR_ENHANCED_WARNING_FLAG -Wall)
 
+set(OMR_DEBUG_COMPILE_FLAG "-g")
+set(OMR_DEBUG_LINK_FLAG)
+
 # disable builtin strncpy buffer length check for components that use variable length
 # array fields at the end of structs
 set(OMR_STRNCPY_FORTIFY_OPTIONS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1)

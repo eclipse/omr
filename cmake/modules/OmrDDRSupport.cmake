@@ -63,6 +63,8 @@ function(make_ddr_set set_name)
 	set_property(TARGET "${DDR_TARGET_NAME}" PROPERTY DDR_BIN_DIR "${DDR_BIN_DIR}")
 	set_property(TARGET "${DDR_TARGET_NAME}" PROPERTY DDR_SET TRUE)
 
+	add_dependencies(${DDR_TARGET_NAME} omr_ddrgen)
+
 	file(READ ${OMR_MODULES_DIR}/ddr/DDRSetStub.cmake.in cmakelist_template)
 	string(CONFIGURE "${cmakelist_template}" cmakelist_template @ONLY)
 	file(GENERATE OUTPUT ${DDR_BIN_DIR}/CMakeLists.txt CONTENT "${cmakelist_template}")
