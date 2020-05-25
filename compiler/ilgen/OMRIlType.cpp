@@ -96,7 +96,7 @@ OMR::IlType::primitiveType(TR::TypeDictionary *d)
 size_t
 OMR::IlType::getSize()
    {
-   TR_ASSERT(0, "The input type does not have a defined size\n");
+   TR_ASSERT_FATAL(0, "The input type does not have a defined size\n");
    return 0;
    }
 

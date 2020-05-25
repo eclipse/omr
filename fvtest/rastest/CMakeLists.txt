@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,82 +19,144 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
+if(OMR_OS_AIX)
+	# Ideally we could just set BUILD_RPATH but that is not available on cmake 3.4
+	set(CMAKE_INSTALL_RPATH ".")
+	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+endif()
+
 add_tracegen(omr_test.tdf)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(bindthreadagent SHARED
+omr_add_library(bindthreadagent SHARED
 	bindthreadagent.c
 	omragent.def
 )
+
 target_link_libraries(bindthreadagent PUBLIC omrtestutil)
 
-add_library(memorycategoriesagent SHARED
+omr_add_exports(bindthreadagent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
+omr_add_library(memorycategoriesagent SHARED
 	memorycategoriesagent.c
 	omragent.def
 )
+
 target_link_libraries(memorycategoriesagent PRIVATE omrtestutil)
 
-add_library(traceagent SHARED
+omr_add_exports(memorycategoriesagent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
+omr_add_library(traceagent SHARED
 	traceagent.c
 	omragent.def
 )
+
 target_link_libraries(traceagent PRIVATE omrtestutil)
 
-add_library(traceNotStartedAgent SHARED
+omr_add_exports(traceagent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
+omr_add_library(traceNotStartedAgent SHARED
 	traceNotStartedAgent.c
 	omragent.def
 )
+
 target_link_libraries(traceNotStartedAgent PRIVATE omrtestutil)
 
+omr_add_exports(traceNotStartedAgent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
 
-
-add_library(cpuLoadAgent SHARED
+omr_add_library(cpuLoadAgent SHARED
 	cpuLoadAgent.c
 	omragent.def
 )
+
 target_link_libraries(cpuLoadAgent PUBLIC omrtestutil)
 
-add_library(invalidAgentMissingOnLoad SHARED
+omr_add_exports(cpuLoadAgent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
+omr_add_library(invalidAgentMissingOnLoad SHARED
 	invalidAgentMissingOnLoad.c
 	invalidAgentMissingOnLoad.def
 )
 
 target_link_libraries(invalidAgentMissingOnLoad PUBLIC omr_base)
 
-add_library(invalidAgentMissingOnUnload SHARED
+omr_add_exports(invalidAgentMissingOnLoad
+	OMRAgent_OnUnload
+)
+
+omr_add_library(invalidAgentMissingOnUnload SHARED
 	invalidAgentMissingOnUnload.c
 	invalidAgentMissingOnUnload.def
 )
 
 target_link_libraries(invalidAgentMissingOnUnload PUBLIC omr_base)
 
-add_library(invalidAgentReturnError SHARED
+omr_add_exports(invalidAgentMissingOnUnload
+	OMRAgent_OnLoad
+)
+
+omr_add_library(invalidAgentReturnError SHARED
 	invalidAgentReturnError.c
 	omragent.def
 )
 
 target_link_libraries(invalidAgentReturnError PUBLIC omr_base)
 
-add_library(sampleSubscriber SHARED
+omr_add_exports(invalidAgentReturnError
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
+omr_add_library(sampleSubscriber SHARED
 	sampleSubscriber.c
 	omragent.def
 )
 
 target_link_libraries(sampleSubscriber PUBLIC omr_base)
 
-add_library(subscriberAgent SHARED
+omr_add_exports(sampleSubscriber
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
+omr_add_library(subscriberAgent SHARED
 	subscriberAgent.c
 	omragent.def
 )
 target_link_libraries(subscriberAgent PRIVATE omrtestutil)
 
-add_library(subscriberAgentWithJ9thread SHARED
+omr_add_exports(subscriberAgent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
+omr_add_library(subscriberAgentWithJ9thread SHARED
 	subscriberAgentWithJ9thread.c
 	omragent.def
 )
 target_link_libraries(subscriberAgentWithJ9thread PRIVATE omrtestutil)
 
-add_library(traceOptionAgent SHARED
+omr_add_exports(subscriberAgentWithJ9thread
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
+omr_add_library(traceOptionAgent SHARED
 	traceOptionAgent.c
 	omragent.def
 )
@@ -104,7 +166,12 @@ target_link_libraries(traceOptionAgent
 		omr_base
 )
 
-add_executable(omrrastest
+omr_add_exports(traceOptionAgent
+	OMRAgent_OnLoad
+	OMRAgent_OnUnload
+)
+
+omr_add_executable(omrrastest
 	agentNegativeTest.cpp
 	agentTest.cpp
 	main.cpp
@@ -137,7 +204,7 @@ add_dependencies(omrrastest
 	traceNotStartedAgent
 )
 
-add_executable(omrsubscribertest
+omr_add_executable(omrsubscribertest
 	main.cpp
 	rasTestHelpers.cpp
 	subscriberTest.cpp
@@ -159,7 +226,7 @@ add_dependencies(omrsubscribertest
 	subscriberAgentWithJ9thread
 )
 
-add_executable(omrtraceoptiontest
+omr_add_executable(omrtraceoptiontest
 	main.cpp
 	rasTestHelpers.cpp
 	traceOptionTest.cpp
@@ -177,9 +244,9 @@ add_dependencies(omrtraceoptiontest
 	traceOptionAgent
 )
 
-add_test(NAME rastest COMMAND omrrastest)
-add_test(NAME subscribertest COMMAND omrsubscribertest)
-add_test(NAME traceoptiontest COMMAND omrtraceoptiontest)
+add_test(NAME rastest COMMAND omrrastest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrrastest-results.xml)
+add_test(NAME subscribertest COMMAND omrsubscribertest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrsubscribertest-results.xml)
+add_test(NAME traceoptiontest COMMAND omrtraceoptiontest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrtraceoptiontest-results.xml)
 
 set_target_properties(
 	omrrastest

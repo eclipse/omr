@@ -74,7 +74,9 @@ static intptr_t monitor_notify_original(omrthread_t self, omrthread_monitor_t mo
 
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 static intptr_t init_spinCounts(omrthread_library_t lib);
+#if !defined(OMR_THR_MCS_LOCKS)
 static void unblock_spinlock_threads(omrthread_t self, omrthread_monitor_t monitor);
+#endif /* !defined(OMR_THR_MCS_LOCKS) */
 #endif /* OMR_THR_THREE_TIER_LOCKING */
 
 static intptr_t init_threadParam(char *name, uintptr_t *pDefault);
@@ -113,7 +115,15 @@ static void postForkResetThreads(omrthread_t self);
 static void postForkResetLib(omrthread_t self);
 static void postForkResetMonitors(omrthread_t self);
 static void postForkResetRWMutexes(omrthread_t self);
+#if defined(OMR_THR_MCS_LOCKS)
+static void preserveMCSNodesInForkSurvivor(omrthread_t forkSurvivorThread);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 #endif /* defined(OMR_THR_FORK_SUPPORT) */
+
+#if defined(OMR_THR_MCS_LOCKS)
+static omrthread_mcs_nodes_t allocate_mcs_nodes(omrthread_library_t lib);
+static void free_mcs_nodes(omrthread_library_t lib, omrthread_mcs_nodes_t mcsNodes);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 #ifdef THREAD_ASSERTS
 /**
@@ -853,6 +863,10 @@ postForkResetThreads(omrthread_t self)
 	omrthread_t threadIterator = NULL;
 	J9PoolState threadPoolState;
 
+#if defined(OMR_THR_MCS_LOCKS)
+	preserveMCSNodesInForkSurvivor(self);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 	threadIterator = (omrthread_t)pool_startDo(lib->thread_pool, &threadPoolState);
 	while (NULL != threadIterator) {
 		if (threadIterator == self) {
@@ -866,6 +880,17 @@ postForkResetThreads(omrthread_t self)
 			threadIterator->handle = THREAD_SELF();
 		} else {
 			omrthread_tls_finalizeNoLock(threadIterator);
+
+#if defined(OMR_THR_MCS_LOCKS)
+			/* For all threads other than the fork survivor thread, the stack head and J9Pool,
+			 * which is stored in J9Thread->mcsNodes, should be reset. This is part of
+			 * resetting the monitors. This step is performed in postForkResetThreads instead
+			 * of postForkResetMonitors because mcsNodes is the property of a thread. Thus, it
+			 * is easier to process in postForkResetThreads.
+			 */
+			threadIterator->mcsNodes->stackHead = NULL;
+			pool_clear(threadIterator->mcsNodes->pool);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 			/* Flush the thread local list of destroyed monitors of the thread that no longer exists to the global list. */
 			if (NULL != threadIterator->destroyed_monitor_head) {
@@ -929,15 +954,26 @@ postForkResetMonitors(omrthread_t self)
 					entry->pinCount = 0;
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 					entry->spinlockState = J9THREAD_MONITOR_SPINLOCK_UNOWNED;
+#if defined(OMR_THR_MCS_LOCKS)
+					entry->queueTail = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
 					entry->spinThreads = 0;
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 				} else {
 #if defined(OMR_THR_THREE_TIER_LOCKING)
+#if defined(OMR_THR_MCS_LOCKS)
+					/* Refer to preserveMCSNodesInForkSurvivor, which is invoked from postForkResetThreads.
+					 * It is used to preserve the state of the MCS locks and nodes (monitors), which are
+					 * owned by the fork survivor thread.
+					 */
+					entry->spinlockState = J9THREAD_MONITOR_SPINLOCK_OWNED;
+#else /* defined(OMR_THR_MCS_LOCKS) */
 					if (J9THREAD_MONITOR_SPINLOCK_EXCEEDED == entry->spinlockState) {
 						entry->spinlockState = J9THREAD_MONITOR_SPINLOCK_OWNED;
 					}
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 				}
 
@@ -973,6 +1009,59 @@ postForkResetMonitors(omrthread_t self)
 		threadMonitorPool = threadMonitorPool->next;
 	}
 }
+
+#if defined(OMR_THR_MCS_LOCKS)
+/**
+ * This function preserves the MCS nodes in a fork survivor thread post fork.
+ *
+ * The MCS node, whose associated monitor is owned by the fork survivor thread, is
+ * preserved and placed at the tail of the MCS queue with the queueNext field set
+ * to NULL and the blocked field set to reflect that the fork survivor thread can
+ * acquire the MCS lock.
+ *
+ * The MCS node, whose associated monitor is not owned by the fork survivor thread,
+ * is removed from the stack and freed.
+ *
+ * @param[in] forkSurvivorThread the fork survivor thread
+ *
+ * @return void
+ */
+static void
+preserveMCSNodesInForkSurvivor(omrthread_t forkSurvivorThread)
+{
+	omrthread_mcs_node_t mcsNode = forkSurvivorThread->mcsNodes->stackHead;
+	omrthread_mcs_node_t prevMcsNode = mcsNode;
+	while (NULL != mcsNode) {
+		omrthread_mcs_node_t nextMcsNode = mcsNode->stackNext;
+		omrthread_monitor_t monitorMcsNode = mcsNode->monitor;
+		if (forkSurvivorThread == monitorMcsNode->owner) {
+			/* The MCS node is owned by the fork survivor thread so it should be preserved
+			 * in the stack.
+			 */
+			prevMcsNode = mcsNode;
+
+			/* The MCS node should be placed at the queue tail since no other thread survives
+			 * except the fork survivor thread. The MCS queue has only one MCS node since only
+			 * the fork survivor thread persists and owns the monitor.
+			 */
+			monitorMcsNode->queueTail = mcsNode;
+			mcsNode->queueNext = NULL;
+			mcsNode->blocked = OMRTHREAD_MCS_THREAD_ACQUIRE;
+		} else {
+			/* If the monitor associated to the MCS node is not owned by the fork survivor
+			 * thread, then it is not needed so it should be removed from the stack and freed.
+			 */
+			if (mcsNode == forkSurvivorThread->mcsNodes->stackHead) {
+				forkSurvivorThread->mcsNodes->stackHead = nextMcsNode;
+			} else {
+				prevMcsNode->stackNext = nextMcsNode;
+			}
+			omrthread_mcs_node_free(forkSurvivorThread, mcsNode);
+		}
+		mcsNode = nextMcsNode;
+	}
+}
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 static void
 postForkResetRWMutexes(omrthread_t self)
@@ -1227,6 +1316,14 @@ omrthread_attach_ex(omrthread_t *handle, omrthread_attr_t *attr)
 		goto cleanup2;
 	}
 
+#if defined(OMR_THR_MCS_LOCKS)
+	thread->mcsNodes = allocate_mcs_nodes(lib);
+	if (NULL == thread->mcsNodes) {
+		retVal = OMRTHREAD_ERR_CANT_ALLOC_MCS_NODES;
+		goto cleanup3;
+	}
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 #if defined(OMR_OS_WINDOWS) && !defined(BREW)
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &thread->handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
 #else
@@ -1280,7 +1377,10 @@ omrthread_attach_ex(omrthread_t *handle, omrthread_attr_t *attr)
 	}
 	return J9THREAD_SUCCESS;
 
-/* failure points */
+/* Failure points. */
+#if defined(OMR_THR_MCS_LOCKS)
+cleanup3:	OMROSMUTEX_DESTROY(thread->mutex);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 cleanup2:	OMROSCOND_DESTROY(thread->condition);
 cleanup1:	threadFree(thread, GLOBAL_NOT_LOCKED);
 cleanup0:	return retVal;
@@ -1820,6 +1920,7 @@ threadCreate(omrthread_t *handle, const omrthread_attr_t *attr, uintptr_t suspen
 		retVal = J9THREAD_ERR_CANT_INIT_CONDITION;
 		goto cleanup1;
 	}
+
 	if (!OMROSMUTEX_INIT(thread->mutex)) {
 		retVal = J9THREAD_ERR_CANT_INIT_MUTEX;
 		goto cleanup2;
@@ -1846,6 +1947,14 @@ threadCreate(omrthread_t *handle, const omrthread_attr_t *attr, uintptr_t suspen
 	memset(&(thread->numaAffinity), 0x0, sizeof(thread->numaAffinity));
 #endif /* OMR_PORT_NUMA_SUPPORT */
 
+#if defined(OMR_THR_MCS_LOCKS)
+	thread->mcsNodes = allocate_mcs_nodes(lib);
+	if (NULL == thread->mcsNodes) {
+		retVal = OMRTHREAD_ERR_CANT_ALLOC_MCS_NODES;
+		goto cleanup3;
+	}
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 	retVal = osthread_create(self, &(thread->handle), tempAttr, thread_wrapper, (WRAPPER_ARG)thread);
 	if (retVal != J9THREAD_SUCCESS) {
 		goto cleanup4;
@@ -1857,9 +1966,13 @@ threadCreate(omrthread_t *handle, const omrthread_attr_t *attr, uintptr_t suspen
 	}
 	return J9THREAD_SUCCESS;
 
-	/* Cleanup points */
-cleanup4:
-	OMROSMUTEX_DESTROY(thread->mutex);
+/* Cleanup points. */
+#if defined(OMR_THR_MCS_LOCKS)
+cleanup4:	free_mcs_nodes(lib, thread->mcsNodes);
+cleanup3:	OMROSMUTEX_DESTROY(thread->mutex);
+#else /* defined(OMR_THR_MCS_LOCKS) */
+cleanup4:	OMROSMUTEX_DESTROY(thread->mutex);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 cleanup2:	OMROSCOND_DESTROY(thread->condition);
 cleanup1:	threadFree(thread, globalIsLocked);
 cleanup0:	if (handle) *handle = NULL;
@@ -2019,6 +2132,10 @@ threadDestroy(omrthread_t thread, int globalAlreadyLocked)
 	OMROSCOND_DESTROY(thread->condition);
 
 	OMROSMUTEX_DESTROY(thread->mutex);
+
+#if defined(OMR_THR_MCS_LOCKS)
+	free_mcs_nodes(thread->library, thread->mcsNodes);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 #ifdef OMR_THR_TRACING
 	omrthread_dump_trace(thread);
@@ -3249,7 +3366,7 @@ omrthread_current_stack_free(void)
 
 	guardPageSize = 3 * (uintptr_t)sysInfo.dwPageSize;
 	return (stackFree < guardPageSize) ? 0 : stackFree - guardPageSize;
-#else
+#else /* defined(OMR_OS_WINDOWS) */
 	return 0;
 #endif /* defined(OMR_OS_WINDOWS) */
 }
@@ -3274,7 +3391,7 @@ omrthread_current_stack_free(void)
 intptr_t
 omrthread_monitor_init_with_name(omrthread_monitor_t *handle, uintptr_t flags, const char *name)
 {
-	intptr_t rc;
+	intptr_t rc = 0;
 
 	rc = monitor_alloc_and_init(handle, flags, J9THREAD_LOCKING_DEFAULT, J9THREAD_LOCKING_NO_DATA, name);
 	return rc;
@@ -3304,9 +3421,9 @@ omrthread_monitor_destroy(omrthread_monitor_t monitor)
 
 	GLOBAL_LOCK(self, CALLER_MONITOR_DESTROY);
 
-#ifdef OMR_THR_TRACING
+#if defined(OMR_THR_TRACING)
 	omrthread_monitor_dump_trace(monitor);
-#endif
+#endif /* defined(OMR_THR_TRACING) */
 
 	if (monitor->owner || monitor_maximum_wait_number(monitor)) {
 		/* This monitor is in use! It was probably abandoned when a thread was cancelled.
@@ -3346,9 +3463,9 @@ omrthread_monitor_destroy_nolock(omrthread_t self, omrthread_monitor_t monitor)
 	ASSERT(self);
 	ASSERT(monitor);
 
-#ifdef OMR_THR_TRACING
+#if defined(OMR_THR_TRACING)
 	omrthread_monitor_dump_trace(monitor);
-#endif
+#endif /* defined(OMR_THR_TRACING) */
 
 	if (monitor->owner || monitor_maximum_wait_number(monitor)) {
 		/* This monitor is in use! It was probably abandoned when a thread was cancelled.
@@ -3474,7 +3591,7 @@ monitor_allocate(omrthread_t self, intptr_t policy, intptr_t policyData)
 			jlm_monitor_clear(lib, newMonitor);
 		}
 	}
-#endif
+#endif /* defined(OMR_THR_JLM) */
 
 	GLOBAL_UNLOCK(self);
 
@@ -3498,28 +3615,30 @@ monitor_free(omrthread_library_t lib, omrthread_monitor_t monitor)
 	ASSERT(lib->monitor_pool);
 	ASSERT(monitor);
 
-#ifdef OMR_THR_JLM
+#if defined(OMR_THR_JLM)
 	jlm_monitor_free(lib, monitor);
-#endif
+#endif /* defined(OMR_THR_JLM) */
 
 	monitor->owner = (omrthread_t)lib->monitor_pool->next_free;
 	monitor->count = FREE_TAG;
 	monitor->userData = 0;
 
 	/* CMVC 112926 Delete the name if we copied it */
-	if (monitor->flags & J9THREAD_MONITOR_NAME_COPY) {
-		if (monitor->name) {
-			omrthread_free_memory(lib, monitor->name);
-		}
+	if (OMR_ARE_ANY_BITS_SET(monitor->flags, J9THREAD_MONITOR_NAME_COPY)) {
+		omrthread_free_memory(lib, monitor->name);
 		monitor->name = NULL;
 		monitor->flags &= ~J9THREAD_MONITOR_NAME_COPY;
 	}
 
 	/* CMVC 144063 J9VM is "leaking" handles */
-	if ((monitor->flags & J9THREAD_MONITOR_MUTEX_UNINITIALIZED) == 0) {
+	if (OMR_ARE_NO_BITS_SET(monitor->flags, J9THREAD_MONITOR_MUTEX_UNINITIALIZED)) {
 		OMROSMUTEX_DESTROY(monitor->mutex);
 		monitor->flags = J9THREAD_MONITOR_MUTEX_UNINITIALIZED;
 	}
+
+#if defined(OMR_THR_MCS_LOCKS)
+	monitor->queueTail = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 	lib->monitor_pool->next_free = monitor;
 }
@@ -3545,21 +3664,23 @@ monitor_free_nolock(omrthread_library_t lib, omrthread_t thread, omrthread_monit
 	monitor->userData = 0;
 
 	/* CMVC 112926 Delete the name if we copied it */
-	if (monitor->flags & J9THREAD_MONITOR_NAME_COPY) {
-		if (monitor->name) {
-			omrthread_free_memory(lib, monitor->name);
-		}
+	if (OMR_ARE_ANY_BITS_SET(monitor->flags, J9THREAD_MONITOR_NAME_COPY)) {
+		omrthread_free_memory(lib, monitor->name);
 		monitor->name = NULL;
 		monitor->flags &= ~J9THREAD_MONITOR_NAME_COPY;
 	}
 
 	/* CMVC 144063 J9VM is "leaking" handles */
-	if (lib->flags & J9THREAD_LIB_FLAG_DESTROY_MUTEX_ON_MONITOR_FREE) {
-		if ((monitor->flags & J9THREAD_MONITOR_MUTEX_UNINITIALIZED) == 0) {
+	if (OMR_ARE_ANY_BITS_SET(lib->flags, J9THREAD_LIB_FLAG_DESTROY_MUTEX_ON_MONITOR_FREE)) {
+		if (OMR_ARE_NO_BITS_SET(monitor->flags, J9THREAD_MONITOR_MUTEX_UNINITIALIZED)) {
 			OMROSMUTEX_DESTROY(monitor->mutex);
 			monitor->flags = J9THREAD_MONITOR_MUTEX_UNINITIALIZED;
 		}
 	}
+
+#if defined(OMR_THR_MCS_LOCKS)
+	monitor->queueTail = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 	if (0 == thread->destroyed_monitor_head) {
 		thread->destroyed_monitor_tail = monitor;
@@ -3588,26 +3709,26 @@ monitor_init(omrthread_monitor_t monitor, uintptr_t flags, omrthread_library_t l
 	monitor->owner = NULL;
 	monitor->waiting = NULL;
 	monitor->flags = flags;
-#if (defined(OMR_THR_ADAPTIVE_SPIN))
+#if defined(OMR_THR_ADAPTIVE_SPIN)
 	/* Default to no sampling. */
 	monitor->flags |= J9THREAD_MONITOR_STOP_SAMPLING;
-#endif
+#endif /* defined(OMR_THR_ADAPTIVE_SPIN) */
 	monitor->userData = 0;
 	monitor->name = NULL;
 	monitor->pinCount = 0;
 
 #if defined(OMR_THR_CUSTOM_SPIN_OPTIONS)
 	monitor->customSpinOptions = NULL;
-#endif /* OMR_THR_CUSTOM_SPIN_OPTIONS */
+#endif /* defined(OMR_THR_CUSTOM_SPIN_OPTIONS) */
 
-#ifdef OMR_THR_THREE_TIER_LOCKING
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 	monitor->blocking = NULL;
 	monitor->spinlockState = J9THREAD_MONITOR_SPINLOCK_UNOWNED;
 
 	/* check if we should spin on system monitors that are backing a Object monitor
 	 * the default is now that we do not spin.
 	 */
-	if ((J9THREAD_MONITOR_OBJECT != (flags & J9THREAD_MONITOR_OBJECT))
+	if (!OMR_ARE_ALL_BITS_SET(flags, J9THREAD_MONITOR_OBJECT)
 		|| OMR_ARE_ALL_BITS_SET(lib->flags, J9THREAD_LIB_FLAG_SECONDARY_SPIN_OBJECT_MONITORS_ENABLED)
 	) {
 		monitor->flags |= J9THREAD_MONITOR_TRY_ENTER_SPIN;
@@ -3623,11 +3744,10 @@ monitor_init(omrthread_monitor_t monitor, uintptr_t flags, omrthread_library_t l
 	ASSERT(monitor->spinCount1 != 0);
 	ASSERT(monitor->spinCount2 != 0);
 	ASSERT(monitor->spinCount3 != 0);
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
-#endif
-
-	if (name) {
-		if (monitor->flags & J9THREAD_MONITOR_NAME_COPY) {
+	if (NULL != name) {
+		if (OMR_ARE_ANY_BITS_SET(monitor->flags, J9THREAD_MONITOR_NAME_COPY)) {
 			uintptr_t length = strlen(name);
 
 			/* Allow names that are empty strings because, for example,
@@ -3643,13 +3763,17 @@ monitor_init(omrthread_monitor_t monitor, uintptr_t flags, omrthread_library_t l
 		}
 	}
 
+#if defined(OMR_THR_MCS_LOCKS)
+ 	monitor->queueTail = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 	return 0;
 }
 
 static intptr_t
 monitor_alloc_and_init(omrthread_monitor_t *handle, uintptr_t flags, intptr_t policy, intptr_t policyData, const char *name)
 {
-	omrthread_monitor_t monitor;
+	omrthread_monitor_t monitor = NULL;
 	omrthread_t self = MACRO_SELF();
 
 	ASSERT(self);
@@ -3702,11 +3826,11 @@ omrthread_monitor_enter(omrthread_monitor_t monitor)
 		return 0;
 	}
 
-#ifdef OMR_THR_THREE_TIER_LOCKING
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 	return monitor_enter_three_tier(self, monitor, DONT_SET_ABORTABLE);
-#else
+#else /* defined(OMR_THR_THREE_TIER_LOCKING) */
 	return monitor_enter(self, monitor);
-#endif
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 }
 
 
@@ -3740,11 +3864,11 @@ omrthread_monitor_enter_using_threadId(omrthread_monitor_t monitor, omrthread_t 
 		return 0;
 	}
 
-#ifdef OMR_THR_THREE_TIER_LOCKING
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 	return monitor_enter_three_tier(threadId, monitor, DONT_SET_ABORTABLE);
-#else
+#else /* defined(OMR_THR_THREE_TIER_LOCKING) */
 	return monitor_enter(threadId, monitor);
-#endif
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 }
 
 /**
@@ -3775,11 +3899,11 @@ omrthread_monitor_enter_abortable_using_threadId(omrthread_monitor_t monitor, om
 		return 0;
 	}
 
-#ifdef OMR_THR_THREE_TIER_LOCKING
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 	return monitor_enter_three_tier(threadId, monitor, SET_ABORTABLE);
-#else
+#else /* defined(OMR_THR_THREE_TIER_LOCKING) */
 	return monitor_enter(threadId, monitor);
-#endif
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 }
 
 
@@ -3834,7 +3958,7 @@ monitor_enter(omrthread_t self, omrthread_monitor_t monitor)
 
 
 
-#if (defined(OMR_THR_THREE_TIER_LOCKING))
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 /**
  * Enter a three-tier monitor.
  *
@@ -3849,7 +3973,9 @@ static intptr_t
 monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN isAbortable)
 {
 	int blockedCount = 0;
-
+#if defined(OMR_THR_MCS_LOCKS)
+	omrthread_mcs_node_t mcsNode = omrthread_mcs_node_allocate(self);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 	ASSERT(self);
 	ASSERT(monitor);
 	ASSERT(monitor->spinCount1 != 0);
@@ -3859,8 +3985,12 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 	ASSERT(FREE_TAG != monitor->count);
 
 	while (1) {
-
-		if (omrthread_spinlock_acquire(self, monitor) == 0) {
+#if defined(OMR_THR_MCS_LOCKS)
+		if (0 == omrthread_mcs_lock(self, monitor, mcsNode, (blockedCount != 0)))
+#else /* defined(OMR_THR_MCS_LOCKS) */
+		if (0 == omrthread_spinlock_acquire(self, monitor))
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+		{
 			monitor->owner = self;
 			monitor->count = 1;
 			ASSERT(monitor->spinlockState != J9THREAD_MONITOR_SPINLOCK_UNOWNED);
@@ -3869,6 +3999,8 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 
 		MONITOR_LOCK(monitor, CALLER_MONITOR_ENTER_THREE_TIER1);
 
+#if !defined(OMR_THR_MCS_LOCKS)
+		/* For MCS locks, J9THREAD_MONITOR_SPINLOCK_EXCEEDED is unused. */
 		if (J9THREAD_MONITOR_SPINLOCK_UNOWNED == omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_EXCEEDED)) {
 			MONITOR_UNLOCK(monitor);
 			monitor->owner = self;
@@ -3876,6 +4008,7 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 			ASSERT(monitor->spinlockState != J9THREAD_MONITOR_SPINLOCK_UNOWNED);
 			break;
 		}
+#endif /* !defined(OMR_THR_MCS_LOCKS) */
 
 		blockedCount++;
 
@@ -3890,6 +4023,9 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 				self->monitor = 0;
 				THREAD_UNLOCK(self);
 				MONITOR_UNLOCK(monitor);
+#if defined(OMR_THR_MCS_LOCKS)
+				omrthread_mcs_node_free(self, mcsNode);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 				return J9THREAD_INTERRUPTED_MONITOR_ENTER;
 			}
 		}
@@ -3902,11 +4038,21 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 		self->monitor = monitor;
 		THREAD_UNLOCK(self);
 
+#if defined(OMR_THR_MCS_LOCKS)
+		if (0 != mcsNode->blocked) {
+			threadEnqueue(&monitor->blocking, self);
+			OMROSCOND_WAIT(self->condition, monitor->mutex);
+				break;
+			OMROSCOND_WAIT_LOOP();
+			threadDequeue(&monitor->blocking, self);
+		}
+#else /* defined(OMR_THR_MCS_LOCKS) */
 		threadEnqueue(&monitor->blocking, self);
 		OMROSCOND_WAIT(self->condition, monitor->mutex);
 			break;
 		OMROSCOND_WAIT_LOOP();
 		threadDequeue(&monitor->blocking, self);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 		/*
 		 * Check for abort upon waking.
@@ -3919,6 +4065,9 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 				self->monitor = 0;
 				THREAD_UNLOCK(self);
 				MONITOR_UNLOCK(monitor);
+#if defined(OMR_THR_MCS_LOCKS)
+				omrthread_mcs_node_free(self, mcsNode);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 				return J9THREAD_INTERRUPTED_MONITOR_ENTER;
 			}
 			THREAD_UNLOCK(self);
@@ -3957,10 +4106,10 @@ monitor_enter_three_tier(omrthread_t self, omrthread_monitor_t monitor, BOOLEAN 
 
 	return 0;
 }
-#endif /* OMR_THR_THREE_TIER_LOCKING */
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
 
-#if (defined(OMR_THR_THREE_TIER_LOCKING))
+#if defined(OMR_THR_THREE_TIER_LOCKING) && !defined(OMR_THR_MCS_LOCKS)
 /**
  * Notify all threads blocked on the monitor's mutex, waiting
  * to be told that it's ok to try again to get the spinlock.
@@ -3996,7 +4145,7 @@ unblock_spinlock_threads(omrthread_t self, omrthread_monitor_t monitor)
 	}
 }
 
-#endif /* OMR_THR_THREE_TIER_LOCKING */
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) && !defined(OMR_THR_MCS_LOCKS) */
 
 
 
@@ -4040,6 +4189,9 @@ intptr_t
 omrthread_monitor_try_enter_using_threadId(omrthread_monitor_t monitor, omrthread_t threadId)
 {
 	intptr_t lockAcquired = -1;
+#if defined(OMR_THR_MCS_LOCKS)
+	omrthread_mcs_node_t mcsNode = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 	ASSERT(threadId != 0);
 	ASSERT(threadId == MACRO_SELF());
 	ASSERT(monitor);
@@ -4053,12 +4205,19 @@ omrthread_monitor_try_enter_using_threadId(omrthread_monitor_t monitor, omrthrea
 		return 0;
 	}
 #if defined(OMR_THR_THREE_TIER_LOCKING)
+#if defined(OMR_THR_MCS_LOCKS)
+	mcsNode = omrthread_mcs_node_allocate(threadId);
+	if (NULL != mcsNode) {
+		lockAcquired = omrthread_mcs_trylock(threadId, monitor, mcsNode);
+	}
+#else /* defined(OMR_THR_MCS_LOCKS) */
 	if (J9THREAD_MONITOR_TRY_ENTER_SPIN == (monitor->flags & J9THREAD_MONITOR_TRY_ENTER_SPIN)) {
 		lockAcquired = omrthread_spinlock_acquire(threadId, monitor);
 	} else {
 		lockAcquired = omrthread_spinlock_acquire_no_spin(threadId, monitor);
 	}
-#else
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+#else /* defined(OMR_THR_THREE_TIER_LOCKING) */
 	lockAcquired = MONITOR_TRY_LOCK(monitor);
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
@@ -4075,6 +4234,11 @@ omrthread_monitor_try_enter_using_threadId(omrthread_monitor_t monitor, omrthrea
 
 		return 0;
 	}
+
+#if defined(OMR_THR_MCS_LOCKS)
+	/* Failed to acquire the MCS lock. Return the MCS node to the pool. */
+	omrthread_mcs_node_free(threadId, mcsNode);
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 	return -1;
 }
@@ -4156,6 +4320,10 @@ omrthread_monitor_exit_using_threadId(omrthread_monitor_t monitor, omrthread_t t
 static intptr_t
 monitor_exit(omrthread_t self, omrthread_monitor_t monitor)
 {
+#if defined(OMR_THR_MCS_LOCKS)
+	omrthread_t nextThread = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+
 	ASSERT(monitor);
 	ASSERT(self);
 	ASSERT(0 == self->monitor);
@@ -4173,7 +4341,15 @@ monitor_exit(omrthread_t self, omrthread_monitor_t monitor)
 		monitor->owner = NULL;
 		UPDATE_JLM_MON_EXIT(self, monitor);
 
-#ifdef OMR_THR_THREE_TIER_LOCKING
+#if defined(OMR_THR_THREE_TIER_LOCKING)
+#if defined(OMR_THR_MCS_LOCKS)
+		MONITOR_LOCK(monitor, CALLER_MONITOR_EXIT1);
+		nextThread = omrthread_mcs_unlock(self, monitor);
+		if (NULL != nextThread) {
+			NOTIFY_WRAPPER(nextThread);
+		}
+		MONITOR_UNLOCK(monitor);
+#else /* defined(OMR_THR_MCS_LOCKS) */
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
 		omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_UNOWNED);
  		MONITOR_LOCK(monitor, CALLER_MONITOR_EXIT1);
@@ -4188,9 +4364,10 @@ monitor_exit(omrthread_t self, omrthread_monitor_t monitor)
 			MONITOR_UNLOCK(monitor);
 		}
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
-#else
+#endif /* defined(OMR_THR_MCS_LOCKS) */
+#else /* defined(OMR_THR_THREE_TIER_LOCKING) */
 		MONITOR_UNLOCK(monitor);
-#endif
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 	}
 
 	return 0;
@@ -4367,6 +4544,9 @@ monitor_wait_original(omrthread_t self, omrthread_monitor_t monitor,
 	uintptr_t intrMask = 0;
 	uintptr_t intrFlags = 0;
 	uintptr_t timedOut = 0;
+#if defined(OMR_THR_MCS_LOCKS)
+	omrthread_t nextThread = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 	ASSERT(monitor);
 	ASSERT(FREE_TAG != monitor->count);
@@ -4430,8 +4610,14 @@ monitor_wait_original(omrthread_t self, omrthread_monitor_t monitor,
 	monitor->owner = NULL;
 	monitor->count = 0;
 
-#ifdef OMR_THR_THREE_TIER_LOCKING
+#if defined(OMR_THR_THREE_TIER_LOCKING)
 	MONITOR_LOCK(monitor, CALLER_MONITOR_WAIT);
+#if defined(OMR_THR_MCS_LOCKS)
+	nextThread = omrthread_mcs_unlock(self, monitor);
+	if (NULL != nextThread) {
+		NOTIFY_WRAPPER(nextThread);
+	}
+#else /* defined(OMR_THR_MCS_LOCKS) */
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
 	omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_UNOWNED);
 	if (0 == monitor->spinThreads) {
@@ -4442,6 +4628,7 @@ monitor_wait_original(omrthread_t self, omrthread_monitor_t monitor,
 		unblock_spinlock_threads(self, monitor);
 	}
 #endif  /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 	self->lockedmonitorcount--;
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
@@ -4618,6 +4805,9 @@ monitor_wait_three_tier(omrthread_t self, omrthread_monitor_t monitor,
 	uintptr_t intrMask = 0;
 	uintptr_t intrFlags = 0;
 	uintptr_t timedOut = 0;
+#if defined(OMR_THR_MCS_LOCKS)
+	omrthread_t nextThread = NULL;
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 	ASSERT(monitor);
 	ASSERT(FREE_TAG != monitor->count);
@@ -4690,6 +4880,12 @@ monitor_wait_three_tier(omrthread_t self, omrthread_monitor_t monitor,
 	monitor->count = 0;
 
 	MONITOR_LOCK(monitor, CALLER_MONITOR_WAIT);
+#if defined(OMR_THR_MCS_LOCKS)
+	nextThread = omrthread_mcs_unlock(self, monitor);
+	if (NULL != nextThread) {
+		NOTIFY_WRAPPER(nextThread);
+	}
+#else /* defined(OMR_THR_MCS_LOCKS) */
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
 	omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_UNOWNED);
 	if (0 == monitor->spinThreads) {
@@ -4700,6 +4896,7 @@ monitor_wait_three_tier(omrthread_t self, omrthread_monitor_t monitor,
 		unblock_spinlock_threads(self, monitor);
 	}
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 	self->lockedmonitorcount--;
 
 	threadEnqueue(&monitor->waiting, self);
@@ -5028,15 +5225,19 @@ monitor_notify_three_tier(omrthread_t self, omrthread_monitor_t monitor, int not
 	MONITOR_LOCK(monitor, CALLER_NOTIFY_ONE_OR_ALL);
 	queue = monitor->waiting;
 	if (queue) {
+#if defined(OMR_THR_MCS_LOCKS)
 #if defined(THREAD_ASSERTS)
-		intptr_t state;
-
-		state = omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_EXCEEDED);
+		ASSERT(monitor->spinlockState == J9THREAD_MONITOR_SPINLOCK_OWNED);
+#endif /* defined(THREAD_ASSERTS) */
+#else /* defined(OMR_THR_MCS_LOCKS) */
+#if defined(THREAD_ASSERTS)
+		intptr_t state = omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_EXCEEDED);
 		ASSERT((state == J9THREAD_MONITOR_SPINLOCK_OWNED)
 			|| (state == J9THREAD_MONITOR_SPINLOCK_EXCEEDED));
-#else
+#else /* defined(THREAD_ASSERTS) */
 		omrthread_spinlock_swapState(monitor, J9THREAD_MONITOR_SPINLOCK_EXCEEDED);
-#endif
+#endif /* defined(THREAD_ASSERTS) */
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 		if (notifyall) {
 			/* set all the thread flags */
 			do {
@@ -5221,6 +5422,51 @@ omrthread_monitor_dump_trace(omrthread_monitor_t monitor)
 
 #endif /* OMR_THR_TRACING */
 
+#if defined(OMR_THR_MCS_LOCKS)
+/**
+ * Create and initialize an OMRThreadMCSNodes structure.
+ *
+ * @param[in] lib pointer to the OMR thread library.
+ *
+ * @return pointer to the new OMRThreadMCSNodes structure on success, or NULL on failure.
+ */
+static omrthread_mcs_nodes_t
+allocate_mcs_nodes(omrthread_library_t lib)
+{
+	omrthread_mcs_nodes_t mcsNodes = (omrthread_mcs_nodes_t)omrthread_allocate_memory(lib, sizeof(OMRThreadMCSNodes), OMRMEM_CATEGORY_THREADS);
+	if (NULL == mcsNodes) {
+		return NULL;
+	}
+
+	memset(mcsNodes, 0, sizeof(OMRThreadMCSNodes));
+
+	mcsNodes->pool = pool_new(
+			sizeof(OMRThreadMCSNode), OMRTHREAD_MIN_MCS_NODES, OMRTHREAD_MCS_NODE_ALIGNMENT, 0, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_THREADS,
+			omrthread_mallocWrapper, omrthread_freeWrapper, lib);
+
+	if (NULL == mcsNodes->pool) {
+		omrthread_free_memory(lib, mcsNodes);
+		return NULL;
+	}
+
+	return mcsNodes;
+}
+
+/**
+ * Free the memory associated to an OMRThreadMCSNodes structure.
+ *
+ * @param[in] lib pointer to the OMR thread library.
+ * @param[in] mcsNodes pointer to the OMRThreadMCSNodes structure.
+ *
+ * @return void.
+ */
+static void
+free_mcs_nodes(omrthread_library_t lib, omrthread_mcs_nodes_t mcsNodes)
+{
+	pool_kill(mcsNodes->pool);
+	omrthread_free_memory(lib, mcsNodes);
+}
+#endif /* defined(OMR_THR_MCS_LOCKS) */
 
 #if (defined(OMR_THR_TRACING))
 /**

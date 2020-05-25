@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,7 @@ TR_PrexArgument::TR_PrexArgument(
    _classKind(ClassIsUnknown),
    _class(0),
    _profiledClazz(0),
+   _isTypeInfoForInlinedBody(false),
    _knownObjectIndex(knownObjectIndex)
    {
 #ifdef J9_PROJECT_SPECIFIC
@@ -63,3 +64,23 @@ TR_PrexArgument::TR_PrexArgument(
       }
 #endif
    }
+
+void TR_PrexArgInfo::dumpTrace() {
+   TR::Compilation *comp = TR::comp();
+   traceMsg(comp,  "<argInfo address = %p numArgs = %d>\n", this, getNumArgs());
+   for (int i = 0 ; i < getNumArgs(); i++)
+      {
+      TR_PrexArgument* arg = get(i);
+      if (arg && arg->getClass())
+         {
+         char* className = TR::Compiler->cls.classSignature(comp, arg->getClass(), comp->trMemory());
+         traceMsg(comp,  "<Argument no=%d address=%p classIsFixed=%d classIsPreexistent=%d argIsKnownObject=%d koi=%d class=%p className= %s/>\n",
+         i, arg, arg->classIsFixed(), arg->classIsPreexistent(), arg->hasKnownObjectIndex(), arg->getKnownObjectIndex(), arg->getClass(), className);
+         }
+      else
+         {
+         traceMsg(comp,  "<Argument no=%d address=%p classIsFixed=%d classIsPreexistent=%d/>\n", i, arg, arg ? arg->classIsFixed() : 0, arg ? arg->classIsPreexistent() : 0);
+         }
+      }
+   traceMsg(comp,  "</argInfo>\n");
+}

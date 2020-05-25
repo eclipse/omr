@@ -47,18 +47,23 @@ class Monitor
    static TR::Monitor *create(char *name);
    static void destroy(TR::Monitor *monitor);
    void enter();
-   int32_t try_enter() { TR_UNIMPLEMENTED(); }
+   int32_t try_enter() { TR_UNIMPLEMENTED(); return 0; }
    int32_t exit(); // returns 0 on success
    void destroy();
    void wait() { TR_UNIMPLEMENTED(); }
-   intptr_t wait_timed(int64_t millis, int32_t nanos) { TR_UNIMPLEMENTED(); }
+   intptr_t wait_timed(int64_t millis, int32_t nanos) { TR_UNIMPLEMENTED(); return 0; }
    void notify() { TR_UNIMPLEMENTED(); }
    void notifyAll() { TR_UNIMPLEMENTED(); }
-   int32_t num_waiting() { TR_UNIMPLEMENTED(); }
+   int32_t num_waiting() { TR_UNIMPLEMENTED(); return 0; }
    char const *getName();
    bool init(char *name);
 
+#if defined(J9ZOS390) || defined(AIXPPC)
+   // xlc cannot handle private delete operator
+   public:
+#else
    private:
+#endif
 
    void *operator new(size_t size);
    void operator delete(void *p);

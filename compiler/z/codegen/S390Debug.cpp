@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 #include "codegen/CodeGenPhase.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/GCRegisterMap.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
@@ -54,18 +54,18 @@
 #include "env/TRMemory.hpp"
 #include "env/defines.h"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "infra/SimpleRegex.hpp"
@@ -280,6 +280,9 @@ TR_Debug::printz(TR::FILE *pOutFile, TR::Instruction * instr)
       case TR::Instruction::IsNOP:
          print(pOutFile, (TR::S390NOPInstruction *) instr);
          break;
+      case TR::Instruction::IsAlignmentNop:
+         print(pOutFile, (TR::S390AlignmentNopInstruction *) instr);
+         break;
 #ifdef J9_PROJECT_SPECIFIC
       case TR::Instruction::IsVirtualGuardNOP:
          print(pOutFile, (TR::S390VirtualGuardNOPInstruction *) instr);
@@ -353,7 +356,7 @@ TR_Debug::printz(TR::FILE *pOutFile, TR::Instruction * instr)
          // if (instr->getOpCodeValue() == TR::InstOpCode::ASSOCREGS) break;
 
          if ((instr->getOpCodeValue() == TR::InstOpCode::ASSOCREGS) && /*(debug("traceMsg90RA"))*/
-             (_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRABasic)))
+             (_comp->getOption(TR_TraceRA)))
             {
             if (_comp->cg()->getCodeGeneratorPhase() < TR::CodeGenPhase::BinaryEncodingPhase)
                printAssocRegDirective(pOutFile, instr);
@@ -700,7 +703,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390LabelInstruction * instr)
       if (instr->getCallSnippet())
          {
          print(pOutFile, instr->getCallSnippet()->getSnippetLabel());
-         intptrj_t labelLoc = (intptrj_t) instr->getCallSnippet()->getSnippetLabel()->getCodeLocation();
+         intptr_t labelLoc = (intptr_t) instr->getCallSnippet()->getSnippetLabel()->getCodeLocation();
          if (labelLoc)
             {
             trfprintf(pOutFile, ", labelTargetAddr=0x%p", labelLoc);
@@ -709,7 +712,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390LabelInstruction * instr)
       else
          {
          print(pOutFile, instr->getLabelSymbol());
-         intptrj_t labelLoc = (intptrj_t) instr->getLabelSymbol()->getCodeLocation();
+         intptr_t labelLoc = (intptr_t) instr->getLabelSymbol()->getCodeLocation();
          if (labelLoc)
             {
             trfprintf(pOutFile, ", labelTargetAddr=0x%p", labelLoc);
@@ -734,7 +737,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390VirtualGuardNOPInstruction * instr)
    else
       trfprintf(pOutFile, "VGNOP \t");
    print(pOutFile, instr->getLabelSymbol());
-   intptrj_t labelLoc = (intptrj_t) instr->getLabelSymbol()->getCodeLocation();
+   intptr_t labelLoc = (intptr_t) instr->getLabelSymbol()->getCodeLocation();
    if (labelLoc)
       {
       trfprintf(pOutFile, ", labelTargetAddr=0x%p", labelLoc);
@@ -765,7 +768,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390BranchInstruction * instr)
     if (instr->getCallSnippet())
        {
        print(pOutFile, instr->getCallSnippet()->getSnippetLabel());
-       intptrj_t labelLoc = (intptrj_t) instr->getCallSnippet()->getSnippetLabel()->getCodeLocation();
+       intptr_t labelLoc = (intptr_t) instr->getCallSnippet()->getSnippetLabel()->getCodeLocation();
        if (labelLoc)
           {
           trfprintf(pOutFile, ", labelTargetAddr=0x%p", labelLoc);
@@ -774,7 +777,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390BranchInstruction * instr)
     else
        {
        print(pOutFile, instr->getLabelSymbol());
-       intptrj_t labelLoc = (intptrj_t) instr->getLabelSymbol()->getCodeLocation();
+       intptr_t labelLoc = (intptr_t) instr->getLabelSymbol()->getCodeLocation();
        if (labelLoc)
           {
           trfprintf(pOutFile, ", labelTargetAddr=0x%p", labelLoc);
@@ -796,7 +799,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390BranchOnCountInstruction * instr)
    print(pOutFile, instr->getRegisterOperand(1));
    trfprintf(pOutFile, ",");
    print(pOutFile, instr->getLabelSymbol());
-   intptrj_t labelLoc = (intptrj_t) instr->getLabelSymbol()->getCodeLocation();
+   intptr_t labelLoc = (intptr_t) instr->getLabelSymbol()->getCodeLocation();
    if (labelLoc)
       {
       trfprintf(pOutFile, ", labelTargetAddr=0x%p", labelLoc);
@@ -832,7 +835,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390BranchOnIndexInstruction * instr)
       }
    trfprintf(pOutFile, ",");
    print(pOutFile, instr->getLabelSymbol());
-   intptrj_t labelLoc = (intptrj_t) instr->getLabelSymbol()->getCodeLocation();
+   intptr_t labelLoc = (intptr_t) instr->getLabelSymbol()->getCodeLocation();
    if (labelLoc)
       {
       trfprintf(pOutFile, ", labelTargetAddr=0x%p", labelLoc);
@@ -1213,9 +1216,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390RILInstruction * instr)
          {
          if (*cursor == 0x18) cursor += 2; //if padding NOP, skip it
          int32_t offsetInHalfWords =(int32_t) (*((int32_t *)(cursor+2)));
-         intptrj_t offset = ((intptrj_t)offsetInHalfWords) * 2;
-         intptrj_t targetAddress = (intptrj_t)cursor + offset;
-         if (TR::Compiler->target.is32Bit())
+         intptr_t offset = ((intptr_t)offsetInHalfWords) * 2;
+         intptr_t targetAddress = (intptr_t)cursor + offset;
+         if (_comp->target().is32Bit())
             targetAddress &= 0x7FFFFFFF;
 
          if (offsetInHalfWords<0)
@@ -1227,23 +1230,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390RILInstruction * instr)
 
    printInstructionComment(pOutFile, 1, instr, true);
    trfflush(pOutFile);
-   }
-
-static char *
-bitString(int8_t val)
-   {
-   static char bits[16][5] =
-      {
-      "0000", "0001", "0010", "0011", "0100", "0101", "0110", "0111", "1000", "1001", "1010", "1011", "1100", "1101", "1110", "1111"
-      };
-   if (val > 15 || val < 0)
-      {
-      return "????";
-      }
-   else
-      {
-      return bits[val];
-      }
    }
 
 void
@@ -1760,9 +1746,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390MIIInstruction * instr)
       {
       int32_t offsetInHalfWords =(int32_t) (*((int32_t *)(cursor+3)));
       offsetInHalfWords = offsetInHalfWords >> 8;
-      intptrj_t offset = ((intptrj_t)offsetInHalfWords) * 2;
-      intptrj_t targetAddress = (intptrj_t)cursor + offset;
-      if (TR::Compiler->target.is32Bit())
+      intptr_t offset = ((intptr_t)offsetInHalfWords) * 2;
+      intptr_t targetAddress = (intptr_t)cursor + offset;
+      if (_comp->target().is32Bit())
          targetAddress &= 0x7FFFFFFF;
       if (offsetInHalfWords<0)
          trfprintf(pOutFile, ", targetAddr=0x%p (offset=-0x%p)", targetAddress, -offset);
@@ -1980,15 +1966,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::MemoryReference * mr, TR::Instruction * 
          trfprintf(pOutFile,")");
          }
       }
-   if (strlen(comments) > 0)
-     {
-     TR::SimpleRegex * regex = _comp->getOptions()->getTraceForCodeMining();
-     if (regex && TR::SimpleRegex::match(regex, comments))
-        {
-        trfprintf(pOutFile, "\t ; %s", comments);
-        firstPrint = false;
-        }
-     }
 
    printInstructionComment(pOutFile, 0, instr, firstPrint );
    trfflush(pOutFile);
@@ -2130,6 +2107,14 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390NOPInstruction * instr)
    {
    printPrefix(pOutFile, instr);
    trfprintf(pOutFile, "NOP");
+   trfflush(pOutFile);
+   }
+
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::S390AlignmentNopInstruction * instr)
+   {
+   printPrefix(pOutFile, instr);
+   trfprintf(pOutFile, "%s\t; Align to %u bytes", instr->getOpCode().getMnemonicName(), instr->getAlignment());
    trfflush(pOutFile);
    }
 
@@ -2338,11 +2323,11 @@ TR_Debug::printS390ArgumentsFlush(TR::FILE *pOutFile, TR::Node * node, uint8_t *
          case TR::Address:
             if (!privateLinkage->getRightToLeft())
                {
-               offset -= TR::Compiler->target.is64Bit() ? 8 : 4;
+               offset -= _comp->target().is64Bit() ? 8 : 4;
                }
             if (intArgNum < privateLinkage->getNumIntegerArgumentRegisters())
                {
-               if (TR::Compiler->target.is64Bit() && child->getDataType() == TR::Address)
+               if (_comp->target().is64Bit() && child->getDataType() == TR::Address)
                   {
                   printPrefix(pOutFile, NULL, bufferPos, 6);
                   trfprintf(pOutFile, "STG  \t");
@@ -2358,7 +2343,7 @@ TR_Debug::printS390ArgumentsFlush(TR::FILE *pOutFile, TR::Node * node, uint8_t *
                print(pOutFile, stackPtr);
                trfprintf(pOutFile, ")");
 
-               if (TR::Compiler->target.is64Bit() && child->getDataType() == TR::Address)
+               if (_comp->target().is64Bit() && child->getDataType() == TR::Address)
                   {
                   bufferPos += 6;
                   }
@@ -2370,18 +2355,18 @@ TR_Debug::printS390ArgumentsFlush(TR::FILE *pOutFile, TR::Node * node, uint8_t *
             intArgNum++;
             if (privateLinkage->getRightToLeft())
                {
-               offset -= TR::Compiler->target.is64Bit() ? 8 : 4;
+               offset -= _comp->target().is64Bit() ? 8 : 4;
                }
             break;
 
          case TR::Int64:
             if (!privateLinkage->getRightToLeft())
                {
-               offset -= (TR::Compiler->target.is64Bit() ? 16 : 8);
+               offset -= (_comp->target().is64Bit() ? 16 : 8);
                }
             if (intArgNum < privateLinkage->getNumIntegerArgumentRegisters())
                {
-               if (TR::Compiler->target.is64Bit())
+               if (_comp->target().is64Bit())
                   {
                   printPrefix(pOutFile, NULL, bufferPos, 6);
                   trfprintf(pOutFile, "STG  \t");
@@ -2414,10 +2399,10 @@ TR_Debug::printS390ArgumentsFlush(TR::FILE *pOutFile, TR::Node * node, uint8_t *
                      }
                   }
                }
-            intArgNum += TR::Compiler->target.is64Bit() ? 1 : 2;
+            intArgNum += _comp->target().is64Bit() ? 1 : 2;
             if (privateLinkage->getRightToLeft())
                {
-               offset += TR::Compiler->target.is64Bit() ? 16 : 8;
+               offset += _comp->target().is64Bit() ? 16 : 8;
                }
             break;
 

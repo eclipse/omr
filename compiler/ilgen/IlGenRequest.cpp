@@ -22,7 +22,7 @@
 #include "ilgen/IlGenRequest.hpp"
 
 #include <stddef.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "ilgen/IlGen.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "env/IO.hpp"

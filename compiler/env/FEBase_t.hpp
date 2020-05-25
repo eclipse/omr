@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ namespace TR
 // We should be relying on the port library to allocate memory, but this connection
 // has not yet been made, so as a quick workaround for platforms like OS X <= 10.9,
 // where MAP_ANONYMOUS is not defined, is to map MAP_ANON to MAP_ANONYMOUS ourselves
-#if !defined(OMR_OS_WINDOWS)
+#if defined(__APPLE__)
    #if !defined(MAP_ANONYMOUS)
       #define NO_MAP_ANONYMOUS
       #if defined(MAP_ANON)
@@ -48,7 +48,7 @@ namespace TR
          #error unexpectedly, no MAP_ANONYMOUS or MAP_ANON definition
       #endif
    #endif
-#endif /* OMR_OS_WINDOWS */
+#endif /* defined(__APPLE__) */
 
 template <class Derived>
 uint8_t *
@@ -65,6 +65,13 @@ FEBase<Derived>::allocateRelocationData(TR::Compilation* comp, uint32_t size)
             size,
             MEM_COMMIT,
             PAGE_READWRITE));
+// TODO: Why is there no OMR_OS_ZOS? Or any other OS for that matter?
+#elif defined(J9ZOS390)
+   // TODO: This is an absolute hack to get z/OS JITBuilder building and even remotely close to working. We really
+   // ought to be using the port library to allocate such memory. This was the quickest "workaround" I could think
+   // of to just get us off the ground.
+   return reinterpret_cast<uint8_t *>(
+         __malloc31(size));
 #else
    return reinterpret_cast<uint8_t *>(
          mmap(0,

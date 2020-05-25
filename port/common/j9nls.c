@@ -385,6 +385,15 @@ j9nls_lookup_message(struct OMRPortLibrary *portLibrary, uintptr_t flags, uint32
 	omrthread_monitor_enter(nls->monitor);
 
 	if (!nls->catalog) {
+		/* Don't load the catalog if VM is running in an
+		 * english locale and there is a default message
+		 */
+		if (NULL != default_string) {
+			if (0 == strcmp(nls->language, "en")) {
+				message = default_string;
+				goto done;
+			}
+		}
 		open_catalog(portLibrary);
 	}
 
@@ -395,7 +404,7 @@ j9nls_lookup_message(struct OMRPortLibrary *portLibrary, uintptr_t flags, uint32
 			message = J9NLS_ERROR_MESSAGE(J9NLS_PORT_NLS_FAILURE, "NLS Failure\n");
 		}
 	}
-
+done:
 	omrthread_monitor_exit(nls->monitor);
 	return message;
 }
@@ -1206,11 +1215,11 @@ read_from_catalog(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, in
 	char temp[BUF_SIZE];
 	intptr_t count, nbytes = bufsize;
 	char *cursor = buf;
-#ifdef J9ZOS390
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	iconv_t converter;
 	size_t inbytesleft, outbytesleft;
 	char *inbuf, *outbuf;
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 	if (nbytes <= 0) {
 		return 0;
@@ -1220,7 +1229,7 @@ read_from_catalog(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, in
 	nbytes -= 1;
 
 
-#ifdef J9ZOS390
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	/* iconv_get is not an a2e function, so we need to pass it honest-to-goodness EBCDIC strings */
 #pragma convlit(suspend)
 	converter = iconv_get(portLibrary, J9NLS_ICONV_DESCRIPTOR, "UTF-8", "IBM-1047");
@@ -1228,7 +1237,7 @@ read_from_catalog(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, in
 	if (J9VM_INVALID_ICONV_DESCRIPTOR == converter) {
 		return NULL;
 	}
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 
 	while (nbytes) {
@@ -1236,9 +1245,9 @@ read_from_catalog(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, in
 		count = portLibrary->file_read(portLibrary, fd, temp, count);
 
 		if (count < 0) {
-#ifdef J9ZOS390
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 			iconv_free(portLibrary, J9NLS_ICONV_DESCRIPTOR, converter);
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 			/* if we've made it through a successful read, return the buf. */
 			if (nbytes + 1 != bufsize) {
 				return buf;
@@ -1246,7 +1255,7 @@ read_from_catalog(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, in
 			return NULL;
 		}
 
-#ifdef J9ZOS390
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 		inbuf = temp;
 		inbytesleft = count;
 		outbuf = cursor;
@@ -1262,18 +1271,18 @@ read_from_catalog(struct OMRPortLibrary *portLibrary, intptr_t fd, char *buf, in
 		}
 		nbytes -= count - inbytesleft;
 		cursor += count - inbytesleft;
-#else
+#else /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 		memcpy(cursor, temp, count);
 		cursor += count;
 		nbytes -= count;
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	}
 
 	*cursor = '\0';
 
-#ifdef J9ZOS390
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	iconv_free(portLibrary, J9NLS_ICONV_DESCRIPTOR, converter);
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 	return buf;
 }

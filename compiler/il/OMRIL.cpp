@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -499,16 +499,16 @@ TR::ILOpCodes OMR::IL::opCodesForIfCompareGreaterOrEquals[] =
    TR::BadILOp,   // TR::Aggregate
    };
 
-TR::ILOpCodes OMR::IL::opCodesForTernarySelect [] =
+TR::ILOpCodes OMR::IL::opCodesForSelect [] =
    {
    TR::BadILOp,  // NoType
-   TR::bternary, // Int8
-   TR::sternary, // Int16
-   TR::iternary, // Int32
-   TR::lternary, // Int64
-   TR::fternary, // Float
-   TR::dternary, // Double
-   TR::aternary, // Address
+   TR::bselect,  // Int8
+   TR::sselect,  // Int16
+   TR::iselect,  // Int32
+   TR::lselect,  // Int64
+   TR::fselect,  // Float
+   TR::dselect,  // Double
+   TR::aselect,  // Address
    TR::BadILOp,   // TR::VectorInt8
    TR::BadILOp,   // TR::VectorInt16
    TR::BadILOp,   // TR::VectorInt32
@@ -596,10 +596,10 @@ OMR::IL::opCodeForCorrespondingIndirectLoad(TR::ILOpCodes loadOpCode)
       case TR::aloadi: return TR::astorei;
       case TR::vloadi: return TR::vstorei;
       case TR::cloadi: return TR::cstorei;
-      case TR::buloadi: return TR::bustorei;
-      case TR::iuload: return TR::iustore;
-      case TR::iuloadi: return TR::iustorei;
-      case TR::luloadi: return TR::lustorei;
+      case TR::buloadi: return TR::bstorei;
+      case TR::iuload: return TR::istore;
+      case TR::iuloadi: return TR::istorei;
+      case TR::luloadi: return TR::lstorei;
       case TR::brdbari:
       case TR::srdbari:
       case TR::irdbari:
@@ -634,11 +634,11 @@ OMR::IL::opCodeForCorrespondingIndirectStore(TR::ILOpCodes storeOpCode)
       case TR::astorei:  return TR::aloadi;
       case TR::awrtbari: return TR::aloadi;
       case TR::vstorei:  return TR::vloadi;
-      case TR::cstorei:  return TR::cloadi;
-      case TR::bustorei: return TR::buloadi;
-      case TR::iustore:  return TR::iuload;
-      case TR::iustorei: return TR::iuloadi;
-      case TR::lustorei: return TR::luloadi;
+      case TR::cstorei:  return TR::sloadi;
+      case TR::bustorei: return TR::bloadi;
+      case TR::iustore:  return TR::iload;
+      case TR::iustorei: return TR::iloadi;
+      case TR::lustorei: return TR::lloadi;
       case TR::bwrtbari:
       case TR::swrtbari:
       case TR::iwrtbari:
@@ -658,11 +658,11 @@ OMR::IL::opCodeForCorrespondingIndirectStore(TR::ILOpCodes storeOpCode)
    }
 
 TR::ILOpCodes
-OMR::IL::opCodeForTernarySelect(TR::DataType dt)
+OMR::IL::opCodeForSelect(TR::DataType dt)
    {
-   TR_ASSERT(dt < TR::NumOMRTypes, "unexpcted opcode");
+   TR_ASSERT(dt < TR::NumOMRTypes, "Unexpected data type");
 
-   return OMR::IL::opCodesForTernarySelect[dt];
+   return OMR::IL::opCodesForSelect[dt];
    }
 
 TR::ILOpCodes

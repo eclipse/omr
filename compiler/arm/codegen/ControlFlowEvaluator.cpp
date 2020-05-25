@@ -312,25 +312,14 @@ TR::Instruction *OMR::ARM::TreeEvaluator::compareIntsForEquality(TR_ARMCondition
 static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
    {
 #ifdef J9_PROJECT_SPECIFIC
-   TR::Compilation *comp = cg->comp();
-   if ((!node->isNopableInlineGuard() && !node->isHCRGuard() && !node->isBreakpointGuard()) ||
-       !cg->getSupportsVirtualGuardNOPing())
-      return false;
 
-   TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
-   if (!((comp->performVirtualGuardNOPing() || node->isHCRGuard()) &&
-         comp->isVirtualGuardNOPingRequired(virtualGuard)) &&
-       virtualGuard->canBeRemoved())
-      return false;
-
-   if (   node->getOpCodeValue() != TR::ificmpne
-       && node->getOpCodeValue() != TR::iflcmpne
-       && node->getOpCodeValue() != TR::ifacmpne)
+   if (!cg->willGenerateNOPForVirtualGuard(node))
       {
-      //TR_ASSERT(0, "virtualGuradHelper: not expecting reversed comparison");
       return false;
       }
 
+   TR::Compilation *comp = cg->comp();
+   TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
    TR_VirtualGuardSite *site = NULL;
 
    if (comp->compileRelocatableCode())
@@ -1449,100 +1438,6 @@ TR::Register *OMR::ARM::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGe
    return NULL;
    }
 
-static TR::Register *evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool needsResolve, TR::CodeGenerator *cg)
-   {
-   // NOTE:
-   // If no code is generated for the null check, just evaluate the
-   // child and decrement its use count UNLESS the child is a pass-through node
-   // in which case some kind of explicit test or indirect load must be generated
-   // to force the null check at this point.
-
-   // Generate the code for the null check
-   //
-   TR::Node     *firstChild = node->getFirstChild();
-   TR::ILOpCode &opCode     = firstChild->getOpCode();
-   TR::Node     *reference  = node->getNullCheckReference();
-
-   // Skip the NULLCHK for TR::loadaddr nodes.
-   //
-   if (reference->getOpCodeValue() == TR::loadaddr)
-      {
-      cg->evaluate(firstChild);
-      firstChild->decReferenceCount();
-      return NULL;
-      }
-
-   bool needCode = !(cg->canNullChkBeImplicit(node, true));
-
-   // nullchk is not implicit
-   //
-   if (needCode)
-      {
-      // TODO - If a resolve check is needed as well, the resolve must be done
-      // before the null check, so that exceptions are handled in the correct
-      // order.
-      //
-      ///// if (needsResolve)
-      /////    {
-      /////    ...
-      /////    }
-
-      TR::Register    *targetRegister = cg->evaluate(reference);
-
-#if (NULLVALUE==0)
-      generateSrc2Instruction(cg, ARMOp_tst, node, targetRegister, targetRegister);
-#else
-#error("NULL is not 0, must fix");
-#endif
-
-      TR::SymbolReference *NULLCHKException = node->getSymbolReference();
-      TR::Instruction *instr1 = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)NULLCHKException->getMethodAddress(), NULL, NULLCHKException, NULL, NULL, ARMConditionCodeEQ);
-      instr1->ARMNeedsGCMap(0xFFFFFFFF);
-      cg->machine()->setLinkRegisterKilled(true);
-      }
-
-      // For a load, if this is the only use decrement the use count on the
-      // grandchild since it has already been evaluated.
-      // Otherwise just evaluate the child.
-      //
-   if (needCode && opCode.isLoad() && firstChild->getReferenceCount() == 1
-       && firstChild->getSymbolReference() && !firstChild->getSymbolReference()->isUnresolved())
-      {
-      firstChild->decReferenceCount();
-      reference->decReferenceCount();
-      }
-   else
-      {
-      cg->evaluate(firstChild);
-      firstChild->decReferenceCount();
-      }
-
-      // If an explicit check has not been generated for the null check, there is
-      // an instruction that will cause a hardware trap if the exception is to be
-      // taken. If this method may catch the exception, a GC stack map must be
-      // created for this instruction. All registers are valid at this GC point
-      // TODO - if the method may not catch the exception we still need to note
-      // that the GC point exists, since maps before this point and after it cannot
-      // be merged.
-      //
-      /////if (!needCode && comp->getMethodSymbol()->isEHAwareMethod())
-   if (!needCode)
-      {
-      TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
-      if (faultingInstruction)
-         faultingInstruction->setNeedsGCMap();
-      }
-
-   reference->setIsNonNull(true);
-
-   return NULL;
-   }
-
-TR::Register *OMR::ARM::TreeEvaluator::NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return evaluateNULLCHKWithPossibleResolve(node, false, cg);
-   }
-
 TR::Register *OMR::ARM::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // NOTE: ZEROCHK is intended to be general and straightforward.  If you're
@@ -1618,23 +1513,6 @@ TR::Register *OMR::ARM::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::Code
       }
    generateLabelInstruction(cg, ARMOp_label, node, restartLabel);
 
-   return NULL;
-   }
-
-TR::Register *OMR::ARM::TreeEvaluator::resolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return evaluateNULLCHKWithPossibleResolve(node, true, cg);
-   }
-
-TR::Register *OMR::ARM::TreeEvaluator::resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   // No code is generated for the resolve check. The child will reference an
-   // unresolved symbol and all check handling is done via the corresponding
-   // snippet.
-   //
-   TR::Node *firstChild = node->getFirstChild();
-   cg->evaluate(firstChild);
-   firstChild->decReferenceCount();
    return NULL;
    }
 

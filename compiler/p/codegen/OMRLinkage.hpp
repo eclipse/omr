@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,8 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef OMR_Power_LINKAGE_INCL
-#define OMR_Power_LINKAGE_INCL
+#ifndef OMR_POWER_LINKAGE_INCL
+#define OMR_POWER_LINKAGE_INCL
 
 /*
  * The following #define and typedef must appear before any #includes in this file
@@ -35,22 +35,22 @@ namespace OMR { typedef OMR::Power::Linkage LinkageConnector; }
 
 #include <stddef.h>
 #include <stdint.h>
-#include "codegen/CodeGenerator.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/RealRegister.hpp"
-#include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/RegisterDependency.hpp"
+#include "compile/CompilationTypes.hpp"
 #include "env/TRMemory.hpp"
 #include "infra/Annotations.hpp"
 
-class TR_FrontEnd;
 namespace TR { class AutomaticSymbol; }
+namespace TR { class CodeGenerator; }
 namespace TR { class Compilation; }
 namespace TR { class Instruction; }
 namespace TR { class MemoryReference; }
 namespace TR { class Node; }
 namespace TR { class ParameterSymbol; }
+namespace TR { class Register; }
+namespace TR { class RegisterDependencyConditions; }
 namespace TR { class ResolvedMethodSymbol; }
 template <class T> class List;
 
@@ -68,11 +68,12 @@ class PPCMemoryArgument
 
 
 // linkage properties
-#define CallerCleanup       0x01
-#define RightToLeft         0x02
-#define IntegersInRegisters 0x04
-#define LongsInRegisters    0x08
-#define FloatsInRegisters   0x10
+#define CallerCleanup             0x01
+#define RightToLeft               0x02
+#define IntegersInRegisters       0x04
+#define LongsInRegisters          0x08
+#define FloatsInRegisters         0x10
+#define SmallIntParmsAlignedRight 0x20
 
 // register flags
 #define Preserved                   0x01
@@ -138,6 +139,8 @@ struct PPCLinkageProperties
    uint32_t getLongsInRegisters() const {return (_properties & LongsInRegisters);}
 
    uint32_t getFloatsInRegisters() const {return (_properties & FloatsInRegisters);}
+
+   uint32_t getSmallIntParmsAlignedRight() const { return (_properties & SmallIntParmsAlignedRight); }
 
    uint32_t getRegisterFlags(TR::RealRegister::RegNum regNum) const
       {
@@ -403,18 +406,6 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
    virtual TR::Register *buildDirectDispatch(TR::Node *callNode) = 0;
 
    virtual TR::Register *buildIndirectDispatch(TR::Node *callNode) = 0;
-
-   // Given an offset (generally into a stack frame) of the slot used
-   // to hold a parameter, compute the offset of the data itself.
-   // (in the case of 32-bit slots, the offset will be 3 for a char,
-   // 2 for a short, 0 for an int.)
-   //
-   virtual uintptr_t calculateActualParameterOffset(uintptr_t o, TR::ParameterSymbol& p) { return o; }
-
-   // And the reverse...Once paramaters are mapped, where do I store the
-   // actual full-sized register
-   //
-   virtual uintptr_t calculateParameterRegisterOffset(uintptr_t o, TR::ParameterSymbol& p) { return o; }
 
    TR_ReturnInfo getReturnInfoFromReturnType(TR::DataType);
    };

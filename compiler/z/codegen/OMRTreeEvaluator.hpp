@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,12 +99,17 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *mbranchEvaluator(TR::Node * node, TR::CodeGenerator * cg);
    static TR::Register *iloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *aloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *floadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *dloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *sloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *istoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *astoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -125,6 +130,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *treetopEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *aiaddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *aladdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *axaddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *iaddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *laddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *faddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -230,13 +236,23 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
     *
     *   \param cg
     *      The code generator used to generate the instructions
+    * 
+    *    \param shiftAmount
+    *      The number of bits we should shift the result of the logical AND. A positive value represents a left shift,
+    *      a negative value represents a right shift, and a value of zero represents no shift.
+    *      Note that if the absolute value of number is greater than 6 bits, then this optimization will not work
+    *      since the RISBG instruction will only hold 6 bits for the shift operand.
+    * 
+    *   \param isSignedShift
+    *      If replacing a signed shift+and combination, this variable evaluates to true. Else it will evaluate to false.
+    *      Note: If we are using this function to replace a standalone 'and', then this variable should be false.
     *
     *   \return
     *      The target register for the instruction, or NULL if generating a 
     *      RISBG instruction is not suitable
     *
     */
-   static TR::Register *tryToReplaceLongAndWithRotateInstruction(TR::Node * node, TR::CodeGenerator * cg);
+   static TR::Register *tryToReplaceShiftLandWithRotateInstruction(TR::Node * node, TR::CodeGenerator * cg, int32_t shiftAmount, bool isSignedShift);
 
    static TR::Register *bandEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *sandEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -398,8 +414,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::InstOpCode::S390BranchCondition getBranchConditionFromCompareOpCode(TR::ILOpCodes opCode);
    static TR::InstOpCode::S390BranchCondition mapBranchConditionToLOCRCondition(TR::InstOpCode::S390BranchCondition incomingBc);
    static TR::InstOpCode::Mnemonic getCompareOpFromNode(TR::CodeGenerator *cg, TR::Node *node);
-   static TR::Register *ternaryEvaluator(TR::Node * node, TR::CodeGenerator * cg);
-   static TR::Register *dternaryEvaluator(TR::Node * node, TR::CodeGenerator * cg);
+   static TR::Register *selectEvaluator(TR::Node * node, TR::CodeGenerator * cg);
+   static TR::Register *dselectEvaluator(TR::Node * node, TR::CodeGenerator * cg);
    static bool treeContainsAllOtherUsesForNode(TR::Node *condition, TR::Node *trueVal);
    static int32_t countReferencesInTree(TR::Node *treeNode, TR::Node *node);
    static TR::Register *NOPEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -408,9 +424,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static void tableEvaluatorCaseLabelHelper(TR::Node * node, TR::CodeGenerator * cg, tableKind tableKindToBeEvaluated, int32_t numBranchTableEntries, TR::Register * selectorReg, TR::Register * branchTableReg, TR::Register *reg1  );
    static TR::Register *tableEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *loadaddrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *resolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *vselEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
@@ -449,7 +463,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *vsetelemEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *inlineVectorUnaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op);
    static TR::Register *inlineVectorBinaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op);
-   static TR::Register *inlineVectorTernaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op);
+   static TR::Register *inlineVectorBitSelectOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op);
 
    static TR::Register *bitpermuteEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    
@@ -721,9 +735,15 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *dRegStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lRegStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *GlRegDepsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-
-   static TR::Register *minEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *maxEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   
+   static TR::Register *iminEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lminEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fminEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dminEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *imaxEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lmaxEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fmaxEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dmaxEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool needsResolve, TR::CodeGenerator * cg);
 

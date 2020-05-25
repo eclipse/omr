@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@
 #pragma csect(TEST,"OMRCGPhase#T")
 
 
-#include "codegen/OMRCodeGenPhase.hpp"
+#include "codegen/CodeGenPhase.hpp"
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -38,7 +38,7 @@
 #include "codegen/CodeGenPhase.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
@@ -54,7 +54,7 @@
 #include "env/TRMemory.hpp"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/ILWalk.hpp"
@@ -179,50 +179,46 @@ OMR::CodeGenPhase::performProcessRelocationsPhase(TR::CodeGenerator * cg, TR::Co
         }
      }
 
-   if (comp->getOption(TR_AOT) && (comp->getOption(TR_TraceRelocatableDataCG) || comp->getOption(TR_TraceRelocatableDataDetailsCG) || comp->getOption(TR_TraceReloCG)))
-     {
-     traceMsg(comp, "\n<relocatableDataCG>\n");
-     if (comp->getOption(TR_TraceRelocatableDataDetailsCG)) // verbose output
-        {
-        uint8_t * relocatableMethodCodeStart = (uint8_t *)comp->getRelocatableMethodCodeStart();
-        traceMsg(comp, "Code start = %8x, Method start pc = %x, Method start pc offset = 0x%x\n", relocatableMethodCodeStart, cg->getCodeStart(), cg->getCodeStart() - relocatableMethodCodeStart);
-        }
-     cg->getAheadOfTimeCompile()->dumpRelocationData();
-     traceMsg(comp, "</relocatableDataCG>\n");
-     }
+   if (cg->getAheadOfTimeCompile() && (comp->getOption(TR_TraceRelocatableDataCG) || comp->getOption(TR_TraceRelocatableDataDetailsCG) || comp->getOption(TR_TraceReloCG)))
+      {
+      traceMsg(comp, "\n<relocatableDataCG>\n");
+      if (comp->getOption(TR_TraceRelocatableDataDetailsCG)) // verbose output
+         {
+         uint8_t * relocatableMethodCodeStart = (uint8_t *)comp->getRelocatableMethodCodeStart();
+         traceMsg(comp, "Code start = %8x, Method start pc = %x, Method start pc offset = 0x%x\n", relocatableMethodCodeStart, cg->getCodeStart(), cg->getCodeStart() - relocatableMethodCodeStart);
+         }
+      cg->getAheadOfTimeCompile()->dumpRelocationData();
+      traceMsg(comp, "</relocatableDataCG>\n");
+      }
 
-     if (debug("dumpCodeSizes"))
-        {
-        diagnostic("%08d   %s\n", cg->getCodeLength(), comp->signature());
-        }
+   if (debug("dumpCodeSizes"))
+      {
+      diagnostic("%08d   %s\n", cg->getCodeLength(), comp->signature());
+      }
 
-     if (comp->getCurrentMethod() == NULL)
-        {
-        comp->getMethodSymbol()->setMethodAddress(cg->getBinaryBufferStart());
-        }
+   TR_ASSERT(cg->getCodeLength() <= cg->getEstimatedCodeLength(),
+      "Method length estimate must be conservatively large\n"
+      "    codeLength = %d, estimatedCodeLength = %d \n",
+      cg->getCodeLength(), cg->getEstimatedCodeLength()
+   );
 
-     TR_ASSERT(cg->getCodeLength() <= cg->getEstimatedCodeLength(),
-               "Method length estimate must be conservatively large\n"
-               "    codeLength = %d, estimatedCodeLength = %d \n",
-               cg->getCodeLength(), cg->getEstimatedCodeLength()
-               );
+   // also trace the interal stack atlas
+   cg->getStackAtlas()->close(cg);
 
-     // also trace the interal stack atlas
-     cg->getStackAtlas()->close(cg);
+   TR::SimpleRegex * regex = comp->getOptions()->getSlipTrap();
+   if (regex && TR::SimpleRegex::match(regex, comp->getCurrentMethod()))
+      {
+      if (cg->comp()->target().is64Bit())
+         {
+         setDllSlip((char*)cg->getCodeStart(), (char*)cg->getCodeStart() + cg->getCodeLength(), "SLIPDLL64", comp);
+         }
+      else
+         {
+         setDllSlip((char*)cg->getCodeStart(), (char*)cg->getCodeStart() + cg->getCodeLength(), "SLIPDLL31", comp);
+         }
+      }
 
-     TR::SimpleRegex * regex = comp->getOptions()->getSlipTrap();
-     if (regex && TR::SimpleRegex::match(regex, comp->getCurrentMethod()))
-        {
-        if (TR::Compiler->target.is64Bit())
-        {
-        setDllSlip((char*)cg->getCodeStart(),(char*)cg->getCodeStart()+cg->getCodeLength(),"SLIPDLL64", comp);
-        }
-     else
-        {
-        setDllSlip((char*)cg->getCodeStart(),(char*)cg->getCodeStart()+cg->getCodeLength(),"SLIPDLL31", comp);
-        }
-     }
-   if (comp->getOption(TR_TraceCG) || comp->getOptions()->getTraceCGOption(TR_TraceCGPostBinaryEncoding))
+   if (comp->getOption(TR_TraceCG))
       {
       const char * title = "Post Relocation Instructions";
       comp->getDebug()->dumpMethodInstrs(comp->getOutFile(), title, false, true);
@@ -259,7 +255,7 @@ OMR::CodeGenPhase::performEmitSnippetsPhase(TR::CodeGenerator * cg, TR::CodeGenP
       comp->getOSRCompilationData()->compressInstruction2SharedSlotMap();
       }
 
-   if (comp->getOption(TR_TraceCG) || comp->getOptions()->getTraceCGOption(TR_TraceCGPostBinaryEncoding))
+   if (comp->getOption(TR_TraceCG))
       {
       diagnostic("\nbuffer start = %8x, code start = %8x, buffer length = %d", cg->getBinaryBufferStart(), cg->getCodeStart(), cg->getEstimatedCodeLength());
       diagnostic("\n");
@@ -304,6 +300,9 @@ OMR::CodeGenPhase::performBinaryEncodingPhase(TR::CodeGenerator * cg, TR::CodeGe
 
    cg->doBinaryEncoding();
 
+   // Instructions have been emitted, and now we know what the entry point is, so update the compilation method symbol
+   comp->getMethodSymbol()->setMethodAddress(cg->getCodeStart());
+
    if (debug("verifyFinalNodeReferenceCounts"))
       {
       if (cg->getDebug())
@@ -344,7 +343,7 @@ OMR::CodeGenPhase::performMapStackPhase(TR::CodeGenerator * cg, TR::CodeGenPhase
 
      cg->getLinkage()->mapStack(comp->getJittedMethodSymbol());
 
-     if (comp->getOption(TR_TraceCG) || comp->getOptions()->getTraceCGOption(TR_TraceEarlyStackMap))
+     if (comp->getOption(TR_TraceCG))
         comp->getDebug()->dumpMethodInstrs(comp->getOutFile(), "Post Stack Map", false);
      }
    cg->setMappingAutomatics();
@@ -361,21 +360,14 @@ OMR::CodeGenPhase::performRegisterAssigningPhase(TR::CodeGenerator * cg, TR::Cod
    if (cg->getDebug())
       cg->getDebug()->roundAddressEnumerationCounters();
 
-     {
+      {
       TR::LexicalMemProfiler mp("RA", comp->phaseMemProfiler());
       LexicalTimer pt("RA", comp->phaseTimer());
 
-      TR_RegisterKinds colourableKindsToAssign;
-      TR_RegisterKinds nonColourableKindsToAssign = cg->prepareRegistersForAssignment();
+      TR_RegisterKinds kindsToAssign = cg->prepareRegistersForAssignment();
 
       cg->jettisonAllSpills(); // Spill temps used before now may lead to conflicts if also used by register assignment
-
-      // Do local register assignment for non-colourable registers.
-      //
-      if(cg->getTraceRAOption(TR_TraceRAListing))
-         if(cg->getDebug()) cg->getDebug()->dumpMethodInstrs(comp->getOutFile(),"Before Local RA",false);
-
-      cg->doRegisterAssignment(nonColourableKindsToAssign);
+      cg->doRegisterAssignment(kindsToAssign);
 
       if (comp->compilationShouldBeInterrupted(AFTER_REGISTER_ASSIGNMENT_CONTEXT))
          {
@@ -383,7 +375,7 @@ OMR::CodeGenPhase::performRegisterAssigningPhase(TR::CodeGenerator * cg, TR::Cod
          }
       }
 
-   if (comp->getOption(TR_TraceCG) || comp->getOptions()->getTraceCGOption(TR_TraceCGPostRegisterAssignment))
+   if (comp->getOption(TR_TraceCG))
       comp->getDebug()->dumpMethodInstrs(comp->getOutFile(), "Post Register Assignment Instructions", false, true);
    }
 
@@ -404,7 +396,7 @@ OMR::CodeGenPhase::performInstructionSelectionPhase(TR::CodeGenerator * cg, TR::
    TR::Compilation* comp = cg->comp();
    phase->reportPhase(InstructionSelectionPhase);
 
-   if (comp->getOption(TR_TraceCG) || comp->getOption(TR_TraceTrees) || comp->getOptions()->getTraceCGOption(TR_TraceCGPreInstructionSelection))
+   if (comp->getOption(TR_TraceCG) || comp->getOption(TR_TraceTrees))
       comp->dumpMethodTrees("Pre Instruction Selection Trees");
 
    TR::LexicalMemProfiler mp(phase->getName(), comp->phaseMemProfiler());
@@ -412,7 +404,7 @@ OMR::CodeGenPhase::performInstructionSelectionPhase(TR::CodeGenerator * cg, TR::
 
    cg->doInstructionSelection();
 
-   if (comp->getOption(TR_TraceCG) || comp->getOptions()->getTraceCGOption(TR_TraceCGPostInstructionSelection))
+   if (comp->getOption(TR_TraceCG))
       comp->getDebug()->dumpMethodInstrs(comp->getOutFile(), "Post Instruction Selection Instructions", false, true);
 
    // check reference counts
@@ -561,6 +553,17 @@ OMR::CodeGenPhase::performInsertDebugCountersPhase(TR::CodeGenerator * cg, TR::C
    cg->insertDebugCounters();
    }
 
+void
+OMR::CodeGenPhase::performExpandInstructionsPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase)
+   {
+   TR::Compilation * comp = cg->comp();
+   phase->reportPhase(ExpandInstructionsPhase);
+
+   cg->expandInstructions();
+
+   if (comp->getOption(TR_TraceCG))
+      comp->getDebug()->dumpMethodInstrs(comp->getOutFile(), "Post Instruction Expansion Instructions", false, true);
+   }
 
 const char *
 OMR::CodeGenPhase::getName()
@@ -608,6 +611,8 @@ OMR::CodeGenPhase::getName(PhaseValue phase)
 	 return "InsertDebugCountersPhase";
       case CleanUpFlagsPhase:
 	 return "CleanUpFlagsPhase";
+      case ExpandInstructionsPhase:
+         return "ExpandInstructionsPhase";
       default:
          TR_ASSERT(false, "TR::CodeGenPhase %d doesn't have a corresponding name.", phase);
          return NULL;

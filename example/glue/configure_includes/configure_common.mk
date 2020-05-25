@@ -25,6 +25,7 @@ CONFIGURE_ARGS += \
   --enable-OMR_PORT \
   --enable-OMR_THREAD \
   --enable-OMR_OMRSIG \
+  --enable-OMR_PORT_SOCKET_SUPPORT \
   --enable-fvtest \
   --enable-OMR_GC_SEGREGATED_HEAP \
   --enable-OMR_GC_MODRON_SCAVENGER \

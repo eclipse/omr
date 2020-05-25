@@ -124,6 +124,28 @@ TR::ELFGenerator::initializeTextSection(uint32_t shName, ELFAddress shAddress,
     _textSection = shdr;
     strcpy(_textSectionName, ".text");
 }
+
+void 
+TR::ELFGenerator::initializeDataSection(uint32_t shName, ELFAddress shAddress,
+                                                 ELFOffset shOffset, uint32_t shSize)
+{
+
+    ELFSectionHeader * shdr = static_cast<ELFSectionHeader *>(_rawAllocator.allocate(sizeof(ELFSectionHeader)));
+    
+    shdr->sh_name = shName;
+    shdr->sh_type = SHT_PROGBITS;
+    shdr->sh_flags = SHF_ALLOC | SHF_WRITE;
+    shdr->sh_addr = shAddress;
+    shdr->sh_offset = shOffset;
+    shdr->sh_size = shSize;
+    shdr->sh_link = 0;
+    shdr->sh_info = 0;
+    shdr->sh_addralign = 8;
+    shdr->sh_entsize = 0;
+
+    _dataSection = shdr;
+    strcpy(_dataSectionName, ".data");
+}
     
 void
 TR::ELFGenerator::initializeDynSymSection(uint32_t shName, ELFOffset shOffset, uint32_t shSize, uint32_t shLink)
@@ -227,10 +249,14 @@ TR::ELFGenerator::emitELFFile(const char * filename)
     }
 
     writeCodeSegmentToFile(elfFile);
+    
+    writeDataSegmentToFile(elfFile);
 
     writeSectionHeaderToFile(elfFile, _zeroSection);
 
     writeSectionHeaderToFile(elfFile, _textSection);
+
+    writeSectionHeaderToFile(elfFile, _dataSection);
 
     if (_relaSection)
     {
@@ -246,6 +272,9 @@ TR::ELFGenerator::emitELFFile(const char * filename)
     writeSectionNameToFile(elfFile, _zeroSectionName, sizeof(_zeroSectionName));
 
     writeSectionNameToFile(elfFile, _textSectionName, sizeof(_textSectionName));
+
+    writeSectionNameToFile(elfFile, _dataSectionName, sizeof(_dataSectionName));
+
     if (_relaSection)
     {
         writeSectionNameToFile(elfFile, _relaSectionName, sizeof(_relaSectionName));
@@ -296,6 +325,14 @@ void
 TR::ELFGenerator::writeCodeSegmentToFile(::FILE *fp)
 {
     fwrite(static_cast<const void *>(_codeStart), sizeof(uint8_t), _codeSize, fp);
+}
+
+void 
+TR::ELFGenerator::writeDataSegmentToFile(::FILE *fp)
+{
+    //char temp[] = "Hello World";
+    //fwrite(static_cast<const void *>(temp), sizeof(uint8_t), sizeof(temp), fp);
+    return;
 }
 
 void 
@@ -509,8 +546,8 @@ TR::ELFRelocatableGenerator::initializeELFHeader(void)
     _header->e_shoff = sizeof(ELFEHeader) + _codeSize; //start of the section header table in bytes from the first byte of the ELF file
     _header->e_phentsize = 0; //no program headers in relocatable elf
     _header->e_phnum = 0;
-    _header->e_shnum = 6;
-    _header->e_shstrndx = 4; //index of section header string table
+    _header->e_shnum = 7;
+    _header->e_shstrndx = 5; //index of section header string table
 }
 
 void
@@ -519,6 +556,7 @@ TR::ELFRelocatableGenerator::buildSectionHeaders(void)
     uint32_t shStrTabNameLength = sizeof(_zeroSectionName) +
                                   sizeof(_shStrTabSectionName) +
                                   sizeof(_textSectionName) +
+                                  sizeof(_dataSectionName) +
                                   sizeof(_relaSectionName) +
                                   sizeof(_dynSymSectionName) +
                                   sizeof(_dynStrSectionName);
@@ -526,7 +564,7 @@ TR::ELFRelocatableGenerator::buildSectionHeaders(void)
     /* offset calculations */
     uint32_t trailerStartOffset = sizeof(ELFEHeader) + _codeSize;
     uint32_t symbolsStartOffset = trailerStartOffset +
-                                  (sizeof(ELFSectionHeader) * /* # shdr */ 6) +
+                                  (sizeof(ELFSectionHeader) * /* # shdr */ 7) +
                                   shStrTabNameLength;
     uint32_t symbolNamesStartOffset = symbolsStartOffset + 
                                       (_numSymbols + /* UNDEF */ 1) * sizeof(ELFSymbol);
@@ -542,6 +580,12 @@ TR::ELFRelocatableGenerator::buildSectionHeaders(void)
                           _codeSize);
     shNameOffset += sizeof(_textSectionName);
 
+    initializeDataSection(shNameOffset,
+                          /*sh_addr*/0,
+                          sizeof(ELFEHeader) + _codeSize,
+                          0);
+    shNameOffset += sizeof(_dataSectionName);
+
     initializeRelaSection(shNameOffset,
                           relaStartOffset, 
                           _numRelocations * sizeof(ELFRela));
@@ -550,7 +594,7 @@ TR::ELFRelocatableGenerator::buildSectionHeaders(void)
     initializeDynSymSection(shNameOffset, 
                             symbolsStartOffset,
                             symbolNamesStartOffset - symbolsStartOffset,
-                            /*Index of dynStrTab*/ 5);
+                            /*Index of dynStrTab*/ 6);
     shNameOffset += sizeof(_dynSymSectionName);
 
     initializeStrTabSection(shNameOffset, 

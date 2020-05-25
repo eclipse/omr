@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,12 +28,13 @@
 #include "env/Region.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/TRMemory.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
@@ -108,6 +109,7 @@ OMR::MethodBuilder::MethodBuilder(TR::TypeDictionary *types, TR::VirtualMachineS
    _symbolNameFromSlot(std::less<int32_t>(), trMemory()->heapMemoryRegion()),
    _symbolIsArray(str_comparator, trMemory()->heapMemoryRegion()),
    _memoryLocations(str_comparator, trMemory()->heapMemoryRegion()),
+   _globals(str_comparator,trMemory()->heapMemoryRegion()),
    _functions(str_comparator, trMemory()->heapMemoryRegion()),
    _cachedParameterTypes(0),
    _definingFile(""),
@@ -128,7 +130,7 @@ OMR::MethodBuilder::MethodBuilder(TR::TypeDictionary *types, TR::VirtualMachineS
    _definingLine[0] = '\0';
    }
 
-// used when inlining: 
+// used when inlining:
 OMR::MethodBuilder::MethodBuilder(TR::MethodBuilder *callerMB, TR::VirtualMachineState *vmState)
    : TR::IlBuilder(asMethodBuilder(), callerMB->typeDictionary()),
    _methodName("NoName"),
@@ -140,6 +142,7 @@ OMR::MethodBuilder::MethodBuilder(TR::MethodBuilder *callerMB, TR::VirtualMachin
    _symbolNameFromSlot(std::less<int32_t>(), trMemory()->heapMemoryRegion()),
    _symbolIsArray(str_comparator, trMemory()->heapMemoryRegion()),
    _memoryLocations(str_comparator, trMemory()->heapMemoryRegion()),
+   _globals(str_comparator,trMemory()->heapMemoryRegion()),
    _functions(str_comparator, trMemory()->heapMemoryRegion()),
    _cachedParameterTypes(0),
    _definingFile(""),
@@ -385,7 +388,7 @@ OMR::MethodBuilder::defineSymbol(const char *name, TR::SymbolReference *symRef)
 
    _symbols.insert(std::make_pair(name, symRef));
    _symbolNameFromSlot.insert(std::make_pair(symRef->getCPIndex(), name));
-   
+
    TR::IlType *type = typeDictionary()->PrimitiveType(symRef->getSymbol()->getDataType());
    _symbolTypes.insert(std::make_pair(name, type));
 
@@ -436,9 +439,19 @@ OMR::MethodBuilder::lookupSymbol(const char *name)
       }
    else
       {
-      symRef = symRefTab()->createTemporary(_methodSymbol, primitiveType);
-      const char *adjustedName = adjustNameForInlinedSite(name); 
-      symRef->getSymbol()->getAutoSymbol()->setName(adjustedName);
+      GlobalMap::iterator globalsIterator = _globals.find(name);
+      if(globalsIterator != _globals.end())
+         {
+         symRef = symRefTab()->createNamedStatic(_methodSymbol, primitiveType, name);
+         symRef->getSymbol()->getStaticSymbol()->setStaticAddress((*globalsIterator).second);
+         symRef->getSymbol()->setVolatile();
+         }
+      else
+         {
+         symRef = symRefTab()->createTemporary(_methodSymbol, primitiveType);
+         const char *adjustedName = adjustNameForInlinedSite(name);
+         symRef->getSymbol()->getAutoSymbol()->setName(adjustedName);
+         }
       _symbolNameFromSlot.insert(std::make_pair(symRef->getCPIndex(), name));
 
       // also do the symbol name mapping in caller so references to parameters can be shown in logs
@@ -508,6 +521,15 @@ OMR::MethodBuilder::DefineMemory(const char *name, TR::IlType *dt, void *locatio
 
    _symbolTypes.insert(std::make_pair(name, dt));
    _memoryLocations.insert(std::make_pair(name, location));
+   }
+
+void
+OMR::MethodBuilder::DefineGlobal(const char *name, TR::IlType *dt, void *location)
+   {
+   TR_ASSERT_FATAL(_globals.find(name) == _globals.end(), "Global '%s' already defined", name);
+
+   _globals.insert(std::make_pair(name, location));
+   _symbolTypes.insert(std::make_pair(name, dt));
    }
 
 void
@@ -612,7 +634,7 @@ OMR::MethodBuilder::getParameterTypes()
    if (_cachedParameterTypes)
       return _cachedParameterTypes;
 
-   TR_ASSERT(_numParameters < 10, "too many parameters for parameter types array");
+   TR_ASSERT_FATAL(_numParameters < 18, "Too many parameters (%d) for parameter types array", _numParameters);
    TR::IlType **paramTypesArray = _cachedParameterTypesArray;
    for (int32_t p=0;p < _numParameters;p++)
       {
@@ -620,7 +642,7 @@ OMR::MethodBuilder::getParameterTypes()
       TR_ASSERT_FATAL(symNamesIterator != _symbolNameFromSlot.end(), "No symbol found in slot %d", p);
       const char *name = symNamesIterator->second;
 
-      std::map<const char *, TR::IlType *, StrComparator>::iterator symTypesIterator = _symbolTypes.find(name);
+      auto symTypesIterator = _symbolTypes.find(name);
       TR_ASSERT_FATAL(symTypesIterator != _symbolTypes.end(), "No matching symbol type for parameter '%s'", name);
       paramTypesArray[p] = symTypesIterator->second;
       }
@@ -705,7 +727,17 @@ OMR::MethodBuilder::Compile(void **entry)
 
    int32_t rc=0;
    *entry = (void *) compileMethodFromDetails(NULL, details, warm, rc);
+
+   // let TypeDictionary know to clear out sym refs used in this compilation so
+   // no dangling pointers
    typeDictionary()->NotifyCompilationDone();
+
+   // in case this MethodBuilder object is used in another Call()
+   // clear out symrefs allocated in this compilation (no dangling pointers)
+   // and reset _connectedTrees so MethodBuilder can be inlined if needed
+   _symbols.clear();
+   _connectedTrees = false;
+
    return rc;
    }
 

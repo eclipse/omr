@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,6 @@ void initializeJitRuntimeHelperTable(char jvmpi);
 
 enum TR_CCPreLoadedCode
    {
-#if !defined(TR_TARGET_S390)
    TR_AllocPrefetch = 0,
 #if defined(TR_TARGET_POWER)
    TR_ObjAlloc,
@@ -63,73 +62,7 @@ enum TR_CCPreLoadedCode
    TR_arrayStoreCHK,
 #endif // TR_TARGET_POWER
    TR_NonZeroAllocPrefetch,
-#endif // !defined(TR_TARGET_S390)
    TR_numCCPreLoadedCode
-   };
-
-///////////////////////////////////////////
-// TR_LinkageInfo
-//
-// Non-instantiable Abstract Class
-// Cannot have any virtual methods in here
-//
-///////////////////////////////////////////
-
-class TR_LinkageInfo
-   {
-   public:
-   static TR_LinkageInfo *get(void *startPC) { return (TR_LinkageInfo*)(((uint32_t*)startPC)-1); }
-
-   void setCountingMethodBody()     { _word |= CountingPrologue; }
-   void setSamplingMethodBody()     { _word |= SamplingPrologue; }
-   void setHasBeenRecompiled();
-   void setHasFailedRecompilation();
-   void setIsBeingRecompiled()      { _word |= IsBeingRecompiled; }
-   void resetIsBeingRecompiled()    { _word &= ~IsBeingRecompiled; }
-
-   bool isCountingMethodBody()    { return (_word & CountingPrologue) != 0; }
-   bool isSamplingMethodBody()    { return (_word & SamplingPrologue) != 0; }
-   bool isRecompMethodBody()      { return (_word & (SamplingPrologue | CountingPrologue)) != 0; }
-   bool hasBeenRecompiled()       { return (_word & HasBeenRecompiled) != 0; }
-   bool hasFailedRecompilation()  { return (_word & HasFailedRecompilation) != 0; }
-   bool recompilationAttempted()  { return hasBeenRecompiled() || hasFailedRecompilation(); }
-   bool isBeingCompiled()         { return (_word & IsBeingRecompiled) != 0; }
-
-   inline uint16_t getReservedWord()            { return (_word & ReservedMask) >> 16; }
-   inline void     setReservedWord(uint16_t w)  { _word |= ((w << 16) & ReservedMask); }
-
-   int32_t getJitEntryOffset()
-      {
-#if defined(TR_TARGET_X86) && defined(TR_TARGET_32BIT)
-      return 0;
-#else
-      return getReservedWord();
-#endif
-      }
-
-   enum
-      {
-      ReturnInfoMask                     = 0x0000000F, // bottom 4 bits
-      // The VM depends on these four bits - word to the wise: don't mess
-
-      SamplingPrologue                   = 0x00000010,
-      CountingPrologue                   = 0x00000020,
-      // NOTE: flags have to be set under the compilation monitor or during compilation process
-      HasBeenRecompiled                  = 0x00000040,
-      HasFailedRecompilation             = 0x00000100,
-      IsBeingRecompiled                  = 0x00000200,
-
-      // RESERVED:
-      // non-ia32:                         0xffff0000 <---- jitEntryOffset
-      // ia32:                             0xffff0000 <---- Recomp/FSD save area
-
-      ReservedMask                       = 0xFFFF0000
-      };
-
-   uint32_t _word;
-
-   private:
-   TR_LinkageInfo() {};
    };
 
 
@@ -159,6 +92,8 @@ enum TR_RuntimeHelper
    TR_numRuntimeHelpers = TR_ARM64numRuntimeHelpers
 #elif defined(TR_HOST_S390)
    TR_numRuntimeHelpers = TR_S390numRuntimeHelpers
+#elif defined(TR_HOST_RISCV)
+   TR_numRuntimeHelpers = TR_RISCVnumRuntimeHelpers
 #endif
 
    };
@@ -167,7 +102,7 @@ class TR_RuntimeHelperTable
    {
 public:
 
-    static const intptrj_t INVALID_FUNCTION_POINTER = 0xdeadb00f;
+    static const intptr_t INVALID_FUNCTION_POINTER = 0xdeadb00f;
 
     /**
      * \brief
@@ -437,10 +372,10 @@ typedef enum
 
 // Multi Code Cache Routine for S390 for checking whether an entry point is within reach of a RIL instruction.
 // In RIL instruction, the relative address is specified in number of half words.
-#define CHECK_32BIT_TRAMPOLINE_RANGE(x,rip)  (((intptrj_t)(x) == (intptrj_t)(rip) + ((intptrj_t)((int32_t)(((intptrj_t)(x) - (intptrj_t)(rip))/2)))*2) && (x % 2 == 0))
+#define CHECK_32BIT_TRAMPOLINE_RANGE(x,rip)  (((intptr_t)(x) == (intptr_t)(rip) + ((intptr_t)((int32_t)(((intptr_t)(x) - (intptr_t)(rip))/2)))*2) && (x % 2 == 0))
 
 // Routine to check trampoline range for x86-64
-#define IS_32BIT_RIP_JUMP(x,rip)  ((intptrj_t)(x) == (intptrj_t)(rip) + (int32_t)((intptrj_t)(x) - (intptrj_t)(rip)))
+#define IS_32BIT_RIP_JUMP(x,rip)  ((intptr_t)(x) == (intptr_t)(rip) + (int32_t)((intptr_t)(x) - (intptr_t)(rip)))
 
 // Branch limit for PPC and ARM ARM64
 #define BRANCH_FORWARD_LIMIT      (0x01fffffc)

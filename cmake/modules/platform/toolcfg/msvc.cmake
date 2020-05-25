@@ -116,9 +116,10 @@ function(_omr_toolchain_process_exports TARGET_NAME)
 
 	set(def_file "$<TARGET_PROPERTY:${TARGET_NAME},BINARY_DIR>/${TARGET_NAME}.def")
 
-	file(READ "${omr_SOURCE_DIR}/cmake/modules/platform/toolcfg/msvc_exports.def.in" template)
-	string(CONFIGURE "${template}" configured_template)
-	file(GENERATE OUTPUT "${def_file}" CONTENT "${configured_template}")
+	omr_process_template(
+		"${omr_SOURCE_DIR}/cmake/modules/platform/toolcfg/msvc_exports.def.in"
+		"${def_file}"
+	)
 
 	target_sources("${TARGET_NAME}" PRIVATE "${def_file}")
 endfunction()

@@ -1,0 +1,155 @@
+trigger:
+  - master
+pr:
+  - master
+ 
+jobs:
+  - job:
+    displayName: 'x86-64 Windows'
+    pool:
+      vmImage: vs2017-win2016
+    steps:
+      - script: |
+          mkdir build
+        displayName: 'Create build directory'
+ 
+      - script: |
+          set PATH=C:\Program Files (x86)\Windows Kits\10\bin\10.0.16299.0\x64;%PATH%
+          cmake .. -G "Visual Studio 15 2017 Win64" -C../cmake/caches/AppVeyor.cmake .. -DOMR_DDR=0
+        displayName: 'Configure'
+        workingDirectory: 'build'
+ 
+      - script: |
+          cmake --build . -- -maxCpuCount
+        displayName: 'Build'
+        workingDirectory: 'build'
+ 
+      - script: |
+          ctest -V -C Debug
+        displayName: "Test"
+        workingDirectory: 'build'
+ 
+      - task: PublishTestResults@2
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '**/*results.xml'
+        displayName: 'Publish results'
+ 
+  - job:
+    displayName: 'x86-64 Linux'
+    pool:
+      vmImage: 'ubuntu-16.04'
+    variables:
+      CCACHE_DIR: $(Pipeline.Workspace)/ccache
+    steps:
+      - script: |
+          sudo apt-get install -y ccache libelf-dev libdwarf-dev
+        displayName: 'Install prerequisites'
+ 
+      - script: |
+          PARALLELISM=$(grep -c '^processor' /proc/cpuinfo)
+          echo "Number of parallel jobs: $PARALLELISM"
+          echo "##vso[task.setvariable variable=NUMBER_OF_PROCESSORS]$PARALLELISM"
+          echo "##vso[task.prependpath]/usr/lib/ccache"
+        displayName: 'Initialize environment'
+       
+      - script: |
+          mkdir build
+        displayName: 'Create build directory'
+      - task: Cache@2
+        inputs:
+          key: 'ccache | "$(Agent.OS)" | azure-pipelines.cache'
+          path: $(CCACHE_DIR)
+        displayName: 'Save/Restore ccache'
+ 
+      - script: |
+          ccache -s -z
+        displayName: 'Print cache stats'
+ 
+      - script: |
+          cmake -C ../cmake/caches/Travis.cmake ..
+        displayName: 'Configure'
+        workingDirectory: 'build'
+ 
+      - script: |
+          make -j$NUMBER_OF_PROCESSORS
+        displayName: 'Build'
+        workingDirectory: 'build'
+ 
+      - script: |
+          ccache -s -z
+        displayName: 'Print cache stats'
+ 
+      - script: |
+          ctest -V -j$NUMBER_OF_PROCESSORS
+        displayName: "Test"
+        workingDirectory: 'build'
+ 
+      - task: PublishTestResults@2
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '**/*results.xml'
+        displayName: 'Publish results'
+ 
+  - job:
+    displayName: 'x86-64 macOS'
+    pool:
+      vmImage: 'macOS-10.14'
+    variables:
+      CCACHE_DIR: $(Pipeline.Workspace)/ccache
+    steps:
+      - script: |
+          brew install ccache
+        displayName: 'Install prerequisites'
+ 
+      - script: |
+          sudo sysctl -w kern.maxproc=25000
+          sudo sysctl -w kern.maxprocperuid=25000
+         
+          PARALLELISM=$(sysctl -a | grep machdep.cpu.core_count | cut -d ' ' -f 2)
+          echo "Number of parallel jobs: $PARALLELISM"
+          echo "##vso[task.setvariable variable=NUMBER_OF_PROCESSORS]$PARALLELISM"
+          echo "##vso[task.prependpath]/usr/local/opt/ccache/libexec"
+        displayName: 'Initialize environment'
+ 
+      - script: |
+          mkdir build
+        displayName: 'Create build directory'
+ 
+      - task: Cache@2
+        inputs:
+          key: 'ccache | "$(Agent.OS)" | azure-pipelines.cache'
+          path: $(CCACHE_DIR)
+        displayName: 'Save/Restore ccache'
+ 
+      - script: |
+          ccache -s -z
+        displayName: 'Print cache stats'
+ 
+      - script: |
+          cmake -C ../cmake/caches/Travis.cmake ..
+        displayName: 'Configure'
+        workingDirectory: 'build'
+ 
+      - script: |
+          make -j$NUMBER_OF_PROCESSORS
+        displayName: 'Build'
+        workingDirectory: 'build'
+ 
+      - script: |
+          ccache -s -z
+        displayName: 'Print cache stats'
+ 
+      - script: |
+          ctest -V -j$NUMBER_OF_PROCESSORS
+        displayName: "Test"
+        workingDirectory: 'build'
+ 
+      - task: PublishTestResults@2
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '**/*results.xml'
+        displayName: 'Publish results'

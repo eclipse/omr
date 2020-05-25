@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -161,7 +161,12 @@ template <typename Function>
 static Function assert_compile(OMR::JitBuilder::MethodBuilder* m)
    {
    void* entry;
-   assert(0 == compileMethodBuilder(m, &entry));
+   int32_t rc = compileMethodBuilder(m, &entry);
+   if (rc != 0)
+      {
+      fprintf(stderr, "FAIL: could not compile MethodBuilder\n");
+      exit(-1);
+      }
    return (Function)entry;
    }
 
@@ -169,7 +174,12 @@ int
 main()
    {
    std::cout << "Step 1: initialize JIT\n";
-   assert(initializeJit());
+   bool initialized = initializeJit();
+   if (!initialized)
+      {
+      fprintf(stderr, "FAIL: could not initialize JIT\n");
+      exit(-1);
+      }
 
    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -161,6 +161,8 @@ static int32_t
 findError(int32_t errorCode)
 {
 	switch (errorCode) {
+	case 0:
+		return OMRPORT_ERROR_FILE_EOF;
 	case EACCES:
 			/* FALLTHROUGH */
 	case EPERM:
@@ -345,7 +347,7 @@ omrfile_open(struct OMRPortLibrary *portLibrary, const char *path, int32_t flags
 		}
 	}
 
-#ifdef J9ZOS390
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	/* On zOS use the non-tagging version of atoe_open for VM generated files that are always platform
 	 * encoded (EBCDIC), e.g. javacore dumps. See CMVC 199888
 	 */
@@ -354,9 +356,9 @@ omrfile_open(struct OMRPortLibrary *portLibrary, const char *path, int32_t flags
 	} else {
 		fd = open(path, realFlags, mode);
 	}
-#else
+#else /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	fd = open(path, realFlags, mode);
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 	if (-1 == fd) {
 		Trc_PRT_file_open_Exception2(path, errno, findError(errno));
@@ -482,7 +484,7 @@ omrfile_read(struct OMRPortLibrary *portLibrary, intptr_t inFD, void *buf, intpt
 #error FD_BIAS must be 0
 #endif
 	{
-		/* CMVC 178203 - Restart system calls interrupted by EINTR */
+		/* in case of EINTR try again */
 		do {
 			result = read(fd - FD_BIAS, buf, nbytes);
 		} while ((-1 == result) && (EINTR == errno));
@@ -491,8 +493,14 @@ omrfile_read(struct OMRPortLibrary *portLibrary, intptr_t inFD, void *buf, intpt
 	if ((0 == result) || (-1 == result)) {
 		if (-1 == result) {
 			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+		} else {
+			/*
+			 *  number of bytes read is zero and no error occur - should be EOF
+			 *  use error code 0 in findError()
+			 */
+			portLibrary->error_set_last_error(portLibrary, 0, findError(0));
+			result = -1;
 		}
-		result = -1;
 	}
 
 	Trc_PRT_file_read_Exit(result);

@@ -320,12 +320,6 @@ public:
 	 * @return true if contraction is successful
 	 */
 	bool heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress, void *lowValidAddress, void *highValidAddress);
-	/**
-	 * Called when the heap geometry has been reconfigured but no memory was added or removed from the heap (happens during tilt).
-	 * @param[in] env The thread which caused the heap geometry change (typically the master GC thread)
-	 * @note This implementation does nothing.
-	 */
-	void heapReconfigured(MM_EnvironmentBase *env);
 	
 	/**
 	 * @return A pointer to the mutable card table stats structure

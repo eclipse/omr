@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "compile/Compilation.hpp"
@@ -45,20 +45,20 @@
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -554,7 +554,7 @@ bool findLoadNearStartOfBlock(TR::Block *block, TR::SymbolReference *ref)
 bool TR_RegisterCandidates::aliasesPreventAllocation(TR::Compilation *comp, TR::SymbolReference *symRef)
   {
 
-  if (!symRef->getSymbol()->isAutoOrParm() && !(TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isLinux()) ) return true;
+  if (!symRef->getSymbol()->isAutoOrParm() && !(comp->target().cpu.isZ() && comp->target().isLinux()) ) return true;
 
   TR::SparseBitVector use_def_aliases(comp->allocator());
   symRef->getUseDefAliases(false).getAliases(use_def_aliases);
@@ -695,13 +695,13 @@ bool TR_RegisterCandidate::rcNeeds2Regs(TR::Compilation *comp)
    {
    if(getType().isAggregate())
       {
-      if ( (TR::Compiler->target.is32Bit() && !comp->cg()->use64BitRegsOn32Bit() && getSymbol()->getSize() > 4) || (getSymbol()->getSize() > 8 ) )
+      if ( (comp->target().is32Bit() && !comp->cg()->use64BitRegsOn32Bit() && getSymbol()->getSize() > 4) || (getSymbol()->getSize() > 8 ) )
          return true;
       else
          return false;
       }
    else
-      return ((getType().isInt64() && TR::Compiler->target.is32Bit() && !comp->cg()->use64BitRegsOn32Bit())
+      return ((getType().isInt64() && comp->target().is32Bit() && !comp->cg()->use64BitRegsOn32Bit())
 #ifdef J9_PROJECT_SPECIFIC
               || getType().isLongDouble()
 #endif
@@ -1851,7 +1851,7 @@ TR_RegisterCandidates::reprioritizeCandidates(
          {
          if ((!onlyReprioritizeLongs ||
               (rc->getType().isInt64() &&
-               TR::Compiler->target.is32Bit())) &&
+               comp->target().is32Bit())) &&
              ((reprioritizeFP && isFPCandidate) ||
               (!reprioritizeFP && !isFPCandidate)))
             {
@@ -2566,7 +2566,7 @@ TR_RegisterCandidates::assign(TR::Block ** cfgBlocks, int32_t numberOfBlocks, in
          {
          if (trace)
             traceMsg(comp(),"Leaving candidate because it has vector type but no global vector registers provided\n");
-         TR_ASSERT(!TR::Compiler->target.cpu.isZ(),"ed : debug : Should never get here for vector GRA on z");
+         TR_ASSERT(!comp()->target().cpu.isZ(),"ed : debug : Should never get here for vector GRA on z");
          continue;
          }
 
@@ -2607,7 +2607,7 @@ TR_RegisterCandidates::assign(TR::Block ** cfgBlocks, int32_t numberOfBlocks, in
                       );
       bool isVector = dt.isVector();
       int32_t firstRegister, lastRegister;
-      
+
       if (isFloat)
          {
            if (debug("disableGlobalFPRs")

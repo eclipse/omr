@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 1991, 2018 IBM Corp. and others
+ * (c) Copyright 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@
 
 #include "BaseVirtual.hpp"
 #include "EnvironmentBase.hpp"
+#include "ModronAssertions.h"
 
 class MM_AllocateDescription;
 class MM_AllocationContext;
@@ -59,6 +60,7 @@ protected:
 	bool _gcCompleted;
 	bool _isRecursiveGC;
 	bool _disableGC;
+	bool _stwCollectionInProgress;  /**< if set, the whole or partial STW phase is in progress (mutators not running) */
 
 	uintptr_t _collectorExpandedSize;
 	uintptr_t _cycleType;
@@ -66,12 +68,6 @@ protected:
 	uint64_t _masterThreadCpuTimeStart; /**< slot to store the master CPU time at the beginning of the collection */
 
 public:
-	/*
-	 * Determine if a collector (some parent, typically the global collector) wishes to usurp any minor collection.
-	 * @return boolean indicating if the parent collector should be invoked in place of a child.
-	 */
-	virtual bool isTimeForGlobalGCKickoff();
-
 	/**
  	 * Perform any collector-specific initialization.
  	 * @return TRUE if startup completes OK, FALSE otherwise
@@ -89,6 +85,15 @@ public:
 	 * @return boolean indicating if the last GC completed successfully.
 	 */
 	bool gcCompleted() { return _gcCompleted; }
+	
+	/*
+	 * Return value of _stwCollectionInProgress flag
+	 */
+	bool isStwCollectionInProgress()
+	{
+		return _stwCollectionInProgress;
+	}
+	
 
 private:
 	void setThreadFailAllocFlag(MM_EnvironmentBase *env, bool flag);
@@ -194,8 +199,8 @@ public:
 	 * moved from one subspace to another.
 	 * @param env[in] The thread which performed the change in heap geometry 
 	 */
-	virtual void heapReconfigured(MM_EnvironmentBase* env) = 0;
-
+	virtual void heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress) {}
+	
 	/**
 	 * Post collection broadcast event, indicating that the collection has been completed.
 	 * @param subSpace the memory subspace where the collection occurred
@@ -285,6 +290,11 @@ public:
 	virtual	void postConcurrentUpdateStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats, UDATA bytesConcurrentlyScanned) {}
 	virtual void forceConcurrentFinish() {}
 	virtual void completeExternalConcurrentCycle(MM_EnvironmentBase *env) {}
+	/**
+	 * Notify any (concurrent) collector that might block and hold VM access
+	 * that an Exclusive VM Access is to be requested so that VM access can be released
+	 */
+	virtual void notifyAcquireExclusiveVMAccess(MM_EnvironmentBase *env) {}
 	virtual bool isDisabled(MM_EnvironmentBase *env) { return _disableGC; }
 	/**
 	 * @return pointer to collector/phase specific concurrent stats structure
@@ -299,6 +309,7 @@ public:
 		, _gcCompleted(false)
 		, _isRecursiveGC(false)
 		, _disableGC(false)
+		, _stwCollectionInProgress(false)
 		, _collectorExpandedSize(0)
 		, _cycleType(OMR_GC_CYCLE_TYPE_DEFAULT)
 		, _masterThreadCpuTimeStart(0)

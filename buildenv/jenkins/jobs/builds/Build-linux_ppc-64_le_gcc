@@ -2,7 +2,6 @@ def setBuildStatus(String message, String state, String sha) {
     context = "continuous-integration/eclipse-omr/branch/linux_ppc-64_le_gcc"
     step([
         $class: "GitHubCommitStatusSetter",
-        reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/eclipse/omr"],
         contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
         errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
         commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
@@ -15,14 +14,15 @@ pipeline {
     agent{label 'Linux && PPCLE'}
     environment {
         PATH = "/usr/lib/ccache/:$PATH"
+        GTEST_COLOR = "0"
     }
     stages {
         stage('Get Sources') {
             steps {
                 timestamps {
-                    checkout([$class: 'GitSCM', branches: [[name: '${MERGE_COMMIT}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/eclipse/omr.git']]])
+                    checkout scm
                     
-                    setBuildStatus("In Progress","PENDING","${MERGE_COMMIT}")
+                    setBuildStatus("In Progress","PENDING","${env.GIT_COMMIT}")
                 }
             }
         }
@@ -51,6 +51,7 @@ pipeline {
                     dir('build') {
                         echo "Sanity Test..."
                         sh'''ctest -V'''
+                        junit '**/*results.xml'
                     }
                 }
             }
@@ -58,10 +59,10 @@ pipeline {
     }
     post {
         success {
-            setBuildStatus("Complete","SUCCESS","${MERGE_COMMIT}")
+            setBuildStatus("Complete","SUCCESS","${env.GIT_COMMIT}")
         }
         failure {
-            setBuildStatus("Complete","FAILURE","${MERGE_COMMIT}")
+            setBuildStatus("Complete","FAILURE","${env.GIT_COMMIT}")
         }
         always {
             echo 'Cleanup workspace'

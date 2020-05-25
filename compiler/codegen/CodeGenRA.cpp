@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/OMRCodeGenerator.hpp"
+#include "codegen/CodeGenerator.hpp"
 
 #include <limits.h>
 #include <stdint.h>
@@ -28,7 +28,7 @@
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
@@ -48,20 +48,20 @@
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -133,7 +133,7 @@ OMR::CodeGenerator::estimateRegisterPressure(TR::Node *node, int32_t &registerPr
                {
                registerPressure--;
                if ((node->getType().isInt64()) &&
-                   TR::Compiler->target.is32Bit())
+                   self()->comp()->target().is32Bit())
                   registerPressure--;
                }
 
@@ -229,7 +229,7 @@ OMR::CodeGenerator::estimateRegisterPressure(TR::Node *node, int32_t &registerPr
                   {
                   registerPressure++;
                   if ((node->getType().isInt64()) &&
-                      TR::Compiler->target.is32Bit())
+                      self()->comp()->target().is32Bit())
                      registerPressure++;
                   }
                }
@@ -247,7 +247,7 @@ OMR::CodeGenerator::estimateRegisterPressure(TR::Node *node, int32_t &registerPr
             //
             if (highRegisterPressureOpCode ||
                 ((node->getType().isInt64()) &&
-                 TR::Compiler->target.is32Bit() &&
+                 self()->comp()->target().is32Bit() &&
                  (node->getOpCode().isMul() ||
                   node->getOpCode().isDiv() ||
                   node->getOpCode().isRem() ||
@@ -456,7 +456,7 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
    TR_ASSERT_FATAL(dataSize <= 16, "assertion failure");
    TR_ASSERT_FATAL(!containsCollectedReference || (dataSize == TR::Compiler->om.sizeofReferenceAddress()), "assertion failure");
 
-   if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+   if (self()->comp()->getOption(TR_TraceRA))
       traceMsg(self()->comp(), "\nallocateSpill(%d, %s, %s)", dataSize, containsCollectedReference? "collected":"uncollected", offset? "offset":"NULL");
 
    if (offset && self()->comp()->getOption(TR_DisableHalfSlotSpills))
@@ -495,7 +495,7 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
        self()->getSpill16FreeList().pop_front();
      }
      if (
-         (spill && self()->getTraceRAOption(TR_TraceRASpillTemps) && !performTransformation(self()->comp(), "O^O SPILL TEMPS: Reuse spill temp %s\n", self()->getDebug()->getName(spill->getSymbolReference()))))
+         (spill && self()->comp()->getOption(TR_TraceRA) && !performTransformation(self()->comp(), "O^O SPILL TEMPS: Reuse spill temp %s\n", self()->getDebug()->getName(spill->getSymbolReference()))))
        {
        // Discard the spill temp we popped and never use it again; allocate a
        // new one instead, and later, where we would have returned this spill
@@ -560,13 +560,13 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
       {
       spillSymbol->setGCMapIndex(self()->getStackAtlas()->assignGCIndex());
       _collectedSpillList.push_front(spill);
-      if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+      if (self()->comp()->getOption(TR_TraceRA))
          traceMsg(self()->comp(), "\n -> added to collectedSpillList");
       }
    spill->setContainsCollectedReference(containsCollectedReference);
 
    TR_ASSERT(spill->isOccupied(), "assertion failure");
-   if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+   if (self()->comp()->getOption(TR_TraceRA))
      traceMsg(self()->comp(), "\nallocateSpill returning (%s(%d%d), %d) ", self()->getDebug()->getName(spill->getSymbolReference()->getSymbol()), spill->firstHalfIsOccupied()?1:0, spill->secondHalfIsOccupied()?1:0, offset? *offset : 0);
    return spill;
    }
@@ -578,7 +578,7 @@ OMR::CodeGenerator::freeSpill(TR_BackingStore *spill, int32_t dataSize, int32_t 
    TR_ASSERT(offset == 0 || offset == 4, "assertion failure");
    TR_ASSERT(dataSize + offset <= 16, "assertion failure");
 
-   if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+   if (self()->comp()->getOption(TR_TraceRA))
       {
       traceMsg(self()->comp(), "\nfreeSpill(%s(%d%d), %d, %d, isLocked=%d)",
                self()->getDebug()->getName(spill->getSymbolReference()->getSymbol()),
@@ -602,7 +602,7 @@ OMR::CodeGenerator::freeSpill(TR_BackingStore *spill, int32_t dataSize, int32_t 
       if (updateFreeList)
          {
          _internalPointerSpillFreeList.push_front(spill);
-         if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+         if (self()->comp()->getOption(TR_TraceRA))
             traceMsg(self()->comp(), "\n -> Added to internalPointerSpillFreeList");
          }
       }
@@ -611,14 +611,14 @@ OMR::CodeGenerator::freeSpill(TR_BackingStore *spill, int32_t dataSize, int32_t 
       if (offset == 0)
          {
          spill->setFirstHalfIsEmpty();
-         if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+         if (self()->comp()->getOption(TR_TraceRA))
             traceMsg(self()->comp(), "\n -> setFirstHalfIsEmpty");
          }
       else
          {
          TR_ASSERT(offset == 4, "assertion failure");
          spill->setSecondHalfIsEmpty();
-         if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+         if (self()->comp()->getOption(TR_TraceRA))
             traceMsg(self()->comp(), "\n -> setSecondHalfIsEmpty");
          }
 
@@ -630,14 +630,14 @@ OMR::CodeGenerator::freeSpill(TR_BackingStore *spill, int32_t dataSize, int32_t 
             {
             _spill4FreeList.remove(spill); // It may have been half-full before
             _spill8FreeList.push_front(spill);
-            if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+            if (self()->comp()->getOption(TR_TraceRA))
                traceMsg(self()->comp(), "\n -> moved to spill8FreeList");
             }
          }
       else if (spill->firstHalfIsOccupied())
          {
          // TODO: Once every caller can cope with nonzero offsets, we should add first-half-occupied symbols into _spill4FreeList.
-         if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+         if (self()->comp()->getOption(TR_TraceRA))
             traceMsg(self()->comp(), "\n -> first half is still occupied; conservatively keeping out of spill4FreeList");
          }
       else
@@ -648,7 +648,7 @@ OMR::CodeGenerator::freeSpill(TR_BackingStore *spill, int32_t dataSize, int32_t 
             {
             // Half-free
             _spill4FreeList.push_front(spill);
-            if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+            if (self()->comp()->getOption(TR_TraceRA))
                traceMsg(self()->comp(), "\n -> moved to spill4FreeList");
             }
          }
@@ -662,19 +662,19 @@ OMR::CodeGenerator::freeSpill(TR_BackingStore *spill, int32_t dataSize, int32_t 
          if (spill->getSymbolReference()->getSymbol()->getSize() <= 4)
             {
             _spill4FreeList.push_front(spill);
-            if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+            if (self()->comp()->getOption(TR_TraceRA))
                traceMsg(self()->comp(), "\n -> added to spill4FreeList");
             }
          else if (spill->getSymbolReference()->getSymbol()->getSize() == 8)
             {
             _spill8FreeList.push_front(spill);
-            if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+            if (self()->comp()->getOption(TR_TraceRA))
                traceMsg(self()->comp(), "\n -> added to spill8FreeList");
             }
          else if (spill->getSymbolReference()->getSymbol()->getSize() == 16)
             {
             _spill16FreeList.push_front(spill);
-            if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+            if (self()->comp()->getOption(TR_TraceRA))
                traceMsg(self()->comp(), "\n -> added to spill16FreeList");
             }
          }
@@ -684,7 +684,7 @@ OMR::CodeGenerator::freeSpill(TR_BackingStore *spill, int32_t dataSize, int32_t 
 void
 OMR::CodeGenerator::jettisonAllSpills()
    {
-   if (self()->getTraceRAOption(TR_TraceRASpillTemps))
+   if (self()->comp()->getOption(TR_TraceRA))
       traceMsg(self()->comp(), "jettisonAllSpills: Clearing spill-temp freelists\n");
    _spill4FreeList.clear();
    _spill8FreeList.clear();
@@ -1107,10 +1107,9 @@ static bool blockIsMuchColderThanContainingLoop(TR::Block *block, TR::CodeGenera
 
 static bool blockIsIgnorablyCold(TR::Block *block, TR::CodeGenerator *cg)
    {
-   bool cannotSpillInBlock = cg->comp()->getJittedMethodSymbol()->isNoTemps();
    if (block->isCold() && cg->traceSimulateTreeEvaluation())
       traceMsg(cg->comp(), "            Block %d is cold\n", block->getNumber());
-   return !cannotSpillInBlock && (block->isCold() || blockIsMuchColderThanContainingLoop(block, cg));
+   return (block->isCold() || blockIsMuchColderThanContainingLoop(block, cg));
    }
 
 void
@@ -1178,7 +1177,7 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
          {
          TR_GlobalRegisterNumber lowRegisterNumber = bvi.getNextElement();
 
-         if (TR::Compiler->target.is32Bit() && rc->getDataType() == TR::Int64)
+         if (self()->comp()->target().is32Bit() && rc->getDataType() == TR::Int64)
             highRegisterNumber = bvi.getNextElement();
          else
             highRegisterNumber = -1;
@@ -2193,9 +2192,9 @@ bool OMR::CodeGenerator::isLoadAlreadyAssignedOnEntry(TR::Node *node,  TR_Regist
 uint8_t OMR::CodeGenerator::gprCount(TR::DataType type,int32_t size)
    {
    if (type.isAggregate())
-      return (TR::Compiler->target.is32Bit() && !self()->use64BitRegsOn32Bit() && size > 4 && size <=  8) ? 2 : 1;
+      return (self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit() && size > 4 && size <=  8) ? 2 : 1;
 
-   return (type.isInt64() && TR::Compiler->target.is32Bit() && !self()->use64BitRegsOn32Bit())? 2 : (type.isIntegral() || type.isAddress())? 1 : 0;
+   return (type.isInt64() && self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit())? 2 : (type.isIntegral() || type.isAddress())? 1 : 0;
    }
 
 TR::CodeGenerator::TR_SimulatedNodeState &

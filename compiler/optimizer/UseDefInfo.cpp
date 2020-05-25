@@ -25,7 +25,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
 #include "compile/SymbolReferenceTable.hpp"
@@ -41,15 +41,15 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"
@@ -74,8 +74,27 @@
 
 const char* const TR_UseDefInfo::allocatorName = "UseDefInfo";
 
+/**
+ * Constructs TR_UseDefInfo instance. Note that this should not be called directly.
+ * Instead construction is handled by OMR::Optimizer::createUseDefInfo() method.
+ *
+ * @param cfg                        The compilation instance
+ * @param requiresGlobals
+ * @param prefersGlobals
+ * @param loadsShouldBeDefs
+ * @param cannotOmitTrivialDefs
+ * @param conversionRegsOnly
+ * @param doCompletion
+ * @param callsShouldBeUses          Enables inclusion of calls as uses so that the alias analysis can detect
+ *                                   when local (stack) variable has been aliased by a function call.
+ *                                   A value of false is fine for Java like languages where
+ *                                   local (stack) variables cannot be passed by reference to function calls
+ *                                   and hence cannot be aliased. However for C like languages this flag should be
+ *                                   set to true.
+ */
 TR_UseDefInfo::TR_UseDefInfo(TR::Compilation *comp, TR::CFG *cfg, TR::Optimizer *optimizer,
-      bool requiresGlobals, bool prefersGlobals, bool loadsShouldBeDefs, bool cannotOmitTrivialDefs, bool conversionRegsOnly, bool doCompletion)
+      bool requiresGlobals, bool prefersGlobals, bool loadsShouldBeDefs, bool cannotOmitTrivialDefs, bool conversionRegsOnly, 
+      bool doCompletion, bool callsShouldBeUses)
    : _region(comp->trMemory()->heapMemoryRegion()),
      _compilation(comp),
      _optimizer(optimizer),
@@ -91,6 +110,7 @@ TR_UseDefInfo::TR_UseDefInfo(TR::Compilation *comp, TR::CFG *cfg, TR::Optimizer 
      _tempsOnly(false),
      _trace(comp->getOption(TR_TraceUseDefs)),
      _hasLoadsAsDefs(loadsShouldBeDefs),
+     _hasCallsAsUses(callsShouldBeUses),
      _useDefs(0, _region),
      _numMemorySymbols(0),
      _valueNumbersToMemorySymbolsMap(0, static_cast<MemorySymbolList *>(NULL), _region),
@@ -1693,7 +1713,7 @@ void TR_UseDefInfo::insertData(TR::Block *block, TR::Node *node,TR::Node *parent
          }
       TR::GlobalSparseBitVector *mustKill = NULL;
       TR::Symbol *callSym = NULL;
-      TR_Method *callMethod = NULL;
+      TR::Method *callMethod = NULL;
 
       TR::SparseBitVector::Cursor aliasesCursor(aliases);
       for (aliasesCursor.SetToFirstOne(); aliasesCursor.Valid(); aliasesCursor.SetToNextOne())
@@ -1825,7 +1845,7 @@ void TR_UseDefInfo::processReachingDefinition(void* vblockInfo, AuxiliaryData &a
 
 void TR_UseDefInfo::buildUseDefs(void *vblockInfo, AuxiliaryData &aux)
    {
-   TR_Method *method = comp()->getMethodSymbol()->getMethod();
+   TR::Method *method = comp()->getMethodSymbol()->getMethod();
    TR::Block *block;
    TR::TreeTop *treeTop;
    TR_ReachingDefinitions::ContainerType *analysisInfo = NULL;
@@ -1876,7 +1896,7 @@ void TR_UseDefInfo::buildUseDefs(void *vblockInfo, AuxiliaryData &aux)
          }
 
       int32_t i, ii;
-      TR_Method *method = comp()->getMethodSymbol()->getMethod();
+      TR::Method *method = comp()->getMethodSymbol()->getMethod();
       TR_BitVectorIterator bvi(*analysisInfo);
       while (bvi.hasMoreElements())
          {
@@ -2272,7 +2292,7 @@ void TR_UseDefInfo::buildUseDefs(TR::Node *node, void *vanalysisInfo, TR_BitVect
       buildUseDefs(node->getChild(i), analysisInfo, nodesToBeDereferenced, node, aux);
       }
 
-   TR_Method *method = comp()->getMethodSymbol()->getMethod();
+   TR::Method *method = comp()->getMethodSymbol()->getMethod();
    uint32_t nodeIndex = node->getUseDefIndex();
    if (node->getOpCode().hasSymbolReference() &&
        isTrivialUseDefNode(node, aux) )
@@ -2432,7 +2452,7 @@ void TR_UseDefInfo::buildUseDefs(TR::Node *node, void *vanalysisInfo, TR_BitVect
             }
 #endif
 
-         TR_Method *method = comp()->getMethodSymbol()->getMethod();
+         TR::Method *method = comp()->getMethodSymbol()->getMethod();
 
          TR_BitVectorIterator cursor(*defs);
          while (cursor.hasMoreElements())

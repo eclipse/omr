@@ -140,7 +140,6 @@ MM_MemoryPool::unregisterMemoryPool(MM_MemoryPool *memoryPool)
 		next->setPrevious(previous);
 	}
 }
-#if defined(OMR_GC_ARRAYLETS)
 	/**
 	 * Allocate an arraylet leaf.
 	 */
@@ -150,7 +149,6 @@ MM_MemoryPool::unregisterMemoryPool(MM_MemoryPool *memoryPool)
 		Assert_MM_unreachable();
 		return NULL;
 	}
-#endif /* OMR_GC_ARRAYLETS */
 
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 	void *

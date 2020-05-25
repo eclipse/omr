@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,6 +75,8 @@ bool
 MM_MemoryPoolAddressOrderedListBase::createFreeEntry(MM_EnvironmentBase* env, void* addrBase, void* addrTop,
 													  MM_HeapLinkedFreeHeader* previousFreeEntry, MM_HeapLinkedFreeHeader* nextFreeEntry)
 {
+	bool const compressed = compressObjectReferences();
+
 	/* Sanity checks -- should never create an out of order link */
 	assume0((NULL == nextFreeEntry) || (nextFreeEntry > addrTop));
 
@@ -87,7 +89,7 @@ MM_MemoryPoolAddressOrderedListBase::createFreeEntry(MM_EnvironmentBase* env, vo
 		/* The range is big enough for the free list, so link the previous to it */
 		if (previousFreeEntry) {
 			assume0(previousFreeEntry < addrBase);
-			previousFreeEntry->setNext((MM_HeapLinkedFreeHeader*)addrBase);
+			previousFreeEntry->setNext((MM_HeapLinkedFreeHeader*)addrBase, compressed);
 		}
 		return true;
 	}
@@ -95,7 +97,7 @@ MM_MemoryPoolAddressOrderedListBase::createFreeEntry(MM_EnvironmentBase* env, vo
 	/* The range was not big enough for the free list, so link previous to next */
 	if (previousFreeEntry) {
 		assume0((NULL == nextFreeEntry) || (nextFreeEntry > previousFreeEntry));
-		previousFreeEntry->setNext(nextFreeEntry);
+		previousFreeEntry->setNext(nextFreeEntry, compressed);
 	}
 	return false;
 }
@@ -188,6 +190,7 @@ MM_MemoryPoolAddressOrderedListBase::abandonMemoryInPool(MM_EnvironmentBase* env
 uintptr_t
 MM_MemoryPoolAddressOrderedListBase::releaseFreeEntryMemoryPages(MM_EnvironmentBase* env, MM_HeapLinkedFreeHeader* freeEntry)
 {
+	bool const compressed = compressObjectReferences();
 	uintptr_t releasedMemory = 0;
 	MM_HeapLinkedFreeHeader* currentFreeEntry = freeEntry;
 	uintptr_t pageSize = env->getExtensions()->heap->getPageSize();
@@ -214,7 +217,7 @@ MM_MemoryPoolAddressOrderedListBase::releaseFreeEntryMemoryPages(MM_EnvironmentB
 				}
 			}
 		}
-		currentFreeEntry = currentFreeEntry->getNext();
+		currentFreeEntry = currentFreeEntry->getNext(compressed);
 	}
 	return releasedMemory;
 }

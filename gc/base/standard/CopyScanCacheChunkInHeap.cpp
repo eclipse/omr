@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,11 +69,12 @@ MM_CopyScanCacheChunkInHeap::newInstance(MM_EnvironmentStandard *env, MM_CopySca
 	addrBase = (MM_CopyScanCacheChunkInHeap *)memorySubSpace->collectorAllocate(env, requestCollector, &allocDescription);
 
 	if (NULL != addrBase) {
+		bool const compressed = env->compressObjectReferences();
 		/* memory allocated */
 		addrTop = (void *)(((uint8_t *)addrBase) + sizeToAllocate);
 
 		/* create a hole */
-		MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, sizeToAllocate);
+		MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, sizeToAllocate, compressed);
 
 		/* create a CopyScanCacheChunkInHeap itself */
 		chunk = (MM_CopyScanCacheChunkInHeap *)((uintptr_t)addrBase + sizeof(MM_HeapLinkedFreeHeader));

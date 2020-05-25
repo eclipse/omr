@@ -44,6 +44,7 @@ private:
 	MM_HeapRegionDescriptorSegregated *_head;
 	MM_HeapRegionDescriptorSegregated *_tail;
 	omrthread_monitor_t _lockMonitor;
+	uintptr_t _totalRegionsCount;
 
 /* Methods */
 public:
@@ -57,7 +58,8 @@ public:
 		MM_FreeHeapRegionList(regionListKind, singleRegionsOnly),
 		_head(NULL),
 		_tail(NULL),
-		_lockMonitor(NULL)
+		_lockMonitor(NULL),
+		_totalRegionsCount(0)
 	{
 		_typeId = __FUNCTION__;
 	}
@@ -84,9 +86,11 @@ public:
 		MM_HeapRegionDescriptorSegregated *front = src->_head;
 		MM_HeapRegionDescriptorSegregated *back = src->_tail;
 		uintptr_t srcLength = src->_length;
+		uintptr_t srcRegionsCount = src->_totalRegionsCount;
 		src->_head = NULL;
 		src->_tail = NULL;
 		src->_length = 0;
+		src->_totalRegionsCount = 0;
 		
 		/* Add to front of self */
 		back->setNext(_head); /* OK even if _head is NULL */
@@ -97,7 +101,8 @@ public:
 		}
 		_head = front;
 		_length += srcLength;
-		
+		_totalRegionsCount += srcRegionsCount;
+
 		src->unlock();
 		unlock();
 	}
@@ -116,9 +121,11 @@ public:
 		MM_HeapRegionDescriptorSegregated *front = src->_head;
 		MM_HeapRegionDescriptorSegregated *back = src->_tail;
 		uintptr_t srcLength = src->_length;
+		uintptr_t srcRegionsCount = src->_totalRegionsCount;
 		src->_head = NULL;
 		src->_tail = NULL;
 		src->_length = 0;
+		src->_totalRegionsCount = 0;
 		
 		/* Add to front of self */
 		back->setNext(_head); /* OK even if _head is NULL */
@@ -129,7 +136,8 @@ public:
 		}
 		_head = front;
 		_length += srcLength;
-		
+		_totalRegionsCount += srcRegionsCount;
+
 		src->unlock();
 		unlock();
 	}
@@ -154,7 +162,6 @@ public:
 	virtual MM_HeapRegionDescriptorSegregated* allocate(MM_EnvironmentBase *env, uintptr_t szClass, uintptr_t numRegions, uintptr_t maxExcess);
 
 	virtual uintptr_t getTotalRegions();
-	virtual uintptr_t getMaxRegions();
 
 	virtual void showList(MM_EnvironmentBase *env);
 
@@ -167,6 +174,7 @@ public:
 		return (MM_LockingFreeHeapRegionList *)pl;
 	}
 
+
 protected:
 private:
 	MMINLINE void lock() { omrthread_monitor_enter(_lockMonitor); }
@@ -178,6 +186,7 @@ private:
 	{
 		Assert_MM_true(NULL == region->getNext() && NULL == region->getPrev());
 		_length++;
+		_totalRegionsCount += region->getRange();
 		if (NULL == _head) {
 			_head = region;
 			_tail = region;
@@ -194,6 +203,7 @@ private:
 		MM_HeapRegionDescriptorSegregated *result = _head;
 		if (_head != NULL) {
 			_length--;
+			_totalRegionsCount -= result->getRange();
 			_head = result->getNext();
 			result->setNext(NULL);
 			if (NULL == _head) {
@@ -213,6 +223,7 @@ private:
 	detachInternal(MM_HeapRegionDescriptorSegregated *cur)
 	{
 		_length--;
+		_totalRegionsCount -= cur->getRange();
 		MM_HeapRegionDescriptorSegregated *prev = cur->getPrev();
 		MM_HeapRegionDescriptorSegregated *next = cur->getNext();
 		if (prev != NULL) {

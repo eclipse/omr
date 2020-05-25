@@ -2,7 +2,6 @@ def setBuildStatus(String message, String state, String sha) {
     context = "continuous-integration/eclipse-omr/branch/aix_ppc-64"
     step([
         $class: "GitHubCommitStatusSetter",
-        reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/eclipse/omr"],
         contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
         errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
         commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
@@ -17,14 +16,15 @@ pipeline {
         PATH = "/home/u0020236/tools:$PATH"
         LIBPATH="."
         CCACHE_CPP2="1"
+        GTEST_COLOR = "0"
     }
     stages {
         stage('Get Sources') {
             steps {
                 timestamps {
-                    checkout([$class: 'GitSCM', branches: [[name: '${MERGE_COMMIT}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/eclipse/omr.git']]])
-                    
-                    setBuildStatus("In Progress","PENDING","${MERGE_COMMIT}")
+                    checkout scm
+
+                    setBuildStatus("In Progress","PENDING","${env.GIT_COMMIT}")
                 }
             }
         }
@@ -33,15 +33,15 @@ pipeline {
                 timestamps {
                     echo 'Output CCACHE stats before running and clear them'
                     sh '''ccache -s -z'''
-                    
+
                     dir('build') {
                         echo 'Configure...'
-                        sh '''cmake -Wdev -DCMAKE_XL_CreateExportList="/usr/vac/bin/CreateExportList -X64" -DOMR_JIT=OFF -DOMR_JITBUILDER=OFF -DOMR_TEST_COMPILER=OFF -DOMR_DDR=OFF -C../cmake/caches/Travis.cmake ..''' 
-                       
+                        sh '''cmake -Wdev -DCMAKE_C_COMPILER=xlc_r -DCMAKE_CXX_COMPILER=xlC_r -DCMAKE_XL_CreateExportList="/opt/IBM/xlC/13.1.3/bin/CreateExportList -X64" -DOMR_DDR=OFF -C../cmake/caches/Travis.cmake ..'''
+
                         echo 'Compile...'
-                        sh '''make -j8'''
+                        sh '''export CCACHE_EXTRAFILES="$PWD/omrcfg.h" && make -j8'''
                     }
-                    
+
                     echo 'Output CCACHE stats after running'
                     sh '''ccache -s'''
                 }
@@ -53,6 +53,7 @@ pipeline {
                     dir('build') {
                         echo "Sanity Test..."
                         sh'''ctest -V'''
+                        junit '**/*results.xml'
                     }
                 }
             }
@@ -60,10 +61,10 @@ pipeline {
     }
     post {
         success {
-            setBuildStatus("Complete","SUCCESS","${MERGE_COMMIT}")
+            setBuildStatus("Complete","SUCCESS","${env.GIT_COMMIT}")
         }
         failure {
-            setBuildStatus("Complete","FAILURE","${MERGE_COMMIT}")
+            setBuildStatus("Complete","FAILURE","${env.GIT_COMMIT}")
         }
         always {
             echo 'Cleanup workspace'

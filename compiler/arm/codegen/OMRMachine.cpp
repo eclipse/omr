@@ -1023,7 +1023,7 @@ OMR::ARM::Machine::takeRegisterStateSnapShot()
       _registerStatesSnapShot[i] = _registerFile[i]->getState();
       _assignedRegisterSnapShot[i] = _registerFile[i]->getAssignedRegister();
       _registerFlagsSnapShot[i] = _registerFile[i]->getFlags();
-      if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+      if (comp->getOption(TR_TraceRA))
          traceMsg(comp,"OOL: Taking snap shot %d, %x, %x, %x\n", i, _registerStatesSnapShot[i], _assignedRegisterSnapShot[i], _registerFlagsSnapShot[i]);
       }
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
@@ -1033,7 +1033,7 @@ OMR::ARM::Machine::takeRegisterStateSnapShot()
       _registerStatesSnapShot[i] = _registerFile[i]->getState();
       _assignedRegisterSnapShot[i] = _registerFile[i]->getAssignedRegister();
       _registerFlagsSnapShot[i] = _registerFile[i]->getFlags();
-      if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+      if (comp->getOption(TR_TraceRA))
          traceMsg(comp,"OOL: Taking snap shot %d, %x, %x, %x\n", i, _registerStatesSnapShot[i], _assignedRegisterSnapShot[i], _registerFlagsSnapShot[i]);
       }
 #endif
@@ -1064,7 +1064,7 @@ OMR::ARM::Machine::restoreRegisterStateFromSnapShot()
          {
          _registerFile[i]->getAssignedRegister()->setAssignedRegister(_registerFile[i]);
          }
-      if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+      if (comp->getOption(TR_TraceRA))
          traceMsg(comp,"OOL: Restoring snap shot %d, %x, %x, %x\n", i, _registerFile[i]->getState(), _registerFile[i]->getAssignedRegister(), _registerFile[i]->getFlags());
       }
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
@@ -1087,7 +1087,7 @@ OMR::ARM::Machine::restoreRegisterStateFromSnapShot()
          {
          _registerFile[i]->getAssignedRegister()->setAssignedRegister(_registerFile[i]);
          }
-      if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+      if (comp->getOption(TR_TraceRA))
          traceMsg(comp,"OOL: Restoring snap shot %d, %x, %x, %x\n", i, _registerFile[i]->getState(), _registerFile[i]->getAssignedRegister(), _registerFile[i]->getFlags());
       }
 #endif

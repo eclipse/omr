@@ -45,6 +45,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/x/codegen/X86Debug.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/X86FPConversionSnippet.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRInstruction.cpp \
+    $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRInstructionDelegate.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRX86Instruction.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRMachine.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRLinkage.cpp \

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,7 +94,6 @@ public:
    static TR::Register *returnEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 #if J9_PROJECT_SPECIFIC
    static TR::Register *instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -129,7 +128,6 @@ public:
    static TR::Register *dmulEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bmulEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *smulEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *cmulEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *idivEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ldivEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fdivEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -158,7 +156,6 @@ public:
    static TR::Register *lshlEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bshlEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *sshlEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *cshlEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ishrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lshrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bshrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -374,10 +371,7 @@ public:
    static TR::Register *tableEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *exceptionRangeFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *loadaddrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *resolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *aRegLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *iRegLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg);

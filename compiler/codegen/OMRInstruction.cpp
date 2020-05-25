@@ -47,7 +47,6 @@ Instruction::Instruction(
    _cg(cg),
    _liveLocals(0),
    _liveMonitors(0),
-   _registerSaveDescription(0),
    _gc()
    {
    TR_ASSERT(node || !debug("checkByteCodeInfo"), "TR::Node * not passed to OMR::Instruction ctor");
@@ -112,7 +111,6 @@ Instruction::Instruction(
    _cg(cg),
    _liveLocals(0),
    _liveMonitors(0),
-   _registerSaveDescription(0),
    _gc()
    {
 

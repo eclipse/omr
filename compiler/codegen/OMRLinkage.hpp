@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,9 +30,6 @@
 namespace OMR { class Linkage; }
 namespace OMR { typedef OMR::Linkage LinkageConnector; }
 #endif
-
-#include "infra/List.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -127,6 +124,45 @@ class OMR_EXTENSIBLE Linkage
    virtual int32_t numArgumentRegisters(TR_RegisterKinds kind) = 0;
 
    virtual TR_RegisterKinds argumentRegisterKind(TR::Node *argumentNode);
+
+   /**
+    * @brief Perform operations required by this linkage once the code generator
+    *    binary encoding phase has completed.  Linkage implementors should override
+    *    this function as necessary.
+    */
+   virtual void performPostBinaryEncoding() { }
+
+   /**
+    * @brief Provides the entry point in a method to use when that method is invoked
+    *        from a method compiled with the same linkage.
+    *
+    * @details
+    *    When asked on the method currently being compiled, this API will return 0 if
+    *    asked before code memory has been allocated.
+    *
+    *    The compiled method entry point may be the same as the interpreter entry point.
+    *
+    *    If this API returns 0 then `entryPointFromInterpetedMethod` must also return 0.
+    *
+    * @return The entry point for compiled methods to use; 0 if the entry point is unknown
+    */
+   virtual intptr_t entryPointFromCompiledMethod() { TR_UNIMPLEMENTED(); return 0; }
+
+   /**
+    * @brief Provides the entry point in a method to use when that method is invoked
+    *        from an interpreter using the same linkage.
+    *
+    * @details
+    *    When asked on the method currently being compiled, this API will return 0 if
+    *    asked before code memory has been allocated.
+    *
+    *    The compiled method entry point may be the same as the interpreter entry point.
+    *
+    *    If this API returns 0 then `entryPointFromCompiledMethod` must also return 0.
+    *
+    * @return The entry point for interpreted methods to use; 0 if the entry point is unknown
+    */
+   virtual intptr_t entryPointFromInterpretedMethod() { TR_UNIMPLEMENTED(); return 0; }
 
 protected:
 

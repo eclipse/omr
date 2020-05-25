@@ -19,17 +19,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(AIXPPC) || defined(J9ZOS390)
-#define __IBMCPP_TR1__ 1
-#endif /* defined(AIXPPC) || defined(J9ZOS390) */
+#include "ddr/config.hpp"
 
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
 
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
-#endif /* defined(J9ZOS390) */
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 #include "omrport.h"
 #include "thread_api.h"
@@ -43,6 +41,7 @@
 #include "ddr/macros/MacroTool.hpp"
 #include "ddr/scanner/Scanner.hpp"
 #include "ddr/ir/Symbol_IR.hpp"
+#include "ddr/ir/TextFile.hpp"
 
 struct Options
 {
@@ -93,7 +92,7 @@ main(int argc, char *argv[])
 
 	DDR_RC rc = DDR_RC_OK;
 
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	/* Convert EBCDIC to UTF-8 (ASCII) */
 	if (-1 != iconv_init()) {
 		/* translate argv strings to ASCII */
@@ -109,7 +108,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "failed to initialize iconv\n");
 		rc = DDR_RC_ERROR;
 	}
-#endif /* defined(J9ZOS390) */
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 	/* Get options. */
 	Options options;
@@ -158,7 +157,7 @@ main(int argc, char *argv[])
 	if ((DDR_RC_OK == rc) && (NULL != options.macroFile)) {
 		MacroTool macroTool;
 
-		rc = macroTool.getMacros(options.macroFile);
+		rc = macroTool.getMacros(&portLibrary, options.macroFile);
 		/* Add Macros to IR. */
 		if (DDR_RC_OK == rc) {
 			rc = macroTool.addMacrosToIR(&ir);
@@ -311,43 +310,25 @@ Options::configure(OMRPortLibrary *portLibrary, int argc, char *argv[])
 DDR_RC
 Options::readFileList(OMRPortLibrary *portLibrary, const char *listFileName, vector<string> *fileNameList)
 {
-	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 	DDR_RC rc = DDR_RC_ERROR;
 
 	/* Read list of debug files to scan from the input file. */
-	intptr_t fd = omrfile_open(listFileName, EsOpenRead, 0660);
-	if (0 > fd) {
-		ERRMSG("Failure attempting to open %s", listFileName);
-	} else {
-		int64_t length = omrfile_seek(fd, 0, SEEK_END);
-		if (-1 != length) {
-			char *buff = (char *)malloc((size_t)(length + 1));
-			if (NULL == buff) {
-				ERRMSG("Unable to allocate memory for file contents: %s", listFileName);
-			} else {
-				memset(buff, 0, (size_t)(length + 1));
-				omrfile_seek(fd, 0, SEEK_SET);
+	TextFile filelist(portLibrary);
 
-				if (length != omrfile_read(fd, buff, (intptr_t)length)) {
-					ERRMSG("Failure reading %s", listFileName);
-				} else {
-					const char *delimiters = "\r\n";
-					char *fileName = strtok(buff, delimiters);
-					while (NULL != fileName) {
-						if ('\0' != *fileName) {
-							fileNameList->push_back(string(fileName));
-						}
-						fileName = strtok(NULL, delimiters);
-					}
-					rc = DDR_RC_OK;
-				}
-				free(buff);
+	if (!filelist.openRead(listFileName)) {
+		ERRMSG("Failure attempting to open %s; exiting...", listFileName);
+	} else {
+		string fileName;
+
+		while (filelist.readLine(fileName)) {
+			if (!fileName.empty()) {
+				fileNameList->push_back(fileName);
 			}
 		}
-		omrfile_close(fd);
+
+		filelist.close();
+		rc = DDR_RC_OK;
 	}
-	if (DDR_RC_OK != rc) {
-		ERRMSG("Exiting...\n");
-	}
+
 	return rc;
 }

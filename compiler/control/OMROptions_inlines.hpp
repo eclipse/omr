@@ -87,14 +87,6 @@ OMR::Options::getNumLimitedGRARegsWithheld()
          return regsToWithhold;
       }
 
-
-inline bool
-OMR::Options::getTraceRAOption(uint32_t mask)
-   {
-   return self()->getRegisterAssignmentTraceOption(mask);
-   }
-
-
 inline bool
 OMR::Options::isDisabledForAllMethods (OMR::Optimizations o)
    {

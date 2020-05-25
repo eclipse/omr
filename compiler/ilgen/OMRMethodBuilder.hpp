@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,6 +121,14 @@ class MethodBuilder : public TR::IlBuilder
    void DefineReturnType(TR::IlType *dt);
    void DefineLocal(const char *name, TR::IlType *dt);
    void DefineMemory(const char *name, TR::IlType *dt, void *location);
+
+   /**
+    * @brief Define a global symbol
+    * @param name the name by which the global symbol will be referred to
+    * @param dt the data type of the global symbol
+    * @param location the address of the value the global symbol refers to
+    */
+   void DefineGlobal(const char *name, TR::IlType *dt, void *location);
    void DefineFunction(const char* const name,
                        const char* const fileName,
                        const char* const lineNumber,
@@ -344,6 +352,15 @@ class MethodBuilder : public TR::IlBuilder
    typedef std::map<const char *, void *, StrComparator, MemoryLocationMapAllocator> MemoryLocationMap;
    MemoryLocationMap           _memoryLocations;
 
+   typedef TR::typed_allocator<std::pair<const char * const, void *>, TR::Region &> GlobalMapAllocator;
+   typedef std::map<const char *, void *, StrComparator, GlobalMapAllocator> GlobalMap;
+
+   /**
+    * @brief map of global symbol names and locations of values global symbols refer to.
+    *        This map should only be accessed inside a compilation via lookupSymbol.
+    */
+   GlobalMap                   _globals;
+
    typedef TR::typed_allocator<std::pair<const char * const, TR::ResolvedMethod *>, TR::Region &> FunctionMapAllocator;
    typedef std::map<const char *, TR::ResolvedMethod *, StrComparator, FunctionMapAllocator> FunctionMap;
    FunctionMap                 _functions;
@@ -351,7 +368,7 @@ class MethodBuilder : public TR::IlBuilder
    TR::IlType                ** _cachedParameterTypes;
    const char                * _definingFile;
    char                        _definingLine[MAX_LINE_NUM_LEN];
-   TR::IlType                * _cachedParameterTypesArray[10];
+   TR::IlType                * _cachedParameterTypesArray[18];
 
    bool                        _newSymbolsAreTemps;
    int32_t                     _nextValueID;

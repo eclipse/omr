@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
@@ -48,20 +48,20 @@
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
@@ -82,8 +82,9 @@ TR::S390zLinuxSystemLinkage::S390zLinuxSystemLinkage(TR::CodeGenerator* cg)
       TR::SystemLinkage(cg, TR_SystemLinux)
    {
    setProperties(FirstParmAtFixedOffset);
+   setProperty(SmallIntParmsAlignedRight);
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       setProperty(NeedsWidening);
       setProperty(PadFloatParms);
@@ -102,7 +103,7 @@ TR::S390zLinuxSystemLinkage::S390zLinuxSystemLinkage(TR::CodeGenerator* cg)
                                                                 // This possibly assumes that we don't shuffle the return address register around elsewhere
    setRegisterFlag(TR::RealRegister::GPR15, Preserved);
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       setRegisterFlag(TR::RealRegister::FPR8, Preserved);
       setRegisterFlag(TR::RealRegister::FPR9, Preserved);
@@ -152,7 +153,7 @@ TR::S390zLinuxSystemLinkage::S390zLinuxSystemLinkage(TR::CodeGenerator* cg)
    setFloatArgumentRegister(0, TR::RealRegister::FPR0);
    setFloatArgumentRegister(1, TR::RealRegister::FPR2);
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       setFloatArgumentRegister(2, TR::RealRegister::FPR4);
       setFloatArgumentRegister(3, TR::RealRegister::FPR6);
@@ -212,7 +213,7 @@ TR::S390zLinuxSystemLinkage::S390zLinuxSystemLinkage(TR::CodeGenerator* cg)
    // x'1c0' see ICST_PAR in tpf/icstk.h
    setOffsetToFirstParm(448);
 #else
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       setOffsetToRegSaveArea(16);
       setGPRSaveAreaBeginOffset(48);
@@ -255,7 +256,7 @@ void TR::S390zLinuxSystemLinkage::createEpilogue(TR::Instruction * cursor)
 void TR::S390zLinuxSystemLinkage::createPrologue(TR::Instruction* cursor)
    {
    TR::Delimiter delimiter (comp(), comp()->getOption(TR_TraceCG), "Prologue");
-   
+
    int32_t argSize = getOutgoingParameterBlockSize();
    setOutgoingParmAreaEndOffset(getOutgoingParmAreaBeginOffset() + argSize);
 
@@ -276,14 +277,14 @@ void TR::S390zLinuxSystemLinkage::createPrologue(TR::Instruction* cursor)
       {
       traceMsg(comp(), "Initial stackFrameSize = %d\n Offset to first parameter = %d\n Argument size = %d\n Local size = %d\n", stackFrameSize, getOffsetToFirstParm(), argSize, localSize);
       }
-   
+
    // Now that we know the stack frame size, map the stack backwards
    mapStack(bodySymbol, stackFrameSize);
-   
+
    setFirstPrologueInstruction(cursor);
 
    TR::Node* node = comp()->getStartTree()->getNode();
-   
+
    cursor = spillGPRsInPrologue(node, cursor);
    cursor = spillFPRsInPrologue(node, cursor);
 
@@ -317,7 +318,90 @@ void TR::S390zLinuxSystemLinkage::createPrologue(TR::Instruction* cursor)
    }
 
 void
-TR::S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node* callNode, TR::RegisterDependencyConditions* deps, intptrj_t targetAddress, TR::Register* methodAddressReg, TR::Register* javaLitOffsetReg, TR::LabelSymbol* returnFromJNICallLabel, TR::S390JNICallDataSnippet* jniCallDataSnippet, bool isJNIGCPoint)
+TR::S390zLinuxSystemLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol * method)
+   {
+   setParameterLinkageRegisterIndex(method, method->getParameterList());
+   }
+
+void
+TR::S390zLinuxSystemLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol * method, List<TR::ParameterSymbol> &parmList)
+   {
+   int32_t numGPRArgs = 0;
+   int32_t numFPRArgs = 0;
+   int32_t numVRFArgs = 0;
+
+   int32_t maxGPRArgs = getNumIntegerArgumentRegisters();
+   int32_t maxFPRArgs = getNumFloatArgumentRegisters();
+   int32_t maxVRFArgs = getNumVectorArgumentRegisters();
+
+   ListIterator<TR::ParameterSymbol> paramIterator(&parmList);
+   for (TR::ParameterSymbol* paramCursor = paramIterator.getFirst(); paramCursor != NULL; paramCursor = paramIterator.getNext())
+      {
+      int32_t lri = -1;
+
+      switch (paramCursor->getDataType())
+         {
+         case TR::Int8:
+         case TR::Int16:
+         case TR::Int32:
+         case TR::Int64:
+         case TR::Address:
+            {
+            if (numGPRArgs < maxGPRArgs)
+               {
+               lri = numGPRArgs;
+               }
+
+            numGPRArgs++;
+            break;
+            }
+
+         case TR::Float:
+         case TR::Double:
+            {
+            if (numFPRArgs < getNumFloatArgumentRegisters())
+               {
+               lri = numFPRArgs;
+               }
+            
+            numFPRArgs++;
+            break;
+            }
+
+         case TR::Aggregate:
+            {
+            TR_ASSERT_FATAL(false, "Support for aggregates is currently not implemented");
+            break;
+            }
+
+         case TR::VectorInt8:
+         case TR::VectorInt16:
+         case TR::VectorInt32:
+         case TR::VectorInt64:
+         case TR::VectorDouble:
+            {
+            if (numVRFArgs < getNumVectorArgumentRegisters())
+               {
+               lri = numVRFArgs;
+               }
+
+            numVRFArgs++;
+            break;
+            }
+
+         default:
+            {
+            TR_ASSERT_FATAL(false, "Unknown data type %s", paramCursor->getDataType().toString());
+            break;
+            }
+         }
+
+      paramCursor->setLinkageRegisterIndex(lri);
+      }
+   }
+
+void
+TR::S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node* callNode, TR::RegisterDependencyConditions* deps, intptr_t targetAddress, TR::Register* methodAddressReg, TR::Register* javaLitOffsetReg, TR::LabelSymbol* returnFromJNICallLabel, TR::Snippet* callDataSnippet, bool isJNIGCPoint)
    {
    TR::CodeGenerator * codeGen = cg();
 
@@ -358,15 +442,15 @@ TR::S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node* callNode, TR:
  */
 TR::Register *
 TR::S390zLinuxSystemLinkage::callNativeFunction(TR::Node * callNode,
-   TR::RegisterDependencyConditions * deps, intptrj_t targetAddress,
+   TR::RegisterDependencyConditions * deps, intptr_t targetAddress,
    TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
-   TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint)
+   TR::Snippet * callDataSnippet, bool isJNIGCPoint)
    {
    /********************************/
    /***Generate call instructions***/
    /********************************/
    generateInstructionsForCall(callNode, deps, targetAddress, methodAddressReg,
-         javaLitOffsetReg, returnFromJNICallLabel, jniCallDataSnippet,isJNIGCPoint);
+         javaLitOffsetReg, returnFromJNICallLabel, callDataSnippet,isJNIGCPoint);
 
    TR::Register * returnRegister = NULL;
    // set dependency on return register
@@ -376,18 +460,14 @@ TR::S390zLinuxSystemLinkage::callNativeFunction(TR::Node * callNode,
       {
       case TR::icall:
       case TR::icalli:
-      case TR::iucall:
-      case TR::iucalli:
       case TR::acall:
       case TR::acalli:
          returnRegister = deps->searchPostConditionRegister(getIntegerReturnRegister());
          break;
       case TR::lcall:
       case TR::lcalli:
-      case TR::lucall:
-      case TR::lucalli:
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             {
             returnRegister = deps->searchPostConditionRegister(getIntegerReturnRegister());
             }
@@ -478,7 +558,7 @@ TR::S390zLinuxSystemLinkage::initParamOffset(TR::ResolvedMethodSymbol * method, 
       switch (parmCursor->getDataType())
          {
          case TR::Int64:
-            if(TR::Compiler->target.is32Bit())
+            if(cg()->comp()->target().is32Bit())
                {
                //make sure that we can fit the entire value in registers, not half in registers half on the stack
                if((numIntegerArgs + 2) <= getNumIntegerArgumentRegisters())
@@ -525,7 +605,7 @@ TR::S390zLinuxSystemLinkage::initParamOffset(TR::ResolvedMethodSymbol * method, 
                   {
                   if (numIntegerArgs < getNumIntegerArgumentRegisters())
                      {
-                     numIntegerArgs += (TR::Compiler->target.is64Bit()) ? 1 : 2;
+                     numIntegerArgs += (cg()->comp()->target().is64Bit()) ? 1 : 2;
                      }
                   }
             break;
@@ -574,7 +654,7 @@ TR::S390zLinuxSystemLinkage::initParamOffset(TR::ResolvedMethodSymbol * method, 
          parmCursor->setParameterOffset(parmCursor->getParameterOffset() + gprSize - parmCursor->getSize());
          }
 
-      if (TR::Compiler->target.is64Bit() && parmCursor->getType().isAddress() && (parmCursor->getSize()==4))
+      if (cg()->comp()->target().is64Bit() && parmCursor->getType().isAddress() && (parmCursor->getSize()==4))
          {
          // This is a 31-bit pointer parameter. It's real location is +4 bytes from the start of the
          // 8-byte parm slot. Since ptr31 parms are passed as 64-bit values, the prologue code has the
@@ -595,8 +675,8 @@ TR::S390zLinuxSystemLinkage::initParamOffset(TR::ResolvedMethodSymbol * method, 
 int32_t
 TR::S390zLinuxSystemLinkage::getRegisterSaveOffset(TR::RealRegister::RegNum srcReg)
    {
-   int32_t gpr2Offset = TR::Compiler->target.is64Bit() ? 16 : 8;
-   int32_t fpr0Offset = TR::Compiler->target.is64Bit() ? 128 : 64;
+   int32_t gpr2Offset = cg()->comp()->target().is64Bit() ? 16 : 8;
+   int32_t fpr0Offset = cg()->comp()->target().is64Bit() ? 128 : 64;
    switch(srcReg)
       {
       case TR::RealRegister::FPR0: return fpr0Offset;
@@ -696,7 +776,7 @@ TR::S390zLinuxSystemLinkage::fillFPRsInEpilogue(TR::Node* node, TR::Instruction*
    TR::RealRegister* spReg = getNormalStackPointerRealRegister();
    int32_t offset = getFPRSaveAreaEndOffset();
    int16_t FPRSaveMask = getFPRSaveMask();
-   
+
    for (int32_t i = TR::Linkage::getFirstMaskedBit(FPRSaveMask); i <= TR::Linkage::getLastMaskedBit(FPRSaveMask); ++i)
      {
       if (FPRSaveMask & (1 << (i)))
@@ -799,7 +879,7 @@ TR::S390zLinuxSystemLinkage::spillFPRsInPrologue(TR::Node* node, TR::Instruction
    TR::RealRegister* spReg = getNormalStackPointerRealRegister();
    int32_t offset = getFPRSaveAreaEndOffset();
    int16_t FPRSaveMask = getFPRSaveMask();
-   
+
    for (int32_t i = TR::Linkage::getFirstMaskedBit(FPRSaveMask); i <= TR::Linkage::getLastMaskedBit(FPRSaveMask); ++i)
       {
       if (FPRSaveMask & (1 << (i)))

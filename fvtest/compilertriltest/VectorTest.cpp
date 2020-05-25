@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,8 +45,11 @@ TEST_F(VectorTest, VDoubleAdd) {
     // have vector support. Determining whether a specific platform has the support
     // at runtime is currently not possible in tril. So the test is being disabled altogether
     // on Z for now.
-#ifndef TR_TARGET_S390
-    Tril::DefaultCompiler compiler{trees};
+    SKIP_ON_S390(KnownBug) << "This test is currently disabled on Z platforms because not all Z platforms have vector support (issue #1843)";
+    SKIP_ON_S390X(KnownBug) << "This test is currently disabled on Z platforms because not all Z platforms have vector support (issue #1843)";
+    SKIP_ON_RISCV(MissingImplementation);
+
+    Tril::DefaultCompiler compiler(trees);
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
 
@@ -61,5 +64,4 @@ TEST_F(VectorTest, VDoubleAdd) {
     entry_point(output,inputA,inputB); 
     EXPECT_DOUBLE_EQ(inputA[0] + inputB[0], output[0]); // Epsilon = 4ULP -- is this necessary? 
     EXPECT_DOUBLE_EQ(inputA[1] + inputB[1], output[1]); // Epsilon = 4ULP -- is this necessary? 
-#endif
 }

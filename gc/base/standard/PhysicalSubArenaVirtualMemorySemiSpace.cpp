@@ -114,7 +114,7 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::tearDown(MM_EnvironmentBase *env)
 	/* Remove the heap range represented */
 	if (NULL != _subSpace) {
 		_subSpace->heapRemoveRange(env, _subSpace, ((uintptr_t)_highAddress) - ((uintptr_t)_lowAddress), _lowAddress, _highAddress, lowValidAddress, highValidAddress);
-		_subSpace->heapReconfigured(env);
+		_subSpace->heapReconfigured(env, HEAP_RECONFIG_CONTRACT);
 	}
 	MM_PhysicalSubArenaVirtualMemory::tearDown(env);
 }
@@ -188,12 +188,30 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::inflate(MM_EnvironmentBase *env)
 			Assert_MM_inflateInvalidRange();
 		}
 
+		void *lowAddress = _highSemiSpaceRegion->getLowAddress();
+		void *highAddress = _highSemiSpaceRegion->getHighAddress();
+
 		/* Inform the semi spaces that they have been expanded */
-		bool result = subSpaceAllocate->expanded(env, this, _highSemiSpaceRegion->getSize(), _highSemiSpaceRegion->getLowAddress(), _highSemiSpaceRegion->getHighAddress(), false);
-		subSpaceAllocate->heapReconfigured(env);
-		result = result && subSpaceSurvivor->expanded(env, this, _lowSemiSpaceRegion->getSize(), _lowSemiSpaceRegion->getLowAddress(), _lowSemiSpaceRegion->getHighAddress(), false);
-		subSpaceSurvivor->heapReconfigured(env);
-		return result;
+		bool resultExpandAllocate = subSpaceAllocate->expanded(env, this, _highSemiSpaceRegion->getSize(), lowAddress, highAddress, false);
+
+		if (resultExpandAllocate) {
+			subSpaceAllocate->heapReconfigured(env, HEAP_RECONFIG_EXPAND, subSpaceAllocate, lowAddress, highAddress);
+		} else {
+			subSpaceAllocate->heapReconfigured(env, HEAP_RECONFIG_EXPAND);
+		}
+
+		lowAddress = _lowSemiSpaceRegion->getLowAddress();
+		highAddress = _lowSemiSpaceRegion->getHighAddress();
+
+		bool resultExpandSurvivor = subSpaceSurvivor->expanded(env, this, _lowSemiSpaceRegion->getSize(), lowAddress, highAddress, false);
+
+		if(resultExpandSurvivor) {
+			subSpaceSurvivor->heapReconfigured(env, HEAP_RECONFIG_EXPAND, subSpaceSurvivor, lowAddress, highAddress);
+		} else {
+			subSpaceSurvivor->heapReconfigured(env, HEAP_RECONFIG_EXPAND);
+		}
+
+		return resultExpandAllocate && resultExpandSurvivor;
 	}
 	return false;
 }
@@ -686,7 +704,7 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::contract(MM_EnvironmentBase *env, uin
 			removeMemoryTop,
 			previousValidAddressNotRemoved,
 			(void *)allocateSegmentBase);
-		_subSpace->heapReconfigured(env);
+		_subSpace->heapReconfigured(env, HEAP_RECONFIG_CONTRACT);
 
 		/* Decommit the heap (the return value really doesn't matter here - its already too late) */
 		_heap->decommitMemory(
@@ -869,7 +887,7 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::contract(MM_EnvironmentBase *env, uin
 			removeMemoryTop,
 			previousValidAddressNotRemoved,
 			(void *)survivorSegmentBase);
-		_subSpace->heapReconfigured(env);
+		_subSpace->heapReconfigured(env, HEAP_RECONFIG_CONTRACT);
 
 		/* Decommit the heap (the return value really doesn't matter here - its already too late) */
 		_heap->decommitMemory(
@@ -1046,7 +1064,7 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::tilt(MM_EnvironmentBase *env, uintptr
 	((MM_MemorySubSpaceSemiSpace *)_subSpace)->setSurvivorSpaceSizeRatio(survivorSpaceSize / ((_highSemiSpaceRegion->getSize() + _lowSemiSpaceRegion->getSize()) / 100));
 
 	/* Broadcast that the heap has been reconfigured */
-	_subSpace->heapReconfigured(env);
+	_subSpace->heapReconfigured(env, HEAP_RECONFIG_SCAVENGER_TILT);
 }
 
 /**
@@ -1253,8 +1271,12 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::expandNoCheck(MM_EnvironmentBase *env
 		/* Broadcast the expansion of the heap, but do not add the memory to any free lists.
 		 * Must be done after segment information has been updated.
 		 */
-		_subSpace->heapAddRange(env, _subSpace, splitExpandSize, newLowAddress, (void *) (((uintptr_t)newLowAddress) + splitExpandSize));
-		_subSpace->heapReconfigured(env);
+		bool expandResult = _subSpace->heapAddRange(env, _subSpace, splitExpandSize, newLowAddress, (void *) (((uintptr_t)newLowAddress) + splitExpandSize));
+		if (expandResult) {
+			_subSpace->heapReconfigured(env, HEAP_RECONFIG_EXPAND, _subSpace, newLowAddress, (void *) (((uintptr_t)newLowAddress) + splitExpandSize));
+		} else {
+			_subSpace->heapReconfigured(env, HEAP_RECONFIG_EXPAND);
+		}
 		
 		/* Include the memory into the free lists */
 		if(debug) {
@@ -1315,8 +1337,12 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::expandNoCheck(MM_EnvironmentBase *env
 		/* Broadcast the expansion of the heap, but do not add the memory to any free lists.
 		 * Must be done after segment information has been updated.
 		 */
-		_subSpace->heapAddRange(env, _subSpace, splitExpandSize, newLowAddress, (void *) (((uintptr_t)newLowAddress) + splitExpandSize));
-		_subSpace->heapReconfigured(env);
+		bool expandResult = _subSpace->heapAddRange(env, _subSpace, splitExpandSize, newLowAddress, (void *) (((uintptr_t)newLowAddress) + splitExpandSize));
+		if (expandResult) {
+			_subSpace->heapReconfigured(env, HEAP_RECONFIG_EXPAND, _subSpace, newLowAddress, (void *) (((uintptr_t)newLowAddress) + splitExpandSize));
+		} else {
+			_subSpace->heapReconfigured(env, HEAP_RECONFIG_EXPAND);
+		}
 
 		/* Include the memory into the free lists. */
 		if(debug) {

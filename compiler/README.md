@@ -121,37 +121,3 @@ Generally there should not be a need to enable these macros.  Our expecatation i
 
 We recognize the presence of these macros is far from ideal, and IBM will be working to eliminate them over time so that the codebase is self-contained and fully testable.  These macros should not be imitated in newer code commits except where absolutely necessary.
 
-# Build Info
-
-The compiler technology has been built successfully with the following compilers:
-
-OS    | Architecture | Build Compiler | Version
-------|--------------|----------------|--------
-Linux | x86          | g++            | 4.4.7
-Linux | s390x        | g++            | 4.4.7
-Linux | ppc64le      | XLC            | 12.1
-Linux | ppc64le      | g++            | 4.4.7
-AIX   | ppc64        | XLC            | 12.1
-z/OS  | s390x        | XLC            | v2r2
-
-Older compilers may not support all the C++11 features required, and while we
-endeavour to build with newer compilers, incompatibilities have occurred
-previously. Issues are welcome where forward compatibility is broken.
-
-We are completely aware not everyone will have access to all these build
-compilers, so we will help with any compatability fixes required to make a pull
-request mergeable. To minimize issues, see the table below containing a
-summary of our ability to support C++ language features.
-
-
-C++11 Core Language Features                    | Supported
-------------------------------------------------|----------
-Variadic templates                              | Some
-static_assert                                   | Yes
-auto                                            | Yes
-decltype                                        | Yes
-nullptr                                         | No
-Delegating constructors                         | No
-Inheriting constructors                         | No
-Extended friend declarations                    | No
-Range-based for-loop                            | No

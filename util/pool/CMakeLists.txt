@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_tracegen(pool.tdf)
 
-add_library(j9pool STATIC
+omr_add_library(j9pool STATIC
 	pool.c
 	pool_cap.c
 	${CMAKE_CURRENT_BINARY_DIR}/ut_pool.c
@@ -35,14 +35,8 @@ target_link_libraries(j9pool
 		omr_base
 )
 
-if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(j9pool PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-endif()
-
-if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(j9pool PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-endif()
-
 set_property(TARGET j9pool PROPERTY FOLDER util)
 
-target_enable_ddr(j9pool "${OMR_DDR_SET}")
+target_enable_ddr(j9pool)
+ddr_add_headers(j9pool ${omr_SOURCE_DIR}/include_core/j9pool.h)
+ddr_set_add_targets(omrddr j9pool)

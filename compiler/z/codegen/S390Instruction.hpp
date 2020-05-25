@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@
 #include "control/Options_inlines.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Flags.hpp"
 #include "ras/Debug.hpp"
@@ -461,7 +461,7 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
 
    enum
       {
-      doPrint                         = 0x01,
+      // AVAILABLE                    = 0x01,
       skipForLabelTargetNOPs          = 0x02,
       estimateDoneForLabelTargetNOPs  = 0x04,
       // AVAILABLE                    = 0x08
@@ -473,32 +473,7 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
                            TR::Node          *n,
                            TR::LabelSymbol    *sym,
                            TR::CodeGenerator *cg)
-      : S390LabeledInstruction(op, n, sym, cg), _alignment(0), _handle(0), _flags(0)
-      {
-      if (op==TR::InstOpCode::LABEL)
-         sym->setInstruction(this);
-      cg->getNextAvailableBlockIndex();
-      }
-
-   S390LabelInstruction(TR::InstOpCode::Mnemonic    op,
-                           TR::Node          *n,
-                           TR::Register      *targetReg,
-                           TR::LabelSymbol    *sym,
-                           TR::CodeGenerator *cg)
-      : S390LabeledInstruction(op, n, sym, cg), _alignment(0), _handle(0), _flags(0)
-      {
-      if (op==TR::InstOpCode::LABEL)
-         sym->setInstruction(this);
-      cg->getNextAvailableBlockIndex();
-      }
-
-   S390LabelInstruction(TR::InstOpCode::Mnemonic    op,
-                           TR::Node          *n,
-                           TR::Register      *targetReg,
-                           TR::LabelSymbol    *sym,
-                           TR::Instruction   *precedingInstruction,
-                           TR::CodeGenerator *cg)
-      : S390LabeledInstruction(op, n, sym, precedingInstruction, cg), _alignment(0), _handle(0), _flags(0)
+      : S390LabeledInstruction(op, n, sym, cg), _alignment(0), _flags(0)
       {
       if (op==TR::InstOpCode::LABEL)
          sym->setInstruction(this);
@@ -510,7 +485,7 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
                            TR::LabelSymbol    *sym,
                            TR::RegisterDependencyConditions * cond,
                            TR::CodeGenerator *cg)
-      : S390LabeledInstruction(op, n, sym, cond, cg), _alignment(0), _handle(0), _flags(0)
+      : S390LabeledInstruction(op, n, sym, cond, cg), _alignment(0), _flags(0)
       {
       if (op==TR::InstOpCode::LABEL)
          sym->setInstruction(this);
@@ -522,7 +497,7 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
                            TR::LabelSymbol    *sym,
                            TR::Instruction   *precedingInstruction,
                            TR::CodeGenerator *cg)
-      : S390LabeledInstruction(op, n, sym, precedingInstruction, cg), _alignment(0), _handle(0), _flags(0)
+      : S390LabeledInstruction(op, n, sym, precedingInstruction, cg), _alignment(0), _flags(0)
       {
       if (op==TR::InstOpCode::LABEL)
          sym->setInstruction(this);
@@ -535,7 +510,7 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
                            TR::RegisterDependencyConditions * cond,
                            TR::Instruction   *precedingInstruction,
                            TR::CodeGenerator *cg)
-      : S390LabeledInstruction(op, n, sym, cond, precedingInstruction, cg), _alignment(0), _handle(0), _flags(0)
+      : S390LabeledInstruction(op, n, sym, cond, precedingInstruction, cg), _alignment(0), _flags(0)
       {
       if (op==TR::InstOpCode::LABEL)
          sym->setInstruction(this);
@@ -546,7 +521,7 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
                            TR::Node           *n,
                            TR::Snippet        *s,
                            TR::CodeGenerator  *cg)
-      : S390LabeledInstruction(op, n, s, cg), _alignment(0), _handle(0), _flags(0)
+      : S390LabeledInstruction(op, n, s, cg), _alignment(0), _flags(0)
       {}
 
    S390LabelInstruction(TR::InstOpCode::Mnemonic     op,
@@ -554,7 +529,7 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
                            TR::Snippet        *s,
                            TR::RegisterDependencyConditions * cond,
                            TR::CodeGenerator  *cg)
-      : S390LabeledInstruction(op, n, s, cond, cg), _alignment(0), _handle(0), _flags(0)
+      : S390LabeledInstruction(op, n, s, cond, cg), _alignment(0), _flags(0)
       {}
 
    S390LabelInstruction(TR::InstOpCode::Mnemonic     op,
@@ -562,7 +537,7 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
                            TR::Snippet        *s,
                            TR::Instruction    *precedingInstruction,
                            TR::CodeGenerator  *cg)
-      : S390LabeledInstruction(op, n, s, precedingInstruction, cg), _alignment(0), _handle(0), _flags(0)
+      : S390LabeledInstruction(op, n, s, precedingInstruction, cg), _alignment(0), _flags(0)
       {}
 
    S390LabelInstruction(TR::InstOpCode::Mnemonic     op,
@@ -571,7 +546,7 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
                            TR::RegisterDependencyConditions * cond,
                            TR::Instruction    *precedingInstruction,
                            TR::CodeGenerator  *cg)
-      : S390LabeledInstruction(op, n, s, cond, precedingInstruction, cg), _alignment(0), _handle(0), _flags(0)
+      : S390LabeledInstruction(op, n, s, cond, precedingInstruction, cg), _alignment(0), _flags(0)
       {}
 
    virtual char *description() { return "S390LabelInstruction"; }
@@ -580,9 +555,6 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
    virtual uint8_t *generateBinaryEncoding();
    virtual int32_t estimateBinaryLength(int32_t currentEstimate);
    void assignRegistersAndDependencies(TR_RegisterKinds kindToBeAssigned);
-
-   void preservedForListing()    { _flags.set(doPrint);}
-   bool isPreservedForListing()  {return _flags.testAny(doPrint); }
 
    void setSkipForLabelTargetNOPs()    { _flags.set(skipForLabelTargetNOPs);}
    bool isSkipForLabelTargetNOPs()     {return _flags.testAny(skipForLabelTargetNOPs); }
@@ -597,7 +569,6 @@ class S390LabelInstruction : public TR::S390LabeledInstruction
 
    protected:
       uint16_t _alignment;
-      int32_t _handle;
    };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1391,8 +1362,6 @@ class S390RegInstruction : public TR::Instruction
       }
 
    virtual uint8_t *generateBinaryEncoding();
-
-   virtual void assignRegistersNoDependencies(TR_RegisterKinds kindToBeAssigned);
 
    virtual bool refsRegister(TR::Register *reg);
 
@@ -2414,13 +2383,13 @@ class S390RILInstruction : public TR::Instruction
    bool isImmediateOffsetInBytes() {return _flagsRIL.testAny(isImmediateOffsetInBytesFlag); }
    void setIsImmediateOffsetInBytes() { _flagsRIL.set(isImmediateOffsetInBytesFlag);}
 
-   uintptrj_t getTargetPtr()
-      { return  reinterpret_cast<uintptrj_t>(_targetPtr); }
-   uintptrj_t setTargetPtr(uintptrj_t tp)
+   uintptr_t getTargetPtr()
+      { return  reinterpret_cast<uintptr_t>(_targetPtr); }
+   uintptr_t setTargetPtr(uintptr_t tp)
       { TR_ASSERT(!isImmediateOffsetInBytes(), "Immediate Offset already set on RIL instruction."); _targetPtr = reinterpret_cast<void*>(tp); return tp; }
-   uintptrj_t getImmediateOffsetInBytes()
-      { TR_ASSERT(isImmediateOffsetInBytes(), "Immediate Offset not set for RIL Instruction."); return reinterpret_cast<uintptrj_t>(_targetPtr); }
-   uintptrj_t setImmediateOffsetInBytes(uintptrj_t tp)
+   uintptr_t getImmediateOffsetInBytes()
+      { TR_ASSERT(isImmediateOffsetInBytes(), "Immediate Offset not set for RIL Instruction."); return reinterpret_cast<uintptr_t>(_targetPtr); }
+   uintptr_t setImmediateOffsetInBytes(uintptr_t tp)
       { setIsImmediateOffsetInBytes(); _targetPtr = reinterpret_cast<void*>(tp); return tp; }
    TR::Snippet *getTargetSnippet()
       { return _targetSnippet; }
@@ -6106,6 +6075,39 @@ class S390NOPInstruction : public TR::Instruction
 
    };
 
+class S390AlignmentNopInstruction : public TR::Instruction
+   {
+   uint32_t _alignment;
+
+   void setAlignment(uint32_t alignment)
+      {
+      TR_ASSERT_FATAL((alignment % 2) == 0, "Alignment must be a multiple of 2");
+      _alignment = alignment != 0 ? alignment : 2;
+      }
+
+public:
+   S390AlignmentNopInstruction(TR::Node *n, uint32_t alignment, TR::CodeGenerator *cg)
+      : TR::Instruction(TR::InstOpCode::NOP, n, cg)
+      {
+      setAlignment(alignment);
+      }
+
+   S390AlignmentNopInstruction(TR::Node *n, uint32_t alignment, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : TR::Instruction(TR::InstOpCode::NOP, n, precedingInstruction, cg)
+      {
+      setAlignment(alignment);
+      }
+
+   virtual char *description() { return "S390AlignmentNopInstruction"; }
+   virtual Kind getKind() { return IsAlignmentNop; }
+
+   uint32_t getAlignment() { return _alignment; }
+
+   virtual int32_t estimateBinaryLength(int32_t currentEstimate);
+   virtual uint8_t *generateBinaryEncoding();
+
+   };
+
 ////////////////////////////////////////////////////////////////////////////////
 // S390IInstruction Class Definition
 ////////////////////////////////////////////////////////////////////////////////
@@ -6164,7 +6166,7 @@ class S390EInstruction : public TR::Instruction
       }
 
    /**
-    * Following constructor is for PFPO instructino, where FPR0/FPR2 and GPR1 are target registers;
+    * Following constructor is for PFPO instruction, where FPR0/FPR2 and GPR1 are target registers;
     * FPR4/FPR6 and GPR0 are source registers;
     * they are implied by the opcode, purpose of adding these is to notify RA the reg use/def dependencies
     */
@@ -6383,7 +6385,4 @@ inline TR::S390VRXInstruction * toS390VRXInstruction(TR::Instruction *i)
    {
    return (TR::S390VRXInstruction *)i;
    }
-
-TR::MemoryReference *getFirstReadWriteMemoryReference(TR::Instruction *i);
-
 #endif

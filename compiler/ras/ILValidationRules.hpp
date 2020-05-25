@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,6 +220,13 @@ class Validate_ireturnReturnType : public NodeValidationRule
    void validate(TR::Node *node);
    };
 
+class Validate_axaddEnvironment : public NodeValidationRule
+   {
+   public:
+   Validate_axaddEnvironment(TR::Compilation *comp);
+
+   void validate(TR::Node *node);
+   };
 /* NOTE: Please add any new NodeValidationRules here */
 
 } //namespace TR

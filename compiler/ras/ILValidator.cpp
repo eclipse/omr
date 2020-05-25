@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,7 @@ const OMR::ILValidationStrategy OMR::postILgenValidatonStrategy[] =
    { OMR::validateChildTypes              },
    { OMR::validateLivenessBoundaries      },
    { OMR::validateNodeRefCountWithinBlock },
+   { OMR::validate_axaddEnvironment       },
    { OMR::endRules                        }
    };
 
@@ -130,7 +131,8 @@ TR::ILValidator::ILValidator(TR::Compilation *comp)
         { 
           new  (comp->trHeapMemory()) TR::ValidateChildCount(_comp),
           new  (comp->trHeapMemory()) TR::ValidateChildTypes(_comp),
-          new  (comp->trHeapMemory()) TR::Validate_ireturnReturnType(_comp)
+          new  (comp->trHeapMemory()) TR::Validate_ireturnReturnType(_comp),
+          new  (comp->trHeapMemory()) TR::Validate_axaddEnvironment(_comp)
         };
      /**
       * NOTE: Please initialize any new *ValidationRule here!

@@ -88,8 +88,9 @@ typedef struct loadavg_info {
 	int cpu_count;
 } loadavg_info_t;
 
-#ifndef _AIX61
+#if !defined(_AIX61) || defined(J9OS_I5_V6R1)
 /* create rsid_t_MODIFIED since rsid_t is already defined in 5.3 but is missing the at_sradid field */
+/* at_sradid field missed in IBM i 7.1 */
 typedef union {
 	pid_t at_pid;           /* Process id (for R_PROCESS and R_PROCMEM */
 	tid_t at_tid;           /* Kernel thread id (for R_THREAD) */
@@ -105,7 +106,7 @@ typedef union {
 #endif
 extern sradid_t rs_get_homesrad(void);
 extern int rs_info(void *out, int command, long arg1, long arg2);
-#ifndef _AIX61
+#if !defined(_AIX61) || defined(J9OS_I5_V6R1)
 extern int ra_attach(rstype_t, rsid_t, rstype_t, rsid_t_MODIFIED, uint_t);
 #else
 extern int ra_attach(rstype_t, rsid_t, rstype_t, rsid_t, uint_t);
@@ -191,6 +192,8 @@ omrvmem_startup(struct OMRPortLibrary *portLibrary)
 
 	/* set default value to advise OS about vmem that is no longer needed */
 	portLibrary->portGlobals->vmemAdviseOSonFree = 1;
+	/* set default value to advise OS about vmem to consider for Transparent HugePage (Only for Linux) */
+	portLibrary->portGlobals->vmemEnableMadvise = 0;
 
 	return 0;
 }
@@ -652,7 +655,7 @@ detectAndRecordPageSize(struct OMRPortLibrary *portLibrary, struct J9PortVmemIde
 	}
 
 	/* Update identifier and commit memory if required, else return reserved memory */
-	update_vmemIdentifier(identifier, memoryPointer, (void *)addressKey, byteAmount, mode, (uintptr_t)page_info.pagesize, OMRPORT_VMEM_PAGE_FLAG_NOT_USED, OMRPORT_VMEM_RESERVE_USED_SHM, category);
+	update_vmemIdentifier(identifier, memoryPointer, (void *)(intptr_t)addressKey, byteAmount, mode, (uintptr_t)page_info.pagesize, OMRPORT_VMEM_PAGE_FLAG_NOT_USED, OMRPORT_VMEM_RESERVE_USED_SHM, category);
 
 	if (0 != vmgetinfoResult) {
 		Trc_PRT_vmem_omrvmem_reserve_memory_ex_aix_vmgetinfo_failed(page_info.addr);
@@ -1369,7 +1372,7 @@ omrvmem_numa_set_affinity(struct OMRPortLibrary *portLibrary, uintptr_t numaNode
 	 * See CMVC 178983 for more detail regarding this limitation.
 	 */
 	if (OMR_ARE_NO_BITS_SET(identifier->mode, OMRPORT_VMEM_NO_AFFINITY)) {
-#ifndef _AIX61
+#if !defined(_AIX61) || defined(J9OS_I5_V6R1)
 		int (*PTR_ra_attach)(rstype_t, rsid_t, rstype_t, rsid_t_MODIFIED, uint_t) = (int (*)(rstype_t, rsid_t, rstype_t, rsid_t_MODIFIED, uint_t))dlsym(RTLD_DEFAULT, "ra_attach");
 		rsid_t_MODIFIED targetSRADResourceID;
 #else

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -284,6 +284,14 @@ omrport_control(struct OMRPortLibrary *portLibrary, const char *key, uintptr_t v
 		return 0;
 	}
 
+	if (0 == strcmp(OMRPORT_CTLDATA_VMEM_HUGE_PAGES_MMAP_ENABLED, key)) {
+#if defined(LINUX)
+		Assert_PRT_true((0 == value) || (1 == value));
+		PPG_huge_pages_mmap_enabled = value;
+#endif /* defined(LINUX) */
+		return 0;
+	}
+
 	if (0 == strcmp(OMRPORT_CTLDATA_VECTOR_REGS_SUPPORT_ON, key)) {
 		portLibrary->portGlobals->vectorRegsSupportOn = value;
 		return 0;
@@ -291,6 +299,23 @@ omrport_control(struct OMRPortLibrary *portLibrary, const char *key, uintptr_t v
 
 	if (0 == strcmp(OMRPORT_CTLDATA_NLS_DISABLE, key)) {
 		portLibrary->portGlobals->nls_data.isDisabled = value;
+		return 0;
+	}
+
+	if (0 == strcmp(OMRPORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, key)) {
+#if defined(LINUX)
+		/* set value to advise OS about vmem to consider for Transparent HugePage (Only for Linux) */
+		portLibrary->portGlobals->vmemEnableMadvise &= value;
+#endif
+		return 0;
+	}
+
+	/* work around for case if smart address feature still be not reliable enough */
+	if (0 == strcmp(OMRPORT_CTLDATA_VMEM_PERFORM_FULL_MEMORY_SEARCH, key)) {
+#if defined(PPG_performFullMemorySearch)
+		Assert_PRT_true((0 == value) || (1 == value));
+		PPG_performFullMemorySearch = value;
+#endif /* PPG_performFullMemorySearch */
 		return 0;
 	}
 

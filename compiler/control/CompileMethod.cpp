@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
@@ -49,7 +49,7 @@
 #include "env/TRMemory.hpp"
 #include "env/defines.h"
 #include "env/jittypes.h"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "infra/Assert.hpp"
@@ -379,7 +379,7 @@ compileMethodFromDetails(
          // not ready yet...
          //OMR::MethodMetaDataPOD *metaData = fe.createMethodMetaData(&compiler);
 
-         startPC = compiler.cg()->getCodeStart();
+         startPC = (uint8_t*)compiler.getMethodSymbol()->getMethodAddress();
          uint64_t translationTime = TR::Compiler->vm.getUSecClock() - translationStartTime;
 
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance))

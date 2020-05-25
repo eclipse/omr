@@ -24,35 +24,29 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "env/FilePointerDecl.hpp"
 
 class TR_S390Peephole
    {
 public:
-   TR_S390Peephole(TR::Compilation* comp, TR::CodeGenerator *cg);
+   TR_S390Peephole(TR::Compilation* comp);
 
 protected:
    void printInfo(const char* info)
       {
-      if (_outFile)
+      if (_outFile && comp()->getOption(TR_TraceCG))
          {
-         if ( !( !comp()->getOption(TR_TraceCG) && comp()->getOptions()->getTraceCGOption(TR_TraceCGPostBinaryEncoding) && comp()->getOptions()->getTraceCGOption(TR_TraceCGMixedModeDisassembly) )  )
-            {
-            trfprintf(_outFile, info);
-            }
+         trfprintf(_outFile, info);
          }
       }
 
    void printInst()
       {
-      if (_outFile)
+      if (_outFile && comp()->getOption(TR_TraceCG))
          {
-         if ( !( !comp()->getOption(TR_TraceCG) && comp()->getOptions()->getTraceCGOption(TR_TraceCGPostBinaryEncoding) && comp()->getOptions()->getTraceCGOption(TR_TraceCGMixedModeDisassembly) )  )
-            {
-            comp()->getDebug()->print(_outFile, _cursor);
-            }
+         comp()->getDebug()->print(_outFile, _cursor);
          }
       }
 
@@ -68,7 +62,7 @@ protected:
 class TR_S390PreRAPeephole : private TR_S390Peephole
    {
 public:
-   TR_S390PreRAPeephole(TR::Compilation* comp, TR::CodeGenerator *cg);
+   TR_S390PreRAPeephole(TR::Compilation* comp);
 
    void perform();
 
@@ -92,7 +86,7 @@ private:
 class TR_S390PostRAPeephole : private TR_S390Peephole
    {
 public:
-   TR_S390PostRAPeephole(TR::Compilation* , TR::CodeGenerator *);
+   TR_S390PostRAPeephole(TR::Compilation* comp);
 
    void perform();
 

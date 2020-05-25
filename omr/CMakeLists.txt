@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ omr_assert(
 	MESSAGE "OMR_RAS_GLUE_TARGET must be set. Try using the example with OMR_EXAMPLE=ON"
 )
 
-add_library(omrcore STATIC
+omr_add_library(omrcore STATIC
 	OMR_Agent.cpp
 	OMR_MethodDictionary.cpp
 	OMR_Profiler.cpp
@@ -47,14 +47,6 @@ add_library(omrcore STATIC
 	${CMAKE_CURRENT_BINARY_DIR}/ut_omrti.c
 	${CMAKE_CURRENT_BINARY_DIR}/ut_omrvm.c
 )
-
-if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(omrcore PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-endif()
-
-if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(omrcore PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-endif()
 
 target_include_directories(omrcore
 	PUBLIC
@@ -84,4 +76,5 @@ if(OMR_GC)
 	)
 endif(OMR_GC)
 
-target_enable_ddr(omrcore "${OMR_DDR_SET}")
+target_enable_ddr(omrcore)
+ddr_set_add_targets(omrddr omrcore)

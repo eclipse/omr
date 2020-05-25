@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,20 +28,20 @@
 *.yml @charliegracie
 
 # CMake
-*.cmake @youngar @charliegracie
-/cmake/ @youngar @charliegracie
-**/CMakeLists.txt @youngar @charliegracie
+*.cmake @youngar @charliegracie @rwy0717
+/cmake/ @youngar @charliegracie @rwy0717
+**/CMakeLists.txt @youngar @charliegracie @rwy0717
 
 # GC
-/gc/ @charliegracie @youngar
-/glue/ @charliegracie @youngar
+/gc/ @charliegracie @youngar @rwy0717
+/glue/ @charliegracie @youngar @rwy0717
 
 # Compiler
 /compiler/ @0xdaryl @mstoodle
-/compiler/optimizer/ @vijaysun-omr
+/compiler/optimizer/ @vijaysun-omr @andrewcraik
 /compiler/il/ @vijaysun-omr @Leonardo2718
-/compiler/arm/ @0xdaryl
-/compiler/aarch64/ @0xdaryl
+/compiler/arm/ @0xdaryl @knn-k
+/compiler/aarch64/ @0xdaryl @knn-k
 /compiler/z/ @fjeremic
 
 # JitBuilder
@@ -49,13 +49,13 @@
 /compiler/ilgen @mstoodle @Leonardo2718
 
 # Port Library
-/port/ @charliegracie @youngar
+/port/ @charliegracie @youngar @rwy0717
 
 # Thread Library
-/thread/ @charliegracie
+/thread/ @charliegracie @youngar @rwy0717
 
 # OMR Core Utilities
-/include_core/OMR/ @youngar @charliegracie @Leonardo2718
+/include_core/OMR/ @youngar @charliegracie @Leonardo2718 @rwy0717
 
 # Tril and Testing
 /fvtest/tril/ @Leonardo2718 @fjeremic @0xdaryl

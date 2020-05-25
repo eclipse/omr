@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,9 +36,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 /* Define a macro for the name of the main function that takes char args */
 #if defined(OMR_OS_WINDOWS)
@@ -52,7 +52,7 @@ extern "C" int omr_main_entry(int argc, char **argv, char **envp);
 int
 CHARMAIN(int argc, char **argv, char **envp)
 {
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	/* translate argv strings to ascii */
 	iconv_init();
 	{
@@ -61,7 +61,7 @@ CHARMAIN(int argc, char **argv, char **envp)
 			argv[i] = e2a_string(argv[i]);
 		}
 	}
-#endif /* defined(J9ZOS390) */
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 	return omr_main_entry(argc, argv, envp);
 }

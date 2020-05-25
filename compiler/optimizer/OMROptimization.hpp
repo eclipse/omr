@@ -127,6 +127,12 @@ class OMR_EXTENSIBLE Optimization: public TR_HasRandomGenerator
 
    inline bool                trace();
    void                       setTrace(bool trace = true);
+   /**
+    * @brief Checks if opt has any trace options specified
+    * 
+    * @return True if any trace option is specified, false otherwise
+    */
+   bool                       traceAny();
 
    bool                       getLastRun();
 

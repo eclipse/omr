@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,12 @@
 include(OmrAssert)
 
 omr_assert(TEST OMR_FVTEST)
+
+# We currently have a number of sign-comparison warnings that need to be fixed
+if(OMR_TOOLCONFIG STREQUAL "gnu")
+	omr_append_flags(CMAKE_C_FLAGS "-Wno-error=sign-compare")
+	omr_append_flags(CMAKE_CXX_FLAGS "-Wno-error=sign-compare")
+endif()
 
 add_subdirectory(util)
 
@@ -52,7 +58,17 @@ if(OMR_TEST_COMPILER)
 	add_subdirectory(compilertest)
 endif()
 
+if(OMR_LLJB_TEST)
+	add_subdirectory(lljbtest)
+endif()
+
 if(OMR_JITBUILDER_TEST)
 	add_subdirectory(tril)
 	add_subdirectory(compilertriltest)
+
+	# Currently, there are only unit tests for the Power codegen. To avoid unnecessarily compiling and running an
+	# executable with no tests, compilerunittest is thus disabled on other architectures.
+	if(OMR_ARCH_POWER)
+		add_subdirectory(compilerunittest)
+	endif()
 endif()

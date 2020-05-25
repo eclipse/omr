@@ -36,6 +36,16 @@ extern "C" {
 */
 
 /**
+ * Retrieve z/Architecture facility bits.
+ *
+ * @param [in]  lastDoubleWord   Size of the bits array in number of uint64_t, minus 1.
+ * @param [out] bits             Caller-supplied uint64_t array that gets populated with the facility bits.
+ *
+ * @return The index of the last valid uint64_t in the bits array.
+ */
+extern int getstfle(int lastDoubleWord, uint64_t *bits);
+
+/**
  * Function retrieves and populates memory usage statistics on a z/OS platform.
  * @param [in] portLibrary The Port Library Handle.
  * @param[out] memInfo     Pointer to J9MemoryInfo struct which we populate with memory usage.

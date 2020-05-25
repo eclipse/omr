@@ -71,26 +71,9 @@ MM_LockingFreeHeapRegionList::tearDown(MM_EnvironmentBase *env)
 uintptr_t
 MM_LockingFreeHeapRegionList::getTotalRegions()
 {
-	uintptr_t count = 0;
-	lock();
-	for (MM_HeapRegionDescriptorSegregated *cur = _head; cur != NULL; cur = cur->getNext()) {
-		count += cur->getRange();		
-	}
-	unlock();
-	return count;
+	return _totalRegionsCount;
 }
 
-uintptr_t
-MM_LockingFreeHeapRegionList::getMaxRegions()
-{
-	uintptr_t max = 0;
-	lock();
-	for (MM_HeapRegionDescriptorSegregated *cur = _head; cur != NULL; cur = cur->getNext()) {
-		max = (max > cur->getRange()) ? max : cur->getRange();
-	}
-	unlock();
-	return max;
-}
 
 void
 MM_LockingFreeHeapRegionList::showList(MM_EnvironmentBase *env)
@@ -127,10 +110,8 @@ MM_LockingFreeHeapRegionList::allocate(MM_EnvironmentBase *env, uintptr_t szClas
 				cur->setRangeHead(cur);
 				if (szClass == OMR_SIZECLASSES_LARGE) {
 					cur->setLarge(numRegions);
-#if defined(OMR_GC_ARRAYLETS)
 				} else if (szClass == OMR_SIZECLASSES_ARRAYLET) {
 					cur->setArraylet();
-#endif /* defined(OMR_GC_ARRAYLETS) */		
 				} else {
 					cur->setSmall(szClass);
 				}

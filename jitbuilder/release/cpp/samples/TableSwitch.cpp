@@ -87,7 +87,7 @@ TableSwitchMethod::buildIL()
    {
    OMR::JitBuilder::IlBuilder *defaultBldr=NULL;
    OMR::JitBuilder::IlBuilder *case1Bldr=NULL, *case2Bldr=NULL, *case3Bldr=NULL;
-   TableSwitch("selector", &defaultBldr, true, 3,
+   TableSwitch(Load("selector"), &defaultBldr, true, 3,
           MakeCase(1, &case1Bldr, false),
           MakeCase(2, &case2Bldr, false),
           MakeCase(3, &case3Bldr, false));

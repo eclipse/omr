@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -70,7 +70,7 @@ TR::Register *OMR::Power::TreeEvaluator::aconstEvaluator(TR::Node *node, TR::Cod
    bool isProfiledPointerConstant = node->isClassPointerConstant() || node->isMethodPointerConstant();
 
    // use data snippet only on class pointers when HCR is enabled
-   intptrj_t address = TR::Compiler->target.is64Bit()? node->getLongInt(): node->getInt();
+   intptr_t address = cg->comp()->target().is64Bit()? node->getLongInt(): node->getInt();
    if (isClass && cg->wantToPatchClassPointer((TR_OpaqueClassBlock*)address, node) ||
        isProfiledPointerConstant && cg->profiledPointersRequireRelocation())
       {
@@ -87,11 +87,10 @@ TR::Register *OMR::Power::TreeEvaluator::aconstEvaluator(TR::Node *node, TR::Cod
       }
    }
 
-// also handles luconst
 TR::Register *OMR::Power::TreeEvaluator::lconstEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       TR::Register *tempReg = node->setRegister(cg->allocateRegister());
       loadConstant(cg, node, node->getLongInt(), tempReg);
@@ -136,7 +135,7 @@ TR::Register *OMR::Power::TreeEvaluator::inegEvaluator(TR::Node *node, TR::CodeG
 TR::Register *OMR::Power::TreeEvaluator::lnegEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       return TR::TreeEvaluator::inegEvaluator(node, cg);
       }
@@ -177,7 +176,7 @@ TR::Register *OMR::Power::TreeEvaluator::iabsEvaluator(TR::Node *node, TR::CodeG
 TR::Register *OMR::Power::TreeEvaluator::labsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       TR::Register *trgReg = cg->allocateRegister();
       TR::Register *tmpReg = cg->allocateRegister();
@@ -269,7 +268,7 @@ TR::Register *OMR::Power::TreeEvaluator::b2iEvaluator(TR::Node *node, TR::CodeGe
 
 TR::Register *OMR::Power::TreeEvaluator::b2aEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       return TR::TreeEvaluator::b2lEvaluator(node, cg);
    else
       return TR::TreeEvaluator::b2iEvaluator(node, cg);
@@ -290,7 +289,7 @@ TR::Register *OMR::Power::TreeEvaluator::s2iEvaluator(TR::Node *node, TR::CodeGe
          {
          trgReg = cg->allocateRegister();
          TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 2, cg);
-#ifdef J9_ProjectSpecific
+#ifdef J9_PROJECT_SPECIFIC
          if (node->getFirstChild()->getOpCodeValue() == TR::irsload)
             {
             tempMR->forceIndexedForm(node->getFirstChild(), cg);
@@ -343,7 +342,7 @@ TR::Register *OMR::Power::TreeEvaluator::s2iEvaluator(TR::Node *node, TR::CodeGe
 TR::Register *OMR::Power::TreeEvaluator::b2lEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *child  = node->getFirstChild();
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       TR::Register *trgReg = cg->allocateRegister();
       generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, trgReg, cg->evaluate(child));
@@ -368,7 +367,7 @@ TR::Register *OMR::Power::TreeEvaluator::b2lEvaluator(TR::Node *node, TR::CodeGe
 TR::Register *OMR::Power::TreeEvaluator::s2lEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *child = node->getFirstChild();
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       TR::InstOpCode::Mnemonic opCode = TR::InstOpCode::extsw;
       TR::ILOpCodes  nodeOpCode = node->getOpCodeValue();
@@ -404,7 +403,7 @@ TR::Register *OMR::Power::TreeEvaluator::s2lEvaluator(TR::Node *node, TR::CodeGe
 TR::Register *OMR::Power::TreeEvaluator::iu2lEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *child  = node->getFirstChild();
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       if (node->getOpCodeValue() == TR::iu2l && child && child->getReferenceCount() == 1 && !child->getRegister() &&
           (child->getOpCodeValue() == TR::iloadi || child->getOpCodeValue() == TR::iload))
@@ -445,7 +444,7 @@ TR::Register *OMR::Power::TreeEvaluator::iu2lEvaluator(TR::Node *node, TR::CodeG
 
 TR::Register *OMR::Power::TreeEvaluator::su2aEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       return TR::TreeEvaluator::iu2lEvaluator(node, cg);
    else
       return TR::TreeEvaluator::s2iEvaluator(node, cg);
@@ -477,7 +476,7 @@ TR::Register *OMR::Power::TreeEvaluator::su2iEvaluator(TR::Node *node, TR::CodeG
 
 TR::Register *OMR::Power::TreeEvaluator::s2aEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       return TR::TreeEvaluator::s2lEvaluator(node, cg);
    else
       return TR::TreeEvaluator::s2iEvaluator(node, cg);
@@ -504,7 +503,7 @@ TR::Register *OMR::Power::TreeEvaluator::i2cEvaluator(TR::Node *node, TR::CodeGe
        child->getRegister() == NULL)
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 2, cg);
-      tempMR->addToOffset(node, TR::Compiler->target.cpu.isBigEndian()?2:0, cg);
+      tempMR->addToOffset(node, cg->comp()->target().cpu.isBigEndian()?2:0, cg);
       generateTrg1MemInstruction(cg, TR::InstOpCode::lhz, node, trgReg, tempMR);
       tempMR->decNodeReferenceCounts(cg);
       }
@@ -521,13 +520,13 @@ TR::Register *OMR::Power::TreeEvaluator::i2sEvaluator(TR::Node *node, TR::CodeGe
    TR::Node *child  = node->getFirstChild();
    TR::Register *trgReg = cg->allocateRegister();
 
-   if (TR::Compiler->target.cpu.id() != TR_PPCp6 &&  // avoid algebraic loads on P6
+   if (cg->comp()->target().cpu.id() != TR_PPCp6 &&  // avoid algebraic loads on P6
        child->getReferenceCount() == 1 &&
        child->getOpCode().isMemoryReference() &&
        child->getRegister() == NULL)
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 2, cg);
-      tempMR->addToOffset(node, TR::Compiler->target.cpu.isBigEndian()?2:0, cg);
+      tempMR->addToOffset(node, cg->comp()->target().cpu.isBigEndian()?2:0, cg);
       generateTrg1MemInstruction(cg, TR::InstOpCode::lhz, node, trgReg, tempMR);
       generateTrg1Src1Instruction(cg, TR::InstOpCode::extsh, node, trgReg, trgReg);
       tempMR->decNodeReferenceCounts(cg);
@@ -543,7 +542,7 @@ TR::Register *OMR::Power::TreeEvaluator::i2sEvaluator(TR::Node *node, TR::CodeGe
 
 TR::Register *OMR::Power::TreeEvaluator::i2aEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       return TR::TreeEvaluator::s2lEvaluator(node, cg);
    else
       return TR::TreeEvaluator::passThroughEvaluator(node, cg);
@@ -551,7 +550,7 @@ TR::Register *OMR::Power::TreeEvaluator::i2aEvaluator(TR::Node *node, TR::CodeGe
 
 TR::Register *OMR::Power::TreeEvaluator::iu2aEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       return TR::TreeEvaluator::iu2lEvaluator(node, cg);
    else
       return TR::TreeEvaluator::passThroughEvaluator(node, cg);
@@ -567,7 +566,7 @@ TR::Register *OMR::Power::TreeEvaluator::l2bEvaluator(TR::Node *node, TR::CodeGe
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 1, cg);
       trgReg = cg->allocateRegister();
-      tempMR->addToOffset(node, TR::Compiler->target.cpu.isBigEndian()?7:0, cg);
+      tempMR->addToOffset(node, cg->comp()->target().cpu.isBigEndian()?7:0, cg);
       generateTrg1MemInstruction(cg, TR::InstOpCode::lbz, node, trgReg, tempMR);
       node->setRegister(trgReg);
       tempMR->decNodeReferenceCounts(cg);
@@ -577,7 +576,7 @@ TR::Register *OMR::Power::TreeEvaluator::l2bEvaluator(TR::Node *node, TR::CodeGe
       TR::Register *temp = cg->evaluate(child);
       if (child->getReferenceCount() == 1 || !cg->useClobberEvaluate())
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             trgReg = temp;
          else // 32 bit target
             trgReg = temp->getLowOrder();
@@ -585,7 +584,7 @@ TR::Register *OMR::Power::TreeEvaluator::l2bEvaluator(TR::Node *node, TR::CodeGe
       else
          {
          trgReg = cg->allocateRegister();
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, trgReg, temp);
 	 else
             generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, trgReg, temp->getLowOrder());
@@ -606,14 +605,14 @@ TR::Register *OMR::Power::TreeEvaluator::l2buEvaluator(TR::Node *node, TR::CodeG
        child->getOpCode().isMemoryReference() && (child->getRegister() == NULL))
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 1, cg);
-      tempMR->addToOffset(node, TR::Compiler->target.cpu.isBigEndian()?7:0, cg);
+      tempMR->addToOffset(node, cg->comp()->target().cpu.isBigEndian()?7:0, cg);
       generateTrg1MemInstruction(cg, TR::InstOpCode::lbz, node, trgReg, tempMR);
       tempMR->decNodeReferenceCounts(cg);
       }
    else
       {
       TR::Register *tempReg;
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          tempReg = cg->evaluate(child);
       else // 32 bit target
          tempReg = cg->evaluate(child)->getLowOrder();
@@ -637,13 +636,13 @@ TR::Register *OMR::Power::TreeEvaluator::l2cEvaluator(TR::Node *node, TR::CodeGe
        child->getOpCode().isMemoryReference() && (temp == NULL))
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 2, cg);
-      tempMR->addToOffset(node, TR::Compiler->target.cpu.isBigEndian()?6:0, cg);
+      tempMR->addToOffset(node, cg->comp()->target().cpu.isBigEndian()?6:0, cg);
       generateTrg1MemInstruction(cg, TR::InstOpCode::lhz, node, trgReg, tempMR);
       tempMR->decNodeReferenceCounts(cg);
       }
    else
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicl, node, trgReg, cg->evaluate(child), 0, CONSTANT64(0x000000000000ffff));
       else // 32 bit target
          generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, trgReg, cg->evaluate(child)->getLowOrder(), 0, 0xffff);
@@ -663,8 +662,8 @@ TR::Register *OMR::Power::TreeEvaluator::l2sEvaluator(TR::Node *node, TR::CodeGe
        child->getRegister() == NULL)
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 2, cg);
-      tempMR->addToOffset(node, TR::Compiler->target.cpu.isBigEndian()?6:0, cg);
-      if (TR::Compiler->target.cpu.id() == TR_PPCp6)  // avoid algebraic loads on P6
+      tempMR->addToOffset(node, cg->comp()->target().cpu.isBigEndian()?6:0, cg);
+      if (cg->comp()->target().cpu.id() == TR_PPCp6)  // avoid algebraic loads on P6
          {
          generateTrg1MemInstruction(cg, TR::InstOpCode::lhz, node, trgReg, tempMR);
          generateTrg1Src1Instruction(cg, TR::InstOpCode::extsh, node, trgReg, trgReg);
@@ -675,7 +674,7 @@ TR::Register *OMR::Power::TreeEvaluator::l2sEvaluator(TR::Node *node, TR::CodeGe
       }
    else
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          generateTrg1Src1Instruction(cg, TR::InstOpCode::extsh, node, trgReg, cg->evaluate(child));
       else // 32 bit target
          generateTrg1Src1Instruction(cg, TR::InstOpCode::extsh, node, trgReg, cg->evaluate(child)->getLowOrder());
@@ -696,7 +695,7 @@ TR::Register *OMR::Power::TreeEvaluator::l2iEvaluator(TR::Node *node, TR::CodeGe
       {
       trgReg = cg->allocateRegister();
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 4, cg);
-      tempMR->addToOffset(node, TR::Compiler->target.cpu.isBigEndian()?4:0, cg);
+      tempMR->addToOffset(node, cg->comp()->target().cpu.isBigEndian()?4:0, cg);
       generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, trgReg, tempMR);
       tempMR->decNodeReferenceCounts(cg);
       node->setRegister(trgReg);
@@ -706,7 +705,7 @@ TR::Register *OMR::Power::TreeEvaluator::l2iEvaluator(TR::Node *node, TR::CodeGe
       temp = cg->evaluate(child);
       if (child->getReferenceCount() == 1 || !cg->useClobberEvaluate())
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             trgReg = temp;
          else // 32 bit target
             trgReg = temp->getLowOrder();
@@ -714,7 +713,7 @@ TR::Register *OMR::Power::TreeEvaluator::l2iEvaluator(TR::Node *node, TR::CodeGe
       else
          {
          trgReg = cg->allocateRegister();
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, trgReg, temp);
 	 else
             generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, trgReg, temp->getLowOrder());
@@ -728,7 +727,7 @@ TR::Register *OMR::Power::TreeEvaluator::l2iEvaluator(TR::Node *node, TR::CodeGe
 TR::Register *OMR::Power::TreeEvaluator::l2aEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       // -J9JIT_COMPRESSED_POINTER-
       //
@@ -784,7 +783,7 @@ TR::Register *OMR::Power::TreeEvaluator::su2lEvaluator(TR::Node *node, TR::CodeG
    {
    TR::Node *child  = node->getFirstChild();
    TR::Register *sourceRegister = NULL;
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       TR::Register *trgReg = cg->allocateRegister();
       TR::Register *temp;
@@ -873,7 +872,7 @@ TR::Register *OMR::Power::TreeEvaluator::bu2lEvaluator(TR::Node *node, TR::CodeG
    TR::Node *child  = node->getFirstChild();
    TR::Register *trgReg;
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       if (child->getOpCode().isMemoryReference())
          {
@@ -910,7 +909,7 @@ TR::Register *OMR::Power::TreeEvaluator::bu2lEvaluator(TR::Node *node, TR::CodeG
 
 TR::Register *OMR::Power::TreeEvaluator::bu2aEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       return TR::TreeEvaluator::bu2lEvaluator(node, cg);
    else
       return TR::TreeEvaluator::bu2iEvaluator(node, cg);
@@ -918,7 +917,7 @@ TR::Register *OMR::Power::TreeEvaluator::bu2aEvaluator(TR::Node *node, TR::CodeG
 
 TR::Register *OMR::Power::TreeEvaluator::a2iEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       return TR::TreeEvaluator::l2iEvaluator(node, cg);
    else
       return TR::TreeEvaluator::passThroughEvaluator(node, cg);
@@ -926,7 +925,7 @@ TR::Register *OMR::Power::TreeEvaluator::a2iEvaluator(TR::Node *node, TR::CodeGe
 
 TR::Register *OMR::Power::TreeEvaluator::a2lEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       return TR::TreeEvaluator::passThroughEvaluator(node, cg);
    else
       return TR::TreeEvaluator::iu2lEvaluator(node, cg);
@@ -934,7 +933,7 @@ TR::Register *OMR::Power::TreeEvaluator::a2lEvaluator(TR::Node *node, TR::CodeGe
 
 TR::Register *OMR::Power::TreeEvaluator::a2bEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       return TR::TreeEvaluator::l2bEvaluator(node, cg);
    else
       return TR::TreeEvaluator::i2bEvaluator(node, cg);
@@ -942,78 +941,11 @@ TR::Register *OMR::Power::TreeEvaluator::a2bEvaluator(TR::Node *node, TR::CodeGe
 
 TR::Register *OMR::Power::TreeEvaluator::a2sEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       return TR::TreeEvaluator::l2sEvaluator(node, cg);
    else
       return TR::TreeEvaluator::i2sEvaluator(node, cg);
    }
-
-#if 1
-// These are here only because ControlFlowEvalutor.cpp is currently locked
-TR::Register *OMR::Power::TreeEvaluator::ifacmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (TR::Compiler->target.is64Bit())
-      return TR::TreeEvaluator::iflucmpltEvaluator(node, cg);
-   else
-      return TR::TreeEvaluator::ifiucmpltEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::ifacmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (TR::Compiler->target.is64Bit())
-      return TR::TreeEvaluator::iflucmpgeEvaluator(node, cg);
-   else
-      return TR::TreeEvaluator::ifiucmpgeEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::ifacmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (TR::Compiler->target.is64Bit())
-      return TR::TreeEvaluator::iflucmpgtEvaluator(node, cg);
-   else
-      return TR::TreeEvaluator::ifiucmpgtEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::ifacmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (TR::Compiler->target.is64Bit())
-      return TR::TreeEvaluator::iflucmpleEvaluator(node, cg);
-   else
-      return TR::TreeEvaluator::ifiucmpleEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::acmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (TR::Compiler->target.is64Bit())
-      return TR::TreeEvaluator::lucmpltEvaluator(node, cg);
-   else
-      return TR::TreeEvaluator::iucmpltEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::acmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (TR::Compiler->target.is64Bit())
-      return TR::TreeEvaluator::lucmpgeEvaluator(node, cg);
-   else
-      return TR::TreeEvaluator::iucmpgeEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::acmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (TR::Compiler->target.is64Bit())
-      return TR::TreeEvaluator::lucmpgtEvaluator(node, cg);
-   else
-      return TR::TreeEvaluator::iucmpgtEvaluator(node, cg);
-   }
-
-TR::Register *OMR::Power::TreeEvaluator::acmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (TR::Compiler->target.is64Bit())
-      return TR::TreeEvaluator::lucmpleEvaluator(node, cg);
-   else
-      return TR::TreeEvaluator::iucmpleEvaluator(node, cg);
-   }
-#endif
 
 TR::Register *OMR::Power::TreeEvaluator::libmFuncEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {

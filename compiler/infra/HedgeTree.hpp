@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"     // TR_FrontEnd (ptr only)
+#include "env/FrontEnd.hpp"     // TR_FrontEnd (ptr only)
 #include "compile/Compilation.hpp"
 #include "env/IO.hpp"
 #include "env/TRMemory.hpp"

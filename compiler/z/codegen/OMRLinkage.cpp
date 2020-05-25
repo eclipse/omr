@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,13 +26,13 @@
 // See also S390Linkage2.cpp which contains more S390 Linkage
 // implementations (primarily System Linkage and derived classes).
 
-#include "codegen/OMRLinkage.hpp"
+#include "codegen/Linkage.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
@@ -59,23 +59,23 @@
 #include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/List.hpp"
@@ -387,7 +387,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
    )
    {
    TR::RealRegister * stackPtr = self()->getNormalStackPointerRealRegister();
-   static const bool enableVectorLinkage = self()->cg()->getSupportsVectorRegisters();
+   const bool enableVectorLinkage = self()->cg()->getSupportsVectorRegisters();
 
    // for XPLink or FASTLINK, there are cases where the "normal" stack pointer is
    // not appropriate for where to save arguments in registers.
@@ -463,8 +463,8 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 
    for (paramCursor = paramIterator.getFirst(); paramCursor != NULL; paramCursor = paramIterator.getNext())
       {
-      int32_t ai = paramCursor->getAllocatedIndex();
-      int32_t ai_l = paramCursor->getAllocatedLow();  //  low reg of a pair
+      int32_t ai = paramCursor->getAssignedGlobalRegisterIndex();
+      int32_t ai_l = paramCursor->getAssignedLowGlobalRegisterIndex();  //  low reg of a pair
 
       // Contruct list of globally allocated registers
       //
@@ -492,10 +492,10 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                 || type.getDataType() == TR::DecimalDouble
 #endif
                 )
-                count = (TR::Compiler->target.is64Bit()) ? 1 : 2;
+                count = (self()->cg()->comp()->target().is64Bit()) ? 1 : 2;
 #ifdef J9_PROJECT_SPECIFIC
             else if (type.isLongDouble())
-                count = (TR::Compiler->target.is64Bit()) ? 2 : 4;
+                count = (self()->cg()->comp()->target().is64Bit()) ? 2 : 4;
 #endif
             else
                 count = 1;
@@ -512,7 +512,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
             }
          else
             {
-            numIntArgs += (type.isInt64() && TR::Compiler->target.is32Bit()) ? 2 : 1;
+            numIntArgs += (type.isInt64() && self()->cg()->comp()->target().is32Bit()) ? 2 : 1;
             }
          }
       }
@@ -522,7 +522,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
       {
       parmNum++;
       int32_t lri = paramCursor->getLinkageRegisterIndex();                // linkage register
-      int32_t ai = paramCursor->getAllocatedIndex();                       // global reg number
+      int32_t ai = paramCursor->getAssignedGlobalRegisterIndex();          // global reg number
       TR::DataType dtype = paramCursor->getDataType();
       int32_t offset = paramCursor->getParameterOffset() - frameOffset;
       TR::SymbolReference * paramSymRef = NULL;
@@ -533,7 +533,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 
       // Treat GPR6 special on zLinux.  It is a linkage register but also preserved.
       // If it has no global reg number, locate it on local save area instead of register save area
-      if (TR::Compiler->target.isLinux() &&
+      if (self()->cg()->comp()->target().isLinux() &&
           (lri > 0 && ai < 0 && (self()->getPreserved(REGNUM(lri + 3)) || dtype.isVector())))
           paramCursor->setParmHasToBeOnStack();
 
@@ -547,6 +547,14 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
       bool secondStore = false;
 
       int32_t slotSize = paramCursor->getSize();
+
+      if (self()->isSmallIntParmsAlignedRight())
+         {
+         // On both Linux and z/OS system linkages we spill both the clean and dirty bits of the incoming arguments to
+         // the stack if needed. The `initParamOffset` API will ensure the parameters within the method are initialized
+         // with offsets which point only to the clean data (no dirty bits loaded).
+         slotSize = gprSize;
+         }
 
       if (slotSize < 4)
          slotSize = 4;
@@ -572,7 +580,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
             loadOpCode = TR::InstOpCode::L;
             break;
          case 8:
-            if (TR::Compiler->target.is64Bit())
+            if (self()->cg()->comp()->target().is64Bit())
                {
                storeOpCode = TR::InstOpCode::STG;
                loadOpCode = TR::InstOpCode::LG;
@@ -625,12 +633,12 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                }
 #endif
             }
-         else if(TR::Compiler->target.isLinux() && dtype == TR::Aggregate)
+         else if(self()->cg()->comp()->target().isLinux() && dtype == TR::Aggregate)
            {
            TR_ASSERT( paramCursor->getSize()<=8, "Only aggregates of size 8 bytes or less are passed in registers");
            regNum = self()->getIntegerArgumentRegister(lri);
            lastFreeIntArgIndex = lri + 1;
-           if(TR::Compiler->target.is32Bit() && paramCursor->getSize() > 4)
+           if(self()->cg()->comp()->target().is32Bit() && paramCursor->getSize() > 4)
              {
              fullLong = true;   // On 31 bit this larger aggregate will be treated like a 64 bit long
              lastFreeIntArgIndex++;
@@ -646,7 +654,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                regNum = self()->getIntegerArgumentRegister(lri);
 
             lastFreeIntArgIndex = lri + 1;
-            if (fullLong && TR::Compiler->target.is32Bit())
+            if (fullLong && self()->cg()->comp()->target().is32Bit())
                {
                lastFreeIntArgIndex++;
                }
@@ -661,7 +669,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
              (!unconditionalSave || (unconditionalSave && dtype != TR::Address)) )
             {
             freeScratchable.set(regNum);
-            if (fullLong && TR::Compiler->target.is32Bit())
+            if (fullLong && self()->cg()->comp()->target().is32Bit())
                {
                freeScratchable.set(regNum + 1);
                }
@@ -732,7 +740,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 
                   if (secondStore &&
                       fullLong &&
-                      TR::Compiler->target.is32Bit())
+                      self()->cg()->comp()->target().is32Bit())
                      {
                      if (genBinary)
                         {
@@ -865,7 +873,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
             // Or we have long reg on 31bir, so we need to build the 64bit register from the two
             // arguments (reg + reg) or (reg + mem)
             // also need to take care of longdouble/complex types which takes 2 or more slots
-            if (regNum != ai || (dtype == TR::Int64 && TR::Compiler->target.is32Bit()))
+            if (regNum != ai || (dtype == TR::Int64 && self()->cg()->comp()->target().is32Bit()))
                {
                //  Global register is available as scratch reg, so make the move
                //
@@ -889,7 +897,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 #ifdef J9_PROJECT_SPECIFIC
                   else if (dtype == TR::DecimalLongDouble)
                      {
-                     int32_t ai_l = paramCursor->getAllocatedLow();  //  low reg of a pair
+                     int32_t ai_l = paramCursor->getAssignedLowGlobalRegisterIndex();  //  low reg of a pair
                      TR_ASSERT( (ai_l == (ai+2)),"global RA incorrect for long double params");
                      cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LXR, firstNode, self()->cg()->allocateFPRegisterPair(self()->getRealRegister(REGNUM(ai_l)), self()->getRealRegister(REGNUM(ai))),
                         self()->cg()->allocateFPRegisterPair(self()->getRealRegister(REGNUM(regNum+2)),self()->getRealRegister(REGNUM(regNum))), (TR::Instruction *) cursor);
@@ -903,7 +911,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 #endif
                   else
                      {
-                     if (dtype == TR::Int64 && TR::Compiler->target.is32Bit())
+                     if (dtype == TR::Int64 && self()->cg()->comp()->target().is32Bit())
                         {
                         cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::SLLG, firstNode, self()->getRealRegister(REGNUM(ai)),
                                     self()->getRealRegister(regNum), 32, (TR::Instruction *) cursor);
@@ -952,7 +960,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   // We have to handle the high and low word.  We use two entries
                   // in the busyMoves to represent high and low word.
                   //
-                  if (dtype == TR::Int64 && TR::Compiler->target.is32Bit())
+                  if (dtype == TR::Int64 && self()->cg()->comp()->target().is32Bit())
                      {
                      if (fullLong)
                         {
@@ -1005,7 +1013,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
 
          int32_t ai_l = 0;
          if (!skipLong)
-            ai_l = paramCursor->getAllocatedLow();
+            ai_l = paramCursor->getAssignedLowGlobalRegisterIndex();
          if (ai_l>=0 && !InPreProlog && !skipLong)
             {
             // Some linkages allow for the low half of the argument to be passed
@@ -1082,7 +1090,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
       //
       else if (ai>=0 && !InPreProlog)
          {
-         int32_t ai_l = paramCursor->getAllocatedLow();
+         int32_t ai_l = paramCursor->getAssignedLowGlobalRegisterIndex();
          switch (dtype)
             {
             case TR::Int8:
@@ -1327,121 +1335,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
    return cursor;
    }
 
-void
-OMR::Z::Linkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol * method)
-   {
-   self()->setParameterLinkageRegisterIndex(method, method->getParameterList());
-   }
-
-void
-OMR::Z::Linkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol * method, List<TR::ParameterSymbol> &parmList)
-   {
-   ListIterator<TR::ParameterSymbol> paramIterator(&parmList);
-   TR::ParameterSymbol * paramCursor=paramIterator.getFirst();
-   int32_t numIntArgs = 0, numFloatArgs = 0, numVectorArgs = 0;
-
-   int32_t paramNum = -1;
-   while ((paramCursor != NULL) &&
-          (numIntArgs < self()->getNumIntegerArgumentRegisters() ||
-           numFloatArgs < self()->getNumFloatArgumentRegisters() ||
-           numVectorArgs < self()->getNumVectorArgumentRegisters()))
-      {
-      int32_t index = -1;
-      paramNum++;
-
-      TR::DataType dt = paramCursor->getDataType();
-
-      switch (dt)
-         {
-         case TR::Int8:
-         case TR::Int16:
-         case TR::Int32:
-         case TR::Address:
-            if (numIntArgs < self()->getNumIntegerArgumentRegisters())
-               {
-               index = numIntArgs;
-               }
-            numIntArgs++;
-            break;
-         case TR::Int64:
-            if(numIntArgs < self()->getNumIntegerArgumentRegisters())
-               {
-               index = numIntArgs;
-               }
-            numIntArgs += (TR::Compiler->target.is64Bit() ? 1 : 2);
-            break;
-         case TR::Float:
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalFloat:
-#endif
-            if (numFloatArgs < self()->getNumFloatArgumentRegisters())
-               {
-               index = numFloatArgs;
-               }
-            numFloatArgs++;
-            break;
-         case TR::Double:
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalDouble:
-            if (numFloatArgs < self()->getNumFloatArgumentRegisters())
-               {
-               index = numFloatArgs;
-               }
-            numFloatArgs++;
-            break;
-         case TR::DecimalLongDouble:
-            // On zLinux Long Double is passed in memory using a pointer to buffer
-            if(TR::Compiler->target.isLinux())
-               {
-               if(numIntArgs < self()->getNumIntegerArgumentRegisters())
-                  index = numIntArgs++;
-               break;
-               }
-            if ((numFloatArgs & 0x1) !=0)  // if there are odd number of fp args in before a long double arg, need to skip one
-               numFloatArgs++;
-            if (numFloatArgs < self()->getNumFloatArgumentRegisters())
-               {
-               index = numFloatArgs;
-               }
-            numFloatArgs +=2;
-            break;
-         case TR::PackedDecimal:
-         case TR::ZonedDecimal:
-         case TR::ZonedDecimalSignLeadingEmbedded:
-         case TR::ZonedDecimalSignLeadingSeparate:
-         case TR::ZonedDecimalSignTrailingSeparate:
-         case TR::UnicodeDecimal:
-         case TR::UnicodeDecimalSignLeading:
-         case TR::UnicodeDecimalSignTrailing:
-#endif
-         case TR::Aggregate:
-            break;
-         case TR::VectorInt8:
-         case TR::VectorInt16:
-         case TR::VectorInt32:
-         case TR::VectorInt64:
-         case TR::VectorDouble:
-            if (numVectorArgs < self()->getNumVectorArgumentRegisters())
-               {
-               index = numVectorArgs;
-               }
-            numVectorArgs++;
-            break;
-         }
-      paramCursor->setLinkageRegisterIndex(index);
-      paramCursor = paramIterator.getNext();
-
-      if (self()->isFastLinkLinkageType())
-         {
-         if ((numFloatArgs == 1) || (numIntArgs >= self()->getNumIntegerArgumentRegisters()))
-            {
-            // force fastlink ABI condition of only one float parameter for fastlink parameter and it must be within first slots
-            numFloatArgs = self()->getNumFloatArgumentRegisters();   // no more float args possible now
-            }
-         }
-      }
-   }
-
 TR::InstOpCode::Mnemonic
 OMR::Z::Linkage::getOpCodeForLinkage(TR::Node * child, bool isStore, bool isRegReg)
    {
@@ -1449,7 +1342,7 @@ OMR::Z::Linkage::getOpCodeForLinkage(TR::Node * child, bool isStore, bool isRegR
        switch (child->getDataType())
          {
          case TR::Int64:
-            if (TR::Compiler->target.is32Bit())
+            if (self()->cg()->comp()->target().is32Bit())
                return (isStore)? TR::InstOpCode::STM : (isRegReg)? TR::InstOpCode::LR : TR::InstOpCode::LM;
             else
                return (isStore)? TR::InstOpCode::STG : (isRegReg)? TR::InstOpCode::LGR : TR::InstOpCode::LG;
@@ -1460,12 +1353,12 @@ OMR::Z::Linkage::getOpCodeForLinkage(TR::Node * child, bool isStore, bool isRegR
          case TR::Int8:
          case TR::Int16:
          case TR::Int32:
-            if (TR::Compiler->target.is32Bit())
+            if (self()->cg()->comp()->target().is32Bit())
               return (isStore)? TR::InstOpCode::ST : (isRegReg)? TR::InstOpCode::LR : TR::InstOpCode::L;
             else
               return (isStore)? (isWiden)? TR::InstOpCode::STG : TR::InstOpCode::ST : (isRegReg)? (isWiden)? TR::InstOpCode::LGFR : TR::InstOpCode::LGR : (isWiden)? TR::InstOpCode::LGF: TR::InstOpCode::L;
          case TR::Aggregate: // can get here for aggregates with register size
-            if (TR::Compiler->target.is32Bit())
+            if (self()->cg()->comp()->target().is32Bit())
               return (isStore)? TR::InstOpCode::ST : (isRegReg)? TR::InstOpCode::LR : TR::InstOpCode::L;
             else
               return (isStore)? TR::InstOpCode::STG : (isRegReg)? TR::InstOpCode::LGR : TR::InstOpCode::LG;
@@ -1520,7 +1413,7 @@ OMR::Z::Linkage::copyArgRegister(TR::Node * callNode, TR::Node * child, TR::Regi
 
    TR_Debug * debugObj = self()->cg()->getDebug();
    char * REG_PARAM = "LR=Reg_param";
-   if (TR::Compiler->target.is32Bit() && child->getDataType() == TR::Int64 && !argRegister->getRegisterPair())
+   if (self()->cg()->comp()->target().is32Bit() && child->getDataType() == TR::Int64 && !argRegister->getRegisterPair())
       {
       TR::Register * tempRegH = self()->cg()->allocateRegister();
       TR::Register * tempRegL = self()->cg()->allocateRegister();
@@ -1703,7 +1596,7 @@ OMR::Z::Linkage::pushArg(TR::Node * callNode, TR::Node * child, int32_t numInteg
    {
    TR::DataType argType = child->getType();
    TR::DataType argDataType = argType.getDataType();
-   int8_t regSize = (TR::Compiler->target.is64Bit())? 8:4;
+   int8_t regSize = (self()->cg()->comp()->target().is64Bit())? 8:4;
    int8_t argSize = 0;
 
    if (argType.isInt64()
@@ -1722,7 +1615,7 @@ OMR::Z::Linkage::pushArg(TR::Node * callNode, TR::Node * child, int32_t numInteg
    else
        argSize += regSize;
 
-   if (TR::Compiler->target.is32Bit() && argType.isInt64())
+   if (self()->cg()->comp()->target().is32Bit() && argType.isInt64())
       return self()->pushLongArg32(callNode, child, numIntegerArgs,  numFloatArgs, stackOffsetPtr, dependencies, argRegister);
 
    bool isStoreArg = self()->isAllParmsOnStack();
@@ -2005,7 +1898,7 @@ OMR::Z::Linkage::loadIntArgumentsFromStack(TR::Node *callNode, TR::RegisterDepen
          TR::MemoryReference * argMemRef = generateS390MemoryReference(stackRegister, stackOffset , self()->cg());
          TR::InstOpCode::Mnemonic loadOp = TR::InstOpCode::getLoadOpCode();
 #ifdef J9_PROJECT_SPECIFIC
-         if (argType == TR::DecimalFloat && TR::Compiler->target.is64Bit()) // special case for DecFloat on 64bit
+         if (argType == TR::DecimalFloat && self()->cg()->comp()->target().is64Bit()) // special case for DecFloat on 64bit
             loadOp = TR::InstOpCode::LLGF;
 #endif
 
@@ -2059,7 +1952,7 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
    TR::DataType resType = callNode->getType();
    TR::DataType resDataType = resType.getDataType();
 
-   static const bool enableVectorLinkage = self()->cg()->getSupportsVectorRegisters();
+   const bool enableVectorLinkage = self()->cg()->getSupportsVectorRegisters();
 
 
    //Not kill special registers
@@ -2142,32 +2035,7 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
          argSize += gprSize;
       }
 
-   bool isXPLinkToPureOSLinkageCall = false;
-   if (!self()->isFirstParmAtFixedOffset())
-      {
-      stackOffset = argSize;
-      }
-   else
-      {
-      stackOffset = self()->getOffsetToFirstParm();
-
-      if (isXPLinkToPureOSLinkageCall)
-         {
-         // Load argument list (GPR1) pointer here in XPLink to OS linkage call
-         // The OS linkage argument list is embedded in the XPLink outbound argument area
-         // at offset 8 instead of 0 (to bypass collision with long displacement slot)
-         TR::Register *r1Reg = self()->cg()->allocateRegister();
-         if (stackOffset == self()->getOffsetToLongDispSlot())
-            {
-            stackOffset += 8; // avoid first parm at long displacement slot
-            }
-         TR::RealRegister * stackPtr = self()->getNormalStackPointerRealRegister();
-         generateRXInstruction(self()->cg(), TR::InstOpCode::LA, callNode, r1Reg,
-                   generateS390MemoryReference(stackPtr, stackOffset, self()->cg()));
-         dependencies->addPreCondition(r1Reg, TR::RealRegister::GPR1);
-         self()->cg()->stopUsingRegister(r1Reg);
-         }
-      }
+   stackOffset = self()->isFirstParmAtFixedOffset() ? self()->getOffsetToFirstParm() : argSize;
 
    //store env register
    stackOffset = self()->storeExtraEnvRegForBuildArgs(callNode, self(), dependencies, isFastJNI, stackOffset, gprSize, numIntegerArgs);
@@ -2199,7 +2067,7 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
             numIntegerArgs++;
             break;
          case TR::Int64:
-            if (TR::Compiler->target.is32Bit())
+            if (self()->cg()->comp()->target().is32Bit())
                {
                argRegister = self()->pushLongArg32(callNode, child, numIntegerArgs, numFloatArgs, &stackOffset, dependencies);
                numIntegerArgs += 2;
@@ -2221,28 +2089,24 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
 
                if (self()->isSkipGPRsForFloatParms())
                   {
-                  if (numIntegerArgs < self()->getNumIntegerArgumentRegisters())
-                     {
-                     numIntegerArgs++;
-                     }
+                  numIntegerArgs++;
                   }
                break;
                }
          case TR::Double:
 #ifdef J9_PROJECT_SPECIFIC
          case TR::DecimalDouble:
+#endif
             argRegister = self()->pushArg(callNode, child, numIntegerArgs, numFloatArgs, &stackOffset, dependencies);
 
             numFloatArgs++;
 
             if (self()->isSkipGPRsForFloatParms())
                {
-               if (numIntegerArgs < self()->getNumIntegerArgumentRegisters())
-                  {
-                  numIntegerArgs += (TR::Compiler->target.is64Bit()) ? 1 : 2;
-                  }
+               numIntegerArgs += (self()->cg()->comp()->target().is64Bit()) ? 1 : 2;
                }
             break;
+#ifdef J9_PROJECT_SPECIFIC
          case TR::DecimalLongDouble:
             if (numFloatArgs%2 == 1)
                { // need to skip fp arg 'hole' for long double arg
@@ -2259,7 +2123,7 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
                {
                if (numIntegerArgs < self()->getNumIntegerArgumentRegisters())
                   {
-                  numIntegerArgs += (TR::Compiler->target.is64Bit()) ? 2 : 4;
+                  numIntegerArgs += (self()->cg()->comp()->target().is64Bit()) ? 2 : 4;
                   }
                }
             break;
@@ -2342,7 +2206,7 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
             }
 #endif
          case TR::Int64:
-            if (TR::Compiler->target.is32Bit())
+            if (self()->cg()->comp()->target().is32Bit())
                {
                //In this case, private and system linkage use same regs for return value
                TR::Register * resultRegLow = self()->cg()->allocateRegister();
@@ -2383,7 +2247,7 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
 
    // In zLinux, GPR6 may be used for param passing, in this case, we need to kill it
    // so kill GPR6 if used in preDeps and is not in postDeps
-  if (TR::Compiler->target.isLinux())
+  if (self()->cg()->comp()->target().isLinux())
      {
      TR::Register * gpr6Reg= dependencies->searchPreConditionRegister(TR::RealRegister::GPR6);
      if (gpr6Reg)
@@ -2425,7 +2289,7 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
 
    // spill all high regs
    //
-   if (TR::Compiler->target.is32Bit())
+   if (self()->cg()->comp()->target().is32Bit())
       {
       TR::Register *reg = self()->cg()->allocateRegister();
 
@@ -2553,7 +2417,7 @@ OMR::Z::Linkage::killAndAssignRegister(int64_t killMask, TR::RegisterDependencyC
       if (isDummy)
          {
          (*virtualRegPtr)->setPlaceholderReg();
-         if (TR::Compiler->target.is64Bit() && regNum <= TR::RealRegister::LastGPR)
+         if (self()->cg()->comp()->target().is64Bit() && regNum <= TR::RealRegister::LastGPR)
             {
             (*virtualRegPtr)->setIs64BitReg(true);
             }
@@ -2642,7 +2506,7 @@ OMR::Z::Linkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_DispatchType
    self()->comp()->setHasNativeCall();
 
 
-   if (!TR::Compiler->target.isZOS())
+   if (!self()->cg()->comp()->target().isZOS())
       {
       TR::Register * parm3VirtualRegister = NULL;
       killMask = self()->killAndAssignRegister(killMask, deps, &parm3VirtualRegister, TR::RealRegister::GPR4, self()->cg(), true);
@@ -2652,7 +2516,7 @@ OMR::Z::Linkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_DispatchType
 
    if (dispatchType == TR_SystemDispatch)
      {
-     if (!TR::Compiler->target.isZOS())
+     if (!self()->cg()->comp()->target().isZOS())
        killMask = self()->killAndAssignRegister(killMask, deps, methodAddressReg, TR::RealRegister::GPR14, self()->cg(), true);
      }
    }
@@ -2706,20 +2570,20 @@ void
 OMR::Z::Linkage::performCallNativeFunctionForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::Register * &javaReturnRegister, TR::SystemLinkage * systemLinkage,
       TR::RegisterDependencyConditions * &deps, TR::Register * javaLitOffsetReg, TR::Register * methodAddressReg, bool isJNIGCPoint)
    {
-   TR::S390JNICallDataSnippet * jniCallDataSnippet = NULL;
+   TR::Snippet * callDataSnippet = NULL;
    TR::LabelSymbol * returnFromJNICallLabel = generateLabelSymbol(self()->cg());
-   intptrj_t targetAddress = (intptrj_t) 0;
+   intptr_t targetAddress = (intptr_t) 0;
 
    if (dispatchType == TR_SystemDispatch)
      {
      TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
      TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
-     targetAddress = (intptrj_t) methodSymbol->getMethodAddress();
+     targetAddress = (intptr_t) methodSymbol->getMethodAddress();
      }
 
    javaReturnRegister = systemLinkage->callNativeFunction(
         callNode, deps, targetAddress, methodAddressReg, javaLitOffsetReg, returnFromJNICallLabel,
-        jniCallDataSnippet, isJNIGCPoint);
+        callDataSnippet, isJNIGCPoint);
    }
 
 
@@ -2899,7 +2763,7 @@ OMR::Z::Linkage::restorePreservedRegs(TR::RealRegister::RegNum firstUsedReg,
    TR::Instruction * cursor, TR::Node * nextNode, TR::RealRegister * spReg, TR::MemoryReference * rsa,
    TR::RealRegister::RegNum spRealReg)
    {
-   bool break64 = TR::Compiler->target.is64Bit() && self()->comp()->getOption(TR_Enable39064Epilogue);
+   bool break64 = self()->cg()->comp()->target().is64Bit() && self()->comp()->getOption(TR_Enable39064Epilogue);
 
    // restoring preserved regs is unavoidable in Java due to GC object moves
 
@@ -2953,7 +2817,7 @@ OMR::Z::Linkage::restorePreservedRegs(TR::RealRegister::RegNum firstUsedReg,
       }
 
    // 64-bit non-optimized CASE AND 32-bit shorter LMG case
-   else if ((TR::Compiler->target.is64Bit() && !break64) ||
+   else if ((self()->cg()->comp()->target().is64Bit() && !break64) ||
             ((newFirstUsedReg+1) %2 == 0))
       {
       cursor = generateRSInstruction(self()->cg(), TR::InstOpCode::getLoadMultipleOpCode(), nextNode,

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -147,7 +147,7 @@ public:
      * In Compressed Mark Map one bit represents twice more space then one bit of regular Mark Map
      * So, sizeof_page should be double of number of bytes represented by one uintptr_t in Mark Map
      */
-    enum { sizeof_page = 2 * J9MODRON_HEAP_BYTES_PER_HEAPMAP_SLOT };
+    ddr_constant(sizeof_page, 2 * J9MODRON_HEAP_BYTES_PER_HEAPMAP_SLOT);
 
 private:
     omrobjectptr_t freeChunkEnd(omrobjectptr_t chunk);
@@ -158,7 +158,6 @@ private:
 protected:
 	virtual bool initialize(MM_EnvironmentBase *env);
 	virtual void tearDown(MM_EnvironmentBase *env);
-
 
     void createSubAreaTable(MM_EnvironmentStandard *env, bool singleThreaded);
     /**

@@ -51,6 +51,7 @@ private:
 	MM_HeapRegionDescriptorSegregated *_tail;
 	bool _needLock;
 	omrthread_monitor_t _lockMonitor;
+	uintptr_t _totalRegionsCount;
 	
 public:
 	static MM_LockingHeapRegionQueue *newInstance(MM_EnvironmentBase *env, RegionListKind regionListKind, bool singleRegionOnly, bool concurrentAccess, bool trackFreeBytes = false);
@@ -70,7 +71,8 @@ public:
 		_head(NULL),
 		_tail(NULL),
 		_needLock(concurrentAccess),
-		_lockMonitor(NULL)
+		_lockMonitor(NULL),
+		_totalRegionsCount(0)
 	{
 		_typeId = __FUNCTION__;
 	}
@@ -99,9 +101,11 @@ public:
 		MM_HeapRegionDescriptorSegregated *front = src->_head;
 		MM_HeapRegionDescriptorSegregated *back = src->_tail;
 		uintptr_t srcLength = src->_length;
+		uintptr_t srcRegionsCount = src->_totalRegionsCount;
 		src->_head = NULL;
 		src->_tail = NULL;
 		src->_length = 0;
+		src->_totalRegionsCount = 0;
 		
 		/* Add to back of self */
 		front->setPrev(_tail); /* OK even if _tail is NULL */
@@ -112,6 +116,7 @@ public:
 		}
 		_tail = back;
 		_length += srcLength;
+		_totalRegionsCount += srcRegionsCount;
 		
 		src->unlock();
 		unlock();
@@ -180,6 +185,7 @@ private:
 			_tail = region;
 		}
 		_length++;
+		_totalRegionsCount += region->getRange();
 	}
 
 	uintptr_t dequeueInternal(MM_LockingHeapRegionQueue *target, uintptr_t count)
@@ -201,6 +207,7 @@ private:
 		MM_HeapRegionDescriptorSegregated *result = _head;
 		if (_head != NULL) {
 			_length--;
+			_totalRegionsCount -= result->getRange();
 			_head = result->getNext();
 			result->setNext(NULL);
 			if (NULL == _head) {

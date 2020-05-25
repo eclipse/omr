@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,7 +129,6 @@
    TR::TreeEvaluator::dmulEvaluator,        // TR::dmul
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::bmul
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::smul
-   TR::TreeEvaluator::imulEvaluator,        // TR::iumul
    TR::TreeEvaluator::idivEvaluator,        // TR::idiv
    TR::TreeEvaluator::ldivEvaluator,        // TR::ldiv
    TR::TreeEvaluator::fdivEvaluator,        // TR::fdiv
@@ -520,13 +519,13 @@
    TR::TreeEvaluator::iRegStoreEvaluator,   // TR::sRegStore
    TR::TreeEvaluator::iRegStoreEvaluator,   // TR::bRegStore
    TR::TreeEvaluator::GlRegDepsEvaluator,   // TR::GlRegDeps
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::iternary
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::lternary
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::bternary
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::sternary
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::aternary
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::fternary
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::dternary
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::iselect
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::lselect
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::bselect
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::sselect
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::aselect
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::fselect
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::dselect
    TR::TreeEvaluator::treetopEvaluator,     // TR::treetop
    TR::TreeEvaluator::badILOpEvaluator,     // TR::MethodEnterHook
    TR::TreeEvaluator::badILOpEvaluator,     // TR::MethodExitHook
@@ -561,7 +560,7 @@
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vicmpanylt
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vicmpanyle
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vnot
-   TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vselect
+   TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vbitselect
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vperm
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vsplats
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vdmergel
@@ -629,7 +628,7 @@
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::vreturn
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::vcall
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::vcalli
-   TR::TreeEvaluator::unImpOpEvaluator,                    // TR::vternary
+   TR::TreeEvaluator::unImpOpEvaluator,                    // TR::vselect
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::v2v
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::vl2vd
    TR::TreeEvaluator::unImpOpEvaluator,                    // TR::vconst
@@ -679,8 +678,6 @@
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::busub
    TR::TreeEvaluator::inegEvaluator,        // TR::iuneg
    TR::TreeEvaluator::lnegEvaluator,        // TR::luneg
-   TR::TreeEvaluator::ishlEvaluator,        // TR::iushl
-   TR::TreeEvaluator::lshlEvaluator,        // TR::lushl
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
    TR::TreeEvaluator::f2iEvaluator,         // TR::f2iu
    TR::TreeEvaluator::f2lEvaluator,         // TR::f2lu
@@ -698,10 +695,6 @@
    TR::TreeEvaluator::lRegLoadEvaluator,    // TR::luRegLoad
    TR::TreeEvaluator::iRegStoreEvaluator,   // TR::iuRegStore
    TR::TreeEvaluator::lRegStoreEvaluator,   // TR::luRegStore
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::iuternary
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::luternary
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::buternary
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::suternary
    TR::TreeEvaluator::cconstEvaluator,      // TR::cconst
    TR::TreeEvaluator::cloadEvaluator,       // TR::cload
    TR::TreeEvaluator::cloadEvaluator,       // TR::cloadi
@@ -714,7 +707,7 @@
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::monent
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::monexit
 #endif
-   TR::TreeEvaluator::monexitfenceEvaluator, // TR::monexitfence
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::monexitfence
    TR::TreeEvaluator::badILOpEvaluator,     // TR::tstart
    TR::TreeEvaluator::badILOpEvaluator,     // TR::tfinish
    TR::TreeEvaluator::badILOpEvaluator,     // TR::tabort
@@ -723,6 +716,7 @@
    TR::TreeEvaluator::checkcastEvaluator,     // TR::checkcast
    TR::TreeEvaluator::checkcastAndNULLCHKEvaluator,     // TR::checkcastAndNULLCHK
    TR::TreeEvaluator::newObjectEvaluator,   // TR::New
+   TR::TreeEvaluator::unImpOpEvaluator,    // TR::newvalue (should be lowered before evaluation)
    TR::TreeEvaluator::newArrayEvaluator,    // TR::newarray
    TR::TreeEvaluator::anewArrayEvaluator,   // TR::anewarray
    TR::TreeEvaluator::newObjectEvaluator,   // TR::variableNew
@@ -732,6 +726,7 @@
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::checkcast
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::checkcastAndNULLCHK
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::New
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::newvalue (should be lowered before evaluation)
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::newarray
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::anewarray
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::variableNew
@@ -762,10 +757,8 @@
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::iumulh
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::lmulh
    TR::TreeEvaluator::unImpOpEvaluator,     // TR::lumulh
-//   TR::TreeEvaluator::cmulEvaluator,      // TR::cmul
 //   TR::TreeEvaluator::cdivEvaluator,      // TR::cdiv
 //   TR::TreeEvaluator::cremEvaluator,      // TR::crem
-//   TR::TreeEvaluator::cshlEvaluator,      // TR::cshl
 //   TR::TreeEvaluator::cushrEvaluator,     // TR::cushr
 
    TR::TreeEvaluator::ibits2fEvaluator,     // TR::ibits2f
@@ -778,9 +771,9 @@
    TR::TreeEvaluator::tableEvaluator,       // TR::table
    TR::TreeEvaluator::exceptionRangeFenceEvaluator,       // TR::exceptionRangeFence
    TR::TreeEvaluator::exceptionRangeFenceEvaluator,       // TR::dbgFence
-   TR::TreeEvaluator::NULLCHKEvaluator,     // TR::NULLCHK
-   TR::TreeEvaluator::resolveCHKEvaluator,  // TR::ResolveCHK
-   TR::TreeEvaluator::resolveAndNULLCHKEvaluator, // TR::ResolveAndNULLCHK
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::NULLCHK (J9)
+   TR::TreeEvaluator::unImpOpEvaluator,     // TR::ResolveCHK
+   TR::TreeEvaluator::badILOpEvaluator, // TR::ResolveAndNULLCHK (J9)
    TR::TreeEvaluator::DIVCHKEvaluator,      // TR::DIVCHK
    TR::TreeEvaluator::badILOpEvaluator,      // TR::OverflowCHK
    TR::TreeEvaluator::badILOpEvaluator,      // TR::UnsignedOverflowCHK
@@ -870,15 +863,6 @@
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::getstack
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::dealloca
 
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::ishfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::lshfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::iushfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::lushfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::bshfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::sshfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::bushfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::sushfl
-
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::idoz
 
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::dcos
@@ -898,7 +882,6 @@
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::dlog
 
 
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::imulover
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::dfloor
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::ffloor
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::dceil

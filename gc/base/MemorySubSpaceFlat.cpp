@@ -189,7 +189,6 @@ MM_MemorySubSpaceFlat::allocationRequestFailed(MM_EnvironmentBase* env, MM_Alloc
 	return NULL;
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 void*
 MM_MemorySubSpaceFlat::allocateArrayletLeaf(MM_EnvironmentBase* env, MM_AllocateDescription* allocDescription, MM_MemorySubSpace* baseSubSpace, MM_MemorySubSpace* previousSubSpace, bool shouldCollectOnFailure)
 {
@@ -206,7 +205,6 @@ MM_MemorySubSpaceFlat::allocateArrayletLeaf(MM_EnvironmentBase* env, MM_Allocate
 	}
 	return result;
 }
-#endif /* OMR_GC_ARRAYLETS */
 
 /**
  * Return the allocation failure stats for this subSpace.

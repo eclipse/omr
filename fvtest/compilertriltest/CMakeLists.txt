@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,13 +23,16 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 
 project(comptest LANGUAGES C CXX)
 
+set(OMR_WARNINGS_AS_ERRORS OFF)
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 
-add_executable(comptest
+omr_add_executable(comptest
 	main.cpp
+	JitTest.cpp
 	JitTestUtilitiesTest.cpp
 	ILValidatorTest.cpp
 	ArithmeticTest.cpp
@@ -47,6 +50,8 @@ add_executable(comptest
 	MaxMinTest.cpp
 	CompareTest.cpp
 	TypeConversionTest.cpp
+	SelectTest.cpp
+	MinimalTest.cpp
 )
 
 target_link_libraries(comptest
@@ -55,9 +60,13 @@ target_link_libraries(comptest
 	tril
 )
 
+if(OMR_HOST_OS STREQUAL "zos")
+	target_link_libraries(comptest j9a2e)
+endif()
+
 set_property(TARGET comptest PROPERTY FOLDER fvtest)
 
 add_test(
 	NAME comptest
-	COMMAND comptest --gtest_color=yes
+	COMMAND comptest --gtest_color=yes --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/comptest-results.xml
 )

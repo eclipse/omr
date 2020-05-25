@@ -102,7 +102,7 @@ public:
    TR::Node                     * lconst(int64_t value);
    TR::Node                     * bconst(int8_t value);
    TR::Node                     * sconst(int16_t value);
-   TR::Node                     * aconst(uintptrj_t value);
+   TR::Node                     * aconst(uintptr_t value);
    TR::Node                     * dconst(double value);
    TR::Node                     * fconst(float value);
    TR::Node                     * staticAddress(void *address);

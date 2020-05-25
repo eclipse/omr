@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@
 #endif /* defined(OMR_OS_WINDOWS) */
 #include <errno.h>
 #include "OMRTestEnv.hpp"
+#include "runtime/Runtime.hpp"
 
 extern "C" bool initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t numHelpers, char *options);
 extern "C" void shutdownJit();

@@ -107,9 +107,7 @@ public:
 
 	void setMarkingScheme(MM_SegregatedMarkingScheme *markingScheme) { _markingScheme = markingScheme; }
 
-#if defined(OMR_GC_ARRAYLETS)
 	uintptr_t *allocateArraylet(MM_EnvironmentBase *env, omrarrayptr_t parent);
-#endif /* defined(OMR_GC_ARRAYLETS) */
 
 protected:
 	MM_AllocationContextSegregated(MM_EnvironmentBase *env, MM_GlobalAllocationManagerSegregated *gam, MM_RegionPoolSegregated *regionPool)

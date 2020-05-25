@@ -433,12 +433,12 @@ MM_Heap::heapRemoveRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, u
  * The heap has had its memory shuffled between memory subspaces and/or memory pools.
  */
 void
-MM_Heap::heapReconfigured(MM_EnvironmentBase* env)
+MM_Heap::heapReconfigured(MM_EnvironmentBase* env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress)
 {
 	MM_GlobalCollector* globalCollector = env->getExtensions()->getGlobalCollector();
 
 	if (NULL != globalCollector) {
-		globalCollector->heapReconfigured(env);
+		globalCollector->heapReconfigured(env, reason, subspace, lowAddress, highAddress);
 	}
 }
 

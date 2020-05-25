@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,11 +34,11 @@
 #include "codegen/RegisterUsage.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "codegen/X86Instruction.hpp"
@@ -371,6 +371,7 @@ TR::Node *TR_OutlinedInstructions::createOutlinedCallNode(TR::Node *callNode, TR
    }
 
 TR_OutlinedInstructionsGenerator::TR_OutlinedInstructionsGenerator(TR::LabelSymbol* entryLabel, TR::Node* node, TR::CodeGenerator* cg)
+   : _hasEnded(false)
    {
    _oi = new (cg->trHeapMemory()) TR_OutlinedInstructions(entryLabel, cg);
    _oi->setCallNode(node);
@@ -379,11 +380,18 @@ TR_OutlinedInstructionsGenerator::TR_OutlinedInstructionsGenerator(TR::LabelSymb
    generateLabelInstruction(LABEL, node, entryLabel, cg);
    }
 
+void
+TR_OutlinedInstructionsGenerator::endOutlinedInstructionSequence()
+   {
+   generateLabelInstruction(LABEL, _oi->_callNode, generateLabelSymbol(_oi->_cg), _oi->_cg);
+   _oi->swapInstructionListsWithCompilation();
+   _hasEnded = true;
+   }
+
 TR_OutlinedInstructionsGenerator::~TR_OutlinedInstructionsGenerator()
    {
    if (!std::uncaught_exception())
       {
-      generateLabelInstruction(LABEL, _oi->_callNode, generateLabelSymbol(_oi->_cg), _oi->_cg);
-      _oi->swapInstructionListsWithCompilation();
+      TR_ASSERT_FATAL(_hasEnded, "TR_OutlinedInstructionsGenerator object has gone out of scope before call to endOutlinedInstructionSequence().");
       }
    }

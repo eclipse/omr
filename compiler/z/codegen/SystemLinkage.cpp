@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
@@ -45,20 +45,20 @@
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
@@ -70,9 +70,9 @@
 #include "z/codegen/SystemLinkage.hpp"
 
 TR::SystemLinkage::SystemLinkage(TR::CodeGenerator* cg, TR_S390LinkageConventions elc, TR_LinkageConventions lc)
-   : 
+   :
       TR::Linkage(cg, elc,lc),
-      _GPRSaveMask(0), 
+      _GPRSaveMask(0),
       _FPRSaveMask(0)
    {
    }
@@ -191,9 +191,9 @@ TR::SystemLinkage::flipBitsRegisterSaveMask(uint16_t mask)
  * Front-end customization of callNativeFunction
  */
 void
-TR::SystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::RegisterDependencyConditions * deps, intptrj_t targetAddress,
+TR::SystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::RegisterDependencyConditions * deps, intptr_t targetAddress,
       TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
-      TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint)
+      TR::Snippet * callDataSnippet, bool isJNIGCPoint)
    {
    TR_ASSERT(0,"Different system types should have their own implementation.");
    }
@@ -203,9 +203,9 @@ TR::SystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::Register
  * @return return value will be return value from system routine copied to private linkage return reg
  */
 TR::Register *
-TR::SystemLinkage::callNativeFunction(TR::Node * callNode, TR::RegisterDependencyConditions * deps, intptrj_t targetAddress,
+TR::SystemLinkage::callNativeFunction(TR::Node * callNode, TR::RegisterDependencyConditions * deps, intptr_t targetAddress,
       TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
-      TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint)
+      TR::Snippet * callDataSnippet, bool isJNIGCPoint)
    {
    return 0;
    }
@@ -305,10 +305,10 @@ TR::SystemLinkage::mapStack(TR::ResolvedMethodSymbol * method, uint32_t stackInd
       }
 
    // Map slot for long displacement
-   if (TR::Compiler->target.isLinux())
+   if (comp()->target().isLinux())
       {
       // Linux on Z has a special reserved slot in the linkage convention
-      setOffsetToLongDispSlot(TR::Compiler->target.is64Bit() ? 8 : 4);
+      setOffsetToLongDispSlot(comp()->target().is64Bit() ? 8 : 4);
       }
    else
       {
@@ -353,5 +353,15 @@ void TR::SystemLinkage::mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t & s
 
 bool TR::SystemLinkage::hasToBeOnStack(TR::ParameterSymbol * parm)
    {
-   return parm->getAllocatedIndex() >=  0 &&  parm->isParmHasToBeOnStack();
+   return parm->getAssignedGlobalRegisterIndex() >=  0 &&  parm->isParmHasToBeOnStack();
+   }
+
+intptr_t TR::SystemLinkage::entryPointFromCompiledMethod()
+   {
+   return reinterpret_cast<intptr_t>(cg()->getCodeStart());
+   }
+
+intptr_t TR::SystemLinkage::entryPointFromInterpretedMethod()
+   {
+   return reinterpret_cast<intptr_t>(cg()->getCodeStart());
    }

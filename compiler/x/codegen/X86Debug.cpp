@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,12 +42,12 @@
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "ras/Debug.hpp"
@@ -356,7 +356,7 @@ TR_Debug::dumpDependencies(TR::FILE *pOutFile, TR::Instruction  * instr)
    if (pOutFile == NULL || // no dump file
        (_cg->getStackAtlas() // not in instruction selection
         && !(_registerAssignmentTraceFlags & TRACERA_IN_PROGRESS && // not in register assignment...
-          _comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRADependencies)) // or dependencies are not traced
+          _comp->getOption(TR_TraceRA)) // or dependencies are not traced
        ))
       return;
 
@@ -860,7 +860,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86ImmSymInstruction  * instr)
    intptr_t targetAddress = 0;
 
    //  64 bit always gets the targetAddress from the symRef
-   if(TR::Compiler->target.is64Bit())
+   if(_comp->target().is64Bit())
       {
       // new code patching might have a call to a snippet label, which is not a method
       if(!sym->isLabel())
@@ -1475,7 +1475,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::MemoryReference  * mr, TR_RegisterSizes 
       "dword",    // TR_FloatReg
       "qword" };  // TR_DoubleReg
 
-   TR_RegisterSizes addressSize = (TR::Compiler->target.cpu.isAMD64() ? TR_DoubleWordReg : TR_WordReg);
+   TR_RegisterSizes addressSize = (_comp->target().cpu.isAMD64() ? TR_DoubleWordReg : TR_WordReg);
    bool hasTerm = false;
    bool hasPrecedingTerm = false;
    trfprintf(pOutFile, "%s ptr [", typeSpecifier[operandSize]);
@@ -1499,12 +1499,26 @@ TR_Debug::print(TR::FILE *pOutFile, TR::MemoryReference  * mr, TR_RegisterSizes 
 
    TR::Symbol *sym = mr->getSymbolReference().getSymbol();
 
-      if (sym != NULL || mr->getSymbolReference().getOffset() != 0)
+   if (sym != NULL || mr->getSymbolReference().getOffset() != 0)
       {
-      intptrj_t disp32 = mr->getDisplacement();
+      intptr_t disp32 = mr->getDisplacement();
 
       if (!hasPrecedingTerm)
          {
+         // Annotate the constant emitted to indicate it is an absolute address,
+         // and further annotate to indicate RIP-relative addressability.
+         //
+#ifdef TR_TARGET_64BIT
+         if (mr->getForceRIPRelative())
+            {
+            trfprintf(pOutFile, "rip $");
+            }
+         else
+#endif
+            {
+            trfprintf(pOutFile, "$");
+            }
+
          // Treat this as an absolute reference and display in base16.
          //
          printIntConstant(pOutFile, disp32, 16, addressSize, true);
@@ -1556,14 +1570,14 @@ TR_Debug::print(TR::FILE *pOutFile, TR::MemoryReference  * mr, TR_RegisterSizes 
          if (disp)
             {
             trfprintf(pOutFile, " : ");
-            printHexConstant(pOutFile, disp, TR::Compiler->target.is64Bit() ? 16 : 8, false);
+            printHexConstant(pOutFile, disp, _comp->target().is64Bit() ? 16 : 8, false);
             }
          }
       else if (disp)
          {
          printHexConstant(pOutFile,
-                          TR::Compiler->target.is64Bit() ? disp : (uint32_t)disp,
-                          TR::Compiler->target.is64Bit() ? 16 : 8,
+                          _comp->target().is64Bit() ? disp : (uint32_t)disp,
+                          _comp->target().is64Bit() ? 16 : 8,
                           true);
          }
       else if (cds)
@@ -1632,8 +1646,8 @@ int32_t
 TR_Debug::printHexConstant(TR::FILE *pOutFile, int64_t value, int8_t width, bool padWithZeros)
    {
    // we probably need to revisit generateMasmListingSyntax
-   const char *prefix = TR::Compiler->target.isLinux() ? "0x" : (_cg->generateMasmListingSyntax() ? "0" : "0x");
-   const char *suffix = TR::Compiler->target.isLinux() ? "" : (_cg->generateMasmListingSyntax() ? "h" : "");
+   const char *prefix = _comp->target().isLinux() ? "0x" : (_cg->generateMasmListingSyntax() ? "0" : "0x");
+   const char *suffix = _comp->target().isLinux() ? "" : (_cg->generateMasmListingSyntax() ? "h" : "");
 
    if (padWithZeros)
       trfprintf(pOutFile, "%s%0*llx%s", prefix, width, value, suffix);
@@ -2169,7 +2183,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86CallSnippet  * snippet)
 
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
 
-   if (TR::Compiler->target.is64Bit())
+   if (_comp->target().is64Bit())
       {
       int32_t   count;
       int32_t   size = 0;
@@ -2208,7 +2222,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86CallSnippet  * snippet)
                }
 
           }
-         intptrj_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
+         intptr_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
 
          printPrefix(pOutFile, NULL, bufferPos, 10);
          trfprintf(pOutFile, "mov \trdi, 0x%x\t\t# MOV8RegImm64",ramMethod);
@@ -2222,7 +2236,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86CallSnippet  * snippet)
 
    else
       {
-         intptrj_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
+         intptr_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
 
          printPrefix(pOutFile, NULL, bufferPos, 5);
          trfprintf(pOutFile, "mov \tedi, 0x%x\t\t# MOV8RegImm32",ramMethod);
@@ -2407,7 +2421,7 @@ TR_Debug::getOpCodeName(TR_X86OpCode  * opCode)
 const char *
 TR_Debug::getMnemonicName(TR_X86OpCode  * opCode)
    {
-   if (TR::Compiler->target.isLinux())
+   if (_comp->target().isLinux())
       {
       int32_t o = opCode->getOpCodeValue();
       if (o == (int32_t) DQImm64) return dqString();

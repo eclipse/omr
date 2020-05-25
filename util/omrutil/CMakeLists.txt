@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,16 +27,6 @@ omr_assert(
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-#TODO port following vpath code:
-#ifeq (zos,$(OMR_HOST_OS))
-	#OBJECTS += zbarrier$(OBJEXT)
-	#ifeq (0,$(OMR_ENV_DATA64))
-		#vpath zbarrier.s unix/zos/31
-	#else
-		#vpath zbarrier.s unix/zos/64
-	#endif
-#endif
-
 include(OmrFindFiles)
 
 set(OBJECTS "")
@@ -44,7 +34,7 @@ set(VPATH "")
 
 add_tracegen(utilcore.tdf j9utilcore)
 
-add_library(omrutil_obj OBJECT
+omr_add_library(omrutil_obj OBJECT
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9utilcore.c
 )
 
@@ -65,12 +55,14 @@ if(OMR_ARCH_S390)
 		if(OMR_ENV_DATA64)
 			list(APPEND OBJECTS j9memclrz10_64.s)
 			list(APPEND OBJECTS omrget_userExtendedPrivateAreaMemoryType.s)
+			list(APPEND OBJECTS zbarrier.s)
 
 			list(APPEND VPATH unix/zos/64)
 			target_include_directories(omrutil_obj PRIVATE unix/zos/64)
 		else()
-			list(APPEND OBJECTS omrceetbck.s)
 			list(APPEND OBJECTS j9memclrz10_31.s)
+			list(APPEND OBJECTS omrceetbck.s)
+			list(APPEND OBJECTS zbarrier.s)
 
 			list(APPEND VPATH unix/zos/31)
 			target_include_directories(omrutil_obj PRIVATE unix/zos/31)
@@ -124,6 +116,20 @@ if(OMR_ARCH_POWER)
 	endif()
 endif()
 
+if(OMR_ARCH_RISCV)
+	if(OMR_HOST_OS STREQUAL linux)
+		list(APPEND OBJECTS cas32helper.s)
+		list(APPEND VPATH unix/linux/riscv/32)
+		target_include_directories(omrutil_obj PRIVATE unix/linux/riscv/32)
+
+		if(OMR_ENV_DATA64)
+			list(APPEND OBJECTS cas64helper.s)
+			list(APPEND VPATH unix/linux/riscv/64)
+			target_include_directories(omrutil_obj PRIVATE unix/linux/riscv/64)
+		endif()
+	endif()
+endif()
+
 list(APPEND OBJECTS
 	AtomicFunctions.cpp
 	argscan.c
@@ -164,23 +170,19 @@ target_sources(omrutil_obj PRIVATE $<TARGET_PROPERTY:${OMR_UTIL_GLUE_TARGET},INT
 target_include_directories(omrutil_obj PUBLIC $<TARGET_PROPERTY:${OMR_UTIL_GLUE_TARGET},INTERFACE_INCLUDE_DIRECTORIES>)
 
 
-target_enable_ddr(omrutil_obj "${OMR_DDR_SET}")
+target_enable_ddr(omrutil_obj)
+ddr_set_add_targets(omrddr omrutil_obj)
 
-add_library(omrutil STATIC
+omr_add_library(omrutil STATIC
 	$<TARGET_OBJECTS:omrutil_obj>
 )
+
+# Duplicate the export list onto the static library version
+get_target_property(util_exports omrutil_obj EXPORTED_SYMBOLS)
+omr_add_exports(omrutil ${util_exports})
+
 # Add in the interface include dirs from omrutil_obj to omrutil
 target_include_directories(omrutil PUBLIC $<TARGET_PROPERTY:omrutil_obj,INTERFACE_INCLUDE_DIRECTORIES>)
-
-if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(omrutil PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-	target_compile_options(omrutil_obj PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-endif()
-
-if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(omrutil PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-	target_compile_options(omrutil_obj PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-endif()
 
 target_link_libraries(omrutil
 	PUBLIC

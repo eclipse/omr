@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/OMRRegister.hpp"
+#include "codegen/Register.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -27,7 +27,7 @@
 #include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "codegen/RegisterRematerializationInfo.hpp"
-#include "codegen/OMRRealRegister.hpp"
+#include "codegen/RealRegister.hpp"
 #include "compile/Compilation.hpp"
 #include "ras/Debug.hpp"
 

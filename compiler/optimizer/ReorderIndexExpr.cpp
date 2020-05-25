@@ -22,7 +22,7 @@
 #include "optimizer/ReorderIndexExpr.hpp"
 
 #include <stdio.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "env/TRMemory.hpp"
 #include "il/Block.hpp"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
@@ -41,17 +41,17 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Flags.hpp"
@@ -74,7 +74,7 @@ namespace TR { class Register; }
 static TR_BitVector * addVeryRefinedCallAliasSets(TR::ResolvedMethodSymbol *, TR_BitVector *, List<void> *);
 #endif
 
-OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab, TR::SymbolReference& sr, intptrj_t o, TR::KnownObjectTable::Index knownObjectIndex)
+OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab, TR::SymbolReference& sr, intptr_t o, TR::KnownObjectTable::Index knownObjectIndex)
    {
    _referenceNumber = symRefTab->assignSymRefNumber(self());
    _symbol = sr._symbol;
@@ -132,6 +132,17 @@ OMR::SymbolReference::getUseonlyAliasesBV(TR::SymbolReferenceTable * symRefTab)
             return &symRefTab->aliasBuilder.defaultMethodUseAliases();
             }
 
+         // Aliases for eaEscapeHelper
+         // Ensure EA sees the method as causing an escape for all arguments passed
+         if (symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::eaEscapeHelperSymbol))
+            {
+            return &symRefTab->aliasBuilder.defaultMethodUseAliases();
+            }
+         if (symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
+            {
+            return &symRefTab->aliasBuilder.defaultMethodUseAliases();
+            }
+
          if (!methodSymbol->isHelper())
             {
             return &symRefTab->aliasBuilder.defaultMethodUseAliases();
@@ -176,6 +187,9 @@ OMR::SymbolReference::getUseonlyAliasesBV(TR::SymbolReferenceTable * symRefTab)
             case TR_transactionExit:
             case TR_newObject:
             case TR_newObjectNoZeroInit:
+            case TR_acmpHelper:
+            case TR_newValue:
+            case TR_newValueNoZeroInit:
             case TR_newArray:
             case TR_multiANewArray:
             default:
@@ -312,7 +326,9 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
 
          if (symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::arraySetSymbol) ||
              symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::osrFearPointHelperSymbol) ||
-             symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::potentialOSRPointHelperSymbol))
+             symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::potentialOSRPointHelperSymbol) ||
+             symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::eaEscapeHelperSymbol) ||
+             symRefTab->isNonHelper(self(), TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
             {
             return &symRefTab->aliasBuilder.defaultMethodDefAliases();
             }
@@ -358,6 +374,9 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
             case TR_writeBarrierClassStoreRealTimeGC:
             case TR_writeBarrierStoreRealTimeGC:
             case TR_aNewArray:
+            case TR_acmpHelper:
+            case TR_newValue:
+            case TR_newValueNoZeroInit:
             case TR_newObject:
             case TR_newObjectNoZeroInit:
             case TR_newArray:
@@ -467,9 +486,9 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
                case TR::com_ibm_dataaccess_DecimalData_setflags:
                   if (!(
 #ifdef TR_TARGET_S390
-                     TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility() ||
+                     comp->target().cpu.getSupportsDecimalFloatingPointFacility() ||
 #endif
-                      TR::Compiler->target.cpu.supportsDecimalFloatingPoint()) ||
+                      comp->target().cpu.supportsDecimalFloatingPoint()) ||
                       comp->getOption(TR_DisableDFP))
                      return NULL;
 #endif //J9_PROJECT_SPECIFIC
@@ -480,7 +499,7 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
 
 #ifdef J9_PROJECT_SPECIFIC
          TR_ResolvedMethod * method = resolvedMethodSymbol->getResolvedMethod();
-         TR_PersistentMethodInfo * methodInfo = TR_PersistentMethodInfo::get(method);
+         TR_PersistentMethodInfo * methodInfo = comp->getRecompilationInfo() ? TR_PersistentMethodInfo::get(method) : NULL;
          if (methodInfo && (methodInfo->hasRefinedAliasSets() ||
                             comp->getMethodHotness() >= veryHot ||
                             resolvedMethodSymbol->hasVeryRefinedAliasSets()) &&

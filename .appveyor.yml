@@ -25,13 +25,10 @@ shallow_clone: true
 clone_depth: 1
 
 environment:
-  GTEST_FILTER: '-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended:PortSysinfoTest.sysinfo_test0:ThreadExtendedTest.TestOtherThreadCputime'
+  GTEST_FILTER: '-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended:ThreadExtendedTest.TestOtherThreadCputime'
   GTEST_COLOR: '1'
   TEST_RESULT_DIR: '%APPVEYOR_BUILD_FOLDER%\test_results'
   GTEST_OUTPUT: 'xml:%TEST_RESULT_DIR%\'
-
-install:
-  - cinst winflexbison
 
 before_build:
   - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"

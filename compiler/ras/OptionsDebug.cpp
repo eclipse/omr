@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/OptionsUtil.hpp"
@@ -372,7 +372,7 @@ TR_Debug::dumpOptions(
       // See if this entry needs to be printed
       //
       bool printIt = true;
-      intptrj_t value = 0;
+      intptr_t value = 0;
       TR::SimpleRegex * regex = 0;
       if (entry->fcn == TR::Options::setBit)
          {
@@ -400,19 +400,19 @@ TR_Debug::dumpOptions(
          }
       else if (entry->fcn == TR::Options::set32BitValue)
          {
-         value = (intptrj_t)(*((int32_t*)(base+entry->parm1)));
+         value = (intptr_t)(*((int32_t*)(base+entry->parm1)));
          if (entry->msg[0] == 'P')
             printIt = (value == entry->parm2);
          }
       else if (entry->fcn == TR::Options::setNumeric)
          {
-         value = (intptrj_t)(*((intptrj_t*)(base+entry->parm1)));
+         value = (intptr_t)(*((intptr_t*)(base+entry->parm1)));
          if (entry->msg[0] == 'P')
             printIt = (value != 0);
          }
       else if (entry->fcn == TR::Options::set32BitNumeric || entry->fcn == TR::Options::set32BitSignedNumeric || entry->fcn == TR::Options::setCount)
          {
-         value = (intptrj_t)(*((int32_t*)(base+entry->parm1)));
+         value = (intptr_t)(*((int32_t*)(base+entry->parm1)));
          if (entry->msg[0] == 'P')
             printIt = (value != 0);
          }
@@ -430,13 +430,13 @@ TR_Debug::dumpOptions(
          }
       else if (entry->fcn == TR::Options::setString)
          {
-         value = (intptrj_t)(*((char**)(base+entry->parm1)));
+         value = (intptr_t)(*((char**)(base+entry->parm1)));
          if (entry->msg[0] == 'P')
             printIt = (value != 0);
          }
       else if (entry->fcn == TR::Options::setStaticString)
          {
-         value = (intptrj_t)(*((char**)(entry->parm1)));
+         value = (intptr_t)(*((char**)(entry->parm1)));
          if (entry->msg[0] == 'P')
             printIt = (value != 0);
          }
@@ -444,7 +444,7 @@ TR_Debug::dumpOptions(
       else if (entry->fcn == TR::Options::setStringForPrivateBase)
          {
          char *localBase = (char*)fej9->getPrivateConfig();
-         value = (intptrj_t)(*((char**)(localBase+entry->parm1)));
+         value = (intptr_t)(*((char**)(localBase+entry->parm1)));
          if (entry->msg[0] == 'P')
             printIt = (value != 0);
          }

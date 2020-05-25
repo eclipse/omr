@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,7 @@ compiler_library(z
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRTreeEvaluator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/UnaryEvaluator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRInstruction.cpp
+	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRInstructionDelegate.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/InstOpCode.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRegister.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRRealRegister.cpp
@@ -56,7 +57,7 @@ compiler_library(z
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRCodeGenerator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/snippet/PPA1Snippet.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/snippet/PPA2Snippet.cpp
-	${CMAKE_CURRENT_LIST_DIR}/codegen/snippet/XPLINKCallDescriptorSnippet.cpp
 	${CMAKE_CURRENT_LIST_DIR}/env/OMRCPU.cpp
 	${CMAKE_CURRENT_LIST_DIR}/env/OMRDebugEnv.cpp
+	${CMAKE_CURRENT_LIST_DIR}/runtime/VirtualGuardRuntime.cpp
 )

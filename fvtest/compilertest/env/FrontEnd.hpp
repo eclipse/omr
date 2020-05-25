@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 #define TESTFE_INCL
 
 #include <vector>
-#include "codegen/FrontEnd.hpp"
+#include "compiler/env/FrontEnd.hpp"
 #include "env/FEBase.hpp"
 #include "env/jittypes.h"
 #include "runtime/TestJitConfig.hpp"
@@ -61,39 +61,12 @@ class FrontEnd : public TR::FEBase<FrontEnd>
    virtual void generateBinaryEncodingPrologue(TR_BinaryEncodingData *beData, TR::CodeGenerator *cg);
 #endif
 
-   virtual intptrj_t methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference *symRef,  void *currentCodeCache);
+   virtual intptr_t methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference *symRef,  void *currentCodeCache);
 
   TR_ResolvedMethod * createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod,
                                             TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance);
 
 
-   void encodeStackMap(
-      TR_GCStackMap *map,
-      uint8_t *location,
-      bool encodeFourByteOffsets,
-      uint32_t bytesPerStackMap,
-      TR::Compilation *comp);
-
-   bool mapsAreIdentical(
-      TR_GCStackMap *mapCursor,
-      TR_GCStackMap *nextMapCursor,
-      TR::GCStackAtlas *stackAtlas,
-      TR::Compilation *comp);
-
-   uint8_t *createStackAtlas(
-      bool encodeFourByteOffsets,
-      uint32_t numberOfSlotsMapped,
-      uint32_t bytesPerStackMap,
-      uint8_t *encodedAtlasBaseAddress,
-      uint32_t atlasSizeInBytes,
-      TR::Compilation *comp);
-
-   uint32_t
-      calculateSizeOfStackAtlas(
-      bool encodeFourByteOffsets,
-      uint32_t numberOfSlotsMapped,
-      uint32_t bytesPerStackMap,
-      TR::Compilation *comp);
 
    };
 

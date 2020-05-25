@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2014, 2019 IBM Corp. and others
+# Copyright (c) 2014, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,6 +94,7 @@ OMRTraceFormat.dat
 /tracegen
 /tracemerge
 *.pdat
+*.tracesentinel
 ut_*.c
 ut_*.h
 ut_*.inc
@@ -111,13 +112,12 @@ Testing/
 *.lo
 *.o
 *.obj
-*.dbg
+*.debuginfo
 
 # Compiled Dynamic libraries
 *.so
-*.so.dbg
 *.dylib
-*.dylib.dbg
+*.dSYM
 *.def
 *.dll
 *.exp
@@ -178,6 +178,13 @@ x64/
 # CLion
 .idea/
 
+# CCLS (language server for C/C++)
+.ccls-cache/
+.ccls
+
+# config cmake file for vim autocompletion
+compile_commands.json
+
 # Test Output
 core
 core.*
@@ -196,3 +203,6 @@ VerboseGC_*.xml*
 *.swp
 tags
 *~
+
+# test results
+*-results.xml

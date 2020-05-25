@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/OMRCodeGenerator.hpp"
+#include "codegen/CodeGenerator.hpp"
 
 #include <limits.h>
 #include <stddef.h>
@@ -56,7 +56,6 @@ OMR::CodeGenerator::evaluate(TR::Node * node)
    {
    TR::Register *reg;
 
-   bool trace = self()->comp()->getOptions()->getTraceCGOption(TR_TraceCGEvaluation);
    TR::ILOpCodes opcode = node->getOpCodeValue();
 
    TR_ASSERT(!self()->comp()->getOption(TR_EnableParanoidRefCountChecks) || node->getOpCode().isTreeTop() || node->getReferenceCount() > 0,
@@ -65,19 +64,9 @@ OMR::CodeGenerator::evaluate(TR::Node * node)
    if (opcode != TR::BBStart && node->getRegister())
       {
       reg = node->getRegister();
-      if (trace)
-         {
-         self()->getDebug()->printNodeEvaluation(node, ":  ", reg);
-         }
       }
    else
       {
-      if (trace)
-         {
-         self()->getDebug()->printNodeEvaluation(node);
-         _indentation += 2;
-         }
-
       // Evaluation of a TR IL tree can be performed by many functions:
       //
       // 1) evaluate(...)
@@ -191,11 +180,6 @@ OMR::CodeGenerator::evaluate(TR::Node * node)
 
       reg = _nodeToInstrEvaluators[opcode](node, self());
 
-      if (self()->comp()->getOptions()->getTraceCGOption(TR_TraceCGEvaluation))
-         {
-         self()->getDebug()->printNodeEvaluation(node, "<- ", reg, false);
-         _indentation -= 2;
-         }
       if (self()->comp()->getOption(TR_TraceRegisterPressureDetails))
          {
          traceMsg(self()->comp(), "  evaluated %s", self()->getDebug()->getName(node));
@@ -359,10 +343,6 @@ OMR::CodeGenerator::incReferenceCount(TR::Node *node)
 #endif
 
    rcount_t count = node->incReferenceCount();
-   if (self()->comp()->getOptions()->getTraceCGOption(TR_TraceCGEvaluation))
-      {
-      self()->getDebug()->printNodeEvaluation(node, "++ ", reg);
-      }
    return count;
    }
 
@@ -428,10 +408,6 @@ OMR::CodeGenerator::decReferenceCount(TR::Node * node)
 #endif
 
    rcount_t count = node->decReferenceCount();
-   if (self()->comp()->getOptions()->getTraceCGOption(TR_TraceCGEvaluation))
-      {
-      self()->getDebug()->printNodeEvaluation(node, "-- ", reg);
-      }
    return count;
    }
 

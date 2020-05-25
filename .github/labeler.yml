@@ -1,0 +1,102 @@
+arch:aarch32:
+  - compiler/arm/**/*
+  - port/linuxarm/**/*
+
+arch:aarch64:
+  - compiler/aarch64/**/*
+  - port/linuxaarch64/**/*
+
+arch:power:
+  - compiler/p/**/*
+  - fvtest/compilerunittest/p/**/*
+  - jitbuilder/p/**/*
+  - port/aix*/**/*
+  - port/linuxppc*/**/*
+
+arch:riscv:
+  - compiler/riscv/**/*
+  - port/linuxriscv64/**/*
+
+arch:x86:
+  - compiler/x/**/*
+  - jitbuilder/x/**/*
+  - port/linux386/**/*
+  - port/linuxamd64/**/*
+  - port/osx/**/*
+  - port/win*/**/*
+  - thread/osx/**/*
+  - thread/win32/**/*
+
+arch:z:
+  - compiler/z/**/*
+  - jitbuilder/z/**/*
+  - port/linuxs390*/**/*
+  - port/zos390/**/*
+  - thread/zos/**/*
+
+build / configure:
+  - buildenv/**/*
+  - cmake/**/*
+
+ci:
+  - buildenv/jenkins/**/*
+  - scripts/Appveyor-ProcessTests.ps1
+  - scripts/build-on-travis.sh
+  - ./.appveyor.yml
+  - ./.travis.yml
+  - ./azure-pipelines*
+
+cmake:
+  - cmake/**/*
+
+comp:compiler:
+  - compiler/**/*
+
+comp:diagnostic:
+  - ddr/**/*
+
+comp:gc:
+  - gc/**/*
+
+comp:jitbuilder:
+  - jitbuilder/**/*
+
+comp:port:
+  - port/**/*
+
+comp:test:
+  - fvtest/**/*
+
+comp:thread:
+  - thread/**/*
+
+comp:tril:
+  - fvtest/compilertriltest/**/*
+  - fvtest/tril/**/*
+
+documentation:
+  - doc/**/*
+  - ./**/*.md
+
+os:aix:
+  - port/aix*/**/*
+  - thread/aix*/**/*
+
+os:linux:
+  - port/linux*/**/*
+  - thread/linux*/**/*
+
+os:macos:
+  - port/osx/**/*
+  - thread/osx/**/*
+
+os:windows:
+  - port/win*/**/*
+  - thread/win*/**/*
+
+os:zos:
+  - port/zos/**/*
+  - thread/zos/**/*
+
+os:ztpf:
+  - port/ztpf/**/*

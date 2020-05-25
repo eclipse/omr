@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
@@ -40,13 +40,13 @@
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/CfgEdge.hpp"

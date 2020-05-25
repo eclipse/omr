@@ -19,12 +19,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "arm/codegen/OMRLinkage.hpp"
+#include "arm/codegen/Linkage.hpp"
 
 #include "arm/codegen/ARMInstruction.hpp"
-#ifdef J9_PROJECT_SPECIFIC
-#include "arm/codegen/ARMPrivateLinkage.hpp"
-#endif
 #include "arm/codegen/ARMSystemLinkage.hpp"
 #ifdef J9_PROJECT_SPECIFIC
 #include "codegen/CallSnippet.hpp"
@@ -42,16 +39,17 @@
 #include "codegen/StackCheckFailureSnippet.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/StackMemoryRegion.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
+#include "il/Symbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 
 #ifdef J9_PROJECT_SPECIFIC
 #include "env/VMJ9.h"
@@ -102,7 +100,7 @@ TR::Instruction *OMR::ARM::Linkage::saveArguments(TR::Instruction *cursor)
       TR::RealRegister     *argRegister;
 //      int32_t lri = paramCursor->getLinkageRegisterIndex();
 
-      int32_t ai  = paramCursor->getAllocatedIndex();
+      int32_t ai  = paramCursor->getAssignedGlobalRegisterIndex();
       int32_t                 offset = paramCursor->getParameterOffset();
 
       if (numIntArgs >= properties.getNumIntArgRegs())
@@ -500,7 +498,7 @@ int32_t OMR::ARM::Linkage::buildARMLinkageArgs(TR::Node                         
    bool isHelper  = (conventions == TR_Helper);
    bool isVirtual = (isVirtualOrJNI && conventions == TR_Private);
    bool isSystem  = (conventions == TR_System);
-   bool bigEndian = TR::Compiler->target.cpu.isBigEndian();
+   bool bigEndian = self()->comp()->target().cpu.isBigEndian();
    int32_t   i;
    int32_t   totalSize = 0;
    uint32_t  numIntegerArgs = 0;

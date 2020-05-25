@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -202,6 +202,8 @@ MM_Collector::preCollect(MM_EnvironmentBase* env, MM_MemorySubSpace* subSpace, M
 	 */
 	completeExternalConcurrentCycle(env);
 
+	_stwCollectionInProgress = true;
+	
 	/* Record the master GC thread CPU time at the start to diff later */
 	_masterThreadCpuTimeStart = omrthread_get_self_cpu_time(env->getOmrVMThread()->_os_thread);
 
@@ -461,6 +463,9 @@ MM_Collector::postCollect(MM_EnvironmentBase* env, MM_MemorySubSpace* subSpace)
 		/* Set the excessive GC state, whether it was an implicit or system GC */
 		setThreadFailAllocFlag(env, excessiveGCDetected);
 	}
+
+	Assert_MM_true(_stwCollectionInProgress);
+	_stwCollectionInProgress = false;
 }
 
 /**
@@ -531,13 +536,6 @@ MM_Collector::setThreadFailAllocFlag(MM_EnvironmentBase* env, bool flag)
 	while ((vmThread = threadListIterator.nextOMRVMThread()) != NULL) {
 		MM_EnvironmentBase::getEnvironment(vmThread)->_failAllocOnExcessiveGC = flag;
 	}
-}
-
-bool
-MM_Collector::isTimeForGlobalGCKickoff()
-{
-	Assert_MM_unreachable();
-	return false;
 }
 
 /**

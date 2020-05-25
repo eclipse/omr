@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,6 +128,7 @@ public:
 	MMINLINE void *getHeapBase() { return _heapBase; }
 
 	MMINLINE uintptr_t *getHeapMapBits() { return _heapMapBits; }
+	MMINLINE const uintptr_t *getHeapMapBits() const { return _heapMapBits; }
 
 	MMINLINE uintptr_t getObjectGrain() { return ((uintptr_t)1) << _heapMapBitShift; };
 		
@@ -154,7 +155,7 @@ public:
 	}
 	
 	MMINLINE uintptr_t 
-	getSlotIndex(omrobjectptr_t objectPtr)
+	getSlotIndex(omrobjectptr_t objectPtr) const
 	{
 		uintptr_t slotIndex = ((uintptr_t)objectPtr) - _heapMapBaseDelta;
 		slotIndex >>= _heapMapIndexShift;
@@ -255,6 +256,30 @@ public:
 		return false;
 	}
 	
+	MMINLINE uintptr_t *
+	getSlotPtr(uintptr_t index)
+	{
+		return &(getHeapMapBits()[index]);
+	}
+
+	MMINLINE const uintptr_t *
+	getSlotPtr(uintptr_t index) const
+	{
+		return &(getHeapMapBits()[index]);
+	}
+
+	MMINLINE uintptr_t *
+	getSlotPtrForAddress(omrobjectptr_t address)
+	{
+		return getSlotPtr(getSlotIndex(address));
+	}
+
+	MMINLINE const uintptr_t *
+	getSlotPtrForAddress(omrobjectptr_t address) const
+	{
+		return getSlotPtr(getSlotIndex(address));
+	}
+
 	uintptr_t numberBitsInRange(MM_EnvironmentBase *env, void *lowAddress, void *highAddress);
 
 	/**

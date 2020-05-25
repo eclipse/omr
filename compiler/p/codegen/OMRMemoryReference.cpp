@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
@@ -48,14 +48,14 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
@@ -200,7 +200,7 @@ OMR::Power::MemoryReference::MemoryReference(TR::Node *rootLoadOrStore, uint32_t
          }
       }
 
-   if (TR::Compiler->target.is32Bit() || !symbol->isConstObjectRef())
+   if (cg->comp()->target().is32Bit() || !symbol->isConstObjectRef())
       self()->addToOffset(rootLoadOrStore, ref->getOffset(), cg);
    if (self()->getUnresolvedSnippet() != NULL)
       self()->adjustForResolution(cg);
@@ -214,7 +214,6 @@ OMR::Power::MemoryReference::MemoryReference(TR::Node *node, TR::SymbolReference
      _conditions(NULL), _length(len), _staticRelocation(NULL)
    {
    TR::Symbol *symbol = symRef->getSymbol();
-
 
    if (symbol->isStatic())
       {
@@ -233,7 +232,7 @@ OMR::Power::MemoryReference::MemoryReference(TR::Node *node, TR::SymbolReference
          }
       }
 
-   if (TR::Compiler->target.is32Bit() || !symbol->isConstObjectRef())
+   if (cg->comp()->target().is32Bit() || !symbol->isConstObjectRef())
       self()->addToOffset(0, symRef->getOffset(), cg);
    if (self()->getUnresolvedSnippet() != NULL)
       self()->adjustForResolution(cg);
@@ -288,12 +287,12 @@ int32_t OMR::Power::MemoryReference::getTOCOffset()
    // TODO: add checking for other type of TOC usages.
    if (self()->isUsingStaticTOC())
       {
-      return _symbolReference->getSymbol()->getStaticSymbol()->getTOCIndex() * sizeof(intptrj_t);
+      return _symbolReference->getSymbol()->getStaticSymbol()->getTOCIndex() * sizeof(intptr_t);
       }
    return 0;
    }
 
-void OMR::Power::MemoryReference::addToOffset(TR::Node * node, intptrj_t amount, TR::CodeGenerator *cg)
+void OMR::Power::MemoryReference::addToOffset(TR::Node * node, intptr_t amount, TR::CodeGenerator *cg)
    {
    // in compressedRefs mode, amount maybe heapBase constant, which in
    // most cases is quite large
@@ -313,16 +312,16 @@ void OMR::Power::MemoryReference::addToOffset(TR::Node * node, intptrj_t amount,
       {
       self()->consolidateRegisters(NULL, NULL, false, cg);
       }
-   intptrj_t displacement = self()->getOffset() + amount;
+   intptr_t displacement = self()->getOffset() + amount;
    if (displacement<LOWER_IMMED || displacement>UPPER_IMMED)
       {
       TR::Register  *newBase;
-      intptrj_t     upper, lower;
+      intptr_t     upper, lower;
 
       self()->setOffset(0);
-      lower = displacement & 0x0000ffff;
+      lower = (intptr_t)(int16_t)displacement;
       upper = displacement >> 16;
-      if (lower & (1<<15))
+      if (lower < 0)
          upper++;
       if (_baseRegister!=NULL && self()->isBaseModifiable())
          newBase = _baseRegister;
@@ -348,7 +347,7 @@ void OMR::Power::MemoryReference::addToOffset(TR::Node * node, intptrj_t amount,
             }
          else
             {
-            if (TR::Compiler->target.is64Bit() && (upper<LOWER_IMMED || upper>UPPER_IMMED))
+            if (cg->comp()->target().is64Bit() && (upper<LOWER_IMMED || upper>UPPER_IMMED))
                {
                TR::Register *tempReg = cg->allocateRegister();
                loadActualConstant(cg, node, upper<<16, tempReg);
@@ -403,7 +402,7 @@ void OMR::Power::MemoryReference::forceIndexedForm(TR::Node * node, TR::CodeGene
       }
 
    // true displacement available now
-   intptrj_t displacement = self()->getOffset();
+   intptr_t displacement = self()->getOffset();
 
    if (displacement == 0)
       {
@@ -484,7 +483,7 @@ void OMR::Power::MemoryReference::bookKeepingRegisterUses(TR::Instruction *instr
 
 static bool isLoadConstAndShift(TR::Node *subTree, TR::CodeGenerator *cg)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       if (subTree->getOpCodeValue() == TR::lshl)
          {
@@ -569,9 +568,9 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
          if (integerChild->getOpCode().isLoadConst())
             {
             self()->populateMemoryReference(addressChild, cg);
-            if (TR::Compiler->target.is64Bit())
+            if (cg->comp()->target().is64Bit())
                {
-               intptrj_t amount = (integerChild->getOpCodeValue() == TR::iconst) ?
+               intptr_t amount = (integerChild->getOpCodeValue() == TR::iconst) ?
                                    integerChild->getInt() :
                                    integerChild->getLongInt();
                self()->addToOffset(integerChild, amount, cg);
@@ -581,7 +580,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
             cg->decReferenceCount(integerChild);
             }
          else if (integerChild->getEvaluationPriority(cg)>addressChild->getEvaluationPriority(cg) &&
-                  !(subTree->getOpCode().isArrayRef() && TR::Compiler->target.cpu.id()==TR_PPCp6))
+                  !(subTree->getOpCode().isArrayRef() && cg->comp()->target().cpu.id()==TR_PPCp6))
             {
             self()->populateMemoryReference(integerChild, cg);
             self()->populateMemoryReference(addressChild, cg);
@@ -595,9 +594,9 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
          }
       else if (isLoadConstAndShift(subTree, cg))
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             { // 64-bit
-            intptrj_t amount = (subTree->getSecondChild()->getOpCodeValue() == TR::iconst) ?
+            intptr_t amount = (subTree->getSecondChild()->getOpCodeValue() == TR::iconst) ?
                                 subTree->getSecondChild()->getInt() :
                                 subTree->getSecondChild()->getLongInt();
             // lshl
@@ -663,7 +662,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
                _baseNode = NULL;
                }
             }
-         if (TR::Compiler->target.is32Bit() || !symbol->isConstObjectRef())
+         if (cg->comp()->target().is32Bit() || !symbol->isConstObjectRef())
             self()->addToOffset(subTree, subTree->getSymbolReference()->getOffset(), cg);
          // TODO: aliasing sets?
          cg->decReferenceCount(subTree); // need to decrement ref count because
@@ -673,7 +672,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
                subTree->getOpCodeValue() == TR::iconst || // subTree->getOpCode().isLoadConst ?
                subTree->getOpCodeValue() == TR::lconst)
          {
-         intptrj_t amount = (subTree->getOpCodeValue() == TR::iconst) ?
+         intptr_t amount = (subTree->getOpCodeValue() == TR::iconst) ?
                              subTree->getInt() : subTree->getLongInt();
          self()->addToOffset(subTree, amount, cg);
          }
@@ -1069,374 +1068,329 @@ void OMR::Power::MemoryReference::mapOpCode(TR::Instruction *currentInstruction)
       }
    }
 
-
-uint8_t *OMR::Power::MemoryReference::generateBinaryEncoding(TR::Instruction *currentInstruction, uint8_t *cursor, TR::CodeGenerator *cg)
+TR::Instruction *OMR::Power::MemoryReference::expandForUnresolvedSnippet(TR::Instruction *currentInstruction, TR::CodeGenerator *cg)
    {
-   uint32_t             *wcursor = (uint32_t *)cursor;
-   TR::RealRegister   *base, *index;
+#ifdef J9_PROJECT_SPECIFIC
    TR::Compilation *comp = cg->comp();
+   TR::Node *node = currentInstruction->getNode();
+   TR::Instruction *prevInstruction = currentInstruction->getPrev();
+   TR::UnresolvedDataSnippet *snippet = self()->getUnresolvedSnippet();
+   TR::MemoryReference *newMR = NULL;
 
-   if (self()->getStaticRelocation() != NULL)
-      self()->getStaticRelocation()->setSource2Instruction(currentInstruction);
+   TR::RealRegister *base = toRealRegister(self()->getBaseRegister());
+   TR::RealRegister *index = toRealRegister(self()->getIndexRegister());
+   TR::RealRegister *data = toRealRegister(currentInstruction->getMemoryDataRegister());
+   int32_t displacement = self()->getOffset(*comp);
 
-   base = (self()->getBaseRegister()==NULL)?cg->machine()->getRealRegister(TR::RealRegister::gr0):toRealRegister(self()->getBaseRegister());
-   index=(self()->getIndexRegister()==NULL)?NULL:toRealRegister(self()->getIndexRegister());
+   currentInstruction->remove();
 
-   if (TR::Compiler->target.is64Bit() && self()->isTOCAccess())
+   TR::Instruction *firstInstruction = generateLabelInstruction(cg, TR::InstOpCode::bl, node, getUnresolvedSnippet()->getSnippetLabel(), prevInstruction);
+   prevInstruction = firstInstruction;
+
+   if (comp->target().is64Bit() && self()->isTOCAccess())
       {
-      uint32_t preserve = *wcursor;
-      TR::RealRegister *target = toRealRegister(currentInstruction->getMemoryDataRegister());
-      int32_t  displacement = self()->getTOCOffset();
-      int32_t  lower = LO_VALUE(displacement) & 0x0000ffff;
-      int32_t  upper = cg->hiValue(displacement) & 0x0000ffff;
+      displacement = self()->getTOCOffset();
 
-      if (self()->getUnresolvedSnippet() != NULL)
+      if (displacement == PTOC_FULL_INDEX)
          {
-#ifdef J9_PROJECT_SPECIFIC
-         getUnresolvedSnippet()->setAddressOfDataReference(cursor);
-         getUnresolvedSnippet()->setMemoryReference(self());
-         getUnresolvedSnippet()->setDataRegister(target);
-         cg->addRelocation(new (cg->trHeapMemory()) TR::LabelRelative24BitRelocation(cursor, getUnresolvedSnippet()->getSnippetLabel()));
-         *wcursor = 0x48000000;                        // b SnippetLabel;
-         wcursor++;
-         cursor += PPC_INSTRUCTION_LENGTH;
-
-         if (displacement != PTOC_FULL_INDEX)
-            {
-            if (displacement<LOWER_IMMED || displacement>UPPER_IMMED)
-               {
-               *wcursor = preserve | lower;
-               toRealRegister(getModBase())->setRegisterFieldRA(wcursor);      // mb is the modified base
-               cursor += PPC_INSTRUCTION_LENGTH;
-               }
-            }
-         else
-            {
-            *wcursor = 0x60000000;                    // ori target, target, bits16-31
-            target->setRegisterFieldRS(wcursor);
-            target->setRegisterFieldRA(wcursor);
-            wcursor++;
-            cursor += PPC_INSTRUCTION_LENGTH;
-
-            *wcursor = 0x780007c6;                    // rldicr target, target, 32, 31
-            target->setRegisterFieldRS(wcursor);
-            target->setRegisterFieldRA(wcursor);
-            wcursor++;
-            cursor += PPC_INSTRUCTION_LENGTH;
-
-            *wcursor = 0x64000000;                    // oris target, target, bits32-47
-            target->setRegisterFieldRS(wcursor);
-            target->setRegisterFieldRA(wcursor);
-            wcursor++;
-            cursor += PPC_INSTRUCTION_LENGTH;
-
-            *wcursor = 0x60000000;                    // ori target, target, bits48-63
-            target->setRegisterFieldRS(wcursor);
-            target->setRegisterFieldRA(wcursor);
-            wcursor++;
-            cursor += PPC_INSTRUCTION_LENGTH;
-            }
-#endif
+         prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, data, data, 0, prevInstruction);
+         prevInstruction = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, data, data, 32, 0xffffffff00000000ULL, prevInstruction);
+         prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::oris, node, data, data, 0, prevInstruction);
+         prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, data, data, 0, prevInstruction);
          }
-      else
+      else if (displacement < LOWER_IMMED || displacement > UPPER_IMMED)
          {
-         TR::Symbol *symbol = self()->getSymbolReference()->getSymbol();
-         uint64_t addr = symbol->isStatic()?(uint64_t)symbol->getStaticSymbol()->getStaticAddress():
-                                            (uint64_t)symbol->getMethodSymbol()->getMethodAddress();
-         if (displacement != PTOC_FULL_INDEX)
-            {
-            if (!self()->getSymbolReference()->isUnresolved() && TR_PPCTableOfConstants::getTOCSlot(displacement) == 0)
-               {
-               TR_PPCTableOfConstants::setTOCSlot(displacement, addr);
-               }
-
-            if (displacement<LOWER_IMMED || displacement>UPPER_IMMED)
-               {
-               *wcursor = 0x3c000000;
-               target->setRegisterFieldRT(wcursor);
-               base->setRegisterFieldRA(wcursor);
-               *wcursor |= upper;                         // addis rT, rB, upper
-               wcursor++;
-               cursor += PPC_INSTRUCTION_LENGTH;
-               base = target;                             // rT is the modified base
-               }
-
-            *wcursor = preserve | lower;
-            base->setRegisterFieldRA(wcursor);            // Original with potential new base
-            cursor += PPC_INSTRUCTION_LENGTH;
-            }
-         else
-            {
-            if (comp->compileRelocatableCode()
-                && symbol->isStatic()
-                && symbol->isClassObject())
-               {
-               TR::Node *node = currentInstruction->getNode();
-               TR_RelocationRecordInformation *recordInfo =
-                  (TR_RelocationRecordInformation*)comp->trMemory()->allocateMemory(
-                     sizeof(TR_RelocationRecordInformation),
-                     heapAlloc);
-
-               if (comp->getOption(TR_UseSymbolValidationManager))
-                  {
-                  recordInfo->data1 = (uintptr_t)self()->getSymbolReference()->getSymbol()->getStaticSymbol()->getStaticAddress();
-                  recordInfo->data2 = (uintptr_t)TR::SymbolType::typeClass;
-                  recordInfo->data3 = fixedSequence1;
-                  cg->addExternalRelocation(
-                     new (cg->trHeapMemory()) TR::ExternalRelocation(
-                        cursor,
-                        (uint8_t*)recordInfo,
-                        TR_DiscontiguousSymbolFromManager,
-                        cg),
-                     __FILE__,
-                     __LINE__,
-                     node);
-                  }
-               else
-                  {
-                  recordInfo->data1 = (uintptr_t)self()->getSymbolReference();
-                  recordInfo->data2 = node == NULL ? -1 : node->getInlinedSiteIndex();
-                  recordInfo->data3 = fixedSequence1;
-                  cg->addExternalRelocation(
-                     new (cg->trHeapMemory()) TR::ExternalRelocation(
-                        cursor,
-                        (uint8_t*)recordInfo,
-                        TR_ClassAddress,
-                        cg),
-                     __FILE__,
-                     __LINE__,
-                     node);
-                  }
-
-               // The relocation will OR its values into the immediates, so
-               // they have to be zero beforehand
-               addr = 0;
-               }
-
-            *wcursor = 0x3c000000;                        // lis target, bits0-15
-            target->setRegisterFieldRT(wcursor);
-            *wcursor |= (addr>>48) & 0x0000ffff;
-            wcursor++;
-            cursor += PPC_INSTRUCTION_LENGTH;
-
-            *wcursor = 0x60000000;                        // ori target, target, bits16-31
-            target->setRegisterFieldRS(wcursor);
-            target->setRegisterFieldRA(wcursor);
-            *wcursor |= (addr>>32) & 0x0000ffff;
-            wcursor++;
-            cursor += PPC_INSTRUCTION_LENGTH;
-
-            *wcursor = 0x780007c6;                        // rldicr target, target, 32, 31
-            target->setRegisterFieldRS(wcursor);
-            target->setRegisterFieldRA(wcursor);
-            wcursor++;
-            cursor += PPC_INSTRUCTION_LENGTH;
-
-            *wcursor = 0x64000000;                        // oris target, target, bits32-47
-            target->setRegisterFieldRS(wcursor);
-            target->setRegisterFieldRA(wcursor);
-            *wcursor |= (addr>>16) & 0x0000ffff;
-            wcursor++;
-            cursor += PPC_INSTRUCTION_LENGTH;
-
-            *wcursor = 0x60000000;                        // ori target, target, bits48-63
-            target->setRegisterFieldRS(wcursor);
-            target->setRegisterFieldRA(wcursor);
-            *wcursor |= addr & 0x0000ffff;
-            wcursor++;
-            cursor += PPC_INSTRUCTION_LENGTH;
-            }
+         newMR = new (cg->trHeapMemory()) TR::MemoryReference(self()->getModBase(), LO_VALUE(displacement), self()->getLength(), cg);
          }
-
-      return(cursor);
       }
-
-   if (self()->getUnresolvedSnippet() != NULL)
+   else if (index != NULL || isUsingDelayedIndexedForm())
       {
-#ifdef J9_PROJECT_SPECIFIC
-      uint32_t preserve = *wcursor;
-      TR::RealRegister *mBase = toRealRegister(getModBase());
-
-      getUnresolvedSnippet()->setAddressOfDataReference(cursor);
-      getUnresolvedSnippet()->setMemoryReference(self());
-      cg->addRelocation(new (cg->trHeapMemory()) TR::LabelRelative24BitRelocation(cursor, getUnresolvedSnippet()->getSnippetLabel()));
-      *wcursor = 0x48000000;                        // b SnippetLabel;
-      wcursor++;
-      cursor += PPC_INSTRUCTION_LENGTH;
-
-      if (index != NULL)
+      if (index == NULL)
          {
-         *wcursor = 0x38000000;
-         mBase->setRegisterFieldRT(wcursor);
-         mBase->setRegisterFieldRA(wcursor);
-         wcursor++;
-         cursor += PPC_INSTRUCTION_LENGTH;              // addi Rmb, Rmb, 0
-                                                        // backpatch fills in SI field
-
-         *wcursor = preserve;
-         mBase->setRegisterFieldRA(wcursor);
-         index->setRegisterFieldRB(wcursor);        // Original Instruction
-         }
-      else if (isUsingDelayedIndexedForm())
-         {
-         *wcursor = 0x38000000;
-         mBase->setRegisterFieldRT(wcursor);
-         mBase->setRegisterFieldRA(wcursor);
-         wcursor++;
-         cursor += PPC_INSTRUCTION_LENGTH;              // addi Rmb, Rmb, 0
-                                                        // backpatch fills in SI field
-
-         *wcursor = preserve;
-         // just use 0 as RA, mBase as RB
-         mBase->setRegisterFieldRB(wcursor);        // Original Instruction
+         newMR = new (cg->trHeapMemory()) TR::MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::gr0), base, self()->getLength(), cg);
          }
       else
          {
-         *wcursor = preserve;
-         mBase->setRegisterFieldRA(wcursor);
-         *wcursor &= 0xffff0000;                    // Original with disp clear
+         newMR = new (cg->trHeapMemory()) TR::MemoryReference(base, index, self()->getLength(), cg);
          }
 
-      return(cursor + PPC_INSTRUCTION_LENGTH);
-#endif
-      }
-
-   if (index != NULL)
-      {
-      if (self()->isUsingDelayedIndexedForm())
-         {
-         int32_t  displacement = self()->getOffset(*comp);
-         if (displacement<LOWER_IMMED || displacement>UPPER_IMMED)
-            {
-            uint32_t preserve = *wcursor;
-
-            *wcursor = 0x3c000000 | ((displacement >> 16) & 0x0000ffff);
-            index->setRegisterFieldRT(wcursor);
-            cursor += PPC_INSTRUCTION_LENGTH;
-            wcursor++;                                  // lis Ri,upper
-
-            *wcursor = 0x60000000 | (displacement & 0x0000ffff);
-            index->setRegisterFieldRA(wcursor);
-            index->setRegisterFieldRS(wcursor);
-            cursor += PPC_INSTRUCTION_LENGTH;
-            wcursor++;                                  // ori Ri,Ri,lower
-
-            *wcursor = preserve;
-            base->setRegisterFieldRA(wcursor);
-            index->setRegisterFieldRB(wcursor);
-            }
-         else if (displacement != 0)
-            {
-            uint32_t preserve = *wcursor;
-
-            *wcursor = 0x38000000 | (displacement & 0x0000ffff);
-            index->setRegisterFieldRT(wcursor);
-            cursor += PPC_INSTRUCTION_LENGTH;
-            wcursor++;                                  // li Ri,disp
-
-            *wcursor = preserve;
-            base->setRegisterFieldRA(wcursor);
-            index->setRegisterFieldRB(wcursor);
-            }
-         else
-            {
-            // we don't need to use the index reg
-            // just use 0 as RA, base as RB
-            base->setRegisterFieldRB(wcursor);
-            }
-         }
-      else
-         {
-         base->setRegisterFieldRA(wcursor);
-         index->setRegisterFieldRB(wcursor);
-         }
+      prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, base, base, 0, prevInstruction);
       }
    else
       {
-      int32_t  displacement = self()->getOffset(*comp);
-      uint32_t preserve = *wcursor;
-      int32_t  lower = LO_VALUE(displacement) & 0x0000ffff;
-      int32_t  upper = cg->hiValue(displacement) & 0x0000ffff;
+      newMR = new (cg->trHeapMemory()) TR::MemoryReference(self()->getModBase(), 0, self()->getLength(), cg);
+      }
 
-      if (self()->isUsingDelayedIndexedForm())
+   // Since J9UnresolvedDataSnippet will look at this memory reference's registers, modifying them in place to be
+   // correct for binary encoding will cause that to break. Instead, we leave the current memory reference alone and
+   // simply replace the current instruction with an entirely new one.
+   if (newMR != NULL)
+      {
+      switch (currentInstruction->getKind())
          {
-         // must be isBaseModifiable()
-         if (displacement<LOWER_IMMED || displacement>UPPER_IMMED)
-            {
-            *wcursor = 0x3c000000 | upper;
-            base->setRegisterFieldRT(wcursor);
-            base->setRegisterFieldRA(wcursor);
-            cursor += PPC_INSTRUCTION_LENGTH;
-            wcursor++;                                  // addis Rb,Rb,upper
+         case TR::Instruction::IsMem:
+            prevInstruction = generateMemInstruction(
+               cg,
+               currentInstruction->getOpCodeValue(),
+               currentInstruction->getNode(),
+               newMR,
+               prevInstruction
+            );
+            break;
+         case TR::Instruction::IsMemSrc1:
+            prevInstruction = generateMemSrc1Instruction(
+               cg,
+               currentInstruction->getOpCodeValue(),
+               currentInstruction->getNode(),
+               newMR,
+               static_cast<TR::PPCMemSrc1Instruction*>(currentInstruction)->getSourceRegister(),
+               prevInstruction
+            );
+            break;
+         case TR::Instruction::IsTrg1Mem:
+            prevInstruction = generateTrg1MemInstruction(
+               cg,
+               currentInstruction->getOpCodeValue(),
+               currentInstruction->getNode(),
+               static_cast<TR::PPCTrg1MemInstruction*>(currentInstruction)->getTargetRegister(),
+               newMR,
+               prevInstruction
+            );
+            break;
+         default:
+            TR_ASSERT_FATAL_WITH_INSTRUCTION(currentInstruction, false, "Unrecognized instruction kind %d for memory instruction", currentInstruction->getKind());
+         }
+      }
 
-            *wcursor = 0x38000000 | lower;
-            base->setRegisterFieldRT(wcursor);
-            base->setRegisterFieldRA(wcursor);
-            cursor += PPC_INSTRUCTION_LENGTH;
-            wcursor++;                                  // addi Rb,Rb,lower
+   if (currentInstruction->needsGCMap())
+      {
+      firstInstruction->setNeedsGCMap(currentInstruction->getGCRegisterMask());
+      firstInstruction->setGCMap(currentInstruction->getGCMap());
+      }
+
+   snippet->setDataReferenceInstruction(firstInstruction);
+   snippet->setMemoryReference(self());
+   snippet->setDataRegister(data);
+
+   return prevInstruction;
+#else
+   TR_UNIMPLEMENTED();
+#endif
+   }
+
+TR::Instruction *OMR::Power::MemoryReference::expandInstruction(TR::Instruction *currentInstruction, TR::CodeGenerator *cg)
+   {
+   // Due to the way the generate*Instruction helpers work, there's no way to use them to generate an instruction at the
+   // start of the instruction stream at the moment. As a result, we cannot peform expansion if the first instruction is
+   // a memory instruction.
+   TR_ASSERT_FATAL(currentInstruction->getPrev(), "The first instruction cannot be a memory instruction");
+
+   self()->mapOpCode(currentInstruction);
+
+   if (self()->getUnresolvedSnippet() != NULL)
+      return self()->expandForUnresolvedSnippet(currentInstruction, cg);
+
+   if (!self()->getBaseRegister())
+      {
+      if (self()->getModBase())
+         self()->setBaseRegister(self()->getModBase());
+      else
+         self()->setBaseRegister(cg->machine()->getRealRegister(TR::RealRegister::gr0));
+      }
+   else
+      {
+      TR_ASSERT_FATAL_WITH_INSTRUCTION(currentInstruction, !self()->getModBase(), "Cannot have mod base and base register");
+      }
+
+   TR::Compilation *comp = cg->comp();
+   TR::Node *node = currentInstruction->getNode();
+   TR::Instruction *prevInstruction = currentInstruction->getPrev();
+
+   TR::RealRegister *base = toRealRegister(self()->getBaseRegister());
+   TR::RealRegister *index = toRealRegister(self()->getIndexRegister());
+   TR::RealRegister *data = toRealRegister(currentInstruction->getMemoryDataRegister());
+   int32_t displacement = self()->getOffset(*comp);
+
+   self()->setOffset(displacement);
+   self()->setDelayedOffsetDone();
+
+   TR_ASSERT_FATAL_WITH_INSTRUCTION(
+      currentInstruction,
+      index == NULL || displacement == 0 || self()->isUsingDelayedIndexedForm(),
+      "Cannot have an index register and a displacement unless using delayed indexed form"
+   );
+
+   if (self()->getStaticRelocation() != NULL)
+      {
+      prevInstruction = generateLabelInstruction(cg, TR::InstOpCode::label, node, generateLabelSymbol(cg), prevInstruction);
+      self()->getStaticRelocation()->setSource2Instruction(prevInstruction);
+      }
+
+   if (comp->target().is64Bit() && self()->isTOCAccess())
+      {
+      int32_t displacement = self()->getTOCOffset();
+      TR::SymbolReference *symRef = self()->getSymbolReference();
+      TR::Symbol *symbol = symRef->getSymbol();
+      uint64_t addr;
+
+      if (symbol->isStatic())
+         addr = (uint64_t) symbol->getStaticSymbol()->getStaticAddress();
+      else if (symbol->isMethod())
+         addr = (uint64_t) symbol->getMethodSymbol()->getMethodAddress();
+      else
+         TR_ASSERT_FATAL_WITH_INSTRUCTION(currentInstruction, false, "Symbol %s has unrecognized type for PTOC access", comp->getDebug()->getName(symbol));
+
+      if (displacement != PTOC_FULL_INDEX)
+         {
+         if (!self()->getSymbolReference()->isUnresolved() && TR_PPCTableOfConstants::getTOCSlot(displacement) == 0)
+            TR_PPCTableOfConstants::setTOCSlot(displacement, addr);
+
+         if (displacement < LOWER_IMMED || displacement > UPPER_IMMED)
+            {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, data, base, cg->hiValue(displacement), prevInstruction);
+            self()->setBaseRegister(data);
+            }
+
+         self()->setOffset(LO_VALUE(displacement));
+         }
+      else
+         {
+         if (cg->comp()->compileRelocatableCode() && symbol->isStatic() && symbol->isClassObject())
+            {
+            prevInstruction = generateLabelInstruction(cg, TR::InstOpCode::label, node, generateLabelSymbol(cg), prevInstruction);
+
+            TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*)cg->trMemory()->allocateHeapMemory(sizeof(TR_RelocationRecordInformation));
+
+            if (comp->getOption(TR_UseSymbolValidationManager))
+               {
+               recordInfo->data1 = (uintptr_t)symbol->getStaticSymbol()->getStaticAddress();
+               recordInfo->data2 = (uintptr_t)TR::SymbolType::typeClass;
+               recordInfo->data3 = fixedSequence1;
+               cg->addExternalRelocation(
+                  new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+                     prevInstruction,
+                     (uint8_t*)recordInfo,
+                     TR_DiscontiguousSymbolFromManager,
+                     cg
+                  ),
+                  __FILE__,
+                  __LINE__,
+                  node
+               );
+               }
+            else
+               {
+               recordInfo->data1 = (uintptr_t)symRef;
+               recordInfo->data2 = node == NULL ? -1 : node->getInlinedSiteIndex();
+               recordInfo->data3 = fixedSequence1;
+               cg->addExternalRelocation(
+                  new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+                     prevInstruction,
+                     (uint8_t*)recordInfo,
+                     TR_ClassAddress,
+                     cg
+                  ),
+                  __FILE__,
+                  __LINE__,
+                  node
+               );
+               }
+
+            addr = 0;
+            }
+
+         TR::Instruction *newInstruction = prevInstruction = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, data, (int16_t)(addr >> 48), prevInstruction);
+         prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, data, data, (addr >> 32) & 0xffff, prevInstruction);
+         prevInstruction = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, data, data, 32, 0xffffffff00000000ULL, prevInstruction);
+         prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::oris, node, data, data, (addr >> 16) & 0xffff, prevInstruction);
+         prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, data, data, addr & 0xffff, prevInstruction);
+
+         currentInstruction->remove();
+         currentInstruction = newInstruction;
+         }
+      }
+   else if (self()->isUsingDelayedIndexedForm())
+      {
+      if (index != NULL)
+         {
+         if (displacement < LOWER_IMMED || displacement > UPPER_IMMED)
+            {
+            prevInstruction = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, index, (int16_t)(displacement >> 16), prevInstruction);
+            prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, index, index, displacement & 0xffff, prevInstruction);
             }
          else if (displacement != 0)
             {
-            *wcursor = 0x38000000 | (displacement & 0x0000ffff);
-            index->setRegisterFieldRT(wcursor);
-            cursor += PPC_INSTRUCTION_LENGTH;
-            wcursor++;                                  // addi Rb,Rb,disp
-            }
-
-         *wcursor = preserve;
-         // just use 0 as RA, base as RB
-         base->setRegisterFieldRB(wcursor);
-         }
-      else if (displacement<LOWER_IMMED || displacement>UPPER_IMMED ||
-               (self()->offsetRequireWordAlignment() && (displacement & 3 != 0)))
-         {
-         if (self()->isBaseModifiable())
-            {
-            *wcursor = 0x3c000000 | upper;
-            base->setRegisterFieldRT(wcursor);
-            base->setRegisterFieldRA(wcursor);
-            cursor += PPC_INSTRUCTION_LENGTH;
-            wcursor++;                                  // addis Rb,Rb,upper
-
-            *wcursor = preserve | lower;
-            base->setRegisterFieldRA(wcursor);          // Original instruction
+            prevInstruction = generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, index, displacement, prevInstruction);
             }
          else
             {
-            TR::RealRegister   *stackPtr = cg->getStackPointerRegister();
-            TR::RealRegister *rX = cg->machine()->getRealRegister(choose_rX(currentInstruction, base));
-            *wcursor = (TR::Compiler->target.is64Bit())?0xf800fff8:0x9000fffc;
-            rX->setRegisterFieldRS(wcursor);
-            stackPtr->setRegisterFieldRA(wcursor);
-            cursor += PPC_INSTRUCTION_LENGTH;
-            wcursor++;                                 // stw [sp,-4], rX | std [sp, -8], rX
-
-            *wcursor = 0x3c000000 | upper;
-            rX->setRegisterFieldRT(wcursor);
-            base->setRegisterFieldRA(wcursor);
-            cursor += PPC_INSTRUCTION_LENGTH;
-            wcursor++;                                  // addis rX, Rb, upper
-
-            *wcursor = preserve | lower;
-            rX->setRegisterFieldRA(wcursor);
-            cursor += PPC_INSTRUCTION_LENGTH;
-            wcursor++;                                  // ld Rt, [rX, lower]
-                                                        // st Rs, [rX, lower]
-
-            *wcursor = (TR::Compiler->target.is64Bit())?0xe800fff8:0x8000fffc;
-            rX->setRegisterFieldRT(wcursor);
-            stackPtr->setRegisterFieldRA(wcursor);
-                                                       // lwz rX, [sp, -4] | ld rX, [sp, -8]
+            // To implicitly use a displacement of 0, put the base register into the index position and use r0 as the
+            // base register.
+            self()->setIndexRegister(base);
+            self()->setBaseRegister(cg->machine()->getRealRegister(TR::RealRegister::gr0));
             }
          }
       else
          {
-         base->setRegisterFieldRA(wcursor);
-         *wcursor |= lower;
+         TR_ASSERT_FATAL_WITH_INSTRUCTION(
+            currentInstruction,
+            self()->isBaseModifiable(),
+            "Delayed index form without index register requires isBaseModifiable"
+         );
+
+         if (displacement < LOWER_IMMED || displacement > UPPER_IMMED)
+            {
+            prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, base, base, cg->hiValue(displacement), prevInstruction);
+            displacement = LO_VALUE(displacement);
+            }
+
+         if (displacement != 0)
+            prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, base, base, displacement, prevInstruction);
+
+         self()->setIndexRegister(base);
+         self()->setBaseRegister(cg->machine()->getRealRegister(TR::RealRegister::gr0));
+         }
+
+      self()->setOffset(0);
+      }
+   else if (displacement < LOWER_IMMED || displacement > UPPER_IMMED)
+      {
+      if (self()->isBaseModifiable())
+         {
+         prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, base, base, cg->hiValue(displacement), prevInstruction);
+         self()->setOffset(LO_VALUE(displacement));
+         }
+      else
+         {
+         TR::RealRegister *stackPtr = cg->getStackPointerRegister();
+         TR::RealRegister *rX = cg->machine()->getRealRegister(choose_rX(currentInstruction, base));
+         int32_t saveLen = comp->target().is64Bit() ? 8 : 4;
+
+         prevInstruction = generateMemSrc1Instruction(
+            cg,
+            TR::InstOpCode::Op_st,
+            node,
+            new (comp->trHeapMemory()) TR::MemoryReference(stackPtr, -saveLen, saveLen, cg),
+            rX,
+            prevInstruction
+         );
+         prevInstruction = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addis, node, rX, base, cg->hiValue(displacement), prevInstruction);
+
+         self()->setBaseRegister(rX);
+         self()->setOffset(LO_VALUE(displacement));
+
+         currentInstruction = generateTrg1MemInstruction(
+            cg,
+            TR::InstOpCode::Op_load,
+            node,
+            rX,
+            new (comp->trHeapMemory()) TR::MemoryReference(stackPtr, -saveLen, saveLen, cg),
+            currentInstruction
+         );
          }
       }
-   cursor += PPC_INSTRUCTION_LENGTH;
-   return(cursor);
+
+   return currentInstruction;
    }
 
 static TR::RealRegister::RegNum choose_rX(TR::Instruction *currentInstruction, TR::RealRegister *base)
@@ -1460,78 +1414,6 @@ static TR::RealRegister::RegNum choose_rX(TR::Instruction *currentInstruction, T
    return(TR::RealRegister::gr10);
    }
 
-uint32_t OMR::Power::MemoryReference::estimateBinaryLength(TR::CodeGenerator& codeGen)
-   {
-   TR::Compilation *comp = codeGen.comp();
-   if (self()->isTOCAccess())
-      {
-      int32_t tocOffset = self()->getTOCOffset();
-      if (tocOffset == PTOC_FULL_INDEX)
-         return(5*PPC_INSTRUCTION_LENGTH);
-      if (tocOffset<LOWER_IMMED || tocOffset>UPPER_IMMED)
-         return(2*PPC_INSTRUCTION_LENGTH);
-      return(PPC_INSTRUCTION_LENGTH);
-      }
-
-   if (self()->getUnresolvedSnippet() != NULL)
-      {
-      if (_indexRegister != NULL || self()->isUsingDelayedIndexedForm())
-         {
-         return(3*PPC_INSTRUCTION_LENGTH);
-         }
-      else
-         {
-         return(2*PPC_INSTRUCTION_LENGTH);
-         }
-      }
-
-   if (_indexRegister != NULL)
-      {
-      if (self()->isUsingDelayedIndexedForm())
-         {
-         if (self()->getOffset(*comp)<LOWER_IMMED || self()->getOffset(*comp)>UPPER_IMMED)
-            {
-            return(3*PPC_INSTRUCTION_LENGTH);
-            }
-         else if (self()->getOffset(*comp) != 0)
-            {
-            return(2*PPC_INSTRUCTION_LENGTH);
-            }
-         }
-      return(PPC_INSTRUCTION_LENGTH);
-      }
-   else
-      {
-      if (self()->isUsingDelayedIndexedForm())
-         {
-         // must be isBaseModifiable()
-         if (self()->getOffset(*comp)<LOWER_IMMED || self()->getOffset(*comp)>UPPER_IMMED)
-            {
-            return(3*PPC_INSTRUCTION_LENGTH);
-            }
-         else if (self()->getOffset(*comp) != 0)
-            {
-            return(2*PPC_INSTRUCTION_LENGTH);
-            }
-         }
-      if (self()->getOffset(*comp)<LOWER_IMMED || self()->getOffset(*comp)>UPPER_IMMED)
-         {
-         if (self()->isBaseModifiable())
-            {
-            return(2*PPC_INSTRUCTION_LENGTH);
-            }
-         else
-            {
-            return(4*PPC_INSTRUCTION_LENGTH);
-            }
-         }
-      else
-         {
-         return(PPC_INSTRUCTION_LENGTH);
-         }
-      }
-   }
-
 extern "C" void voom(){}
 void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolReference *ref, bool isStore, TR::CodeGenerator *cg)
    {
@@ -1551,7 +1433,7 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
       {
       TR_ASSERT(!comp->getOption(TR_AOT), "HCR: AOT is currently no supported");
       TR::Register *reg = _baseRegister = cg->allocateRegister();
-      intptrj_t address = (intptrj_t)symbol->getStaticSymbol()->getStaticAddress();
+      intptr_t address = (intptr_t)symbol->getStaticSymbol()->getStaticAddress();
       loadAddressConstantInSnippet(cg, node ? node : cg->getCurrentEvaluationTreeTop()->getNode(), address, reg, NULL, isStore?TR::InstOpCode::Op_st :TR::InstOpCode::Op_load, false, NULL);
       return;
       }
@@ -1571,66 +1453,63 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
          useUnresSnippetToAvoidRelo = false;
       }
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       TR::Node *topNode = cg->getCurrentEvaluationTreeTop()->getNode();
       TR::UnresolvedDataSnippet *snippet = NULL;
-      int32_t  tocIndex = symbol->getStaticSymbol()->getTOCIndex();
+      int32_t tocIndex = symbol->getStaticSymbol()->getTOCIndex();
+ 
+      /* don't want to trash node prematurely by the code for handling other symbols */
+      TR::Node *nodeForSymbol = node;
+      if (!nodeForSymbol)
+         nodeForSymbol = cg->getCurrentEvaluationTreeTop()->getNode();
 
-      if (cg->comp()->compileRelocatableCode())
+      if (symbol->isDebugCounter() && cg->comp()->compileRelocatableCode())
          {
-         /* don't want to trash node prematurely by the code for handling other symbols */
-         TR::Node *nodeForSymbol = node;
-         if (!nodeForSymbol)
-            nodeForSymbol = cg->getCurrentEvaluationTreeTop()->getNode();
-
-         if (symbol->isDebugCounter())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_DebugCounter);
-            return;
-            }
-         if (symbol->isCountForRecompile())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, TR_CountForRecompile, reg, NULL, false, TR_GlobalValue);
-            return;
-            }
-         else if (symbol->isRecompilationCounter())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_BodyInfoAddressLoad);
-            return;
-            }
-         else if (symbol->isCompiledMethod())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_RamMethodSequence);
-            return;
-            }
-         else if (symbol->isStartPC())
-            {
-            // use inSnippet, as the relocation mechanism is already set up there
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstantInSnippet(cg, nodeForSymbol, 0, reg, NULL, TR::InstOpCode::addi, false, NULL);
-            return;
-            }
-         else if (isStaticField && !ref->isUnresolved())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_DataAddress);
-            return;
-            }
-         else if (isClass && !ref->isUnresolved() && comp->getOption(TR_UseSymbolValidationManager))
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, (intptrj_t)ref, reg, NULL, false, TR_ClassAddress);
-            return;
-            }
-         else
-            {
-            TR_ASSERT_FATAL(!comp->getOption(TR_UseSymbolValidationManager) || ref->isUnresolved(), "SVM relocation unhandled");
-            }
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_DebugCounter);
+         return;
+         }
+      if (symbol->isCountForRecompile() && cg->needRelocationsForPersistentInfoData())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, TR_CountForRecompile, reg, NULL, false, TR_GlobalValue);
+         return;
+         }
+      else if (symbol->isRecompilationCounter() && cg->needRelocationsForBodyInfoData())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_BodyInfoAddressLoad);
+         return;
+         }
+      else if (symbol->isCompiledMethod() && cg->needRelocationsForCurrentMethodPC())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_RamMethodSequence);
+         return;
+         }
+      else if (symbol->isStartPC())
+         {
+         // use inSnippet, as the relocation mechanism is already set up there
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstantInSnippet(cg, nodeForSymbol, 0, reg, NULL, TR::InstOpCode::addi, false, NULL);
+         return;
+         }
+      else if (isStaticField && !ref->isUnresolved() && cg->needRelocationsForStatics())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_DataAddress);
+         return;
+         }
+      else if (isClass && !ref->isUnresolved() && comp->getOption(TR_UseSymbolValidationManager) && cg->needClassAndMethodPointerRelocations())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, (intptr_t)ref, reg, NULL, false, TR_ClassAddress);
+         return;
+         }
+      else
+         {
+         TR_ASSERT_FATAL(!comp->getOption(TR_UseSymbolValidationManager) || ref->isUnresolved(), "SVM relocation unhandled");
          }
 
       // TODO: find a better default uninitialized value --- 0x80000000
@@ -1656,7 +1535,7 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
          }
 
       // TODO: Improve the code sequence for cases when we know pTOC is full.
-      TR::MemoryReference *tocRef = new (cg->trHeapMemory()) TR::MemoryReference(cg->getTOCBaseRegister(), 0, sizeof(uintptrj_t), cg);
+      TR::MemoryReference *tocRef = new (cg->trHeapMemory()) TR::MemoryReference(cg->getTOCBaseRegister(), 0, sizeof(uintptr_t), cg);
       tocRef->setSymbol(symbol, cg);
       tocRef->getSymbolReference()->copyFlags(ref);
       tocRef->setUsingStaticTOC();
@@ -1677,66 +1556,64 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
       }
    else
       {
-      if (ref->isUnresolved() || comp->compileRelocatableCode())
-         {
-         /* don't want to trash node prematurely by the code for handling other symbols */
-         TR::Node *nodeForSymbol = node;
-         if (!nodeForSymbol)
-            nodeForSymbol = cg->getCurrentEvaluationTreeTop()->getNode();
+      // don't want to trash node prematurely by the code for handling other symbols */
+      TR::Node *nodeForSymbol = node;
+      if (!nodeForSymbol)
+         nodeForSymbol = cg->getCurrentEvaluationTreeTop()->getNode();
+      bool refIsUnresolved = ref->isUnresolved();
 
-         if (symbol->isDebugCounter())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_DebugCounter);
-            return;
-            }
-         else if (symbol->isCountForRecompile())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, TR_CountForRecompile, reg, NULL, false, TR_GlobalValue);
-            return;
-            }
-         else if (symbol->isRecompilationCounter())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 0, reg, NULL, false, TR_BodyInfoAddressLoad);
-            return;
-            }
-         else if (symbol->isCompiledMethod())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 0, reg, NULL, false, TR_RamMethodSequence);
-            return;
-            }
-         else if (symbol->isStartPC())
-            {
-            // use inSnippet, as the relocation mechanism is already set up there
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstantInSnippet(cg, nodeForSymbol, 0, reg, NULL, TR::InstOpCode::addi, false, NULL);
-            return;
-            }
-         else if (isStaticField && !ref->isUnresolved())
-            {
-            TR::Register *reg = _baseRegister = cg->allocateRegister();
-            loadAddressConstant(cg, nodeForSymbol, 1, reg, NULL, false, TR_DataAddress);
-            return;
-            }
-         else if (ref->isUnresolved() || useUnresSnippetToAvoidRelo)
-            {
-            self()->setUnresolvedSnippet(new (cg->trHeapMemory()) TR::UnresolvedDataSnippet(cg, node, ref, isStore, false));
-            cg->addSnippet(self()->getUnresolvedSnippet());
-            return;
-            }
+      if ((refIsUnresolved || comp->compileRelocatableCode()) && symbol->isDebugCounter())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, comp->compileRelocatableCode(), nodeForSymbol, 1, reg, NULL, false, TR_DebugCounter);
+         return;
+         }
+      else if ((refIsUnresolved || cg->needRelocationsForPersistentInfoData()) && symbol->isCountForRecompile())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, cg->needRelocationsForPersistentInfoData(), nodeForSymbol, TR_CountForRecompile, reg, NULL, false, TR_GlobalValue);
+         return;
+         }
+      else if ((refIsUnresolved || cg->needRelocationsForBodyInfoData()) && symbol->isRecompilationCounter())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, cg->needRelocationsForBodyInfoData(), nodeForSymbol, 0, reg, NULL, false, TR_BodyInfoAddressLoad);
+         return;
+         }
+      else if (symbol->isCompiledMethod() && (ref->isUnresolved() || cg->needRelocationsForCurrentMethodPC()))
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, cg->needRelocationsForCurrentMethodPC(), nodeForSymbol, 0, reg, NULL, false, TR_RamMethodSequence);
+         return;
+         }
+      else if (symbol->isStartPC() && (ref->isUnresolved() || cg->needRelocationsForCurrentMethodPC()))
+         {
+         // use inSnippet, as the relocation mechanism is already set up there
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstantInSnippet(cg, nodeForSymbol, 0, reg, NULL, TR::InstOpCode::addi, false, NULL);
+         return;
+         }
+      else if (isStaticField && !refIsUnresolved && cg->needRelocationsForStatics())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_DataAddress);
+         return;
+         }
+      else if (refIsUnresolved || useUnresSnippetToAvoidRelo)
+         {
+         self()->setUnresolvedSnippet(new (cg->trHeapMemory()) TR::UnresolvedDataSnippet(cg, node, ref, isStore, false));
+         cg->addSnippet(self()->getUnresolvedSnippet());
+         return;
          }
 
       TR::Instruction                 *rel1;
       TR::PPCPairedRelocation         *staticRelocation;
       TR::Register                    *reg = _baseRegister = cg->allocateRegister();
       TR_ExternalRelocationTargetKind relocationKind;
-      intptrj_t                        addr;
+      intptr_t                        addr;
 
-      addr = symbol->isStatic() ? (intptrj_t)symbol->getStaticSymbol()->getStaticAddress() :
-                                  (intptrj_t)symbol->getMethodSymbol()->getMethodAddress();
+      addr = symbol->isStatic() ? (intptr_t)symbol->getStaticSymbol()->getStaticAddress() :
+                                  (intptr_t)symbol->getMethodSymbol()->getMethodAddress();
 
       if (!node) node = cg->getCurrentEvaluationTreeTop()->getNode();
 
@@ -1747,10 +1624,10 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
          }
 
       self()->setBaseModifiable();
-      rel1 = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, reg, cg->hiValue(addr)&0x0000ffff);
+      rel1 = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, reg, cg->hiValue(addr));
       self()->addToOffset(node, LO_VALUE(addr), cg);
 
-      if (comp->compileRelocatableCode())
+      if (cg->needClassAndMethodPointerRelocations())
          {
          TR_ASSERT_FATAL(
             symbol->isClassObject(),
@@ -1767,7 +1644,6 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
          }
       }
    }
-
 
 void
 OMR::Power::MemoryReference::setOffsetRequiresWordAlignment(
@@ -1805,4 +1681,14 @@ OMR::Power::MemoryReference::checkRegisters(TR::CodeGenerator *cg)
       {
       self()->consolidateRegisters(NULL, NULL, false, cg);
       }
+   }
+
+int32_t
+OMR::Power::MemoryReference::getOffset(TR::Compilation& comp)
+   {
+   int32_t displacement = _offset;
+   if (self()->hasDelayedOffset() && !self()->isDelayedOffsetDone())
+      displacement += _symbolReference->getSymbol()->getOffset();
+
+   return(displacement);
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,12 +37,12 @@
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -93,7 +93,7 @@ TR_ValueNumberInfo::TR_ValueNumberInfo(TR::Compilation *comp, TR::Optimizer *opt
             {
             TR::LexicalMemProfiler mp("use defs (value numbers - I)", comp->phaseMemProfiler());
 
-            _useDefInfo = new (comp->allocator()) TR_UseDefInfo(comp, comp->getFlowGraph(), optimizer, requiresGlobals, prefersGlobals);
+            _useDefInfo = optimizer->createUseDefInfo(comp, requiresGlobals, prefersGlobals);
             if (_useDefInfo->infoIsValid())
                {
                _optimizer->setUseDefInfo(_useDefInfo);
@@ -643,7 +643,7 @@ int32_t TR_ValueNumberInfo::hash(TR::Node *node)
       if (symRef)
          {
          TR::Symbol *sym = symRef->getSymbol();
-         h = (h << 4) + (int32_t)(intptrj_t)sym;
+         h = (h << 4) + (int32_t)(intptr_t)sym;
          g = h & 0xF0000000;
          h ^= g >> 24;
          h = (h << 4) + symRef->getOffset();
@@ -1533,7 +1533,7 @@ TR_HashValueNumberInfo::TR_HashValueNumberInfo(TR::Compilation *comp, TR::Optimi
          if (!(requiresGlobals && _optimizer->cantBuildGlobalsUseDefInfo()))
             {
             TR::LexicalMemProfiler mp("use defs (value numbers - II)", comp->phaseMemProfiler());
-            _useDefInfo = new (comp->allocator()) TR_UseDefInfo(comp, comp->getFlowGraph(), optimizer, requiresGlobals, prefersGlobals);
+            _useDefInfo = optimizer->createUseDefInfo(comp, requiresGlobals, prefersGlobals);
             if (_useDefInfo->infoIsValid())
                {
                _optimizer->setUseDefInfo(_useDefInfo);

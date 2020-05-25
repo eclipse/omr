@@ -305,21 +305,13 @@ omrsig_can_protect(struct OMRPortLibrary *portLibrary,  uint32_t flags)
 		supportedFlags |= OMRPORT_SIG_FLAG_SIGALLSYNC;
 	}
 
-	if (OMR_ARE_NO_BITS_SET(signalOptionsGlobal, OMRPORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS)) {
-		supportedFlags |= OMRPORT_SIG_FLAG_SIGQUIT | OMRPORT_SIG_FLAG_SIGABRT | OMRPORT_SIG_FLAG_SIGTERM;
-	}
-
-	if (OMR_ARE_ANY_BITS_SET(signalOptionsGlobal, OMRPORT_SIG_OPTIONS_SIGXFSZ)) {
-		supportedFlags |= OMRPORT_SIG_FLAG_SIGXFSZ;
-	}
-
 	if (OMR_ARE_ALL_BITS_SET(supportedFlags, flags)) {
 		Trc_PRT_signal_omrsig_can_protect_exiting_is_able_to_protect(supportedFlags);
 		return 1;
-	} else {
-		Trc_PRT_signal_omrsig_can_protect_exiting_is_not_able_to_protect(supportedFlags);
-		return 0;
 	}
+
+	Trc_PRT_signal_omrsig_can_protect_exiting_is_not_able_to_protect(supportedFlags);
+	return 0;
 }
 
 uint32_t

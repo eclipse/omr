@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,9 +40,9 @@ namespace OMR { typedef OMR::Power::MemoryReference MemoryReferenceConnector; }
 #include "codegen/Register.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 
 namespace TR { class PPCPairedRelocation; }
 namespace TR { class CodeGenerator; }
@@ -66,7 +66,7 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
    TR::Register *_indexRegister;
    TR::Node *_indexNode;
    TR::Register *_modBase;
-   intptrj_t _offset;
+   intptr_t _offset;
 
    TR::UnresolvedDataSnippet *_unresolvedSnippet;
    TR::PPCPairedRelocation *_staticRelocation;
@@ -86,7 +86,8 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
       TR_PPCMemoryReferenceControl_Index_Modifiable            = 0x02,
       TR_PPCMemoryReferenceControl_Static_TOC                  = 0x04,
       TR_PPCMemoryReferenceControl_Late_Xform                  = 0x08,
-      TR_PPCMemoryReferenceControl_OffsetRequiresWordAlignment = 0x10
+      TR_PPCMemoryReferenceControl_OffsetRequiresWordAlignment = 0x10,
+      TR_PPCMemoryReferenceControl_DelayedOffsetDone           = 0x20
       } TR_PPCMemoryReferenceControl;
 
    MemoryReference(TR::CodeGenerator *cg);
@@ -106,6 +107,7 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
    virtual TR::RegisterDependencyConditions *getConditions() { return _conditions; }
 
    TR::SymbolReference *getSymbolReference() {return _symbolReference;}
+   TR::SymbolReference *setSymbolReference(TR::SymbolReference *symRef) {return (_symbolReference = symRef);}
 
    TR::Register *getBaseRegister() {return _baseRegister;}
    TR::Register *setBaseRegister(TR::Register *br) {return (_baseRegister = br);}
@@ -138,18 +140,29 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
       return false;
       }
 
+   /**
+    * \brief Gets the flag indicating whether the delayed offset has already been applied.
+    *
+    * When this flag is set, the delayed offset of this MemoryReference from its register-mapped
+    * symbol has already been applied to this MemoryReference's internal offset and should not be
+    * applied again. When true, getOffset() and getOffset(TR::Compilation&) are guaranteed to
+    * return the same value.
+    *
+    * \see setDelayedOffsetDone()
+    */
+   bool isDelayedOffsetDone() { return (_flag & TR_PPCMemoryReferenceControl_DelayedOffsetDone) != 0; }
+
+   /**
+    * \brief Sets the flag to indicate that the delayed offset has been applied.
+    *
+    * \see isDelayedOffsetDone()
+    */
+   void setDelayedOffsetDone() { _flag |= TR_PPCMemoryReferenceControl_DelayedOffsetDone; }
+
    int32_t setOffset(int32_t o) {return _offset = o;}
    int32_t getOffset() {return _offset;}
 
-   int32_t getOffset(TR::Compilation& comp)
-      {
-      int32_t displacement = _offset;
-      if (_symbolReference->getSymbol() != NULL &&
-          _symbolReference->getSymbol()->isRegisterMappedSymbol())
-         displacement += _symbolReference->getSymbol()->getOffset();
-
-      return(displacement);
-      }
+   int32_t getOffset(TR::Compilation& comp);
 
    bool isBaseModifiable()
       {
@@ -277,13 +290,11 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
 
    void accessStaticItem(TR::Node *node, TR::SymbolReference *ref, bool isStore, TR::CodeGenerator *cg);
 
-   void addToOffset(TR::Node * node, intptrj_t amount, TR::CodeGenerator *cg);
+   void addToOffset(TR::Node * node, intptr_t amount, TR::CodeGenerator *cg);
 
    void forceIndexedForm(TR::Node * node, TR::CodeGenerator *cg, TR::Instruction *cursor = 0);
 
    void adjustForResolution(TR::CodeGenerator *cg);
-
-   uint32_t estimateBinaryLength(TR::CodeGenerator&);
 
    void decNodeReferenceCounts(TR::CodeGenerator *cg);
 
@@ -297,7 +308,8 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
 
    void mapOpCode(TR::Instruction *currentInstruction);
 
-   uint8_t *generateBinaryEncoding(TR::Instruction *ci, uint8_t *modRM, TR::CodeGenerator *cg);
+   TR::Instruction *expandInstruction(TR::Instruction *currentInstruction, TR::CodeGenerator *cg);
+   TR::Instruction *expandForUnresolvedSnippet(TR::Instruction *currentInstruction, TR::CodeGenerator *cg);
 
    };
 }

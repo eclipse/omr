@@ -79,7 +79,7 @@ public:
          snprintf(timestr, sizeof(timestr), "%i", (int32_t)timer % 100000);
          
          char tidstr[_threadIDLength];
-         snprintf(tidstr, sizeof(tidstr), "%d", syscall(SYS_gettid));
+         snprintf(tidstr, sizeof(tidstr), "%ld", syscall(SYS_gettid));
 
          // Construct the output filename, with the thread id and time in seconds
          char filename[_fileLength];

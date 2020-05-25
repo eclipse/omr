@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -43,10 +43,10 @@
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Flags.hpp"
 #include "ras/Debug.hpp"
@@ -62,11 +62,11 @@ namespace TR { class MethodSymbol; }
 
 static void rematerializeAddressAdds(TR::Node *rootLoadOrStore, TR::CodeGenerator *cg);
 
-intptrj_t
+intptr_t
 OMR::X86::MemoryReference::getDisplacement()
    {
    TR::SymbolReference &symRef = self()->getSymbolReference();
-   intptrj_t  displacement = symRef.getOffset();
+   intptr_t  displacement = symRef.getOffset();
    TR::Symbol *symbol = symRef.getSymbol();
 
    if (symbol != NULL)
@@ -78,7 +78,7 @@ OMR::X86::MemoryReference::getDisplacement()
          }
       else if (!symRef.isUnresolved() && symbol->isStatic())
          {
-         displacement += (uintptrj_t)symbol->castToStaticSymbol()->getStaticAddress();
+         displacement += (uintptr_t)symbol->castToStaticSymbol()->getStaticAddress();
          }
       }
 
@@ -131,7 +131,7 @@ OMR::X86::MemoryReference::MemoryReference(TR::SymbolReference *symRef, TR::Code
    self()->initialize(symRef, cg);
    }
 
-OMR::X86::MemoryReference::MemoryReference(TR::SymbolReference *symRef, intptrj_t displacement, TR::CodeGenerator *cg):
+OMR::X86::MemoryReference::MemoryReference(TR::SymbolReference *symRef, intptr_t displacement, TR::CodeGenerator *cg):
    _baseRegister(NULL),
    _baseNode(NULL),
    _indexRegister(NULL),
@@ -336,7 +336,7 @@ OMR::X86::MemoryReference::initialize(
 
 OMR::X86::MemoryReference::MemoryReference(
       TR::MemoryReference& mr,
-      intptrj_t n,
+      intptr_t n,
       TR::CodeGenerator *cg,
       TR_ScratchRegisterManager *srm) :
    _symbolReference(cg->comp()->getSymRefTab())
@@ -354,6 +354,10 @@ OMR::X86::MemoryReference::MemoryReference(
       {
       _dataSnippet = TR::UnresolvedDataSnippet::create(cg, _baseNode, &_symbolReference, false, _symbolReference.canCauseGC());
       cg->addSnippet(_dataSnippet);
+      }
+   else if (mr.getDataSnippet() != NULL)
+      {
+      _dataSnippet = mr.getDataSnippet();
       }
    else
       {
@@ -476,7 +480,7 @@ OMR::X86::MemoryReference::getStrideForNode(
       if (node->getSecondChild()->getOpCode().isLoadConst())
          {
          int32_t multiplier;
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             multiplier = (int32_t)node->getSecondChild()->getLongInt();
          else
             multiplier = node->getSecondChild()->getInt();
@@ -782,7 +786,7 @@ OMR::X86::MemoryReference::evaluate(TR::Node * node, TR::CodeGenerator * cg, TR:
          {
          //Node is already positive and zero extended
          }
-      else if (TR::Compiler->target.is64Bit())
+      else if (cg->comp()->target().is64Bit())
          {
          //Sign extension in the 64-bit case
          TR::Instruction *instr = NULL;
@@ -881,7 +885,7 @@ OMR::X86::MemoryReference::assignRegisters(
          if (assignedBaseRegister == NULL)
             {
             // Note: a MemRef can be used only once -- if you want to reuse make a copy using
-            // generateX86MemoryReference(OMR::X86::MemoryReference  &, intptrj_t, TR::CodeGenerator *cg).
+            // generateX86MemoryReference(OMR::X86::MemoryReference  &, intptr_t, TR::CodeGenerator *cg).
             TR_ASSERT(!_baseRegister->getRealRegister(),"_baseRegister is a Real Register already, are you reusing a Memory Reference?");
             assignedBaseRegister = assignGPRegister(currentInstruction, _baseRegister, TR_WordReg, cg);
             }
@@ -946,7 +950,7 @@ OMR::X86::MemoryReference::estimateBinaryLength(TR::CodeGenerator *cg)
 
    TR::RealRegister *base = toRealRegister(self()->getBaseRegister());
 
-   intptrj_t displacement;
+   intptr_t displacement;
    uint32_t addressTypes =
       (self()->getBaseRegister() != NULL ? 1 : 0) |
       (self()->getIndexRegister() != NULL ? 2 : 0) |
@@ -1043,7 +1047,7 @@ OMR::X86::MemoryReference::estimateBinaryLength(TR::CodeGenerator *cg)
 uint32_t
 OMR::X86::MemoryReference::getBinaryLengthLowerBound(TR::CodeGenerator *cg)
    {
-   intptrj_t displacement;
+   intptr_t displacement;
    uint32_t addressTypes =
       (self()->getBaseRegister()     != NULL ? 1 : 0) |
       (self()->getIndexRegister()    != NULL ? 2 : 0) |
@@ -1224,7 +1228,7 @@ OMR::X86::MemoryReference::addMetaDataForCodeAddress(
                      TR::Compilation *comp = cg->comp();
                      cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                             (uint8_t *)self()->getSymbolReference().getOwningMethod(comp)->constantPool(),
-                                                                            node ? (uint8_t *)(intptrj_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                            node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                            TR_ConstantPool, cg),
                                           __FILE__, __LINE__, node);
                      }
@@ -1232,11 +1236,11 @@ OMR::X86::MemoryReference::addMetaDataForCodeAddress(
                      {
                      if (cg->needClassAndMethodPointerRelocations())
                         {
-                        *(int32_t *)cursor = (int32_t)(TR::Compiler->cls.persistentClassPointerFromClassPointer(cg->comp(), (TR_OpaqueClassBlock*)(self()->getSymbolReference().getOffset() + (intptrj_t)staticSym->getStaticAddress())));
+                        *(int32_t *)cursor = (int32_t)(TR::Compiler->cls.persistentClassPointerFromClassPointer(cg->comp(), (TR_OpaqueClassBlock*)(self()->getSymbolReference().getOffset() + (intptr_t)staticSym->getStaticAddress())));
                         if (cg->comp()->getOption(TR_UseSymbolValidationManager))
                            {
                            cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                                     (uint8_t *)(self()->getSymbolReference().getOffset() + (intptrj_t)staticSym->getStaticAddress()),
+                                                                                                     (uint8_t *)(self()->getSymbolReference().getOffset() + (intptr_t)staticSym->getStaticAddress()),
                                                                                                      (uint8_t *)TR::SymbolType::typeClass,
                                                                                                      TR_SymbolFromManager,
                                                                                                      cg),
@@ -1245,7 +1249,7 @@ OMR::X86::MemoryReference::addMetaDataForCodeAddress(
                         else
                            {
                            cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)&self()->getSymbolReference(),
-                                                                                                    node ? (uint8_t *)(intptrj_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                                                    node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                                                     TR_ClassAddress, cg), __FILE__, __LINE__, node);
                            }
                         }
@@ -1324,7 +1328,7 @@ OMR::X86::MemoryReference::addMetaDataForCodeAddress(
 
             if (label != NULL)
                {
-               if (TR::Compiler->target.is64Bit())
+               if (cg->comp()->target().is64Bit())
                   {
                   // Assume the snippet is in RIP range
                   // TODO:AMD64: Would it be cleaner to have some kind of "isRelative" flag rather than "is64BitTarget"?
@@ -1346,7 +1350,7 @@ OMR::X86::MemoryReference::addMetaDataForCodeAddress(
 
       case 5:
          {
-         intptrj_t displacement = self()->getDisplacement();
+         intptr_t displacement = self()->getDisplacement();
          TR::RealRegister *base = toRealRegister(self()->getBaseRegister());
 
          if (!(displacement == 0 &&
@@ -1370,7 +1374,7 @@ OMR::X86::MemoryReference::addMetaDataForCodeAddress(
 
       case 7:
          {
-         intptrj_t displacement = self()->getDisplacement();
+         intptr_t displacement = self()->getDisplacement();
 
          if (!(displacement >= -128 &&
                displacement <= 127  &&
@@ -1407,7 +1411,7 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
         self()->getSymbolReference().getOffset() != 0    ||
         self()->isForceWideDisplacement()) ? 4 : 0);
 
-   intptrj_t displacement;
+   intptr_t displacement;
 
    uint8_t *cursor = modRM;
    TR::RealRegister *base = NULL;
@@ -1534,7 +1538,7 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
 
                if (self()->getUnresolvedDataSnippet() == NULL)
                   {
-                  *(int32_t *)cursor = (int32_t)(self()->getSymbolReference().getOffset() + (intptrj_t)staticSym->getStaticAddress());
+                  *(int32_t *)cursor = (int32_t)(self()->getSymbolReference().getOffset() + (intptr_t)staticSym->getStaticAddress());
                   }
                else
                   {
@@ -1576,12 +1580,12 @@ OMR::X86::MemoryReference::generateBinaryEncoding(
 
             if (label != NULL)
                {
-               if (TR::Compiler->target.is64Bit())
+               if (cg->comp()->target().is64Bit())
                   {
                   // This cast is ok because we only need the low 32 bits of the address
-                  // *(int32_t *)cursor = -(int32_t)(intptrj_t)(cursor+4);
+                  // *(int32_t *)cursor = -(int32_t)(intptr_t)(cursor+4);
                   // if it is X86MEMIMM instruction, offset need consider immedidate length
-                  *(int32_t *)cursor = -(int32_t)(intptrj_t)(cursor+4 + containingInstruction->getOpCode().info().ImmediateSize());
+                  *(int32_t *)cursor = -(int32_t)(intptr_t)(cursor+4 + containingInstruction->getOpCode().info().ImmediateSize());
                   }
                else
                   {
@@ -1759,7 +1763,7 @@ void rematerializeAddressAdds(
 
          if (debug("traceInstructionSelection"))
             {
-            if (TR::Compiler->target.is64Bit())
+            if (cg->comp()->target().is64Bit())
                diagnostic("\nRematerializing aladd [" POINTER_PRINTF_FORMAT "] with [" POINTER_PRINTF_FORMAT "] at [" POINTER_PRINTF_FORMAT "]",
                         tempNode, subTree, rootLoadOrStore);
             else
@@ -1803,13 +1807,13 @@ generateX86MemoryReference(TR::CodeGenerator *cg)
    }
 
 TR::MemoryReference  *
-generateX86MemoryReference(intptrj_t disp, TR::CodeGenerator *cg)
+generateX86MemoryReference(intptr_t disp, TR::CodeGenerator *cg)
    {
    return new (cg->trHeapMemory()) TR::MemoryReference(disp, cg);
    }
 
 TR::MemoryReference  *
-generateX86MemoryReference(TR::Register * br, intptrj_t disp, TR::CodeGenerator *cg)
+generateX86MemoryReference(TR::Register * br, intptr_t disp, TR::CodeGenerator *cg)
    {
    return new (cg->trHeapMemory()) TR::MemoryReference(br, disp, cg);
    }
@@ -1821,7 +1825,7 @@ generateX86MemoryReference(TR::Register * br, TR::Register * ir, uint8_t s, TR::
    }
 
 TR::MemoryReference  *
-generateX86MemoryReference(TR::Register * br, TR::Register * ir, uint8_t s, intptrj_t disp, TR::CodeGenerator *cg)
+generateX86MemoryReference(TR::Register * br, TR::Register * ir, uint8_t s, intptr_t disp, TR::CodeGenerator *cg)
    {
    return new (cg->trHeapMemory()) TR::MemoryReference(br, ir, s, disp, cg);
    }
@@ -1833,15 +1837,15 @@ generateX86MemoryReference(TR::Node * node, TR::CodeGenerator *cg, bool canRemat
    }
 
 TR::MemoryReference  *
-generateX86MemoryReference(TR::MemoryReference  & mr, intptrj_t n, TR::CodeGenerator *cg)
+generateX86MemoryReference(TR::MemoryReference  & mr, intptr_t n, TR::CodeGenerator *cg)
    {
    return new (cg->trHeapMemory()) TR::MemoryReference(mr, n, cg);
    }
 
 TR::MemoryReference  *
-generateX86MemoryReference(TR::MemoryReference& mr, intptrj_t n, TR_ScratchRegisterManager *srm, TR::CodeGenerator *cg)
+generateX86MemoryReference(TR::MemoryReference& mr, intptr_t n, TR_ScratchRegisterManager *srm, TR::CodeGenerator *cg)
    {
-   if(TR::Compiler->target.is64Bit())
+   if(cg->comp()->target().is64Bit())
       return new (cg->trHeapMemory()) TR::MemoryReference(mr, n, cg, srm);
    else
       return new (cg->trHeapMemory()) TR::MemoryReference(mr, n, cg);
@@ -1854,7 +1858,7 @@ generateX86MemoryReference(TR::SymbolReference * sr, TR::CodeGenerator *cg)
    }
 
 TR::MemoryReference  *
-generateX86MemoryReference(TR::SymbolReference * sr, intptrj_t displacement, TR::CodeGenerator *cg)
+generateX86MemoryReference(TR::SymbolReference * sr, intptr_t displacement, TR::CodeGenerator *cg)
    {
    return new (cg->trHeapMemory()) TR::MemoryReference(sr, displacement, cg);
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,30 +19,28 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "il/OMRSymbolReference.hpp"
+#include "il/SymbolReference.hpp"
 
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/hashtab.h"
-#include "cs2/sparsrbit.h"
 #include "env/KnownObjectTable.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
 #include "il/DataTypes.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -66,7 +64,7 @@ void
 OMR::SymbolReference::init(TR::SymbolReferenceTable * symRefTab,
           uint32_t      refNumber,
           TR::Symbol * sym,
-          intptrj_t     offset,
+          intptr_t     offset,
           mcount_t      owningMethodIndex,
           int32_t       cpIndex,
           int32_t       unresolvedIndex,
@@ -92,7 +90,7 @@ OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab)
 
 OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab,
                    TR::Symbol * symbol,
-                   intptrj_t offset)
+                   intptr_t offset)
    {
    self()->init(symRefTab, symRefTab->assignSymRefNumber(self()), symbol, offset);
    }
@@ -100,7 +98,7 @@ OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab,
 OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab,
                    int32_t refNumber,
                    TR::Symbol *ps,
-                   intptrj_t offset)
+                   intptr_t offset)
    {
    self()->init(symRefTab, refNumber, ps, offset);
    }
@@ -108,7 +106,7 @@ OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab,
 OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable *symRefTab,
                    TR::SymbolReferenceTable::CommonNonhelperSymbol number,
                    TR::Symbol *ps,
-                   intptrj_t offset)
+                   intptr_t offset)
    {
    self()->init(symRefTab, symRefTab->getNonhelperIndex(number), ps, offset);
    }
@@ -117,7 +115,7 @@ OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable *symRefTab,
 /**
  * Create a symbol reference, however, don't check named shadows
  */
-OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab, TR::Symbol * symbol, intptrj_t offset, const char *name)
+OMR::SymbolReference::SymbolReference(TR::SymbolReferenceTable * symRefTab, TR::Symbol * symbol, intptr_t offset, const char *name)
    {
    self()->init(symRefTab,
         symRefTab->assignSymRefNumber(self()),
@@ -312,7 +310,7 @@ OMR::SymbolReference::hasKnownObjectIndex()
    return self()->getKnownObjectIndex() != TR::KnownObjectTable::UNKNOWN;
    }
 
-uintptrj_t*
+uintptr_t*
 OMR::SymbolReference::getKnownObjectReferenceLocation(TR::Compilation *comp)
    {
    return self()->hasKnownObjectIndex() ?

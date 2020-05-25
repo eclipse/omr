@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2017 IBM Corp. and others
+# Copyright (c) 2016, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@ include $(top_srcdir)/omrmakefiles/configure.mk
 
 MODULE_NAME := ddrgentest
 ARTIFACT_TYPE := cxx_executable
+USE_NATIVE_ENCODING := 1
 
 OBJECTS += $(patsubst %.cpp,%$(OBJEXT),$(wildcard *.cpp))
 OBJECTS += $(patsubst %.c,%$(OBJEXT),$(wildcard *.c))
@@ -36,6 +37,8 @@ ifeq (gcc,$(OMR_TOOLCHAIN))
   MODULE_CXXFLAGS += -g3 -Wno-error -frtti -std=c++0x
 else ifeq (msvc,$(OMR_TOOLCHAIN))
   MODULE_CXXFLAGS += /Zi /EHsc
+else ifeq (zos,$(OMR_HOST_OS))
+  # no extra flags for z/OS
 else
   MODULE_CXXFLAGS += -qdbgfmt=stabstring
 endif

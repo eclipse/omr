@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
@@ -39,14 +39,14 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"
@@ -602,9 +602,11 @@ void TR_LoopTransformer::detectWhileLoops(ListAppender<TR_Structure> &whileLoops
                   {
                   TR::TreeTop *firstTree = hdrBlock->getFirstRealTreeTop();
                   static const bool skipTt = feGetEnv("TR_canonicalizerStopAtTreetop") == NULL;
+                  static const bool skipCRAnchor = feGetEnv("TR_canonicalizerStopAtCompressedRefsAnchor") == NULL;
                   while ((firstTree &&
                           (firstTree->getNode()->getOpCodeValue() == TR::asynccheck ||
                            (skipTt && firstTree->getNode()->getOpCodeValue() == TR::treetop) ||
+                           (skipCRAnchor && firstTree->getNode()->getOpCodeValue() == TR::compressedRefs) ||
                            firstTree->getNode()->getOpCode().isCheck())))
                     firstTree = firstTree->getNextTreeTop();
 
@@ -1309,14 +1311,16 @@ void TR_LoopCanonicalizer::canonicalizeNaturalLoop(TR_RegionStructure *whileLoop
    splitter2->setFrequency(sumPredFreq);
    if (loopBody->isCold())
       {
-      traceMsg(comp(), "Setting s2 block_%d cold because loop body is cold\n", splitter2->getNumber());
+      if (trace())
+         traceMsg(comp(), "Setting s2 block_%d cold because loop body is cold\n", splitter2->getNumber());
       splitter2->setIsCold(true);
       }
 
    splitter1->setFrequency(exitBlockFrequency);
    if (joinBlock->isCold())
       {
-      traceMsg(comp(), "Setting s1 block_%d cold because join block is cold\n", splitter1->getNumber());
+      if (trace())
+         traceMsg(comp(), "Setting s1 block_%d cold because join block is cold\n", splitter1->getNumber());
       splitter2->setIsCold(true);
       }
 
@@ -2532,16 +2536,6 @@ bool TR_LoopCanonicalizer::examineTreeForInductionVariableUse(TR::Block *loopInv
       _primaryInductionVarStoreSomewhereInBlock = NULL;
       _derivedInductionVarStoreInBlock = NULL;
       _currentBlock = node->getBlock();
-      }
-
-   if (node->getOpCode().hasSymbolReference() &&
-       !node->getOpCode().isStore() &&
-       node->getSymbolReference() == _symRefBeingReplaced &&
-       comp()->getJittedMethodSymbol() && // avoid NULL pointer on non-Wcode builds
-              comp()->getJittedMethodSymbol()->isNoTemps())
-      {
-      dumpOptDetails(comp(), "Skipping transformation under NOTEMPS\n");
-      return false;
       }
 
    if (node->getOpCode().hasSymbolReference() &&

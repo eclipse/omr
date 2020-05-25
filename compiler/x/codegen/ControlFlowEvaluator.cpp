@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
@@ -57,14 +57,14 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
 #include "infra/List.hpp"
@@ -90,11 +90,11 @@ static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg);
 // Right now, this function is duplicated in TreeEval, ControlFlowEval, Binary &UnaryEval.
 inline bool getNodeIs64Bit(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::Compiler->target.is64Bit() && node->getSize() > 4;
+   return cg->comp()->target().is64Bit() && node->getSize() > 4;
    }
 
 // Right now, this is duplicated in ControlFlowEval, BinaryEval and TreeEval.
-inline intptrj_t integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg)
+inline intptr_t integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg)
    {
    if (getNodeIs64Bit(node, cg))
       {
@@ -107,10 +107,10 @@ inline intptrj_t integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg)
       }
    }
 // Right now, this is duplicated in ControlFlowEval, BinaryEval and TreeEval.
-inline bool constNodeValueIs32BitSigned(TR::Node *node, intptrj_t *value, TR::CodeGenerator *cg)
+inline bool constNodeValueIs32BitSigned(TR::Node *node, intptr_t *value, TR::CodeGenerator *cg)
    {
    *value = integerConstNodeValue(node, cg);
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       return IS_32BIT_SIGNED(*value);
       }
@@ -123,7 +123,7 @@ inline bool constNodeValueIs32BitSigned(TR::Node *node, intptrj_t *value, TR::Co
 
 
 static inline TR::Instruction *generateWiderCompare(TR::Node *node, TR::Register *targetReg,
-                                                   intptrj_t value,
+                                                   intptr_t value,
                                                    TR::CodeGenerator *cg)
    {
    // using 16bit immediate in a 32-bit compare instruction (0x66 length change prefix)
@@ -430,8 +430,8 @@ TR::Register *OMR::X86::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGe
    {
    int32_t i;
    uint32_t numBranchTableEntries = node->getNumChildren() - 2;
-   intptrj_t *branchTable =
-      (intptrj_t*)cg->allocateCodeMemory(numBranchTableEntries * sizeof(branchTable[0]), cg->getCurrentEvaluationBlock()->isCold());
+   intptr_t *branchTable =
+      (intptr_t*)cg->allocateCodeMemory(numBranchTableEntries * sizeof(branchTable[0]), cg->getCurrentEvaluationBlock()->isCold());
 
    TR::Register *selectorReg = cg->evaluate(node->getFirstChild());
    TR_X86OpCodes opCode;
@@ -465,7 +465,7 @@ TR::Register *OMR::X86::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGe
 
    TR::MemoryReference *jumpMR = NULL;
    TR::Register *branchTableReg = NULL;
-   if (TR::Compiler->target.is64Bit() && cg->comp()->compileRelocatableCode())
+   if (cg->comp()->target().is64Bit() && cg->comp()->compileRelocatableCode())
       {
       // Generate position-independent code so that no (external) relocation is
       // necessary:
@@ -485,8 +485,8 @@ TR::Register *OMR::X86::TreeEvaluator::tableEvaluator(TR::Node *node, TR::CodeGe
       jumpMR = generateX86MemoryReference(
          (TR::Register *)NULL,
          selectorReg,
-         (uint8_t)(TR::Compiler->target.is64Bit()? 3 : 2),
-         (intptrj_t)branchTable, cg);
+         (uint8_t)(cg->comp()->target().is64Bit()? 3 : 2),
+         (intptr_t)branchTable, cg);
 
       jumpMR->setNeedsCodeAbsoluteExternalRelocation();
       }
@@ -617,14 +617,14 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
       cg->evaluate(secondChild);
       }
 
-   intptrj_t constValue;
+   intptr_t constValue;
    if (secondChild->getOpCode().isLoadConst() &&
        secondChild->getRegister() == NULL     &&
        (((secondChild->getSize() <= 2) && (!secondChild->isUnsigned())) ||
        (TR::TreeEvaluator::constNodeValueIs32BitSigned(secondChild, &constValue, cg) && !cg->constantAddressesCanChangeSize(secondChild))))
       {
       if(secondChild->getSize() <= 2)
-         constValue = (intptrj_t)secondChild->get64bitIntegralValue();
+         constValue = (intptr_t)secondChild->get64bitIntegralValue();
 
       // compare  (node)
       //    ?     (firstChild)
@@ -969,7 +969,7 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
       //
       TR::Node *firstChild = node->getFirstChild();
 
-      if (TR::Compiler->target.is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
+      if (cg->comp()->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
          {
          if (   (firstChild->getOpCode().isLoadIndirect()
                  && firstChild->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef())
@@ -1023,7 +1023,7 @@ void OMR::X86::TreeEvaluator::compareIntegersForOrder(
    TR::Node          *secondChild,
    TR::CodeGenerator *cg)
    {
-   intptrj_t constValue;
+   intptr_t constValue;
 
    if (secondChild->getOpCode().isLoadConst() &&
        secondChild->getRegister() == NULL     &&
@@ -1231,7 +1231,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerReturnEvaluator(TR::Node *node, TR
 
    if (comp->getMethodSymbol()->getLinkageConvention() == TR_Private)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          {
          TR_ReturnInfo returnInfo;
          switch (node->getDataType())
@@ -1290,8 +1290,8 @@ TR::Register *OMR::X86::TreeEvaluator::returnEvaluator(TR::Node *node, TR::CodeG
    return NULL;
    }
 
-// also handles lternary, aternary
-TR::Register *OMR::X86::TreeEvaluator::iternaryEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+// also handles lselect, aselect
+TR::Register *OMR::X86::TreeEvaluator::iselectEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *condition = node->getChild(0);
    TR::Node *trueVal   = node->getChild(1);
@@ -1305,7 +1305,7 @@ TR::Register *OMR::X86::TreeEvaluator::iternaryEvaluator(TR::Node *node, TR::Cod
 
    // don't need to test if we're already using a compare eq or compare ne
    auto conditionOp = condition->getOpCode();
-   bool longCompareOn32bit = (TR::Compiler->target.is32Bit() && conditionOp.isBooleanCompare() &&
+   bool longCompareOn32bit = (cg->comp()->target().is32Bit() && conditionOp.isBooleanCompare() &&
          condition->getFirstChild()->getOpCode().isLong());
    //if ((conditionOp == TR::icmpeq) || (conditionOp == TR::icmpne) || (conditionOp == TR::lcmpeq) || (conditionOp == TR::lcmpne))
    if (!longCompareOn32bit && conditionOp.isCompareForEquality() && condition->getFirstChild()->getOpCode().isIntegerOrAddress())
@@ -1331,7 +1331,7 @@ TR::Register *OMR::X86::TreeEvaluator::iternaryEvaluator(TR::Node *node, TR::Cod
       generateRegRegInstruction(CMOVERegReg(trueValIs64Bit), node, trueReg, falseReg, cg);
       }
 
-   if ((node->getOpCodeValue() == TR::buternary || node->getOpCodeValue() == TR::bternary) &&
+   if (node->getOpCodeValue() == TR::bselect &&
        cg->enableRegisterInterferences())
       cg->getLiveRegisters(TR_GPR)->setByteRegisterAssociation(trueReg);
 
@@ -1563,7 +1563,7 @@ bool OMR::X86::TreeEvaluator::generateLAddOrSubForOverflowCheck(TR::Node *compar
       // leftChild might appear twice in this tree, and we need a clobber evaluate only if it also appears elsewhere
       bool leftNeedsCopy = u.leftChild->getReferenceCount() > 2 || (u.leftChild->getReferenceCount() > 1 && u.operationNode->getRegister());
       TR::Register *leftReg  = leftNeedsCopy? cg->longClobberEvaluate(u.leftChild) : cg->evaluate(u.leftChild);
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          {
          TR_X86OpCodes opCode = u.operationNode->getOpCode().isAdd()? ADD8RegReg : SUB8RegReg;
          generateRegRegInstruction(opCode, u.operationNode, leftReg, rightReg, cg);
@@ -1670,7 +1670,7 @@ TR::Register *OMR::X86::TreeEvaluator::unsignedIntegerIfCmpleEvaluator(TR::Node 
    }
 
 
-// also handles ifbcmpne, ifbucmpeq, ifbucmpne
+// also handles ifbcmpne
 TR::Register *OMR::X86::TreeEvaluator::ifbcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
 
@@ -1754,7 +1754,7 @@ TR::Register *OMR::X86::TreeEvaluator::ifbcmpeqEvaluator(TR::Node *node, TR::Cod
       }
 
    TR_X86OpCodes opCode;
-   if (node->getOpCodeValue() == TR::ifbcmpeq || node->getOpCodeValue() == TR::ifbucmpeq)
+   if (node->getOpCodeValue() == TR::ifbcmpeq)
       opCode = reverseBranch ? JNE4 : JE4;
    else
       opCode = reverseBranch ? JE4 : JNE4;
@@ -1764,8 +1764,6 @@ TR::Register *OMR::X86::TreeEvaluator::ifbcmpeqEvaluator(TR::Node *node, TR::Cod
    }
 
 // ifbcmpneEvaluator handled by ifbcmpeqEvaluator
-// ifbucmpneEvaluator handled by ifbcmpeqEvaluator
-// ifbucmpeqEvaluator handled by ifbcmpeqEvaluator
 
 TR::Register *OMR::X86::TreeEvaluator::ifbcmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -1916,7 +1914,7 @@ TR::Register *OMR::X86::TreeEvaluator::ifscmpleEvaluator(TR::Node *node, TR::Cod
    return NULL;
    }
 
-// also handles ifsucmpne
+
 TR::Register *OMR::X86::TreeEvaluator::ifsucmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::TreeEvaluator::compareIntegersForEquality(node, cg);
@@ -1924,8 +1922,6 @@ TR::Register *OMR::X86::TreeEvaluator::ifsucmpeqEvaluator(TR::Node *node, TR::Co
                                       node, cg, true);
    return NULL;
    }
-
-// ifsucmpneEvaluator handled by ifsucmpeqEvaluator
 
 TR::Register *OMR::X86::TreeEvaluator::ifsucmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -2072,7 +2068,7 @@ TR::Register *OMR::X86::TreeEvaluator::bcmpeqEvaluator(TR::Node *node, TR::CodeG
       TR_X86CompareAnalyser  temp(cg);
       temp.integerCompareAnalyser(node, CMP1RegReg, CMP1RegMem, CMP1MemReg);
       }
-   bool isEq = node->getOpCodeValue() == TR::bcmpeq || node->getOpCodeValue() == TR::bucmpeq;
+   bool isEq = node->getOpCodeValue() == TR::bcmpeq;
    generateRegInstruction(isEq ? SETE1Reg : SETNE1Reg,
                           node, targetRegister, cg);
    generateRegRegInstruction(MOVZXReg4Reg1, node, targetRegister, targetRegister, cg);
@@ -2202,7 +2198,6 @@ TR::Register *OMR::X86::TreeEvaluator::scmpleEvaluator(TR::Node *node, TR::CodeG
    return TR::TreeEvaluator::cmp2BytesEvaluator(node, SETLE1Reg, cg);
    }
 
-// also handles sucmpne
 
 TR::Register *OMR::X86::TreeEvaluator::sucmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -2244,13 +2239,10 @@ TR::Register *OMR::X86::TreeEvaluator::sucmpeqEvaluator(TR::Node *node, TR::Code
    if (cg->enableRegisterInterferences())
       cg->getLiveRegisters(TR_GPR)->setByteRegisterAssociation(targetRegister);
 
-   generateRegInstruction(node->getOpCodeValue() == TR::sucmpeq ? SETE1Reg : SETNE1Reg,
-                          node, targetRegister, cg);
+   generateRegInstruction(node->getOpCodeValue() == TR::sucmpeq ? SETE1Reg : SETNE1Reg, node, targetRegister, cg);
    generateRegRegInstruction(MOVZXReg4Reg1, node, targetRegister, targetRegister, cg);
    return targetRegister;
    }
-
-// sucmpneEvaluator handled by sucmpeqEvaluator
 
 TR::Register *OMR::X86::TreeEvaluator::sucmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -2275,29 +2267,14 @@ TR::Register *OMR::X86::TreeEvaluator::sucmpleEvaluator(TR::Node *node, TR::Code
 static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
    {
 #ifdef J9_PROJECT_SPECIFIC
-   if (!(node->isNopableInlineGuard() || node->isOSRGuard()) || !cg->getSupportsVirtualGuardNOPing())
+
+   if (!cg->willGenerateNOPForVirtualGuard(node))
+      {
       return false;
+      }
 
    TR::Compilation *comp = cg->comp();
    TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
-
-   if (!((comp->performVirtualGuardNOPing() || node->isHCRGuard() || node->isOSRGuard() || cg->needClassAndMethodPointerRelocations()) &&
-         comp->isVirtualGuardNOPingRequired(virtualGuard)) &&
-         virtualGuard->canBeRemoved())
-      return false;
-
-   if (   node->getOpCodeValue() != TR::ificmpne
-       && node->getOpCodeValue() != TR::ifacmpne
-       && node->getOpCodeValue() != TR::iflcmpne)
-      {
-      //TR_ASSERT(0, "virtualGuardHelper: not expecting reversed comparison");
-
-      // Raise an assume if the optimizer requested that this virtual guard must be NOPed
-      //
-      TR_ASSERT(virtualGuard->canBeRemoved(), "virtualGuardHelper: a non-removable virtual guard cannot be NOPed");
-
-      return false;
-      }
 
    TR_VirtualGuardSite *site = NULL;
    if (cg->needClassAndMethodPointerRelocations())
@@ -2356,7 +2333,7 @@ static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
 
    // Guards patched when the threads are stopped have no issues with multithreaded patching.
    // therefore alignment is not required
-   if (TR::Compiler->target.isSMP() && !node->isStopTheWorldGuard())
+   if (cg->comp()->target().isSMP() && !node->isStopTheWorldGuard())
       {
       // the compiler is now capable of generating a train of vgnops all looking to patch the
       // same point with different constraints. alignment is required before the delegated patch

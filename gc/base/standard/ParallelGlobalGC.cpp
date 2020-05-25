@@ -464,9 +464,6 @@ MM_ParallelGlobalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_Allo
 	
 	sweep(env, allocDescription, rebuildMarkBits);
 
-	if (_extensions->processLargeAllocateStats) {
-		processLargeAllocateStatsAfterSweep(env);
-	}
 
 #if defined(OMR_GC_MODRON_COMPACTION)
 	/* If a compaction was required, then do one */
@@ -478,6 +475,9 @@ MM_ParallelGlobalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_Allo
 
 		masterThreadCompact(env, allocDescription, rebuildMarkBits);
 		_collectionStatistics._tenureFragmentation = NO_FRAGMENTATION;
+		if (_extensions->processLargeAllocateStats) {
+			processLargeAllocateStatsAfterCompact(env);
+		}
 	} else {
 		/* If a compaction was prevented, report the reason */
 		CompactPreventedReason compactPreventedReason = (CompactPreventedReason)(_extensions->globalGCStats.compactStats._compactPreventedReason);
@@ -501,12 +501,10 @@ MM_ParallelGlobalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_Allo
 	compactedThisCycle = _compactThisCycle;
 #endif /* OMR_GC_MODRON_COMPACTION */
 
-	/* If the J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK flag is set then fix the heap so that it can be walked
-	 * by debugging tools
-	 */
+	/* If the delegate has isAllowUserHeapWalk set, fix the heap so that it can be walked */
 	if (_delegate.isAllowUserHeapWalk() || env->_cycleState->_gcCode.isRASDumpGC()) {
 		if (!_fixHeapForWalkCompleted) {
-#if defined(J9VM_GC_MODRON_COMPACTION)
+#if defined(OMR_GC_MODRON_COMPACTION)
 			if (compactedThisCycle) {
 				OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 				U_64 startTime = omrtime_hires_clock();
@@ -514,7 +512,7 @@ MM_ParallelGlobalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env, MM_Allo
 				_extensions->globalGCStats.fixHeapForWalkTime = omrtime_hires_delta(startTime, omrtime_hires_clock(), OMRPORT_TIME_DELTA_IN_MICROSECONDS);
 				_extensions->globalGCStats.fixHeapForWalkReason = FIXUP_DEBUG_TOOLING;
 			} else
-#endif /* J9VM_GC_MODRON_COMPACTION */
+#endif /* OMR_GC_MODRON_COMPACTION */
 			{
 				fixHeapForWalk(env, MEMORY_TYPE_RAM, FIXUP_DEBUG_TOOLING, fixObject);
 			}
@@ -568,7 +566,7 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 	CompactReason compactReason = COMPACT_NONE;
 	CompactPreventedReason compactPreventedReason = COMPACT_PREVENTED_NONE;
 	uintptr_t tlhPercent, totalBytesAllocated;
-	
+
 	/* Assume no compaction is required until we prove otherwise*/
 	/* If user has specified -XnoCompact then were done */
 	if(_extensions->noCompactOnGlobalGC) {
@@ -716,6 +714,46 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 			goto compactionReqd;
 		}
 	}	
+
+	{
+		/* Tenure space dark matter trigger */
+		MM_MemorySubSpace *memorySubSpace = _extensions->heap->getDefaultMemorySpace()->getTenureMemorySubSpace();
+		uintptr_t totalSize = memorySubSpace->getActiveMemorySize();
+		MM_MemoryPool *memoryPool= memorySubSpace->getMemoryPool();
+		uintptr_t darkMatterBytes = 0;
+		if (!_extensions->concurrentSweep) {
+			darkMatterBytes = memoryPool->getDarkMatterBytes();
+		}
+		uintptr_t freeMemorySize = memoryPool->getActualFreeMemorySize();
+		float darkMatterRatio = ((float)darkMatterBytes)/((float)freeMemorySize + (float)totalSize / 2);
+
+		if (darkMatterRatio > _extensions->getDarkMatterCompactThreshold()) {
+			compactReason = COMPACT_MICRO_FRAG;
+			goto compactionReqd;
+		}
+
+#if defined(OMR_GC_IDLE_HEAP_MANAGER) 
+		if ((J9MMCONSTANT_EXPLICIT_GC_IDLE_GC == gcCode.getCode()) && (_extensions->gcOnIdle)){
+
+			MM_LargeObjectAllocateStats *stats = memoryPool->getLargeObjectAllocateStats();
+
+			uintptr_t pageSize = env->getExtensions()->heap->getPageSize();
+			uintptr_t reusableFreeMemory = stats->getPageAlignedFreeMemory(pageSize);
+
+			uintptr_t memoryFragmentationDiff = freeMemorySize - reusableFreeMemory;
+			uintptr_t totalFragmentation = memoryFragmentationDiff + darkMatterBytes;
+			float totalFragmentationRatio = ((float)totalFragmentation)/((float)freeMemorySize + (float)totalSize / 2);
+
+			Trc_ParallelGlobalGC_shouldCompactThisCycle(env->getLanguageVMThread(), totalFragmentationRatio, _extensions->gcOnIdleCompactThreshold);
+
+			if (totalFragmentationRatio > _extensions->gcOnIdleCompactThreshold) {
+				compactReason = COMPACT_PAGE;
+				goto compactionReqd;
+			}
+		}
+#endif /* OMR_GC_IDLE_HEAP_MANAGER */
+	}
+
 	
 nocompact:	
 	/* Compaction not required or prevented from running */
@@ -821,6 +859,10 @@ MM_ParallelGlobalGC::sweep(MM_EnvironmentBase *env, MM_AllocateDescription *allo
 	reportSweepStart(env);
 	sweepStats->_startTime = omrtime_hires_clock();
 	masterThreadSweepStart(env, allocDescription);
+
+	if (_extensions->processLargeAllocateStats) {
+		processLargeAllocateStatsAfterSweep(env);
+	}
 
 	MM_MemorySubSpace *activeSubSpace = env->_cycleState->_activeSubSpace;
 	bool isExplicitGC = env->_cycleState->_gcCode.isExplicitGC();
@@ -1064,9 +1106,10 @@ MM_ParallelGlobalGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSp
 	/* Clear overflow flag regardless */
 	_extensions->globalGCStats.workPacketStats.setSTWWorkStackOverflowOccured(false);
 	_extensions->allocationStats.clear();
-#if defined(OMR_GC_IDLE_HEAP_MANAGER)
-	_extensions->lastGCFreeBytes = _extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD);
-#endif
+	_extensions->setLastGlobalGCFreeBytes(_extensions->heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD));
+#if defined(OMR_GC_LARGE_OBJECT_AREA)
+	_extensions->lastGlobalGCFreeBytesLOA = _extensions->heap->getApproximateActiveFreeLOAMemorySize(MEMORY_TYPE_OLD); 
+#endif /* defined (OMR_GC_LARGE_OBJECT_AREA) */
 
 
 #if defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS)
@@ -1114,6 +1157,13 @@ MM_ParallelGlobalGC::processLargeAllocateStatsBeforeGC(MM_EnvironmentBase *env)
 		defaultMemorySubspace->getTopLevelMemorySubSpace(MEMORY_TYPE_NEW)->mergeLargeObjectAllocateStats(env);
 	}
 }
+
+void
+MM_ParallelGlobalGC::processLargeAllocateStatsAfterCompact(MM_EnvironmentBase *env)
+{
+	processLargeAllocateStatsAfterSweep(env);
+}
+
 
 void
 MM_ParallelGlobalGC::processLargeAllocateStatsAfterSweep(MM_EnvironmentBase *env)
@@ -1295,10 +1345,9 @@ MM_ParallelGlobalGC::heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace 
  * @see MM_GlobalCollector::heapReconfigured()
  */
 void
-MM_ParallelGlobalGC::heapReconfigured(MM_EnvironmentBase *env)
+MM_ParallelGlobalGC::heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress)
 {
 	_sweepScheme->heapReconfigured(env);
-	
 }
 
 bool
@@ -1482,6 +1531,23 @@ MM_ParallelGlobalGC::completeExternalConcurrentCycle(MM_EnvironmentBase *env)
 	if (_extensions->isConcurrentScavengerEnabled()) {
 		/* ParallelGlobalGC or ConcurrentGC (STW phase) cannot start before Concurrent Scavenger cycle is in progress */
 		_extensions->scavenger->completeConcurrentCycle(env);
+	}
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+}
+
+void
+MM_ParallelGlobalGC::notifyAcquireExclusiveVMAccess(MM_EnvironmentBase *env)
+{
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	if (_extensions->concurrentScavengeExhaustiveTermination && _extensions->isConcurrentScavengerInProgress()) {
+		/* This thread is not releasing VM access (as being the one to request Exclusive) and doesn't have a chance (as other threads) to flush copy caches
+		 * through VMaccess-release hook, so it's doing it now.
+		 * false (not final) argument should work this time, since this will be flushed one more time (as final), as any other thread, at the start of STW increment.
+		 */
+		env->flushGCCaches(false);
+
+		/* Must specifically call it against Scavenger, even though the Exclusive access might have been requested to perform Concurrent Global. */
+		_extensions->scavenger->externalNotifyToYield(env);
 	}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 }
@@ -1675,14 +1741,6 @@ MM_ParallelGlobalGC::reportGCEnd(MM_EnvironmentBase *env)
 	/* these are assigned to temporary variable out-of-line since some preprocessors get confused if you have directives in macros */
 	uintptr_t approximateActiveFreeMemorySize = 0;
 	uintptr_t activeMemorySize = 0;
-
-	TRIGGER_J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE(
-		_extensions->privateHookInterface,
-		env->getOmrVMThread(),
-		omrtime_hires_clock(),
-		J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE,
-		_extensions->getForge()->getCurrentStatistics()
-	);
 
 	TRIGGER_J9HOOK_MM_OMR_GLOBAL_GC_END(
 		_extensions->omrHookInterface,

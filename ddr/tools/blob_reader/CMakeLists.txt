@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-add_executable(omr_blob_reader
+omr_add_executable(omr_blob_reader
 	blob_reader.cpp
 )
 
@@ -32,4 +32,20 @@ target_link_libraries(omr_blob_reader
 	omr_ddr_macros
 	omr_ddr_scanner
 	omrutil
+	omrport
+	j9thrstatic
 )
+
+if(OMRPORT_OMRSIG_SUPPORT)
+	target_link_libraries(omr_blob_reader omrsig)
+endif()
+
+if((OMR_TOOLCONFIG STREQUAL "gnu") AND (NOT OMR_OS_OSX))
+	include(CheckCXXCompilerFlag)
+	check_cxx_compiler_flag("-static-libstdc++" ALLOWS_STATIC_LIBCPP)
+	if(ALLOWS_STATIC_LIBCPP)
+		set_property(
+			TARGET omr_blob_reader
+			APPEND_STRING PROPERTY LINK_FLAGS " -static-libstdc++")
+	endif()
+endif()

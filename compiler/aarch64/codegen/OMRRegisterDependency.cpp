@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@
 #include "codegen/RealRegister.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
 
 // Replace this by #include "codegen/Instruction.hpp" when available for aarch64
 namespace TR { class Instruction; }
@@ -39,7 +40,95 @@ OMR::ARM64::RegisterDependencyConditions::RegisterDependencyConditions(
                                        uint32_t          extranum,
                                        TR::Instruction  **cursorPtr)
    {
-   TR_UNIMPLEMENTED();
+   List<TR::Register>  regList(cg->trMemory());
+   TR::Instruction    *iCursor = (cursorPtr==NULL)?NULL:*cursorPtr;
+   int32_t totalNum = node->getNumChildren() + extranum;
+   int32_t i;
+
+   cg->comp()->incVisitCount();
+
+   _preConditions = new (totalNum, cg->trMemory()) TR_ARM64RegisterDependencyGroup;
+   _postConditions = new (totalNum, cg->trMemory()) TR_ARM64RegisterDependencyGroup;
+   _numPreConditions = totalNum;
+   _addCursorForPre = 0;
+   _numPostConditions = totalNum;
+   _addCursorForPost = 0;
+
+   // First, handle dependencies that match current association
+   for (i = 0; i < node->getNumChildren(); i++)
+      {
+      TR::Node *child = node->getChild(i);
+      TR::Register *reg = child->getRegister();
+      TR::RealRegister::RegNum regNum = (TR::RealRegister::RegNum)cg->getGlobalRegister(child->getGlobalRegisterNumber());
+
+      if (reg->getAssociation() != regNum)
+         {
+         continue;
+         }
+
+      addPreCondition(reg, regNum);
+      addPostCondition(reg, regNum);
+      regList.add(reg);
+      }
+
+   // Second pass to handle dependencies for which association does not exist
+   // or does not match
+   for (i = 0; i < node->getNumChildren(); i++)
+      {
+      TR::Node *child = node->getChild(i);
+      TR::Register *reg = child->getRegister();
+      TR::Register *copyReg = NULL;
+      TR::RealRegister::RegNum regNum = (TR::RealRegister::RegNum)cg->getGlobalRegister(child->getGlobalRegisterNumber());
+
+      if (reg->getAssociation() == regNum)
+         {
+         continue;
+         }
+
+      if (regList.find(reg))
+         {
+         TR_RegisterKinds kind = reg->getKind();
+
+         TR_ASSERT_FATAL((kind == TR_GPR) || (kind == TR_FPR), "Invalid register kind.");
+
+         if (kind == TR_GPR)
+            {
+            bool containsInternalPointer = reg->getPinningArrayPointer();
+            copyReg = (reg->containsCollectedReference() && !containsInternalPointer) ?
+                        cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+            if (containsInternalPointer)
+               {
+               copyReg->setContainsInternalPointer();
+               copyReg->setPinningArrayPointer(reg->getPinningArrayPointer());
+               }
+            iCursor = generateMovInstruction(cg, node, copyReg, reg, true, iCursor);
+            }
+         else
+            {
+            bool isSinglePrecision = reg->isSinglePrecision();
+            copyReg = isSinglePrecision ? cg->allocateSinglePrecisionRegister() : cg->allocateRegister(TR_FPR);
+            iCursor = generateTrg1Src1Instruction(cg, isSinglePrecision ? TR::InstOpCode::fmovs : TR::InstOpCode::fmovd, node, copyReg, reg, iCursor);
+            }
+
+         reg = copyReg;
+         }
+
+      addPreCondition(reg, regNum);
+      addPostCondition(reg, regNum);
+      if (copyReg != NULL)
+         {
+         cg->stopUsingRegister(copyReg);
+         }
+      else
+         {
+         regList.add(reg);
+         }
+      }
+
+   if (iCursor != NULL && cursorPtr != NULL)
+      {
+      *cursorPtr = iCursor;
+      }
    }
 
 void OMR::ARM64::RegisterDependencyConditions::unionNoRegPostCondition(TR::Register *reg, TR::CodeGenerator *cg)
@@ -146,10 +235,46 @@ void OMR::ARM64::RegisterDependencyConditions::incRegisterTotalUseCounts(TR::Cod
 TR::RegisterDependencyConditions *
 OMR::ARM64::RegisterDependencyConditions::clone(
    TR::CodeGenerator *cg,
-   TR::RegisterDependencyConditions *added)
+   TR::RegisterDependencyConditions *added,
+   bool omitPre, bool omitPost)
    {
-   TR_UNIMPLEMENTED();
-   return NULL;
+   int preNum = omitPre ? 0 : getAddCursorForPre();
+   int postNum = omitPost ? 0 : getAddCursorForPost();
+   int addPreNum = 0;
+   int addPostNum = 0;
+
+   if (added != NULL)
+      {
+      addPreNum = omitPre ? 0 : added->getAddCursorForPre();
+      addPostNum = omitPost ? 0 : added->getAddCursorForPost();
+      }
+   
+   TR::RegisterDependencyConditions *result =  new (cg->trHeapMemory()) TR::RegisterDependencyConditions(preNum + addPreNum, postNum + addPostNum, cg->trMemory());
+   for (int i = 0; i < preNum; i++)
+      {
+      auto singlePair = getPreConditions()->getRegisterDependency(i);
+      result->addPreCondition(singlePair->getRegister(), singlePair->getRealRegister(), singlePair->getFlags());
+      }
+
+   for (int i = 0; i < postNum; i++)
+      {
+      auto singlePair = getPostConditions()->getRegisterDependency(i);
+      result->addPostCondition(singlePair->getRegister(), singlePair->getRealRegister(), singlePair->getFlags());
+      }
+
+   for (int i = 0; i < addPreNum; i++)
+      {
+      auto singlePair = added->getPreConditions()->getRegisterDependency(i);
+      result->addPreCondition(singlePair->getRegister(), singlePair->getRealRegister(), singlePair->getFlags());
+      }
+
+   for (int i = 0; i < addPostNum; i++)
+      {
+      auto singlePair = added->getPostConditions()->getRegisterDependency(i);
+      result->addPostCondition(singlePair->getRegister(), singlePair->getRealRegister(), singlePair->getFlags());
+      }
+
+   return result;
    }
 
 void TR_ARM64RegisterDependencyGroup::assignRegisters(

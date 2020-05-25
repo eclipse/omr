@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "compile/Compilation.hpp"
@@ -40,20 +40,20 @@
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -423,16 +423,6 @@ TR_GlobalRegisterAllocator::perform()
                ++numLocals;
             }
 
-         ListIterator<TR::RegisterMappedSymbol> methodMetaDataSymbols(&comp()->getMethodSymbol()->getMethodMetaDataList());
-         if (comp()->allocateAtThisOptLevel())
-            {
-            for (auto mds = methodMetaDataSymbols.getFirst(); mds != NULL; mds = methodMetaDataSymbols.getNext())
-               {
-               TR_ASSERT(mds->isMethodMetaData(), "Should be method meta data");
-               ++numLocals;
-               }
-            }
-
          const uint64_t MAX_BITVECTOR_MEMORY_USAGE = 1000000000;
          uint64_t bitvectorMemoryUsage = numLocals * comp()->getFlowGraph()->getNextNodeNumber();
 
@@ -483,7 +473,7 @@ TR_GlobalRegisterAllocator::perform()
       _temp2 = new (trStackMemory()) TR_BitVector(_origSymRefCount, trMemory(), stackAlloc);
 
 
-      if (TR::Compiler->target.is64Bit() &&
+      if (comp()->target().is64Bit() &&
           optimizer()->getUseDefInfo())
          {
          _temp = new (trStackMemory()) TR_BitVector(optimizer()->getUseDefInfo()->getNumDefNodes(), trMemory(), stackAlloc);
@@ -3070,7 +3060,7 @@ TR_GlobalRegister::createStoreToRegister(TR::TreeTop * prevTreeTop, TR::Node *no
    if (NULL != doit)
       enableSignExtGRA = true;
 
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp->target().cpu.isZ())
       {
       enableSignExtGRA = true;
       static char *doit2 = feGetEnv("TR_NSIGNEXTGRA");
@@ -3078,7 +3068,7 @@ TR_GlobalRegister::createStoreToRegister(TR::TreeTop * prevTreeTop, TR::Node *no
          enableSignExtGRA = false;
       }
 
-   if (TR::Compiler->target.is64Bit() &&
+   if (comp->target().is64Bit() &&
        (store->getOpCodeValue() == TR::iRegStore) &&
        gra->candidateCouldNeedSignExtension(rc->getSymbolReference()->getReferenceNumber()) &&
        enableSignExtGRA)
@@ -3893,7 +3883,7 @@ TR_GlobalRegisterAllocator::markAutosUsedIn(
    if (NULL != doit)
       enableSignExtGRA = true;
 
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp()->target().cpu.isZ())
       {
       enableSignExtGRA = true;
       static char *doit2 = feGetEnv("TR_NSIGNEXTGRA");
@@ -3912,7 +3902,7 @@ TR_GlobalRegisterAllocator::markAutosUsedIn(
    if (node->getOpCode().isLoadVarDirect() && node->getSymbolReference()->getSymbol()->isAuto())
       {
       TR_UseDefInfo *info = optimizer()->getUseDefInfo();
-      if (TR::Compiler->target.is64Bit() && info &&
+      if (comp()->target().is64Bit() && info &&
           (parent->getOpCodeValue() == TR::i2l) && node->isNonNegative() && enableSignExtGRA)
          {
          node->setSkipSignExtension(true);
@@ -4022,7 +4012,7 @@ TR_GlobalRegisterAllocator::markAutosUsedIn(
                }
             else
                {
-               if (TR::Compiler->target.cpu.isZ() &&
+               if (comp()->target().cpu.isZ() &&
                    rc->getSymbolReference()->getSymbol()->getDataType() == TR::Address &&
                    parent &&
                    (((parent->getOpCode().isStoreIndirect() ||
@@ -4326,7 +4316,7 @@ TR_GlobalRegisterAllocator::createStoresForSignExt(
    if (NULL != doit)
       enableSignExtGRA = true;
 
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp()->target().cpu.isZ())
       {
       enableSignExtGRA = true;
       static char *doit2 = feGetEnv("TR_NSIGNEXTGRA");
@@ -4630,7 +4620,7 @@ TR_LiveRangeSplitter::splitLiveRanges(TR_StructureSubGraphNode *structureNode)
 #endif
                                   );
                   int32_t numRegsForCandidate = 1;
-                  if ((symRef->getSymbol()->getType().isInt64() && TR::Compiler->target.is32Bit())
+                  if ((symRef->getSymbol()->getType().isInt64() && comp()->target().is32Bit())
 #ifdef J9_PROJECT_SPECIFIC
                       || symRef->getSymbol()->getType().isLongDouble()
 #endif

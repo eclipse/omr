@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
@@ -51,11 +51,11 @@
 #include "il/Node.hpp"
 #include "il/NodePool.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"
@@ -175,7 +175,9 @@ const OptimizationStrategy expensiveObjectAllocationOpts[] =
 
 const OptimizationStrategy eachEscapeAnalysisPassOpts[] =
    {
+   { preEscapeAnalysis,           IfOSR     },
    { escapeAnalysis                         },
+   { postEscapeAnalysis,          IfOSR     },
    { eachEscapeAnalysisPassGroup, IfEnabled }, // if another pass requested
    { endGroup                               }
    };
@@ -285,7 +287,9 @@ const OptimizationStrategy partialRedundancyEliminationOpts[] =
    { localReordering,             IfEnabled }, // PRE may create temp stores that can be moved closer to uses
    { globalValuePropagation,      IfEnabledAndMoreThanOneBlockMarkLastRun  }, // GVP (after PRE)
 #ifdef J9_PROJECT_SPECIFIC
+   { preEscapeAnalysis,           IfOSR     },
    { escapeAnalysis,              IfEAOpportunitiesMarkLastRun }, // to stack-allocate after loopversioner and localCSE
+   { postEscapeAnalysis,          IfOSR     },
 #endif
    { basicBlockOrdering,          IfLoops }, // early ordering with no extension
    { globalCopyPropagation,       IfLoops }, // for Loop Versioner
@@ -544,6 +548,7 @@ static const OptimizationStrategy ilgenStrategyOpts[] =
    { unsafeFastPath                                },
    { recognizedCallTransformer                     },
    { coldBlockMarker                               },
+   { CFGSimplification                             },
    { allocationSinking,             IfNews         },
    { invariantArgumentPreexistence, IfNotClassLoadPhaseAndNotProfiling }, // Should not run if a recompilation is possible
 #endif
@@ -760,7 +765,7 @@ OMR::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *metho
    _opts[OMR::catchBlockRemoval] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_CatchBlockRemover::create, OMR::catchBlockRemoval);
    _opts[OMR::CFGSimplification] =
-      new (comp->allocator()) TR::OptimizationManager(self(), TR_CFGSimplifier::create, OMR::CFGSimplification);
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::CFGSimplifier::create, OMR::CFGSimplification);
    _opts[OMR::checkcastAndProfiledGuardCoalescer] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_CheckcastAndProfiledGuardCoalescer::create, OMR::checkcastAndProfiledGuardCoalescer);
    _opts[OMR::coldBlockMarker] =
@@ -982,6 +987,13 @@ TR_ValueNumberInfo *OMR::Optimizer::setValueNumberInfo(TR_ValueNumberInfo *v)
    return (_valueNumberInfo = v);
    }
 
+TR_UseDefInfo* OMR::Optimizer::createUseDefInfo(TR::Compilation* comp,
+    bool requiresGlobals, bool prefersGlobals, bool loadsShouldBeDefs, bool cannotOmitTrivialDefs,
+    bool conversionRegsOnly, bool doCompletion)
+    {
+    return new (comp->allocator()) TR_UseDefInfo(comp, comp->getFlowGraph(), self(), requiresGlobals, prefersGlobals, loadsShouldBeDefs,
+        cannotOmitTrivialDefs, conversionRegsOnly, doCompletion, getCallsAsUses());
+    }
 
 TR_ValueNumberInfo *OMR::Optimizer::createValueNumberInfo(bool requiresGlobals, bool preferGlobals, bool noUseDefInfo)
    {
@@ -1171,7 +1183,7 @@ void OMR::Optimizer::dumpPostOptTrees()
    // do nothing for IlGen optimizer
    if (isIlGenOpt()) return;
 
-   TR_Method *method = comp()->getMethodSymbol()->getMethod();
+   TR::Method *method = comp()->getMethodSymbol()->getMethod();
    if ((debug("dumpPostLocalOptTrees") || comp()->getOption(TR_TraceTrees)))
       comp()->dumpMethodTrees("Post Optimization Trees");
    }
@@ -1802,7 +1814,7 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
 
             LexicalTimer t("use defs (for globals definitely)", comp()->phaseTimer());
             TR::LexicalMemProfiler mp("use defs (for globals definitely)", comp()->phaseMemProfiler());
-            useDefInfo = new (comp()->allocator()) TR_UseDefInfo(comp(), comp()->getFlowGraph(), self(),
+            useDefInfo = createUseDefInfo(comp(), 
                                    true, // requiresGlobals
                                    false,// prefersGlobals
                                    !manager->getDoesNotRequireLoadsAsDefsInUseDefs(),
@@ -1848,7 +1860,7 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
 #endif
             LexicalTimer t("use defs (for globals possibly)", comp()->phaseTimer());
             TR::LexicalMemProfiler mp("use defs (for globals possibly)", comp()->phaseMemProfiler());
-            useDefInfo = new (comp()->allocator()) TR_UseDefInfo(comp(), comp()->getFlowGraph(), self(),
+            useDefInfo = createUseDefInfo(comp(), 
                                                false, // requiresGlobals
                                                manager->getPrefersGlobalsUseDefInfo() || manager->getPrefersGlobalsValueNumbering(),
                                                !manager->getDoesNotRequireLoadsAsDefsInUseDefs(),

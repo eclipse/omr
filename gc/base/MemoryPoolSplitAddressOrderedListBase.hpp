@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -301,10 +301,11 @@ protected:
 	 */
 	MMINLINE void setNextForFreeEntryInFreeList(J9ModronFreeList* freelist, MM_HeapLinkedFreeHeader* freeEntry, MM_HeapLinkedFreeHeader* next)
 	{
+		bool const compressed = compressObjectReferences();
 		if (NULL == freeEntry) {
 			freelist->_freeList = next;
 		} else {
-			freeEntry->setNext(next);
+			freeEntry->setNext(next, compressed);
 		}
 	}
 

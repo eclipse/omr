@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@ set(j9avl_public_headers
 	"${omr_SOURCE_DIR}/include_core/avl_api.h"
 )
 
-add_library(j9avl STATIC
+omr_add_library(j9avl STATIC
 	avlsup.c
 	${CMAKE_CURRENT_BINARY_DIR}/ut_avl.c
 )
@@ -38,20 +38,12 @@ target_link_libraries(j9avl
 
 target_include_directories(j9avl
 	PUBLIC
-		$<BUILD_INTERFACE:${OMR_SOURCE_DIR}/include_core>
+		$<BUILD_INTERFACE:${omr_SOURCE_DIR}/include_core>
 		$<INSTALL_INTERFACE:${OMR_INSTALL_INC_DIR}>
 	PRIVATE
 		.
 		${CMAKE_CURRENT_BINARY_DIR}
 )
-
-if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(j9avl PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-endif()
-
-if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(j9avl PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-endif()
 
 set_property(TARGET j9avl PROPERTY FOLDER util)
 
@@ -65,4 +57,9 @@ install(
 	LIBRARY DESTINATION ${OMR_INSTALL_LIB_DIR}/
 )
 
-target_enable_ddr(j9avl "${OMR_DDR_SET}")
+target_enable_ddr(j9avl)
+ddr_add_headers(j9avl
+	${omr_SOURCE_DIR}/include_core/omravl.h
+	${omr_SOURCE_DIR}/include_core/omravldefines.h
+)
+ddr_set_add_targets(omrddr j9avl)

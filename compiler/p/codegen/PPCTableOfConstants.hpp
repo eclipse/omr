@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,12 +43,12 @@ struct TR_tocHashEntry
       {
       uint64_t   _d;
       int8_t    *_n;
-      intptrj_t  _cp;
-      intptrj_t  _addr;
+      intptr_t  _cp;
+      intptr_t  _addr;
       uint32_t   _f;
       } _key;
 
-   intptrj_t   _keyTag ;   // class-loader or anonClass used as key2 for hashed "names"
+   intptr_t   _keyTag ;   // class-loader or anonClass used as key2 for hashed "names"
    int32_t     _flag;
    int32_t     _collisionChain;
    int32_t     _tocIndex;
@@ -67,7 +67,7 @@ struct TR_tocHashEntry
 #define TR_FLAG_tocStatic2ClassKey   0x00000020
 
 // PTOC_FULL_INDEX value has to be special:
-//    no valid index or index*sizeof(intptrj_t) can equal to PTOC_FULL_INDEX
+//    no valid index or index*sizeof(intptr_t) can equal to PTOC_FULL_INDEX
 #define CHAIN_END             (-1)
 #define PTOC_FULL_INDEX       0
 
@@ -76,7 +76,7 @@ class TR_PPCTableOfConstants : public TableOfConstants
 
    TR_PERSISTENT_ALLOC(TR_Memory::TableOfConstants)
 
-   uintptrj_t              *_tocBase;
+   uintptr_t              *_tocBase;
    struct TR_tocHashEntry  *_hashMap;
    int8_t                  *_nameAStart, *_nameACursor;
    int64_t     _nameASize;
@@ -96,7 +96,7 @@ class TR_PPCTableOfConstants : public TableOfConstants
    TR_PPCTableOfConstants(uint32_t size)
       : TableOfConstants(size), _tocBase(NULL)
       {
-      _downLast = (size>>1)/sizeof(uintptrj_t);
+      _downLast = (size>>1)/sizeof(uintptr_t);
       _upLast = -(_downLast + 1);
       _upCursor = _upCursorAfterPermanentEntries = -1;
       _downCursor = _downCursorAfterPermanentEntries = 0;
@@ -125,11 +125,11 @@ class TR_PPCTableOfConstants : public TableOfConstants
          }
       }
 
-   static void       *initTOC(TR_FrontEnd *vm, TR::PersistentInfo *, uintptrj_t systemTOC);
+   static void       *initTOC(TR_FrontEnd *vm, TR::PersistentInfo *, uintptr_t systemTOC);
    static void        reinitializeMemory();
    static void        shutdown(TR_FrontEnd *vm);
    static int32_t     lookUp(int32_t val, struct TR_tocHashEntry *lk, int32_t *s, TR::CodeGenerator *cg);  // return index
-   static int32_t     lookUp(int8_t *n, int32_t len, bool isAddr,intptrj_t loader, TR::CodeGenerator *cg); // return index
+   static int32_t     lookUp(int8_t *n, int32_t len, bool isAddr,intptr_t loader, TR::CodeGenerator *cg); // return index
    static int32_t     lookUp(TR::SymbolReference *symRef, TR::CodeGenerator *);                            // return index
    static int32_t     lookUp(double d, TR::CodeGenerator *cg);                                             // return offset
    static int32_t     lookUp(float f, TR::CodeGenerator *cg);                                              // return offset
@@ -138,8 +138,8 @@ class TR_PPCTableOfConstants : public TableOfConstants
    static void        permanentEntriesAddtionComplete();
    static bool        isPermanentEntriesAddtionComplete();
 
-   static uintptrj_t   getTOCSlot(int32_t offset);
-   static void         setTOCSlot(int32_t offset, uintptrj_t v);
+   static uintptr_t   getTOCSlot(int32_t offset);
+   static void         setTOCSlot(int32_t offset, uintptr_t v);
 
    int32_t getUpLast() {return _upLast;}
    int32_t getDownLast() {return _downLast;}
@@ -156,8 +156,8 @@ class TR_PPCTableOfConstants : public TableOfConstants
    void    setPermanentEntriesAddtionComplete(bool b) { _permanentEntriesAddtionComplete = b; };
    bool    getPermanentEntriesAddtionComplete() { return _permanentEntriesAddtionComplete; }
 
-   uintptrj_t *getTOCBase() {return _tocBase;}
-   void       setTOCBase(uintptrj_t *b) {_tocBase=b;}
+   uintptr_t *getTOCBase() {return _tocBase;}
+   void       setTOCBase(uintptr_t *b) {_tocBase=b;}
 
    uint8_t *getTOCPtr() {return _tocPtr;}
    void     setTOCPtr(uint8_t* tocPtr) {_tocPtr = tocPtr;}

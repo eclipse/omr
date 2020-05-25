@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,68 @@
 #pragma csect(STATIC,"OMRZCPUBase#S")
 #pragma csect(TEST,"OMRZCPUBase#T")
 
+#include "control/Options.hpp"
+#include "control/Options_inlines.hpp"
 #include "env/CPU.hpp"
+
+TR::CPU
+OMR::Z::CPU::detect(OMRPortLibrary * const omrPortLib)
+   {
+   OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
+   OMRProcessorDesc processorDescription;
+   omrsysinfo_get_processor_description(&processorDescription);
+
+   if (processorDescription.processor >= OMR_PROCESSOR_S390_Z10 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ10))
+      processorDescription.processor = OMR_PROCESSOR_S390_FIRST;
+   else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z196 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ196))
+      processorDescription.processor = OMR_PROCESSOR_S390_Z10;
+   else if (processorDescription.processor >= OMR_PROCESSOR_S390_ZEC12 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZEC12))
+      processorDescription.processor = OMR_PROCESSOR_S390_Z196;
+   else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z13 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ13))
+      processorDescription.processor = OMR_PROCESSOR_S390_ZEC12;
+   else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z14 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ14))
+      processorDescription.processor = OMR_PROCESSOR_S390_Z13;
+   else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z15 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ15))
+      processorDescription.processor = OMR_PROCESSOR_S390_Z14;
+   else if (processorDescription.processor >= OMR_PROCESSOR_S390_ZNEXT && TR::Options::getCmdLineOptions()->getOption(TR_DisableZNext))
+      processorDescription.processor = OMR_PROCESSOR_S390_Z15;
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z10)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_DFP, FALSE);
+      }
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z196)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_HIGH_WORD, FALSE);
+      }
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_ZEC12)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_TE, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_RI, FALSE);
+      }
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z13)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_FACILITY, FALSE);
+      }
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z14)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_GUARDED_STORAGE, FALSE);
+      }
+
+   if (processorDescription.processor < OMR_PROCESSOR_S390_Z15)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY, FALSE);
+      }
+
+   return TR::CPU(processorDescription);
+   }
 
 const char*
 OMR::Z::CPU::getProcessorName(int32_t machineId)
@@ -108,12 +169,6 @@ OMR::Z::CPU::getProcessorName(int32_t machineId)
    return result;
    }
 
-OMR::Z::CPU::CPU()
-   :
-   OMR::CPU(),
-   _supportedArch(z9)
-   {}
-
 bool
 OMR::Z::CPU::getSupportsArch(Architecture arch)
    {
@@ -135,7 +190,7 @@ OMR::Z::CPU::getSupportsHardwareSQRT()
 bool
 OMR::Z::CPU::hasPopulationCountInstruction()
    {
-   return getSupportsMiscellaneousInstructionExtensions3Facility();
+   return self()->getSupportsMiscellaneousInstructionExtensions3Facility();
    }
 
 bool
@@ -314,6 +369,25 @@ OMR::Z::CPU::setSupportsGuardedStorageFacility(bool value)
    }
 
 bool
+OMR::Z::CPU::getSupportsMiscellaneousInstructionExtensions2Facility()
+   {
+   return _flags.testAny(S390SupportsMIE2);
+   }
+
+bool
+OMR::Z::CPU::setSupportsMiscellaneousInstructionExtensions2Facility(bool value)
+   {
+   if (value)
+      {
+      _flags.set(S390SupportsMIE2);
+      }
+   else
+      {
+      _flags.reset(S390SupportsMIE2);
+      }
+   }
+
+bool
 OMR::Z::CPU::getSupportsMiscellaneousInstructionExtensions3Facility()
    {
    return _flags.testAny(S390SupportsMIE3);
@@ -356,6 +430,27 @@ OMR::Z::CPU::setSupportsVectorFacilityEnhancement2(bool value)
    }
 
 bool
+OMR::Z::CPU::getSupportsVectorFacilityEnhancement1()
+   {
+   return _flags.testAny(S390SupportsVectorFacilityEnhancement1);
+   }
+
+bool
+OMR::Z::CPU::setSupportsVectorFacilityEnhancement1(bool value)
+   {
+   if (value)
+      {
+      _flags.set(S390SupportsVectorFacilityEnhancement1);
+      }
+   else
+      {
+      _flags.reset(S390SupportsVectorFacilityEnhancement1);
+      }
+
+   return value;
+   }
+
+bool
 OMR::Z::CPU::getSupportsVectorPackedDecimalEnhancementFacility()
    {
    return _flags.testAny(S390SupportsVectorPDEnhancementFacility);
@@ -377,8 +472,9 @@ OMR::Z::CPU::setSupportsVectorPackedDecimalEnhancementFacility(bool value)
    }
 
 bool
-OMR::Z::CPU::isTargetWithinBranchRelativeRILRange(intptrj_t targetAddress, intptrj_t sourceAddress)
+OMR::Z::CPU::isTargetWithinBranchRelativeRILRange(intptr_t targetAddress, intptr_t sourceAddress)
    {
-   return (targetAddress == sourceAddress + ((intptrj_t)((int32_t)((targetAddress - sourceAddress) / 2))) * 2) &&
+   return (targetAddress == sourceAddress + ((intptr_t)((int32_t)((targetAddress - sourceAddress) / 2))) * 2) &&
             (targetAddress % 2 == 0);
    }
+

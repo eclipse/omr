@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,7 @@ void
 MM_EnvironmentStandard::tearDown(MM_GCExtensionsBase *extensions)
 {
 	/* If we are in a middle of a concurrent GC, we may want to flush GC caches (if thread happens to do GC work) */
-	flushGCCaches();
+	flushGCCaches(true);
 	/* tearDown base class */
 	MM_EnvironmentBase::tearDown(extensions);
 }
@@ -93,13 +93,13 @@ MM_EnvironmentStandard::flushNonAllocationCaches()
 }
 
 void
-MM_EnvironmentStandard::flushGCCaches()
+MM_EnvironmentStandard::flushGCCaches(bool final)
 {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	if (getExtensions()->concurrentScavenger) {
 		if (MUTATOR_THREAD == getThreadType()) {
 			if (NULL != getExtensions()->scavenger) {
-				getExtensions()->scavenger->threadReleaseCaches(this, true);
+				getExtensions()->scavenger->threadReleaseCaches(NULL, this, true, final);
 			}
 		}
 	}

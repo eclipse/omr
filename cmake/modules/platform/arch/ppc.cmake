@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,8 +36,9 @@ set(TR_HOST_ARCH p)
 list(APPEND TR_COMPILE_DEFINITIONS TR_HOST_POWER TR_TARGET_POWER)
 
 if(OMR_ENV_DATA64)
-	set(TR_HOST_BITS    64)
+	set(TR_HOST_BITS 64)
 	list(APPEND TR_COMPILE_DEFINITIONS TR_HOST_64BIT TR_TARGET_64BIT BITVECTOR_64BIT)
 else()
-	message(FATAL_ERROR "JIT isn't ready to build with CMake on this platform: ")
+	set(TR_HOST_BITS 32)
+	list(APPEND TR_COMPILE_DEFINITIONS TR_HOST_32BIT TR_TARGET_32BIT)
 endif()

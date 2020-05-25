@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
 #include "compile/SymbolReferenceTable.hpp"
@@ -36,12 +36,12 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
 #include "limits.h"
 #ifdef J9_PROJECT_SPECIFIC
 #include "env/VMJ9.h"
@@ -172,14 +172,16 @@ void TR_DebuggingCounters::insertCounter(const char * name, TR::Compilation * co
       // Treetops for counterRef = counterRef + 1;
 
       TR::Node * node = tt->getNode();
-      TR::Node* loadNode = TR::Node::createWithSymRef(node, TR::iuload, 0, counterRef);
+      TR::Node* loadNode = TR::Node::createWithSymRef(node, TR::iload, 0, counterRef);
 
       TR::Node* addNode =
-         TR::Node::create(TR::iuadd, 2, loadNode,
-		         TR::Node::create(node, TR::iuconst, 0, 1));
+
+         TR::Node::create(TR::iadd, 2, loadNode,
+		         TR::Node::create(node, TR::iconst, 0, 1));
+
 
       TR::TreeTop* incrementTree =
-         TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::iustore, 1, 1,
+         TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::istore, 1, 1,
 					          addNode, counterRef));
 
       tt->getPrevTreeTop()->insertAfter(incrementTree);
@@ -232,7 +234,7 @@ void TR_DebuggingCounters::report()
          int32_t deviation = ((counterInfo->delta + 1)*counterInfo->bucketSize);
 
          if (deviation != INT_MAX)
-            fprintf(output, "Name: [%31s (%5d)] dynamic : (%5.2lf ) static : (%5.2lf ) [%llu]\n",
+            fprintf(output, "Name: [%31s (%5d)] dynamic : (%5.2lf ) static : (%5.2lf ) [%lu]\n",
 	   	             counterInfo->counterName,
                    ((counterInfo->delta + 1)*counterInfo->bucketSize),
                    //(uint32_t) counterInfo->totalCount,
@@ -252,7 +254,7 @@ void TR_DebuggingCounters::report()
 	       }
       }
 
-   fprintf(output, "Compilation sum %d Dynamic sum %llu \n", (int32_t) compilationSum, dynamicSum);
+   fprintf(output, "Compilation sum %d Dynamic sum %lu \n", (int32_t) compilationSum, dynamicSum);
    fprintf(output, "\n");
 
    if (output != stdout)

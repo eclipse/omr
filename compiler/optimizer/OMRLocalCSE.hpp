@@ -35,7 +35,7 @@
 #include "infra/List.hpp"
 #include "optimizer/Optimization.hpp"
 
-class TR_NodeKillAliasSetInterface;
+class TR_UseDefAliasSetInterface;
 namespace TR { class Block; }
 namespace TR { class LocalCSE; }
 namespace TR { class OptimizationManager; }
@@ -117,13 +117,13 @@ class LocalCSE : public TR::Optimization
    bool canBeAvailable(TR::Node *, TR::Node *, TR_BitVector &, bool);
    bool isAvailableNullCheck(TR::Node *, TR_BitVector &);
    TR::Node *getAvailableExpression(TR::Node *parent, TR::Node *node);
-   bool killExpressionsIfVolatileLoad(TR::Node *node, TR_BitVector &seenAvailableLoadedSymbolReferences, TR_NodeKillAliasSetInterface &UseDefAliases);
+   bool killExpressionsIfVolatileLoad(TR::Node *node, TR_BitVector &seenAvailableLoadedSymbolReferences, TR_UseDefAliasSetInterface &UseDefAliases);
    void killAvailableExpressionsAtGCSafePoints(TR::Node *, TR::Node *, TR_BitVector &);
    void killAllAvailableExpressions();
    void killAllDataStructures(TR_BitVector &);
    void killAvailableExpressions(int32_t);
    void killAvailableExpressionsUsingBitVector(HashTable *hashTable, TR_BitVector &vec);
-   void killAvailableExpressionsUsingAliases(TR_NodeKillAliasSetInterface &);
+   void killAvailableExpressionsUsingAliases(TR_UseDefAliasSetInterface &);
    void killAvailableExpressionsUsingAliases(TR_BitVector &);
    void killAllInternalPointersBasedOnThisPinningArray(TR::SymbolReference *symRef);
 
@@ -137,6 +137,7 @@ class LocalCSE : public TR::Optimization
    bool doCopyPropagationIfPossible(TR::Node *, TR::Node *, int32_t, TR::Node *, TR::SymbolReference *, vcount_t, bool &);
    void doCommoningIfAvailable(TR::Node *, TR::Node *, int32_t, bool &);
    void doCommoningAgainIfPreviouslyCommoned(TR::Node *, TR::Node *, int32_t);
+   bool canCommonNodeInVolatilePass(TR::Node*);
 
    TR::Node *getNode(TR::Node *node);
 

@@ -26,7 +26,7 @@
 #include "codegen/Machine.hpp"
 #include "codegen/RealRegister.hpp"
 #include "il/ILOps.hpp"
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "ras/Debug.hpp"
 #include "codegen/X86Instruction.hpp"
 #include "x/codegen/X86Ops.hpp"
@@ -44,7 +44,7 @@ uint8_t *TR::X86DivideCheckSnippet::emitSnippetBody()
 
    // CMP realDivisorReg, -1
    //
-   uint8_t rexPrefix = TR::Compiler->target.is64Bit() ? realDivisorReg->rexBits(TR::RealRegister::REX_B, false) : 0;
+   uint8_t rexPrefix = cg()->comp()->target().is64Bit() ? realDivisorReg->rexBits(TR::RealRegister::REX_B, false) : 0;
    buffer = TR_X86OpCode(CMPRegImms(_divOp.isLong())).binary(buffer, rexPrefix);
    realDivisorReg->setRMRegisterFieldInModRM(buffer-1);
    *buffer++ = -1;
@@ -58,7 +58,7 @@ uint8_t *TR::X86DivideCheckSnippet::emitSnippetBody()
       {
       // MOV eax, realDividendReg
       //
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          uint8_t rexPrefix = realDividendReg->rexBits(TR::RealRegister::REX_R, false);
          if (_divOp.isLong())
@@ -76,7 +76,7 @@ uint8_t *TR::X86DivideCheckSnippet::emitSnippetBody()
       {
       // XOR edx, edx
       //
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          uint8_t rexPrefix = 0;
          if (_divOp.isLong())
@@ -110,7 +110,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86DivideCheckSnippet  * snippet) // TOD
 
    int32_t cmpSize = 6;
 #if defined(TR_TARGET_64BIT)
-   if (TR::Compiler->target.is64Bit())
+   if (comp()->target().is64Bit())
       {
       uint8_t rexPrefix = realDivisorReg->rexBits(TR::RealRegister::REX_B, false);
       if (isLong)
@@ -132,7 +132,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86DivideCheckSnippet  * snippet) // TOD
       {
       int32_t movSize = 2;
 #if defined(TR_TARGET_64BIT)
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          uint8_t rexPrefix = realDividendReg->rexBits(TR::RealRegister::REX_R, false);
          if (isLong)
@@ -169,7 +169,7 @@ uint32_t TR::X86DivideCheckSnippet::getLength(int32_t estimatedSnippetStart)
    uint32_t fixedLength = 6;
 
    TR::Machine *machine = cg()->machine();
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       uint8_t rexPrefix = realDivisorReg->rexBits(TR::RealRegister::REX_B, false);
       if (_divOp.isLong())
@@ -184,7 +184,7 @@ uint32_t TR::X86DivideCheckSnippet::getLength(int32_t estimatedSnippetStart)
    if (_divOp.isDiv() && realDividendReg->getRegisterNumber() != TR::RealRegister::eax)
       {
       fixedLength += 2;
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          uint8_t rexPrefix = realDividendReg->rexBits(TR::RealRegister::REX_R, false);
          if (_divOp.isLong())

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,15 +66,38 @@ struct ILGenFailure : public virtual CompilationException
    };
 
 /**
+ * Unsupported value type operation exception type.
+ *
+ * Thrown if an unsupported value type operation is encountered that requires
+ * compilation to be aborted.
+ */
+struct UnsupportedValueTypeOperation : public virtual CompilationException
+   {
+   virtual const char* what() const throw() { return "Unsupported value type operation"; }
+   };
+
+/**
  * Recoverable IL Generation Failure exception type.
  *
  * Thrown on an IL Generation Failure condition which the compiler can
- * recover either by continuing the compilation, or by allowing a
- * recompilation to occur.
+ * recover either by
+ * 1. continuing the compilation of the caller method if the failing method is an inlined callee
+ * 2. allowing a recompilation to occur for the failing method if it's the outermost method
  */
 struct RecoverableILGenException : public virtual CompilationException
    {
    virtual const char* what() const throw() { return "Recoverable IL Gen Exception"; }
+   };
+
+/**
+ * Special recoverable IL Generation Failure exception type.
+ *
+ * Different from general RecoverableILGenException in that
+ * recompilation is not allowed when the failing method is the outermost method.
+ */
+struct NoRecompilationRecoverableILGenException: public RecoverableILGenException
+   {
+   virtual const char* what() const throw() { return "Recoverable IL Gen Exception with no recompilation if failing method is outermost"; }
    };
 
 /**

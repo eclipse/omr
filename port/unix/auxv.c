@@ -24,6 +24,7 @@
  * suffer the consequences if you're an ingenious fool and dlopen this library
  * after you've moved the env via a call to setenv!  Just don't do it.  */
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -45,7 +46,7 @@ static char **saved_environ = NULL;
 void __attribute__ ((__constructor__)) __attribute__ ((__visibility__ ("hidden")))
 libauxv_init (void)
 {
-  saved_environ = __environ;
+  saved_environ = environ;
 }
 
 /* Scan to the end of the saved environ to find the aux vector.  */

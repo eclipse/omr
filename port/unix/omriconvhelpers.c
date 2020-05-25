@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,24 +32,27 @@
 #include "ut_omrport.h"
 
 #if defined(J9VM_PROVIDE_ICONV)
+#include <string.h>
 #include "omrportptb.h"
 #include "omrportpriv.h"
 
 #if defined(J9ZOS390)
 #pragma convlit(suspend)
-#endif
+#endif /* defined(J9ZOS390) */
 const char *utf8 = "UTF-8";
 #if defined(J9ZOS390)
 const char *utf16 = "01200"; /* z/OS does not accept "UTF-16" */
-#elif defined(OSX)
+#elif defined(AIXPPC) /* defined(J9ZOS390) */
+const char *utf16 = "UTF-16"; /* AIX does not accept UTF-16BE */
+#elif defined(OMR_ENV_LITTLE_ENDIAN) /* defined(AIXPPC) */
 const char *utf16 = "UTF-16LE";
-#else
-const char *utf16 = "UTF-16";
-#endif
+#else /* defined(OMR_ENV_LITTLE_ENDIAN) */
+const char *utf16 = "UTF-16BE";
+#endif /* defined(OMR_ENV_LITTLE_ENDIAN) */
 const char *ebcdic = "IBM-1047";
 #if defined(J9ZOS390)
 #pragma convlit(resume)
-#endif
+#endif /* defined(J9ZOS390) */
 
 #if defined(J9ZOS390)
 /*
@@ -90,7 +93,7 @@ openIconvDescriptor(iconv_t *globalConverter, MUTEX *globalConverterMutex, uint3
 	}
 	return success;
 }
-#endif
+#endif /* defined(J9ZOS390) */
 
 /* There are  converters that are permanently cached
  * within the portLibraryGlobal structure
@@ -136,7 +139,7 @@ iconv_global_init(struct OMRPortLibrary *portLibrary)
 		}
 		rc = 1;
 	}
-#endif
+#endif /* defined(J9ZOS390) */
 	return rc;
 }
 
@@ -157,7 +160,7 @@ iconv_global_destroy(struct OMRPortLibrary *portLibrary)
 			MUTEX_DESTROY(globalConverterMutex[iconvIndex]);
 		}
 	}
-#endif
+#endif /* defined(J9ZOS390) */
 }
 
 /**
@@ -183,7 +186,6 @@ iconv_get(struct OMRPortLibrary *portLibrary, J9IconvName converterName, const c
 	PortlibPTBuffers_t ptBuffer = NULL;
 	iconv_t converter = J9VM_INVALID_ICONV_DESCRIPTOR;
 #if defined(J9ZOS390)
-
 	if (PPG_global_converter_enabled) {
 		/* NOTE: using original nl_langinfo implementation that returns an EBCDIC string
 		 * by defining J9_USE_ORIG_EBCDIC_LANGINFO which is checked in a2e/headers/langinfo.h */
@@ -222,7 +224,7 @@ iconv_get(struct OMRPortLibrary *portLibrary, J9IconvName converterName, const c
 			return globalConverter[index];
 		}
 	}
-#endif
+#endif /* defined(J9ZOS390) */
 
 	if (converterName < UNCACHED_ICONV_DESCRIPTOR) {
 		ptBuffer = (PortlibPTBuffers_t) omrport_tls_get(portLibrary);
@@ -250,7 +252,6 @@ void
 iconv_free(struct OMRPortLibrary *portLibrary, J9IconvName converterName, iconv_t converter)
 {
 #if defined(J9ZOS390)
-
 	if (PPG_global_converter_enabled) {
 		iconv_t *globalConverter = PPG_global_converter;
 		MUTEX *globalConverterMutex = PPG_global_converter_mutex;
@@ -266,7 +267,7 @@ iconv_free(struct OMRPortLibrary *portLibrary, J9IconvName converterName, iconv_
 			}
 		}
 	}
-#endif
+#endif /* defined(J9ZOS390) */
 	if (converterName < UNCACHED_ICONV_DESCRIPTOR) {
 		PortlibPTBuffers_t ptBuffer = (PortlibPTBuffers_t) omrport_tls_get(portLibrary);
 		if (ptBuffer && (converter == ptBuffer->converterCache[converterName])) {

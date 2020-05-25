@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,12 +25,6 @@
 #include "omrutil.h"
 
 #include <string.h>
-
-#if defined(__xlC__)
-void dcbz(char *);
-#pragma mc_func dcbz  {"7c001fec"}  /* dcbz, 0, r3 */
-#pragma reg_killed_by dcbz
-#endif
 
 #if (defined(LINUX) && defined(S390))
 /* _j9Z10Zero() is defined in j9memclrz10_31.s and j9memclrz10_64.s */
@@ -101,11 +95,7 @@ OMRZeroMemory(void *ptr, uintptr_t length)
 	/* dcbz forms a group on POWER4, so there is no reason to unroll */
 	limit = (char *)(((uintptr_t)ptr + length) & ~(localCacheLineSize - 1));
 	for (; addr < limit; addr += localCacheLineSize) {
-#if defined(__xlC__)
-		dcbz(addr);
-#else
 		__asm__ __volatile__("dcbz 0,%0" : /* no outputs */ : "r"(addr));
-#endif /* defined(__xlC__) */
 	}
 
 	/* zero final portion smaller than a cache line */
@@ -117,42 +107,10 @@ OMRZeroMemory(void *ptr, uintptr_t length)
 	}
 
 #elif defined(OMR_OS_WINDOWS) && !defined(OMR_ENV_DATA64)
-#if defined(REENABLE_WHEN_THIS_WORKS)
 	/* NOTE: memset on WIN64 (AMD64) seems to do a fine job all on its own,
 	 * so we don't use our own SSE2 code there
 	 */
-	extern void J9SSE2memclear(void *ptr, uint32_t length);
-	extern uint32_t J9SSE2cpuidFeatures(void);
-
-	/* assumes at least a late model 486 CPU */
-
-	static int sse2Supported = 0;
-	if (sse2Supported == 0) {
-		sse2Supported = J9SSE2cpuidFeatures() & 0x00400000 ? 1 : -1;
-	}
-	if (length >= 256 && sse2Supported == 1) {
-		/* align to a 128-byte boundary first */
-		if ((uintptr_t)ptr & 127) {
-			uintptr_t bytesToAlign = (128 - ((uintptr_t)ptr & 127)) & 127;
-			memset(ptr, 0, bytesToAlign);
-			ptr = (uint8_t *)ptr + bytesToAlign;
-			length -= bytesToAlign;
-		}
-
-		/* use SSE2 instructions to set the middle section 128 bytes at a time */
-		/* because length >= 256 to start, there will always be at least 128 bytes left here */
-		J9SSE2memclear(ptr, length);
-
-		if (length & 127) {
-			/* clean up the last few bytes */
-			memset((uint8_t *)ptr + (length & ~127), 0, length & 127);
-		}
-	} else {
-		memset(ptr, 0, (size_t)length);
-	}
-#else
 	memset(ptr, 0, (size_t)length);
-#endif
 #elif defined(J9ZOS390)
 
 	if (((struct IHAPSA *)0)->FLCFGIEF) {
@@ -192,11 +150,7 @@ getCacheLineSize(void)
 
 	/* xlc -O3 inlines/unrolls this memset */
 	memset(buf, 255, 1024);
-#if defined(__xlC__)
-	dcbz(&buf[512]);
-#else
 	__asm__ __volatile__("dcbz 0,%0" : /* no outputs */ : "r"(&buf[512]));
-#endif
 	for (i = 0, ppcCacheLineSize = 0; i < 1024; i++) {
 		if (buf[i] == 0) {
 			ppcCacheLineSize++;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
 #include "codegen/RegisterDependency.hpp"
@@ -38,11 +38,11 @@
 #include "il/AliasSetInterface.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/List.hpp"
 #include "runtime/Runtime.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
@@ -80,7 +80,7 @@ TR::Instruction *
 MemToMemVarLenMacroOp::generateLoop()
    {
    TR::Compilation *comp = _cg->comp();
-   bool needs64BitOpCode = TR::Compiler->target.is64Bit();
+   bool needs64BitOpCode = comp->target().is64Bit();
 
    if (useEXForRemainder())
       {
@@ -107,17 +107,15 @@ MemToMemVarLenMacroOp::generateLoop()
    if (getKind() == MemToMemMacroOp::IsMemInit)
       generateInstruction(0, 1);
 
-   if (!needsLoop()) return NULL;
-
    TR::LabelSymbol * topOfLoop = generateLabelSymbol(_cg);
    TR::LabelSymbol * bottomOfLoop = generateLabelSymbol(_cg);
 
    //
    // But first, load up the branch address into raReg for two reasons:
    // 1) to avoid the AGI on the indirection and (more importantly)
-   // 2) to ensure that no wierd spilling happens if the code decides it needs
+   // 2) to ensure that no weird spilling happens if the code decides it needs
    //    to allocate a register at this point for the literal pool base address.
-   intptrj_t helper = 0;
+   intptr_t helper = 0;
 
    if (!useEXForRemainder())
       {
@@ -127,9 +125,9 @@ MemToMemVarLenMacroOp::generateLoop()
          _raReg = _cg->allocateRegister();
 
       //use literal for aot to make it easier for relocation
-      if (comp->compileRelocatableCode())
+      if (_cg->needRelocationsForHelpers())
          {
-         generateRegLitRefInstruction(_cg, TR::InstOpCode::getLoadOpCode(), _rootNode, _raReg, (uintptrj_t)getHelperSymRef(), TR_HelperAddress, NULL, NULL, NULL);
+         generateRegLitRefInstruction(_cg, TR::InstOpCode::getLoadOpCode(), _rootNode, _raReg, (uintptr_t)getHelperSymRef(), TR_HelperAddress, NULL, NULL, NULL);
          }
       else
          {
@@ -146,7 +144,7 @@ MemToMemVarLenMacroOp::generateLoop()
       }
    else
       {
-      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+      if (_cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
          {
          generateRSInstruction(_cg, TR::InstOpCode::SRAK, _rootNode, _itersReg, _regLen, 8);
          }
@@ -170,7 +168,7 @@ MemToMemVarLenMacroOp::generateLoop()
 
    generateS390BranchInstruction(_cg, TR::InstOpCode::BRCT, _rootNode, _itersReg, topOfLoop);
 
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && !comp->getOption(TR_DisableInlineEXTarget))
+   if (_cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && !comp->getOption(TR_DisableInlineEXTarget))
       {
       if (useEXForRemainder())
          {
@@ -194,20 +192,6 @@ MemToMemVarLenMacroOp::generateLoop()
       _cg->stopUsingRegister(_raReg);
 
    return cursor;
-   }
-bool
-MemToMemVarLenMacroOp::needsLoop()
-   {
-   int64_t maxLength = 0;
-   if (_cg->inlineNDmemcpyWithPad(_rootNode, &maxLength))
-      {
-      if (maxLength == 0 || maxLength > 256)
-         return true;
-      else
-         return false;
-      }
-
-   return true;
    }
 
 TR::Instruction *
@@ -357,7 +341,7 @@ MemToMemConstLenMacroOp::generateLoop()
    uint64_t dstOffset = 0;
 
 
-   if (inRange && (aliasingPattern || !_cg->storageMayOverlap(_srcNode, len, _dstNode, len)) && !_cg->inlineNDmemcpyWithPad(_rootNode))
+   if (inRange && (aliasingPattern || !_cg->storageMayOverlap(_srcNode, len, _dstNode, len)))
       {
       TR::InstOpCode::Mnemonic opCode = TR::InstOpCode::MVCL;
 
@@ -416,7 +400,7 @@ MemToMemConstLenMacroOp::generateLoop()
    if (_itersReg == NULL)
       _itersReg = (_tmpReg == NULL ? _cg->allocateRegister() : _tmpReg);
 
-   if (TR::Compiler->target.is64Bit())
+   if (_cg->comp()->target().is64Bit())
       cursor = genLoadLongConstant(_cg, _rootNode, largeCopies, _itersReg, cursor, NULL, NULL);
    else
       cursor = generateLoad32BitConstant(_cg, _rootNode, largeCopies, _itersReg, true, cursor, NULL, NULL);
@@ -541,7 +525,7 @@ MemInitConstLenMacroOp::generateLoop()
    if (_itersReg == NULL)
       _itersReg = (_tmpReg == NULL ? _cg->allocateRegister() : _tmpReg);
 
-   if (TR::Compiler->target.is64Bit())
+   if (_cg->comp()->target().is64Bit())
       cursor = genLoadLongConstant(_cg, _rootNode, largeCopies, _itersReg, cursor, NULL, NULL);
    else
       cursor = generateLoad32BitConstant(_cg, _rootNode, largeCopies, _itersReg, true, cursor, NULL, NULL);
@@ -585,41 +569,41 @@ MemInitConstLenMacroOp::generateRemainder()
    return cursor;
    }
 
-intptrj_t
+intptr_t
 MemInitVarLenMacroOp::getHelper()
    {
-   return (intptrj_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arraySetGeneralHelper, false, false, false)->getMethodAddress();
+   return (intptr_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arraySetGeneralHelper, false, false, false)->getMethodAddress();
    }
 
-intptrj_t
+intptr_t
 MemClearVarLenMacroOp::getHelper()
    {
-   return (intptrj_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arraySetZeroHelper, false, false, false)->getMethodAddress();
+   return (intptr_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arraySetZeroHelper, false, false, false)->getMethodAddress();
    }
 
-intptrj_t
+intptr_t
 MemCpyVarLenMacroOp::getHelper()
    {
-   return (intptrj_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayCopyHelper, false, false, false)->getMethodAddress();
+   return (intptr_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayCopyHelper, false, false, false)->getMethodAddress();
    }
 
-intptrj_t
+intptr_t
 MemCmpVarLenMacroOp::getHelper()
    {
-   return (intptrj_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayCmpHelper, false, false, false)->getMethodAddress();
+   return (intptr_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayCmpHelper, false, false, false)->getMethodAddress();
    }
 
-intptrj_t
+intptr_t
 BitOpMemVarLenMacroOp::getHelper()
    {
    switch(_opcode)
       {
       case TR::InstOpCode::XC:
-         return (intptrj_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayXORHelper, false, false, false)->getMethodAddress();
+         return (intptr_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayXORHelper, false, false, false)->getMethodAddress();
       case TR::InstOpCode::NC:
-         return (intptrj_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayANDHelper, false, false, false)->getMethodAddress();
+         return (intptr_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayANDHelper, false, false, false)->getMethodAddress();
       case TR::InstOpCode::OC:
-         return (intptrj_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayORHelper, false, false, false)->getMethodAddress();
+         return (intptr_t) _cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayORHelper, false, false, false)->getMethodAddress();
       default:
          TR_ASSERT( 0, "not support");
       }
@@ -987,7 +971,7 @@ MemToMemVarLenMacroOp::generateRemainder()
 
       TR::Instruction* cursor = NULL;
 
-      if (!TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) || comp->getOption(TR_DisableInlineEXTarget) || !needsLoop())
+      if (!_cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) || comp->getOption(TR_DisableInlineEXTarget))
          {
          cursor = generateInstruction(0, 1);
          }
@@ -1007,7 +991,7 @@ MemToMemVarLenMacroOp::generateRemainder()
         }
 
 
-      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && !comp->getOption(TR_DisableInlineEXTarget) && needsLoop())
+      if (_cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && !comp->getOption(TR_DisableInlineEXTarget))
          {
          TR_ASSERT(_EXTargetLabel != NULL, "Assert: EXTarget label must not be NULL");
 
@@ -1034,18 +1018,15 @@ MemToMemVarLenMacroOp::generateRemainder()
    else
       {
       TR::LabelSymbol *remainderDoneLabel = generateLabelSymbol(_cg);
-      if (TR::Compiler->target.is64Bit())
-         generateShiftAndKeepSelected64Bit(_rootNode, _cg, _regLen, _regLen, 52, 59, 4, true, false);
+      if (_cg->comp()->target().is64Bit())
+         generateShiftThenKeepSelected64Bit(_rootNode, _cg, _regLen, _regLen, 52, 59, 4);
       else
-         generateShiftAndKeepSelected31Bit(_rootNode, _cg, _regLen, _regLen, 20, 27, 4, true, false);
+         generateShiftThenKeepSelected31Bit(_rootNode, _cg, _regLen, _regLen, 20, 27, 4);
 
       TR::MemoryReference * targetMR = new (_cg->trHeapMemory()) TR::MemoryReference(_raReg, _regLen, 0, _cg);
       generateRXInstruction(_cg, TR::InstOpCode::BAS, _rootNode, _raReg, targetMR);
       _cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::LABEL, _rootNode, remainderDoneLabel);
       }
-
-   if(!needsLoop() && _doneLabel==NULL)
-     _startControlFlow = _cursor; // If loop was not generated there is no need for control flow
 
    return _cursor;
    }
@@ -1062,7 +1043,7 @@ MemInitVarLenMacroOp::generateRemainder()
       {
       // can't use generateS390ImmOp as it may generate a temporary register
       // which wouldn't have a dependency
-      if(TR::Compiler->target.is64Bit())
+      if(_cg->comp()->target().is64Bit())
          {
          generateRILInstruction(_cg, TR::InstOpCode::NILF, _rootNode, _regLen, 0xFF);
          generateRILInstruction(_cg, TR::InstOpCode::NIHF, _rootNode, _regLen, 0);
@@ -1078,13 +1059,13 @@ MemInitVarLenMacroOp::generateRemainder()
       if (!_doneLabel)
          _doneLabel  = generateLabelSymbol(_cg);
 
-      if(TR::Compiler->target.is64Bit())
+      if(_cg->comp()->target().is64Bit())
          generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::CG, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_BNH, _doneLabel, false, false);
       else
          generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_BNH, _doneLabel, false, false);
 
       if (_firstByteInitialized)
-         generateRIInstruction(_cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, _rootNode, _regLen, -1);
+         generateRIInstruction(_cg, _cg->comp()->target().is64Bit() ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, _rootNode, _regLen, -1);
 
       TR::Instruction * MVCInstr = generateSS1Instruction(_cg, TR::InstOpCode::MVC, _rootNode, 0,
                new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, 1, _cg),
@@ -1106,7 +1087,7 @@ MemInitVarLenMacroOp::generateRemainder()
       {
       //Need to compensate the length as the first byte has been set in generateLoop
       //and check if there is a remainder.
-      generateRIInstruction(_cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, _rootNode, _regLen, -1);
+      generateRIInstruction(_cg, _cg->comp()->target().is64Bit() ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, _rootNode, _regLen, -1);
 
       if (!_doneLabel)
          _doneLabel  = generateLabelSymbol(_cg);
@@ -1145,7 +1126,7 @@ MemClearVarLenMacroOp::generateRemainder()
       return MemToMemVarLenMacroOp::generateRemainder();
       }
 
-   if(TR::Compiler->target.is64Bit())
+   if(_cg->comp()->target().is64Bit())
       {
       cursor = generateS390ImmOp(_cg, TR::InstOpCode::NG, _rootNode, _regLen, _regLen, (int64_t)0xFF);
       generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::CG, _rootNode, _regLen, (int32_t)0, TR::InstOpCode::COND_BL, _doneLabel, false, false);
@@ -1262,7 +1243,7 @@ MemClearConstLenMacroOp::generateInstruction(int32_t offset, int64_t length, TR:
       // For lengths of 1, 2, 4 and 8, the XC sequence is suboptimal, as they require
       // 2 cycles to execute.  If MVI / MVHHI / MVHI / MVGHI are supported, we should
       // generate those instead.
-      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && length <= 8 && TR::TreeEvaluator::checkPositiveOrNegativePowerOfTwo(length))
+      if (_cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && length <= 8 && TR::TreeEvaluator::checkPositiveOrNegativePowerOfTwo(length))
          {
          switch(length)
             {
@@ -1613,7 +1594,7 @@ generateCmpSignResult(TR::CodeGenerator * cg, TR::Node * rootNode, TR::Register 
 #if USE_IPM_FORARRAYCMPSIGN
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, rootNode, falseLabel);
    generateRRInstruction(cg, TR::InstOpCode::IPM, rootNode, resultReg, resultReg);
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       generateRSInstruction(cg, TR::InstOpCode::SLLG, rootNode, resultReg, resultReg, 34);
       generateRSInstruction(cg, TR::InstOpCode::SRAG, rootNode, resultReg, resultReg, 64-2);
@@ -1765,7 +1746,7 @@ MemToMemTypedVarLenMacroOp::shiftSize()
          return 3;
          break;
       default:
-         if (TR::Compiler->target.is64Bit())
+         if (_cg->comp()->target().is64Bit())
             return 3;
          else
             return 2;
@@ -1793,7 +1774,7 @@ MemToMemTypedVarLenMacroOp::strideSize()
          return 8;
          break;
       default:
-         if (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers())
+         if (comp->target().is64Bit() && !comp->useCompressedPointers())
             return 8;
          else
             return 4;
@@ -1991,7 +1972,7 @@ MemCpyVarLenTypedMacroOp::generateInstruction()
          cursor = generateRXInstruction(_cg, TR::InstOpCode::STG, _dstNode, _workReg, dstMR);
          break;
       case TR::Address:
-         if (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers())
+         if (_cg->comp()->target().is64Bit() && !comp->useCompressedPointers())
             {
             if (_needsGuardedLoad)
                {
@@ -2396,9 +2377,9 @@ MemCpyAtomicMacroOp::generateLoop()
       if (_trace)
          traceMsg(comp, "MemCpyAtomicMacroOp: unknown type routine\n");
 
-      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+      if (comp->target().cpu.getSupportsArch(TR::CPU::z196))
          {
-         auto mnemonic = TR::Compiler->target.is64Bit() ? TR::InstOpCode::OGRK : TR::InstOpCode::ORK;
+         auto mnemonic = comp->target().is64Bit() ? TR::InstOpCode::OGRK : TR::InstOpCode::ORK;
 
          cursor = generateRRRInstruction(_cg, mnemonic, _srcNode, _alignedReg, _srcReg, _startReg);
          }
@@ -2467,9 +2448,9 @@ MemCpyAtomicMacroOp::generateLoop()
          traceMsg(comp, "MemCpyAtomicMacroOp: aligned loop\n");
       if (_destType == TR::Int16)
          {
-         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+         if (comp->target().cpu.getSupportsArch(TR::CPU::z196))
             {
-            auto mnemonic = TR::Compiler->target.is64Bit() ? TR::InstOpCode::NGRK : TR::InstOpCode::NRK;
+            auto mnemonic = comp->target().is64Bit() ? TR::InstOpCode::NGRK : TR::InstOpCode::NRK;
 
             cursor = generateRRRInstruction(_cg, mnemonic, _srcNode, _alignedReg, _srcReg, _startReg);
             }
@@ -2492,9 +2473,9 @@ MemCpyAtomicMacroOp::generateLoop()
          cursor = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, _srcNode, remainderLabel);
          }
 
-      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+      if (_cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
          {
-         auto mnemonic = TR::Compiler->target.is64Bit() ? TR::InstOpCode::AGRK : TR::InstOpCode::ARK;
+         auto mnemonic = _cg->comp()->target().is64Bit() ? TR::InstOpCode::AGRK : TR::InstOpCode::ARK;
 
          cursor = generateRRRInstruction(_cg, mnemonic, _srcNode, _alignedReg, _srcReg, _startReg);
          }

@@ -167,7 +167,6 @@ MM_HeapRegionDescriptorSegregated::formatFresh(MM_EnvironmentBase *env, uintptr_
 	return numCells;
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 uintptr_t *
 MM_HeapRegionDescriptorSegregated::allocateArraylet(MM_EnvironmentBase *env, omrarrayptr_t parentIndexableObject)
 {
@@ -216,7 +215,6 @@ MM_HeapRegionDescriptorSegregated::addBytesFreedToSmallSpineBackout(MM_Environme
 		_memoryPoolACL.addSweepFreeBytes(env, cellSize);
 	}
 }
-#endif /* defined(OMR_GC_ARRAYLETS) */
 
 /**
  * We must be notified when an empty region is allocated so that we can account for the memory lost to
@@ -233,13 +231,11 @@ MM_HeapRegionDescriptorSegregated::emptyRegionAllocated(MM_EnvironmentBase *env)
 		Assert_MM_true(getRange() == 1);
 		/* We need to account for internal fragmentation. */
 		_memoryPoolACL.addBytesAllocated(env, (extensions->regionSize - (getNumCells() * getCellSize())));
-#if defined(OMR_GC_ARRAYLETS)
 	} else if (isArraylet()) {
 		/* We only need to take into account potential internal fragmentation of arraylets, the allocation
 		 * context will call into the allocation tracker for the allocation of the arraylet.
 		 */
 		_memoryPoolACL.addBytesAllocated(env, (extensions->regionSize % env->getOmrVM()->_arrayletLeafSize) * getRange());
-#endif /* defined(OMR_GC_ARRAYLETS) */
 	} else if (isLarge()) {
 		/* We need to account for the entire allocation. */
 		env->_allocationTracker->addBytesAllocated(env, extensions->regionSize * getRange());
@@ -257,11 +253,9 @@ MM_HeapRegionDescriptorSegregated::emptyRegionReturned(MM_EnvironmentBase *env)
 		Assert_MM_true(getRange() == 1);
 		/* We need to account for internal fragmentation. */
 		env->_allocationTracker->addBytesFreed(env, (extensions->regionSize - (getNumCells() * getCellSize())));
-#if defined(OMR_GC_ARRAYLETS)
 	} else if (isArraylet()) {
 		/* We only need to take into account potential internal fragmentation of arraylets. */
 		env->_allocationTracker->addBytesFreed(env, (extensions->regionSize % env->getOmrVM()->_arrayletLeafSize) * getRange());
-#endif /* defined(OMR_GC_ARRAYLETS) */
 	} else if (isLarge()) {
 		/* We need to account for the entire allocation. */
 		env->_allocationTracker->addBytesFreed(env, extensions->regionSize * getRange());
@@ -273,7 +267,6 @@ MM_HeapRegionDescriptorSegregated::emptyRegionReturned(MM_EnvironmentBase *env)
 void
 MM_HeapRegionDescriptorSegregated::updateCounts(MM_EnvironmentBase *env, bool fromFlush)
 {
-#if defined(OMR_GC_ARRAYLETS)
 	if (isArraylet()) {
 
 		_memoryPoolACL.resetCounts();
@@ -285,7 +278,6 @@ MM_HeapRegionDescriptorSegregated::updateCounts(MM_EnvironmentBase *env, bool fr
 			}
 		}
 	} else
-#endif /* defined(OMR_GC_ARRAYLETS) */
 	if (isSmall()) {
 		_memoryPoolACL.updateCounts(env, fromFlush);
 	} else if (isLarge()) {

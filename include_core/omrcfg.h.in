@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/* ATTENTION: when updating this file, be sure to also update omrcfg.CMakeTemplate.h */
+/* ATTENTION: when updating this file, be sure to also update omrcfg.cmake.h.in */
 /**
  * The OMR build configuration. A public header. Controls the APIs of all other headers.
  * Include at the top of every OMR source and header.
@@ -49,7 +49,6 @@
 #undef OMR_GC_COMBINATION_SPEC
 #undef OMR_GC_CONCURRENT_SWEEP
 #undef OMR_GC_DEBUG_ASSERTS
-#undef OMR_GC_HEAP_CARD_TABLE
 #undef OMR_GC_IDLE_HEAP_MANAGER
 #undef OMR_GC_LARGE_OBJECT_AREA
 #undef OMR_GC_LEAF_BITS
@@ -60,6 +59,7 @@
 #undef OMR_GC_CONCURRENT_SCAVENGER
 #undef OMR_GC_MODRON_STANDARD
 #undef OMR_GC_NON_ZERO_TLH
+#undef OMR_GC_SCAN_OBJECT_GLUE
 #undef OMR_GC_SEGREGATED_HEAP
 #undef OMR_GC_THREAD_LOCAL_HEAP
 #undef OMR_GC_DOUBLE_MAP_ARRAYLETS
@@ -124,6 +124,11 @@
 #undef OMR_ARCH_ARM
 
 /**
+ * This spec targets AARCH64 processors.
+ */
+#undef OMR_ARCH_AARCH64
+
+/**
  * This spec targets x86 processors.
  */
 #undef OMR_ARCH_X86
@@ -134,26 +139,13 @@
 #undef OMR_ARCH_S390
 
 #undef OMR_ENV_DATA64
-#undef OMR_ENV_GCC
 #undef OMR_ENV_LITTLE_ENDIAN
-#undef OMR_GC_ARRAYLETS
 #undef OMR_GC_COMPRESSED_POINTERS
-#undef OMR_GC_HYBRID_ARRAYLETS
+#undef OMR_GC_FULL_POINTERS
 #undef OMR_GC_OBJECT_MAP
 #undef OMR_GC_REALTIME
 #undef OMR_GC_TLH_PREFETCH_FTA
 #undef OMR_GC_VLHGC
-
-/**
- * Flag to indicate that on 64-bit platforms, the monitor slot and class slot in object headers are U32 rather than UDATA.
- */
-#undef OMR_INTERP_COMPRESSED_OBJECT_HEADER
-
-/**
- * Flag to indicate that on 64-bit platforms, the monitor slot in object headers is a U32 rather than a UDATA.
- * ifRemoved: The monitor slot is a UDATA.
- */
-#undef OMR_INTERP_SMALL_MONITOR_SLOT
 
 /**
  * Add support for CUDA
@@ -218,8 +210,8 @@
 #undef OMR_NOTIFY_POLICY_CONTROL
 
 /**
- * This flag enables new synchronization prototypes which  
- * -- prevent large number of threads to spin at a time on a monitor 
+ * This flag enables new synchronization prototypes which
+ * -- prevent large number of threads to spin at a time on a monitor
  * -- avoid the thundering herd problem on wake up
  *
  * The prototypes provide the following features
@@ -267,5 +259,21 @@
 #elif defined(J9ZOS390)
 #define OMR_USE_ZOS_SEMAPHORES
 #endif
+
+#if defined(LINUX) || defined(OSX)
+#define OMR_HAVE_DLADDR
+#endif
+
+/**
+ * This flag enables the usage of OMR socket API. The API contains functions for
+ * establishing network connections and communications through sockets.
+ */
+ #undef OMR_PORT_SOCKET_SUPPORT
+
+/**
+ * This flag enables the usage of the MCS (queue-based) lock instead of the default
+ * TATAS (Test & Test & Set) lock in the OMR thread monitor.
+ */
+#undef OMR_THR_MCS_LOCKS
 
 #endif /* !defined(OMRCFG_H_) */

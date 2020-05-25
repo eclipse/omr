@@ -25,6 +25,7 @@
 #include "x/codegen/X86SystemLinkage.hpp"
 
 #include <stdint.h>
+#include "codegen/Machine.hpp"
 #include "codegen/Register.hpp"
 #include "il/DataTypes.hpp"
 

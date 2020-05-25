@@ -26,7 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/RecognizedMethods.hpp"
@@ -44,9 +44,9 @@
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Link.hpp"
@@ -74,7 +74,7 @@ OMR::X86::I386::CodeGenerator::CodeGenerator() :
    self()->setSupportsDoubleWordCAS();
    self()->setSupportsDoubleWordSet();
 
-   if (TR::Compiler->target.isWindows())
+   if (self()->comp()->target().isWindows())
       {
       if (self()->comp()->getOption(TR_DisableTraps))
          {
@@ -92,7 +92,7 @@ OMR::X86::I386::CodeGenerator::CodeGenerator() :
       self()->setJNILinkageCalleeCleanup();
       self()->setRealVMThreadRegister(self()->machine()->getRealRegister(TR::RealRegister::ebp));
       }
-   else if (TR::Compiler->target.isLinux())
+   else if (self()->comp()->target().isLinux())
       {
       if (self()->comp()->getOption(TR_DisableTraps))
          {

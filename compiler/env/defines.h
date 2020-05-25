@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,6 +53,9 @@
 #ifndef OMR_MACOS
 #  define OMR_MACOS     205
 #endif
+#ifndef OMR_BSD
+#  define OMR_BSD     206
+#endif
 
 /* Architectures */
 #ifndef ARCH_X86
@@ -69,6 +72,9 @@
 #endif
 #ifndef ARCH_ARM64
 #  define ARCH_ARM64     105
+#endif
+#ifndef ARCH_RISCV
+#  define ARCH_RISCV     106
 #endif
 
 /* Compilers */
@@ -104,6 +110,8 @@
 #  define HOST_OS OMR_ZOS
 #elif defined(__APPLE__) && defined(__MACH__)
 #  define HOST_OS OMR_MACOS
+#elif defined(OMR_OS_BSD)
+#  define HOST_OS OMR_BSD
 #else
 #  error "defines.h: unknown OS"
 #endif
@@ -136,6 +144,15 @@
 #elif defined(__aarch64__)
 #  define HOST_ARCH ARCH_ARM64
 # define TR_HOST_64BIT 1
+#elif defined(__riscv)
+#  define HOST_ARCH ARCH_RISCV
+#  if __riscv_xlen == 32
+#    define TR_HOST_32BIT 1
+#  elif __riscv_xlen == 64
+#    define TR_HOST_64BIT 1
+#  else
+#    error "defines.h: unknown word size"
+#  endif
 #else
 #  error "defines.h: unknown architecture"
 #endif
@@ -178,6 +195,10 @@
 
 #if (HOST_ARCH == ARCH_ARM64)
 #  define TR_HOST_ARM64    1
+#endif
+
+#if (HOST_ARCH == ARCH_RISCV)
+#  define TR_HOST_RISCV    1
 #endif
 
 /* @ddr_namespace: default */

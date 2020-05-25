@@ -25,7 +25,6 @@
 #include "omrcfg.h"
 #include "ModronAssertions.h"
 
-#if defined(OMR_GC_ARRAYLETS)
 
 class MM_GCExtensionsBase;
 class MM_MemorySubSpace;
@@ -79,5 +78,4 @@ public:
 
 };
 
-#endif /*OMR_GC_ARRAYLETS */
 #endif /* ARRAYLETOBJECTMODEL_ */

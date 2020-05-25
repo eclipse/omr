@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1294,7 +1294,7 @@ MM_ConcurrentGC::tuneToHeap(MM_EnvironmentBase *env)
 	 */
 	if(0 == heapSize) {
 		Trc_MM_ConcurrentGC_tuneToHeap_Exit1(env->getLanguageVMThread());
-		assume0(!_stwCollectionInProgress);
+		Assert_MM_true(!_stwCollectionInProgress);
 		return;
 	}
 
@@ -1822,24 +1822,29 @@ MM_ConcurrentGC::potentialFreeSpace(MM_EnvironmentBase *env, MM_AllocateDescript
 		MM_MemorySubSpace *oldSubspace = memorySpace->getTenureMemorySubSpace();
 		MM_MemorySubSpace *newSubspace = memorySpace->getDefaultMemorySubSpace();
 		MM_ScavengerStats *scavengerStats = &_extensions->scavengerStats;
+		uintptr_t headRoom = 0; 
 
 		/* Have we done at least 1 scavenge ? If not no statistics available so return high values */
-		if (0 == scavengerStats->_gcCount) {
+		if (!scavengerStats->isAvailable(env)) {
 			return (uintptr_t)-1;
 		}
+		
+		nurseryPromotion = scavengerStats->_avgTenureBytes == 0 ? 1: (uintptr_t)(scavengerStats->_avgTenureBytes + (env->getExtensions()->tenureBytesDeviationBoost * scavengerStats->_avgTenureBytesDeviation));
+
 #if defined(OMR_GC_LARGE_OBJECT_AREA)
 		/* Do we need to tax this allocation ? */
 		if (LOA == _meteringType) {
 			nurseryPromotion = scavengerStats->_avgTenureLOABytes == 0 ? 1 : scavengerStats->_avgTenureLOABytes;
 			currentOldFree = oldSubspace->getApproximateActiveFreeLOAMemorySize();
+			headRoom = (uintptr_t)(_extensions->concurrentKickoffTenuringHeadroom * _extensions->lastGlobalGCFreeBytesLOA);
 		} else {
-			assume0(SOA == _meteringType);
-			nurseryPromotion = scavengerStats->_avgTenureSOABytes == 0 ? 1 : scavengerStats->_avgTenureSOABytes;
+			assume0(SOA == _meteringType);			
 			currentOldFree = oldSubspace->getApproximateActiveFreeMemorySize() - oldSubspace->getApproximateActiveFreeLOAMemorySize();
+			headRoom = (uintptr_t)(_extensions->concurrentKickoffTenuringHeadroom * (_extensions->getLastGlobalGCFreeBytes() - _extensions->lastGlobalGCFreeBytesLOA));
 		}
 #else
-		nurseryPromotion = scavengerStats->_avgTenureBytes == 0 ? 1: scavengerStats->_avgTenureBytes;
 		currentOldFree = oldSubspace->getApproximateActiveFreeMemorySize();
+		headRoom = (uintptr_t)(_extensions->concurrentKickoffTenuringHeadroom * _extensions->getLastGlobalGCFreeBytes()); 
 #endif
 		/* reduce oldspace free memory by fragmented estimation */
 		MM_LargeObjectAllocateStats *stats = oldSubspace->getMemoryPool()->getLargeObjectAllocateStats();
@@ -1851,6 +1856,7 @@ MM_ConcurrentGC::potentialFreeSpace(MM_EnvironmentBase *env, MM_AllocateDescript
 				currentOldFree = 0;
 			}
 		}
+		
 		nurseryInitialFree = scavengerStats->_avgInitialFree;
 		currentNurseryFree =  newSubspace->getApproximateFreeMemorySize();
 
@@ -1858,20 +1864,24 @@ MM_ConcurrentGC::potentialFreeSpace(MM_EnvironmentBase *env, MM_AllocateDescript
 		 * fill the old space. If we know next scavenge will percolate then we have no scavenges
 		 * remaining before concurren KO is required
 		 */
-		uintptr_t scavengesRemaining;
+		uintptr_t scavengesRemaining = 0;
 		if (scavengerStats->_nextScavengeWillPercolate) {
-			scavengesRemaining = 0;
 			_stats.setKickoffReason(NEXT_SCAVENGE_WILL_PERCOLATE);
 			_languageKickoffReason = NO_LANGUAGE_KICKOFF_REASON;
 		} else {
 			scavengesRemaining =  (uintptr_t)(currentOldFree/nurseryPromotion);
 		}
 
-		/* KO concurrent one scavenge early to reduce chances of tenure space being exhausted
-		 * before we complete concurrent marking by a scavenge tenuring significantly more than
-		 * the average number of bytes.
+		/*
+		 * The headroom remaining will be the maximum value between 1 , and the current 
+		 * headroom calculation. We want a worst case headroom, so that we avoid percolate.
+		 * By having a higher estimate of headroom, we will have less scavenges remaining, 
+		 *  and will start concurrent mark earlier
 		 */
-		scavengesRemaining = scavengesRemaining > 0  ?  scavengesRemaining - 1 : 0;
+
+		float scavengesRemainingHeadroom = ((float)headRoom)/nurseryPromotion;
+		scavengesRemainingHeadroom = OMR_MAX(scavengesRemainingHeadroom, 1);
+		scavengesRemaining = MM_Math::saturatingSubtract(scavengesRemaining, (uintptr_t)scavengesRemainingHeadroom); 
 
 		/* Now calculate how many bytes we can therefore allocate in the nursery before
 		 * we will fill the tenure area. On 32 bit platforms this can be greater than 4G
@@ -2760,6 +2770,7 @@ MM_ConcurrentGC::localMark(MM_EnvironmentBase *env, uintptr_t sizeToTrace)
 {
 	omrobjectptr_t objectPtr;
 	uintptr_t gcCount = _extensions->globalGCStats.gcCount;
+	uint32_t const referenceSize = env->compressObjectReferences() ? sizeof(uint32_t) : sizeof(uintptr_t);
 
 	env->_workStack.reset(env, _markingScheme->getWorkPackets());
 	Assert_MM_true(env->_cycleState == NULL);
@@ -2775,7 +2786,7 @@ MM_ConcurrentGC::localMark(MM_EnvironmentBase *env, uintptr_t sizeToTrace)
 		} else 	if (((MM_ConcurrentCardTable *)_cardTable)->isObjectInActiveTLH(env,objectPtr)) {
 			env->_workStack.pushDefer(env,objectPtr);
 			/* We are deferring the tracing but get some "tracing credit" */
-			sizeTraced += sizeof(fomrobject_t);
+			sizeTraced += referenceSize;
 		} else if (((MM_ConcurrentCardTable *)_cardTable)->isObjectInUncleanedDirtyCard(env,objectPtr)) {
 			/* Dont need to trace this object now as we will re-visit it
 			 * later when we clean the card during concurrent card cleaning
@@ -2911,11 +2922,7 @@ MM_ConcurrentGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *
 
 	/* Ensure caller acquired exclusive VM access before calling */
 	Assert_MM_mustHaveExclusiveVMAccess(env->getOmrVMThread());
-
-	/* Set flag to show STW collector is active; some operations need to know if they
-	 * are called during a global collect or not, eg heapAddRange
-	 */
-	_stwCollectionInProgress = true;
+	Assert_MM_true(_stwCollectionInProgress);
 
 	/* Assume for now we will need to initialize the mark map. If we subsequenly find
 	 * we got far enough through the concurrent mark cycle then we will reset this flag
@@ -2950,9 +2957,15 @@ MM_ConcurrentGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *
 #endif /* OMR_GC_LARGE_OBJECT_AREA */
 
 	/* Empty all the Packets if we are aborting concurrent mark.
-	 * If we have had a RS overflow abort the concurrent collection
-	 * regardless of how far we got to force a full STW mark.
+	 * If we have had a RS overflow or an explicit gc (resulting for idleness) then 
+	 * abort the concurrent collection regardless of how far we got to force a full STW mark.
 	 */
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
+	if ((J9MMCONSTANT_EXPLICIT_GC_IDLE_GC == gcCode) && (CONCURRENT_OFF < executionModeAtGC)) {
+		abortCollection(env, ABORT_COLLECTION_IDLE_GC);
+		MM_ParallelGlobalGC::internalPreCollect(env, subSpace, allocDescription, gcCode);
+	} else
+#endif /* OMR_GC_IDLE_HEAP_MANAGER */
 	if (_extensions->isRememberedSetInOverflowState() || ((CONCURRENT_OFF < executionModeAtGC) && (CONCURRENT_TRACE_ONLY > executionModeAtGC))) {
 		CollectionAbortReason reason = (_extensions->isRememberedSetInOverflowState() ? ABORT_COLLECTION_REMEMBERSET_OVERFLOW : ABORT_COLLECTION_INSUFFICENT_PROGRESS);
 		abortCollection(env, reason);
@@ -3138,7 +3151,6 @@ MM_ConcurrentGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace 
 	}
 
 	/* Collection is complete so reset flags */
-	_stwCollectionInProgress = false;
 	_forcedKickoff  = false;
 	_stats.clearKickoffReason();
 
@@ -3251,23 +3263,6 @@ MM_ConcurrentGC::heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspa
 	/* Expand any superclass structures including mark bits*/
 	bool result = MM_ParallelGlobalGC::heapAddRange(env, subspace, size, lowAddress, highAddress);
 
-	if (result) {
-		/* If we are within a concurrent cycle we need to initialize the mark bits
-		 * for new region of heap now
-		 */
-		if (CONCURRENT_OFF < _stats.getExecutionMode()) {
-			/* If subspace is concurrently collectible then clear bits otherwise
-			 * set the bits on to stop tracing INTO this area during concurrent
-			 * mark cycle.
-			 */
-			if (subspace->isConcurrentCollectable()) {
-				_markingScheme->setMarkBitsInRange(env, lowAddress, highAddress, true);
-			} else {
-				_markingScheme->setMarkBitsInRange(env, lowAddress, highAddress, false);
-			}
-		}
-	}
-
 	_heapAlloc = _extensions->heap->getHeapTop();
 
 	Trc_MM_ConcurrentGC_heapAddRange_Exit(env->getLanguageVMThread());
@@ -3313,34 +3308,63 @@ MM_ConcurrentGC::heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *sub
  * @see MM_ParallelGlobalGC::heapReconfigured()
  */
 void
-MM_ConcurrentGC::heapReconfigured(MM_EnvironmentBase *env)
+MM_ConcurrentGC::heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress)
 {
-	/* If called outside a global collection for a heap expand/contract..
+	Assert_MM_true(reason != HEAP_RECONFIG_NONE);
+
+	/* _rebuildInitWorkForAdd/_rebuildInitWorkForRemove are not sufficient for determining on how to proceed with headReconfigured
+	 * We end up here in the following scenarios:
+	 *  1) During heap expand - after heapAddRange
+	 *  2) During heap contact - after heapRemoveRange
+	 *  3) After Scavenger Tilt (no resize)
+	 *
+	 *  It is necessary that _rebuildInitWorkForAdd is set when we're here during an expand (after heapAddRange), or
+	 *  _rebuildInitWorkForRemove in the case of contract. However, it is not a sufficient check to ensure the reason we're
+	 *  here. For instance, when Concurrent is on, _rebuildInitWorkForAdd will be set but not cleared.
+	 *  As a result, we can have multiple calls of expands interleaved with contracts, resulting in both flags being set.
+	 *  Similarly, we can end up here after scavenger tilt with any of the flags set.
 	 */
-	if (!_stwCollectionInProgress && (_rebuildInitWorkForAdd || _rebuildInitWorkForRemove)) {
-		/* ... and a concurrent cycle has not yet started then we
-		 *  tune to heap here to reflect new heap size
-		 *  Note: CMVC 153167 : Under gencon, there is a timing hole where
-		 *  if we are in the middle of initializing the heap ranges while a
-		 *  scavenge occurs, and if the scavenge causes the heap to contract,
-		 *  we will try to memset ranges that are now contracted (decommitted memory)
-		 *  when we resume the init work.
+
+	if ((lowAddress != NULL) && (highAddress != NULL)) {
+		Assert_MM_true(_rebuildInitWorkForAdd && (reason == HEAP_RECONFIG_EXPAND));
+		/* If we are within a concurrent cycle we need to initialize the mark bits
+		 * for new region of heap now
 		 */
-		if (_stats.getExecutionMode() < CONCURRENT_INIT_COMPLETE) {
-			tuneToHeap(env);
-		} else {
-			/* Heap expand/contract is during a concurrent cycle..we need to adjust the trace target so
-			 * that the trace rate is adjusted correctly on  subsequent allocates.
+		if (CONCURRENT_OFF < _stats.getExecutionMode()) {
+			/* If subspace is concurrently collectible then clear bits otherwise
+			 * set the bits on to stop tracing INTO this area during concurrent
+			 * mark cycle.
 			 */
-			adjustTraceTarget();
+			_markingScheme->setMarkBitsInRange(env, lowAddress, highAddress, subspace->isConcurrentCollectable());
 		}
 	}
 
-	/* Expand any superclass structures */
-	MM_ParallelGlobalGC::heapReconfigured(env);
+	/* If called outside a global collection for a heap expand/contract.. */
+	if((reason == HEAP_RECONFIG_CONTRACT) || (reason == HEAP_RECONFIG_EXPAND)) {
+		Assert_MM_true(_rebuildInitWorkForAdd || _rebuildInitWorkForRemove);
+		if (!_stwCollectionInProgress) {
+			/* ... and a concurrent cycle has not yet started then we
+			 *  tune to heap here to reflect new heap size
+			 *  Note: CMVC 153167 : Under gencon, there is a timing hole where
+			 *  if we are in the middle of initializing the heap ranges while a
+			 *  scavenge occurs, and if the scavenge causes the heap to contract,
+			 *  we will try to memset ranges that are now contracted (decommitted memory)
+			 *  when we resume the init work.
+			 */
+			if (_stats.getExecutionMode() < CONCURRENT_INIT_COMPLETE) {
+				tuneToHeap(env);
+			} else {
+				/* Heap expand/contract is during a concurrent cycle..we need to adjust the trace target so
+				 * that the trace rate is adjusted correctly on  subsequent allocates.
+				 */
+				adjustTraceTarget();
+			}
+		}
+	}
 
-	/* ...and then expand the card table */
-	((MM_ConcurrentCardTable *)_cardTable)->heapReconfigured(env);
+
+	/* Expand any superclass structures */
+	MM_ParallelGlobalGC::heapReconfigured(env, reason, subspace, lowAddress, highAddress);
 }
 
 /**

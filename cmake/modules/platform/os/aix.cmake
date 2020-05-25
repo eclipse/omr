@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,3 +34,8 @@ set(OMR_PLATFORM_DEFINITIONS
 # of the OMR code should be heavily reduced. In the mean time, we keep
 # the distinction
 list(APPEND TR_COMPILE_DEFINITIONS -DSUPPORTS_THREAD_LOCAL -D_XOPEN_SOURCE_EXTENDED=1 -D_ALL_SOURCE -DAIX)
+
+
+# On newer versions of CMake this seems to be requires (CMAKE_SHARED_LIBRARY_SUFFIX is not enough)
+set(CMAKE_SHARED_LIBRARY_SUFFIX_C ".so")
+set(CMAKE_SHARED_LIBRARY_SUFFIX_CXX ".so")

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,43 +49,42 @@ OMRAgent_OnLoad(OMR_TI const *ti, OMR_VM *vm, char const *options, OMR_AgentCall
 {
 	OMR_VMThread *vmThread = NULL;
 	omr_error_t rc = OMR_ERROR_NONE;
+	omr_error_t rc2 = OMR_ERROR_NONE;
 	OMRPORT_ACCESS_FROM_OMRVM(vm);
 
 	omrtty_printf("%s: Agent_OnLoad(options=\"%s\")\n", agentName, options);
-	if (OMR_ERROR_NONE == rc) {
-		if (NULL == ti) {
-			omrtty_printf("%s:%d: NULL OMR_TI interface pointer.\n", __FILE__, __LINE__);
-			rc = OMR_ERROR_INTERNAL;
-		}
+	if (NULL == ti) {
+		omrtty_printf("%s:%d: NULL OMR_TI interface pointer.\n", __FILE__, __LINE__);
+		return OMR_ERROR_INTERNAL;
 	}
-	if (OMR_ERROR_NONE == rc) {
-		rc = ti->BindCurrentThread(vm, "cpuLoadAgent main", &vmThread);
-		if (OMR_ERROR_NONE != rc) {
-			omrtty_printf("%s: BindCurrentThread failed, rc=%d\n", agentName, rc);
-		} else if (NULL == vmThread) {
-			omrtty_printf("%s: BindCurrentThread failed, NULL vmThread was returned\n", agentName);
-			rc = OMR_ERROR_INTERNAL;
-		} else {
-			omrtty_printf("%s: BindCurrentThread passed, vmThread=0x%p\n", agentName, vmThread);
-		}
+
+	rc = ti->BindCurrentThread(vm, "cpuLoadAgent main", &vmThread);
+	if (OMR_ERROR_NONE != rc) {
+		omrtty_printf("%s: BindCurrentThread failed, rc=%d\n", agentName, rc);
+		return rc;
+	} else if (NULL == vmThread) {
+		omrtty_printf("%s: BindCurrentThread failed, NULL vmThread was returned\n", agentName);
+		return OMR_ERROR_INTERNAL;
+	} else {
+		omrtty_printf("%s: BindCurrentThread passed, vmThread=0x%p\n", agentName, vmThread);
 	}
+
 #if !defined(J9ZOS390)
 	/**
 	 * Exclude z/OS when testing GetProcessCpuLoad() and GetSystemCpuLoad(). Existing implementation of
 	 * omrsysinfo_get_CPU_utilization(), which the two APIs rely on, is problematic on z/OS. (details see JAZZ103 53507)
 	 */
-	if (OMR_ERROR_NONE == rc) {
-		rc = OMRTEST_PRINT_ERROR(testTICpuLoad(vmThread, ti));
-	}
+	rc = OMRTEST_PRINT_ERROR(testTICpuLoad(vmThread, ti));
 #endif /* !defined(J9ZOS390) */
-	if (OMR_ERROR_NONE == rc) {
-		rc = ti->UnbindCurrentThread(vmThread);
-		if (OMR_ERROR_NONE != rc) {
-			omrtty_printf("%s: UnbindCurrentThread failed, rc=%d\n", agentName, rc);
-		} else {
-			omrtty_printf("%s: UnbindCurrentThread passed\n", agentName);
-		}
+
+	rc2 = ti->UnbindCurrentThread(vmThread);
+	if (OMR_ERROR_NONE != rc2) {
+		omrtty_printf("%s: UnbindCurrentThread failed, rc=%d\n", agentName, rc2);
+		return rc2;
+	} else {
+		omrtty_printf("%s: UnbindCurrentThread passed\n", agentName);
 	}
+
 	return rc;
 }
 

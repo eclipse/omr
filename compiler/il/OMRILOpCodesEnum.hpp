@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -160,7 +160,6 @@
    dmul,     // multiply 2 doubles
    bmul,     // multiply 2 bytes
    smul,     // multiply 2 short integers
-   iumul,    // multiply 2 unsigned integers
    idiv,     // divide 2 integers                (child1 / child2)
    ldiv,     // divide 2 long integers           (child1 / child2)
    fdiv,     // divide 2 floats                  (child1 / child2)
@@ -458,13 +457,13 @@
    sRegStore, // Store short global register
    bRegStore, // Store byte global register
    GlRegDeps, // Global Register Dependency List
-   iternary,   // Ternary Operator:  Based on the result of the first child, take the value of the
-   lternary,   //   second (first child evaluates to true) or third(first child evaluates to false) child
-   bternary,   //
-   sternary,   //
-   aternary,   //
-   fternary,   //
-   dternary,   //
+   iselect,   // Select Operator:  Based on the result of the first child, take the value of the
+   lselect,   //   second (first child evaluates to true) or third(first child evaluates to false) child
+   bselect,   //
+   sselect,   //
+   aselect,   //
+   fselect,   //
+   dselect,   //
    treetop,  // tree top to anchor subtrees with side-effects
    MethodEnterHook, // called after a frame is built, temps initialized, and monitor acquired (if necessary)
    MethodExitHook,  // called immediately before returning, frame not yet collapsed, monitor released (if necessary)
@@ -501,7 +500,7 @@
    vicmpanyle,       // vector integer any less equal
 
    vnot,          // vector boolean not
-   vselect,       // vector select
+   vbitselect,       // vector bit select
    vperm,         // vector permute
 
    vsplats,       // vector splats
@@ -575,7 +574,7 @@
    vreturn,    // return a vector
    vcall,      // direct call returning a vector
    vcalli,     // indirect call returning a vector
-   vternary,   // vector ternary operator
+   vselect,    // vector select operator
    v2v,        // vector to vector conversion. preserves bit pattern (noop), only changes datatype
    vl2vd,      // vector to vector conversion. converts each long element to double
    vconst,     // vector constant
@@ -622,8 +621,6 @@
    busub,    // subtract 2 unsigned bytes          (child1 - child2)
    iuneg,    // negate an unsigned integer
    luneg,    // negate a unsigned long integer
-   iushl,    // shift unsigned integer left       (child1 << child2)
-   lushl,    // shift unsigned long integer left  (child1 << child2)
    f2iu,     // convert float to unsigned integer
    f2lu,     // convert float to unsigned long integer
    f2bu,     // convert float to unsigned byte
@@ -636,10 +633,6 @@
    luRegLoad, // Load unsigned long integer global register
    iuRegStore,// Store unsigned integer global register
    luRegStore,// Store long integer global register
-   iuternary,  // second or the third child.  Analogous to the "condition ? a : b" operations in C/Java.
-   luternary,  //
-   buternary,  //
-   suternary,  //
    cconst,   // load unicode constant (16-bit unsigned)
    cload,    // load short unsigned integer
    cloadi,   // load indirect unsigned short integer
@@ -656,6 +649,7 @@
    checkcast,// checkcast
    checkcastAndNULLCHK,// checkcast and NULL check the underlying object reference
    New,      // new - child is class
+   newvalue, //allocate and initialize - children provide field values
    newarray, // new array of primitives
    anewarray,// new array of objects
    variableNew,// new - child is class, type not known at compile time
@@ -797,15 +791,6 @@
    getstack, // returns current value of SP
    dealloca, // resets value of SP
 
-   ishfl,    // int shift logical
-   lshfl,    // long shift logical
-   iushfl,   // unsigned int shift logical
-   lushfl,   // unsigned long shift logical
-   bshfl,    // byte shift logical
-   sshfl,    // short shift logical
-   bushfl,   // unsigned byte shift logical
-   sushfl,   // unsigned short shift logical
-
    idoz,     // difference or zero
 
    dcos,       // cos of double, returning double
@@ -823,8 +808,6 @@
    datan2,     // arctan2 of double, returning double
 
    dlog,       // log of double, returning double
-
-   imulover,   // (int) overflow predicate of int multiplication
 
    dfloor,     // floor of double, returning double
    ffloor,     // floor of float, returning float

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,7 +82,7 @@ typedef int32_t CASECONST_TYPE;
 #define DOUBLE_NAN            DOUBLE_ORDER(((uint64_t)0x7FF80000)<<32)
 
 #define DOUBLE_NAN_1_LOW      ((uint64_t)((((uint64_t)0x7FF00000)<<32)+1))
-#define DOUBLE_NAN_1_HIGH     ((uint64_t)TR::getMaxSigned<TR::Int32>())
+#define DOUBLE_NAN_1_HIGH     ((uint64_t)TR::getMaxSigned<TR::Int64>())
 #define DOUBLE_NAN_2_LOW      ((uint64_t)((((uint64_t)0xFFF00000)<<32)+1))
 #define DOUBLE_NAN_2_HIGH     ((uint64_t)((int64_t)-1))
 #define IN_DOUBLE_NAN_1_RANGE(d) (DOUBLE_ORDER(d) >= DOUBLE_NAN_1_LOW && DOUBLE_ORDER(d) <= DOUBLE_NAN_1_HIGH)
@@ -345,6 +345,7 @@ public:
    inline bool isVector();
    inline bool isBFPorHFP();
    inline bool isDouble();
+   inline bool isFloat();
 
    inline bool isAddress();
    inline bool isAggregate();

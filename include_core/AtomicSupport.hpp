@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,54 +40,6 @@
 #include <builtins.h>
 #endif
 
-#if defined(AIXPPC)
-#if defined(__xlC__)
-#include <builtins.h>
-/* 
-   Bytecode for: or 27,27,27 
-   provides a hint that performance will probably be improved if shared resources dedicated
-   to the executing processor are released for use by other processors. 
-*/
-#pragma mc_func __ppc_yield  {"7F7BDB78"}
-/*
-   Bytecode for: or 1,1,1
-   Lower SMT thread priority.
-*/
-#pragma mc_func __ppc_dropSMT  {"7C210B78"}
-/*
-   Bytecode for: or 2,2,2
-   Restore SMT thread priority
-*/
-#pragma mc_func __ppc_restoreSMT  {"7C421378"}
-/* Bytecode for: nop */
-#pragma mc_func __ppc_nop  {"60000000"}
-#endif /* #if defined(__xlC__) */
-#endif /* defined(AIXPPC) */
-
-#if defined(LINUXPPC)
-#if defined(__xlC__)
-#include <builtins.h>
-/* 
-   Bytecode for: or 27,27,27 
-   provides a hint that performance will probably be improved if shared resources dedicated
-   to the executing processor are released for use by other processors. 
-*/
-#pragma mc_func __ppc_yield  {"7F7BDB78"}
-/*
-   Bytecode for: or 31,31,31
-   Lower SMT thread priority.
-*/
-#pragma mc_func __ppc_dropSMT  {"7FFFFB78"}
-/*
-   Bytecode for: or 6,6,6
-   Restore SMT thread priority
-*/
-#pragma mc_func __ppc_restoreSMT  {"7CC63378"}
-/* Bytecode for: nop */
-#pragma mc_func __ppc_nop  {"60000000"}
-#endif /* #if defined(__xlC__) */
-#endif /* defined(LINUXPPC) */
-
 #if defined(_MSC_VER)
 #include <intrin.h>
 #endif /* defined(_MSC_VER) */
@@ -108,25 +60,15 @@
  * For AIX, dropSMT should drop to LOW(2) and 
  * restoreSMT should raise back to MEDIUM(4)
  */
-#if defined(__xlC__)
-		inline void __dropSMT() { __ppc_dropSMT(); }
-		inline void __restoreSMT() { __ppc_restoreSMT(); }
-#else
-		inline void __dropSMT() {  __asm__ volatile ("or 1,1,1"); }
-		inline void __restoreSMT() {  __asm__ volatile ("or 2,2,2"); }
-#endif
+		inline void __dropSMT() { __asm__ __volatile__ ("or 1,1,1"); }
+		inline void __restoreSMT() { __asm__ __volatile__ ("or 2,2,2"); }
 #elif defined(LINUXPPC) /* defined(AIXPPC) */
 /* The default hardware priorities on LINUXPPC is MEDIUM-LOW(3).
  * For LINUXPPC, dropSMT should drop to VERY-LOW(1) and 
  * restoreSMT should raise back to MEDIUM-LOW(3)
  */
-#if defined(__xlC__)
-		inline void __dropSMT() { __ppc_dropSMT(); }
-		inline void __restoreSMT() { __ppc_restoreSMT(); }
-#else
-		inline void __dropSMT() {  __asm__ volatile ("or 31,31,31"); }
-		inline void __restoreSMT() {  __asm__ volatile ("or 6,6,6"); }
-#endif
+		inline void __dropSMT() {  __asm__ __volatile__ ("or 31,31,31"); }
+		inline void __restoreSMT() {  __asm__ __volatile__ ("or 6,6,6"); }
 
 #elif defined(_MSC_VER) /* defined (LINUXPPC) */
 		inline void __yield() { _mm_pause(); }
@@ -139,14 +81,8 @@
 #if defined(_MSC_VER)
 		/* use compiler intrinsic */
 #elif defined(LINUXPPC) || defined(AIXPPC)
-#if defined(__xlC__)
-		/* XL compiler complained about generated assembly, use machine code instead. */
-		inline void __nop() { __ppc_nop(); }
-		inline void __yield() { __ppc_yield(); }
-#else
-		inline void __nop() { __asm__ volatile ("nop"); }
-		inline void __yield() { __asm__ volatile ("or 27,27,27"); }
-#endif
+		inline void __nop() { __asm__ __volatile__ ("nop"); }
+		inline void __yield() { __asm__ __volatile__ ("or 27,27,27"); }
 #elif defined(LINUX) && (defined(S390) || defined(S39064))
 		/*
 		 * nop instruction requires operand https://bugzilla.redhat.com/show_bug.cgi?id=506417
@@ -269,9 +205,11 @@ public:
 		asm volatile("lock orl $0x0,(%%rsp)" ::: "memory");
 #elif defined(ARM) /* defined(J9HAMMER) */
 		__sync_synchronize();
-#elif defined(AARCH64) /* defined(ARM) */
+#elif defined(OMR_ARCH_AARCH64) /* defined(ARM) */
 		__asm __volatile ("dmb ish":::"memory");
-#elif defined(S390) /* defined(AARCH64) */
+#elif defined(RISCV64) /* defined(OMR_ARCH_AARCH64) */
+		asm volatile ("fence rw,rw":::"memory");
+#elif defined(S390) /* defined(RISCV64) */
 		asm volatile("bcr 15,0":::"memory");
 #else /* defined(S390) */
 		asm volatile("":::"memory");
@@ -304,9 +242,11 @@ public:
 #elif defined(__GNUC__)
 #if defined(ARM)
 		__sync_synchronize();
-#elif defined(AARCH64) /* defined(ARM) */
+#elif defined(OMR_ARCH_AARCH64) /* defined(ARM) */
 		__asm __volatile ("dmb ishst":::"memory");
-#else /* defined(AARCH64) */
+#elif defined(RISCV64) /* defined(OMR_ARCH_AARCH64) */
+		asm volatile ("fence w,w":::"memory");
+#else /* defined(RISCV64) */
 		asm volatile("":::"memory");
 #endif /* defined(ARM) */
 #elif defined(J9ZOS390)
@@ -334,9 +274,11 @@ public:
 #elif defined(__GNUC__)
 #if defined(ARM)
 		__sync_synchronize();
-#elif defined(AARCH64) /* defined(ARM) */
+#elif defined(OMR_ARCH_AARCH64) /* defined(ARM) */
 		__asm __volatile ("dmb ishld":::"memory");
-#else /* defined(AARCH64) */
+#elif defined(RISCV64) /* defined(OMR_ARCH_AARCH64) */
+		asm volatile ("fence r,r":::"memory");
+#else /* defined(RISCV64) */
 		asm volatile("":::"memory");
 #endif /* defined(ARM) */
 #elif defined(J9ZOS390)
@@ -394,11 +336,23 @@ public:
 		}
 #endif /* defined(ATOMIC_ALLOW_PRE_READ) */
 #if defined(OMRZTPF)
-        cs((cs_t *)&oldValue, (cs_t *)address, (cs_t)newValue);
-        return oldValue;
-#elif defined(__GNUC__) /* defined(OMRZTPF) */ 
+		cs((cs_t *)&oldValue, (cs_t *)address, (cs_t)newValue);
+		return oldValue;
+#elif defined(__xlC__) /* defined(OMRZTPF) */
+		__compare_and_swap((volatile int*)address, (int*)&oldValue, (int)newValue);
+		return oldValue;
+#elif defined(__GNUC__)  /* defined(__xlC__) */
+#if defined(__riscv)
+		/* To keep the LR/SC(load/store) code sequentially consistent in memory operations
+		 * so as to prevent reordering of code sequence on RISC-V, directly insert the assembly
+		 * with the RL(release) bit set on the SC(store) instruction which is missing
+		 * in the built-in function __sync_val_compare_and_swap() against the RISC-V Spec.
+		 */
+		return RiscvCAS32Helper(address, oldValue, newValue);
+#else /* defined(__riscv) */
 		/* Assume GCC >= 4.2 */
 		return __sync_val_compare_and_swap(address, oldValue, newValue);
+#endif /* defined(__riscv) */
 #elif defined(_MSC_VER) /* defined(__GNUC__) */
 		return (uint32_t)_InterlockedCompareExchange((volatile long *)address, (long)newValue, (long)oldValue);
 #elif defined(J9ZOS390) /* defined(_MSC_VER) */
@@ -407,10 +361,7 @@ public:
 		/* 390 cs() function defined in <stdlib.h>, doesn't expand properly to __cs1() which correctly deals with aliasing */
 		__cs1((uint32_t *)&old, (uint32_t *)address, (uint32_t *)&newValue);
 		return old;
-#elif defined(__xlC__) /* defined(J9ZOS390) */
-		__compare_and_swap((volatile int*)address, (int*)&oldValue, (int)newValue);
-		return oldValue;
-#else /* defined(__xlC__) */
+#else /* defined(J9ZOS390) */
 #error "lockCompareExchangeU32(): unsupported platform!"
 #endif /* defined(__xlC__) */
 #endif /* defined(ATOMIC_SUPPORT_STUB) */
@@ -453,9 +404,21 @@ public:
 #elif defined(OMRZTPF) /* defined(OMR_ARCH_POWER) && !defined(OMR_ENV_DATA64) */
 		csg((csg_t *)&oldValue, (csg_t *)address, (csg_t)newValue);
 		return oldValue;
-#elif defined(__GNUC__) /* defined(OMRZTPF) */
+#elif defined(__xlC__) /* defined(OMRZTPF) */
+		__compare_and_swaplp((volatile long*)address, (long*)&oldValue, (long)newValue);
+		return oldValue;
+#elif defined(__GNUC__) /* defined(__xlC__) */
+#if defined(__riscv)
+		/* To keep the LR/SC(load/store) code sequentially consistent in memory operations
+		 * so as to prevent reordering of code sequence on RISC-V, directly insert the assembly
+		 * with the RL(release) bit set on the SC(store) instruction which is missing
+		 * in the built-in function __sync_val_compare_and_swap() against the RISC-V Spec.
+		 */
+		return RiscvCAS64Helper(address, oldValue, newValue);
+#else /* defined(__riscv) */
 		/* Assume GCC >= 4.2 */
 		return __sync_val_compare_and_swap(address, oldValue, newValue);
+#endif /* defined(__riscv) */
 #elif defined(_MSC_VER) /* defined(__GNUC__) */
 		return (uint64_t)_InterlockedCompareExchange64((volatile __int64 *)address, (__int64)newValue, (__int64)oldValue);
 #elif defined(J9ZOS390) /* defined(_MSC_VER) */
@@ -470,10 +433,7 @@ public:
 		cds((cds_t*)&old, (cds_t*)address, *(cds_t*)&newValue);
 		return old;
 #endif /* defined(OMR_ENV_DATA64) */
-#elif defined(__xlC__) /* defined(J9ZOS390) */
-		__compare_and_swaplp((volatile long*)address, (long*)&oldValue, (long)newValue);
-		return oldValue;
-#else /* defined(__xlC__) */
+#else /* defined(J9ZOS390) */
 #error "lockCompareExchangeU64(): unsupported platform!"
 #endif /* defined(__xlC__) */
 #endif /* defined(ATOMIC_SUPPORT_STUB) */
@@ -499,6 +459,107 @@ public:
 		return (uintptr_t)lockCompareExchangeU64((volatile uint64_t *)address, (uint64_t)oldValue, (uint64_t)newValue, readBeforeCAS);
 #else /* defined(OMR_ENV_DATA64) */
 		return (uintptr_t)lockCompareExchangeU32((volatile uint32_t *)address, (uint32_t)oldValue, (uint32_t)newValue, readBeforeCAS);
+#endif /* defined(OMR_ENV_DATA64) */
+	}
+
+#if defined(OMR_ENV_DATA64)
+	/**
+	 * Store the unsigned 64-bit value at the memory location as an atomic operation, and
+	 * return the old 64-bit value stored at the memory location.
+	 *
+	 * @param address The memory location to be updated
+	 * @param newValue The new value to be stored at memory address
+	 *
+	 * @return the value at memory location <b>address</b> BEFORE the store was attempted
+	 */
+	VMINLINE static uint64_t
+	lockExchangeU64(volatile uint64_t *address, uint64_t newValue)
+	{
+#if defined(ATOMIC_SUPPORT_STUB)
+		return 0;
+#elif defined(J9ZOS390) /* defined(ATOMIC_SUPPORT_STUB) */
+		/* On zLinux, the fetch-and-store operation generates the same s390x assembly as the
+		 * compare-and-swap operation. On zOS, the XLC equivalent of the fetch-and-store
+		 * operation (__fetch_and_swap) does not compile. So, the lockExchange function is
+		 * supported using the atomic set function on zOS, which is a wrapper for the
+		 * lockCompareExchange function.
+		 */
+		return setU64(address, newValue);
+#else /* defined(ATOMIC_SUPPORT_STUB) */
+		readWriteBarrier();
+#if defined(__GNUC__)
+		return (uint64_t)__sync_lock_test_and_set(address, newValue);
+#elif defined(__xlC__) /* defined(__GNUC__) */
+#if ((__xlC__ > 0x0d01) || ((__xlC__ == 0x0d01) && (__xlC_ver__ >= 0x00000300))) /* XLC >= 13.1.3 */
+		return (uint64_t)__fetch_and_swaplp((volatile unsigned long *)address, (unsigned long)newValue);
+#else /* ((__xlC__ > 0x0d01) || ((__xlC__ == 0x0d01) && (__xlC_ver__ >= 0x00000300))) */
+		return (uint64_t)__fetch_and_swaplp((volatile long *)address, (long)newValue);
+#endif /* ((__xlC__ > 0x0d01) || ((__xlC__ == 0x0d01) && (__xlC_ver__ >= 0x00000300))) */
+#elif defined(_MSC_VER) /* defined(__GNUC__) */
+		return (uint64_t)_InterlockedExchange64((volatile __int64 *)address, (__int64)newValue);
+#else /* defined(__GNUC__) */
+#error "lockExchangeU64(): unsupported platform!"
+#endif /* defined(__GNUC__) */
+#endif /* defined(ATOMIC_SUPPORT_STUB) */
+	}
+#else /* defined(OMR_ENV_DATA64) */
+	/**
+	 * Store the unsigned 32-bit value at the memory location as an atomic operation, and
+	 * return the old 32-bit value stored at the memory location.
+	 *
+	 * @param address The memory location to be updated
+	 * @param newValue The new value to be stored at memory address
+	 *
+	 * @return the value at memory location <b>address</b> BEFORE the store was attempted
+	 */
+	VMINLINE static uint32_t
+	lockExchangeU32(volatile uint32_t *address, uint32_t newValue)
+	{
+#if defined(ATOMIC_SUPPORT_STUB)
+		return 0;
+#elif defined(J9ZOS390) /* defined(ATOMIC_SUPPORT_STUB) */
+		/* On zLinux, the fetch-and-store operation generates the same s390x assembly as the
+		 * compare-and-swap operation. On zOS, the XLC equivalent of the fetch-and-store
+		 * operation (__fetch_and_swap) does not compile. So, the lockExchange function is
+		 * supported using the atomic set function on zOS, which is a wrapper for the
+		 * lockCompareExchange function.
+		 */
+		return (uint32_t)set((volatile uintptr_t *)address, (uintptr_t)newValue);
+#else /* defined(ATOMIC_SUPPORT_STUB) */
+		readWriteBarrier();
+#if defined(__GNUC__)
+		return (uint32_t)__sync_lock_test_and_set(address, newValue);
+#elif defined(__xlC__) /* defined(__GNUC__) */
+#if ((__xlC__ > 0x0d01) || ((__xlC__ == 0x0d01) && (__xlC_ver__ >= 0x00000300))) /* XLC >= 13.1.3 */
+		return (uint32_t)__fetch_and_swap((volatile unsigned int *)address, (unsigned int)newValue);
+#else /* ((__xlC__ > 0x0d01) || ((__xlC__ == 0x0d01) && (__xlC_ver__ >= 0x00000300))) */
+		return (uint32_t)__fetch_and_swap((volatile int *)address, (int)newValue);
+#endif /* ((__xlC__ > 0x0d01) || ((__xlC__ == 0x0d01) && (__xlC_ver__ >= 0x00000300))) */
+#elif defined(_MSC_VER) /* defined(__GNUC__) */
+		return (uint32_t)_InterlockedExchange((volatile long *)address, (long)newValue);
+#else /* defined(__GNUC__) */
+#error "lockExchangeU32(): unsupported platform!"
+#endif /* defined(__GNUC__) */
+#endif /* defined(ATOMIC_SUPPORT_STUB) */
+	}
+#endif /* defined(OMR_ENV_DATA64) */
+
+	/**
+	 * Store the value at the memory location as an atomic operation, and return the old
+	 * value stored at the memory location.
+	 *
+	 * @param address The memory location to be updated
+	 * @param newValue The new value to be stored at memory address
+	 *
+	 * @return the value at memory location <b>address</b> BEFORE the store was attempted
+	 */
+	VMINLINE static uintptr_t
+	lockExchange(volatile uintptr_t * address, uintptr_t newValue)
+	{
+#if defined(OMR_ENV_DATA64)
+		return (uintptr_t)lockExchangeU64((volatile uint64_t *)address, (uint64_t)newValue);
+#else /* defined(OMR_ENV_DATA64) */
+		return (uintptr_t)lockExchangeU32((volatile uint32_t *)address, (uint32_t)newValue);
 #endif /* defined(OMR_ENV_DATA64) */
 	}
 

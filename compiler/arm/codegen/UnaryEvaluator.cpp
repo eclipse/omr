@@ -266,7 +266,7 @@ TR::Register *OMR::ARM::TreeEvaluator::l2iEvaluator(TR::Node *node, TR::CodeGene
       {
       trgReg = cg->allocateRegister();
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 4, cg);
-      if (TR::Compiler->target.cpu.isBigEndian())
+      if (cg->comp()->target().cpu.isBigEndian())
          tempMR->addToOffset(node, 4, cg);
       generateTrg1MemInstruction(cg, ARMOp_ldr, node, trgReg, tempMR);
       tempMR->decNodeReferenceCounts();

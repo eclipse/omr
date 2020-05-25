@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,7 @@ class OMR_EXTENSIBLE CodeMetaData
     * @brief Returns the address of allocated code memory within a code
     * cache for a method.
     */
-   uintptrj_t codeAllocStart() { return _codeAllocStart; }
+   uintptr_t codeAllocStart() { return _codeAllocStart; }
 
    /**
     * @brief Returns the total size of code memory allocated for a method 
@@ -79,7 +79,7 @@ class OMR_EXTENSIBLE CodeMetaData
     * By default, the interpreter entry PC and compiled entry PC point 
     * to the same address.
     */
-   uintptrj_t interpreterEntryPC() { return _interpreterEntryPC; }
+   uintptr_t interpreterEntryPC() { return _interpreterEntryPC; }
 
    /**
     * @brief Returns the starting address of compiled code for a
@@ -88,12 +88,12 @@ class OMR_EXTENSIBLE CodeMetaData
     * By default, the interpreter entry PC and compiled entry PC point 
     * to the same address.
     */
-   uintptrj_t compiledEntryPC() { return _compiledEntryPC; }
+   uintptr_t compiledEntryPC() { return _compiledEntryPC; }
 
    /**
     * @brief Returns the end address of compiled code for a method.
     */
-   uintptrj_t compiledEndPC() { return _compiledEndPC; }
+   uintptr_t compiledEndPC() { return _compiledEndPC; }
 
    /**
     * @brief Returns the compilation hotness level of a compiled method.
@@ -102,12 +102,12 @@ class OMR_EXTENSIBLE CodeMetaData
 
    protected:
 
-   uintptrj_t _codeAllocStart;
+   uintptr_t _codeAllocStart;
    uint32_t _codeAllocSize;
 
-   uintptrj_t _interpreterEntryPC;
-   uintptrj_t _compiledEntryPC;
-   uintptrj_t _compiledEndPC;
+   uintptr_t _interpreterEntryPC;
+   uintptr_t _compiledEntryPC;
+   uintptr_t _compiledEndPC;
 
    TR_Hotness _hotness;
    };

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,6 +58,7 @@ enum MajorOperatingSystem
    os_windows,
    os_zos,
    os_osx,
+   os_bsd,
    os_unknown
    };
 
@@ -100,6 +101,7 @@ public:
    bool isUnix() { return _majorOS == TR::os_unix; }
    bool isZOS() { return _majorOS == TR::os_zos; }
    bool isOSX() { return _majorOS == TR::os_osx; }
+   bool isBSD() { return _majorOS == TR::os_bsd; }
 
    TR::Bitness bitness() { return _bitness; }
    void setBitness(TR::Bitness b) { _bitness = b; }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -141,7 +141,7 @@ J9HookInitializeInterface(struct J9HookInterface **hookInterface, OMRPortLibrary
 
 	commonInterface->nextAgentID = J9HOOK_AGENTID_DEFAULT + 1;
 	commonInterface->portLib = portLib;
-	commonInterface->threshold4Trace = OMRHOOK_DEFAULT_THRESHOLD_IN_MILLISECONDS_WARNING_CALLBACK_ELAPSED_TIME;
+	commonInterface->threshold4Trace = OMRHOOK_DEFAULT_THRESHOLD_IN_MICROSECONDS_WARNING_CALLBACK_ELAPSED_TIME;
 
 	commonInterface->eventSize = (interfaceSize - sizeof(J9CommonHookInterface)) / (sizeof(U_8) + sizeof(OMREventInfo4Dump) + sizeof(J9HookRecord*));
 	return 0;
@@ -229,18 +229,19 @@ J9HookDispatch(struct J9HookInterface **hookInterface, uintptr_t taggedEventNum,
 				}
 				OMRPORT_ACCESS_FROM_OMRPORT(commonInterface->portLib);
 				if (sampling) {
-					startTime = omrtime_current_time_millis();
+					startTime = omrtime_usec_clock(); 
 				}
 
 				function(hookInterface, eventNum, eventData, userData);
 
 				if (sampling) {
-					uint64_t timeDelta = omrtime_current_time_millis() - startTime;
+					uint64_t timeDelta = omrtime_hires_delta(startTime, omrtime_usec_clock(), OMRPORT_TIME_DELTA_IN_MICROSECONDS);
 
 					eventDump->lastHook.startTime = startTime;
 					eventDump->lastHook.callsite = record->callsite;
 					eventDump->lastHook.func_ptr = (void *)record->function;
 					eventDump->lastHook.duration = timeDelta;
+					VM_AtomicSupport::add((volatile uintptr_t *)&eventDump->totalTime, (uintptr_t)timeDelta);
 
 					if ((eventDump->longestHook.duration < timeDelta) ||
 						(0 == eventDump->longestHook.startTime)) {

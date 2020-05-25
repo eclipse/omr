@@ -94,7 +94,7 @@ MM_PhysicalSubArenaVirtualMemoryFlat::tearDown(MM_EnvironmentBase *env)
 	}
 	if (NULL != _subSpace) {
 		_subSpace->heapRemoveRange(env, _subSpace, ((uintptr_t)_highAddress) - ((uintptr_t)_lowAddress), _lowAddress, _highAddress, lowValidAddress, highValidAddress);
-		_subSpace->heapReconfigured(env);
+		_subSpace->heapReconfigured(env, HEAP_RECONFIG_CONTRACT);
 	}
 	MM_PhysicalSubArenaVirtualMemory::tearDown(env);
 }
@@ -113,9 +113,17 @@ MM_PhysicalSubArenaVirtualMemoryFlat::inflate(MM_EnvironmentBase *env)
 		if(NULL != _region) {
 			Assert_MM_true((_lowAddress == _region->getLowAddress()) && (_highAddress == _region->getHighAddress()));
 			/* Inflation successful - inform the owning memorySubSpace */
-			//TODO: Like the semi space arena, this should dispatch directory to the child subspace
-			result = _subSpace->expanded(env, this, _region->getSize(), _region->getLowAddress(), _region->getHighAddress(), false);
-			_subSpace->heapReconfigured(env);
+
+			void *lowAddress = _region->getLowAddress();
+			void *highAddress = _region->getHighAddress();
+
+			MM_MemorySubSpace *genericSubSpace = ((MM_MemorySubSpaceFlat *)_subSpace)->getChildSubSpace();
+			result = genericSubSpace->expanded(env, this, _region->getSize(), lowAddress, highAddress, false);
+			if (result) {
+				genericSubSpace->heapReconfigured(env, HEAP_RECONFIG_EXPAND, genericSubSpace, lowAddress, highAddress);
+			} else {
+				genericSubSpace->heapReconfigured(env, HEAP_RECONFIG_EXPAND);
+			}
 		}
 	}
 	return result;
@@ -211,11 +219,12 @@ MM_PhysicalSubArenaVirtualMemoryFlat::expandNoCheck(MM_EnvironmentBase *env, uin
 		getHeapRegionManager()->resizeAuxillaryRegion(env, _region, _lowAddress, _highAddress);
 		Assert_MM_true(NULL != _region);
 
-		if(result){
+		if(result) {
 			genericSubSpace->addExistingMemory(env, this, expandSize, lowExpandAddress, highExpandAddress, true);
+			genericSubSpace->heapReconfigured(env, HEAP_RECONFIG_EXPAND, genericSubSpace, lowExpandAddress, highExpandAddress);
+		} else {
+			genericSubSpace->heapReconfigured(env, HEAP_RECONFIG_EXPAND);
 		}
-
-		_subSpace->heapReconfigured(env);
 	}
 
 	Assert_MM_true(_lowAddress == _region->getLowAddress());
@@ -305,10 +314,9 @@ MM_PhysicalSubArenaVirtualMemoryFlat::contract(MM_EnvironmentBase *env, uintptr_
 	_highAddress = (void *)contractBase;
 	getHeapRegionManager()->resizeAuxillaryRegion(env, _region, _lowAddress, _highAddress);
 	Assert_MM_true(NULL != _region);
-
 	/* Broadcast that heap has been removed */
 	genericSubSpace->heapRemoveRange(env, _subSpace, contractSize, (void *)contractBase, (void *)contractTop, lowValidAddress, highValidAddress);
-	genericSubSpace->heapReconfigured(env);
+	genericSubSpace->heapReconfigured(env, HEAP_RECONFIG_CONTRACT);
 
 	/* Execute any pending counter balances to the contract that have been enqueued */
 	_subSpace->triggerEnqueuedCounterBalancing(env);

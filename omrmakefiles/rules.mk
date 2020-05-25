@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2018 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -214,7 +214,7 @@ $(CC) $(CPPFLAGS) $(MODULE_CPPFLAGS) $(GLOBAL_CPPFLAGS) -E $< | $(DDR_SED_COMMAN
 endef
 
 define DDR_CPP_COMMAND
-$(CC) $(CPPFLAGS) $(MODULE_CPPFLAGS) $(GLOBAL_CPPFLAGS) -E $< | $(DDR_SED_COMMAND) > $@
+$(CXX) $(CPPFLAGS) $(MODULE_CPPFLAGS) $(GLOBAL_CPPFLAGS) -E $< | $(DDR_SED_COMMAND) > $@
 endef
 
 ###
@@ -398,10 +398,5 @@ endif
 %.i: %.cpp
 	$(DDR_CPP_COMMAND)
 
-# just create an empty output file
-%.i: %.s
-	touch $@
-
-# just create an empty output file
-%.i: %.asm
-	touch $@
+# just create empty output files for other types of source files
+$(foreach E, asm mc s, $(eval %.i : %.$E ; touch $$@))

@@ -19,10 +19,18 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef METHOD_INCL
-#define METHOD_INCL
+#ifndef OMR_METHOD_INCL
+#define OMR_METHOD_INCL
 
-#include "compile/InlineBlock.hpp"
+/*
+ * The following #define and typedef must appear before any #includes in this file
+ */
+#ifndef OMR_METHOD_CONNECTOR
+#define OMR_METHOD_CONNECTOR
+namespace OMR { class Method; }
+namespace OMR { typedef OMR::Method MethodConnector; }
+#endif
+
 
 #include <limits.h>
 #include <stddef.h>
@@ -31,24 +39,12 @@
 #include "env/TRMemory.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
-#include "il/Node.hpp"
-#include "infra/Assert.hpp"
+#include "infra/Annotations.hpp"
 
-class TR_BitVector;
-class TR_CompactLocals;
-class TR_GlobalRegisterAllocator;
-class TR_InlinerBase;
 class TR_OpaqueClassBlock;
 class TR_ResolvedMethod;
-namespace TR { class S390SystemLinkage; }
-class TR_Value;
-namespace TR { class CodeGenerator; }
 namespace TR { class Compilation; }
-namespace TR { class Node; }
-namespace TR { class Snippet; }
-namespace TR { class Symbol; }
-namespace TR { class SymbolReference; }
-template <class T> class TR_ScratchList;
+namespace TR { class Method; }
 
 // Method indexes
 //
@@ -82,16 +78,6 @@ public:
 #define JITTED_METHOD_INDEX (mcount_t::valueOf((uint32_t)0)) // Index of the top-level method being compiled
 #define MAX_CALLER_INDEX (mcount_t::valueOf((uint32_t)INT_MAX)) // Could be UINT_MAX, in theory, but let's avoid corner cases until that day comes when we need 3 billion caller indexes
 
-enum NonUserMethod
-   {
-   unknownNonUserMethod,
-   nonUser_java_util_HashMap_rehash,
-   nonUser_java_util_HashMap_analyzeMap,
-   nonUser_java_util_HashMap_calculateCapacity,
-   nonUser_java_util_HashMap_findNullKeyEntry,
-
-   numNonUserMethods
-   };
 
 class TR_MethodParameterIterator
    {
@@ -110,11 +96,24 @@ protected:
    TR::Compilation &                 _comp;
    };
 
-class TR_Method
+
+typedef struct TR_AOTMethodInfo
+   {
+   TR_ResolvedMethod *resolvedMethod;
+   int32_t cpIndex;
+   } TR_AOTMethodInfo;
+
+
+namespace OMR
+{
+
+class Method
    {
    public:
 
    TR_ALLOC(TR_Memory::Method);
+
+   TR::Method *self();
 
    enum Type {J9, Test, JitBuilder};
 
@@ -140,7 +139,7 @@ class TR_Method
    bool isJ9()     { return _typeOfMethod == J9;     }
    Type methodType() { return _typeOfMethod; }
 
-   TR_Method(Type t = J9) : _typeOfMethod(t) { _recognizedMethod = _mandatoryRecognizedMethod = TR::unknownMethod; }
+   Method(Type t = J9) : _typeOfMethod(t) { _recognizedMethod = _mandatoryRecognizedMethod = TR::unknownMethod; }
 
    // --------------------------------------------------------------------------
    // J9
@@ -169,9 +168,6 @@ class TR_Method
    void setRecognizedMethod(TR::RecognizedMethod rm) { _recognizedMethod = rm; }
    void setMandatoryRecognizedMethod(TR::RecognizedMethod rm) { _mandatoryRecognizedMethod = rm; }
 
-   protected:
-
-
    private:
 
    TR::RecognizedMethod _recognizedMethod;
@@ -180,11 +176,6 @@ class TR_Method
 
    };
 
-
-typedef struct TR_AOTMethodInfo
-   {
-   TR_ResolvedMethod *resolvedMethod;
-   int32_t cpIndex;
-   } TR_AOTMethodInfo;
+}
 
 #endif

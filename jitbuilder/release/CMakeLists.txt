@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 macro(create_jitbuilder_test target)
-	add_executable(${target} ${ARGN})
+	omr_add_executable(${target} ${ARGN})
 	target_include_directories(${target} PUBLIC cpp/include)
 	target_link_libraries(${target}
 		jitbuilder
@@ -62,6 +62,7 @@ if(OMR_JITBUILDER_TEST_EXTENDED)
 	create_jitbuilder_test(tableswitch       cpp/samples/TableSwitch.cpp)
 	create_jitbuilder_test(toiltype          cpp/samples/ToIlType.cpp)
 	create_jitbuilder_test(union             cpp/samples/Union.cpp)
+	create_jitbuilder_test(vmregister        cpp/samples/VMRegister.cpp)
 endif()
 
 # Experimental Tests: These are still on the experimental side
@@ -73,6 +74,5 @@ endif()
 
 
 # Additional Tests: These may not run properly on all platforms
-# Mandelbrot takes arguments for its test
-# so will require we enhance create_jitbuilder_target.
-#create_jitbuilder_target(mandelbrot   cpp/samples/Mandelbrot.cpp)
+# Mandelbrot takes arguments for its test so will require we enhance create_jitbuilder_test
+#create_jitbuilder_test(mandelbrot cpp/samples/Mandelbrot.cpp)

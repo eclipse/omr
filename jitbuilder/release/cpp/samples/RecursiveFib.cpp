@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,10 +72,6 @@ RecursiveFibonnaciMethod::RecursiveFibonnaciMethod(OMR::JitBuilder::TypeDictiona
                   Int32);
    }
 
-static const char *prefix="fib(";
-static const char *middle=") = ";
-static const char *suffix="\n";
-
 bool
 RecursiveFibonnaciMethod::buildIL()
    {
@@ -90,7 +86,6 @@ RecursiveFibonnaciMethod::buildIL()
    baseCase->Store("result",
    baseCase->   Load("n"));
 
-#if defined(RFIB_DEBUG_OUTPUT)
    recursiveCase->Store("result",
    recursiveCase->   Add(
    recursiveCase->      Call("fib", 1,
@@ -101,6 +96,11 @@ RecursiveFibonnaciMethod::buildIL()
    recursiveCase->         Sub(
    recursiveCase->            Load("n"),
    recursiveCase->            ConstInt32(2)))));
+   
+#if defined(RFIB_DEBUG_OUTPUT)
+   static const char *prefix = "fib(";
+   static const char *middle = ") = ";
+   static const char *suffix = "\n";
 
    Call("printString", 1,
       ConstInt64((int64_t)prefix));

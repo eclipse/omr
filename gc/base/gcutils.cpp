@@ -83,6 +83,10 @@ getCompactionReasonAsString(CompactReason reason)
 			return "previous scavenge aborted";
 		case COMPACT_CONTRACT:
 			return "compact to aid heap contraction";
+		case COMPACT_PAGE:
+			return "page granularity fragmentation";	
+		case COMPACT_MICRO_FRAG:
+			return "micro fragmentation";	
 		default:
 			return "unknown";
 	}
@@ -253,6 +257,8 @@ getSystemGCReasonAsString(uint32_t gcCode)
 	case J9MMCONSTANT_EXPLICIT_GC_IDLE_GC:
 		return "vm idle";
 #endif
+	case J9MMCONSTANT_IMPLICIT_GC_COMPLETE_CONCURRENT:
+		return "complete concurrent cycle";
 	default:
 		return "unknown";
 	}

@@ -501,7 +501,7 @@ bool UnitTestOptions::MatchesFilter(
 // name and the test name.
 bool UnitTestOptions::FilterMatchesTest(const std::string &test_case_name,
                                         const std::string &test_name) {
-  const std::string& full_name = test_case_name + "." + test_name.c_str();
+  const std::string full_name = test_case_name + "." + test_name.c_str();
 
   // Split --gtest_filter at '-', if there is one, to separate into
   // positive filter and negative filter portions
@@ -1980,7 +1980,7 @@ std::string String::FormatByte(unsigned char value) {
 // Converts the buffer in a stringstream to an std::string, converting NUL
 // bytes to "\\0" along the way.
 std::string StringStreamToString(::std::stringstream* ss) {
-  const ::std::string& str = ss->str();
+  const ::std::string str = ss->str();
   const char* const start = str.c_str();
   const char* const end = start + str.length();
 
@@ -2858,7 +2858,7 @@ static std::string PrintTestPartResultToString(
 
 // Prints a TestPartResult.
 static void PrintTestPartResult(const TestPartResult& test_part_result) {
-  const std::string& result =
+  const std::string result =
       PrintTestPartResultToString(test_part_result);
   printf("%s\n", result.c_str());
   fflush(stdout);
@@ -3611,7 +3611,7 @@ void XmlUnitTestResultPrinter::OutputXmlAttribute(
     const std::string& element_name,
     const std::string& name,
     const std::string& value) {
-  const std::vector<std::string>& allowed_names =
+  const std::vector<std::string> allowed_names =
       GetReservedAttributesForElement(element_name);
 
   GTEST_CHECK_(std::find(allowed_names.begin(), allowed_names.end(), name) !=
@@ -4400,7 +4400,7 @@ void UnitTestImpl::SuppressTestEventsIfInSubprocess() {
 // Initializes event listeners performing XML output as specified by
 // UnitTestOptions. Must not be called before InitGoogleTest.
 void UnitTestImpl::ConfigureXmlOutput() {
-  const std::string& output_format = UnitTestOptions::GetOutputFormat();
+  const std::string output_format = UnitTestOptions::GetOutputFormat();
   if (output_format == "xml") {
     listeners()->SetDefaultXmlGenerator(new XmlUnitTestResultPrinter(
         UnitTestOptions::GetAbsolutePathToOutputFile().c_str()));
@@ -4802,7 +4802,7 @@ int UnitTestImpl::FilterTests(ReactionToSharding shard_tests) {
   int num_selected_tests = 0;
   for (size_t i = 0; i < test_cases_.size(); i++) {
     TestCase* const test_case = test_cases_[i];
-    const std::string &test_case_name = test_case->name();
+    const std::string test_case_name = test_case->name();
     test_case->set_should_run(false);
 
     for (size_t j = 0; j < test_case->test_info_list().size(); j++) {

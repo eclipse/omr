@@ -53,6 +53,7 @@ struct TR_ExceptionTableEntry
    uint32_t              _instructionEndPC;
    uint32_t              _instructionHandlerPC;
    uint32_t              _catchType;
+   bool                  _isSyntheticHandler; // indicate whether the exception handler is inserted by the compiler rather than existing in the source code
    TR_ByteCodeInfo       _byteCodeInfo;
    };
 

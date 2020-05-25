@@ -24,6 +24,75 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 This folder contains Jenkins pipeline scripts that are used in the OMR Jenkins builds.
 
+### Setting up a Jenkins job
+
+#### Merge Builds
+
+From the [Builds view](https://ci.eclipse.org/omr/view/Builds/), on the left menu select [New Item](https://ci.eclipse.org/omr/view/Builds/newJob). Name the job based on the following convention `Build-<SPEC>` (eg. `Build-linux_x86-64`. See [omrbuild.groovy](./omrbuild.groovy) for full `SPEC` list). Select `Pipeline` as the job type and then click `OK`. Setup the following in the job config.
+
+1. General
+	1. Discard old builds -> Max # of builds to keep: `25`
+	1. GitHub project -> Project url: `https://github.com/eclipse/omr/`
+	1. This project is parameterized -> Choice Parameter -> Name: `BUILDSPEC` -> Choices: `<SPEC>` (The matching SPEC name)
+1. Build Triggers
+	1. Generic Webhook Trigger (defaults should be fine)
+1. Pipeline
+	1. Definition: Pipeline script from SCM
+	1. SCM: Git
+		1. Repositories -> Repository URL: `https://github.com/eclipse/omr.git`
+		1. Branches to build: `/refs/heads/master`
+	1. Script Path: `buildenv/jenkins/omrbuild.groovy`
+	1. Lightweight checkout: `true`
+
+#### Pull Request Builds
+
+From the [Pull Requests view](https://ci.eclipse.org/omr/view/Pull%20Requests/), on the left menu select [New Item](https://ci.eclipse.org/omr/view/Pull%20Requests/newJob). Name the job based on the following convention `PullRequest-<SPEC>` (eg. `PullRequest-linux_x86-64`. See [omrbuild.groovy](./omrbuild.groovy) for full `SPEC` list). Select `Pipeline` as the job type and then click `OK`. Setup the following in the job config.
+
+1. General
+	1. GitHub project -> Project url: `https://github.com/eclipse/omr/`
+	1. This project is parameterized -> Choice Parameter -> Name: `BUILDSPEC` -> Choices: `<SPEC>` (The matching SPEC name)
+1. Build Triggers
+	1. GitHub Pull Request Builder
+		1. Admin list: `<Committers' Github IDs>` (Should be auto filled from Global Config)
+		1. Use github hooks for build triggering: `true`
+		1. Trigger phrase: `.*genie-omr build.*(aix|all).*` (Replace aix with spec shorthand. Where aix is a shorthand for aix_ppc-64)
+		1. White list: `<List of Github IDs allowed to launch PR builds>`
+		1. Trigger Setup
+			1. Add -> Update commit status during build -> Commit Status Context: `continuous-integration/eclipse-omr/pr/<SPEC>`
+			1. Add -> Cancel build on update
+1. Pipeline
+	1. Definition: Pipeline script from SCM
+	1. SCM: Git
+		1. Repositories
+			1. Repository URL: `https://github.com/eclipse/omr.git`
+			1. Advanced -> Refspec: `+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge`
+		1. Branches to build: `${sha1}`
+		1. Additional Behaviours
+			1. Clean before checkout
+			1. Advanced clone behaviours
+				1. Fetch tags: `false`
+				1. Honor refspec on initial clone: `true`
+	1. Script Path: `buildenv/jenkins/omrbuild.groovy`
+	1. Lightweight checkout: `false`
+
+#### Configuring the Github repo hooks
+
+Eclipse admins must do this via a [Bugzilla](https://bugs.eclipse.org/bugs/enter_bug.cgi) request. Product: Community, Component: GitHub
+
+1. Generic Webhook for Merge builds<br>
+	Payload URL: `https://ci.eclipse.org/omr/generic-webhook-trigger/invoke`<br>
+	Content type: `application/json`<br>
+	Enable SSL verification: `true`<br>
+	Which events would you like to trigger this webhook?: `Just the push event`<br>
+	Active: `true`<br>
+
+1. Github PullRequest Trigger Webhook<br>
+	Payload URL: `https://ci.eclipse.org/omr/ghprbhook/`<br>
+	Content type: `application/x-www-form-urlencoded`<br>
+	Enable SSL verification: `true`<br>
+	Which events would you like to trigger this webhook?: `Let me select individual events` -> `Issue comments`, `Pull requests`, `Pushes`<br>
+	Active: `true`<br>
+
 ### Pipeline script from SCM subtleties with Rocket Git for z/OS
 
 Configuring Jenkins to pull the pipeline scripts from Git on z/OS is a non-trivial effort. The Rocket Git for z/OS [1] port does not support _https_ transport protocol, thus specifying the repository in the _Repository URL_ with an `https://` prefix will not work as Jenkins will encounter errors when trying to execute commands on the slave:

@@ -22,7 +22,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
@@ -45,17 +45,17 @@
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
 #include "infra/List.hpp"
@@ -67,11 +67,11 @@
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
 #include "z/codegen/S390OutOfLineCodeSection.hpp"
-#include "z/codegen/OMRLinkage.hpp"
+#include "z/codegen/Linkage.hpp"
 
 static TR::InstOpCode::Mnemonic getIntToFloatLogicalConversion(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic convertOpCode)
    {
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
       {
       switch(convertOpCode)
          {
@@ -112,7 +112,7 @@ static TR::InstOpCode::Mnemonic getIntToFloatLogicalConversion(TR::CodeGenerator
  */
 static TR::InstOpCode::Mnemonic getFloatToIntLogicalConversion(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic convertOpCode)
    {
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
       {
       switch(convertOpCode)
          {
@@ -185,11 +185,11 @@ unaryEvaluator(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic
 inline void
 genLogicalConversionForInt(TR::Node * node, TR::CodeGenerator * cg, TR::Register * targetRegister, int8_t shift_amount)
    {
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12))
       {
       generateRIEInstruction(cg, TR::InstOpCode::RISBGN, node, targetRegister, targetRegister, shift_amount, (int8_t)(63|0x80), 0);
       }
-   else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
+   else if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
       {
       generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, targetRegister, targetRegister, shift_amount, (int8_t)(63|0x80), 0);
       }
@@ -1071,7 +1071,7 @@ OMR::Z::TreeEvaluator::ibits2fEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * targetReg = cg->allocateRegister(TR_FPR);
    TR::Register * sourceReg;
    sourceReg = cg->evaluate(firstChild);
-   if (TR::Compiler->target.cpu.getSupportsFloatingPointExtensionFacility() && !disabled)
+   if (cg->comp()->target().cpu.getSupportsFloatingPointExtensionFacility() && !disabled)
       {
       TR::Register *tempreg;
       tempreg = cg->allocateRegister();
@@ -1112,7 +1112,7 @@ OMR::Z::TreeEvaluator::lbits2dEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * sourceReg;
    TR::Node * firstChild = node->getFirstChild();
    TR::Compilation *comp = cg->comp();
-   if((TR::Compiler->target.cpu.getSupportsFloatingPointExtensionFacility()) && (!disabled))
+   if((cg->comp()->target().cpu.getSupportsFloatingPointExtensionFacility()) && (!disabled))
       {
       sourceReg = cg->evaluate(firstChild);
       TR::Register * targetReg = cg->allocateRegister(TR_FPR);
@@ -1175,7 +1175,7 @@ l2dHelper64(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * longRegister = cg->evaluate(firstChild);
    TR::Register * targetFloatRegister = cg->allocateRegister(TR_FPR);
 
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196) && node->getOpCodeValue() == TR::lu2d)
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196) && node->getOpCodeValue() == TR::lu2d)
       {
       generateRRFInstruction(cg, TR::InstOpCode::CDLGBR, node, targetFloatRegister, longRegister, (uint8_t)0x0, (uint8_t)0x0);
       cg->decReferenceCount(firstChild);

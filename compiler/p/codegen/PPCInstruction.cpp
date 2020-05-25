@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,8 +41,8 @@
 #include "env/TRMemory.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 #include "p/codegen/PPCOpsDefines.hpp"
@@ -68,7 +68,7 @@ void TR::PPCLabelInstruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
       //
       // This label is the end of the hot instruction stream (i.e., the fallthru path).
       //
-      if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+      if (comp->getOption(TR_TraceRA))
          traceMsg (comp,"\nOOL: 1. Taking register state snap shot\n");
       cg()->setIsOutOfLineHotPath(true);
       machine->takeRegisterStateSnapShot();
@@ -87,7 +87,7 @@ void TR::PPCLabelInstruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
       //
       // Start RA for OOL cold path, restore register state from snap shot
       //
-      if (comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+      if (comp->getOption(TR_TraceRA))
          traceMsg (comp, "\nOOL: 1. Restoring Register state from snap shot\n");
       cg()->setIsOutOfLineHotPath(false);
       machine->restoreRegisterStateFromSnapShot();
@@ -324,19 +324,6 @@ TR::PPCImmInstruction *TR::PPCImmInstruction::getPPCImmInstruction()
    }
 #endif
 
-// TR::PPCImm2Instruction:: member functions
-
-
-// The following safe virtual downcast method is only used in an assertion
-// check within "toPPCImmInstruction"
-#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-TR::PPCImm2Instruction *TR::PPCImm2Instruction::getPPCImm2Instruction()
-   {
-   return this;
-   }
-#endif
-
-
 // TR::PPCSrc1Instruction:: member functions
 
 bool TR::PPCSrc1Instruction::refsRegister(TR::Register *reg)
@@ -382,13 +369,6 @@ bool TR::PPCSrc1Instruction::usesRegister(TR::Register *reg)
       return true;
       }
    return false;
-   }
-
-// TR::PPCDepImmInstruction:: member functions
-
-TR::PPCDepImmInstruction *TR::PPCDepImmInstruction::getPPCDepImmInstruction()
-   {
-   return this;
    }
 
 // TR::PPCTrg1Instruction:: member functions
@@ -1048,7 +1028,7 @@ TR::PPCTrg1MemInstruction::PPCTrg1MemInstruction(
 
 bool TR::PPCTrg1MemInstruction::encodeMutexHint()
    {
-   return TR::Compiler->target.cpu.id() >= TR_PPCp6 && (getOpCodeValue() == TR::InstOpCode::lwarx || getOpCodeValue() == TR::InstOpCode::ldarx);
+   return cg()->comp()->target().cpu.id() >= TR_PPCp6 && (getOpCodeValue() == TR::InstOpCode::lwarx || getOpCodeValue() == TR::InstOpCode::ldarx);
    }
 
 
@@ -1198,8 +1178,6 @@ bool TR::PPCControlFlowInstruction::usesRegister(TR::Register *reg)
    return false;
    }
 
-extern bool skipCompare(TR::Node*);
-
 void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
    {
    TR::Machine *machine = cg()->machine();
@@ -1308,24 +1286,6 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), getOpCode2Value(), currentNode, getLabelSymbol(), getTargetRegister(0), cursor));
             }
          break;
-      case TR::InstOpCode::ifx:
-         cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::fcmpu, currentNode, getTargetRegister(0), getSourceRegister(0), getSourceRegister(2), cursor));
-         if (getOpCode2Value() == TR::InstOpCode::bne)
-            cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, currentNode, getLabelSymbol(), getTargetRegister(0), cursor));
-         else
-            cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, currentNode, label2, getTargetRegister(0), cursor));
-         cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::fcmpu, currentNode, getTargetRegister(0), getSourceRegister(1), getSourceRegister(3), cursor));
-         if (getOpCode2Value() == TR::InstOpCode::beq)
-            {
-            cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), getOpCode2Value(), currentNode, getLabelSymbol(), getTargetRegister(0), cursor));
-            cg()->traceRAInstruction(cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, currentNode, label2, cursor));
-            }
-         else
-            {
-            cg()->traceRAInstruction(cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, currentNode, label2, cursor));
-            cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), getOpCode2Value(), currentNode, getLabelSymbol(), getTargetRegister(0), cursor));
-            }
-         break;
       case TR::InstOpCode::setblong:
          label1 = TR::LabelSymbol::create(cg()->trHeapMemory(),cg());
          cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), getOpCode2Value(), currentNode, getTargetRegister(0), getSourceRegister(0), getSourceRegister(2), cursor));
@@ -1337,40 +1297,28 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
          cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(1), 0, cursor));
          cg()->traceRAInstruction(cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, currentNode, label2, cursor));
          break;
-      case TR::InstOpCode::setbx:
-         label1 = TR::LabelSymbol::create(cg()->trHeapMemory(),cg());
-         cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::fcmpu, currentNode, getTargetRegister(0), getSourceRegister(0), getSourceRegister(2), cursor));
-         cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(1), 1, cursor));
-         cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, currentNode, label1, getTargetRegister(0), cursor));
-         cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::fcmpu, currentNode, getTargetRegister(0), getSourceRegister(1), getSourceRegister(3), cursor));
-         cg()->traceRAInstruction(cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, currentNode, label1, cursor));
-         cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), getOpCode2Value(), currentNode, label2, getTargetRegister(0), cursor));
-         cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(1), 0, cursor));
-         cg()->traceRAInstruction(cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, currentNode, label2, cursor));
-         break;
       case TR::InstOpCode::setbool:
-         if (TR::Compiler->target.cpu.id() >= TR_PPCp9 && getCmpOpValue() == TR::InstOpCode::fcmpu && (getOpCode2Value() == TR::InstOpCode::blt || getOpCode2Value() ==  TR::InstOpCode::bgt))
+         if (cg()->comp()->target().cpu.id() >= TR_PPCp9 && getCmpOpValue() == TR::InstOpCode::fcmpu && (getOpCode2Value() == TR::InstOpCode::blt || getOpCode2Value() ==  TR::InstOpCode::bgt))
             {
 
             /* Used with: dcmpgt, dcmplt, fcmpgt and fcmplt*/
-            /* Determine relationship between the two inputs, translate correct return value into GT bit of the Target Condition Register, clear the LT field of the target condition register and finally 
+            /* Determine relationship between the two inputs, translate correct return value into GT bit of the Target Condition Register, clear the LT field of the target condition register and finally
             set the result. */
 
             int64_t imm = (TR::RealRegister::CRCC_LT <<  TR::RealRegister::pos_RT | TR::RealRegister::CRCC_LT <<  TR::RealRegister::pos_RA | TR::RealRegister::CRCC_LT << TR::RealRegister::pos_RB);
 
             cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::fcmpu, currentNode, getTargetRegister(0), getSourceRegister(0), getSourceRegister(1), cursor));
-            
+
             if (getOpCode2Value() != TR::InstOpCode::bgt)
                cg()->traceRAInstruction(cursor = generateTrg1Src2ImmInstruction(cg(), TR::InstOpCode::cror, currentNode, getTargetRegister(0), getTargetRegister(0), getTargetRegister(0), getSourceImmediate(2), cursor));
-            
+
             cg()->traceRAInstruction(cursor = generateTrg1Src2ImmInstruction(cg(), TR::InstOpCode::crxor, currentNode, getTargetRegister(0), getTargetRegister(0), getTargetRegister(0), imm, cursor));
             cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction(cg(), TR::InstOpCode::setb, currentNode, getTargetRegister(1), getTargetRegister(0), cursor));
 
             }
          else
             {
-            if (!skipCompare(currentNode))
-               cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), getCmpOpValue(), currentNode, getTargetRegister(0), getSourceRegister(0), getSourceRegister(1), cursor));
+            cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), getCmpOpValue(), currentNode, getTargetRegister(0), getSourceRegister(0), getSourceRegister(1), cursor));
             cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(1), 1, cursor));
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), getOpCode2Value(), currentNode, label2, getTargetRegister(0), cursor));
             cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(1), 0, cursor));
@@ -1420,7 +1368,7 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
       case TR::InstOpCode::idiv:
          cg()->traceRAInstruction(cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, currentNode, getTargetRegister(0), getSourceRegister(1), -1, cursor));
          cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction(cg(), TR::InstOpCode::neg, currentNode, getTargetRegister(1), getSourceRegister(0), cursor));
-         if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
+         if (cg()->comp()->target().cpu.id() >= TR_PPCgp)
             // use PPC AS branch hint
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, PPCOpProp_BranchUnlikely, currentNode, label2, getTargetRegister(0), cursor));
          else
@@ -1431,12 +1379,12 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
       case TR::InstOpCode::irem:
          cg()->traceRAInstruction(cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, currentNode, getTargetRegister(0), getSourceRegister(1), -1, cursor));
          cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(1), 0, cursor));
-         if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
+         if (cg()->comp()->target().cpu.id() >= TR_PPCgp)
             // use PPC AS branch hint
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, PPCOpProp_BranchUnlikely, currentNode, label2, getTargetRegister(0), cursor));
          else
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, currentNode, label2, getTargetRegister(0), cursor));
-         if (TR::Compiler->target.cpu.id() >= TR_PPCp9)
+         if (cg()->comp()->target().cpu.id() >= TR_PPCp9)
             {
             cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::modsw, currentNode, getTargetRegister(1), getSourceRegister(0), getSourceRegister(1), cursor));
             }
@@ -1451,7 +1399,7 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
       case TR::InstOpCode::ldiv:
          cg()->traceRAInstruction(cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi8, currentNode, getTargetRegister(0), getSourceRegister(1), -1, cursor));
          cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction(cg(), TR::InstOpCode::neg, currentNode, getTargetRegister(1), getSourceRegister(0), cursor));
-         if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
+         if (cg()->comp()->target().cpu.id() >= TR_PPCgp)
             // use PPC AS branch hint
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, PPCOpProp_BranchUnlikely, currentNode, label2, getTargetRegister(0), cursor));
          else
@@ -1462,12 +1410,12 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
       case TR::InstOpCode::lrem:
          cg()->traceRAInstruction(cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi8, currentNode, getTargetRegister(0), getSourceRegister(1), -1, cursor));
          cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(1), 0, cursor));
-         if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
+         if (cg()->comp()->target().cpu.id() >= TR_PPCgp)
             // use PPC AS branch hint
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, PPCOpProp_BranchUnlikely, currentNode, label2, getTargetRegister(0), cursor));
          else
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, currentNode, label2, getTargetRegister(0), cursor));
-         if (TR::Compiler->target.cpu.id() >= TR_PPCp9)
+         if (cg()->comp()->target().cpu.id() >= TR_PPCp9)
             {
             cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::modsd, currentNode, getTargetRegister(1), getSourceRegister(0), getSourceRegister(1), cursor));
             }
@@ -1479,50 +1427,24 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
             }
          cg()->traceRAInstruction(cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, currentNode, label2, cursor));
          break;
-      case TR::InstOpCode::cfnan:
-         if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
-            // use PPC AS branch hint
-            cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, PPCOpProp_BranchLikely, currentNode, label2, getSourceRegister(1), cursor));
-         else
-            cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, currentNode, label2, getSourceRegister(1), cursor));
-         cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::lis, currentNode, getTargetRegister(0), 0x7fc0, cursor));
-         cg()->traceRAInstruction(cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, currentNode, label2, cursor));
-         break;
-      case TR::InstOpCode::cdnan:
-         if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
-            // use PPC AS branch hint
-            cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, PPCOpProp_BranchLikely, currentNode, label2, getSourceRegister(0), cursor));
-         else
-            cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, currentNode, label2, getSourceRegister(0), cursor));
-         if (TR::Compiler->target.is64Bit())
-            {
-            cg()->traceRAInstruction(cursor = loadConstant(cg(), currentNode, (int64_t)CONSTANT64(0x7ff8000000000000), getTargetRegister(0), cursor));
-            }
-         else
-            {
-            cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::lis, currentNode, getTargetRegister(1), 0x7ff8, cursor));
-            cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(0), 0, cursor));
-            }
-         cg()->traceRAInstruction(cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, currentNode, label2, cursor));
-         break;
       case TR::InstOpCode::d2i:
          cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::fcmpu, currentNode, getTargetRegister(0), getSourceRegister(0), getSourceRegister(0), cursor));
          cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction(cg(), TR::InstOpCode::fctiwz, currentNode, getTargetRegister(1), getSourceRegister(0), cursor));
          cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(2), 0, cursor));
 
-         if (TR::Compiler->target.cpu.id() < TR_PPCp8)
+         if (cg()->comp()->target().cpu.id() < TR_PPCp8)
             {
             tempMR = new (cg()->trHeapMemory()) TR::MemoryReference(cg()->getStackPointerRegister(), -8, 8, cg());
             cg()->traceRAInstruction(cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::stfd, currentNode, tempMR, getTargetRegister(1), cursor));
             }
 
-         if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
+         if (cg()->comp()->target().cpu.id() >= TR_PPCgp)
             // use PPC AS branch hint
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, currentNode, label2, getTargetRegister(0), cursor));
          else
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, currentNode, label2, getTargetRegister(0), cursor));
 
-         if (TR::Compiler->target.cpu.id() >= TR_PPCp8)
+         if (cg()->comp()->target().cpu.id() >= TR_PPCp8)
             cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction(cg(), TR::InstOpCode::mfvsrwz, currentNode, getTargetRegister(2), getTargetRegister(1), cursor));
          else
             cg()->traceRAInstruction(cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::lwz, currentNode, getTargetRegister(2), new (cg()->trHeapMemory()) TR::MemoryReference(currentNode, *tempMR, 4, 4, cg()), cursor));
@@ -1533,28 +1455,28 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
          cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::fcmpu, currentNode, getTargetRegister(0), getSourceRegister(0), getSourceRegister(0), cursor));
          cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction(cg(), TR::InstOpCode::fctidz, currentNode, getTargetRegister(1), getSourceRegister(0), cursor));
 
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(2), 0, cursor));
          else
             {
             cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(2), 0, cursor));
             cg()->traceRAInstruction(cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, currentNode, getTargetRegister(3), 0, cursor));
             }
-         if (TR::Compiler->target.cpu.id() < TR_PPCp8 || TR::Compiler->target.is32Bit())
+         if (cg()->comp()->target().cpu.id() < TR_PPCp8 || cg()->comp()->target().is32Bit())
             {
             tempMR = new (cg()->trHeapMemory()) TR::MemoryReference(cg()->getStackPointerRegister(), -8, 8, cg());
             cg()->traceRAInstruction(cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::stfd, currentNode, tempMR, getTargetRegister(1), cursor));
             }
 
-         if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
+         if (cg()->comp()->target().cpu.id() >= TR_PPCgp)
             // use PPC AS branch hint
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, currentNode, label2, getTargetRegister(0), cursor));
          else
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, currentNode, label2, getTargetRegister(0), cursor));
 
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             {
-            if (TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.is64Bit())
+            if (cg()->comp()->target().cpu.id() >= TR_PPCp8 && cg()->comp()->target().is64Bit())
                cg()->traceRAInstruction(cursor = generateTrg1Src1Instruction(cg(), TR::InstOpCode::mfvsrd, currentNode, getTargetRegister(2), getTargetRegister(1), cursor));
             else
                cg()->traceRAInstruction(cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ld, currentNode, getTargetRegister(2), tempMR, cursor));
@@ -1567,7 +1489,7 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
          cg()->traceRAInstruction(cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, currentNode, label2, cursor));
 
          break;
-      case TR::InstOpCode::iternary:
+      case TR::InstOpCode::iselect:
          {
          cg()->traceRAInstruction(cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, currentNode, getTargetRegister(0), getSourceRegister(0), 0, cursor));
 

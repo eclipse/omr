@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
@@ -423,7 +423,7 @@ TR_Debug::inlinefileOption(char *option, void *base, TR::OptionTable *entry, TR:
    char *inlineFileName = (char *)(TR::Compiler->regionAllocator.allocate(len+1));
    memcpy(inlineFileName, name, len);
    inlineFileName[len] = 0; // NULL terminate the copied string
-   entry->msgInfo = (intptrj_t)inlineFileName;
+   entry->msgInfo = (intptr_t)inlineFileName;
 
    FILE *inlineFile = fopen(inlineFileName, "r");
    bool success = false;
@@ -513,9 +513,9 @@ TR_Debug::limitfileOption(char *option, void *base, TR::OptionTable *entry, TR::
    char *limitFileName = (char *)(TR::Compiler->regionAllocator.allocate(len+1));
    memcpy(limitFileName, name, len);
    limitFileName[len] = 0;
-   entry->msgInfo = (intptrj_t)limitFileName;
+   entry->msgInfo = (intptr_t)limitFileName;
 
-   intptrj_t firstLine = 1, lastLine = INT_MAX;
+   intptr_t firstLine = 1, lastLine = INT_MAX;
    if (range)
       {
       if (!*endOpt)
@@ -715,7 +715,7 @@ TR_Debug::limitOption(char *option, void *base, TR::OptionTable *entry, TR::Opti
    char *limitName = (char *)(TR::Compiler->regionAllocator.allocate(len+1));
    memcpy(limitName, option, len);
    limitName[len] = 0;
-   entry->msgInfo = (intptrj_t)limitName;
+   entry->msgInfo = (intptr_t)limitName;
 
    // Look for option subset if this is "limit" rather than "exclude"
    //
@@ -1168,7 +1168,7 @@ TR_Debug::scanFilterName(char *string, TR_FilterBST *filter)
 
 
 bool
-TR_Debug::methodSigCanBeCompiled(const char *methodSig, TR_FilterBST * & filter, TR_Method::Type methodType)
+TR_Debug::methodSigCanBeCompiled(const char *methodSig, TR_FilterBST * & filter, TR::Method::Type methodType)
    {
    return methodSigCanBeCompiledOrRelocated(methodSig, filter, false, methodType);
    }
@@ -1176,17 +1176,17 @@ TR_Debug::methodSigCanBeCompiled(const char *methodSig, TR_FilterBST * & filter,
 bool
 TR_Debug::methodSigCanBeRelocated(const char *methodSig, TR_FilterBST * & filter)
    {
-   return methodSigCanBeCompiledOrRelocated(methodSig, filter, true, TR_Method::J9);
+   return methodSigCanBeCompiledOrRelocated(methodSig, filter, true, TR::Method::J9);
    }
 
 bool
-TR_Debug::methodSigCanBeFound(const char *methodSig, TR::CompilationFilters * filters, TR_FilterBST * & filter, TR_Method::Type methodType)
+TR_Debug::methodSigCanBeFound(const char *methodSig, TR::CompilationFilters * filters, TR_FilterBST * & filter, TR::Method::Type methodType)
    {
    const char *methodClass, *methodName, *methodSignature;
    uint32_t methodClassLen, methodNameLen, methodSignatureLen;
 
    methodClass = methodSig;
-   if (methodType != TR_Method::J9)
+   if (methodType != TR::Method::J9)
       {
       if (methodSig[0] == '/' || methodSig[0] == '.') // omr method pattern
          {
@@ -1302,7 +1302,7 @@ TR_Debug::methodCanBeFound(TR_Memory *trMemory, TR_ResolvedMethod *method, TR::C
    }
 
 bool
-TR_Debug::methodSigCanBeCompiledOrRelocated(const char *methodSig, TR_FilterBST * & filter, bool loadLimit, TR_Method::Type methodType)
+TR_Debug::methodSigCanBeCompiledOrRelocated(const char *methodSig, TR_FilterBST * & filter, bool loadLimit, TR::Method::Type methodType)
    {
    TR::CompilationFilters *compOrReloFilter = NULL;
 

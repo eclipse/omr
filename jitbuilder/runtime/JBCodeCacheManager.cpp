@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ JitBuilder::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
    // We should really rely on the port library to allocate memory, but this connection
    // has not yet been made, so as a quick workaround for platforms like OS X <= 10.9
    // where MAP_ANONYMOUS is not defined, is to map MAP_ANON to MAP_ANONYMOUS ourselves
-   #if !defined(OMR_OS_WINDOWS)
+   #if defined(__APPLE__)
       #if !defined(MAP_ANONYMOUS)
          #define NO_MAP_ANONYMOUS
          #if defined(MAP_ANON)
@@ -71,7 +71,7 @@ JitBuilder::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
             #error unexpectedly, no MAP_ANONYMOUS or MAP_ANON definition
          #endif
       #endif
-   #endif /* OMR_OS_WINDOWS */
+   #endif /* defined(__APPLE__) */
 
    // ignore preferredStartAddress for now, since it's NULL anyway
    //   goal would be to allocate code cache segments near the JIT library address
@@ -86,13 +86,20 @@ JitBuilder::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
             codeCacheSizeToAllocate,
             MEM_COMMIT,
             PAGE_EXECUTE_READWRITE));
+// TODO: Why is there no OMR_OS_ZOS? Or any other OS for that matter?
+#elif defined(J9ZOS390)
+   // TODO: This is an absolute hack to get z/OS JITBuilder building and even remotely close to working. We really
+   // ought to be using the port library to allocate such memory. This was the quickest "workaround" I could think
+   // of to just get us off the ground.
+   auto memorySlab = reinterpret_cast<uint8_t *>(
+         __malloc31(codeCacheSizeToAllocate));
 #else
    auto memorySlab = reinterpret_cast<uint8_t *>(
          mmap(NULL,
               codeCacheSizeToAllocate,
               PROT_READ | PROT_WRITE | PROT_EXEC,
               MAP_ANONYMOUS | MAP_PRIVATE,
-              0,
+              -1,
               0));
    // keep the impact of this fix localized
    #if defined(NO_MAP_ANONYMOUS)
@@ -110,6 +117,8 @@ JitBuilder::CodeCacheManager::freeCodeCacheSegment(TR::CodeCacheMemorySegment * 
    {
 #if defined(OMR_OS_WINDOWS)
    VirtualFree(memSegment->_base, 0, MEM_RELEASE); // second arg must be zero when calling with MEM_RELEASE
+#elif defined(J9ZOS390)
+   free(memSegment->_base);
 #else
    munmap(memSegment->_base, memSegment->_top - memSegment->_base + sizeof(TR::CodeCacheMemorySegment));
 #endif

@@ -35,7 +35,6 @@ CONFIGURE_ARGS += \
 	--enable-OMR_ENV_LITTLE_ENDIAN \
 	--enable-OMR_EXAMPLE \
 	--enable-OMR_GC \
-	--enable-OMR_GC_ARRAYLETS \
 	--enable-OMR_GC_TLH_PREFETCH_FTA \
 	--enable-OMR_PORT \
 	--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \

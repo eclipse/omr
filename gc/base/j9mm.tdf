@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 1998, 2019 IBM Corp. and others
+// Copyright (c) 1998, 2020 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -199,7 +199,7 @@ TraceEvent=Trc_MM_concurrentClassMarkStart Overhead=1 Level=1 Template="Concurre
 TraceEvent=Trc_MM_concurrentClassMarkEnd Overhead=1 Level=1 Template="Concurrent class mark end, traced %zu"
 TraceEntry=Trc_MM_ParallelHeapWalker_allObjectsDoParallel_Entry Overhead=1 Level=1 Template="Trc_MM_ParallelHeapWalker_allObjectsDoParallel_Entry"
 TraceExit=Trc_MM_ParallelHeapWalker_allObjectsDoParallel_Exit Overhead=1 Level=1 Template="Trc_MM_ParallelHeapWalker_allObjectsDoParallel_Exit: heapChunkFactor=%zu, parallelChunkSize=0x%zx, objects walked by this thread=%zu"
-TraceExit=Trc_MM_MemorySubSpace_garbageCollect_Exit4 Overhead=9 Level=9 Template="MM_MemorySubSpace_garbageCollect Exit4 Concurrent kickoff forced"
+TraceExit=Trc_MM_MemorySubSpace_garbageCollect_Exit4 Overhead=1 Level=1 Template="MM_MemorySubSpace_garbageCollect Exit4 Concurrent kickoff forced"
 
 TraceEntry=Trc_MM_Scavenger_masterThreadGarbageCollect_Entry Overhead=1 Level=1 Template="Scavenger start"
 TraceEvent=Trc_MM_Scavenger_masterThreadGarbageCollect_setFailedTenureFlag Overhead=1 Level=1 Group=percolate Template="Setting failed tenure flag. _failedTenureLargest = %zu"
@@ -258,11 +258,11 @@ TraceEvent=Trc_MM_ConcurrentHaltedState Overhead=1 Level=1 Group=gclogger Templa
 // Assert that the thread has exclusive VM access
 TraceAssert=Assert_MM_mustHaveExclusiveVMAccess noEnv Overhead=1 Level=1 Assert="(P1)->exclusiveCount != 0"
 
-TraceEntry=Trc_MM_GlobalCollector_isTimeForClassUnloading_Entry noEnv Overhead=1 Level=9 Template="MM_GlobalCollector_isTimeForClassUnloading. dynamicClassUnloading:%zu classLoaderBlocks:%zu dynamicClassUnloadingThreshold:%zu lastUnloadNumOfClassLoaders:%zu"
-TraceExit=Trc_MM_GlobalCollector_isTimeForClassUnloading_Exit noEnv Overhead=1 Level=9 Template="MM_GlobalCollector_isTimeForClassUnloading result = %s"
+TraceEntry=Trc_MM_GlobalCollector_isTimeForClassUnloading_Entry noEnv Overhead=1 Level=2 Template="MM_GlobalCollector_isTimeForClassUnloading. dynamicClassUnloading:%zu classLoaderBlocks:%zu dynamicClassUnloadingThreshold:%zu lastUnloadNumOfClassLoaders:%zu"
+TraceExit=Trc_MM_GlobalCollector_isTimeForClassUnloading_Exit noEnv Overhead=1 Level=2 Template="MM_GlobalCollector_isTimeForClassUnloading result = %s"
 
-TraceEntry=Trc_MM_GlobalCollector_isTimeForGlobalGCKickoff_Entry noEnv Overhead=1 Level=9 Template="MM_GlobalCollector_isTimeForGlobalGCKickoff. dynamicClassUnloading:%zu classLoaderBlocks:%zu dynamicClassUnloadingKickoffThreshold:%zu lastUnloadNumOfClassLoaders:%zu"
-TraceExit=Trc_MM_GlobalCollector_isTimeForGlobalGCKickoff_Exit noEnv Overhead=1 Level=9 Template="MM_GlobalCollector_isTimeForGlobalGCKickoff result = %s"
+TraceEntry=Trc_MM_GlobalCollector_isTimeForGlobalGCKickoff_Entry noEnv Overhead=1 Level=1 Template="MM_GlobalCollector_isTimeForGlobalGCKickoff. dynamicClassUnloading:%zu classLoaderBlocks:%zu dynamicClassUnloadingKickoffThreshold:%zu lastUnloadNumOfClassLoaders:%zu"
+TraceExit=Trc_MM_GlobalCollector_isTimeForGlobalGCKickoff_Exit noEnv Overhead=1 Level=1 Template="MM_GlobalCollector_isTimeForGlobalGCKickoff result = %s"
 TraceEvent=Trc_MM_Oracle_setupForCollect Obsolete Overhead=1 Level=1 Group=oracle Template="Oracle received setup call"
 TraceEvent=Trc_MM_Oracle_cleanupAfterCollect Obsolete Overhead=1 Level=1 Group=oracle Template="Oracle received cleanup call"
 
@@ -328,8 +328,8 @@ TraceEvent=Trc_MM_StandardAccessBarrier_treatObjectAsRecentlyAllocated Overhead=
 TraceEntry=Trc_MM_ConcurrentGC_determineInitWork_Entry Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_determineInitWork"
 TraceExit=Trc_MM_ConcurrentGC_determineInitWork_Exit Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_determineInitWork"
 
-TraceEntry=Trc_MM_ConcurrentGC_getInitRange_Entry Overhead=1 Level=2 Group=concurrent Template="MM_ConcurrentGC_getInitRange"
-TraceExit=Trc_MM_ConcurrentGC_getInitRange_Succeed Overhead=1 Level=2 Group=concurrent Template="MM_ConcurrentGC_getInitRange from %p to %p type=%zx concurrentCollectible=%s"
+TraceEntry=Trc_MM_ConcurrentGC_getInitRange_Entry Overhead=1 Level=3 Group=concurrent Template="MM_ConcurrentGC_getInitRange"
+TraceExit=Trc_MM_ConcurrentGC_getInitRange_Succeed Overhead=1 Level=3 Group=concurrent Template="MM_ConcurrentGC_getInitRange from %p to %p type=%zx concurrentCollectible=%s"
 TraceExit=Trc_MM_ConcurrentGC_getInitRange_Fail Overhead=1 Level=2 Group=concurrent Template="MM_ConcurrentGC_getInitRange return false"
 
 TraceEntry=Trc_MM_ConcurrentGC_tuneToHeap_Entry Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_tuneToHeap"
@@ -916,3 +916,12 @@ TraceEvent=Trc_MM_Scavenger_percolate_preventTenureExpand Overhead=1 Level=1 Gro
 TraceEvent=Trc_MM_Scavenger_percolate_tenureMaxFree Overhead=1 Level=1 Group=percolate Template="Percolating due to meeting Tenure max free"
 
 TraceAssert=Assert_MM_double_map_unreachable noEnv Overhead=1 Level=1 Assert="(false)"
+
+TraceEvent=Trc_ParallelGlobalGC_shouldCompactThisCycle Overhead=1 Level=1 Group=compact Template="Current page granularity fragmented ratio: %f  Threshold: %f"
+
+TraceEntry=Trc_MM_double_map_Entry Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. spine: %p, leafSize=%zu leavesCount=%zu"
+TraceException=Trc_MM_double_map_TraverseLeavesNULLPointer Overhead=1 Level=1 Group=arraylet Template="Found a NULL pointer as the last leaf in arraylet spine"
+TraceException=Trc_MM_double_map_Failed Overhead=1 Level=1 Group=arraylet Template="Failed to double map arraylets"
+TraceExit=Trc_MM_double_map_Exit Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. result=%p"
+
+TraceEvent=Trc_MM_Scavenger_percolate_delegate Overhead=1 Level=1 Group=percolate Template="Percolating due to language specific reason"

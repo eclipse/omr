@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,31 @@
 
 #include "HookGen.hpp"
 #include "pugixml.hpp"
+
+static const char *
+getChildText(pugi::xml_node node, const char *name)
+{
+	pugi::xml_node child = node.child(name);
+
+	if (!child) {
+		fprintf(stderr, "'%s' node has no '%s' child.\n", node.name(), name);
+		exit(1);
+	}
+
+	return child.text().as_string();
+}
+
+static const char *
+getChildTextOrElse(pugi::xml_node node, const char *name, const char *defaultText)
+{
+	pugi::xml_node child = node.child(name);
+
+	if (!child) {
+		return defaultText;
+	}
+
+	return child.text().as_string();
+}
 
 /**
  * Create a header Macro gate.
@@ -293,21 +318,15 @@ HookGen::writeEventToPrivateHeader(const char *name, const char *condition, cons
 void
 HookGen::writeEvent(pugi::xml_node event)
 {
-	const char *name = event.child("name").text().as_string();
-	const char *description = event.child("description").text().as_string();
-	const char *condition = event.child("condition").text().as_string();
-	const char *structName = event.child("struct").text().as_string();
-	const char *once = event.child("once").text().as_string();
-	const char *reverse = event.child("reverse").text().as_string();
+	const char *name = getChildText(event, "name");
+	const char *description = getChildText(event, "description");
+	const char *condition = getChildTextOrElse(event, "condition", NULL);
+	const char *structName = getChildText(event, "struct");
+	const char *once = getChildTextOrElse(event, "once", NULL);
+	const char *reverse = getChildTextOrElse(event, "reverse", NULL);
 	pugi::xml_node sampling_node = event.child("trace-sampling");
 	int sampling = 0;
 
-	if (event.child("condition").empty()) {
-		condition = NULL;
-	}
-	if (event.child("once").empty()) {
-		once = NULL;
-	}
 	if (sampling_node) {
 		sampling = sampling_node.attribute("intervals").as_int(0);
 		if (sampling < 0) {
@@ -316,10 +335,6 @@ HookGen::writeEvent(pugi::xml_node event)
 		if (sampling > 100) {
 			sampling = 0xff;
 		}
-	}
-
-	if (event.child("reverse").empty()) {
-		reverse = NULL;
 	}
 
 	writeEventToPublicHeader(name, description, condition, structName, reverse, event);
@@ -472,13 +487,10 @@ HookGen::processFile()
 	}
 
 	pugi::xml_node node = doc.select_node("/interface").node();
-	const char *publicFileName = node.child("publicHeader").text().as_string();
-	const char *privateFileName = node.child("privateHeader").text().as_string();
-	const char *structName = node.child("struct").text().as_string();
-	const char *declarations = node.child("declarations").text().as_string();
-	if (node.child("declarations").empty()) {
-		declarations = NULL;
-	}
+	const char *publicFileName = getChildText(node, "publicHeader");
+	const char *privateFileName = getChildText(node, "privateHeader");
+	const char *structName = getChildText(node, "struct");
+	const char *declarations = getChildTextOrElse(node, "declarations", NULL);
 
 #if defined(DEBUG)
 	fprintf(stderr, "Processing %s into public header %s and private header %s\n", _fileName, publicFileName, privateFileName);
@@ -528,8 +540,7 @@ RCType
 HookGen::parseOptions(int argc, char *argv[])
 {
 	for (int i = 1; i < argc; i++) {
-		printf("%d: %s", i, argv[i]);
-		if(0 == strcmp(argv[i], "-v")) {
+		if (0 == strcmp(argv[i], "-v")) {
 			_verbose = true;
 		} else {
 			if (NULL != _fileName) {
@@ -546,7 +557,6 @@ HookGen::parseOptions(int argc, char *argv[])
 		displayUsage();
 		return RC_FAILED;
 	}
-
 
 	return RC_OK;
 }
@@ -577,7 +587,7 @@ startHookGen(int argc, char *argv[])
 		goto finish;
 	}
 
-	if(hookGen.isVerbose()) {
+	if (hookGen.isVerbose()) {
 		fprintf(stderr, "Processed %s to create public header %s and private header %s\n", hookGen.getFileName(), hookGen.getPublicFileName(), hookGen.getPrivateFileName());
 	}
 

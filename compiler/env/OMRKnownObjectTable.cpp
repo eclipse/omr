@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@
  *******************************************************************************/
 
 #include "env/KnownObjectTable.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #ifdef J9_PROJECT_SPECIFIC
 #include "env/VMAccessCriticalSection.hpp"
 #endif
@@ -49,17 +49,17 @@ OMR::KnownObjectTable::getEndIndex()
    }
 
 TR::KnownObjectTable::Index
-OMR::KnownObjectTable::getIndex(uintptrj_t objectPointer)
+OMR::KnownObjectTable::getOrCreateIndex(uintptr_t objectPointer)
    {
    TR_UNIMPLEMENTED();
    return -1;
    }
 
 TR::KnownObjectTable::Index
-OMR::KnownObjectTable::getIndex(uintptrj_t objectPointer, bool isArrayWithConstantElements)
+OMR::KnownObjectTable::getOrCreateIndex(uintptr_t objectPointer, bool isArrayWithConstantElements)
    {
    TR_ASSERT(TR::Compiler->vm.hasAccess(self()->comp()), "Getting KnownObjectTable index requires VM access");
-   TR::KnownObjectTable::Index index = self()->getIndex(objectPointer);
+   TR::KnownObjectTable::Index index = self()->getOrCreateIndex(objectPointer);
    if (isArrayWithConstantElements)
       {
       self()->addArrayWithConstantElements(index);
@@ -86,7 +86,7 @@ OMR::KnownObjectTable::isArrayWithConstantElements(Index index)
    return false;
    }
 
-uintptrj_t *
+uintptr_t *
 OMR::KnownObjectTable::getPointerLocation(Index index)
    {
    TR_UNIMPLEMENTED();
@@ -107,42 +107,45 @@ OMR::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
    }
 
 TR::KnownObjectTable::Index
-OMR::KnownObjectTable::getIndexAt(uintptrj_t *objectReferenceLocation)
+OMR::KnownObjectTable::getOrCreateIndexAt(uintptr_t *objectReferenceLocation)
    {
 #ifdef J9_PROJECT_SPECIFIC
    TR::VMAccessCriticalSection getIndexCriticalSection(self()->comp());
 #endif
-   uintptrj_t objectPointer = *objectReferenceLocation; // Note: object references held as uintptrj_t must never be compressed refs
-   Index result = self()->getIndex(objectPointer);
+   uintptr_t objectPointer = *objectReferenceLocation; // Note: object references held as uintptr_t must never be compressed refs
+   Index result = self()->getOrCreateIndex(objectPointer);
    return result;
    }
 
 TR::KnownObjectTable::Index
-OMR::KnownObjectTable::getIndexAt(uintptrj_t *objectReferenceLocation, bool isArrayWithConstantElements)
+OMR::KnownObjectTable::getOrCreateIndexAt(uintptr_t *objectReferenceLocation, bool isArrayWithConstantElements)
    {
-   Index result = self()->getIndexAt(objectReferenceLocation);
+   Index result = self()->getOrCreateIndexAt(objectReferenceLocation);
    if (isArrayWithConstantElements)
       self()->addArrayWithConstantElements(result);
    return result;
    }
 
 TR::KnownObjectTable::Index
-OMR::KnownObjectTable::getExistingIndexAt(uintptrj_t *objectReferenceLocation)
+OMR::KnownObjectTable::getExistingIndexAt(uintptr_t *objectReferenceLocation)
    {
    Index result = UNKNOWN;
 #ifdef J9_PROJECT_SPECIFIC
    TR::VMAccessCriticalSection getIndexCriticalSection(self()->comp());
 #endif
-   uintptrj_t objectPointer = *objectReferenceLocation;
+   uintptr_t objectPointer = *objectReferenceLocation;
    for (Index i = 0; i < self()->getEndIndex() && (result == UNKNOWN); i++)
       {
       if (self()->getPointer(i) == objectPointer)
+         {
          result = i;
+         break;
+         }
       }
    return result;
    }
 
-uintptrj_t
+uintptr_t
 OMR::KnownObjectTable::getPointer(Index index)
    {
    TR_ASSERT(TR::Compiler->vm.hasAccess(self()->comp()), "Getting a heap object pointer requires VM access");
@@ -152,8 +155,8 @@ OMR::KnownObjectTable::getPointer(Index index)
       return *self()->getPointerLocation(index);
    }
 
-uintptrj_t *
-OMR::KnownObjectTable::getfPointerLocationAt(uintptrj_t *objectReferenceLocation)
+void
+OMR::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocation)
    {
-   return self()->getPointerLocation(self()->getIndexAt(objectReferenceLocation));
+   TR_UNIMPLEMENTED();
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,6 @@ private:
 protected:
 	static const intptr_t _bitsPerScanMap = sizeof(uintptr_t) << 3;
 
-	omrobjectptr_t const _parentObjectPtr;	/**< Object being scanned */
 	uintptr_t _scanMap;						/**< Bit map of reference slots in object being scanned (32/64-bit window) */
 #if defined(OMR_GC_LEAF_BITS)
 	uintptr_t _leafMap;						/**< Bit map of reference slots in object that refernce leaf objects */
@@ -63,7 +62,9 @@ protected:
 	fomrobject_t *_scanPtr;					/**< Pointer to base of object slots mapped by current _scanMap */
 	GC_SlotObject _slotObject;				/**< Create own SlotObject class to provide output */
 	uintptr_t _flags;						/**< Scavenger context flags (scanRoots, scanHeap, ...) */
-	uintptr_t _hotFieldsDescriptor;			/**< Hot fields descriptor for languages that support hot field tracking */
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool const _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	
 public:
 	/**
@@ -88,18 +89,14 @@ protected:
 	 *
 	 * For marking context with leaf optimization see below:
 	 *
-	 * GC_ObjectScanner(MM_EnvironmentBase *, omrobjectptr_t, fomrobject_t *, uintptr_t, uintptr_t, uintptr_t, uintptr_t)
-	 *
 	 * @param[in] env The environment for the scanning thread
-	 * @param[in] parentObjectPtr The object to be scanned
 	 * @param[in] scanPtr The first slot contained in the object to be scanned
 	 * @param[in] scanMap Bit map marking object reference slots, with least significant bit mapped to slot at scanPtr
 	 * @param[in] flags A bit mask comprised of InstanceFlags
 	 * @param[in] hotFieldsDescriptor Hot fields descriptor for languages that support hot field tracking (0 if no hot fields support)
 	 */
-	GC_ObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t parentObjectPtr, fomrobject_t *scanPtr, uintptr_t scanMap, uintptr_t flags, uintptr_t hotFieldsDescriptor = 0)
+	GC_ObjectScanner(MM_EnvironmentBase *env, fomrobject_t *scanPtr, uintptr_t scanMap, uintptr_t flags)
 		: MM_BaseVirtual()
-		, _parentObjectPtr(parentObjectPtr)
 		, _scanMap(scanMap)
 #if defined(OMR_GC_LEAF_BITS)
 		, _leafMap(0)
@@ -107,7 +104,9 @@ protected:
 		, _scanPtr(scanPtr)
 		, _slotObject(env->getOmrVM(), NULL)
 		, _flags(flags | headObjectScanner)
-		, _hotFieldsDescriptor(hotFieldsDescriptor)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(env->compressObjectReferences())
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	{
 		_typeId = __FUNCTION__;
 	}
@@ -130,51 +129,35 @@ protected:
 	 *
 	 * @param[in] env Current environment
 	 * @see getNextSlotMap()
-	 * @see putNextSlotMapBit()
 	 */
 	MMINLINE void
 	initialize(MM_EnvironmentBase *env)
 	{
 	}
 
+public:
 	/**
-	 * Helper function can be used to rebuild bit map of reference fields in
-	 * implementation of getNextSlotMap(). Simply call this method once for
-	 * each object slot holding a reference pointer. Best to present reference
-	 * fields in increasing address order until method returns false or no
-	 * more fields.
-	 *
-	 * If the method returns false, the field presented in the call will not
-	 * be included in the slot map and must be presented first in the next
-	 * call to getNextSlotMap().
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
 	 */
-	MMINLINE bool
-	putNextSlotMapBit(fomrobject_t *nextSlotAddress)
-	{
-		if (0 != _scanMap) {
-			intptr_t bitOffset = nextSlotAddress - _scanPtr;
-			if (_bitsPerScanMap < bitOffset) {
-				_scanMap |= (uintptr_t)1 << bitOffset;
-			} else {
-				return false;
-			}
-		} else {
-			_scanPtr = nextSlotAddress;
-			_scanMap = 1;
-		}
+	MMINLINE bool compressObjectReferences() {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* defined(OMR_GC_FULL_POINTERS) */
 		return true;
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return false;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 	}
 
-public:
 	/**
 	 * Leaf objects contain no reference slots (eg plain value object or empty array).
 	 *
 	 * @return true if the object to be scanned is a leaf object
 	 */
 	MMINLINE bool isLeafObject() { return (0 == _scanMap) && !hasMoreSlots(); }
-
-
-	MMINLINE uintptr_t getHotFieldsDescriptor() { return _hotFieldsDescriptor; }
 
 	/**
 	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
@@ -196,16 +179,17 @@ public:
 	MMINLINE GC_SlotObject *
 	getNextSlot()
 	{
+		bool const compressed = compressObjectReferences();
 		while (NULL != _scanPtr) {
 			/* while there is at least one bit-mapped slot, advance scan ptr to a non-NULL slot or end of map */
-			while ((0 != _scanMap) && ((0 == (1 & _scanMap)) || (0 == *_scanPtr))) {
-				_scanPtr += 1;
+			while ((0 != _scanMap) && ((0 == (1 & _scanMap)) || (0 == GC_SlotObject::readSlot(_scanPtr, compressed)))) {
+				_scanPtr = GC_SlotObject::addToSlotAddress(_scanPtr, 1, compressed);
 				_scanMap >>= 1;
 			}
 			if (0 != _scanMap) {
 				/* set up to return slot object for non-NULL slot at scan ptr and advance scan ptr */
 				_slotObject.writeAddressToSlot(_scanPtr);
-				_scanPtr += 1;
+				_scanPtr = GC_SlotObject::addToSlotAddress(_scanPtr, 1, compressed);
 				_scanMap >>= 1;
 				return &_slotObject;
 			}
@@ -267,10 +251,11 @@ public:
 	MMINLINE GC_SlotObject *
 	getNextSlot(bool* isLeafSlot)
 	{
+		bool const compressed = compressObjectReferences();
 		while (NULL != _scanPtr) {
 			/* while there is at least one bit-mapped slot, advance scan ptr to a non-NULL slot or end of map */
-			while ((0 != _scanMap) && ((0 == (1 & _scanMap)) || (0 == *_scanPtr))) {
-				_scanPtr += 1;
+			while ((0 != _scanMap) && ((0 == (1 & _scanMap)) || (0 == GC_SlotObject::readSlot(_scanPtr, compressed)))) {
+				_scanPtr = GC_SlotObject::addToSlotAddress(_scanPtr, 1, compressed);
 				_scanMap >>= 1;
 				_leafMap >>= 1;
 			}
@@ -278,7 +263,7 @@ public:
 				/* set up to return slot object for non-NULL slot at scan ptr and advance scan ptr */
 				_slotObject.writeAddressToSlot(_scanPtr);
 				*isLeafSlot = (0 != (1 & _leafMap));
-				_scanPtr += 1;
+				_scanPtr = GC_SlotObject::addToSlotAddress(_scanPtr, 1, compressed);
 				_scanMap >>= 1;
 				_leafMap >>= 1;
 				return &_slotObject;
@@ -306,10 +291,10 @@ public:
 	 * Informational, relating to scanning context (_flags)
 	 */
 	MMINLINE void setNoMoreSlots() { _flags |= (uintptr_t)GC_ObjectScanner::noMoreSlots; }
+	
+	MMINLINE void setMoreSlots() { _flags &= ~(uintptr_t)GC_ObjectScanner::noMoreSlots; }
 
 	MMINLINE bool hasMoreSlots() { return 0 == (GC_ObjectScanner::noMoreSlots & _flags); }
-
-	MMINLINE omrobjectptr_t const getParentObject() { return _parentObjectPtr; }
 
 	MMINLINE static bool isRootScan(uintptr_t flags) { return (0 != (scanRoots & flags)); }
 

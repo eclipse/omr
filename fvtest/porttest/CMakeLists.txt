@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 
 set(cudaSources "")
+set(socketSources "")
 
 if(OMR_OPT_CUDA)
 	set(cudaSources
@@ -41,8 +42,14 @@ if(OMR_OPT_CUDA)
 	)
 endif()
 
+# TODO: Remove AND (NOT OMR_HOST_OS STREQUAL "win") after OMRSOCK API is implemented on Windows.
+if((OMR_PORT_SOCKET_SUPPORT) AND (NOT OMR_HOST_OS STREQUAL "win"))
+	set(socketSources
+		omrsockTest.cpp
+	)
+endif()
 
-add_executable(omrporttest
+omr_add_executable(omrporttest
 	fileTest.cpp
 	heapTest.cpp
 	omrportTest.cpp
@@ -70,6 +77,7 @@ add_executable(omrporttest
 	testProcessHelpers.cpp
 
 	${cudaSources}
+	${socketSources}
 )
 
 
@@ -89,8 +97,12 @@ if(OMR_HOST_OS STREQUAL "zos")
 	target_link_libraries(omrporttest j9a2e)
 endif()
 
-add_library(sltestlib SHARED
+omr_add_library(sltestlib SHARED
 	sltestlib/sltest.c
+)
+
+omr_add_exports(sltestlib
+	sl_test1_function
 )
 
 target_compile_options(sltestlib
@@ -99,7 +111,7 @@ target_compile_options(sltestlib
 )
 
 if(OMR_HOST_OS STREQUAL "aix")
-	add_library(aixbaddep SHARED
+	omr_add_library(aixbaddep SHARED
 		aixbaddep/sltest.c
 	)
 
@@ -109,12 +121,17 @@ if(OMR_HOST_OS STREQUAL "aix")
 	)
 	
 	set_target_properties(aixbaddep PROPERTIES LINK_FLAGS "-bI:${CMAKE_CURRENT_SOURCE_DIR}/aixbaddep/dummy.imp" FOLDER fvtest)
+	omr_add_exports(aixbaddep
+		sl_AixDLLMissingDependency_function
+	)
 endif()
 
 set_target_properties(omrporttest sltestlib PROPERTIES FOLDER fvtest)
 
-add_test(NAME porttest COMMAND omrporttest)
+if (NOT OMR_HOST_OS STREQUAL "aix" AND NOT OMR_HOST_OS STREQUAL "zos")
+	add_test(NAME porttest COMMAND omrporttest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrporttest-results.xml)
+endif()
 
 if(OMR_OPT_CUDA)
-	add_test(NAME cuda_porttest COMMAND omrporttest --gtest_filter="Cuda*" -earlyExit)
+	add_test(NAME cuda_porttest COMMAND omrporttest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrporttest-results.xml --gtest_filter="Cuda*" -earlyExit)
 endif()

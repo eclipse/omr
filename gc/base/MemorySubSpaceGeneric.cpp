@@ -314,7 +314,6 @@ MM_MemorySubSpaceGeneric::allocateObject(MM_EnvironmentBase* env, MM_AllocateDes
 /**
  * Allocate the arraylet spine in immortal or scoped memory.
  */
-#if defined(OMR_GC_ARRAYLETS)
 void*
 MM_MemorySubSpaceGeneric::allocateArrayletLeaf(MM_EnvironmentBase* env, MM_AllocateDescription* allocDescription, MM_MemorySubSpace* baseSubSpace, MM_MemorySubSpace* previousSubSpace, bool shouldCollectOnFailure)
 {
@@ -337,7 +336,6 @@ MM_MemorySubSpaceGeneric::allocateArrayletLeaf(MM_EnvironmentBase* env, MM_Alloc
 
 	return result;
 }
-#endif /* OMR_GC_ARRAYLETS */
 
 void*
 MM_MemorySubSpaceGeneric::allocationRequestFailed(MM_EnvironmentBase* env, MM_AllocateDescription* allocateDescription, AllocationType allocationType, MM_ObjectAllocationInterface* objectAllocationInterface, MM_MemorySubSpace* baseSubSpace, MM_MemorySubSpace* previousSubSpace)

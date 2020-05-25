@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,6 @@ namespace OMR { typedef OMR::SymbolReference SymbolReferenceConnector; }
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
 #include "compile/SymbolReferenceTable.hpp"
-#include "cs2/sparsrbit.h"
 #include "env/KnownObjectTable.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
@@ -48,6 +47,11 @@ namespace OMR { typedef OMR::SymbolReference SymbolReferenceConnector; }
 #include "infra/BitVector.hpp"
 #include "infra/Flags.hpp"
 
+typedef enum {
+   UseDefAliasSet,
+   UseOnlyAliasSet
+} AliasSetInterface;
+
 class TR_Debug;
 class TR_ResolvedMethod;
 class TR_UseDefAliasSetInterface;
@@ -56,8 +60,7 @@ namespace TR { class Register; }
 namespace TR { class ResolvedMethodSymbol; }
 namespace TR { class SymbolReference; }
 template <class T> class TR_Array;
-template <uint32_t> class TR_NodeAliasSetInterface;
-template <uint32_t> class TR_SymAliasSetInterface;
+template <AliasSetInterface> class TR_AliasSetInterface ;
 typedef TR::SparseBitVector SharedSparseBitVector;
 
 // Extra symbol reference info for allocation nodes.
@@ -91,7 +94,7 @@ public:
    void init(TR::SymbolReferenceTable * symRefTab,
              uint32_t                   refNumber,
              TR::Symbol *               sym = 0,
-             intptrj_t                  offset = 0,
+             intptr_t                  offset = 0,
              mcount_t                   owningMethodIndex = JITTED_METHOD_INDEX,
              int32_t                    cpIndex = -1,
              int32_t                    unresolvedIndex = 0,
@@ -103,17 +106,17 @@ public:
 
    SymbolReference(TR::SymbolReferenceTable * symRefTab,
                    TR::Symbol * symbol,
-                   intptrj_t offset = 0);
+                   intptr_t offset = 0);
 
    SymbolReference(TR::SymbolReferenceTable * symRefTab,
                    int32_t refNumber,
                    TR::Symbol *ps,
-                   intptrj_t offset = 0);
+                   intptr_t offset = 0);
 
    SymbolReference(TR::SymbolReferenceTable *symRefTab,
                    TR::SymbolReferenceTable::CommonNonhelperSymbol number,
                    TR::Symbol *ps,
-                   intptrj_t offset = 0);
+                   intptr_t offset = 0);
 
    SymbolReference(TR::SymbolReferenceTable *symRefTab,
                    TR::Symbol *sym,
@@ -124,7 +127,7 @@ public:
 
    SymbolReference(TR::SymbolReferenceTable *symRefTab,
                    TR::SymbolReference& sr,
-                   intptrj_t offset,
+                   intptr_t offset,
                    TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN);
 
    void copyFlags(TR::SymbolReference * sr);
@@ -197,9 +200,9 @@ public:
 
    // Offset from the underlying symbol. Should the symbol have an offset, these
    // offsets are later summed together
-   intptrj_t            getOffset()                            { return _offset; }
-   void                 setOffset(intptrj_t o)                 { _offset = o; }
-   void                 addToOffset(intptrj_t o)               { _offset += o; }
+   intptr_t            getOffset()                            { return _offset; }
+   void                 setOffset(intptr_t o)                 { _offset = o; }
+   void                 addToOffset(intptr_t o)               { _offset += o; }
 
    uint32_t             getSize()                              { return _size; }
    void                 setSize(uint32_t size)                 { _size = size; }
@@ -217,7 +220,7 @@ public:
 
    TR::KnownObjectTable::Index getKnownObjectIndex();
    bool                        hasKnownObjectIndex();
-   uintptrj_t *                getKnownObjectReferenceLocation(TR::Compilation *comp);
+   uintptr_t *                getKnownObjectReferenceLocation(TR::Compilation *comp);
 
    /// Resolved final class that is not an array returns TRUE
    virtual void setAliasedTo(TR::SymbolReference *other, bool symmetric = true);
@@ -294,6 +297,11 @@ public:
 
    bool isOSRInductionHelper();
 
+   TR::SymbolReference *getOriginalUnimprovedSymRef(TR::Compilation *comp)
+      {
+      return comp->getSymRefTab()->getOriginalUnimprovedSymRef(self());
+      }
+
 protected:
 
    /**
@@ -301,16 +309,13 @@ protected:
     */
    SymbolReference(TR::SymbolReferenceTable * symRefTab,
                    TR::Symbol *               symbol,
-                   intptrj_t                  offset,
+                   intptr_t                  offset,
                    const char *               name);
 
    friend class ::TR_Debug;
 
-   template <uint32_t>
-   friend class ::TR_NodeAliasSetInterface;
-
-   template <uint32_t>
-   friend class ::TR_SymAliasSetInterface;
+   template <AliasSetInterface>
+   friend class ::TR_AliasSetInterface;
 
    TR_BitVector *getUseonlyAliasesBV(TR::SymbolReferenceTable *symRefTab);
    TR_BitVector *getUseDefAliasesBV( bool isDirectCall = false, bool gcSafe = false);
@@ -340,7 +345,7 @@ protected:
 
    TR_ExtraInfoForNew *        _extraInfo;             ///< Extra info pointer used for some SymbolReferences
 
-   intptrj_t                   _offset;                ///< Offset of reference from base address
+   intptr_t                   _offset;                ///< Offset of reference from base address
 
    uint32_t                    _size;                  ///< Byte size of this SymbolReference
 

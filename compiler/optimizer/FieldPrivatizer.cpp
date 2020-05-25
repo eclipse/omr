@@ -25,16 +25,12 @@
 #include <stdint.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/allocator.h"
-#include "cs2/bitvectr.h"
-#include "cs2/hashtab.h"
-#include "cs2/sparsrbit.h"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
 #include "il/AliasSetInterface.hpp"
@@ -42,14 +38,14 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"
@@ -76,9 +72,7 @@ TR_FieldPrivatizer::TR_FieldPrivatizer(TR::OptimizationManager *manager)
      _privatizedFieldSymRefs(manager->trMemory(), stackAlloc),
      _privatizedRegCandidates(manager->trMemory()),
      _appendCalls(manager->trMemory()),
-     _privatizedFieldNodes(manager->trMemory()),
-     _epCandidates(getTypedAllocator<EPCandidate>(manager->allocator())),
-     _epValueNumbers(manager->allocator())
+     _privatizedFieldNodes(manager->trMemory())
    {
    }
 
@@ -110,10 +104,6 @@ int32_t TR_FieldPrivatizer::perform()
       requestOpt(OMR::expensiveObjectAllocationGroup);
 #endif
       }
-
-
-   if(comp()->getOption(TR_EnableElementPrivatization))
-      elementPrivatization();
 
    return 1;
    }
@@ -1475,192 +1465,6 @@ void TR_FieldPrivatizer::cleanupStringPeephole()
        TR_ASSERT(0, "Pattern not matched at this stage\n");
       }
 #endif
-   }
-
-
-void TR_FieldPrivatizer::elementPrivatization()
-   {
-   setVisitCount(comp()->incOrResetVisitCount());
-
-      if (!optimizer()->getValueNumberInfo())
-         {
-         dumpOptDetails(comp(), "Can't do element Privatization - no value numbers for %s\n", comp()->signature());
-         return;
-         }
-
-      _valueNumberInfo = optimizer()->getValueNumberInfo();
-
-
-      findElementCandidates();
-      privatizeElementCandidates();
-
-   }
-
-void TR_FieldPrivatizer::findElementCandidates()
-   {
-   for ( TR::TreeTop *tt = comp()->getMethodSymbol()->getFirstTreeTop() ; tt ; tt = tt->getNextTreeTop())
-      {
-      TR::Node *loadOrStoreNode = walkTreeForLoadOrStoreNode(tt->getNode());
-
-      if (loadOrStoreNode && isNodeInCorrectForm(loadOrStoreNode))
-         {
-         traceMsg(comp(), "Adding node %p tt %p with vn %d to list of candidates to privatize\n",loadOrStoreNode,tt,_valueNumberInfo->getValueNumber(loadOrStoreNode->getFirstChild()));
-
-         EPCandidate newCand(loadOrStoreNode,tt,_valueNumberInfo->getValueNumber(loadOrStoreNode->getFirstChild()));
-         _epCandidates.push_back(newCand);
-         _epValueNumbers[_valueNumberInfo->getValueNumber(loadOrStoreNode->getFirstChild())] = 1;
-         }
-      }
-   }
-
-void TR_FieldPrivatizer::privatizeElementCandidates()
-   {
-   CS2::HashTable<int32_t, TR::SymbolReference*, TR::Allocator> tempMap(comp()->allocator());
-   TR::list<EPCandidate> difficultCandidates(getTypedAllocator<EPCandidate>(comp()->allocator()));
-   for (auto cursor = _epCandidates.begin(); cursor != _epCandidates.end(); ++cursor)
-      {
-      TR::SymbolReference *tempSymRef = 0;
-
-      EPCandidate &candidate = *cursor;
-      CS2::HashIndex index;
-      if (tempMap.Locate(candidate.valueNum,index))
-         {
-         tempSymRef = tempMap[index];
-         }
-      else
-         {
-         TR_ASSERT(candidate.node->getOpCode().hasSymbolReference(), "Candidate node %p does not have a symbol reference!\n",candidate.node);
-
-         TR::Node *addressNode = candidate.node->getFirstChild();
-
-         int64_t offset = getOffSetFromAddressNode(addressNode);
-
-         if (offset < 0)        //This means that candidate has a value number and some other node will have the addr calculation, we just have to wait till it gets added to the hashtable
-            {
-            difficultCandidates.push_back(candidate);
-            continue;
-            }
-
-         tempSymRef = comp()->getSymRefTab()->createCoDependentTemporary(comp()->getMethodSymbol(),candidate.node->getDataType(),false,candidate.node->getSize(),candidate.node->getSymbol(),0);
-
-         tempMap.Add(candidate.valueNum,tempSymRef);
-         }
-
-      TR::DataType storedt = candidate.node->getDataType();
-
-      // step 1, anchor the original store address calculation child
-
-      TR::TreeTop *anchorTT = TR::TreeTop::create(comp(),TR::Node::create(TR::treetop, 1,candidate.node->getFirstChild()));
-      candidate.rootTT->insertBefore(anchorTT);
-
-      // step 2, convert the indirect store in to a direct store.
-
-      TR_ASSERT(candidate.node->getReferenceCount() == 1, "Candidate store node %p has refcount > 1... How is this possible?\n",candidate.node);
-
-      TR::Node::recreate(candidate.node, comp()->il.opCodeForDirectStore(storedt));
-      candidate.node->setSymbolReference(tempSymRef);
-      candidate.node->setFirst(candidate.node->getSecondChild());
-      candidate.node->setNumChildren(1);
-      }
-
-
-   // Process the difficult candidates.
-   for (auto difficult_cursor = difficultCandidates.begin(); difficult_cursor != difficultCandidates.end(); ++difficult_cursor)
-      {
-      TR::SymbolReference *tempSymRef = 0;
-
-      EPCandidate &candidate = *difficult_cursor;
-      CS2::HashIndex index;
-      if (tempMap.Locate(candidate.valueNum,index))
-         {
-         tempSymRef = tempMap[index];
-         }
-      else
-         {
-         TR_ASSERT(0, "Unable to process Candidate node %p!\n",candidate.node);
-         }
-      }
-
-
-   }
-
-int64_t TR_FieldPrivatizer::getOffSetFromAddressNode(TR::Node *addressNode)
-   {
-   if (addressNode->getOpCodeValue() == TR::loadaddr)
-      {
-      return 0;
-      }
-
-   else if (addressNode->getOpCode().isAdd())
-      {
-      if (addressNode->getFirstChild()->getOpCode().isLoadConst())
-         {
-         //TR_ASSERT(addressNode->getFirst)
-         return addressNode->getFirstChild()->getLongInt();
-         }
-      else if (addressNode->getSecondChild()->getOpCode().isLoadConst())
-         {
-         return addressNode->getSecondChild()->getLongInt();
-         }
-
-      }
-
-   return -1;
-
-   }
-
-
-bool TR_FieldPrivatizer::isNodeInCorrectForm(TR::Node *node)
-   {
-
-   TR_ASSERT(node->getOpCode().isStoreIndirect() || node->getOpCode().isLoadIndirect(), "Node is not an indirect store or load!\n");
-
-   if(node->getFirstChild()->getOpCodeValue() == TR::loadaddr)
-      {
-      return true;
-      }
-   else if( node->getFirstChild()->getOpCode().isAdd() && ((node->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::loadaddr && node->getFirstChild()->getSecondChild()->getOpCode().isLoadConst() ) ||
-                                                           (node->getFirstChild()->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getSecondChild()->getOpCodeValue() == TR::loadaddr)
-                                                          )
-          )
-      {
-
-      int64_t offset = getOffSetFromAddressNode(node->getFirstChild());
-
-      if (offset < 0 || offset > 20)    // a basic heuristic to not do this for massively huge arrays.  Maybe I don't need this.
-         return false;
-
-      return true;
-      }
-   else
-      {
-      int32_t vn = _valueNumberInfo->getValueNumber(node->getFirstChild());
-
-      if(_epValueNumbers.ValueAt(vn))
-         {
-         return true;
-         }
-      }
-
-   return false;
-   }
-
-TR::Node * TR_FieldPrivatizer::walkTreeForLoadOrStoreNode(TR::Node *node)
-   {
-   if (node->getVisitCount() >= _visitCount)
-      return 0;
-
-   node->setVisitCount(_visitCount);
-
-   if (node->getOpCode().isStoreIndirect() || node->getOpCode().isLoadIndirect())
-      return node;
-
-   for(int32_t i = 0 ; i < node->getNumChildren() ; ++i)
-      {
-      walkTreeForLoadOrStoreNode(node->getChild(i));
-      }
-
-   return 0;
    }
 
 const char *

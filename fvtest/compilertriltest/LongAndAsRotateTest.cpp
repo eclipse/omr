@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ uint64_t lconstInput_onesAroundZeros [] = {0x0, 0x8000000000000001, 0xE000000000
 uint64_t lconstInput_invalidPatterns [] = {0x4000000000000001, 0xF0F0F0F0F0F0F0F0, 0x8000000000000002};
 
 template <typename VarType, typename ConstType>
-class LongAndAsRotateTest : public ::testing::TestWithParam<std::tuple<VarType, ConstType, ConstType (*) (VarType, ConstType)>>
+class LongAndAsRotateTest : public TRTest::TestWithPortLib, public ::testing::WithParamInterface<std::tuple<VarType, ConstType, ConstType (*) (VarType, ConstType)>>
    {
    public:
 
@@ -110,6 +110,8 @@ class i2lLongAndAsRotateTest : public LongAndAsRotateTest<int32_t, uint64_t> {};
 
 TEST_P(i2lLongAndAsRotateTest, SimpleTest)
    {
+   SKIP_ON_RISCV(KnownBug);
+
    auto param = to_struct(GetParam());
 
    char inputTrees[512] = {0};
@@ -127,7 +129,7 @@ TEST_P(i2lLongAndAsRotateTest, SimpleTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -138,6 +140,8 @@ TEST_P(i2lLongAndAsRotateTest, SimpleTest)
 
 TEST_P(i2lLongAndAsRotateTest, iConstTest)
    {
+   SKIP_ON_RISCV(KnownBug);
+
    auto param = to_struct(GetParam());
 
    // this is an arbitrary value that will be used to create
@@ -168,7 +172,7 @@ TEST_P(i2lLongAndAsRotateTest, iConstTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -180,6 +184,8 @@ TEST_P(i2lLongAndAsRotateTest, iConstTest)
 
 TEST_P(i2lLongAndAsRotateTest, GreaterThanOneRefCount1)
    {
+   SKIP_ON_RISCV(KnownBug);
+
    auto param = to_struct(GetParam());
 
    // this is an arbitrary value that will be used to create
@@ -216,7 +222,7 @@ TEST_P(i2lLongAndAsRotateTest, GreaterThanOneRefCount1)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -228,6 +234,8 @@ TEST_P(i2lLongAndAsRotateTest, GreaterThanOneRefCount1)
 
 TEST_P(i2lLongAndAsRotateTest, GreaterThanOneRefCount2)
    {
+   SKIP_ON_RISCV(KnownBug);
+
    auto param = to_struct(GetParam());
 
    // these are arbitrary values that will be used to create
@@ -276,7 +284,7 @@ TEST_P(i2lLongAndAsRotateTest, GreaterThanOneRefCount2)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -291,6 +299,8 @@ class iu2lLongAndAsRotateTest : public LongAndAsRotateTest<uint32_t, uint64_t> {
 
 TEST_P(iu2lLongAndAsRotateTest, SimpleTest)
    {
+   SKIP_ON_RISCV(KnownBug);
+
    auto param = to_struct(GetParam());
 
    char inputTrees[512] = {0};
@@ -308,7 +318,7 @@ TEST_P(iu2lLongAndAsRotateTest, SimpleTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -319,6 +329,8 @@ TEST_P(iu2lLongAndAsRotateTest, SimpleTest)
 
 TEST_P(iu2lLongAndAsRotateTest, iConstTest)
    {
+   SKIP_ON_RISCV(KnownBug);
+
    auto param = to_struct(GetParam());
 
    // this is an arbitrary value that will be used to create
@@ -349,7 +361,7 @@ TEST_P(iu2lLongAndAsRotateTest, iConstTest)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -360,6 +372,8 @@ TEST_P(iu2lLongAndAsRotateTest, iConstTest)
 
 TEST_P(iu2lLongAndAsRotateTest, GreaterThanOneRefCount1)
    {
+   SKIP_ON_RISCV(KnownBug);
+
    auto param = to_struct(GetParam());
 
    // this is an arbitrary value that will be used to create
@@ -396,7 +410,7 @@ TEST_P(iu2lLongAndAsRotateTest, GreaterThanOneRefCount1)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 
@@ -407,6 +421,8 @@ TEST_P(iu2lLongAndAsRotateTest, GreaterThanOneRefCount1)
 
 TEST_P(iu2lLongAndAsRotateTest, GreaterThanOneRefCount2)
    {
+   SKIP_ON_RISCV(KnownBug);
+
    auto param = to_struct(GetParam());
 
    // these are arbitrary values that will be used to create
@@ -455,7 +471,7 @@ TEST_P(iu2lLongAndAsRotateTest, GreaterThanOneRefCount2)
 
    ASSERT_NOTNULL(trees);
 
-   Tril::DefaultCompiler compiler {trees};
+   Tril::DefaultCompiler compiler(trees);
 
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\nInput trees: " << inputTrees;
 

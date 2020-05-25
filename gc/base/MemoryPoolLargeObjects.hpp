@@ -37,6 +37,7 @@
 #include "GCExtensionsBase.hpp"
 #include "MemoryPool.hpp"
 #include "MemoryPoolAddressOrderedListBase.hpp"
+#include "ModronAssertions.h"
 class MM_AllocateDescription;
 class MM_EnvironmentBase;
 class MM_LargeObjectAllocateStats;
@@ -115,9 +116,46 @@ private:
 	double resetTargetLOARatio(MM_EnvironmentBase*);
 	void resetLOASize(MM_EnvironmentBase*, double newLOARatio);
 	void redistributeFreeMemory(MM_EnvironmentBase*, uintptr_t newOldAreaSize);
-	bool isSizeEnoughForLOA(MM_EnvironmentBase* env, uintptr_t newOldAreaSize)
-	{
-		return (newOldAreaSize >= _extensions->largeObjectMinimumSize);
+
+	/**
+	 * Check if new LOA size is larger than largeObjectMinimumSize. If it is not large enough,
+	 * set the LOA size to 0.  After, set the SOA size to be the remainder of the heap.
+	 * @return true If the newLOASize is large enough for the LOA
+	 */
+	MMINLINE bool
+	checkAndSetSizeForLOA(MM_EnvironmentBase* env, uintptr_t newLOASize, double newLOARatio, void* newLOABase=NULL) {
+		bool ret = newLOASize >= _extensions->largeObjectMinimumSize;
+		uintptr_t oldAreaSize = _memorySubSpace->getActiveMemorySize();
+		if (!ret) {
+			/* No.. make LOA empty as not even big enough for one free chunk */
+			_loaSize = 0;
+			_soaSize = oldAreaSize;
+			_currentLOARatio = 0;
+			_currentLOABase = LOA_EMPTY;
+		} else {
+			_loaSize = newLOASize;
+			/* ..and SOA is whats left after LOA allocation */
+			_soaSize = oldAreaSize - _loaSize;
+			if (0 != newLOARatio) {
+				_currentLOARatio = newLOARatio;
+			} else {
+				Assert_MM_true((_loaSize + _soaSize) == oldAreaSize);
+				_currentLOARatio = ((double)_loaSize) / oldAreaSize;
+				/* Rounding during float operations may result in a new LOA ratio less than
+				 * minimum so fix up if necessary
+				 */
+				if (_currentLOARatio < _extensions->largeObjectAreaMinimumRatio) {
+					_currentLOARatio = _extensions->largeObjectAreaMinimumRatio;
+				}
+				Assert_MM_true(0 != _currentLOARatio);
+			}
+			if (NULL != newLOABase) {
+				_currentLOABase = newLOABase;
+			} else {
+				_currentLOABase = determineLOABase(env, _soaSize);
+			}
+		}
+		return ret;
 	}
 
 protected:
@@ -240,6 +278,8 @@ public:
 		, _loaSize(0)
 		, _soaSize(0)
 		, _currentLOARatio(_extensions->largeObjectAreaInitialRatio)
+		, _minLOAFreeRatio(0)
+		, _loaFreeRatioHistory(NULL)
 		, _soaObjectSizeLWM(UDATA_MAX)
 		, _soaFreeBytesAfterLastGC(0)
 	{

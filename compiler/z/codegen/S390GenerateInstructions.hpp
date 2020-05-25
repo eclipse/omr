@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -189,12 +189,13 @@ TR::Instruction * generateS390CompareAndBranchInstruction(
                    bool needsCC = true,
                    bool targetIsFarAndCold = false);
 
+template <typename imm32Or64Bit>
 TR::Instruction * generateS390CompareAndBranchInstruction(
                    TR::CodeGenerator * cg,
                    TR::InstOpCode::Mnemonic compareOpCode,
                    TR::Node * node,
                    TR::Register * first,
-                   int32_t second,
+                   imm32Or64Bit second,
                    TR::InstOpCode::S390BranchCondition bc,
                    TR::LabelSymbol * branchDestination,
                    bool needsCC = true,
@@ -1332,7 +1333,7 @@ TR::Instruction *generateRegLitRefInstruction(
                    TR::InstOpCode::Mnemonic                       op,
                    TR::Node                             *n,
                    TR::Register                         *treg,
-                   uintptrj_t                              imm,
+                   uintptr_t                              imm,
                    int32_t                              reloType = 0,
                    TR::RegisterDependencyConditions *cond = 0,
                    TR::Instruction                      *preced = 0,
@@ -1364,7 +1365,7 @@ TR::Instruction *generateRegLitRefInstruction(
                    TR::InstOpCode::Mnemonic                       op,
                    TR::Node                             *n,
                    TR::Register                         *treg,
-                   uintptrj_t                            imm,
+                   uintptr_t                            imm,
                    TR::RegisterDependencyConditions *cond,
                    TR::Instruction                      *preced = 0,
                    TR::Register                         *base = 0,
@@ -1510,15 +1511,101 @@ TR::Instruction *
 generateReplicateNodeInVectorReg(TR::Node * node, TR::CodeGenerator *cg, TR::Register * targetVRF, TR::Node * srcElementNode,
                                  int elementSize, TR::Register *zeroReg=NULL, TR::Instruction * preced=NULL);
 
-void generateShiftAndKeepSelected64Bit(
+/**
+ * \param node
+ *    The node being evaluated.
+ *
+ * \param cg
+ *    The code generator used to generate the instructions.
+ * 
+ * \param targetRegister
+ *    The register where the specific shifted bits from sourceRegister will be placed to the corresponding 
+ *    location. The remaining bits will be zeroed out.
+ * 
+ * \param sourceRegister
+ *    The register which will be shifted. The selected shifted bits in sourceRegister will be placed to 
+ *    targetRegister, and the sourceRegister itself will stay unchanged. 
+ * 
+ * \param fromBit
+ *    Indicates the starting bit position of the selected range of bits in targetRegister and in sourceRegister after shifting. 
+ * 
+ * \param toBit
+ *    Indicates the ending bit position of the selected range of bits in targetRegister and in sourceRegister after shifting. 
+ * 
+ * \param shiftAmount
+ *    Indicates the amount of bits that sourceRegister is shifted to the left. 
+ * 
+ * \example
+ *    fromBit = 10;   toBit = 20;   shiftAmount = 15;
+ * 
+ *                              Bit 10    Bit 20
+ *    Before:                     |          |
+ *                     0          V          V                                               63
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+     
+ *    sourceRegister: |10010000 00100011 01001000 11000100 00011010 00111000 00101011 00010000|
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+
+ *      
+ *                     0                                                                     63
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+     
+ *    targetRegister: |10000110 01101010 00111000 11011110 11000011 01111000 00100011 00000000|
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+
+ *    
+ *    The function first makes a copy of sourceRegister into the targetRegister and then shifts the targetRegister left
+ *    by the shiftAmount (15 bits):
+ * 
+ *                              Bit 10    Bit 20
+ *                                |          |
+ *                     0          V          V                                               63
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+     
+ *    targetRegister: |10100100 01100010 00001101 00011100 00010101 10001000 00000000 00000000|
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+
+ * 
+ *    The function then selects the bits in rage [fromBit, toBit] inclusive of the shifted value and all other non-
+ *    selected bits are zeroed out:
+ * 
+ *                              Bit 10    Bit 20
+ *    After:                      |          |
+ *                     0          V          V                                               63
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+     
+ *    targetRegister: |00000000 00100010 00001000 00000000 00000000 00000000 00000000 00000000|
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+
+ *
+ *    Note the value of sourceRegister will remain unchanged.
+*/
+void generateShiftThenKeepSelected64Bit(
       TR::Node * node, TR::CodeGenerator *cg,
-      TR::Register * aFirstRegister, TR::Register * aSecondRegister, int aFromBit,
-      int aToBit, int aShiftAmount, bool aClearOtherBits, bool aSetConditionCode);
+      TR::Register * targetRegister, TR::Register * sourceRegister, int fromBit,
+      int toBit, int shiftAmount);
 
-void generateShiftAndKeepSelected31Bit(
+void generateShiftThenKeepSelected31Bit(
       TR::Node * node, TR::CodeGenerator *cg,
-      TR::Register * aFirstRegister, TR::Register * aSecondRegister, int aFromBit,
-      int aToBit, int aShiftAmount, bool aClearOtherBits, bool aSetConditionCode);
+      TR::Register * targetRegister, TR::Register * sourceRegister, int fromBit,
+      int toBit, int shiftAmount);
 
 TR::Instruction *generateZeroVector(TR::Node *node, TR::CodeGenerator *cg, TR::Register *vecZeroReg);
+
+/** \brief
+ *     Generates an alignment NOP (no-operation) pseudo-instruction in the instruction stream which will expand into
+ *     an appropriate number of NOP instructions at binary encoding time to satisfy the specified alignment.
+ *
+ *  \param cg
+ *     The code generator used to generate the instructions.
+ *
+ *  \param node
+ *     The node with which the generated instruction will be associated.
+ *
+ *  \param alignment
+ *     The alignment at which the next instruction in the instruction stream will be encoded at. For example specifying
+ *     a value of 16 will ensure that the binary encoding location of the subsequent instruction will be 16-byte
+ *     aligned, i.e. the low order four bits will be zero.
+ *
+ *  \param preced
+ *     The preceeding instruction to link the generated data constant instruction with.
+ *
+ *  \return
+ *     The generated instruction.
+ */
+TR::Instruction*
+generateAlignmentNopInstruction(TR::CodeGenerator *cg, TR::Node *node, uint32_t alignment, TR::Instruction *preced = NULL);
+
 #endif

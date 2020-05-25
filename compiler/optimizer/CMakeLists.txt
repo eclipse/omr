@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@ compiler_library(optimizer
 	${CMAKE_CURRENT_LIST_DIR}/BackwardUnionBitVectorAnalysis.cpp
 	${CMAKE_CURRENT_LIST_DIR}/BitVectorAnalysis.cpp
 	${CMAKE_CURRENT_LIST_DIR}/CatchBlockRemover.cpp
-	${CMAKE_CURRENT_LIST_DIR}/CFGSimplifier.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRCFGSimplifier.cpp
 	${CMAKE_CURRENT_LIST_DIR}/CompactLocals.cpp
 	${CMAKE_CURRENT_LIST_DIR}/CopyPropagation.cpp
 	${CMAKE_CURRENT_LIST_DIR}/DataFlowAnalysis.cpp

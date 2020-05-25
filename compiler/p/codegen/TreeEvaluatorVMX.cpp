@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
@@ -44,9 +44,9 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 
@@ -87,15 +87,15 @@ TR::Register *OMR::Power::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
                doubleword = (halfword << 48) | (halfword << 32) | (halfword << 16) | halfword;
                }
             fillReg = cg->allocateRegister();
-            if (dofastPath && TR::Compiler->target.is64Bit())
+            if (dofastPath && cg->comp()->target().is64Bit())
                {
-               generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, fillReg, halfword);
+               generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, fillReg, (int16_t)halfword);
                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwimi, node, fillReg, fillReg,  16, 0xffff0000);
                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, fillReg, fillReg,  32, 0xffffffff00000000ULL);
                }
             else
                {
-               generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, fillReg, halfword);
+               generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, fillReg, (int16_t)halfword);
                generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, fillReg, fillReg, halfword);
                }
             }
@@ -108,15 +108,15 @@ TR::Register *OMR::Power::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
                doubleword = (halfword << 48) | (halfword << 32) | (halfword << 16) | halfword;
                }
             fillReg = cg->allocateRegister();
-            if (dofastPath && TR::Compiler->target.is64Bit())
+            if (dofastPath && cg->comp()->target().is64Bit())
                {
-               generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, fillReg, halfword);
+               generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, fillReg, (int16_t)halfword);
                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwimi, node, fillReg, fillReg,  16, 0xffff0000);
                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, fillReg, fillReg,  32, 0xffffffff00000000ULL);
                }
             else
                {
-               generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, fillReg, halfword);
+               generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, fillReg, (int16_t)halfword);
                generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, fillReg, fillReg, halfword);
                }
             }
@@ -130,7 +130,7 @@ TR::Register *OMR::Power::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
                }
             fillReg = cg->allocateRegister();
             loadConstant(cg, node, ((int32_t)word), fillReg);
-            if (dofastPath && TR::Compiler->target.is64Bit())
+            if (dofastPath && cg->comp()->target().is64Bit())
                generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, fillReg, fillReg,  32, 0xffffffff00000000ULL);
             }
             break;
@@ -143,7 +143,7 @@ TR::Register *OMR::Power::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
                   fp1Reg = cg->evaluate(fillNode);
                fillReg = cg->allocateRegister();
                }
-            else if (TR::Compiler->target.is64Bit())  //long: 64 bit target
+            else if (cg->comp()->target().is64Bit())  //long: 64 bit target
                fillReg = cg->evaluate(fillNode);
             else                           //long: 32 bit target
                {
@@ -160,7 +160,7 @@ TR::Register *OMR::Power::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
       if (fillNode->getDataType() != TR::Double && dofastPath)
          {
          fp1Reg = cg->allocateRegister(TR_FPR);
-         if (TR::Compiler->target.is32Bit())
+         if (cg->comp()->target().is32Bit())
             {
             fixedSeqMemAccess(cg, node, 0, q, fp1Reg, tempReg, TR::InstOpCode::lfd, 8, NULL, tempReg);
             cg->findOrCreateFloatConstant(&doubleword, TR::Double, q[0], q[1], q[2], q[3]);
@@ -195,7 +195,7 @@ TR::Register *OMR::Power::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
                {
                fp1Reg = cg->evaluate(fillNode);
                }
-            else if (TR::Compiler->target.is64Bit())
+            else if (cg->comp()->target().is64Bit())
                {
                fp1Reg = cg->allocateRegister();
                fillReg = cg->evaluate(fillNode);
@@ -289,7 +289,7 @@ TR::Register *OMR::Power::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::C
 
       TR::InstOpCode::Mnemonic dblStoreOp = TR::InstOpCode::stfd;
       TR::Register *dblFillReg= fp1Reg;
-      if (TR::Compiler->target.is64Bit() && fillNode->getDataType() != TR::Double)
+      if (cg->comp()->target().is64Bit() && fillNode->getDataType() != TR::Double)
          {
          dblStoreOp = TR::InstOpCode::std;
          dblFillReg = fillReg;

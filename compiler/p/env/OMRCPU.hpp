@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,32 +38,30 @@ namespace OMR { typedef OMR::Power::CPU CPUConnector; }
 #include "env/jittypes.h"
 #include "infra/Assert.hpp"
 
-#define VALID_PROCESSOR TR_ASSERT(id() >= TR_FirstPPCProcessor && id() <= TR_LastPPCProcessor, "Not a valid PPC Processor Type")
-
 namespace OMR
 {
 
 namespace Power
 {
 
-class CPU : public OMR::CPU
+class OMR_EXTENSIBLE CPU : public OMR::CPU
    {
 protected:
 
    CPU() : OMR::CPU() {}
+   CPU(const OMRProcessorDesc& processorDescription) : OMR::CPU(processorDescription) {}
 
 public:
 
-   bool getSupportsHardwareSQRT() { VALID_PROCESSOR; return id() >= TR_FirstPPCHwSqrtProcessor; }
-   bool getSupportsHardwareRound() { VALID_PROCESSOR; return id() >= TR_FirstPPCHwRoundProcessor; }
-   bool getSupportsHardwareCopySign() { VALID_PROCESSOR; return id() >= TR_FirstPPCHwCopySignProcessor;}
+   bool getSupportsHardwareSQRT();
+   bool getSupportsHardwareRound();
+   bool getSupportsHardwareCopySign();
 
    bool getPPCis64bit();
    bool getPPCSupportsVMX() { return false; }
    bool getPPCSupportsVSX() { return false; }
    bool getPPCSupportsAES() { return false; }
    bool getPPCSupportsTM()  { return false; }
-   bool getPPCSupportsLM()  { return false; }
 
    /** @brief Determines whether the Transactional Memory (TM) facility is available on the current processor.
     *         Alias of getPPCSupportsTM() as a platform agnostic query.
@@ -100,7 +98,7 @@ public:
     *
     * @return true if the target is within range; false otherwise.
     */
-   bool isTargetWithinIFormBranchRange(intptrj_t targetAddress, intptrj_t sourceAddress);
+   bool isTargetWithinIFormBranchRange(intptr_t targetAddress, intptr_t sourceAddress);
 
    };
 

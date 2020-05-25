@@ -41,8 +41,7 @@ TR::NodePool::NodePool(TR::Compilation * comp, const TR::Allocator &allocator) :
 void
 TR::NodePool::cleanUp()
    {
-   _nodeRegion.~Region();
-   new (&_nodeRegion) TR::Region(_comp->trMemory()->heapMemoryRegion());
+   TR::Region::reset(_nodeRegion, _comp->trMemory()->heapMemoryRegion());
    }
 
 TR::Node *
@@ -88,7 +87,7 @@ TR::NodePool::removeDeadNodes()
        return false;
       }
 
-   TR_ASSERT(false, "Node garbage colleciotn is not currently implemented");
+   TR_ASSERT(false, "Node garbage collection is not currently implemented");
 
    return false;
    }

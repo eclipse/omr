@@ -98,9 +98,7 @@ public:
 	bool isReserved() { return getRegionType() == RESERVED; }
 	bool isSmall() { return getRegionType() == SEGREGATED_SMALL; }
 	bool isLarge() { return getRegionType() == SEGREGATED_LARGE; }
-#if defined(OMR_GC_ARRAYLETS)
 	bool isArraylet() { return getRegionType() == ARRAYLET_LEAF; }
-#endif /* defined(OMR_GC_ARRAYLETS) */
 	bool isFree() { return getRegionType() == FREE; }
 	bool isCanonical() { return isReserved() || isSmall() || getRangeCount() >= 1; }
 
@@ -121,7 +119,6 @@ public:
 	void emptyRegionAllocated(MM_EnvironmentBase* env);
 	void emptyRegionReturned(MM_EnvironmentBase* env);
 
-#if defined(OMR_GC_ARRAYLETS)
 	uintptr_t *allocateArraylet(MM_EnvironmentBase *env, omrarrayptr_t parentIndexableObject);
 	void setArraylet();
 	MMINLINE uintptr_t whichArraylet(uintptr_t *arraylet, uintptr_t arrayletLeafLogSize) { return ((uintptr_t)arraylet - (uintptr_t)getLowAddress()) >> arrayletLeafLogSize; }
@@ -134,7 +131,6 @@ public:
 	MMINLINE void setNextArrayletIndex (uintptr_t index)   { _nextArrayletIndex = index; }
 	void addBytesFreedToArrayletBackout(MM_EnvironmentBase* env);
 	void addBytesFreedToSmallSpineBackout(MM_EnvironmentBase* env);
-#endif /* defined(OMR_GC_ARRAYLETS) */
 
 	void setLarge(uintptr_t range) { setRange(SEGREGATED_LARGE, range); }
 	void setSmall(uintptr_t sizeClass);

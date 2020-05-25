@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@
 #include "codegen/CodeGenPhase.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
@@ -61,15 +61,15 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/deque.hpp"
 #include "ras/Debug.hpp"
@@ -86,7 +86,7 @@ OMR::Z::Instruction::Instruction(TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic
    OMR::Instruction(cg, op, node),
    CTOR_INITIALIZER_LIST
    {
-   TR_ASSERT_FATAL(TR::Compiler->target.cpu.getSupportsArch(_opcode.getMinimumALS()), "Processor detected does not support instruction %s\n", _opcode.getMnemonicName());
+   TR_ASSERT_FATAL(cg->comp()->target().cpu.getSupportsArch(_opcode.getMinimumALS()), "Processor detected does not support instruction %s\n", _opcode.getMnemonicName());
 
    self()->initialize();
    }
@@ -96,7 +96,7 @@ OMR::Z::Instruction::Instruction(TR::CodeGenerator*cg, TR::Instruction* precedin
    OMR::Instruction(cg, precedingInstruction, op, node),
    CTOR_INITIALIZER_LIST
    {
-   TR_ASSERT_FATAL(TR::Compiler->target.cpu.getSupportsArch(_opcode.getMinimumALS()), "Processor detected does not support instruction %s\n", _opcode.getMnemonicName());
+   TR_ASSERT_FATAL(cg->comp()->target().cpu.getSupportsArch(_opcode.getMinimumALS()), "Processor detected does not support instruction %s\n", _opcode.getMnemonicName());
 
    self()->initialize(precedingInstruction, true);
    }
@@ -764,34 +764,6 @@ OMR::Z::Instruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
       //If the value is set here, the snippet can be handled in an identical fashion to a normal constantdataSnippet
       }
 
-   // trace assigned registers bit vector
-   TR_Debug * debugObj = self()->cg()->getDebug();
-   if (debugObj && comp->getOption(TR_TraceRegisterState))
-      {
-      // determine which GPRs are assigned and the total number of available GPRs
-      uint32_t freeRegs = self()->getBinLocalFreeRegs();
-      uint32_t numRegs  =  TR::RealRegister::LastAssignableGPR - TR::RealRegister::FirstGPR + 1;
-
-      // print freeRegs as a binary number
-      char * strFreeRegs = (char *)self()->cg()->trMemory()->allocateHeapMemory(numRegs+1);
-      for(uint32_t i = 0; i < numRegs; i++)
-         {
-         strFreeRegs[numRegs - i - 1] = (freeRegs & 0x1) ? '1' : '0';
-         freeRegs >>= 1;
-         }
-      strFreeRegs[numRegs] = '\0';
-
-      // format the comment nicely and append it as a comment to the instruction
-      char *commentTemplate = "RegState=[%s]";
-      char *comment = (char *)self()->cg()->trMemory()->allocateHeapMemory(strlen(commentTemplate)+strlen(strFreeRegs)-1);
-      if (comment != NULL)
-         {
-         sprintf(comment, commentTemplate, strFreeRegs);
-         debugObj->addInstructionComment(self(),comment);
-         }
-      }
-
-
    // Modify TBEGIN/TBEGINC's General Register Save Mask (GRSM) to only include
    // live registers.
    if (self()->getOpCodeValue() == TR::InstOpCode::TBEGIN || self()->getOpCodeValue() == TR::InstOpCode::TBEGINC)
@@ -870,13 +842,13 @@ OMR::Z::Instruction::recordOperand(void *operand, int8_t &operandCount)
 
    if(_operands==NULL)
       {
-      ((uintptrj_t** )p)[0]=(uintptrj_t *)operand;
+      ((uintptr_t** )p)[0]=(uintptr_t *)operand;
       _operands=p;
       }
    else
       {
-      for (int i=0; i < n; i++) ((uintptrj_t**)p)[i] = ((uintptrj_t **) _operands)[i];
-      ((uintptrj_t** )p)[n]= (uintptrj_t *) operand;
+      for (int i=0; i < n; i++) ((uintptr_t**)p)[i] = ((uintptr_t **) _operands)[i];
+      ((uintptr_t** )p)[n]= (uintptr_t *) operand;
 
       comp->allocator().deallocate(_operands, sizeof(void *) * n);
       _operands = p;
@@ -960,7 +932,7 @@ OMR::Z::Instruction::useTargetRegister(TR::Register* reg)
    self()->useRegister(reg);
 
    if (reg->getKind() == TR_GPR && (_opcode.is64bit() || _opcode.is32to64bit() ||
-         (TR::Compiler->target.is64Bit() &&
+         (comp->target().is64Bit() &&
             (self()->getOpCodeValue() == TR::InstOpCode::LA ||
              self()->getOpCodeValue() == TR::InstOpCode::LAY ||
              self()->getOpCodeValue() == TR::InstOpCode::LARL ||
@@ -1104,7 +1076,10 @@ OMR::Z::Instruction::assignRegisterNoDependencies(TR::Register * reg)
       return reg;
       }
 
-   return self()->cg()->machine()->assignBestRegister(reg, self(), BOOKKEEPING);
+   uint64_t regMask = 0xffffffff;
+   if (reg->isUsedInMemRef())
+      regMask = ~TR::RealRegister::GPR0Mask;
+   return self()->cg()->machine()->assignBestRegister(reg, self(), BOOKKEEPING, regMask);
    }
 
 // Make sure reg life is really ended.
@@ -1531,7 +1506,7 @@ OMR::Z::Instruction::renameRegister(TR::Register *from, TR::Register *to)
     }
 
   TR::RegisterDependencyConditions *conds = self()->getDependencyConditions();
-  if (conds && !conds->getConflictsResolved())
+  if (conds)
     {
     TR_S390RegisterDependencyGroup *preConds = conds->getPreConditions();
     TR_S390RegisterDependencyGroup *postConds = conds->getPostConditions();

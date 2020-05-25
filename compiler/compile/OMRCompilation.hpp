@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@ namespace OMR { typedef OMR::Compilation CompilationConnector; }
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/OSRData.hpp"
@@ -57,18 +57,18 @@ namespace OMR { typedef OMR::Compilation CompilationConnector; }
 #include "il/DataTypes.hpp"
 #include "il/IL.hpp"
 #include "il/Node.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Flags.hpp"
 #include "infra/Link.hpp"
 #include "infra/List.hpp"
 #include "infra/Stack.hpp"
-#include "infra/ThreadLocal.h"
+#include "infra/ThreadLocal.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "ras/Debug.hpp"
 #include "ras/DebugCounter.hpp"
 #include "ras/ILValidationStrategies.hpp"
 
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 
 
 class TR_AOTGuardSite;
@@ -109,6 +109,7 @@ namespace TR { class Symbol; }
 namespace TR { class SymbolReference; }
 namespace TR { class SymbolReferenceTable; }
 namespace TR { class TreeTop; }
+namespace TR { class TypeLayout; }
 typedef TR::SparseBitVector SharedSparseBitVector;
 
 #if _AIX
@@ -175,11 +176,11 @@ enum ProfilingMode
  * transformations to be selectively disabled during debugging in order to
  * isolate a buggy optimization. But this description fails to capture the
  * important effect that performTransformation has on the maintainability of
- * Testarossa’s code base.
+ * Testarossa's code base.
  *
  * Calls to performTransformation can (and should) be placed around any part of
- * the code that is optional; in an optimizer, that’s a lot of code. Tons of
- * Testarossa code is there only to improve performance–not for correctness–and
+ * the code that is optional; in an optimizer, that's a lot of code. Tons of
+ * Testarossa code is there only to improve performance-not for correctness-and
  * can therefore be guarded by performTransformation.
  *
  * A call in a hypothetical dead code elimination might look like this:
@@ -210,10 +211,10 @@ enum ProfilingMode
  * Most importantly, it identifies exactly the code that should be skipped if
  * someone wanted to prevent this opt from occurring in certain cases. Even if
  * you know nothing about an optimization, you can locate its
- * performTransformation call(s) and add an additional clause to this “if”
+ * performTransformation call(s) and add an additional clause to this "if"
  * statement, secure in the knowledge that skipping this code will not leave
  * the optimization in some undefined state. The author of the optimization
- * has identified this code as “skippable”, so you can be fairly certain that
+ * has identified this code as "skippable", so you can be fairly certain that
  * skipping it will do just what you want.
  *
  * If you are developing code that has optional parts, it is strongly
@@ -349,6 +350,18 @@ public:
    OMR_VMThread *omrVMThread() { return _omrVMThread; }
 
    bool compilationShouldBeInterrupted(TR_CallingContext) { return false; }
+
+   /**
+    * @brief denotes the start of a region wherein decisions do not need to be
+    *        remembered (for example, in relocatable compilations)
+    */
+   void enterHeuristicRegion() {}
+
+   /**
+    * @brief denotes the end of a region wherein decisions do not need to be
+    *        remembered (for example, in relocatable compilations)
+    */
+   void exitHeuristicRegion() {}
 
    /* Can be used to ensure that a implementer chosen for inlining is valid;
     * for example, to ensure that the implementer can be used for inlining
@@ -550,7 +563,6 @@ public:
    TR::list<TR::Snippet*> *getSnippetsToBePatchedOnClassUnload() { return &_snippetsToBePatchedOnClassUnload; }
    TR::list<TR::Snippet*> *getMethodSnippetsToBePatchedOnClassUnload() { return &_methodSnippetsToBePatchedOnClassUnload; }
    TR::list<TR::Snippet*> *getSnippetsToBePatchedOnClassRedefinition() { return &_snippetsToBePatchedOnClassRedefinition; }
-   TR::list<TR_Pair<TR::Snippet,TR_ResolvedMethod> *> *getSnippetsToBePatchedOnRegisterNative() { return &_snippetsToBePatchedOnRegisterNative; }
 
    TR_RegisterCandidates *getGlobalRegisterCandidates() { return _globalRegisterCandidates; }
    void setGlobalRegisterCandidates(TR_RegisterCandidates *t) { _globalRegisterCandidates = t; }
@@ -809,9 +821,16 @@ public:
    const char *getHotnessName();
 
    template<typename Exception>
-   void failCompilation(const char *reason)
+   void failCompilation(const char *format, ...)
       {
-      OMR::Compilation::reportFailure(reason);
+      char buffer[512];
+
+      va_list args;
+      va_start(args, format);
+      vsnprintf (buffer, sizeof(buffer), format, args);
+      va_end(args);
+
+      OMR::Compilation::reportFailure(buffer);
       throw Exception();
       }
 
@@ -952,6 +971,23 @@ public:
       return _flags.testAny(HasColdBlocks);
       }
 
+   /**
+    * @brief Specify that the code cache should only contain read only code.
+    */
+   void setGenerateReadOnlyCode()
+      {
+      _flags.set(GenerateReadOnlyCode);
+      }
+
+   /**
+    * @brief Query whether the code cache should only contain read only code.
+    * @return true if generating read only code; false otherwise.
+    */
+   bool getGenerateReadOnlyCode()
+      {
+      return _flags.testAny(GenerateReadOnlyCode);
+      }
+
    TR::ResolvedMethodSymbol *createJittedMethodSymbol(TR_ResolvedMethod *resolvedMethod);
 
    bool isGPUCompilation() { return _flags.testAny(IsGPUCompilation);}
@@ -1017,11 +1053,10 @@ public:
    DebugCounterMap &getDebugCounterMap() { return _debugCounterMap; }
 
    /**
-    *  @brief needRelocationsForStatics
-    *  @return whether static data addresses need to be relocated
+    * @brief Answers whether the compilation is an out of process compilation
+    * @return true if the compilation is an out of process compilation
     */
-   bool needRelocationsForStatics() { return true; }
-
+   static bool isOutOfProcessCompilation() { return false; }
 
 public:
 #ifdef J9_PROJECT_SPECIFIC
@@ -1046,6 +1081,28 @@ public:
 
    TR::Region &aliasRegion();
    void invalidateAliasRegion();
+
+   /** \brief
+    *	    Requests the layout of a type. The layout here means how the fields
+    *     are laid out in an object of the given type.
+    *
+    *  \param clazz
+    *     Class of the type whose layout is requested.
+    *
+    *  \return
+    *     Returns a TypeLayout object pointer.
+    */
+   const TR::TypeLayout* typeLayout(TR_OpaqueClassBlock * clazz);
+
+   /**
+    * \brief
+    *    Returns a copy of the target env singleton that has been specialized
+    *    for the current compilation
+    *
+    * \return
+    *    reference to the copy of the target env
+    */
+   TR::Environment& target() { return _target; }
 
 private:
    void resetVisitCounts(vcount_t, TR::ResolvedMethodSymbol *);
@@ -1102,7 +1159,7 @@ protected:
       HasMethodHandleInvoke             = 0x0080000, // JSR292
       HasSuperColdBlock                 = 0x0100000,
       HasColdBlocks                     = 0x0200000,
-      // AVAILABLE                      = 0x0400000,
+      GenerateReadOnlyCode              = 0x0400000,
       // AVAILABLE                      = 0x0800000,
       // AVAILABLE                      = 0x1000000,
       // AVAILABLE                      = 0x2000000,
@@ -1154,7 +1211,6 @@ private:
    TR::list<TR::Snippet*>                   _snippetsToBePatchedOnClassUnload;
    TR::list<TR::Snippet*>                   _methodSnippetsToBePatchedOnClassUnload;
    TR::list<TR::Snippet*>                   _snippetsToBePatchedOnClassRedefinition;
-   TR::list<TR_Pair<TR::Snippet,TR_ResolvedMethod> *> _snippetsToBePatchedOnRegisterNative;
 
    TR::list<TR::ResolvedMethodSymbol*>      _genILSyms;
 
@@ -1258,6 +1314,13 @@ private:
    int32_t _gpuPtxCount;
 
    BitVectorPool _bitVectorPool; //MUST be declared after _trMemory
+
+   typedef TR::typed_allocator<std::pair<TR_OpaqueClassBlock* const, const TR::TypeLayout *>, TR::Region &> LayoutAllocator;
+   typedef std::less<TR_OpaqueClassBlock*> LayoutComparator;
+   typedef std::map<TR_OpaqueClassBlock *, const TR::TypeLayout *, LayoutComparator, LayoutAllocator> TypeLayoutMap;
+   TypeLayoutMap _typeLayoutMap;
+
+   TR::Environment _target;
 
    /*
     * This must be last

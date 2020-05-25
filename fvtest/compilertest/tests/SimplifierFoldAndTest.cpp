@@ -21,7 +21,6 @@
 
 #include <limits.h>
 #include <stdio.h>
-#include "compile/Method.hpp"
 #include "gtest/gtest.h"
 #include "il/Node.hpp"
 #include "ilgen/IlInjector.hpp"
@@ -169,7 +168,7 @@ class SimplifierFoldAndTest : public OptTestDriver
    };
 
 /* A test case.
- * 
+ *
  * Note that this is a test fixture, since the macro starts with `TEST_F`.
  * This means its first parameter must be a class (which inherits from
  * `::testing::Test`, in this case through `OptTestDriver`). It must also

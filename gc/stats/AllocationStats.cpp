@@ -36,10 +36,8 @@ MM_AllocationStats::clear()
 	_tlhMaxAbandonedListSize = 0;
 #endif /* defined (OMR_GC_THREAD_LOCAL_HEAP) */
 
-#if defined(OMR_GC_ARRAYLETS)
 	_arrayletLeafAllocationCount = 0;
 	_arrayletLeafAllocationBytes = 0;
-#endif
 
 	_allocationCount = 0;
 	_allocationBytes = 0;
@@ -69,10 +67,8 @@ MM_AllocationStats::merge(MM_AllocationStats *stats)
 	}
 #endif /* defined (OMR_GC_THREAD_LOCAL_HEAP) */
 
-#if defined(OMR_GC_ARRAYLETS)
 	MM_AtomicOperations::add(&_arrayletLeafAllocationCount, stats->_arrayletLeafAllocationCount);
 	MM_AtomicOperations::add(&_arrayletLeafAllocationBytes, stats->_arrayletLeafAllocationBytes);
-#endif
 
 	MM_AtomicOperations::add(&_allocationCount, stats->_allocationCount);
 	MM_AtomicOperations::add(&_allocationBytes, stats->_allocationBytes);

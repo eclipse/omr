@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,14 +140,14 @@ OMR::ARM64::TreeEvaluator::dloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *
 OMR::ARM64::TreeEvaluator::fstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return commonLoadEvaluator(node, TR::InstOpCode::vstrimms, 4, cg);
+   return commonStoreEvaluator(node, TR::InstOpCode::vstrimms, 4, cg);
    }
 
 // also handles dstorei
 TR::Register *
 OMR::ARM64::TreeEvaluator::dstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return commonLoadEvaluator(node, TR::InstOpCode::vstrimmd, 8, cg);
+   return commonStoreEvaluator(node, TR::InstOpCode::vstrimmd, 8, cg);
    }
 
 TR::Register *
@@ -260,7 +260,7 @@ commonFpUnaryEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, bool isDoubl
    TR::Register *srcReg = cg->evaluate(firstChild);
    TR::Register *trgReg;
 
-   if (node->getReferenceCount() > 1)
+   if (firstChild->getReferenceCount() > 1)
       {
       trgReg = isDouble ? cg->allocateRegister(TR_FPR) : cg->allocateSinglePrecisionRegister();
       }
@@ -415,7 +415,7 @@ OMR::ARM64::TreeEvaluator::d2fEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return intFpTypeConversionHelper(node, TR::InstOpCode::fcvt_dtos, cg);
    }
 
-static TR::Instruction *iffcmpHelper(TR::Node *node, TR::ARM64ConditionCode cc, bool isDouble, TR::CodeGenerator *cg)
+static TR::Instruction *iffcmpHelper(TR::Node *node, TR::ARM64ConditionCode cc, bool isDouble, bool needsExplicitUnorderedCheck, TR::CodeGenerator *cg)
    {
    TR::Node *firstChild = node->getFirstChild();
    TR::Node *secondChild = node->getSecondChild();
@@ -452,11 +452,23 @@ static TR::Instruction *iffcmpHelper(TR::Node *node, TR::ARM64ConditionCode cc, 
       cg->evaluate(thirdChild);
 
       TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(cg, thirdChild, 0);
-      result = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, dstLabel, cc, deps);
+      if (!needsExplicitUnorderedCheck)
+         {
+         result = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, dstLabel, cc, deps);
+         }
+      else
+         {
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, dstLabel, cc);
+         result = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, dstLabel, TR::CC_VS, deps);
+         }
       }
    else
       {
       result = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, dstLabel, cc);
+      if (needsExplicitUnorderedCheck)
+         {
+         result = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, dstLabel, TR::CC_VS);
+         }
       }
 
    firstChild->decReferenceCount();
@@ -471,84 +483,84 @@ static TR::Instruction *iffcmpHelper(TR::Node *node, TR::ARM64ConditionCode cc, 
 TR::Register *
 OMR::ARM64::TreeEvaluator::iffcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_EQ, false, cg);
+   iffcmpHelper(node, TR::CC_EQ, false, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::iffcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_NE, false, cg);
+   iffcmpHelper(node, TR::CC_NE, false, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::iffcmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_LT, false, cg);
+   iffcmpHelper(node, TR::CC_MI, false, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::iffcmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_GE, false, cg);
+   iffcmpHelper(node, TR::CC_GE, false, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::iffcmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_GT, false, cg);
+   iffcmpHelper(node, TR::CC_GT, false, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::iffcmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_LE, false, cg);
+   iffcmpHelper(node, TR::CC_LS, false, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_EQ, true, cg);
+   iffcmpHelper(node, TR::CC_EQ, true, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_NE, true, cg);
+   iffcmpHelper(node, TR::CC_NE, true, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_LT, true, cg);
+   iffcmpHelper(node, TR::CC_MI, true, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_GE, true, cg);
+   iffcmpHelper(node, TR::CC_GE, true, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_GT, true, cg);
+   iffcmpHelper(node, TR::CC_GT, true, false, cg);
    return NULL;
    }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   iffcmpHelper(node, TR::CC_LE, true, cg);
+   iffcmpHelper(node, TR::CC_LS, true, false, cg);
    return NULL;
    }
 
@@ -602,7 +614,7 @@ OMR::ARM64::TreeEvaluator::fcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg
 TR::Register *
 OMR::ARM64::TreeEvaluator::fcmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return fcmpHelper(node, TR::CC_LT, false, cg);
+   return fcmpHelper(node, TR::CC_MI, false, cg);
    }
 
 TR::Register *
@@ -620,7 +632,7 @@ OMR::ARM64::TreeEvaluator::fcmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg
 TR::Register *
 OMR::ARM64::TreeEvaluator::fcmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return fcmpHelper(node, TR::CC_LE, false, cg);
+   return fcmpHelper(node, TR::CC_LS, false, cg);
    }
 
 TR::Register *
@@ -638,7 +650,7 @@ OMR::ARM64::TreeEvaluator::dcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg
 TR::Register *
 OMR::ARM64::TreeEvaluator::dcmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return fcmpHelper(node, TR::CC_LT, true, cg);
+   return fcmpHelper(node, TR::CC_MI, true, cg);
    }
 
 TR::Register *
@@ -656,7 +668,7 @@ OMR::ARM64::TreeEvaluator::dcmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg
 TR::Register *
 OMR::ARM64::TreeEvaluator::dcmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return fcmpHelper(node, TR::CC_LE, true, cg);
+   return fcmpHelper(node, TR::CC_LS, true, cg);
    }
 
 TR::Register *
@@ -719,39 +731,88 @@ OMR::ARM64::TreeEvaluator::su2dEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	}
 
 TR::Register *
+OMR::ARM64::TreeEvaluator::iffcmpequEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   iffcmpHelper(node, TR::CC_EQ, false, true, cg);
+   return NULL;
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::iffcmpneuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   iffcmpHelper(node, TR::CC_NE, false, false, cg);
+   return NULL;
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::iffcmpltuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   iffcmpHelper(node, TR::CC_LT, false, false, cg);
+   return NULL;
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::iffcmpgeuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   iffcmpHelper(node, TR::CC_PL, false, false, cg);
+   return NULL;
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::iffcmpgtuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   iffcmpHelper(node, TR::CC_HI, false, false, cg);
+   return NULL;
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::iffcmpleuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   iffcmpHelper(node, TR::CC_LE, false, false, cg);
+   return NULL;
+   }
+
+TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpequEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::ifdcmpequEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   iffcmpHelper(node, TR::CC_EQ, true, true, cg);
+   return NULL;
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::ifdcmpneuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   iffcmpHelper(node, TR::CC_NE, true, false, cg);
+   return NULL;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpltuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::ifdcmpltuEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   iffcmpHelper(node, TR::CC_LT, true, false, cg);
+   return NULL;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpgeuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::ifdcmpgeuEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   iffcmpHelper(node, TR::CC_PL, true, false, cg);
+   return NULL;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpgtuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::ifdcmpgtuEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   iffcmpHelper(node, TR::CC_HI, true, false, cg);
+   return NULL;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::ifdcmpleuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::ifdcmpleuEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   iffcmpHelper(node, TR::CC_LE, true, false, cg);
+   return NULL;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::dcmpequEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -794,3 +855,38 @@ OMR::ARM64::TreeEvaluator::dcmpgEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	// TODO:ARM64: Enable TR::TreeEvaluator::dcmpgEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
 	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
 	}
+
+// also handles dselect
+TR::Register *
+OMR::ARM64::TreeEvaluator::fselectEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *condNode = node->getChild(0);
+   TR::Node *trueNode = node->getChild(1);
+   TR::Node *falseNode = node->getChild(2);
+
+   TR::Register *condReg = cg->evaluate(condNode);
+   TR::Register *trueReg = cg->evaluate(trueNode);
+   TR::Register *falseReg = cg->evaluate(falseNode);
+   TR::Register *resultReg = trueReg;
+
+   bool isDouble = trueNode->getDataType().isDouble();
+   TR::InstOpCode::Mnemonic movOp = isDouble ? TR::InstOpCode::fmovd : TR::InstOpCode::fmovs;
+
+   if (!cg->canClobberNodesRegister(trueNode))
+      {
+      resultReg = isDouble ? cg->allocateRegister(TR_FPR) : cg->allocateSinglePrecisionRegister();
+      generateTrg1Src1Instruction(cg, movOp, node, resultReg, trueReg);
+      }
+
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, condReg, doneLabel);
+   generateTrg1Src1Instruction(cg, movOp, node, resultReg, falseReg);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+
+   node->setRegister(resultReg);
+   cg->decReferenceCount(condNode);
+   cg->decReferenceCount(trueNode);
+   cg->decReferenceCount(falseNode);
+
+   return resultReg;
+   }

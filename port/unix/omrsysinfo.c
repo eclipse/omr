@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,9 @@
 #endif
 
 #if defined(LINUX) && !defined(OMRZTPF)
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #elif defined(OSX)
 #define _XOPEN_SOURCE
 #include <libproc.h>
@@ -41,10 +43,12 @@
 #include <mach-o/dyld.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
+
+#if defined(OSX) || defined(OMR_OS_BSD)
 #include <sys/types.h>
 #include <sys/sysctl.h>
-
-#endif /* defined(LINUX) && !defined(OMRZTPF) */
+#endif /* defined(OSX) || defined(OMR_OS_BSD) */
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -58,33 +62,40 @@
 #include <pwd.h>
 #include <grp.h>
 #include <sys/types.h>
+#include "omrport.h"
 #if defined(J9OS_I5)
 #include "Xj9I5OSInterface.H"
 #endif
+#if !defined(J9ZOS390)
 #include <sys/param.h>
+#endif /* !defined(J9ZOS390) */
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <nl_types.h>
 #include <langinfo.h>
-#if !defined(USER_HZ) && !defined(OMRZTPF)
-#define USER_HZ HZ
-#endif /* !defined(USER_HZ) && !defined(OMRZTPF) */
+
 
 #if defined(J9ZOS390)
 #include "omrsimap.h"
-#include "omrsysinfo_helpers.h"
 #endif /* defined(J9ZOS390) */
 
-#if defined(LINUXPPC)
+#if defined(LINUXPPC) || (defined(S390) && defined(LINUX) && !defined(J9ZTPF))
 #include "auxv.h"
 #include <strings.h>
-#endif /* defined(LINUXPPC) */
+#endif /* defined(LINUXPPC) || (defined(S390) && defined(LINUX) && !defined(J9ZTPF)) */
+
+#if (defined(S390))
+#include "omrportpriv.h"
+#include "omrportpg.h"
+#endif /* defined(S390) */
 
 #if defined(AIXPPC)
 #include <fcntl.h>
 #include <sys/procfs.h>
 #include <sys/systemcfg.h>
 #endif /* defined(AIXPPC) */
+
+#include "omrsysinfo_helpers.h"
 
 /* Start copy from omrfiletext.c */
 /* __STDC_ISO_10646__ indicates that the platform wchar_t encoding is Unicode */
@@ -96,7 +107,7 @@
 #endif /* defined(__STDC_ISO_10646__) || defined(LINUX) || defined(OSX) */
 
 /* a2e overrides nl_langinfo to return ASCII strings. We need the native EBCDIC string */
-#if defined(J9ZOS390) && defined (nl_langinfo)
+#if defined(J9ZOS390) && defined(nl_langinfo)
 #undef nl_langinfo
 #endif
 
@@ -124,7 +135,7 @@
 #include <sys/sysconfig.h>
 #include <assert.h>
 
-#if defined( OMR_ENV_DATA64 )
+#if defined(OMR_ENV_DATA64)
 #define LIBC_NAME "/usr/lib/libc.a(shr_64.o)"
 #else
 #define LIBC_NAME "/usr/lib/libc.a(shr.o)"
@@ -174,9 +185,9 @@ uintptr_t Get_Number_Of_CPUs();
 
 #endif
 
-#define JIFFIES			100
-#define USECS_PER_SEC	1000000
-#define TICKS_TO_USEC	((uint64_t)(USECS_PER_SEC/JIFFIES))
+#define JIFFIES         100
+#define USECS_PER_SEC   1000000
+#define TICKS_TO_USEC   ((uint64_t)(USECS_PER_SEC/JIFFIES))
 
 /* For the omrsysinfo_env_iterator */
 extern char **environ;
@@ -186,7 +197,67 @@ static uintptr_t copyEnvToBufferSignalHandler(struct OMRPortLibrary *portLib, ui
 
 static void setPortableError(OMRPortLibrary *portLibrary, const char *funcName, int32_t portlibErrno, int systemErrno);
 
-static const char *getgroupsErrorMsgPrefix = "getgroups : ";
+#if (defined(LINUXPPC) || defined(AIXPPC))
+static OMRProcessorArchitecture omrsysinfo_map_ppc_processor(const char *processorName);
+#endif /* (defined(LINUXPPC) || defined(AIXPPC)) */
+
+#if (defined(AIXPPC) || defined(S390) || defined(J9ZOS390))
+static void omrsysinfo_set_feature(OMRProcessorDesc *desc, uint32_t feature);
+#endif /* defined(AIXPPC) || defined(S390) || defined(J9ZOS390) */
+
+#if defined(LINUXPPC)
+static intptr_t omrsysinfo_get_linux_ppc_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc);
+
+#if !defined(AT_HWCAP2)
+#define AT_HWCAP2 26 /* needed until glibc 2.17 */
+#endif /* !defined(AT_HWCAP2) */
+
+#endif /* defined(LINUXPPC) */
+
+#if defined(AIXPPC)
+static intptr_t omrsysinfo_get_aix_ppc_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc);
+#endif /* defined(AIXPPC) */
+
+#if !defined(__power_8)
+#define POWER_8 0x10000 /* Power 8 class CPU */
+#define __power_8() (_system_configuration.implementation == POWER_8)
+#if !defined(J9OS_I5_V6R1)
+#define PPI8_1 0x4B
+#define PPI8_2 0x4D
+#define __phy_proc_imp_8() (_system_configuration.phys_implementation == PPI8_1 || _system_configuration.phys_implementation == PPI8_2)
+#endif /* !defined(J9OS_I5_V6R1) */
+#endif /* !defined(__power_8) */
+
+#if !defined(__power_9)
+#define POWER_9 0x20000 /* Power 9 class CPU */
+#define __power_9() (_system_configuration.implementation == POWER_9)
+#endif /* !defined(__power_9) */
+
+#if defined(J9OS_I5_V6R1) /* vmx_version id only available since TL4 */
+#define __power_vsx() (_system_configuration.vmx_version > 1)
+#endif
+
+#if !defined(J9OS_I5_V7R2) && !defined(J9OS_I5_V6R1)
+/* both i 7.1 and i 7.2 do not support this function */
+#if !defined(SC_TM_VER)
+#define SC_TM_VER 59
+#endif  /* !defined(SC_TM_VER) */
+
+#if !defined(__power_tm)
+#define __power_tm() ((long)getsystemcfg(SC_TM_VER) > 0) /* taken from AIX 7.1 sys/systemcfg.h */
+#endif  /* !defined(__power_tm) */
+#endif /* !defined(J9OS_I5_V7R2) && !defined(J9OS_I5_V6R1) */
+
+#if (defined(S390) || defined(J9ZOS390) || defined(J9ZTPF))
+static BOOLEAN omrsysinfo_test_stfle(struct OMRPortLibrary *portLibrary, uint64_t stfleBit);
+static intptr_t omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc);
+#endif /* defined(S390) || defined(J9ZOS390) || defined(J9ZTPF) */
+
+#if defined(RISCV)
+static intptr_t omrsysinfo_get_riscv_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc);
+#endif
+
+static const char getgroupsErrorMsgPrefix[] = "getgroups : ";
 
 typedef struct EnvListItem {
 	struct EnvListItem *next;
@@ -200,60 +271,60 @@ typedef struct CopyEnvToBufferArgs {
 } CopyEnvToBufferArgs;
 
 /* For the omrsysinfo_limit_iterator */
-struct  {
+struct {
 	int resource;
 	char *resourceName;
 } limitMap[] = {
-#if defined RLIMIT_AS
+#if defined(RLIMIT_AS)
 	{RLIMIT_AS, "RLIMIT_AS"},
 #endif
-#if defined RLIMIT_CORE
+#if defined(RLIMIT_CORE)
 	{RLIMIT_CORE, "RLIMIT_CORE"},
 #endif
-#if defined RLIMIT_CPU
+#if defined(RLIMIT_CPU)
 	{RLIMIT_CPU, "RLIMIT_CPU"},
 #endif
-#if defined RLIMIT_DATA
+#if defined(RLIMIT_DATA)
 	{RLIMIT_DATA, "RLIMIT_DATA"},
 #endif
-#if defined RLIMIT_FSIZE
+#if defined(RLIMIT_FSIZE)
 	{RLIMIT_FSIZE, "RLIMIT_FSIZE"},
 #endif
-#if defined RLIMIT_LOCKS
+#if defined(RLIMIT_LOCKS)
 	{RLIMIT_LOCKS, "RLIMIT_LOCKS"},
 #endif
-#if defined RLIMIT_MEMLOCK
+#if defined(RLIMIT_MEMLOCK)
 	{RLIMIT_MEMLOCK, "RLIMIT_MEMLOCK"},
 #endif
-#if defined RLIMIT_NOFILE
+#if defined(RLIMIT_NOFILE)
 	{RLIMIT_NOFILE, "RLIMIT_NOFILE"},
 #endif
-#if defined RLIMIT_THREADS
+#if defined(RLIMIT_THREADS)
 	{RLIMIT_THREADS, "RLIMIT_THREADS"},
 #endif
-#if defined RLIMIT_NPROC
+#if defined(RLIMIT_NPROC)
 	{RLIMIT_NPROC, "RLIMIT_NPROC"},
 #endif
-#if defined RLIMIT_RSS
+#if defined(RLIMIT_RSS)
 	{RLIMIT_RSS, "RLIMIT_RSS"},
 #endif
-#if defined RLIMIT_STACK
+#if defined(RLIMIT_STACK)
 	{RLIMIT_STACK, "RLIMIT_STACK"},
 #endif
-#if defined RLIMIT_MSGQUEUE
+#if defined(RLIMIT_MSGQUEUE)
 	{RLIMIT_MSGQUEUE, "RLIMIT_MSGQUEUE"}, /* since Linux 2.6.8 */
 #endif
-#if defined RLIMIT_NICE
+#if defined(RLIMIT_NICE)
 	{RLIMIT_NICE, "RLIMIT_NICE"}, /* since Linux 2.6.12*/
 #endif
-#if defined RLIMIT_RTPRIO
+#if defined(RLIMIT_RTPRIO)
 	{RLIMIT_RTPRIO, "RLIMIT_RTPRIO"}, /* since Linux 2.6.12 */
 #endif
-#if defined RLIMIT_SIGPENDING
-	{RLIMIT_SIGPENDING, "RLIMIT_SIGPENDING"} /* since linux 2.6.8 */
+#if defined(RLIMIT_SIGPENDING)
+	{RLIMIT_SIGPENDING, "RLIMIT_SIGPENDING"}, /* since linux 2.6.8 */
 #endif
-#if defined RLIMIT_MEMLIMIT
-	{RLIMIT_MEMLIMIT, "RLIMIT_MEMLIMIT"} /* likely z/OS only */
+#if defined(RLIMIT_MEMLIMIT)
+	{RLIMIT_MEMLIMIT, "RLIMIT_MEMLIMIT"}, /* likely z/OS only */
 #endif
 };
 
@@ -267,10 +338,10 @@ struct  {
 #define CGROUP_METRIC_FILE_CONTENT_MAX_LIMIT 1024
 
 /* An entry in /proc/<pid>/cgroup is of following form:
- * 	<hierarchy ID>:<subsystem>[,<subsystem>]*:<cgroup name>
+ *  <hierarchy ID>:<subsystem>[,<subsystem>]*:<cgroup name>
  *
  * An example:
- * 	7:cpuacct,cpu:/mycgroup
+ *  7:cpuacct,cpu:/mycgroup
  */
 #define PROC_PID_CGROUP_ENTRY_FORMAT "%d:%[^:]:%s"
 #define PROC_PID_CGROUP_SYSTEMD_ENTRY_FORMAT "%d::%s"
@@ -280,36 +351,36 @@ struct  {
 /* Currently 12 subsystems or resource controllers are defined.
  */
 typedef enum OMRCgroupSubsystem {
-		INVALID_SUBSYSTEM = -1,
-		BLKIO,
-		CPU,
-		CPUACCT,
-		CPUSET,
-		DEVICES,
-		FREEZER,
-		HUGETLB,
-		MEMORY,
-		NET_CLS,
-		NET_PRIO,
-		PERF_EVENT,
-		PIDS,
-		NUM_SUBSYSTEMS
+	INVALID_SUBSYSTEM = -1,
+	BLKIO,
+	CPU,
+	CPUACCT,
+	CPUSET,
+	DEVICES,
+	FREEZER,
+	HUGETLB,
+	MEMORY,
+	NET_CLS,
+	NET_PRIO,
+	PERF_EVENT,
+	PIDS,
+	NUM_SUBSYSTEMS
 } OMRCgroupSubsystem;
 
-const char *subsystemNames[NUM_SUBSYSTEMS] = {
-						"blkio",
-						"cpu",
-						"cpuacct",
-						"cpuset",
-						"devices",
-						"freezer",
-						"hugetlb",
-						"memory",
-						"net_cls",
-						"net_prio",
-						"perf_event",
-						"pids",
-					};
+const char * const subsystemNames[NUM_SUBSYSTEMS] = {
+	"blkio",
+	"cpu",
+	"cpuacct",
+	"cpuset",
+	"devices",
+	"freezer",
+	"hugetlb",
+	"memory",
+	"net_cls",
+	"net_prio",
+	"perf_event",
+	"pids",
+};
 
 struct {
 	const char *name;
@@ -376,6 +447,8 @@ static omrthread_monitor_t cgroupEntryListMonitor;
 
 static intptr_t cwdname(struct OMRPortLibrary *portLibrary, char **result);
 static uint32_t getLimitSharedMemory(struct OMRPortLibrary *portLibrary, uint64_t *limit);
+static uint32_t getLimitFileDescriptors(struct OMRPortLibrary *portLibrary, uint64_t *result, BOOLEAN hardLimitRequested);
+static uint32_t setLimitFileDescriptors(struct OMRPortLibrary *portLibrary, uint64_t limit, BOOLEAN hardLimitRequested);
 #if defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390)
 static intptr_t readSymbolicLink(struct OMRPortLibrary *portLibrary, char *linkFilename, char **result);
 #endif /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) */
@@ -423,8 +496,6 @@ static int32_t retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, stru
 static int32_t retrieveOSXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
 #elif defined(AIXPPC)
 static int32_t retrieveAIXMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
-#elif defined(J9ZOS390)
-static int32_t retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo);
 #endif
 
 /**
@@ -433,7 +504,7 @@ static int32_t retrieveZOSMemoryStats(struct OMRPortLibrary *portLibrary, struct
  *
  * @param[in] errorCode The error code reported by the OS
  *
- * @return	the (negative) portable error code
+ * @return  the (negative) portable error code
  */
 static int32_t
 findError(int32_t errorCode)
@@ -527,17 +598,858 @@ omrsysinfo_get_CPU_architecture(struct OMRPortLibrary *portLibrary)
 	return OMRPORT_ARCH_ARM;
 #elif defined(J9AARCH64)
 	return OMRPORT_ARCH_AARCH64;
+#elif defined(RISCV)
+	return OMRPORT_ARCH_RISCV;
 #else
 	return "unknown";
 #endif
 }
 
+intptr_t
+omrsysinfo_get_processor_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
+{
+	intptr_t rc = -1;
+	Trc_PRT_sysinfo_get_processor_description_Entered(desc);
+
+	if (NULL != desc) {
+		memset(desc, 0, sizeof(OMRProcessorDesc));
+
+#if (defined(J9X86) || defined(J9HAMMER))
+		rc = omrsysinfo_get_x86_description(portLibrary, desc);
+#elif defined(LINUXPPC)
+		rc = omrsysinfo_get_linux_ppc_description(portLibrary, desc);
+#elif defined(AIXPPC)
+		rc = omrsysinfo_get_aix_ppc_description(portLibrary, desc);
+#elif (defined(S390) || defined(J9ZOS390))
+		rc = omrsysinfo_get_s390_description(portLibrary, desc);
+#elif defined(RISCV)
+		rc = omrsysinfo_get_riscv_description(portLibrary, desc);
+#endif
+	}
+
+	Trc_PRT_sysinfo_get_processor_description_Exit(rc);
+	return rc;
+}
+
+BOOLEAN
+omrsysinfo_processor_has_feature(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc, uint32_t feature)
+{
+	BOOLEAN rc = FALSE;
+	Trc_PRT_sysinfo_processor_has_feature_Entered(desc, feature);
+
+#if defined(J9OS_I5)
+#if defined(J9OS_I5_V5R4)
+	if ((OMR_FEATURE_PPC_HAS_VSX == feature) || (OMR_FEATURE_PPC_HAS_ALTIVEC == feature) || (OMR_FEATURE_PPC_HTM == feature)) {
+		Trc_PRT_sysinfo_processor_has_feature_Exit((UDATA)rc);
+		return rc;
+	}
+#elif defined(J9OS_I5_V6R1) || defined(J9OS_I5_V7R2)
+	if (OMR_FEATURE_PPC_HTM == feature) {
+		Trc_PRT_sysinfo_processor_has_feature_Exit((UDATA)rc);
+		return rc;
+	}
+#endif
+#endif
+
+	if ((NULL != desc) && (feature < (OMRPORT_SYSINFO_FEATURES_SIZE * 32))) {
+		uint32_t featureIndex = feature / 32;
+		uint32_t featureShift = feature % 32;
+
+		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1u << featureShift);
+	}
+
+	Trc_PRT_sysinfo_processor_has_feature_Exit((uintptr_t)rc);
+	return rc;
+}
+
+intptr_t
+omrsysinfo_processor_set_feature(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc, uint32_t feature, BOOLEAN enable)
+{
+	intptr_t rc = -1;
+	Trc_PRT_sysinfo_processor_set_feature_Entered(desc, feature, enable);
+
+	if ((NULL != desc) && (feature < (OMRPORT_SYSINFO_FEATURES_SIZE * 32))) {
+		uint32_t featureIndex = feature / 32;
+		uint32_t featureShift = feature % 32;
+
+		if (enable) {
+			desc->features[featureIndex] |= (1u << featureShift);
+		}
+		else {
+			desc->features[featureIndex] &= ~(1u << featureShift);
+		}
+		rc = 0;
+	}
+
+	Trc_PRT_sysinfo_processor_set_feature_Exit(rc);
+	return rc;
+}
+
+#if (defined(AIXPPC) || defined(S390) || defined(J9ZOS390))
+/**
+ * @internal
+ * Helper to set appropriate feature field in a OMRProcessorDesc struct.
+ *
+ * @param[in] desc pointer to the struct that contains the CPU type and features.
+ * @param[in] feature to set
+ *
+ */
+static void
+omrsysinfo_set_feature(OMRProcessorDesc *desc, uint32_t feature)
+{
+	if ((NULL != desc) && (feature < (OMRPORT_SYSINFO_FEATURES_SIZE * 32))) {
+		uint32_t featureIndex = feature / 32;
+		uint32_t featureShift = feature % 32;
+
+		desc->features[featureIndex] = (desc->features[featureIndex] | (1u << (featureShift)));
+	}
+}
+#endif /* defined(AIXPPC) || defined(S390) || defined(J9ZOS390) */
+
+#if defined(LINUXPPC)
+/**
+ * @internal
+ * Populates OMRProcessorDesc *desc on Linux PPC
+ *
+ * @param[in] desc pointer to the struct that will contain the CPU type and features.
+ *
+ * @return 0 on success, -1 on failure
+ */
+static intptr_t
+omrsysinfo_get_linux_ppc_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
+{
+	char* platform = NULL;
+	char* base_platform = NULL;
+
+	/* initialize auxv prior to querying the auxv */
+	if (prefetch_auxv() != 0) {
+		goto _error;
+	}
+
+	/* Linux PPC processor */
+	platform = (char *) query_auxv(AT_PLATFORM);
+	if ((NULL == platform) || (((char *) -1) == platform)) {
+		goto _error;
+	}
+	desc->processor = omrsysinfo_map_ppc_processor(platform);
+
+	/* Linux PPC physical processor */
+	base_platform = (char *) query_auxv(AT_BASE_PLATFORM);
+	if ((NULL == base_platform) || (((char *) -1) == base_platform)) {
+		/* AT_PLATFORM is known from call above.  Default BASE to unknown */
+		desc->physicalProcessor = OMR_PROCESSOR_PPC_UNKNOWN;
+	} else {
+		desc->physicalProcessor = omrsysinfo_map_ppc_processor(base_platform);
+	}
+
+	/* Linux PPC features:
+	 * Can't error check these calls as both 0 & -1 are valid
+	 * bit fields that could be returned by this query.
+	 */
+	desc->features[0] = query_auxv(AT_HWCAP);
+	desc->features[1] = query_auxv(AT_HWCAP2);
+
+	return 0;
+
+_error:
+	desc->processor = OMR_PROCESSOR_PPC_UNKNOWN;
+	desc->physicalProcessor = OMR_PROCESSOR_PPC_UNKNOWN;
+	desc->features[0] = 0;
+	desc->features[1] = 0;
+	return -1;
+
+}
+
+/**
+ * @internal
+ * Maps a PPC processor string to the OMRProcessorArchitecture enum.
+ *
+ * @param[in] processorName
+ *
+ * @return An OMRProcessorArchitecture OMR_PROCESSOR_PPC_* found otherwise OMR_PROCESSOR_PPC_UNKNOWN.
+ */
+static OMRProcessorArchitecture
+omrsysinfo_map_ppc_processor(const char *processorName)
+{
+	OMRProcessorArchitecture rc = OMR_PROCESSOR_PPC_UNKNOWN;
+
+	if (0 == strncasecmp(processorName, "ppc403", 6)) {
+		rc = OMR_PROCESSOR_PPC_PWR403;
+	} else if (0 == strncasecmp(processorName, "ppc405", 6)) {
+		rc = OMR_PROCESSOR_PPC_PWR405;
+	} else if (0 == strncasecmp(processorName, "ppc440gp", 8)) {
+		rc = OMR_PROCESSOR_PPC_PWR440;
+	} else if (0 == strncasecmp(processorName, "ppc601", 6)) {
+		rc = OMR_PROCESSOR_PPC_PWR601;
+	} else if (0 == strncasecmp(processorName, "ppc603", 6)) {
+		rc = OMR_PROCESSOR_PPC_PWR603;
+	} else if (0 == strncasecmp(processorName, "ppc604", 6)) {
+		rc = OMR_PROCESSOR_PPC_PWR604;
+	} else if (0 == strncasecmp(processorName, "ppc7400", 7)) {
+		rc = OMR_PROCESSOR_PPC_PWR603;
+	} else if (0 == strncasecmp(processorName, "ppc750", 6)) {
+		rc = OMR_PROCESSOR_PPC_7XX;
+	} else if (0 == strncasecmp(processorName, "rs64", 4)) {
+		rc = OMR_PROCESSOR_PPC_PULSAR;
+	} else if (0 == strncasecmp(processorName, "ppc970", 6)) {
+		rc = OMR_PROCESSOR_PPC_GP;
+	} else if (0 == strncasecmp(processorName, "power3", 6)) {
+		rc = OMR_PROCESSOR_PPC_PWR630;
+	} else if (0 == strncasecmp(processorName, "power4", 6)) {
+		rc = OMR_PROCESSOR_PPC_GP;
+	} else if (0 == strncasecmp(processorName, "power5", 6)) {
+		rc = OMR_PROCESSOR_PPC_GR;
+	} else if (0 == strncasecmp(processorName, "power6", 6)) {
+		rc = OMR_PROCESSOR_PPC_P6;
+	} else if (0 == strncasecmp(processorName, "power7", 6)) {
+		rc = OMR_PROCESSOR_PPC_P7;
+	} else if (0 == strncasecmp(processorName, "power8", 6)) {
+		rc = OMR_PROCESSOR_PPC_P8;
+	} else if (0 == strncasecmp(processorName, "power9", 6)) {
+		rc = OMR_PROCESSOR_PPC_P9;
+	}
+
+	return rc;
+}
+#endif /* defined(LINUXPPC) */
+
+#if defined(AIXPPC)
+/**
+ * @internal
+ * Populates OMRProcessorDesc *desc on AIX
+ *
+ * @param[in] desc pointer to the struct that will contain the CPU type and features.
+ *
+ * @return 0 on success, -1 on failure
+ */
+static intptr_t
+omrsysinfo_get_aix_ppc_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
+{
+	/* AIX processor */
+	if (__power_rs1() || __power_rsc()) {
+		desc->processor = OMR_PROCESSOR_PPC_RIOS1;
+	} else if (__power_rs2()) {
+		desc->processor = OMR_PROCESSOR_PPC_RIOS2;
+	} else if (__power_601()) {
+		desc->processor = OMR_PROCESSOR_PPC_PWR601;
+	} else if (__power_603()) {
+		desc->processor = OMR_PROCESSOR_PPC_PWR603;
+	} else if (__power_604()) {
+		desc->processor = OMR_PROCESSOR_PPC_PWR604;
+	} else if (__power_620()) {
+		desc->processor = OMR_PROCESSOR_PPC_PWR620;
+	} else if (__power_630()) {
+		desc->processor = OMR_PROCESSOR_PPC_PWR630;
+	} else if (__power_A35()) {
+		desc->processor = OMR_PROCESSOR_PPC_NSTAR;
+	} else if (__power_RS64II()) {
+		desc->processor = OMR_PROCESSOR_PPC_NSTAR;
+	} else if (__power_RS64III()) {
+		desc->processor = OMR_PROCESSOR_PPC_PULSAR;
+	} else if (__power_4()) {
+		desc->processor = OMR_PROCESSOR_PPC_GP;
+	} else if (__power_5()) {
+		desc->processor = OMR_PROCESSOR_PPC_GR;
+	} else if (__power_6()) {
+		desc->processor = OMR_PROCESSOR_PPC_P6;
+	} else if (__power_7()) {
+		desc->processor = OMR_PROCESSOR_PPC_P7;
+	} else if (__power_8()) {
+		desc->processor = OMR_PROCESSOR_PPC_P8;
+	} else if (__power_9()) {
+		desc->processor = OMR_PROCESSOR_PPC_P9;
+	} else {
+		desc->processor = OMR_PROCESSOR_PPC_UNKNOWN;
+	}
+#if !defined(J9OS_I5_V6R1)
+	/* AIX physical processor */
+	if (__phy_proc_imp_4()) {
+		desc->physicalProcessor = OMR_PROCESSOR_PPC_GP;
+	} else if (__phy_proc_imp_5()) {
+		desc->physicalProcessor = OMR_PROCESSOR_PPC_GR;
+	} else if (__phy_proc_imp_6()) {
+		desc->physicalProcessor = OMR_PROCESSOR_PPC_P6;
+	} else if (__phy_proc_imp_7()) {
+		desc->physicalProcessor = OMR_PROCESSOR_PPC_P7;
+	} else if (__phy_proc_imp_8()) {
+		desc->physicalProcessor = OMR_PROCESSOR_PPC_P8;
+	} else {
+		desc->physicalProcessor = desc->processor;
+	}
+#else
+		desc->physicalProcessor = desc->processor;
+#endif /* !defined(J9OS_I5_V6R1) */
+	/* AIX Features */
+	if (__power_64()) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_PPC_64);
+	}
+	if (__power_vmx()) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_PPC_HAS_ALTIVEC);
+	}
+	if (__power_dfp()) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_PPC_HAS_DFP);
+	}
+	if (__power_vsx()) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_PPC_HAS_VSX);
+	}
+#if !defined(J9OS_I5_V6R1)
+	if (__phy_proc_imp_6()) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_PPC_ARCH_2_05);
+	}
+	if (__phy_proc_imp_4()) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_PPC_POWER4);
+	}
+#endif /* !defined(J9OS_I5_V6R1) */
+#if !defined(J9OS_I5_V7R2) && !defined(J9OS_I5_V6R1)
+	if (__power_tm()) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_PPC_HTM);
+	}
+#endif /* !defined(J9OS_I5_V7R2) && !defined(J9OS_I5_V6R1) */
+
+	return 0;
+}
+
+#endif /* defined(AIXPPC) */
+
+#if (defined(S390) || defined(J9ZOS390))
+
+#define LAST_DOUBLE_WORD	2
+
+/**
+ * @internal
+ * Check if a specific bit is set from STFLE instruction on z/OS and zLinux.
+ * STORE FACILITY LIST EXTENDED stores a variable number of doublewords containing facility bits.
+ *  see z/Architecture Principles of Operation 4-69
+ *
+ * @param[in] stfleBit bit to check
+ *
+ * @return TRUE if bit is 1, FALSE otherwise.
+ */
+static BOOLEAN
+omrsysinfo_test_stfle(struct OMRPortLibrary *portLibrary, uint64_t stfleBit)
+{
+	BOOLEAN rc = FALSE;
+
+	OMRSTFLEFacilities *mem = &(PPG_stfleCache.facilities);
+	uintptr_t *stfleRead = &(PPG_stfleCache.lastDoubleWord);
+
+	/* If it is the first time, read stfle and cache it */
+	if (0 == *stfleRead) {
+		*stfleRead = getstfle(LAST_DOUBLE_WORD, (uint64_t*)mem);
+	}
+
+	if (stfleBit < 64 && *stfleRead >= 0) {
+		rc = (0 != (mem->dw1 & (((uint64_t)1) << (63 - stfleBit))));
+	} else if (stfleBit < 128 && *stfleRead >= 1) {
+		rc = (0 != (mem->dw2 & (((uint64_t)1) << (127 - stfleBit))));
+	} else if (stfleBit < 192 && *stfleRead >= 2) {
+		rc = (0 != (mem->dw3 & (((uint64_t)1) << (191 - stfleBit))));
+	}
+
+	return rc;
+}
+
+#ifdef J9ZOS390
+#ifdef _LP64
+typedef struct pcb_t
+{
+	char pcbeye[8];					/* pcbeye = "CEEPCB" */
+	char dummy[336];				/* Ignore the rest to get to flag6 field */
+	unsigned char ceepcb_flags6;
+} pcb_t;
+typedef struct ceecaa_t
+{
+	char dummy[912];				/* pcb is at offset 912 in 64bit */
+	pcb_t *pcb_addr;
+} ceecaa_t;
+#else
+typedef struct pcb_t
+{
+	char pcbeye[8];					/* pcbeye = "CEEPCB" */
+	char dummy[76];					/* Ignore the rest to get to flag6 field */
+	unsigned char ceepcb_flags6;
+} pcb_t;
+typedef struct ceecaa_t
+{
+	char dummy[756];				/* pcb is at offset 756 in 32bit */
+	pcb_t *pcb_addr;
+} ceecaa_t;
+#endif /* ifdef _LP64 */
+
+/** @internal
+ *  Check if z/OS supports the Vector Extension Facility (SIMD) by checking whether both the OS and LE support vector
+ *  registers. We use the CVTVEF (0x80) bit in the CVT structure for the OS check and bit 0x08 of CEEPCB_FLAG6 field in
+ *  the PCB for the LE check.
+ *
+ *  @return TRUE if VEF is supported; FALSE otherwise.
+ */
+static BOOLEAN
+omrsysinfo_get_s390_zos_supports_vector_extension_facility(void)
+{
+	/* FLCCVT is an ADDRESS off the PSA structure
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead300/PSA-map.htm */
+	uint8_t* CVT = (uint8_t*)(*(uint32_t*)0x10);
+
+	/* CVTFLAG5 is a BITSTRING off the CVT structure containing the CVTVEF (0x80) bit
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead100/CVT-map.htm */
+	uint8_t CVTFLAG5 = *(CVT + 0x0F4);
+
+	ceecaa_t* CAA = (ceecaa_t *)_gtca();
+
+	if (OMR_ARE_ALL_BITS_SET(CVTFLAG5, 0x80)) {
+		if (NULL != CAA) {
+			return OMR_ARE_ALL_BITS_SET(CAA->pcb_addr->ceepcb_flags6, 0x08);
+		}
+	}
+
+	return FALSE;
+}
+
+/** @internal
+ *  Check if z/OS supports the Transactional Execution Facility (TX). We use the CVTTX (0x08) and CVTTXC (0x04) bits in
+ *  the CVT structure for the OS check.
+ *
+ *  @return TRUE if TX is supported; FALSE otherwise.
+ */
+static BOOLEAN
+omrsysinfo_get_s390_zos_supports_transactional_execution_facility(void)
+{
+	/* FLCCVT is an ADDRESS off the PSA structure
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead300/PSA-map.htm */
+	uint8_t* CVT = (uint8_t*)(*(uint32_t*)0x10);
+
+	/* CVTFLAG4 is a BITSTRING off the CVT structure containing the CVTTX (0x08), CVTTXC (0x04), and CVTRI (0x02) bits
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead100/CVT-map.htm */
+	uint8_t CVTFLAG4 = *(CVT + 0x17B);
+
+	/* Note we check for both constrained and non-constrained transaction support */
+	return OMR_ARE_ALL_BITS_SET(CVTFLAG4, 0x0C);
+}
+
+/** @internal
+ *  Check if z/OS supports the Runtime Instrumentation Facility (RI). We use the CVTRI (0x02) bit in the CVT structure
+ *  for the OS check.
+ *
+ *  @return TRUE if RI is supported; FALSE otherwise.
+ */
+static BOOLEAN
+omrsysinfo_get_s390_zos_supports_runtime_instrumentation_facility(void)
+{
+	/* FLCCVT is an ADDRESS off the PSA structure
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead300/PSA-map.htm */
+	uint8_t* CVT = (uint8_t*)(*(uint32_t*)0x10);
+
+	/* CVTFLAG4 is a BITSTRING off the CVT structure containing the CVTTX (0x08), CVTTXC (0x04), and CVTRI (0x02) bits
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead100/CVT-map.htm */
+	uint8_t CVTFLAG4 = *(CVT + 0x17B);
+
+	return OMR_ARE_ALL_BITS_SET(CVTFLAG4, 0x02);
+}
+
+/** @internal
+ *  Check if z/OS supports the Guarded Storage Facility (GS). We use the CVTGSF (0x01) bit in the CVT structure
+ *  for the OS check.
+ *
+ *  @return TRUE if GS is supported; FALSE otherwise.
+ */
+static BOOLEAN
+omrsysinfo_get_s390_zos_supports_guarded_storage_facility(void)
+{
+	/* FLCCVT is an ADDRESS off the PSA structure
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead300/PSA-map.htm */
+	uint8_t* CVT = (uint8_t*)(*(uint32_t*)0x10);
+
+	/* CVTFLAG3 is a BITSTRING off the CVT structure containing the CVTGSF (0x01) bit
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead100/CVT-map.htm */
+	uint8_t CVTFLAG3 = *(CVT + 0x17A);
+
+	return OMR_ARE_ALL_BITS_SET(CVTFLAG3, 0x01);
+}
+#endif /* ifdef J9ZOS390 */
+
+/**
+ * @internal
+ * Populates OMRProcessorDesc *desc on z/OS and zLinux
+ *
+ * @param[in] desc pointer to the struct that will contain the CPU type and features.
+ *
+ * @return 0 on success, -1 on failure
+ */
+static intptr_t
+omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
+{
+/* Check hardware and OS (z/OS only) support for GS (guarded storage), RI (runtime instrumentation) and TE (transactional memory) */
+#if defined(J9ZOS390)
+#define S390_STFLE_BIT (0x80000000 >> 7)
+	/* s390 feature detection requires the store-facility-list-extended (STFLE) instruction which was introduced in z9
+	 * Location 200 is architected such that bit 7 is ON if STFLE instruction is installed */
+	if (OMR_ARE_NO_BITS_SET(*(int*) 200, S390_STFLE_BIT)) {
+		return -1;
+	}
+#elif defined(J9ZTPF)  /* defined(J9ZOS390) */
+	/*
+	 * z/TPF requires OS support for some of the Hardware Capabilities.
+	 * Setting the auxvFeatures capabilities flag directly to mimic the query_auxv call in Linux.
+	 */
+	unsigned long auxvFeatures = OMR_HWCAP_S390_HIGH_GPRS|OMR_FEATURE_S390_ESAN3|OMR_HWCAP_S390_ZARCH|
+			OMR_HWCAP_S390_STFLE|OMR_HWCAP_S390_MSA|OMR_HWCAP_S390_DFP|
+			OMR_HWCAP_S390_LDISP|OMR_HWCAP_S390_EIMM|OMR_HWCAP_S390_ETF3EH;
+
+#elif defined(LINUX) /* defined(J9ZTPF) */
+	/* Some s390 features require OS support on Linux, querying auxv for AT_HWCAP bit-mask of processor capabilities. */
+	unsigned long auxvFeatures = query_auxv(AT_HWCAP);
+#endif /* defined(LINUX) */
+
+#if (defined(S390) && defined(LINUX))
+	/* OS Support of HPAGE on Linux on Z */
+	if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_HPAGE)){
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_HPAGE);
+	}
+#endif /* defined(S390) && defined(LINUX) */
+
+	/* Miscellaneous facility detection */
+
+	if (omrsysinfo_test_stfle(portLibrary, 0)) {
+#if (defined(S390) && defined(LINUX))
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_ESAN3))
+#endif /* defined(S390) && defined(LINUX)*/
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_ESAN3);
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 2)) {
+#if (defined(S390) && defined(LINUX))
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_ZARCH))
+#endif /* defined(S390) && defined(LINUX)*/
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_ZARCH);
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 7)) {
+#if (defined(S390) && defined(LINUX))
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_STFLE))
+#endif /* defined(S390) && defined(LINUX)*/
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_STFLE);
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 17)) {
+#if (defined(S390) && defined(LINUX))
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_MSA))
+#endif /* defined(S390) && defined(LINUX)*/
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_MSA);
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 42) && omrsysinfo_test_stfle(portLibrary, 44)) {
+#if (defined(S390) && defined(LINUX))
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_DFP))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_DFP);
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 32)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_COMPARE_AND_SWAP_AND_STORE);
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 33)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_COMPARE_AND_SWAP_AND_STORE2);
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 35)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_EXECUTE_EXTENSIONS);
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 41)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_FPE);
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 49)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION);
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 76)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_MSA_EXTENSION3);
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, 77)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_MSA_EXTENSION4);
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_MSA_EXTENSION_5)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_MSA_EXTENSION_5);
+	}
+
+	/* Assume an unknown processor ID unless we determine otherwise */
+	desc->processor = OMR_PROCESSOR_S390_UNKNOWN;
+
+	/* z990 facility and processor detection */
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_LONG_DISPLACEMENT)) {
+#if (defined(S390) && defined(LINUX))
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_LDISP))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_LONG_DISPLACEMENT);
+
+			desc->processor = OMR_PROCESSOR_S390_GP6;
+		}
+	}
+
+	/* z9 facility and processor detection */
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_EXTENDED_IMMEDIATE)) {
+#if (defined(S390) && defined(LINUX))
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_EIMM))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_EXTENDED_IMMEDIATE);
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_EXTENDED_TRANSLATION_3)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_EXTENDED_TRANSLATION_3);
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_ETF3_ENHANCEMENT)) {
+#if (defined(S390) && defined(LINUX))
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_ETF3EH))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_ETF3_ENHANCEMENT);
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_EXTENDED_IMMEDIATE) &&
+		 omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_EXTENDED_TRANSLATION_3) &&
+		 omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_ETF3_ENHANCEMENT)) {
+		desc->processor = OMR_PROCESSOR_S390_GP7;
+	}
+
+	/* z10 facility and processor detection */
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_GENERAL_INSTRUCTIONS_EXTENSIONS)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_GENERAL_INSTRUCTIONS_EXTENSIONS);
+
+		desc->processor = OMR_PROCESSOR_S390_GP8;
+	}
+
+	/* z196 facility and processor detection */
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_HIGH_WORD)) {
+#if (defined(S390) && defined(LINUX))
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_HIGH_GPRS))
+#endif /* defined(S390) && defined(LINUX)*/
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_HIGH_WORD);
+		}
+
+		desc->processor = OMR_PROCESSOR_S390_GP9;
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_LOAD_STORE_ON_CONDITION_1)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_LOAD_STORE_ON_CONDITION_1);
+
+		desc->processor = OMR_PROCESSOR_S390_GP9;
+	}
+
+	/* zEC12 facility and processor detection */
+
+	/* TE/TX hardware support */
+	if (omrsysinfo_test_stfle(portLibrary, 50) && omrsysinfo_test_stfle(portLibrary, 73)) {
+#if defined(J9ZOS390)
+		if (omrsysinfo_get_s390_zos_supports_transactional_execution_facility())
+#elif defined(LINUX) /* LINUX S390 */
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_TE))
+#endif /* defined(J9ZOS390) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_TE);
+		}
+	}
+
+	/* RI hardware support */
+	if (omrsysinfo_test_stfle(portLibrary, 64)) {
+#if defined(J9ZOS390)
+		if (omrsysinfo_get_s390_zos_supports_runtime_instrumentation_facility())
+#endif /* defined(J9ZOS390) */
+		{
+#if !defined(J9ZTPF)
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_RI);
+#endif /* !defined(J9ZTPF) */
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION);
+
+		desc->processor = OMR_PROCESSOR_S390_GP10;
+	}
+
+	/* z13 facility and processor detection */
+
+	if (omrsysinfo_test_stfle(portLibrary, 129)) {
+#if defined(J9ZOS390)
+		/* Vector facility requires hardware and OS support */
+		if (omrsysinfo_get_s390_zos_supports_vector_extension_facility())
+#elif defined(LINUX) /* LINUX S390 */
+		/* Vector facility requires hardware and OS support */
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_VXRS))
+#endif
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_VECTOR_FACILITY);
+			desc->processor = OMR_PROCESSOR_S390_GP11;
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_LOAD_STORE_ON_CONDITION_2)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_LOAD_STORE_ON_CONDITION_2);
+
+		desc->processor = OMR_PROCESSOR_S390_GP11;
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_LOAD_AND_ZERO_RIGHTMOST_BYTE)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_LOAD_AND_ZERO_RIGHTMOST_BYTE);
+
+		desc->processor = OMR_PROCESSOR_S390_GP11;
+	}
+
+	/* z14 facility and processor detection */
+
+	/* GS hardware support */
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_GUARDED_STORAGE)) {
+#if defined(J9ZOS390)
+		if (omrsysinfo_get_s390_zos_supports_guarded_storage_facility())
+#elif defined(LINUX) /* defined(J9ZOS390) */
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_GS))
+#endif /* defined(LINUX) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_GUARDED_STORAGE);
+
+			desc->processor = OMR_PROCESSOR_S390_GP12;
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_2)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_2);
+
+		desc->processor = OMR_PROCESSOR_S390_GP12;
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_SEMAPHORE_ASSIST)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_SEMAPHORE_ASSIST);
+
+		desc->processor = OMR_PROCESSOR_S390_GP12;
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL)) {
+#if defined(J9ZOS390)
+		/* Vector packed decimal requires hardware and OS support (for OS, checking for VEF is sufficient) */
+		if (omrsysinfo_get_s390_zos_supports_vector_extension_facility())
+#elif (defined(S390) && defined(LINUX)) /* defined(J9ZOS390) */
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_VXRS_BCD))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL);
+
+			desc->processor = OMR_PROCESSOR_S390_GP12;
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1)) {
+#if defined(J9ZOS390)
+		/* Vector facility enhancement 1 requires hardware and OS support (for OS, checking for VEF is sufficient) */
+		if (omrsysinfo_get_s390_zos_supports_vector_extension_facility())
+#elif (defined(S390) && defined(LINUX)) /* defined(J9ZOS390) */
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_VXRS_EXT))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1);
+
+			desc->processor = OMR_PROCESSOR_S390_GP12;
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_MSA_EXTENSION_8)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_MSA_EXTENSION_8);
+
+		desc->processor = OMR_PROCESSOR_S390_GP12;
+	}
+	
+    /* z15 facility and processor detection */
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3);
+
+		desc->processor = OMR_PROCESSOR_S390_GP13;
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2)) {
+#if defined(J9ZOS390)
+		if (omrsysinfo_get_s390_zos_supports_vector_extension_facility())
+#elif defined(LINUX) && !defined(J9ZTPF) /* defined(J9ZOS390) */
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_VXRS))
+#endif /* defined(LINUX) && !defined(J9ZTPF) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2);
+
+			desc->processor = OMR_PROCESSOR_S390_GP13;
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY)) {
+#if defined(J9ZOS390)
+		if (omrsysinfo_get_s390_zos_supports_vector_extension_facility())
+#elif defined(LINUX) && !defined(J9ZTPF) /* defined(J9ZOS390) */
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_VXRS))
+#endif /* defined(LINUX) && !defined(J9ZTPF) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY);
+
+			desc->processor = OMR_PROCESSOR_S390_GP13;
+		}
+	}
+
+	/* Set Side Effect Facility without setting GP12. This is because
+	 * this GP12-only STFLE bit can also be enabled on zEC12 (GP10)
+	 */
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_SIDE_EFFECT_ACCESS)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_SIDE_EFFECT_ACCESS);
+	}
+
+	desc->physicalProcessor = desc->processor;
+
+	return 0;
+}
+
+#endif /* defined(S390) || defined(J9ZOS390) */
+
+#if defined(RISCV)
+static intptr_t
+omrsysinfo_get_riscv_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
+{
+#if defined(RISCV32)
+	desc->processor = OMR_PROCESOR_RISCV32_UNKNOWN;
+#elif defined(RISCV64)
+	desc->processor = OMR_PROCESOR_RISCV64_UNKNOWN;
+#elif
+	desc->processor = OMR_PROCESSOR_UNDEFINED;
+#endif
+	desc->physicalProcessor = desc->processor;
+	return 0;
+}
+#endif /* defined(RISCV) */
 
 intptr_t
 omrsysinfo_get_env(struct OMRPortLibrary *portLibrary, const char *envVar, char *infoString, uintptr_t bufSize)
 {
 	char *value = (char *)getenv(envVar);
-	uintptr_t len;
+	uintptr_t len = 0;
 
 	if (NULL == value) {
 		return -1;
@@ -549,7 +1461,6 @@ omrsysinfo_get_env(struct OMRPortLibrary *portLibrary, const char *envVar, char 
 	}
 }
 
-
 const char *
 omrsysinfo_get_OS_type(struct OMRPortLibrary *portLibrary)
 {
@@ -560,9 +1471,7 @@ omrsysinfo_get_OS_type(struct OMRPortLibrary *portLibrary)
 	return "Mac OS X";
 #else
 	if (NULL == PPG_si_osType) {
-		int rc;
-		int len;
-		char *buffer;
+		int rc = 0;
 		struct utsname sysinfo;
 
 #ifdef J9ZOS390
@@ -571,14 +1480,14 @@ omrsysinfo_get_OS_type(struct OMRPortLibrary *portLibrary)
 		rc = uname(&sysinfo);
 #endif
 		if (rc >= 0) {
-			len = strlen(sysinfo.sysname) + 1;
-			buffer = portLibrary->mem_allocate_memory(portLibrary, len, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+			int len = strlen(sysinfo.sysname);
+			char *buffer = portLibrary->mem_allocate_memory(portLibrary, len + 1, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
 			if (NULL == buffer) {
 				return NULL;
 			}
-			/* copy and null terminte (just in case) */
-			strncpy(buffer, sysinfo.sysname, len - 1);
-			buffer[len - 1] = '\0';
+			/* copy and NUL-terminate */
+			memcpy(buffer, sysinfo.sysname, len);
+			buffer[len] = '\0';
 			PPG_si_osType = buffer;
 		}
 	}
@@ -586,7 +1495,7 @@ omrsysinfo_get_OS_type(struct OMRPortLibrary *portLibrary)
 #endif
 }
 
-#if defined (OSX)
+#if defined(OSX)
 #define KERN_OSPRODUCTVERSION "kern.osproductversion"
 #define PLIST_FILE "/System/Library/CoreServices/SystemVersion.plist"
 #define PRODUCT_VERSION_ELEMENT "<key>ProductVersion</key>"
@@ -609,7 +1518,7 @@ omrsysinfo_get_OS_version(struct OMRPortLibrary *portLibrary)
 {
 	if (NULL == PPG_si_osVersion) {
 		int rc = -1;
-#if defined (OSX)
+#if defined(OSX)
 		char *versionString = NULL;
 		char *allocatedFileBuffer = NULL;
 #else
@@ -618,16 +1527,15 @@ omrsysinfo_get_OS_version(struct OMRPortLibrary *portLibrary)
 
 #ifdef J9ZOS390
 		rc = __osname(&sysinfo);
-#elif defined (OSX)
+#elif defined(OSX)
 		/* uname() on MacOS returns the version of the Darwin kernel, not the operating system product name.
 		 * For compatibility with the reference implementation,
 		 * we need the operating system product name.
 		 * On newer versions of MacOS, the OS name is provided by sysctlbyname().
 		 * On older versions of MacOS, the OS name is provided by a property list file.
 		 * The relevant portion is:
-		 * 		<key>ProductVersion</key>
-		 * 		<string>10.13.6</string>
-		 *
+		 *      <key>ProductVersion</key>
+		 *      <string>10.13.6</string>
 		 */
 		size_t resultSize = 0;
 		rc = sysctlbyname(KERN_OSPRODUCTVERSION, NULL, &resultSize, NULL, 0);
@@ -693,7 +1601,7 @@ omrsysinfo_get_OS_version(struct OMRPortLibrary *portLibrary)
 			if (NULL != buffer) {
 				portLibrary->str_printf(portLibrary, buffer, len, FORMAT_STRING, sysinfo.version, sysinfo.release);
 			}
-#elif defined (OSX)
+#elif defined(OSX)
 			len = resultSize + 1;
 			buffer = portLibrary->mem_allocate_memory(portLibrary, len, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
 			if (NULL != buffer) {
@@ -719,7 +1627,6 @@ omrsysinfo_get_OS_version(struct OMRPortLibrary *portLibrary)
 	}
 	return PPG_si_osVersion;
 }
-
 
 uintptr_t
 omrsysinfo_get_pid(struct OMRPortLibrary *portLibrary)
@@ -829,7 +1736,26 @@ find_executable_name(struct OMRPortLibrary *portLibrary, char **result)
 		rc = 0;
 	}
 	return rc;
-#else /* defined(OSX) */
+#elif defined(OMR_OS_BSD)
+	int proc[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+	size_t size = 0;
+	*result = NULL;
+	if (-1 == sysctl(proc, sizeof(proc) / sizeof(proc[0]), NULL, &size, NULL, 0)) {
+		return -1;
+	}
+
+	*result = portLibrary->mem_allocate_memory(portLibrary, size, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY);
+	if (NULL == *result) {
+		return -1;
+	}
+
+	if (-1 == sysctl(proc, sizeof(proc) / sizeof(proc[0]), *result, &size, NULL, 0)) {
+		portLibrary->mem_free_memory(portLibrary, *result);
+		*result = NULL;
+		return -1;
+	}
+	return 0;
+#else /* defined(OMR_OS_BSD) */
 
 	intptr_t retval = -1;
 	intptr_t length;
@@ -851,7 +1777,11 @@ find_executable_name(struct OMRPortLibrary *portLibrary, char **result)
 	}
 	while ((token = w_getpsent(token, &buf, sizeof(buf))) > 0) {
 		if (buf.ps_pid == mypid) {
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 			e2aName = e2a_func(buf.ps_pathptr, strlen(buf.ps_pathptr) + 1);
+#else /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
+			e2aName = buf.ps_pathptr;
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 			break;
 		}
 	}
@@ -867,7 +1797,9 @@ find_executable_name(struct OMRPortLibrary *portLibrary, char **result)
 	if (currentPath) {
 		strcpy(currentPath, e2aName);
 	}
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	free(e2aName);
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 #else
 	char *execName = NULL;
 
@@ -1215,7 +2147,7 @@ searchSystemPath(struct OMRPortLibrary *portLibrary, char *filename, char **resu
 #ifdef DEBUG
 		(portLibrary->tty_printf)(portLibrary, "Searching path: \"%s\"\n", temp);
 #endif
-		if (!length) {		/* empty path entry */
+		if (!length) { /* empty path entry */
 			continue;
 		}
 		if ((sdir = opendir(temp))) {
@@ -1268,8 +2200,8 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 #elif defined(OMRZTPF)
 		toReturn = get_IPL_IstreamCount();
 		if (0 == toReturn) {
-                        Trc_PRT_sysinfo_get_number_CPUs_by_type_failedPhysical("(no errno) ", 0);
-                }
+						Trc_PRT_sysinfo_get_number_CPUs_by_type_failedPhysical("(no errno) ", 0);
+				}
 #else
 		if (0 == toReturn) {
 			Trc_PRT_sysinfo_get_number_CPUs_by_type_platformNotSupported();
@@ -1433,34 +2365,34 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 	return toReturn;
 }
 
-#define MAX_LINE_LENGTH		128
+#define MAX_LINE_LENGTH     128
 
 /* Memory units are specified in Kilobytes. */
-#define ONE_K				1024
+#define ONE_K               1024
 
 /* Base for the decimal number system is 10. */
-#define COMPUTATION_BASE	10
+#define COMPUTATION_BASE    10
 
 #if defined(LINUX)
-#define MEMSTATPATH			"/proc/meminfo"
+#define MEMSTATPATH         "/proc/meminfo"
 
-#define MEMTOTAL_PREFIX		"MemTotal:"
-#define MEMTOTAL_PREFIX_SZ	(sizeof(MEMTOTAL_PREFIX) - 1)
+#define MEMTOTAL_PREFIX     "MemTotal:"
+#define MEMTOTAL_PREFIX_SZ  (sizeof(MEMTOTAL_PREFIX) - 1)
 
-#define MEMFREE_PREFIX		"MemFree:"
-#define MEMFREE_PREFIX_SZ	(sizeof(MEMFREE_PREFIX) - 1)
+#define MEMFREE_PREFIX      "MemFree:"
+#define MEMFREE_PREFIX_SZ   (sizeof(MEMFREE_PREFIX) - 1)
 
-#define SWAPTOTAL_PREFIX	"SwapTotal:"
-#define SWAPTOTAL_PREFIX_SZ	(sizeof(SWAPTOTAL_PREFIX) - 1)
+#define SWAPTOTAL_PREFIX    "SwapTotal:"
+#define SWAPTOTAL_PREFIX_SZ (sizeof(SWAPTOTAL_PREFIX) - 1)
 
-#define SWAPFREE_PREFIX		"SwapFree:"
-#define SWAPFREE_PREFIX_SZ	(sizeof(SWAPFREE_PREFIX) - 1)
+#define SWAPFREE_PREFIX     "SwapFree:"
+#define SWAPFREE_PREFIX_SZ  (sizeof(SWAPFREE_PREFIX) - 1)
 
-#define CACHED_PREFIX		"Cached:"
-#define CACHED_PREFIX_SZ	(sizeof(CACHED_PREFIX) - 1)
+#define CACHED_PREFIX       "Cached:"
+#define CACHED_PREFIX_SZ    (sizeof(CACHED_PREFIX) - 1)
 
-#define BUFFERS_PREFIX		"Buffers:"
-#define BUFFERS_PREFIX_SZ	(sizeof(BUFFERS_PREFIX) - 1)
+#define BUFFERS_PREFIX      "Buffers:"
+#define BUFFERS_PREFIX_SZ   (sizeof(BUFFERS_PREFIX) - 1)
 
 /**
  * Function collects memory usage statistics by reading /proc/meminfo on Linux platforms.
@@ -1504,8 +2436,9 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 			memInfo->totalPhysical = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
 			if ((LONG_MIN == memInfo->totalPhysical) || (LONG_MAX == memInfo->totalPhysical)) {
 				Trc_PRT_retrieveLinuxMemoryStats_invalidRangeFound("MemTotal");
-				rc = (ERANGE == errno) ? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE :
-					 OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+				rc = (ERANGE == errno)
+						? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE
+						: OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 				goto _cleanup;
 			} /* end outer-if */
 
@@ -1517,8 +2450,9 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 			memInfo->availPhysical = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
 			if ((LONG_MIN == memInfo->availPhysical) || (LONG_MAX == memInfo->availPhysical)) {
 				Trc_PRT_retrieveLinuxMemoryStats_invalidRangeFound("MemFree");
-				rc = (ERANGE == errno) ? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE :
-					 OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+				rc = (ERANGE == errno)
+						? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE
+						: OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 				goto _cleanup;
 			} /* end outer-if */
 
@@ -1530,8 +2464,9 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 			memInfo->totalSwap = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
 			if ((LONG_MIN == memInfo->totalSwap) || (LONG_MAX == memInfo->totalSwap)) {
 				Trc_PRT_retrieveLinuxMemoryStats_invalidRangeFound("SwapTotal");
-				rc = (ERANGE == errno) ? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE :
-					 OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+				rc = (ERANGE == errno)
+						? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE
+						: OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 				goto _cleanup;
 			} /* end outer-if */
 
@@ -1543,8 +2478,9 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 			memInfo->availSwap = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
 			if ((LONG_MIN == memInfo->availSwap) || (LONG_MAX == memInfo->availSwap)) {
 				Trc_PRT_retrieveLinuxMemoryStats_invalidRangeFound("SwapFree");
-				rc = (ERANGE == errno) ? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE :
-					 OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+				rc = (ERANGE == errno)
+						? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE
+						: OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 				goto _cleanup;
 			} /* end outer-if */
 
@@ -1556,8 +2492,9 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 			memInfo->cached = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
 			if ((LONG_MIN == memInfo->cached) || (LONG_MAX == memInfo->cached)) {
 				Trc_PRT_retrieveLinuxMemoryStats_invalidRangeFound("Cached");
-				rc = (ERANGE == errno) ? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE :
-					 OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+				rc = (ERANGE == errno)
+						? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE
+						: OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 				goto _cleanup;
 			} /* end outer-if */
 
@@ -1569,8 +2506,9 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 			memInfo->buffered = strtol(tmpPtr, &endPtr, COMPUTATION_BASE);
 			if ((LONG_MIN == memInfo->buffered) || (LONG_MAX == memInfo->buffered)) {
 				Trc_PRT_retrieveLinuxMemoryStats_invalidRangeFound("Buffers");
-				rc = (ERANGE == errno) ? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE :
-					 OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
+				rc = (ERANGE == errno)
+						? OMRPORT_ERROR_SYSINFO_PARAM_HAS_INVALID_RANGE
+						: OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 				goto _cleanup;
 			} /* end outer-if */
 
@@ -1998,7 +2936,7 @@ omrsysinfo_get_physical_memory(struct OMRPortLibrary *portLibrary)
 	}
 #endif /* defined(LINUX) */
 
-#if defined (RS6000)
+#if defined(RS6000)
 	/* physmem is not a field in the system_configuration struct */
 	/* on systems with 43K headers. However, this is not an issue as we only support AIX 5.2 and above only */
 	result = (uint64_t) _system_configuration.physmem;
@@ -2006,9 +2944,16 @@ omrsysinfo_get_physical_memory(struct OMRPortLibrary *portLibrary)
 	J9CVT * __ptr32 cvtp = ((J9PSA * __ptr32)0)->flccvt;
 	J9RCE * __ptr32 rcep = cvtp->cvtrcep;
 	result = ((U_64)rcep->rcepool * J9BYTES_PER_PAGE);
-#elif defined(OSX)
+#elif defined(OSX) || defined(OMR_OS_BSD)
 	{
-		int name[2] = {CTL_HW, HW_MEMSIZE};
+		int name[2] = {
+			CTL_HW,
+#if defined(OSX)
+			HW_MEMSIZE
+#elif defined(OMR_OS_BSD)
+			HW_PHYSMEM
+#endif
+};
 		size_t len = sizeof(result);
 
 		if (0 != sysctl(name, 2, &result, &len, NULL, 0)) {
@@ -2017,9 +2962,9 @@ omrsysinfo_get_physical_memory(struct OMRPortLibrary *portLibrary)
 	}
 #elif defined(OMRZTPF)
 	result = getPhysicalMemory();
-#else /* defined (RS6000) */
+#else /* defined(RS6000) */
 	result = getPhysicalMemory(portLibrary);
-#endif /* defined (RS6000) */
+#endif /* defined(RS6000) */
 	return result;
 }
 
@@ -2104,9 +3049,11 @@ omrsysinfo_shutdown(struct OMRPortLibrary *portLibrary)
 			cgroupEntryListMonitor = NULL;
 		}
 #endif /* defined(LINUX) */
+#if (defined(S390) || defined(J9ZOS390))
+		PPG_stfleCache.lastDoubleWord = -1;
+#endif
 	}
 }
-
 
 int32_t
 omrsysinfo_startup(struct OMRPortLibrary *portLibrary)
@@ -2134,6 +3081,11 @@ omrsysinfo_startup(struct OMRPortLibrary *portLibrary)
 	isRunningInContainer(portLibrary, &PPG_isRunningInContainer);
 #endif /* defined(LINUX) */
 	return 0;
+
+#if (defined(S390) || defined(J9ZOS390))
+	PPG_stfleCache.lastDoubleWord = -1;
+#endif
+
 }
 
 intptr_t
@@ -2246,62 +3198,46 @@ omrsysinfo_get_hostname(struct OMRPortLibrary *portLibrary, char *buffer, size_t
 	return 0;
 }
 
+/* Limits are unsupported on z/TPF */
+#if defined(OMRZTPF)
+
+uint32_t
+omrsysinfo_get_limit(struct OMRPortLibrary* portLibrary, uint32_t resourceID, uint64_t* limit)
+{
+	int rc = OMRPORT_LIMIT_UNKNOWN;
+
+	Trc_PRT_sysinfo_get_limit_Entered(resourceID);
+	*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
+	Trc_PRT_sysinfo_get_limit_Exit(rc);
+	return rc;
+}
+
+uint32_t
+omrsysinfo_set_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, uint64_t limit)
+{
+	int rc = OMRPORT_LIMIT_UNKNOWN;
+
+	Trc_PRT_sysinfo_set_limit_Entered(resourceID, limit);
+	Trc_PRT_sysinfo_set_limit_Exit(rc);
+	return rc;
+}
+
+#else /* defined(OMRZTPF) */
+
 uint32_t
 omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, uint64_t *limit)
 {
-	uint32_t hardLimitRequested = OMRPORT_LIMIT_HARD == (resourceID & OMRPORT_LIMIT_HARD);
 	uint32_t resourceRequested = resourceID & ~OMRPORT_LIMIT_HARD;
+	BOOLEAN hardLimitRequested = OMR_ARE_ALL_BITS_SET(resourceID, OMRPORT_LIMIT_HARD);
 	uint32_t rc = OMRPORT_LIMIT_UNKNOWN;
-	struct rlimit lim = {0, 0};
-	uint32_t resource = 0;
 
 	Trc_PRT_sysinfo_get_limit_Entered(resourceID);
 
-	if (OMRPORT_RESOURCE_ADDRESS_SPACE == resourceRequested) {
-#if !defined(OMRZTPF)
-		resource = RLIMIT_AS;
-#else /* !defined(OMRZTPF) */
-		/* z/TPF does not have virtual address support */
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		Trc_PRT_sysinfo_get_limit_Exit(rc);
-		return rc;
-#endif /* !defined(OMRZTPF) */
-	} else if (OMRPORT_RESOURCE_CORE_FILE == resourceRequested) {
-#if !defined(OMRZTPF)
-		resource = RLIMIT_CORE;
-#else /* !defined(OMRZTPF) */
-		/* z/TPF does not have virtual address support */
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		Trc_PRT_sysinfo_get_limit_Exit(rc);
-		return rc;
-#endif /* !defined(OMRZTPF) */
-	}
-
-	switch (resourceRequested) {
-	case OMRPORT_RESOURCE_SHARED_MEMORY:
+	if (OMRPORT_RESOURCE_SHARED_MEMORY == resourceRequested) {
 		rc = getLimitSharedMemory(portLibrary, limit);
-		break;
-	case OMRPORT_RESOURCE_ADDRESS_SPACE:
-		/* FALLTHROUGH */
-	case OMRPORT_RESOURCE_CORE_FILE: {
-#if !defined(OMRZTPF)
-	if (0 == getrlimit(resource, &lim)) {
-		*limit = (uint64_t)(hardLimitRequested ? lim.rlim_max : lim.rlim_cur);
-		if (RLIM_INFINITY == *limit) {
-			rc = OMRPORT_LIMIT_UNLIMITED;
-		} else {
-			rc = OMRPORT_LIMIT_LIMITED;
-		}
-	} else {
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-		Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
-		rc = OMRPORT_LIMIT_UNKNOWN;
-	}
-#endif /* !defined(OMRZTPF) */
-	}
-	break;
-	case OMRPORT_RESOURCE_CORE_FLAGS: {
+	} else if (OMRPORT_RESOURCE_FILE_DESCRIPTORS == resourceRequested) {
+		rc = getLimitFileDescriptors(portLibrary, limit, hardLimitRequested);
+	} else if (OMRPORT_RESOURCE_CORE_FLAGS == resourceRequested) {
 #if defined(AIXPPC)
 		struct vario myvar;
 
@@ -2324,17 +3260,30 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
 		rc = OMRPORT_LIMIT_UNKNOWN;
 #endif
-	}
-	break;
-	/* Get the limit on maximum number of files that may be opened in any
-	 * process, in the current configuration of the operating system.  This
-	 * must match "ulimit -n".
-	 */
-	case OMRPORT_RESOURCE_FILE_DESCRIPTORS: {
-#if defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(J9ZOS390)
-		/* getrlimit(2) is a POSIX routine. */
-		if (0 == getrlimit(RLIMIT_NOFILE, &lim)) {
-			*limit = (uint64_t) (hardLimitRequested ? lim.rlim_max : lim.rlim_cur);
+	} else {
+		/* Other resources are handled through getrlimit() */
+		struct rlimit lim = { 0, 0 };
+		uint32_t resource = 0;
+
+		switch (resourceRequested) {
+		case OMRPORT_RESOURCE_ADDRESS_SPACE:
+			resource = RLIMIT_AS;
+			break;
+		case OMRPORT_RESOURCE_CORE_FILE:
+			resource = RLIMIT_CORE;
+			break;
+		case OMRPORT_RESOURCE_DATA:
+			resource = RLIMIT_DATA;
+			break;
+		default:
+			Trc_PRT_sysinfo_getLimit_unrecognised_resourceID(resourceID);
+			*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
+			rc = OMRPORT_LIMIT_UNKNOWN;
+			goto exit;
+		}
+
+		if (0 == getrlimit(resource, &lim)) {
+			*limit = (uint64_t)(hardLimitRequested ? lim.rlim_max : lim.rlim_cur);
 			if (RLIM_INFINITY == *limit) {
 				rc = OMRPORT_LIMIT_UNLIMITED;
 			} else {
@@ -2346,19 +3295,9 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 			Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
 			rc = OMRPORT_LIMIT_UNKNOWN;
 		}
-#else /* defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(J9ZOS390) */
-		/* unsupported on other platforms (just in case). */
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		rc = OMRPORT_LIMIT_UNKNOWN;
-#endif /* defined(AIXPPC) || (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX) || defined(J9ZOS390) */
-	}
-	break;
-	default:
-		Trc_PRT_sysinfo_getLimit_unrecognised_resourceID(resourceID);
-		*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
-		rc = OMRPORT_LIMIT_UNKNOWN;
 	}
 
+exit:
 	Trc_PRT_sysinfo_get_limit_Exit(rc);
 	return rc;
 }
@@ -2366,117 +3305,76 @@ omrsysinfo_get_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, ui
 uint32_t
 omrsysinfo_set_limit(struct OMRPortLibrary *portLibrary, uint32_t resourceID, uint64_t limit)
 {
-	uint32_t hardLimitRequested = OMRPORT_LIMIT_HARD == (resourceID & OMRPORT_LIMIT_HARD);
 	uint32_t resourceRequested = resourceID & ~OMRPORT_LIMIT_HARD;
-	struct rlimit lim = {0, 0};
+	BOOLEAN hardLimitRequested = OMR_ARE_ALL_BITS_SET(resourceID, OMRPORT_LIMIT_HARD);
 	uint32_t rc = 0;
-	uint32_t resource = 0;
 
 	Trc_PRT_sysinfo_set_limit_Entered(resourceID, limit);
 
-	switch (resourceRequested) {
-	case OMRPORT_RESOURCE_FILE_DESCRIPTORS:
-		resource = RLIMIT_NOFILE;
-		break;
-	case OMRPORT_RESOURCE_ADDRESS_SPACE:
-#if !defined(OMRZTPF)
-		resource = RLIMIT_AS;
-#else /* !defined(OMRZTPF) */
-		/* z/TPF does not have virtual address support */
-		rc = -1;
-#endif /* !defined(OMRZTPF) */
-		break;
-	case OMRPORT_RESOURCE_CORE_FILE:
-#if !defined(OMRZTPF)
-		resource = RLIMIT_CORE;
-#else /* !defined(OMRZTPF) */
-		rc = OMRPORT_LIMIT_UNKNOWN;
-#endif /* !defined(OMRZTPF) */
-		break;
-	default:
-		break;
-	}
-
-	if (0 == rc) {
-		switch (resourceRequested) {
-		case OMRPORT_RESOURCE_FILE_DESCRIPTORS:
-			/* FALLTHROUGH */
-		case OMRPORT_RESOURCE_ADDRESS_SPACE:
-			/* FALLTHROUGH */
-		case OMRPORT_RESOURCE_CORE_FILE: {
-#if !defined(OMRZTPF)
-			rc = getrlimit(resource, &lim);
-			if (-1 == rc) {
-				portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-				Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
-				break;
-			}
-
-			if (hardLimitRequested) {
-				lim.rlim_max = limit;
-			} else {
-#if defined(OSX)
-				/* MacOS doesn't allow the soft file limit to be unlimited */
-				if ((OMRPORT_RESOURCE_FILE_DESCRIPTORS == resourceRequested)
-						&& (RLIM_INFINITY == limit)) {
-					int32_t maxFiles = 0;
-					size_t resultSize = sizeof(maxFiles);
-					int name[] = {CTL_KERN, KERN_MAXFILESPERPROC};
-					rc = sysctl(name, 2, &maxFiles, &resultSize, NULL, 0);
-					if (-1 == rc) {
-						portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-						Trc_PRT_sysinfo_setrlimit_error(resource, limit, findError(errno));
-					} else {
-						limit = maxFiles;
-					}
-				}
-#endif
-				lim.rlim_cur = limit;
-			}
-
-			rc = setrlimit(resource, &lim);
-			if (-1 == rc) {
-				portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-				Trc_PRT_sysinfo_setrlimit_error(resource, limit, findError(errno));
-			}
-#else /* !defined(OMRZTPF) */
-			rc = OMRPORT_LIMIT_UNKNOWN;
-#endif /* !defined(OMRZTPF) */
-			break;
-		}
-
-		case OMRPORT_RESOURCE_CORE_FLAGS: {
+	if (OMRPORT_RESOURCE_FILE_DESCRIPTORS == resourceRequested) {
+		rc = setLimitFileDescriptors(portLibrary, limit, hardLimitRequested);
+	} else if (OMRPORT_RESOURCE_CORE_FLAGS == resourceRequested) {
 #if defined(AIXPPC)
-			struct vario myvar;
+		struct vario myvar;
 
-			myvar.v.v_fullcore.value = limit;
-			rc = sys_parm(SYSP_SET, SYSP_V_FULLCORE, &myvar);
-			if (-1 == rc) {
-				portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
-				Trc_PRT_sysinfo_sysparm_error(errno);
-			}
-#else
-			/* unsupported so return error */
-			rc = OMRPORT_LIMIT_UNKNOWN;
-#endif
-			break;
+		myvar.v.v_fullcore.value = limit;
+		rc = sys_parm(SYSP_SET, SYSP_V_FULLCORE, &myvar);
+		if (-1 == rc) {
+			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+			Trc_PRT_sysinfo_sysparm_error(errno);
 		}
+#else /* defined(AIXPPC) */
+		/* unsupported so return error */
+		rc = OMRPORT_LIMIT_UNKNOWN;
+#endif /* defined(AIXPPC) */
+	} else {
+		struct rlimit lim = { 0, 0 };
+		uint32_t resource = 0;
 
+		switch (resourceRequested) {
+		case OMRPORT_RESOURCE_ADDRESS_SPACE:
+			resource = RLIMIT_AS;
+			break;
+		case OMRPORT_RESOURCE_CORE_FILE:
+			resource = RLIMIT_CORE;
+			break;
+		case OMRPORT_RESOURCE_DATA:
+			resource = RLIMIT_DATA;
+			break;
 		default:
 			Trc_PRT_sysinfo_setLimit_unrecognised_resourceID(resourceID);
 			rc = OMRPORT_LIMIT_UNKNOWN;
+			goto exit;
+		}
+
+		rc = getrlimit(resource, &lim);
+		if (-1 == rc) {
+			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+			Trc_PRT_sysinfo_getrlimit_error(resource, findError(errno));
+			goto exit;
+		}
+
+		if (hardLimitRequested) {
+			lim.rlim_max = limit;
+		} else {
+			lim.rlim_cur = limit;
+		}
+		rc = setrlimit(resource, &lim);
+		if (-1 == rc) {
+			portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+			Trc_PRT_sysinfo_setrlimit_error(resource, limit, findError(errno));
 		}
 	}
 
+exit:
 	Trc_PRT_sysinfo_set_limit_Exit(rc);
 	return rc;
 }
 
-
 static uint32_t
 getLimitSharedMemory(struct OMRPortLibrary *portLibrary, uint64_t *limit)
 {
-#if defined(LINUX) && !defined(OMRZTPF)
+#if defined(LINUX)
 	int fd = 0;
 	int64_t shmmax = -1;
 	int bytesRead = 0;
@@ -2516,13 +3414,102 @@ errorReturn:
 	Trc_PRT_sysinfo_getLimitSharedMemory_ErrorExit(OMRPORT_LIMIT_UNKNOWN, OMRPORT_LIMIT_UNKNOWN_VALUE);
 	*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
 	return OMRPORT_LIMIT_UNKNOWN;
-#else /* defined(LINUX) && !defined(OMRZTPF) */
+#else /* defined(LINUX) */
 	Trc_PRT_sysinfo_getLimitSharedMemory_notImplemented(OMRPORT_LIMIT_UNKNOWN);
 	*limit = OMRPORT_LIMIT_UNKNOWN_VALUE;
 	return OMRPORT_LIMIT_UNKNOWN;
-#endif /* defined(LINUX) && !defined(OMRZTPF) */
+#endif /* defined(LINUX) */
 }
 
+#endif /* defined(OMRZTPF) */
+
+static uint32_t
+getLimitFileDescriptors(struct OMRPortLibrary *portLibrary, uint64_t *result, BOOLEAN hardLimitRequested)
+{
+	uint64_t limit = 0;
+	uint32_t rc = 0;
+	struct rlimit rlim = { 0, 0 };
+#if defined(OSX)
+	uint64_t sysctl_limit = 0;
+	size_t sysctl_limit_len = sizeof(sysctl_limit);
+	int sysctl_name[2] = { CTL_KERN, KERN_MAXFILESPERPROC };
+#endif /* defined(OSX) */
+
+	if (0 != getrlimit(RLIMIT_NOFILE, &rlim)) {
+		goto error;
+	}
+
+	limit = (uint64_t)(hardLimitRequested ? rlim.rlim_max : rlim.rlim_cur);
+
+#if defined(OSX)
+	/* On OSX, the limit is <= KERN_MAXFILESPERPROC */
+	if (0 != sysctl(sysctl_name, 2, &sysctl_limit, &sysctl_limit_len, NULL, 0)) {
+		goto error;
+	}
+	limit = OMR_MIN(limit, sysctl_limit);
+	rc = OMRPORT_LIMIT_LIMITED;
+#else /* defined(OSX) */
+	if (RLIM_INFINITY == limit) {
+		rc = OMRPORT_LIMIT_UNLIMITED;
+	} else {
+		rc = OMRPORT_LIMIT_LIMITED;
+	}
+#endif /* defined(OSX) */
+
+	*result = limit;
+	return rc;
+
+error:
+	portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+	Trc_PRT_sysinfo_getrlimit_error(RLIMIT_NOFILE, findError(errno));
+	*result = OMRPORT_LIMIT_UNKNOWN_VALUE;
+	return OMRPORT_LIMIT_UNKNOWN;
+}
+
+static uint32_t
+setLimitFileDescriptors(struct OMRPortLibrary *portLibrary, uint64_t limit, BOOLEAN hardLimitRequested)
+{
+	uint32_t rc = 0;
+	struct rlimit rlim = { 0, 0 };
+#if defined(OSX)
+	uint64_t sysctl_limit = 0;
+	size_t sysctl_limit_len = sizeof(sysctl_limit);
+	int sysctl_name[2] = { CTL_KERN, KERN_MAXFILESPERPROC };
+
+	/* On OSX, we enforce that the limit is <= KERN_MAXFILESPERPROC */
+	rc = sysctl(sysctl_name, 2, &sysctl_limit, &sysctl_limit_len, NULL, 0);
+	if (0 != rc) {
+		goto error;
+	}
+	if (sysctl_limit < limit) {
+		rc = -1;
+		goto error;
+	}
+#endif /* defined(OSX) */
+
+	rc = getrlimit(RLIMIT_NOFILE, &rlim);
+	if (0 != rc) {
+		goto error;
+	}
+
+	if (hardLimitRequested) {
+		rlim.rlim_max = limit;
+	} else {
+		rlim.rlim_cur = limit;
+	}
+
+	rc = setrlimit(RLIMIT_NOFILE, &rlim);
+	if (0 != rc) {
+		goto error;
+	}
+
+	return 0;
+
+error:
+	portLibrary->error_set_last_error(portLibrary, errno, findError(errno));
+	Trc_PRT_sysinfo_setrlimit_error(RLIMIT_NOFILE, limit, findError(errno));
+	return rc;
+}
 
 intptr_t
 omrsysinfo_get_load_average(struct OMRPortLibrary *portLibrary, struct J9PortSysInfoLoadData *loadAverageData)
@@ -2569,14 +3556,15 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	intptr_t bytesRead = -1;
 	/*
 	 * Read the first line of /proc/stat, which takes the form:
-	 * 		cpu <user> <nice> <system> <other data we don't use>
+	 *      cpu <user> <nice> <system> <other data we don't use>
 	 * where user, nice, and system are 64-bit numbers in units of USER_HZ (typically 10 ms).
 	 *
 	 * Each number will have up to 21 decimal digits.  Adding spaces and the "cpu  " prefix brings the total to
 	 * ~70.  Allocate 128 bytes to give lots of margin.
 	 */
 	char buf[128];
-	const uintptr_t NS_PER_HZ = 1000000000 / USER_HZ;
+	const uintptr_t CLK_HZ = sysconf(_SC_CLK_TCK); /* i.e. USER_HZ */
+	const uintptr_t NS_PER_CLK = 1000000000 / CLK_HZ;
 	intptr_t fd = portLibrary->file_open(portLibrary, "/proc/stat", EsOpenRead, 0);
 	if (-1 == fd) {
 		int32_t portableError = portLibrary->error_last_error_number(portLibrary);
@@ -2601,7 +3589,7 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 		if (0 == sscanf(buf, "cpu  %" SCNd64 " %" SCNd64 " %" SCNd64, &userTime, &niceTime, &systemTime)) {
 			return OMRPORT_ERROR_SYSINFO_GET_STATS_FAILED;
 		}
-		cpuTime->cpuTime = (userTime + niceTime + systemTime) * NS_PER_HZ;
+		cpuTime->cpuTime = (userTime + niceTime + systemTime) * NS_PER_CLK;
 		cpuTime->numberOfCpus = portLibrary->sysinfo_get_number_CPUs_by_type(portLibrary, OMRPORT_CPU_ONLINE);
 		status = 0;
 	}
@@ -2636,7 +3624,7 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	cpuTime->numberOfCpus = Xj9GetEntitledProcessorCapacity() / 100;
 	/*Xj9GetSysCPUTime() is newly added to retrieve System CPU Time fromILE.*/
 	cpuTime->cpuTime = Xj9GetSysCPUTime();
-	status = 0;	
+	status = 0;
 #elif defined(AIXPPC) /* AIX */
 	perfstat_cpu_total_t stats;
 	const uintptr_t NS_PER_CPU_TICK = 10000000L;
@@ -2662,6 +3650,85 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	return status;
 #else /* (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) */
 	/* Support on z/OS being temporarily removed to avoid wrong CPU stats being passed. */
+	return OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED;
+#endif
+}
+
+intptr_t
+omrsysinfo_get_CPU_load(struct OMRPortLibrary *portLibrary, double *cpuLoad)
+{
+	J9SysinfoCPUTime currentCPUTime;
+	J9SysinfoCPUTime *oldestCPUTime = &portLibrary->portGlobals->oldestCPUTime;
+	J9SysinfoCPUTime *latestCPUTime = &portLibrary->portGlobals->latestCPUTime;
+
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX)
+	intptr_t portLibraryStatus = omrsysinfo_get_CPU_utilization(portLibrary, &currentCPUTime);
+	
+	if (portLibraryStatus < 0) {
+		return portLibraryStatus;
+	}
+
+	if (oldestCPUTime->timestamp == 0) {
+		*oldestCPUTime = currentCPUTime;
+		*latestCPUTime = currentCPUTime;
+		return OMRPORT_ERROR_OPFAILED;
+	}
+
+	/* Calculate using the most recent value in the history */
+	if (((currentCPUTime.timestamp - latestCPUTime->timestamp) >= 10000000) && (currentCPUTime.numberOfCpus != 0)) {
+		*cpuLoad = OMR_MIN((currentCPUTime.cpuTime - latestCPUTime->cpuTime) / ((double)currentCPUTime.numberOfCpus * (currentCPUTime.timestamp - latestCPUTime->timestamp)), 1.0);
+		if (*cpuLoad >= 0.0) {
+			*oldestCPUTime = *latestCPUTime;
+			*latestCPUTime = currentCPUTime;
+			return 0;
+		} else {
+			/* Either the latest or the current time are bogus, so discard the latest value and try with the oldest value */
+			*latestCPUTime = currentCPUTime;
+		}
+	}
+	
+	if (((currentCPUTime.timestamp - oldestCPUTime->timestamp) >= 10000000) && (currentCPUTime.numberOfCpus != 0)) {
+		*cpuLoad = OMR_MIN((currentCPUTime.cpuTime - oldestCPUTime->cpuTime) / ((double)currentCPUTime.numberOfCpus * (currentCPUTime.timestamp - oldestCPUTime->timestamp)), 1.0);
+		if (*cpuLoad >= 0.0) {
+			return 0;
+		} else {
+			*oldestCPUTime = currentCPUTime;
+		}
+	}
+
+	return OMRPORT_ERROR_OPFAILED;
+#elif defined(J9ZOS390) /* (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) */
+	currentCPUTime.timestamp = portLibrary->time_nano_time(portLibrary);
+
+	if (oldestCPUTime->timestamp == 0) {
+		*oldestCPUTime = currentCPUTime;
+		*latestCPUTime = currentCPUTime;
+		return OMRPORT_ERROR_OPFAILED;
+	}
+
+	/* Calculate using the most recent value in the history */
+	if ((currentCPUTime.timestamp - latestCPUTime->timestamp) >= 10000000) {
+		J9CVT* __ptr32 cvtp = ((J9PSA* __ptr32)0)->flccvt;
+		J9RMCT* __ptr32 rcmtp = cvtp->cvtopctp;
+		J9CCT* __ptr32 cctp = rcmtp->rmctcct;
+
+		*cpuLoad = (double)cctp->ccvutilp / 100.0;
+		*oldestCPUTime = *latestCPUTime;
+		*latestCPUTime = currentCPUTime;
+		return 0;
+	}
+
+	if ((currentCPUTime.timestamp - oldestCPUTime->timestamp) >= 10000000) {
+		J9CVT* __ptr32 cvtp = ((J9PSA* __ptr32)0)->flccvt;
+		J9RMCT* __ptr32 rcmtp = cvtp->cvtopctp;
+		J9CCT* __ptr32 cctp = rcmtp->rmctcct;
+
+		*cpuLoad = (double)cctp->ccvutilp / 100.0;
+		return 0;
+	}
+
+	return OMRPORT_ERROR_OPFAILED;
+#else /* (defined(LINUX) && !defined(OMRZTPF)) || defined(AIXPPC) || defined(OSX) || defined(J9ZOS390) */
 	return OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED;
 #endif
 }
@@ -2714,13 +3781,13 @@ omrsysinfo_limit_iterator_next(struct OMRPortLibrary *portLibrary, J9SysinfoLimi
 		limitElement->name = limitMap[state->count].resourceName;
 
 		if (RLIM_INFINITY == limits.rlim_cur) {
-			limitElement->softValue	= (uint64_t) OMRPORT_LIMIT_UNLIMITED;
+			limitElement->softValue = (uint64_t) OMRPORT_LIMIT_UNLIMITED;
 		} else {
 			limitElement->softValue = (uint64_t) limits.rlim_cur;
 		}
 
 		if (RLIM_INFINITY == limits.rlim_max) {
-			limitElement->hardValue	= (uint64_t) OMRPORT_LIMIT_UNLIMITED;
+			limitElement->hardValue = (uint64_t) OMRPORT_LIMIT_UNLIMITED;
 		} else {
 			limitElement->hardValue = (uint64_t) limits.rlim_max;
 		}
@@ -2855,12 +3922,11 @@ convertWithMBTOWC(struct OMRPortLibrary *portLibrary, char *inputBuffer, char *o
 }
 #endif /* J9VM_USE_MBTOWC */
 
-
 /**
  * Initializes the supplied buffer such that it can be used by the @ref omrsysinfo_env_iteraror_next() and @ref omrsysinfo_env_iterator_hasNext() APIs.
  *
  * If the caller supplies a non-NULL buffer that is not big enough to store all the name=value entries of the environment,
- * 	copyEnvToBuffer will store as many entries as possible, until the buffer is used up.
+ *  copyEnvToBuffer will store as many entries as possible, until the buffer is used up.
  *
  * If the buffer wasn't even big enough to contain a single entry, set its entire contents to '\0'
  *
@@ -2869,8 +3935,8 @@ convertWithMBTOWC(struct OMRPortLibrary *portLibrary, char *inputBuffer, char *o
  * @param[in] args pointer to a CopyEnvToBufferArgs structure
  *
  * @return
- * 		 - 0 if the buffer was big enough to store the entire environment.
- * 		 - the required size of the buffer, if it was not big enough to store the entire environment.
+ *       - 0 if the buffer was big enough to store the entire environment.
+ *       - the required size of the buffer, if it was not big enough to store the entire environment.
  *
  * @return: the number of elements available to the iterator
 */
@@ -2905,8 +3971,8 @@ copyEnvToBuffer(struct OMRPortLibrary *portLibrary, void *args)
 
 		storageRequiredForEnvironment = storageRequiredForEnvironment
 										+ sizeof(EnvListItem)
-										+ (intptr_t)(strlen(environ[i]) * J9_MAX_UTF8_SIZE_BYTES)	/* for the string itself (name=value ) */
-										+ 1;	/* for the null-terminator */
+										+ (intptr_t)(strlen(environ[i]) * J9_MAX_UTF8_SIZE_BYTES)   /* for the string itself (name=value ) */
+										+ 1;    /* for the null-terminator */
 	}
 
 	if (NULL == buffer) {
@@ -3077,8 +4143,8 @@ omrsysinfo_env_iterator_next(struct OMRPortLibrary *portLibrary, J9SysinfoEnvIte
 
 #if defined(LINUX)
 
-#define PROCSTATPATH	"/proc/stat"
-#define PROCSTATPREFIX	"cpu"
+#define PROCSTATPATH    "/proc/stat"
+#define PROCSTATPREFIX  "cpu"
 
 /**
  * Function collects processor usage statistics on Linux platforms and returns the same.
@@ -3130,8 +4196,9 @@ retrieveLinuxProcessorStats(struct OMRPortLibrary *portLibrary, struct J9Process
 	}
 
 	/* Loop until all records have been read-off "/proc/stat". */
-	while ((-1 != getline(&linePtr, &lineSz, procStatFs)) &&
-		   (0 == strncmp(linePtr, PROCSTATPREFIX, sizeof(PROCSTATPREFIX) - 1))) {
+	while ((-1 != getline(&linePtr, &lineSz, procStatFs))
+		&& (0 == strncmp(linePtr, PROCSTATPREFIX, sizeof(PROCSTATPREFIX) - 1)))
+	{
 		int32_t cpuid = -1;
 
 		/* Insufficient memory allocated since cpu count increased. Cleanup and return error. */
@@ -3306,9 +4373,9 @@ retrieveAIXProcessorStats(struct OMRPortLibrary *portLibrary, struct J9Processor
 	procInfo->procInfoArray[0].systemTime = total_cpu_usage.sys * TICKS_TO_USEC;
 	procInfo->procInfoArray[0].idleTime = total_cpu_usage.idle * TICKS_TO_USEC;
 	procInfo->procInfoArray[0].waitTime = total_cpu_usage.wait * TICKS_TO_USEC;
-	procInfo->procInfoArray[0].busyTime = procInfo->procInfoArray[0].userTime +
-										  procInfo->procInfoArray[0].systemTime +
-										  procInfo->procInfoArray[0].waitTime;
+	procInfo->procInfoArray[0].busyTime = procInfo->procInfoArray[0].userTime
+										+ procInfo->procInfoArray[0].systemTime
+										+ procInfo->procInfoArray[0].waitTime;
 
 	/* perfstat_cpu() returns (highest_CPUID+1) that was online since last boot, but counts-in
 	 * stale CPU records too. At present, we can't tell exactly which CPUs are online at this
@@ -3333,7 +4400,7 @@ retrieveAIXProcessorStats(struct OMRPortLibrary *portLibrary, struct J9Processor
 	/* Allocate as many entries perfstat_cpu_t as there are processors on the machine. */
 	statp = (perfstat_cpu_t*) portLibrary->mem_allocate_memory(portLibrary,
 															   onlineProcessorCount * sizeof(perfstat_cpu_t),
-												   			   OMR_GET_CALLSITE(),
+															   OMR_GET_CALLSITE(),
 															   OMRMEM_CATEGORY_PORT_LIBRARY);
 	if (NULL == statp) {
 		Trc_PRT_retrieveAIXProcessorStats_memAllocFailed();
@@ -3597,7 +4664,7 @@ setPortableError(OMRPortLibrary *portLibrary, const char *funcName, int32_t port
 	}
 
 	/*Fill the buffer using str_printf*/
-	portLibrary->str_printf(portLibrary, errmsgbuff, errmsglen, "%s%s", funcName,	strerror(systemErrno));
+	portLibrary->str_printf(portLibrary, errmsgbuff, errmsglen, "%s%s", funcName, strerror(systemErrno));
 
 	/*Set the error message*/
 	portLibrary->error_set_last_error_with_message(portLibrary, portableErrno, errmsgbuff);
@@ -3704,7 +4771,7 @@ omrsysinfo_get_open_file_count(struct OMRPortLibrary *portLibrary, uint64_t *cou
 		ret = OMRPORT_ERROR_SYSINFO_GET_OPEN_FILES_NOT_SUPPORTED;
 #endif
 	}
-	
+
 	Trc_PRT_sysinfo_get_open_file_count_Exit(ret);
 	return ret;
 }
@@ -3725,7 +4792,7 @@ setOSFeature(struct OMROSDesc *desc, uint32_t feature)
 		uint32_t featureIndex = feature / 32;
 		uint32_t featureShift = feature % 32;
 
-		desc->features[featureIndex] = (desc->features[featureIndex] | (1 << (featureShift)));
+		desc->features[featureIndex] = (desc->features[featureIndex] | (1u << (featureShift)));
 	}
 }
 
@@ -3782,7 +4849,7 @@ omrsysinfo_os_has_feature(struct OMRPortLibrary *portLibrary, struct OMROSDesc *
 		uint32_t featureIndex = feature / 32;
 		uint32_t featureShift = feature % 32;
 
-		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1 << featureShift);
+		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1u << featureShift);
 	}
 
 	Trc_PRT_sysinfo_os_has_feature_Exit((uintptr_t)rc);
@@ -4000,8 +5067,6 @@ readCgroupFile(struct OMRPortLibrary *portLibrary, int pid, BOOLEAN inContainer,
 			Trc_PRT_readCgroupFile_fgets_failed(cgroupFilePath, osErrCode);
 			rc = portLibrary->error_set_last_error_with_message_format(portLibrary, OMRPORT_ERROR_SYSINFO_PROCESS_CGROUP_FILE_READ_FAILED, "fgets failed to read %s file stream with errno=%d", cgroupFilePath, osErrCode);
 			goto _end;
-		} else if (NULL == buffer) {
-			break;
 		}
 		rc = sscanf(buffer, PROC_PID_CGROUP_ENTRY_FORMAT, &hierId, subsystems, cgroup);
 
@@ -4189,7 +5254,7 @@ getHandleOfCgroupSubsystemFile(struct OMRPortLibrary *portLibrary, uint64_t subs
 			goto _end;
 		}
 	}
-	
+
 _end:
 	if (allocateMemory) {
 		portLibrary->mem_free_memory(portLibrary, fullPath);
@@ -4296,7 +5361,7 @@ _end:
  *
  * @param[in] portLibrary pointer to OMRPortLibrary
  * @param[out] inContainer pointer to BOOLEAN which on successful return indicates if
- * 		the process is running in container or not.  On error it indicates FALSE.
+ *      the process is running in container or not.  On error it indicates FALSE.
  *
  * @return 0 on success, otherwise negative error code
  */
@@ -4338,8 +5403,6 @@ isRunningInContainer(struct OMRPortLibrary *portLibrary, BOOLEAN *inContainer)
 				Trc_PRT_isRunningInContainer_fgets_failed(OMR_PROC_PID_ONE_CGROUP_FILE, osErrCode);
 				rc = portLibrary->error_set_last_error_with_message_format(portLibrary, OMRPORT_ERROR_SYSINFO_PROCESS_CGROUP_FILE_READ_FAILED, "fgets failed to read %s file stream with errno=%d", OMR_PROC_PID_ONE_CGROUP_FILE, osErrCode);
 				goto _end;
-			} else if (NULL == buffer) {
-				break;
 			}
 			rc = sscanf(buffer, PROC_PID_CGROUP_ENTRY_FORMAT, &hierId, subsystems, cgroup);
 
@@ -4397,7 +5460,7 @@ getCgroupMemoryLimit(struct OMRPortLibrary *portLibrary, uint64_t *limit)
 	if (cgroupMemLimit > physicalMemLimit) {
 		Trc_PRT_sysinfo_cgroup_get_memlimit_unlimited();
 		rc = portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_ERROR_SYSINFO_CGROUP_MEMLIMIT_NOT_SET, "memory limit is not set");
-                goto _end;
+				goto _end;
 	}
 	if (NULL != limit) {
 		*limit = cgroupMemLimit;
@@ -4538,7 +5601,6 @@ omrsysinfo_cgroup_get_memlimit(struct OMRPortLibrary *portLibrary, uint64_t *lim
 	return rc;
 }
 
-
 BOOLEAN
 omrsysinfo_cgroup_is_memlimit_set(struct OMRPortLibrary *portLibrary)
 {
@@ -4564,7 +5626,7 @@ omrsysinfo_get_cgroup_subsystem_list(struct OMRPortLibrary *portLibrary)
 	return PPG_cgroupEntryList;
 #else
 	return NULL;
-#endif 
+#endif
 }
 
 /*
@@ -4574,7 +5636,7 @@ omrsysinfo_get_cgroup_subsystem_list(struct OMRPortLibrary *portLibrary)
 BOOLEAN
 omrsysinfo_is_running_in_container(struct OMRPortLibrary *portLibrary)
 {
-	return PPG_isRunningInContainer; 
+	return PPG_isRunningInContainer;
 }
 
 int32_t
@@ -4588,14 +5650,14 @@ omrsysinfo_cgroup_subsystem_iterator_init(struct OMRPortLibrary *portLibrary, ui
 	state->fileMetricCounter = 0;
 	switch (subsystem) {
 	case OMR_CGROUP_SUBSYSTEM_MEMORY :
-		 state->numElements = sizeof(omrCgroupMemoryMetricMap) / sizeof(omrCgroupMemoryMetricMap[0]);
-		 break;
+		state->numElements = sizeof(omrCgroupMemoryMetricMap) / sizeof(omrCgroupMemoryMetricMap[0]);
+		break;
 	case OMR_CGROUP_SUBSYSTEM_CPU :
-		 state->numElements = sizeof(omrCgroupCpuMetricMap) / sizeof(omrCgroupCpuMetricMap[0]);
-		 break;
+		state->numElements = sizeof(omrCgroupCpuMetricMap) / sizeof(omrCgroupCpuMetricMap[0]);
+		break;
 	case OMR_CGROUP_SUBSYSTEM_CPUSET :
-		 state->numElements = sizeof(omrCgroupCpusetMetricMap) / sizeof(omrCgroupCpusetMetricMap[0]);
-		 break;
+		state->numElements = sizeof(omrCgroupCpusetMetricMap) / sizeof(omrCgroupCpusetMetricMap[0]);
+		break;
 	default :
 		goto _end;
 	}
@@ -4738,7 +5800,7 @@ _end:
 	if (0 == rc) {
 		/**
 		 * 'value' may have new line at the end (fgets add '\n' at the end)
-		 * which is not required so we could remove it 
+		 * which is not required so we could remove it
 		 */
 		size_t len = strlen(metricElement->value);
 		metricElement->units = currentElement->metricUnit;
@@ -4754,9 +5816,9 @@ _end:
 			}
 		}
 	}
-	
+
 #endif /* defined(LINUX) && !defined(OMRZTPF) */
-	return rc;	
+	return rc;
 }
 
 void
@@ -4768,28 +5830,25 @@ omrsysinfo_cgroup_subsystem_iterator_destroy(struct OMRPortLibrary *portLibrary,
 	}
 }
 
-
 #if defined(OMRZTPF)
 /*
- *	Return the number of I-streams ("processors", as called by other
- *	systems) in an unsigned integer as detected at IPL time.
+ * Return the number of I-streams ("processors", as called by other
+ * systems) in an unsigned integer as detected at IPL time.
  */
 uintptr_t
-get_IPL_IstreamCount( void ) {
-	struct dctist *ist;
-	ist = (struct dctist *)cinfc_fast(CINFC_CMMIST);
+get_IPL_IstreamCount(void) {
+	struct dctist *ist = (struct dctist *)cinfc_fast(CINFC_CMMIST);
 	int numberOfIStreams = ist->istactis;
 	return (uintptr_t)numberOfIStreams;
 }
 
- /*
- *      Return the number of I-streams ("processors", as called by other
- *      systems) in an unsigned integer as detect at Process Dispatch time.
+/*
+ * Return the number of I-streams ("processors", as called by other
+ * systems) in an unsigned integer as detect at Process Dispatch time.
  */
 uintptr_t
-get_Dispatch_IstreamCount( void ) {
-	struct dctist *ist;
-	ist = (struct dctist *)cinfc_fast(CINFC_CMMIST);
+get_Dispatch_IstreamCount(void) {
+	struct dctist *ist = (struct dctist *)cinfc_fast(CINFC_CMMIST);
 	int numberOfIStreams = ist->istuseis;
 	return (uintptr_t)numberOfIStreams;
 }

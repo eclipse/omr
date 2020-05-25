@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,14 +19,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "runtime/OMRCodeCache.hpp"
+#include "runtime/CodeCache.hpp"
 
 #include <algorithm>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
@@ -229,7 +229,7 @@ OMR::CodeCache::trimCodeMemoryAllocation(void *codeMemoryStart, size_t actualSiz
 
    if (expectedHeapAlloc == _warmCodeAlloc)
       {
-      _manager->increaseFreeSpaceInCodeCacheRepository(shrinkage);
+      _manager->decreaseCurrTotalUsedInBytes(shrinkage);
       _warmCodeAlloc -= shrinkage;
       cacheHeader->_size = actualSizeInBytes;
       return true;
@@ -302,7 +302,7 @@ OMR::CodeCache::initialize(TR::CodeCacheManager *manager,
    *((TR::CodeCache **)(_segment->segmentBase())) = self(); // Write a pointer to this cache at the beginning of the segment
    _warmCodeAlloc = _segment->segmentBase() + sizeof(this);
 
-   _warmCodeAlloc = align(_warmCodeAlloc, config.codeCacheAlignment() -  1);
+   _warmCodeAlloc = (uint8_t *)align((size_t)_warmCodeAlloc, config.codeCacheAlignment());
 
    if (!config.trampolineCodeSize())
       {
@@ -402,9 +402,8 @@ OMR::CodeCache::initialize(TR::CodeCacheManager *manager,
 
    // Before returning, let's adjust the free space seen by VM.
    // Usable space is between _warmCodeAlloc and _trampolineBase. Everything else is overhead
-   // Only relevant if code cache repository is used
    size_t spaceLost = (_warmCodeAlloc - _segment->segmentBase()) + (_segment->segmentTop() - _trampolineBase);
-   _manager->decreaseFreeSpaceInCodeCacheRepository(spaceLost);
+   _manager->increaseCurrTotalUsedInBytes(spaceLost);
 
    return true;
    }
@@ -947,8 +946,8 @@ OMR::CodeCache::addFreeBlock2WithCallSite(uint8_t *start,
 
    // align start on a code cache alignment boundary
    uint8_t *start_o = start;
-   uint32_t round = config.codeCacheAlignment() - 1;
-   start = align(start, round);
+   uint32_t round = config.codeCacheAlignment();
+   start = (uint8_t *)align((size_t)start, round);
 
    // make sure aligning start didn't push it past end
    if (end <= (start+sizeof(CodeCacheFreeCacheBlock)))
@@ -1064,6 +1063,8 @@ OMR::CodeCache::addFreeBlock2WithCallSite(uint8_t *start,
       }
 
    self()->updateMaxSizeOfFreeBlocks(link, link->_size);
+
+   _manager->decreaseCurrTotalUsedInBytes(size);
 
    if (config.verboseReclamation())
       {
@@ -1215,6 +1216,8 @@ OMR::CodeCache::findFreeBlock(size_t size, bool isCold, bool isMethodHeaderNeede
          {
          TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,"--ccr- findFreeBlock: CodeCache=%p size=%u isCold=%d bestFitLink=%p bestFitLink->size=%u leftBlock=%p", this, size, isCold, bestFitLink, bestFitLink->_size, leftBlock);
          }
+
+      _manager->increaseCurrTotalUsedInBytes(bestFitLink->_size);
       }
    // Because we call this method only after we made sure a free block exists
    // this function can never return NULL
@@ -1288,6 +1291,7 @@ OMR::CodeCache::printOccupancyStats()
    fprintf(stderr, "Code Cache @%p flags=0x%x almostFull=%d\n", this, _flags, _almostFull);
    fprintf(stderr, "   cold-warm hole size        = %8" OMR_PRIuSIZE " bytes\n", self()->getFreeContiguousSpace());
    fprintf(stderr, "   warmCodeAlloc=%p coldCodeAlloc=%p\n", (void*)_warmCodeAlloc, (void*)_coldCodeAlloc);
+   size_t totalReclaimed = 0;
    if (_freeBlockList)
       {
       fprintf(stderr, "   sizeOfLargestFreeColdBlock = %8" OMR_PRIuSIZE " bytes\n", _sizeOfLargestFreeColdBlock);
@@ -1297,7 +1301,10 @@ OMR::CodeCache::printOccupancyStats()
          {
          CacheCriticalSection resolveAndCreateTrampoline(self());
          for (CodeCacheFreeCacheBlock *currLink = _freeBlockList; currLink; currLink = currLink->_next)
+            {
             fprintf(stderr, " %" OMR_PRIuSIZE, currLink->_size);
+            totalReclaimed += currLink->_size;
+            }
          }
       fprintf(stderr, "\n");
       }
@@ -1309,6 +1316,12 @@ OMR::CodeCache::printOccupancyStats()
          (int32_t)(_trampolineReservationMark - _trampolineBase),
          (int32_t)(_tempTrampolineNext - _tempTrampolineBase));
       }
+
+   size_t totalConfigSizeInBytes = config.codeCacheKB() * 1024;
+   size_t totalFreeSizeInBytes = self()->getFreeContiguousSpace() + totalReclaimed;
+   fprintf(stderr, "   config size     = %8" OMR_PRIuSIZE " bytes\n", totalConfigSizeInBytes);
+   fprintf(stderr, "   total free size = %8" OMR_PRIuSIZE " bytes\n", totalFreeSizeInBytes);
+   fprintf(stderr, "   total used size = %8" OMR_PRIuSIZE " bytes\n", totalConfigSizeInBytes - totalFreeSizeInBytes);
    }
 
 
@@ -1425,7 +1438,7 @@ OMR::CodeCache::checkForErrors()
          // 2. A used block must be followed by another used block or by a free block
          // 3. All used blocks must have a CodeCacheMethodHeader with size as first parameter, folowed by eyeCatcher and metaData
          TR::CodeCacheConfig &config = _manager->codeCacheConfig();
-         uint8_t *start = align(((uint8_t*)_segment->segmentTop()) + sizeof(char*), config.codeCacheAlignment() -  1);
+         uint8_t *start = (uint8_t *)align(((size_t)_segment->segmentTop()) + sizeof(char*), config.codeCacheAlignment());
          uint8_t *prevBlock = NULL;
          while (start < this->_trampolineBase)
             {
@@ -1559,7 +1572,7 @@ OMR::CodeCache::allocateCodeMemory(size_t warmCodeSize,
 
          // _warmCodeAlloc will change to its new value 'cacheHeapAlloc'
          // Thus the free code cache space decreases by (cacheHeapAlloc-_warmCodeAlloc)
-         _manager->decreaseFreeSpaceInCodeCacheRepository(cacheHeapAlloc-_warmCodeAlloc);
+         _manager->increaseCurrTotalUsedInBytes(cacheHeapAlloc-_warmCodeAlloc);
          _warmCodeAlloc = cacheHeapAlloc;
          if (isMethodHeaderNeeded)
             self()->writeMethodHeader(warmCodeAddress, warmSize, false);
@@ -1598,7 +1611,7 @@ OMR::CodeCache::allocateCodeMemory(size_t warmCodeSize,
                }
             return NULL;
             }
-         _manager->decreaseFreeSpaceInCodeCacheRepository(_coldCodeAlloc - cacheHeapAlloc);
+         _manager->increaseCurrTotalUsedInBytes(_coldCodeAlloc - cacheHeapAlloc);
          _coldCodeAlloc = cacheHeapAlloc;
          coldCodeAddress = cacheHeapAlloc;
          if (isMethodHeaderNeeded)

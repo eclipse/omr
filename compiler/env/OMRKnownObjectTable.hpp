@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,31 +68,32 @@ public:
    typedef int32_t Index;
    static const Index UNKNOWN = -1;
 
-   TR_FrontEnd *fe() { return _fe; }
+   TR_FrontEnd *fe() const { return _fe; }
    void setFe(TR_FrontEnd *fe) { _fe = fe; }
 
-   TR::Compilation *comp() { return _comp; }
+   TR::Compilation *comp() const { return _comp; }
    void setComp(TR::Compilation *comp) { _comp = comp; }
 
-   virtual Index getEndIndex();                      // Highest index assigned so far + 1
-   virtual Index getIndex(uintptrj_t objectPointer); // Must hold vm access for this
-   Index getIndex(uintptrj_t objectPointer, bool isArrayWithConstantElements); // Must hold vm access for this
-   virtual uintptrj_t *getPointerLocation(Index index);
-   virtual bool isNull(Index index);
+   Index getEndIndex();                      // Highest index assigned so far + 1
+   Index getOrCreateIndex(uintptr_t objectPointer); // Must hold vm access for this
+   Index getOrCreateIndex(uintptr_t objectPointer, bool isArrayWithConstantElements); // Must hold vm access for this
+   uintptr_t *getPointerLocation(Index index);
+   bool isNull(Index index);
 
-   virtual void dumpTo(TR::FILE *file, TR::Compilation *comp);
+   void dumpTo(TR::FILE *file, TR::Compilation *comp);
 
    // Handy wrappers
 
    // API for checking if an known object is an array with immutable elements
    bool isArrayWithConstantElements(Index index);
 
-   Index getIndexAt(uintptrj_t *objectReferenceLocation);
-   Index getIndexAt(uintptrj_t *objectReferenceLocation, bool isArrayWithConstantElements);
-   Index getExistingIndexAt(uintptrj_t *objectReferenceLocation);
+   Index getOrCreateIndexAt(uintptr_t *objectReferenceLocation);
+   Index getOrCreateIndexAt(uintptr_t *objectReferenceLocation, bool isArrayWithConstantElements);
+   Index getExistingIndexAt(uintptr_t *objectReferenceLocation);
 
-   uintptrj_t getPointer(Index index);
-   uintptrj_t *getfPointerLocationAt(uintptrj_t *objectReferenceLocation);
+   uintptr_t getPointer(Index index);
+
+   void updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocation);
 
 protected:
    void addArrayWithConstantElements(Index index);

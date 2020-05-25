@@ -23,14 +23,14 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/IO.hpp"
 #include "env/TRMemory.hpp"
 #include "il/Block.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/List.hpp"

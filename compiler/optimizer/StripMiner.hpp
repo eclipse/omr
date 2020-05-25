@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,16 +69,16 @@ class TR_StripMiner : public TR_LoopTransformer
    struct LoopInfo
       {
       TR_RegionStructure *_region;
-      intptrj_t _regionNum;
-      intptrj_t _arrayDataSize;
+      intptr_t _regionNum;
+      intptr_t _arrayDataSize;
       bool _increasing;
       bool _branchToExit;
       bool _canMoveAsyncCheck;
       bool _needOffsetLoop;
-      intptrj_t _preOffset;
-      intptrj_t _postOffset;
-      intptrj_t _offset;
-      intptrj_t _stripLen;
+      intptr_t _preOffset;
+      intptr_t _postOffset;
+      intptr_t _offset;
+      intptr_t _stripLen;
 
       TR::Block *_preHeader;
       TR::Block *_loopTest;
@@ -93,7 +93,7 @@ class TR_StripMiner : public TR_LoopTransformer
       TR_ScratchList<TR::CFGEdge> _edgesToRemove;
       };
 
-   intptrj_t _nodesInCFG;
+   intptr_t _nodesInCFG;
    TR::TreeTop *_endTree;
 
    TR_ScratchList<LoopInfo> _loopInfos;

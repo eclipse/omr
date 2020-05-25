@@ -22,7 +22,6 @@
 #ifndef GCSTACKMAP_INCL
 #define GCSTACKMAP_INCL
 
-#include "il/symbol/LabelSymbol.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -30,7 +29,8 @@
 #include "codegen/GCRegisterMap.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/AutomaticSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 

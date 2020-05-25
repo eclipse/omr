@@ -52,7 +52,7 @@ TR_S390OutOfLineCodeSection::TR_S390OutOfLineCodeSection(TR::Node  *callNode,
                                                  TR::LabelSymbol    *restartLabel,
                                                  TR::CodeGenerator *cg) :
                                                  TR_OutOfLineCodeSection(callNode,callOp,targetReg,entryLabel,restartLabel,cg),
-                                                   _targetRegMovOpcode(TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGR : TR::InstOpCode::LR)
+                                                   _targetRegMovOpcode(cg->comp()->target().is64Bit() ? TR::InstOpCode::LGR : TR::InstOpCode::LR)
    {
    // isPreparedForDirectJNI also checks if the node is a call
    if(callNode->isPreparedForDirectJNI())

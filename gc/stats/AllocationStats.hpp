@@ -43,10 +43,8 @@ public:
 	uintptr_t _tlhMaxAbandonedListSize; /**< The maximum size of the abandoned list. */
 #endif /* defined (OMR_GC_THREAD_LOCAL_HEAP) */
 
-#if defined(OMR_GC_ARRAYLETS)
 	uintptr_t _arrayletLeafAllocationCount;	/**< Number of arraylet leaf allocations */
 	uintptr_t _arrayletLeafAllocationBytes; /**< The amount of memory allocated for arraylet leafs */
-#endif
 
 	uintptr_t _allocationCount;
 	uintptr_t _allocationBytes;
@@ -73,9 +71,7 @@ public:
 #else
 		totalBytesAllocated += _allocationBytes;
 #endif
-#if defined(OMR_GC_ARRAYLETS)
 		totalBytesAllocated += _arrayletLeafAllocationBytes;
-#endif
 		return totalBytesAllocated;
 	}
 
@@ -89,10 +85,8 @@ public:
 		_tlhDiscardedBytes(0),
 		_tlhMaxAbandonedListSize(0),
 #endif /* defined (OMR_GC_THREAD_LOCAL_HEAP) */
-#if defined(OMR_GC_ARRAYLETS)
 		_arrayletLeafAllocationCount(0),
 		_arrayletLeafAllocationBytes(0),
-#endif
 		_allocationCount(0),
 		_allocationBytes(0),
 		_ownableSynchronizerObjectCount(0),

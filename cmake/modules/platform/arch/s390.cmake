@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,16 +19,12 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-list(APPEND OMR_PLATFORM_DEFINITIONS
-	-DJ9VM_TIERED_CODE_CACHE
-)
-
 # Testarossa build variables. Longer term the distinction between TR and the rest
 # of the OMR code should be heavily reduced. In the mean time, we keep
 # the distinction
-set(TR_HOST_ARCH    z)
-set(TR_HOST_BITS    64)
-list(APPEND TR_COMPILE_DEFINITIONS TR_HOST_S390 TR_TARGET_S390)
+set(TR_HOST_ARCH z)
+set(TR_HOST_BITS 64)
+list(APPEND TR_COMPILE_DEFINITIONS TR_HOST_S390 TR_TARGET_S390 _LONG_LONG)
 
 if(OMR_ENV_DATA64)
 	list(APPEND TR_COMPILE_DEFINITIONS TR_HOST_64BIT TR_TARGET_64BIT BITVECTOR_64BIT)

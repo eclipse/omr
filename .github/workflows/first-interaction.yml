@@ -1,0 +1,17 @@
+name: "First Time Contributor"
+on:
+  schedule:
+  - cron: "*/5 * * * *"
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: fjeremic/cron-first-interaction@0.1.0
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        pr-message: |-
+          Thank you for supporting the project, and congratulations on your first contribution! A project committer will shortly review your contribution. In the mean time, if you haven't had a chance please skim over the [contribution guidelines](https://github.com/eclipse/omr/blob/master/CONTRIBUTING.md#submitting-a-contribution) which all pull requests must adhere to. If the ECA pull request check fails, have a look at the instructions for signing the ECA in the [legal considerations](https://github.com/eclipse/omr/blob/master/CONTRIBUTING.md#legal-considerations) section.
+
+          If you run into any problems our community will be happy to assist you in any way we can. There are a number of recommended ways to [interact with the community](https://github.com/eclipse/omr#how-do-i-interact-with-the-community). We encourage you to ask questions, or drop by to say hello.
+        pr-label: 'first contribution'

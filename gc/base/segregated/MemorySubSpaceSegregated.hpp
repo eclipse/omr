@@ -91,10 +91,8 @@ public:
 
 	virtual void *allocateObject(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
 
-#if defined(OMR_GC_ARRAYLETS)
 	virtual void *allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
 	virtual uintptr_t largestDesirableArraySpine();
-#endif /* defined(OMR_GC_ARRAYLETS) */
 
 	/* Calls for internal collection routines */
 	virtual void abandonHeapChunk(void *addrBase, void *addrTop);
@@ -116,7 +114,7 @@ public:
 
 	virtual bool heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress);
 	virtual bool heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress, void *lowValidAddress, void *highValidAddress);
-	virtual void heapReconfigured(MM_EnvironmentBase *env);
+	virtual void heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace = NULL, void *lowAddress = NULL, void *highAddress = NULL);
 
 	virtual MM_MemoryPool *getMemoryPool();
 	

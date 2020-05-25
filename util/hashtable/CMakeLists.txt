@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,19 +30,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_tracegen(hashtable.tdf)
 
-add_library(j9hashtable STATIC
+omr_add_library(j9hashtable STATIC
 	hash.c
 	hashtable.c
 	${CMAKE_CURRENT_BINARY_DIR}/ut_hashtable.c
 )
-
-if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(j9hashtable PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-endif()
-
-if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(j9hashtable PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-endif()
 
 target_include_directories(j9hashtable
 	PUBLIC
@@ -58,4 +50,9 @@ target_link_libraries(j9hashtable
 
 set_property(TARGET j9hashtable PROPERTY FOLDER util)
 
-target_enable_ddr(j9hashtable "${OMR_DDR_SET}")
+target_enable_ddr(j9hashtable)
+ddr_add_headers(j9hashtable
+	${omr_SOURCE_DIR}/include_core/hashtable_api.h
+	${omr_SOURCE_DIR}/include_core/omrhashtable.h
+)
+ddr_set_add_targets(omrddr j9hashtable)

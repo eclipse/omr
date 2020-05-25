@@ -187,19 +187,19 @@
    {  include:  [  "\"il/OMRTreeTop.hpp\"",                              private,  "\"il/TreeTop.hpp\"",                              public  ]  },
    {  include:  [  "\"il/OMRTreeTop_inlines.hpp\"",                      private,  "\"il/TreeTop_inlines.hpp\"",                      public  ]  },
 
-   {  include:  [  "\"il/symbol/OMRAutomaticSymbol.hpp\"",               private,  "\"il/symbol/AutomaticSymbol.hpp\"",               public  ]  },
+   {  include:  [  "\"il/OMRAutomaticSymbol.hpp\"",                      private,  "\"il/AutomaticSymbol.hpp\"",                      public  ]  },
 
-   {  include:  [  "\"il/symbol/OMRLabelSymbol.hpp\"",                   private,  "\"il/symbol/LabelSymbol.hpp\"",                   public  ]  },
+   {  include:  [  "\"il/OMRLabelSymbol.hpp\"",                          private,  "\"il/LabelSymbol.hpp\"",                          public  ]  },
 
-   {  include:  [  "\"il/symbol/OMRParameterSymbol.hpp\"",               private,  "\"il/symbol/ParameterSymbol.hpp\"",               public  ]  },
+   {  include:  [  "\"il/OMRParameterSymbol.hpp\"",                      private,  "\"il/ParameterSymbol.hpp\"",                      public  ]  },
 
-   {  include:  [  "\"il/symbol/OMRMethodSymbol.hpp\"",                  private,  "\"il/symbol/MethodSymbol.hpp\"",                  public  ]  },
+   {  include:  [  "\"il/OMRMethodSymbol.hpp\"",                         private,  "\"il/MethodSymbol.hpp\"",                         public  ]  },
 
-   {  include:  [  "\"il/symbol/OMRRegisterMappedSymbol.hpp\"",          private,  "\"il/symbol/RegisterMappedSymbol.hpp\"",          public  ]  },
+   {  include:  [  "\"il/OMRRegisterMappedSymbol.hpp\"",                 private,  "\"il/RegisterMappedSymbol.hpp\"",                 public  ]  },
 
-   {  include:  [  "\"il/symbol/OMRResolvedMethodSymbol.hpp\"",          private,  "\"il/symbol/ResolvedMethodSymbol.hpp\"",          public  ]  },
+   {  include:  [  "\"il/OMRResolvedMethodSymbol.hpp\"",                 private,  "\"il/ResolvedMethodSymbol.hpp\"",                 public  ]  },
 
-   {  include:  [  "\"il/symbol/OMRStaticSymbol.hpp\"",                  private,  "\"il/symbol/StaticSymbol.hpp\"",                  public  ]  },
+   {  include:  [  "\"il/OMRStaticSymbol.hpp\"",                         private,  "\"il/StaticSymbol.hpp\"",                         public  ]  },
 
    {  include:  [  "\"ilgen/OMRIlGeneratorMethodDetails.hpp\"",          private,  "\"ilgen/IlGeneratorMethodDetails.hpp\"",          public  ]  },
    {  include:  [  "\"ilgen/OMRIlGeneratorMethodDetails_inlines.hpp\"",  private,  "\"ilgen/IlGeneratorMethodDetails_inlines.hpp\"",  public  ]  },

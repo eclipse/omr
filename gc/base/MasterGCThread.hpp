@@ -67,6 +67,7 @@ private:
 	MM_Collector *_collector; /**< The garbage collector */
 	bool _runAsImplicit; /**< if true, STW GC (via garbageCollect()) is executed with the master thread being the caller's thread, otherwise the request is passed to the explicit master thread */
 	bool _acquireVMAccessDuringConcurrent; /**< if true, (explicit) master GC thread holds VM access, while running concurrent phase of a GC cycle */
+	bool _concurrentResumable; /**< if true, a previously terminated concurrent phase (e.g. Concurrent Scavenger) is able to resume once vm access has been acquired again */
 
 /*
  * Function members
@@ -77,7 +78,7 @@ public:
 	 * Early initialize: montior creation
 	 * globalCollector[in] the global collector (typically the caller)
 	 */
-	bool initialize(MM_Collector *collector, bool runAsImplicit = false, bool acquireVMAccessDuringConcurrent = false);
+	bool initialize(MM_Collector *collector, bool runAsImplicit = false, bool acquireVMAccessDuringConcurrent = false, bool concurrentResumable = false);
 
 	/**
 	 * Teardown resources created by initialize

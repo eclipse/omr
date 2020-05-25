@@ -59,7 +59,7 @@ TR::PPA1Snippet::emitSnippetBody()
 
    uint8_t flags1 = 0x00;
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       flags1 |= 0x80;
       }

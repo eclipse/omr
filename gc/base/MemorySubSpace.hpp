@@ -404,7 +404,7 @@ public:
 	 * moved from one subspace to another.
 	 * @param env[in] The thread which performed the change in heap geometry 
 	 */
-	virtual void heapReconfigured(MM_EnvironmentBase *env);
+	virtual void heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason = HEAP_RECONFIG_NONE, MM_MemorySubSpace *subspace = NULL, void *lowAddress = NULL, void *highAddress = NULL);
 
 	virtual void *findFreeEntryEndingAtAddr(MM_EnvironmentBase *env, void *addr);
 	virtual void *findFreeEntryTopStartingAtAddr(MM_EnvironmentBase *env, void *addr);

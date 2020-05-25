@@ -34,6 +34,10 @@ enum Processor
       #include "arm/env/ARMProcessorEnum.hpp"
    LastARMProcessorMark,
 
+   FirstARM64ProcessorMark,
+      #include "aarch64/env/ARM64ProcessorEnum.hpp"
+   LastARM64ProcessorMark,
+
    FirstPowerProcessorMark,
       #include "p/env/PPCProcessorEnum.hpp"
    LastPowerProcessorMark,
@@ -47,6 +51,7 @@ enum Processor
    LastX86ProcessorMark,
 
    NumARMProcessors = LastARMProcessorMark-FirstARMProcessorMark-1,
+   NumARM64Processors = LastARM64ProcessorMark-FirstARM64ProcessorMark-1,
    NumPowerProcessors = LastPowerProcessorMark-FirstPowerProcessorMark-1,
    NumZProcessors = LastZProcessorMark-FirstZProcessorMark-1,
    NumX86Processors = LastX86ProcessorMark-FirstX86ProcessorMark-1
@@ -87,6 +92,12 @@ enum TR_Processor
    TR_ARMv6,
    TR_LastARMProcessor,
    TR_ARMv7 = TR_LastARMProcessor,
+
+   // ARM64 / AArch64 Processors
+   TR_FirstARM64Processor,
+   TR_DefaultARM64Processor = TR_FirstARM64Processor,
+   TR_LastARM64Processor,
+   TR_ARMv8_A = TR_LastARM64Processor,
 
    // PPC Processors
    // This list is in order

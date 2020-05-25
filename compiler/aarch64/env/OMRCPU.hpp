@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,11 +44,12 @@ namespace OMR
 namespace ARM64
 {
 
-class CPU : public OMR::CPU
+class OMR_EXTENSIBLE CPU : public OMR::CPU
    {
 protected:
 
    CPU() : OMR::CPU() {}
+   CPU(const OMRProcessorDesc& processorDescription) : OMR::CPU(processorDescription) {}
 
 public:
 
@@ -81,7 +82,7 @@ public:
     *
     * @return true if the target is within range; false otherwise.
     */
-   bool isTargetWithinUnconditionalBranchImmediateRange(intptrj_t targetAddress, intptrj_t sourceAddress);
+   bool isTargetWithinUnconditionalBranchImmediateRange(intptr_t targetAddress, intptr_t sourceAddress);
 
    };
 

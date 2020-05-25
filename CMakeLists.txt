@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@ include(OmrHookgen)
 include(OmrOption)
 include(OmrPlatform)
 include(OmrTracegen)
+include(OmrTargetSupport)
 include(OmrSanitizerSupport)
 
 ###
@@ -75,7 +76,7 @@ enable_testing()
 ### omr_base: basic includes and definitions needed everywhere
 ###
 
-add_library(omr_base INTERFACE)
+omr_add_library(omr_base INTERFACE)
 
 target_include_directories(omr_base
 	INTERFACE
@@ -83,6 +84,22 @@ target_include_directories(omr_base
 		$<BUILD_INTERFACE:${omr_BINARY_DIR}>
 		$<INSTALL_INTERFACE:${OMR_INSTALL_INC_DIR}>
 )
+
+if(OMR_OS_ZOS)
+	if(OMR_USE_NATIVE_ENCODING)
+		target_link_libraries(omr_base INTERFACE omr_ebcdic)
+		target_compile_definitions(omr_base
+			INTERFACE
+				-DOMR_EBCDIC
+		)
+	else()
+		target_link_libraries(omr_base INTERFACE omr_ascii)
+	endif()
+endif()
+
+if(OMR_WINDOWS_NOMINMAX)
+	target_compile_definitions(omr_base INTERFACE -DNOMINMAX)
+endif()
 
 install(
 	TARGETS omr_base
@@ -105,20 +122,25 @@ add_custom_target(header_check ALL
 	${CMAKE_COMMAND} "-Domr_SOURCE_DIR=${omr_SOURCE_DIR}" -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckSourceTree.cmake)
 endif()
 
-configure_file(./omrcfg.CMakeTemplate.h omrcfg.h)
-configure_file(./omrversionstrings.CMakeTemplate.h omrversionstrings.h)
+configure_file(include_core/omrcfg.cmake.h.in omrcfg.h)
+configure_file(include_core/omrversionstrings.cmake.h.in omrversionstrings.h)
 
 
 ###
 ### Set up DDR configuration
 ###
 include(OmrDDRSupport)
-
-if(NOT DEFINED OMR_DDR_SET)
-	set(OMR_DDR_SET "omr")
-	make_ddr_set(${OMR_DDR_SET})
+if(OMR_DDR)
+	make_ddr_set(omrddr)
+	ddr_add_headers(omrddr
+		${omr_BINARY_DIR}/omrcfg.h
+		include_core/j9nongenerated.h
+	)
+	set_property(TARGET omrddr PROPERTY INCLUDE_DIRECTORIES
+		${CMAKE_CURRENT_SOURCE_DIR}/include_core
+		${CMAKE_CURRENT_BINARY_DIR}
+	)
 endif()
-
 
 ###
 ### Native Tooling
@@ -151,7 +173,7 @@ add_subdirectory(thread)
 add_subdirectory(port)
 add_subdirectory(util)
 add_subdirectory(omr)
-add_subdirectory(third_party)
+add_subdirectory(third_party EXCLUDE_FROM_ALL)
 add_subdirectory(omrsigcompat)
 
 if(OMR_RAS_TDF_TRACE)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,8 @@ extern "C" void *getCodeSync();
 #define sync() __sync()
 #define isync() __isync()
 
-#else
+#else /* defined(__IBMC__) || defined(__IBMCPP__) */
+
 static inline void dcbf(unsigned char *addr)
    {
    __asm__(
@@ -54,7 +55,7 @@ static inline void isync()
    __asm__("isync");
    }
 
-#endif /* __IBMC__ || __IBMCPP__ */
+#endif /* defined(__IBMC__) || defined(__IBMCPP__) */
 
 static inline void icbi(unsigned char *addr)
    {
@@ -103,29 +104,25 @@ return 32; //For AOT compile, a constant default is returned.
 void ppcCodeSync(unsigned char *codeStart, unsigned int codeSize)
    {
 #if defined(TR_HOST_POWER)
-	int      cacheLineSize = getPPCCacheLineSize();
+	uint32_t       cacheLineSize = getPPCCacheLineSize();
 	unsigned char  *addr;
 	unsigned char  *limit;
 
-    limit = (unsigned char *)(((unsigned long)codeStart + codeSize + (cacheLineSize - 1))
+    limit = (unsigned char *)(((uintptr_t)codeStart + codeSize + (cacheLineSize - 1))
 						/ cacheLineSize * cacheLineSize);
 
 	// for each cache line, do a data cache block flush
-	for(addr = codeStart ; addr < limit; addr += cacheLineSize)
+	for (addr = codeStart; addr < limit; addr += cacheLineSize)
 		dcbf(addr);
 
 	sync();
 
-	limit = (unsigned char *)(((unsigned long)codeStart + codeSize + (cacheLineSize - 1))
-						/ cacheLineSize * cacheLineSize);
-
-	// for each cache line  do an icache block invalidate
-	for(addr = codeStart ; addr < limit; addr += cacheLineSize)
+	// for each cache line, do an icache block invalidate
+	for (addr = codeStart; addr < limit; addr += cacheLineSize)
 		icbi(addr);
 
 	sync();
 	isync();
-
 #endif /* TR_HOST_POWER */
    }
 

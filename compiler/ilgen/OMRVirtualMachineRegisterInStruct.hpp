@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,13 +74,10 @@ class VirtualMachineRegisterInStruct : public TR::VirtualMachineRegister
       _integerTypeForAdjustments = b->typeDictionary()->GetFieldType(structName, fieldName);
       if (_integerTypeForAdjustments->isPointer())
          {
-         _integerTypeForAdjustments = _integerTypeForAdjustments->baseType();
-         if (_integerTypeForAdjustments->isPointer())
-            {
-            _integerTypeForAdjustments = b->typeDictionary()->getWord();
-            }
+         TR::IlType *baseType = _integerTypeForAdjustments->baseType();
+         _integerTypeForAdjustments = b->typeDictionary()->getWord();
          _isAdjustable = true;
-         _adjustByStep = _integerTypeForAdjustments->getSize();
+         _adjustByStep = baseType->getSize();
          }
       else
          {

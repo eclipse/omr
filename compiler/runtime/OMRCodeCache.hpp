@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,7 @@ namespace OMR { typedef CodeCache CodeCacheConnector; }
 #include "runtime/CodeCacheConfig.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/CodeCacheTypes.hpp"
+#include "OMR/Bytes.hpp"
 
 class TR_OpaqueMethodBlock;
 namespace TR { class CodeCache; }
@@ -48,42 +49,10 @@ namespace TR { class CodeCacheMemorySegment; }
 namespace TR { class CodeGenerator; }
 namespace TR { class Monitor; }
 
-extern uint8_t *align(uint8_t *ptr, uint32_t alignment);
-
 namespace OMR
 {
 
-// Base class capturing VM dependency on the _warmCodeAlloc and _coldCodeAlloc pointers at the
-// beginning of a code cache object. Do not change this base class without fully appreciating this
-// dependency.
-//
-class CodeCacheBase
-   {
-public:
-   void setWarmCodeAlloc(uint8_t *wca)   { _warmCodeAlloc = wca; }
-   void setColdCodeAlloc(uint8_t *cca)   { _coldCodeAlloc = cca; }
-
-   uint8_t *getWarmCodeAlloc()   { return _warmCodeAlloc; }
-   uint8_t *getColdCodeAlloc()   { return _coldCodeAlloc; }
-
-   void alignWarmCodeAlloc(uint32_t round)  { _warmCodeAlloc = align(_warmCodeAlloc, round); }
-   void alignColdCodeAlloc(uint32_t round)  { _coldCodeAlloc = align(_coldCodeAlloc, round); }
-
-   // NOTE: warmCodeAlloc and coldCodeAlloc must be the first 2 entries
-   // Other components depend on it !!
-   //----------------
-
-   uint8_t * _warmCodeAlloc;
-   uint8_t * _coldCodeAlloc;
-   };
-
-
-//
-// Remaining classes in this file are extensible
-//
-
-
-class OMR_EXTENSIBLE CodeCache : public CodeCacheBase
+class OMR_EXTENSIBLE CodeCache
    {
    TR::CodeCache *self();
 
@@ -105,6 +74,15 @@ public:
    uint8_t *getCodeTop();
    uint8_t *getHelperBase()            { return _helperBase; }
    uint8_t *getHelperTop()             { return _helperTop; }
+
+   void setWarmCodeAlloc(uint8_t *wca)   { _warmCodeAlloc = wca; }
+   void setColdCodeAlloc(uint8_t *cca)   { _coldCodeAlloc = cca; }
+
+   uint8_t *getWarmCodeAlloc()   { return _warmCodeAlloc; }
+   uint8_t *getColdCodeAlloc()   { return _coldCodeAlloc; }
+
+   void alignWarmCodeAlloc(uint32_t round)  { _warmCodeAlloc = reinterpret_cast<uint8_t *>(align(reinterpret_cast<size_t>(_warmCodeAlloc), round)); }
+   void alignColdCodeAlloc(uint32_t round)  { _coldCodeAlloc = reinterpret_cast<uint8_t *>(align(reinterpret_cast<size_t>(_coldCodeAlloc), round)); }
 
    TR::CodeCache * getNextCodeCache()  { return _next; }
 
@@ -423,6 +401,10 @@ public:
     * @param[in] address : The new trampoline base address
     */
    void setTrampolineBase(uint8_t *address) { _trampolineBase = address; }
+
+   uint8_t * _warmCodeAlloc;
+
+   uint8_t * _coldCodeAlloc;
 
    TR::CodeCacheManager *_manager;
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,6 +122,26 @@ validate_executable_name(const char *expected, const char *found)
 	return FALSE;
 }
 
+#define CPU_BURNER_BUFF_SIZE 10000
+static uintptr_t
+cpuBurner(OMRPortLibrary *portLibrary, const char *myText)
+{
+	/* burn up CPU */
+	uintptr_t counter = 0;
+	char buffer[CPU_BURNER_BUFF_SIZE];
+	char *result = NULL;
+	for (counter = 0; counter < CPU_BURNER_BUFF_SIZE; ++counter) {
+		buffer[counter] = 0;
+	}
+	for (counter = 0; (strlen(buffer) + strlen(myText) + 1) < CPU_BURNER_BUFF_SIZE; ++counter) {
+		result = strcat(buffer, myText);
+		if (NULL != strstr(result, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab")) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 TEST(PortSysinfoTest, sysinfo_test0)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
@@ -136,6 +156,14 @@ TEST(PortSysinfoTest, sysinfo_test0)
 	/* Remove extra "./" from the front of executable name. */
 	if (0 == strncmp(argv0, "./", 2)) {
 		argv0 = &argv0[2];
+	}
+	/* When this test is invoked from a Windows machine, the input in `argv` may have forward or back slashes. To avoid false
+	 * negatives we normalize the path names to use forward slashes always.
+	 */
+	for (char* cursor = argv0; *cursor != '\0'; ++cursor) {
+		if (*cursor == '/') {
+			*cursor = '\\';
+		}
 	}
 #endif /* defined(OMR_OS_WINDOWS) */
 
@@ -1323,25 +1351,6 @@ onlineProcessorCount(const struct J9ProcessorInfos *procInfo)
 	return n_onln;
 }
 
-#define CPU_BURNER_BUFF_SIZE 10000
-static uintptr_t
-cpuBurner(OMRPortLibrary *portLibrary, const char *myText)
-{
-	/* burn up CPU */
-	uintptr_t counter = 0;
-	char buffer[CPU_BURNER_BUFF_SIZE];
-	char *result = NULL;
-	for (counter = 0; counter < CPU_BURNER_BUFF_SIZE; ++counter) {
-		buffer[counter] = 0;
-	}
-	for (counter = 0; (strlen(buffer) + strlen(myText) + 1) < CPU_BURNER_BUFF_SIZE; ++counter) {
-		result = strcat(buffer, myText);
-		if (NULL != strstr(result, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab")) {
-			return 0;
-		}
-	}
-	return 1;
-}
 /**
  * Test for omrsysinfo_get_processor_info() port library API. Ensure that we are
  * able to obtain processor usage data as also, that it is consistent.
@@ -1641,6 +1650,34 @@ TEST(PortSysinfoTest, sysinfo_test_get_CPU_utilization)
 
 #endif /* !defined(J9ZOS390) */
 
+TEST(PortSysinfoTest, sysinfo_test_get_CPU_load)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+
+	/* As per the API specification the first two calls to this API will return a negative portable error code. However
+	 * for the purposes of this test we will not be testing this. This is because the test infrastructure is setup such
+	 * that we cannot guarantee that no other test has called omrsysinfo_get_CPU_utlization or omrsysinfo_get_CPU_load
+	 * up to this point. If some other test did call these APIs then the internal buffers would have been populated and
+	 * as such the omrsysinfo_get_CPU_load could return a zero return code on the very first invocation within this
+	 * test.
+	 *
+	 * To avoid inter-test dependencies we do not assert on the return value of the first two calls here, and only test
+	 * that the API returns valid numbers within the range outlined in the API specification.
+	 */
+	double cpuLoad;
+	omrsysinfo_get_CPU_load(&cpuLoad);
+	omrsysinfo_get_CPU_load(&cpuLoad);
+	
+	/* Sleep for 100ms before re-sampling processor usage stats. This allows other processes and the operating system to
+	 * use the CPU and drive up the user and kernel utilization. The call to cpuBurner probably won't be optimized out,
+	 * but use the result to make absolutely sure that it isn't.
+	 */
+	omrthread_sleep(100 + cpuBurner(OMRPORTLIB, "a"));
+
+	ASSERT_EQ(omrsysinfo_get_CPU_load(&cpuLoad), 0);
+	ASSERT_GE(cpuLoad, 0.0);
+	ASSERT_LE(cpuLoad, 1.0);
+}
 
 /*
  * Test omrsysinfo_get_tmp when the buffer size == 0
@@ -2059,11 +2096,11 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 	} else {
 		portTestEnv->log("mkdir %s\n", utf8);
 	}
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	rc = atoe_chdir(utf8);
-#else
+#else /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	rc = chdir(utf8);
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 	if (0 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "cd %s failed rc: %d\n", utf8, rc);
 	} else {
@@ -2087,7 +2124,7 @@ TEST(PortSysinfoTest, sysinfo_test_get_cwd3)
 
 #if defined(OMR_OS_WINDOWS)
 	_chdir(orig_cwd); /* we need to exit current directory before deleting it*/
-#elif defined(J9ZOS390)
+#elif defined(J9ZOS390) && !defined(OMR_EBCDIC)
 	atoe_chdir(orig_cwd);
 #else /* defined(OMR_OS_WINDOWS) */
 	rc = chdir(orig_cwd);
@@ -2342,4 +2379,35 @@ TEST(PortSysinfoTest, sysinfo_cgroup_get_memlimit)
 
 	reportTestExit(OMRPORTLIB, testName);
 	return;
+}
+
+/**
+ * Test GetProcessorDescription.
+ */
+TEST(PortSysinfoTest, GetProcessorDescription)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+	OMRProcessorDesc desc;
+
+	ASSERT_NE(omrsysinfo_get_processor_description(&desc), -1);
+
+#if defined(J9X86) || defined(J9HAMMER)
+	ASSERT_GE(desc.processor, OMR_PROCESSOR_X86_UNKNOWN);
+	ASSERT_GE(desc.physicalProcessor, OMR_PROCESSOR_X86_UNKNOWN);
+#elif defined(AIXPPC) || defined(LINUXPPC)
+	ASSERT_GE(desc.processor, OMR_PROCESSOR_PPC_UNKNOWN);
+	ASSERT_LT(desc.processor, OMR_PROCESSOR_X86_UNKNOWN);
+	ASSERT_GE(desc.physicalProcessor, OMR_PROCESSOR_PPC_UNKNOWN);
+	ASSERT_LT(desc.physicalProcessor, OMR_PROCESSOR_X86_UNKNOWN);
+#elif defined(S390) || defined(J9ZOS390)
+	ASSERT_GE(desc.processor, OMR_PROCESSOR_S390_UNKNOWN);
+	ASSERT_LT(desc.processor, OMR_PROCESSOR_PPC_UNKNOWN);
+	ASSERT_GE(desc.physicalProcessor, OMR_PROCESSOR_S390_UNKNOWN);
+	ASSERT_LT(desc.physicalProcessor, OMR_PROCESSOR_PPC_UNKNOWN);
+#endif
+	
+	for (int i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE * 32; i++) {
+		BOOLEAN feature = omrsysinfo_processor_has_feature(&desc, i);
+		ASSERT_TRUE(feature == TRUE || feature == FALSE);
+	}
 }

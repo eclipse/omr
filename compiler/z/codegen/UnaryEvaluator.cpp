@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -38,14 +38,14 @@
 #include "control/Options_inlines.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
 #include "ras/Debug.hpp"
@@ -117,13 +117,7 @@ TR::Register *
 OMR::Z::TreeEvaluator::bconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Register * tempReg = node->setRegister(cg->allocateRegister());
-   if (node->getOpCodeValue() == TR::buconst)
-      generateLoad32BitConstant(cg, node, node->getByte() & 0xFF, tempReg, true);
-   else
-      {
-      TR_ASSERT(1, "Should not have bconst node in the final il-tree!\n");
-      generateLoad32BitConstant(cg, node, node->getByte(), tempReg, true);
-      }
+   generateLoad32BitConstant(cg, node, node->getByte(), tempReg, true);
    return tempReg;
    }
 
@@ -187,7 +181,7 @@ OMR::Z::TreeEvaluator::iabsEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 #endif
    else if (node->getOpCodeValue() == TR::iabs)
       opCode = TR::InstOpCode::getLoadPositiveRegWidenOpCode();
-   else if (TR::Compiler->target.is64Bit())
+   else if (cg->comp()->target().is64Bit())
       opCode = TR::InstOpCode::LPGR;
    else
       TR_ASSERT( 0,"labs for 32 bit not implemented yet");
@@ -309,22 +303,20 @@ TR::Register *
 OMR::Z::TreeEvaluator::dsqrtEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Node * firstChild = node->getFirstChild();
-   TR::Register * targetRegister = NULL;
-   TR::Register * opRegister = cg->evaluate(firstChild);
+   TR::Register * targetRegister = cg->allocateRegister(TR_FPR);
 
-   if (cg->canClobberNodesRegister(firstChild))
+   if (firstChild->isSingleRefUnevaluated() && firstChild->getOpCodeValue() == TR::dloadi)
       {
-      targetRegister = opRegister;
+      generateRXEInstruction(cg, TR::InstOpCode::SQDB, node, targetRegister, generateS390MemoryReference(firstChild, cg), 0);
       }
    else
       {
-      targetRegister = cg->allocateRegister(TR_FPR);
+      TR::Register * opRegister = cg->evaluate(firstChild);
+      generateRRInstruction(cg, TR::InstOpCode::SQDBR, node, targetRegister, opRegister);
+      cg->decReferenceCount(firstChild);
       }
-   generateRRInstruction(cg, TR::InstOpCode::SQDBR, node, targetRegister, opRegister);
-
    node->setRegister(targetRegister);
-   cg->decReferenceCount(firstChild);
-   return node->getRegister();
+   return targetRegister;
    }
 
 TR::Register *

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,16 +22,16 @@
 #ifndef OMR_TEST_FRAMEWORK_H_
 #define OMR_TEST_FRAMEWORK_H_
 
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 /* Gtest invokes some functions (e.g., getcwd() ) before main() is invoked.
  * We need to invoke iconv_init() before gtest to ensure a2e is initialized.
  */
 extern int iconv_initialization(void);
 static int iconv_init_static_variable = iconv_initialization();
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 /*  Gtest invokes xlocale, which has function definition for tolower and toupper.
  * This causes compilation issue since the a2e macros (tolower and toupper) automatically replace the function definitions.
  * So we explicitly include <ctype.h> and undefine the macros for gtest, after gtest we then define back the macros.
@@ -47,7 +47,7 @@ static int iconv_init_static_variable = iconv_initialization();
 
 #else
 #include "gtest/gtest.h"
-#endif
+#endif /* defined(J9ZOS390) && !defined(OMR_EBCDIC) */
 
 using namespace testing;
 

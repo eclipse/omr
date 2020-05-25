@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,39 +34,13 @@
 #endif /* defined(OMR_ENV_DATA64) */
 
 class MM_Bits {
-private:
-	/** The number of bits to shift by when converting to/from bytes/slots and bytes/ObjectFieldslots */
-#if defined(OMR_ENV_DATA64)
-	enum {
-		conversionBitShift = 3,
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-		conversionObjectFieldBitShift = 2
-#else
-		conversionObjectFieldBitShift = 3
-#endif
-		};
-#else
-	enum {
-		conversionBitShift = 2,
-		conversionObjectFieldBitShift = 2
-		};
-#endif /* defined(OMR_ENV_DATA64) */
-
 public:
 	static MMINLINE uintptr_t convertBytesToSlots(uintptr_t x) {
-		return x >> conversionBitShift;
+		return x >> OMR_LOG_POINTER_SIZE;
 	}
 
 	static MMINLINE uintptr_t convertSlotsToBytes(uintptr_t x) {
-		return x << conversionBitShift;
-	}
-
-	static MMINLINE uintptr_t convertBytesToU32Slots(uintptr_t x) {
-		return x >> conversionBitShift;
-	}
-	
-	static MMINLINE uintptr_t convertBytesToObjectFieldSlots(uintptr_t x) {
-		return x >> conversionObjectFieldBitShift;
+		return x << OMR_LOG_POINTER_SIZE;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +70,7 @@ static TR::Register *addConstantToInteger(TR::Node *node, TR::Register *srcReg, 
    return trgReg;
    }
 
-// Also handles TR::aiadd, TR::iuadd, aiuadd
+// Also handles TR::aiadd
 TR::Register *OMR::ARM::TreeEvaluator::iaddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Register *src1Reg = NULL;
@@ -81,7 +81,7 @@ TR::Register *OMR::ARM::TreeEvaluator::iaddEvaluator(TR::Node *node, TR::CodeGen
    src1Reg = cg->evaluate(firstChild);
    TR::ILOpCodes secondOp = secondChild->getOpCodeValue();
 
-   if ((secondOp == TR::iconst || secondOp == TR::iuconst) &&
+   if (secondOp == TR::iconst &&
        secondChild->getRegister() == NULL)
       {
       trgReg = addConstantToInteger(node, src1Reg, secondChild->getInt(), cg);
@@ -93,7 +93,7 @@ TR::Register *OMR::ARM::TreeEvaluator::iaddEvaluator(TR::Node *node, TR::CodeGen
       generateTrg1Src2Instruction(cg, ARMOp_add, node, trgReg, src1Reg, src2Reg);
       }
 
-   if ((node->getOpCodeValue() == TR::aiadd || node->getOpCodeValue() == TR::aiuadd) &&
+   if ((node->getOpCodeValue() == TR::aiadd) &&
        node->isInternalPointer())
       {
       if (node->getPinningArrayPointer())
@@ -279,7 +279,7 @@ TR::Register *OMR::ARM::TreeEvaluator::lsubEvaluator(TR::Node *node, TR::CodeGen
        secondChild->getRegister() == NULL)
       {
       TR::Register *src1Reg   = cg->evaluate(firstChild);
-      if (TR::Compiler->target.cpu.isBigEndian())
+      if (cg->comp()->target().cpu.isBigEndian())
          {
          longVal.x.highValue = secondChild->getLongIntLow();
          longVal.x.lowValue = secondChild->getLongIntHigh();
@@ -423,7 +423,7 @@ TR::Register *OMR::ARM::TreeEvaluator::lmulEvaluator(TR::Node *node, TR::CodeGen
    lowReg = cg->allocateRegister();
    trgReg = cg->allocateRegisterPair(lowReg, highReg);
 
-   if(TR::Compiler->target.cpu.isBigEndian())
+   if(cg->comp()->target().cpu.isBigEndian())
       {
       dependencies->addPreCondition(dd_lowReg, TR::RealRegister::gr1);
       dependencies->addPreCondition(dd_highReg, TR::RealRegister::gr0);
@@ -725,7 +725,7 @@ static TR::Register *ldivAndLRemHelper(TR::Node *node, bool isDivide, TR::CodeGe
    lowReg = cg->allocateRegister();
    trgReg = cg->allocateRegisterPair(lowReg, highReg);
 
-   if(TR::Compiler->target.cpu.isBigEndian())
+   if(cg->comp()->target().cpu.isBigEndian())
       {
       dependencies->addPreCondition(dd_lowReg, TR::RealRegister::gr1);
       dependencies->addPreCondition(dd_highReg, TR::RealRegister::gr0);
@@ -1044,7 +1044,7 @@ TR::Register *OMR::ARM::TreeEvaluator::irolEvaluator(TR::Node *node, TR::CodeGen
    TR::Register    *srcReg = cg->evaluate(firstChild);
    TR::Register    *trgReg = cg->allocateRegister();
 
-   if (secondChild->getOpCodeValue() == TR::iconst || secondChild->getOpCodeValue() == TR::iuconst)
+   if (secondChild->getOpCodeValue() == TR::iconst)
       {
       int32_t value = secondChild->getInt() & 0x1F;
       if (value != 0)
@@ -1084,7 +1084,7 @@ TR::Register *OMR::ARM::TreeEvaluator::lrolEvaluator(TR::Node *node, TR::CodeGen
    TR::Register    *highReg = cg->allocateRegister();
    TR::Register    *trgReg = cg->allocateRegisterPair(lowReg, highReg);
 
-   if (secondChild->getOpCodeValue() == TR::iconst || secondChild->getOpCodeValue() == TR::iuconst)
+   if (secondChild->getOpCodeValue() == TR::iconst)
       {
       int32_t value = secondChild->getInt() & 0x3F;
       if (value == 0)

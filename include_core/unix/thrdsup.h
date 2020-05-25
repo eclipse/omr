@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -201,10 +201,19 @@ extern pthread_condattr_t *defaultCondAttr;
 
 /* THREAD_YIELD */
 
-#if (defined(LINUX) || defined(AIXPPC) || defined(OSX))
+/* POSIX systems on which sched_yield() is available define
+   _POSIX_PRIORITY_SCHEDULING in <unistd.h>. */
+#if defined(_POSIX_PRIORITY_SCHEDULING)
 #define THREAD_YIELD() (sched_yield())
+#elif defined(J9ZOS390)
+/* zos is odd in that it needs a null param to pthread_yield */
+#define THREAD_YIELD() (pthread_yield(0))
+#else
+#define THREAD_YIELD() (yield())
+#endif
 
-#ifdef OMR_THR_YIELD_ALG
+#if defined(OMR_THR_YIELD_ALG)
+#if defined(_POSIX_PRIORITY_SCHEDULING)
 #define THREAD_YIELD_NEW(sequentialYields) {\
 	omrthread_t thread = MACRO_SELF();\
 	if (thread->library->yieldAlgorithm ==  J9THREAD_LIB_YIELD_ALGORITHM_INCREASING_USLEEP) {\
@@ -227,23 +236,11 @@ extern pthread_condattr_t *defaultCondAttr;
 		sched_yield();\
 	}\
 }
-#endif
-#else /* (defined(LINUX) || defined(AIXPPC) || defined(OSX)) */
-#ifdef OMR_THR_YIELD_ALG
+#else /* defined(_POSIX_PRIORITY_SCHEDULING) */
 #error 'OMR_THR_YIELD_ALG' is not supported on this platform
-#endif
-#endif /* (defined(LINUX) || defined(AIXPPC) || defined(OSX)) */
+#endif /* defined(_POSIX_PRIORITY_SCHEDULING) */
+#endif /* defined(OMR_THR_YIELD_ALG) */
 
-#if defined(MVS) || defined (J9ZOS390)
-#define THREAD_YIELD() (pthread_yield(0))
-#endif
-
-
-
-/* last chance. If it's not defined by now, use yield */
-#ifndef THREAD_YIELD
-#define THREAD_YIELD() (yield())
-#endif
 
 /* THREAD_CANCEL */
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,23 +35,16 @@ namespace OMR { typedef OMR::Z::Linkage LinkageConnector; }
 
 #include <stddef.h>
 #include <stdint.h>
-#include "codegen/CodeGenerator.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
-#include "codegen/Machine.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/RegisterConstants.hpp"
-#include "codegen/Snippet.hpp"
 #include "env/TRMemory.hpp"
 #include "il/DataTypes.hpp"
 #include "infra/Assert.hpp"
 
-#include "codegen/RegisterDependency.hpp"
-
-class TR_FrontEnd;
-namespace TR { class S390JNICallDataSnippet; }
-namespace TR { class S390PrivateLinkage; }
 namespace TR { class AutomaticSymbol; }
+namespace TR { class CodeGenerator; }
 namespace TR { class Compilation; }
 namespace TR { class Instruction; }
 namespace TR { class MemoryReference; }
@@ -60,6 +53,7 @@ namespace TR { class ParameterSymbol; }
 namespace TR { class Register; }
 namespace TR { class RegisterDependencyConditions; }
 namespace TR { class ResolvedMethodSymbol; }
+namespace TR { class Snippet; }
 namespace TR { class Symbol; }
 namespace TR { class SymbolReference; }
 namespace TR { class SystemLinkage; }
@@ -162,7 +156,7 @@ enum TR_S390LinkageConventions
  *      i.e (i >= TR::RealRegister::FirstFPR)/    <<-----
  *          ...                                             | Notice the equal indentation
  *          FPREGINDEX(i)                            <<-----
- * 4. REGINDEX(i) is the default i.e GPR index, and so lacks a matching ternary condition.
+ * 4. REGINDEX(i) is the default i.e GPR index, and so lacks a matching select condition.
  * 5. Each unrelated condition or answer to a condition is separated by TR indentation rule i.e 3 spaces
  *
  * Feel free to refactor this into if/else conditions :)
@@ -178,18 +172,6 @@ enum TR_S390LinkageConventions
  */
 #define TR_FirstSpecialLinkageIndex  0x10
 
-namespace TR {
-
-/**
- * Pseudo-safe downcast function, since all linkages must be S390 linkages
- */
-inline TR::S390PrivateLinkage *
-toS390PrivateLinkage(TR::Linkage * l)
-   {
-   return (TR::S390PrivateLinkage *) l;
-   }
-
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 //  TR::S390Linkage Definition
@@ -298,8 +280,8 @@ enum TR_DispatchType
    virtual void mapStack(TR::ResolvedMethodSymbol * symbol) = 0;
    virtual void mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t & stackIndex) = 0;
    virtual bool hasToBeOnStack(TR::ParameterSymbol * parm) = 0;
-   virtual void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol * method);
-   virtual void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method, List<TR::ParameterSymbol>&parmList);
+   virtual void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol * method) = 0;
+   virtual void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method, List<TR::ParameterSymbol>&parmList) = 0;
 
    virtual TR::Instruction * loadUpArguments(TR::Instruction * cursor);
    virtual void removeOSCOnSavedArgument(TR::Instruction* instr, TR::Register* sReg, int32_t stackOffset);
@@ -370,7 +352,7 @@ enum TR_DispatchType
    virtual bool isAggregateReturnedInRegistersCall(TR::Node *callNode) { return false; }
    virtual bool isAggregateReturnedInIntRegistersAndMemory(int32_t aggregateLenth)   { return false; }
    virtual bool isAggregateReturnedInRegistersAndMemoryCall(TR::Node *callNode) { return false; }
-   
+
    int32_t  isForceSaveIncomingParameters() { return _properties & ForceSaveIncomingParameters; }
    int32_t  isLongDoubleReturnedOnStorage() { return _properties & LongDoubleReturnedOnStorage; }
    int32_t  isLongDoublePassedOnStorage() { return _properties & LongDoublePassedOnStorage; }

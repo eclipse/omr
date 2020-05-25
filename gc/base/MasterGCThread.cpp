@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,6 +47,7 @@ MM_MasterGCThread::MM_MasterGCThread(MM_EnvironmentBase *env)
 	, _collector(NULL)
 	, _runAsImplicit(false)
 	, _acquireVMAccessDuringConcurrent(false)
+	, _concurrentResumable(false)
 {
 	_typeId = __FUNCTION__;
 }
@@ -79,7 +80,7 @@ MM_MasterGCThread::master_thread_proc(void *info)
 
 
 bool
-MM_MasterGCThread::initialize(MM_Collector *collector, bool runAsImplicit, bool acquireVMAccessDuringConcurrent)
+MM_MasterGCThread::initialize(MM_Collector *collector, bool runAsImplicit, bool acquireVMAccessDuringConcurrent, bool concurrentResumable)
 {
 	bool success = true;
 	if(omrthread_monitor_init_with_name(&_collectorControlMutex, 0, "MM_MasterGCThread::_collectorControlMutex")) {
@@ -89,6 +90,7 @@ MM_MasterGCThread::initialize(MM_Collector *collector, bool runAsImplicit, bool 
 	_collector = collector;
 	_runAsImplicit = runAsImplicit;
 	_acquireVMAccessDuringConcurrent = acquireVMAccessDuringConcurrent;
+	_concurrentResumable = concurrentResumable;
 
 	return success;
 }
@@ -218,8 +220,7 @@ MM_MasterGCThread::handleConcurrent(MM_EnvironmentBase *env)
 			env->releaseVMAccess();
 			omrthread_monitor_enter(_collectorControlMutex);
 		}
-	} while (_collector->getConcurrentPhaseStats()->isTerminationRequestExternal() && _collector->isConcurrentWorkAvailable(env));
-
+	} while (_concurrentResumable && _collector->isConcurrentWorkAvailable(env));
 	if (STATE_RUNNING_CONCURRENT == _masterThreadState) {
 		_masterThreadState = STATE_WAITING;
 	}
@@ -247,9 +248,10 @@ MM_MasterGCThread::masterThreadEntryPoint()
 		/* thread attached successfully */
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(omrVMThread);
 
-		/* attachVMThread could allocate an execute a barrier (since it that point, this thread acted as a mutator thread.
+		/* attachVMThread could have allocated and execute a barrier (until point, this thread acted as a mutator thread.
 		 * Flush GC chaches (like barrier buffers) before turning into the master thread */
-		env->flushGCCaches();
+		/* TODO: call plain env->initializeGCThread() once downstream projects are ready (subclass Env::init calls base Env::init)  */
+		env->MM_EnvironmentBase::initializeGCThread();
 
 		env->setThreadType(GC_MASTER_THREAD);
 

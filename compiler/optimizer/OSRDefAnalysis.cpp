@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/OSRData.hpp"
 #include "compile/SymbolReferenceTable.hpp"
@@ -33,19 +33,19 @@
 #include "cs2/bitvectr.h"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -109,7 +109,7 @@ void TR_OSRDefInfo::performFurtherAnalysis(AuxiliaryData &aux)
    // Iterate through OSR reaching definitions bit vectors and save it in method symbol's data structure.
    TR::SymbolReferenceTable *symRefTab   = comp()->getSymRefTab();
    TR::ResolvedMethodSymbol *methodSymbol = optimizer()->getMethodSymbol();
-   for (intptrj_t i = 0; i < methodSymbol->getOSRPoints().size(); ++i)
+   for (intptr_t i = 0; i < methodSymbol->getOSRPoints().size(); ++i)
       {
       TR_OSRPoint *point = (methodSymbol->getOSRPoints())[i];
       if (point == NULL) continue;
@@ -603,7 +603,7 @@ int32_t TR_OSRDefAnalysis::perform()
          }
       return 0;
       }
-   else 
+   else
       {
       TR_OSRMethodData *osrMethodData = comp()->getOSRCompilationData()->findOrCreateOSRMethodData(comp()->getCurrentInlinedSiteIndex(), comp()->getMethodSymbol());
       if (osrMethodData->hasSlotSharingOrDeadSlotsInfo())
@@ -823,7 +823,7 @@ int32_t TR_OSRLiveRangeAnalysis::perform()
             _sharedSymRefs->set(symRef->getReferenceNumber());
          }
       }
-   
+
    if (comp()->getOSRMode() == TR::involuntaryOSR && containsPendingPush)
       {
       if (!osrMethodData->getSymRefs())
@@ -1039,7 +1039,7 @@ void TR_OSRLiveRangeAnalysis::pendingPushSlotSharingInfo(TR::Node *node, TR_BitV
             slot, symRefNum, symRefOrder, symRef->getSymbol()->getSize(), takesTwoSlots);
          }
       }
-   
+
    comp()->getOSRCompilationData()->ensureSlotSharingInfoAt(osrPoint->getByteCodeInfo());
    }
 
@@ -1110,7 +1110,7 @@ void TR_OSRLiveRangeAnalysis::buildDeadPendingPushSlotsInfo(TR::Node *node, TR_B
    }
 
 //calculate the intersection of existing deadslots
-void 
+void
 TR_OSRLiveRangeAnalysis::intersectWithExistingDeadSlots (TR_OSRPoint *osrPoint, TR_BitVector *deadPPSSlots, TR_BitVector *deadAutoSlots, bool containsPendingPushes)
    {
    TR_ByteCodeInfo& bcInfo = osrPoint->getByteCodeInfo();
@@ -1155,7 +1155,7 @@ TR_OSRLiveRangeAnalysis::intersectWithExistingDeadSlots (TR_OSRPoint *osrPoint, 
                {
                TR_ASSERT_FATAL(deadAutoSlots, "with slotInfos.slot >= 0, there must be at least on auto symbol in this method");
                existingDeadAutoSlots.set(slotInfo.slot);
-               if (!deadAutoSlots->isSet(slotInfo.slot))   
+               if (!deadAutoSlots->isSet(slotInfo.slot))
                   slotInfos.remove(i);
                }
             }
@@ -1216,7 +1216,7 @@ void TR_OSRLiveRangeAnalysis::buildDeadSlotsInfo(TR::Node *node, TR_BitVector *l
 
          TR::SymbolReference *symRef = symRefTab->getSymRef(symRefNum);
          int32_t slot = symRef->getCPIndex();
-         if (slot >= comp()->getMethodSymbol()->getFirstJitTempIndex()) 
+         if (slot >= comp()->getMethodSymbol()->getFirstJitTempIndex())
             continue;
 
          TR::DataType dt = symRef->getSymbol()->getDataType();
@@ -1240,7 +1240,7 @@ void TR_OSRLiveRangeAnalysis::buildDeadSlotsInfo(TR::Node *node, TR_BitVector *l
             }
          }
       }
-   
+
    intersectWithExistingDeadSlots(osrPoint, deadPPSSlots, deadAutoSlots, containsPendingPushes);
 
    if (deadPPSSlots && trace())
@@ -1267,7 +1267,7 @@ void TR_OSRLiveRangeAnalysis::buildDeadSlotsInfo(TR::Node *node, TR_BitVector *l
       }
 
    if (deadAutoSlots && trace())
-      { 
+      {
       TR_ByteCodeInfo& bcInfo = osrPoint->getByteCodeInfo();
       traceMsg(comp(), "deadAutoSlots at node %p %d:%d\n", node, bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex());
       deadAutoSlots->print(comp());
@@ -1500,12 +1500,12 @@ int32_t TR_OSRLiveRangeAnalysis::fullAnalysis(bool includeParms, bool containsPe
 
          // If the transition point is before the OSR point, build the OSR live info after
          // the post PPS and the OSR point are processed.
-         if ((isPotentialOSRPoint || 
+         if ((isPotentialOSRPoint ||
              //maintainLiveness only kicks in for the first evaluation point.
-             //In involuntaryOSR mode, there are cases where the first evaluation point of a node is under a treetop  
+             //In involuntaryOSR mode, there are cases where the first evaluation point of a node is under a treetop
              //that is not an OSRPoint but another treetop with the same bci is an OSRPoint. Need to call buildOSRLiveRangeInfo
              //in this case for the first evaluation point to make sure the liveness info is bookkept correctly for this bci
-             (_visitedBCI->isSet(node->getByteCodeInfo().getByteCodeIndex()) && comp()->getOSRMode() == TR::involuntaryOSR)) 
+             (_visitedBCI->isSet(node->getByteCodeInfo().getByteCodeIndex()) && comp()->getOSRMode() == TR::involuntaryOSR))
             && (comp()->isOSRTransitionTarget(TR::preExecutionOSR) || comp()->requiresAnalysisOSRPoint(node)))
             {
             TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
@@ -1781,12 +1781,12 @@ void TR_OSRLiveRangeAnalysis::buildOSRLiveRangeInfo(TR::Node *node, TR_BitVector
       // Load the existing BitVector
       deadSymRefs = osrMethodData->getLiveRangeInfo(byteCodeIndex);
 
-      //There are cases where one bci has several OSRPoints with different liveness. 
+      //There are cases where one bci has several OSRPoints with different liveness.
       //A symbol is only dead if it's dead at all the OSRPoints
       if (_visitedBCI->isSet(byteCodeIndex))
          {
          if (!containsPendingPushes)
-            *_workDeadSymRefs |= *_pendingPushSymRefs; 
+            *_workDeadSymRefs |= *_pendingPushSymRefs;
          if (deadSymRefs)
             *deadSymRefs &= *_workDeadSymRefs;
          }
@@ -1799,7 +1799,7 @@ void TR_OSRLiveRangeAnalysis::buildOSRLiveRangeInfo(TR::Node *node, TR_BitVector
             }
 
          if (deadSymRefs)
-            *deadSymRefs |= *_workDeadSymRefs; 
+            *deadSymRefs |= *_workDeadSymRefs;
          }
 
       if (newlyAllocated && deadSymRefs && !deadSymRefs->isEmpty())

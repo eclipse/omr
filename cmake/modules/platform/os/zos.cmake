@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,12 +20,15 @@
 #############################################################################
 
 list(APPEND OMR_PLATFORM_DEFINITIONS
-	-DJ9ZOS390
-	-DLONGLONG
 	-D_ALL_SOURCE
-	-D_XOPEN_SOURCE_EXTENDED
-	-DIBM_ATOE
+	-D_OPEN_THREADS=2
 	-D_POSIX_SOURCE
+	-D_XOPEN_SOURCE_EXTENDED
+	-D_ISOC99_SOURCE
+	-DLONGLONG
+	-DJ9ZOS390
+	-DSUPPORTS_THREAD_LOCAL
+	-DZOS
 )
 
 list(APPEND OMR_PLATFORM_INCLUDE_DIRECTORIES
@@ -34,61 +37,26 @@ list(APPEND OMR_PLATFORM_INCLUDE_DIRECTORIES
 	/usr/include
 )
 
-list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
-	"\"-Wc,xplink\""               # link with xplink calling convention
-	"\"-Wc,convlit(ISO8859-1)\""   # convert all string literals to a codepage
-	"\"-Wc,rostring\""             # place string literals in read only storage
-	"\"-Wc,FLOAT(IEEE,FOLD,AFP)\"" # Use IEEE (instead of IBM Hex Format) style floats
-	"\"-Wc,enum(4)\""              # Specifies how many bytes of storage enums occupy
-	"\"-Wa,goff\""                 # Assemble into GOFF object files
-	"\"-Wc,NOANSIALIAS\""          # Do not generate ALIAS binger control statements
-	"\"-Wc,TARGET(zOSV1R13)\""     # Generate code for the target operating system
-)
+# Create helper targets for specifying ascii/ebcdic options
+add_library(omr_ascii INTERFACE)
+target_compile_definitions(omr_ascii INTERFACE -DIBM_ATOE)
+target_compile_options(omr_ascii INTERFACE "-Wc,convlit(ISO8859-1)")
+target_link_libraries(omr_ascii INTERFACE j9a2e)
 
-list(APPEND OMR_PLATFORM_C_COMPILE_OPTIONS
-	"\"-Wc,ARCH(7)\""
-	"\"-Wc,langlvl(extc99)\""
-	"\"-qnosearch\""
-)
+add_library(omr_ebcdic INTERFACE)
+target_compile_definitions(omr_ebcdic INTERFACE -DOMR_EBCDIC)
 
-list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS
-	"\"-Wc,ARCH(7)\""
-	"\"-Wc,langlvl(extended)\""
-	"\"-qnosearch\""
+install(TARGETS omr_ascii omr_ebcdic
+	EXPORT OmrTargets
 )
-
-list(APPEND OMR_PLATFORM_SHARED_COMPILE_OPTIONS
-	"\"-Wc,DLL\""
-	"\"-Wc,EXPORTALL\""
-)
-
-list(APPEND OMR_PLATFORM_SHARED_LINKER_OPTIONS
-	"\"-Wl,xplink\""
-	"\"-Wl,dll\""
-)
-
-if(OMR_ENV_DATA64)
-	list(APPEND OMR_PLATFORM_DEFINITIONS
-		-DJ9ZOS39064
-	)
-	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
-		\"-Wc,lp64\"
-		\"-Wa,SYSPARM(BIT64)\"
-	)
-else()
-	list(APPEND OMR_PLATFORM_DEFINITIONS
-		-D_LARGE_FILES
-	)
-endif()
 
 macro(omr_os_global_setup)
-
 	# TODO: Move this out and after platform config.
 	enable_language(ASM-ZOS)
 
 	omr_append_flags(CMAKE_ASM-ZOS_FLAGS ${OMR_PLATFORM_COMPILE_OPTIONS})
 
-	#TODO below is a chunk of the original makefile which still needs to be ported
+	# TODO below is a chunk of the original makefile which still needs to be ported
 	# # This is the first option applied to the C++ linking command.
 	# # It is not applied to the C linking command.
 	# OMR_MK_CXXLINKFLAGS=-Wc,"langlvl(extended)" -+
@@ -109,15 +77,14 @@ macro(omr_os_global_setup)
 		# GLOBAL_SHARED_LIBS+=j9a2e
 	# endif
 
-	#dump DLLs and exes in same dir like on windows
+	# dump DLLs and exes in same dir like on Windows
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
-	#apparently above doesnt work like it does on windows. Attempt to work arround
+	# Apparently above doesn't work like it does on Windows. Attempt to work around.
 	set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
-	set(LIBRARY_OUTPUT_PATH  "${CMAKE_BINARY_DIR}")
+	set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
 
 	message(STATUS "DEBUG: RUNTIME_OUTPUT_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 	message(STATUS "DEBUG: CFLAGS=${CMAKE_C_FLAGS}")
 	message(STATUS "DEBUG: EXE LDFLAGS=${CMAKE_EXE_LINKER_FLAGS}")
 	message(STATUS "DEBUG: so LDFLAGS=${CMAKE_SHARED_LINKER_FLAGS}")
-
 endmacro(omr_os_global_setup)

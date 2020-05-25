@@ -21,7 +21,7 @@
 
 #include <limits.h>
 #include <stdio.h>
-#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "ilgen/TypeDictionary.hpp"
 #include "OpCodesTest.hpp"
 #include "tests/FooBarTest.hpp"

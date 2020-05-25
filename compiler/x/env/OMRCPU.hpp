@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@ namespace OMR { typedef OMR::X86::CPU CPUConnector; }
 #include <stdint.h>
 #include "compiler/env/OMRCPU.hpp"
 #include "env/jittypes.h"
+#include "omrport.h"
 
 struct TR_X86CPUIDBuffer;
 namespace TR { class Compilation; }
@@ -47,13 +48,16 @@ namespace OMR
 namespace X86
 {
 
-class CPU : public OMR::CPU
+class OMR_EXTENSIBLE CPU : public OMR::CPU
    {
 protected:
 
    CPU() : OMR::CPU() {}
+   CPU(const OMRProcessorDesc& processorDescription) : OMR::CPU(processorDescription) {}
 
 public:
+
+   static TR::CPU detect(OMRPortLibrary * const omrPortLib);
 
    TR_X86CPUIDBuffer *queryX86TargetCPUID();
    const char *getX86ProcessorVendorId();
@@ -61,6 +65,8 @@ public:
    uint32_t getX86ProcessorFeatureFlags();
    uint32_t getX86ProcessorFeatureFlags2();
    uint32_t getX86ProcessorFeatureFlags8();
+
+   bool getSupportsHardwareSQRT();
 
    bool testOSForSSESupport();
 
@@ -82,13 +88,20 @@ public:
     *
     * @return true if the target is within range; false otherwise.
     */
-   bool isTargetWithinRIPRange(intptrj_t targetAddress, intptrj_t sourceAddress)
+   bool isTargetWithinRIPRange(intptr_t targetAddress, intptr_t sourceAddress)
       {
       return targetAddress == sourceAddress + (int32_t)(targetAddress - sourceAddress);
       }
-
+   bool isGenuineIntel();
+   bool isAuthenticAMD();
+   
+   bool requiresLFence();
+   bool supportsFCOMIInstructions();
+   bool supportsMFence();
+   bool supportsLFence();
+   bool supportsSFence();
+   bool prefersMultiByteNOP();
    };
-
 }
 
 }

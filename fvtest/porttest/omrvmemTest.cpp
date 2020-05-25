@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -763,6 +763,13 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 						OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE | OMRPORT_VMEM_MEMORY_MODE_COMMIT | OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN,
 						pageSize, OMRMEM_CATEGORY_PORT_LIBRARY);
 
+		/* In order for double map to work, the system must have the appropriate API. The existance of such API is checked dynamically. In a normal application,
+		 * if the API is not available, we fall back to disabling double mapping, which turns this test useless. Because of that, we must check if such API is
+		 * available. We do so by checking if we found the API call or not. */
+		if (0 == (OMRPORT_VMEM_MEMORY_MODE_DOUBLE_MAP_AVAILABLE & vmemID.mode)) {
+			portTestEnv->log(LEVEL_ERROR, "Double map API not available. Skipping test...\n");
+			goto exit;
+		}
 
 		/* did we get any memory? */
 		if (memPtr == NULL) {
@@ -805,14 +812,14 @@ TEST(PortVmemTest, vmem_test_double_mapping)
 			/* Initialize arraylet offsets to different ranges */
 			long arrayLetOffsets[ARRAYLET_COUNT];
 			/* Must be multiple of pagesize: sysconf(_SC_PAGE_SIZE) 	Simulates the order of arraylet leaves in an array */
-			arrayLetOffsets[0] = 0;								/* 1 */
-			arrayLetOffsets[1] = (HEAP_SIZE / 2) + (HEAP_SIZE / 8);				/* 6 */
-			arrayLetOffsets[2] = HEAP_SIZE / 4;						/* 3 */
-			arrayLetOffsets[3] = (HEAP_SIZE / 4) + (HEAP_SIZE / 8);				/* 4 */
-			arrayLetOffsets[4] = HEAP_SIZE / 2;						/* 5 */
-			arrayLetOffsets[5] = (HEAP_SIZE / 2) + (HEAP_SIZE / 4) + (HEAP_SIZE / 8);	/* 8 */
-			arrayLetOffsets[6] = (HEAP_SIZE / 8);						/* 2 */
-			arrayLetOffsets[7] = (HEAP_SIZE / 2) + (HEAP_SIZE / 4);				/* 7 */
+			arrayLetOffsets[0] = 0;                                                             /* 1 */
+			arrayLetOffsets[1] = (long)((HEAP_SIZE / 2) + (HEAP_SIZE / 8));	                    /* 6 */
+			arrayLetOffsets[2] = (long)(HEAP_SIZE / 4);                                         /* 3 */
+			arrayLetOffsets[3] = (long)((HEAP_SIZE / 4) + (HEAP_SIZE / 8));                     /* 4 */
+			arrayLetOffsets[4] = (long)(HEAP_SIZE / 2);                                         /* 5 */
+			arrayLetOffsets[5] = (long)((HEAP_SIZE / 2) + (HEAP_SIZE / 4) + (HEAP_SIZE / 8));   /* 8 */
+			arrayLetOffsets[6] = (long)(HEAP_SIZE / 8);                                         /* 2 */
+			arrayLetOffsets[7] = (long)((HEAP_SIZE / 2) + (HEAP_SIZE / 4));                     /* 7 */
 
 			size_t i = 0;
 			for(; i < ARRAYLET_COUNT; i++) {
@@ -2834,12 +2841,12 @@ omrvmem_testFindValidPageSize_impl(struct OMRPortLibrary *portLibrary, const cha
 	BOOLEAN sixteenMBPageSize = FALSE;
 	BOOLEAN sixtyFourKBPageSize = FALSE;
 
-	void *address = NULL;
 	uintptr_t dataSegmentPageSize = 0;
 
 	intptr_t caseIndex = 1;
 	intptr_t i = 0;
 	intptr_t rc = 0;
+	(void) rc;
 
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 
@@ -2852,7 +2859,7 @@ omrvmem_testFindValidPageSize_impl(struct OMRPortLibrary *portLibrary, const cha
 
 	if (pageSizes[0] == 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "There aren't any supported page sizes on this platform \n");
-		goto _exit;
+		return reportTestExit(OMRPORTLIB, testName);
 	}
 
 	for (i = 0 ; pageSizes[i] != 0 ; i++) {
@@ -3017,17 +3024,17 @@ omrvmem_testFindValidPageSize_impl(struct OMRPortLibrary *portLibrary, const cha
 #if defined(AIXPPC)
 #define SAMPLE_BLOCK_SIZE 4
 	/* Allocate a memory block using omrmem_allocate_memory, and use the address to get the page size of data segment */
-	address = omrmem_allocate_memory(SAMPLE_BLOCK_SIZE, OMRMEM_CATEGORY_PORT_LIBRARY);
+	void *address = omrmem_allocate_memory(SAMPLE_BLOCK_SIZE, OMRMEM_CATEGORY_PORT_LIBRARY);
 	if (NULL == address) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Failed to allocate block of memory to determine page size of data segment");
-		goto _exit;
+		return reportTestExit(OMRPORTLIB, testName);
 	}
 	struct vm_page_info pageInfo;
 	pageInfo.addr = (uint64_t) address;
 	rc = vmgetinfo(&pageInfo, VM_PAGE_INFO, sizeof(struct vm_page_info));
 	if (-1 == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Failed to get page size of data segment using vmgetinfo()");
-		goto _exit;
+		return reportTestExit(OMRPORTLIB, testName);
 	} else {
 		dataSegmentPageSize = (uintptr_t) pageInfo.pagesize;
 	}
@@ -3088,7 +3095,7 @@ omrvmem_testFindValidPageSize_impl(struct OMRPortLibrary *portLibrary, const cha
 	rc = setenv("TR_ppcCodeCacheConsolidationEnabled", "true", 1 /*overwrite any existing value */);
 	if (-1 == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Failed to set environment variable TR_ppcCodeCacheConsolidationEnabled");
-		goto _exit;
+		return reportTestExit(OMRPORTLIB, testName);
 	}
 	mode = OMRPORT_VMEM_MEMORY_MODE_EXECUTE;
 	requestedPageSize = 16 * ONE_MB;
@@ -3137,7 +3144,7 @@ omrvmem_testFindValidPageSize_impl(struct OMRPortLibrary *portLibrary, const cha
 	rc = setenv("TR_ppcCodeCacheConsolidationEnabled", "true", 1 /*overwrite any existing value */);
 	if (-1 == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Failed to set environment variable TR_ppcCodeCacheConsolidationEnabled");
-		goto _exit;
+		return reportTestExit(OMRPORTLIB, testName);
 	}
 	mode = OMRPORT_VMEM_MEMORY_MODE_EXECUTE;
 	requestedPageSize = 16 * FOUR_KB;
@@ -3180,7 +3187,7 @@ omrvmem_testFindValidPageSize_impl(struct OMRPortLibrary *portLibrary, const cha
 	rc = setenv("TR_ppcCodeCacheConsolidationEnabled", "true", 1 /*overwrite any existing value */);
 	if (-1 == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Failed to set environment variable TR_ppcCodeCacheConsolidationEnabled");
-		goto _exit;
+		return reportTestExit(OMRPORTLIB, testName);
 	}
 	mode = OMRPORT_VMEM_MEMORY_MODE_EXECUTE;
 	requestedPageSize = FOUR_KB;
@@ -3223,7 +3230,7 @@ omrvmem_testFindValidPageSize_impl(struct OMRPortLibrary *portLibrary, const cha
 	rc = setenv("TR_ppcCodeCacheConsolidationEnabled", "true", 1 /*overwrite any existing value */);
 	if (-1 == rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Failed to set environment variable TR_ppcCodeCacheConsolidationEnabled");
-		goto _exit;
+		return reportTestExit(OMRPORTLIB, testName);
 	}
 	mode = OMRPORT_VMEM_MEMORY_MODE_EXECUTE;
 	requestedPageSize = 8 * ONE_MB;
@@ -3244,7 +3251,6 @@ omrvmem_testFindValidPageSize_impl(struct OMRPortLibrary *portLibrary, const cha
 								  requestedPageSize, requestedPageFlags, isSizeSupported);
 #endif /* !defined(OMR_ENV_DATA64) */
 
-_exit:
 	return reportTestExit(OMRPORTLIB, testName);
 }
 
@@ -3792,6 +3798,84 @@ omrvmem_testFindValidPageSize_impl(struct OMRPortLibrary *portLibrary, const cha
 									  requestedPageSize, requestedPageFlags, isSizeSupported);
 	}
 
+	portTestEnv->log("\nCase %d: Default large page when pageable is preferred. \n", caseIndex++);
+	if (0 == defaultLargePageSize) {
+		portTestEnv->log("Skip this test as the configuration does not support default large page size\n");
+	} else {
+		mode = 0;
+		requestedPageSize = 0;
+		requestedPageFlags = OMRPORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE;
+		PRINT_FIND_VALID_PAGE_SIZE_INPUT(mode, requestedPageSize, requestedPageFlags);
+
+		omrvmem_default_large_page_size_ex(mode, &requestedPageSize, &requestedPageFlags);
+
+		expectedPageSize = ONE_MB;
+		expectedPageFlags = oneMBPageable ? OMRPORT_VMEM_PAGE_FLAG_PAGEABLE : OMRPORT_VMEM_PAGE_FLAG_FIXED;
+
+		verifyFindValidPageSizeOutput(
+			portLibrary, testName, expectedPageSize, expectedPageFlags,
+			FALSE, requestedPageSize, requestedPageFlags, FALSE);
+	}
+
+	portTestEnv->log("\nCase %d: Default large page when mode is OMRPORT_VMEM_MEMORY_MODE_EXECUTE.\n", caseIndex++);
+	if (0 == defaultLargePageSize) {
+		portTestEnv->log("Skip this test as the configuration does not support default large page size\n");
+	} else {
+		mode = OMRPORT_VMEM_MEMORY_MODE_EXECUTE;
+		requestedPageSize = 0;
+		requestedPageFlags = OMRPORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE;
+		PRINT_FIND_VALID_PAGE_SIZE_INPUT(mode, requestedPageSize, requestedPageFlags);
+
+		omrvmem_default_large_page_size_ex(mode, &requestedPageSize, &requestedPageFlags);
+
+		expectedPageSize = oneMBPageable ? ONE_MB : 0;
+		expectedPageFlags = oneMBPageable ? OMRPORT_VMEM_PAGE_FLAG_PAGEABLE : OMRPORT_VMEM_PAGE_FLAG_NOT_USED;
+
+		verifyFindValidPageSizeOutput(
+			portLibrary, testName, expectedPageSize, expectedPageFlags,
+			FALSE, requestedPageSize, requestedPageFlags, FALSE);
+	}
+
+	portTestEnv->log("\nCase %d: Verify 1M large pages when pageable is preferred.\n", caseIndex++);
+	if (0 == defaultLargePageSize) {
+		portTestEnv->log("Skip this test as the configuration does not support default large page size\n");
+	} else {
+		mode = 0;
+		requestedPageSize = ONE_MB;
+		requestedPageFlags = OMRPORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE;
+		PRINT_FIND_VALID_PAGE_SIZE_INPUT(mode, requestedPageSize, requestedPageFlags);
+
+		omrvmem_find_valid_page_size(mode, &requestedPageSize, &requestedPageFlags, &isSizeSupported);
+
+		expectedPageSize = ONE_MB;
+		expectedPageFlags = oneMBPageable ? OMRPORT_VMEM_PAGE_FLAG_PAGEABLE : OMRPORT_VMEM_PAGE_FLAG_FIXED;
+		expectedIsSizeSupported = TRUE;
+
+		verifyFindValidPageSizeOutput(
+			portLibrary, testName, expectedPageSize, expectedPageFlags,
+			expectedIsSizeSupported, requestedPageSize, requestedPageFlags, isSizeSupported);
+	}
+
+	portTestEnv->log("\nCase %d: Verify 1M large pages when mode is OMRPORT_VMEM_MEMORY_MODE_EXECUTE.\n", caseIndex++);
+	if (0 == defaultLargePageSize) {
+		portTestEnv->log("Skip this test as the configuration does not support default large page size\n");
+	} else {
+		mode = OMRPORT_VMEM_MEMORY_MODE_EXECUTE;
+		requestedPageSize = ONE_MB;
+		requestedPageFlags = OMRPORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE;
+		PRINT_FIND_VALID_PAGE_SIZE_INPUT(mode, requestedPageSize, requestedPageFlags);
+
+		omrvmem_find_valid_page_size(mode, &requestedPageSize, &requestedPageFlags, &isSizeSupported);
+
+		expectedPageSize = oneMBPageable ? ONE_MB : FOUR_KB;
+		expectedPageFlags = OMRPORT_VMEM_PAGE_FLAG_PAGEABLE;
+		expectedIsSizeSupported = oneMBPageable;
+
+		verifyFindValidPageSizeOutput(
+			portLibrary, testName, expectedPageSize, expectedPageFlags,
+			expectedIsSizeSupported, requestedPageSize, requestedPageFlags, isSizeSupported);
+	}
+
 #endif /* defined(OMR_ENV_DATA64) */
 
 _exit:
@@ -4078,6 +4162,7 @@ TEST(PortVmemTest, vmem_testOverlappingSegments)
 
 	reportTestEntry(OMRPORTLIB, testName);
 	memset(keepCycles, 0, CYCLES);
+	memset(vmemID, 0, sizeof(*vmemID) * CYCLES);
 	srand(10);
 
 	portTestEnv->log("Cycles: %d\n\n", CYCLES);
@@ -4135,6 +4220,9 @@ exit:
 	freed = 0;
 	for (j = 0; j < CYCLES; j++) {
 		if (keepCycles[j] >= i) {
+			if (vmemID[j].address == 0) {
+				continue;
+			}
 			int32_t rc = omrvmem_free_memory(vmemID[j].address, vmemParams[j].byteAmount, &vmemID[j]);
 			if (0 == rc) {
 				freed++;

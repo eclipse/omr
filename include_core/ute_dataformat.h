@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2015 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,6 +116,7 @@ typedef enum {
 	UT_PIV,
 	UT_TREX,
 	UT_OPTERON,
+	UT_RV64G,
 	UT_SUBTYPE_FORCE_INTEGER = INT_MAX
 } UtSubtype;
 
@@ -145,6 +146,7 @@ typedef enum {
 	UT_IA64,
 	UT_S390X,
 	UT_AMD64,
+	UT_RISCV,
 	UT_ARCHITECTURE_FORCE_INTEGER = INT_MAX
 } UtArchitecture;
 

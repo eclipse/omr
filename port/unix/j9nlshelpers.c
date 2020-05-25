@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,8 +117,8 @@ nls_determine_locale(struct OMRPortLibrary *portLibrary)
 	}
 #endif /* defined (J9ZOS390) */
 #endif  /* defined(LINUX) || defined(OSX) */
-	if (lang != NULL && strcmp(lang, "POSIX") && strcmp(lang, "C"))
-		if (lang != NULL && (langlen = strlen(lang)) >= 2) {
+	if ((NULL != lang) && strcmp(lang, "POSIX") && strcmp(lang, "C") && strcmp(lang, "UTF-8")) {
+		if ((NULL != lang) && ((langlen = strlen(lang)) >= 2)) {
 			/* copy the language, stopping at '_'
 			 * CMVC 145188 - language locale must be lowercase
 			 */
@@ -129,6 +129,7 @@ nls_determine_locale(struct OMRPortLibrary *portLibrary)
 				countryStart++;
 			}
 		}
+	}
 	if (!strcmp(languageProp, "jp")) {
 		languageProp[1] = 'a';
 	}

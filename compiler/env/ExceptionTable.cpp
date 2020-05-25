@@ -131,6 +131,7 @@ TR_ExceptionTableEntryIterator::TR_ExceptionTableEntryIterator(TR::Compilation *
             ete->_instructionEndPC = last->getInstructionBoundaries()._endPC;
             ete->_instructionHandlerPC = catchBlock->getInstructionBoundaries()._startPC;
             ete->_catchType = catchType;
+            ete->_isSyntheticHandler = catchBlock->isSyntheticHandler();
             ete->_method = method;
 
             ete->_byteCodeInfo = catchBlock->getByteCodeInfo();
@@ -153,8 +154,8 @@ TR_ExceptionTableEntryIterator::addSnippetRanges(
       ete->_instructionEndPC = ib->_endPC;
       ete->_instructionHandlerPC = catchBlock->getInstructionBoundaries()._startPC;
       ete->_catchType = catchType;
+      ete->_isSyntheticHandler = catchBlock->isSyntheticHandler();
       ete->_method = method;
-
       ete->_byteCodeInfo = catchBlock->getByteCodeInfo();
       tableEntries.add(ete);
       }

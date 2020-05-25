@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -216,9 +216,9 @@ namespace ILProp2
       LeftRotate                   = 0x00001000,
       UnsignedCompare              = 0x00002000,
       OverflowCompare              = 0x00004000,
-      Ternary                      = 0x00008000,
-      TernaryAdd                   = 0x00010000,
-      TernarySub                   = 0x00020000,
+      Select                       = 0x00008000,
+      SelectAdd                    = 0x00010000,
+      SelectSub                    = 0x00020000,
       CondCodeComputation          = 0x00040000,
       JumpWithMultipleTargets      = 0x00080000,
       LoadAddress                  = 0x00100000,

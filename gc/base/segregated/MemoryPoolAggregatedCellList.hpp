@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,8 +97,9 @@ public:
 	addFreeChunk(uintptr_t *freeChunk, uintptr_t freeChunkSize, uintptr_t freeChunkCellCount)
 	{
 		MM_HeapLinkedFreeHeader *chunk = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(freeChunk);
+		bool const compressed = compressObjectReferences();
 		chunk->setSize(freeChunkSize);
-		MM_HeapLinkedFreeHeader::linkInAsHead((volatile uintptr_t *)(&_freeListHead), chunk);
+		MM_HeapLinkedFreeHeader::linkInAsHead((volatile uintptr_t *)(&_freeListHead), chunk, compressed);
 		addFreeCount(freeChunkCellCount);
 	}
 
@@ -139,11 +140,13 @@ public:
 	 */
 	MMINLINE void refreshCurrentEntry()
 	{
+		bool const compressed = compressObjectReferences();
+
 		/* NOTE: The region lock must be held by the caller! */
 		if (NULL != _freeListHead) {
 			_heapCurrent = (uintptr_t *)_freeListHead;
 			_heapTop = (uintptr_t *)((uintptr_t)_heapCurrent + _freeListHead->getSize());
-			_freeListHead = _freeListHead->getNext();
+			_freeListHead = _freeListHead->getNext(compressed);
 		} else {
 			_heapCurrent = NULL;
 			_heapTop = NULL;

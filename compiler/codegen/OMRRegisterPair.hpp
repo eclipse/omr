@@ -39,7 +39,6 @@ namespace OMR { typedef OMR::RegisterPair RegisterPairConnector; }
 namespace TR { class CodeGenerator; }
 namespace TR { class RegisterPair; }
 
-#define REGPAIR_THIS static_cast<TR::RegisterPair*>(this)
 template<typename QueueKind> class TR_Queue;
 
 namespace OMR
@@ -67,12 +66,13 @@ class OMR_EXTENSIBLE RegisterPair : public TR::Register
 
    virtual TR::Register     *getRegister();
    virtual TR::RegisterPair *getRegisterPair();
-   virtual int32_t            FlattenRegisterPairs(TR_Queue<TR::Register> * Pairs);
 
 
    private:
    TR::Register *_lowOrder;
    TR::Register *_highOrder;
+
+   TR::RegisterPair *self();
    };
 
 }

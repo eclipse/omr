@@ -820,6 +820,11 @@ MM_VerboseHandlerOutputStandard::handleConcurrentAborted(J9HookInterface** hook,
 	case ABORT_COLLECTION_PREPARE_HEAP_FOR_WALK:
 		reason = "prepare heap for walk";
 		break;
+#if defined(OMR_GC_IDLE_HEAP_MANAGER)
+	case ABORT_COLLECTION_IDLE_GC:
+		reason = "restart cycle for idle gc";
+		break;
+#endif /* OMR_GC_IDLE_HEAP_MANAGER */
 	default:
 		reason = "unknown";
 		break;

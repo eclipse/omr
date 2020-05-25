@@ -105,7 +105,6 @@ class OMR_EXTENSIBLE Register: public OMR::Register
     * Methods specialized in derived classes
     */
 
-   virtual int32_t             FlattenRegisterPairs(TR_Queue<TR::Register> * Pairs) {return 0;}
    virtual bool usesRegister(TR::Register* reg);  //ppc may duplicate this
    virtual bool usesAnyRegister(TR::Register* reg);
 

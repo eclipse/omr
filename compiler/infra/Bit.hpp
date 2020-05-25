@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,9 @@ class intParts  {
       int32_t getValue()              { return intVal; }
       int32_t setValue(int32_t value) { return intVal=value; }
       int32_t getHighBits()           { return (uint32_t)intVal >> 16; }
+      int32_t getHighBitsSigned()     { return intVal >> 16; }
       int32_t getLowBits()            { return (uint32_t)intVal & 0xffff; }
+      int32_t getLowBitsSigned()      { return (intVal << 16) >> 16; }
       int32_t getLowSign()            { return ((uint32_t)intVal >> 15) & 0x1; }
       int32_t getHighSign()           { return (uint32_t)intVal >> 31; }
       int32_t getByte3()              { return (uint32_t)intVal >> 24; }
@@ -406,9 +408,9 @@ static inline bool isPowerOf2(int64_t input)
    }
 
 #if defined(OSX)
-// On OSX, intptrj_t isn't int32_t nor int64_t
+// On OSX, intptr_t isn't int32_t nor int64_t
 
-static inline int32_t leadingZeroes (intptrj_t input)
+static inline int32_t leadingZeroes (intptr_t input)
    {
 #ifdef TR_HOST_64BIT
    return leadingZeroes ((int64_t)input);
@@ -417,7 +419,7 @@ static inline int32_t leadingZeroes (intptrj_t input)
 #endif
    }
 
-static inline int32_t trailingZeroes(intptrj_t input)
+static inline int32_t trailingZeroes(intptr_t input)
    {
 #ifdef TR_HOST_64BIT
    return trailingZeroes((int64_t)input);
@@ -426,7 +428,7 @@ static inline int32_t trailingZeroes(intptrj_t input)
 #endif
    }
 
-static inline int32_t populationCount(intptrj_t input)
+static inline int32_t populationCount(intptr_t input)
    {
 #ifdef TR_HOST_64BIT
    return populationCount((int64_t)input);
@@ -435,7 +437,7 @@ static inline int32_t populationCount(intptrj_t input)
 #endif
    }
 
-static inline bool isPowerOf2(intptrj_t input)
+static inline bool isPowerOf2(intptr_t input)
    {
 #ifdef TR_HOST_64BIT
    return isPowerOf2((int64_t)input);

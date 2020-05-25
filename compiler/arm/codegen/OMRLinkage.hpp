@@ -33,16 +33,17 @@ namespace OMR { typedef OMR::ARM::Linkage LinkageConnector; }
 #endif
 
 #include "compiler/codegen/OMRLinkage.hpp"
-
+#include "codegen/ARMOps.hpp"
+#include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/RealRegister.hpp"
-#include "codegen/RegisterDependency.hpp"
 #include "infra/Annotations.hpp"
-#ifdef J9_PROJECT_SPECIFIC
-#include "runtime/RuntimeAssumptions.hpp"
-#endif
 
 namespace TR { class CodeGenerator; }
+namespace TR { class Instruction; }
+namespace TR { class MemoryReference; }
+namespace TR { class Node; }
 namespace TR { class Register; }
+namespace TR { class RegisterDependencyConditions; }
 
 namespace TR {
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,8 @@ public:
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 	uintptr_t _syncStallCount; /**< The number of times the thread stalled at a sync point */
 	uint64_t _syncStallTime; /**< The time, in hi-res ticks, the thread spent stalled at a sync point */
+	uintptr_t _splitArraysProcessed; /**< The number of array chunks (not counting parts smaller than the split size) processed by this thread */
+	uintptr_t _splitArraysAmount;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
 	uint64_t _startTime;	/**< Mark start time */
@@ -108,6 +110,12 @@ public:
 		,_objectsMarked(0)
 		,_objectsScanned(0)
 		,_bytesScanned(0)
+#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
+		,_syncStallCount(0)
+		,_syncStallTime(0)
+		,_splitArraysProcessed(0)
+		,_splitArraysAmount(0)
+#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 		,_startTime(0)
 		,_endTime(0)
 	{

@@ -25,7 +25,6 @@ compiler_library(codegen
 	${CMAKE_CURRENT_LIST_DIR}/CodeGenPrep.cpp
 	${CMAKE_CURRENT_LIST_DIR}/CodeGenGC.cpp
 	${CMAKE_CURRENT_LIST_DIR}/CodeGenRA.cpp
-	${CMAKE_CURRENT_LIST_DIR}/FrontEnd.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRGCRegisterMap.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRGCStackAtlas.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRLinkage.cpp

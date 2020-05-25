@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 /*
  * omrsignal_ceehdlr provides an implementation of signal support that uses LE condition handling
  * it is only to be used on 31-bit z/OS
- **/
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -57,7 +57,6 @@ static omrthread_tls_key_t tlsKeyCurrentSignal;
 static void setCurrentSignal(struct OMRPortLibrary *portLibrary, uint32_t portLibSigType);
 
 /*
- *
  * Much of the following omrsig_le_condition_handler parameter documentation is from:
  *
  * 	"V1R11.0 Language Environment Programming Guide", p. 243, http://publibz.boulder.ibm.com/epubs/pdf/ceea21a0.pdf
@@ -81,14 +80,12 @@ static void setCurrentSignal(struct OMRPortLibrary *portLibrary, uint32_t portLi
  *						 For some conditions, there may be other condition tokens that can be provided by the condition
  *						 handler in new_condition to request specific fix-up actions.
  *
- *
  * The Language environment documentation for all the condition messages are here http://publibz.boulder.ibm.com/epubs/pdf/ceea91a0.pdf,
- * 	but the POSIX signal mappings are not included for hardware raised signals.
+ * but the POSIX signal mappings are not included for hardware raised signals.
  *
  * The messages for hardware raised POSIX signals are in Table 74, pg. 421 here http://publibz.boulder.ibm.com/epubs/pdf/cbcpg1a0.pdf
  * The messages for software raised POSIX signals are in Table 76, pg. 423 here http://publibz.boulder.ibm.com/epubs/pdf/cbcpg1a0.pdf
- *
-*/
+ */
 void
 omrsig_le_condition_handler(_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, _FEEDBACK *newfc)
 {
@@ -226,7 +223,6 @@ omrsig_le_condition_handler(_FEEDBACK *fc, _INT4 *token, _INT4 *leResult, _FEEDB
 			/* unreachable */
 			break;
 		}
-
 	} else {
 		/* the handler doesn't want to handle this signal, percolate */
 		*leResult = 20;
@@ -336,6 +332,7 @@ ceehdlr_startup(struct OMRPortLibrary *portLibrary)
 	if (omrthread_tls_alloc(&tlsKeyCurrentSignal)) {
 		return -1;
 	}
+	return 0;
 }
 
 void

@@ -23,7 +23,7 @@
 
 #include <ctype.h>
 #include <stddef.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 
 #define   LOCALE_ENV_VAR   "TR_ProcessOptionsWithLocale"
 #define   LOCALE_DEF   static const char *ignoreLocaleOption=feGetEnv(LOCALE_ENV_VAR)

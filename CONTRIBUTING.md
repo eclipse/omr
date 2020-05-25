@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2019 IBM Corp. and others
+Copyright (c) 2016, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,9 @@ Thanks for your interest in this project.
 We welcome and encourage all kinds of contribution to the project, not only code.
 This includes bug reports, user experience feedback, assistance in reproducing
 issues and more.
+
+If you are new to working with `git`, you may use our [Git Crash Course](doc/GitCrashCourse.md)
+to help you get started.
 
 ## Issues
 
@@ -63,7 +66,7 @@ A subset of the labels are documented below.
   request testing (e.g., Jenkins, Travis, AppVeyor, etc.)
 
 * [**`cmake`**](https://github.com/eclipse/omr/labels/cmake) labels are similar
-  to build/configure but they apply specifically to the Cmake configuration.
+  to build/configure but they apply specifically to the CMake configuration.
 
 * [**`compiler arch review`**](https://github.com/eclipse/omr/labels/compiler%20arch%20review)
   labels are used to indicate a review of this issue or pull request at the
@@ -91,6 +94,13 @@ A subset of the labels are documented below.
 
 * [**`meeting`**](https://github.com/eclipse/omr/labels/meeting) labels are
   used to annotate issues pertaining to project meeting agendas or minutes.
+
+* [**`toolchain bug`**](https://github.com/eclipse/omr/labels/toolchain%20bug)
+  labels are used to document issues or pull requests that describe or implement
+  a workaround to a bug in the development toolchain (such as the compiler) used
+  to build OMR.  Toolchain workarounds should be temporary in nature, and the
+  intention of this label is to make such workarounds easy to discover in the
+  future lest they be lost in the code.
 
 * [**`tooling`**](https://github.com/eclipse/omr/labels/tooling) labels are for
   issues concerning support tooling needed to support any of the code or
@@ -120,6 +130,7 @@ can be achieved with the following labels:
 * [**`arch:aarch32`**](https://github.com/eclipse/omr/labels/arch%3Aaarch32)
 * [**`arch:aarch64`**](https://github.com/eclipse/omr/labels/arch%3Aaarch64)
 * [**`arch:power`**](https://github.com/eclipse/omr/labels/arch%3Apower)
+* [**`arch:riscv`**](https://github.com/eclipse/omr/labels/arch%3Ariscv)
 * [**`arch:x86`**](https://github.com/eclipse/omr/labels/arch%3Ax86)
 * [**`arch:z`**](https://github.com/eclipse/omr/labels/arch%3Az)
 <br/>
@@ -161,14 +172,17 @@ Following these guidelines will help us to merge your pull requests smoothly:
    in style however, so if the file you are editing seems to have a diffferent
    style, defer to the style of the file as you found it.
 
-6. Follow the commit guidelines found below.
+6. Only use C++ language features supported by our compilers. A list of supported
+   features can be found [here](doc/SupportedC++Features.md).
 
-7. We encourage you to open a pull request early, and mark it as "Work In Progress"
+7. Follow the commit guidelines found below.
+
+8. We encourage you to open a pull request early, and mark it as "Work In Progress"
    (prefix the PR title with WIP). This allows feedback to start early, and helps
    create a better end product. Committers will wait until after you've removed
    the WIP prefix to merge your changes.
 
-8. If you are contributing a change to the compiler technology that involves modifications
+9. If you are contributing a change to the compiler technology that involves modifications
    to the Testarossa IL (including, but not limited to, adding a new IL opcode, changing
    the properties of an opcode, or adding a new datatype) or, in the opinion of a committer,
    a fundamental element of compiler infrastructure, a committer will request that this

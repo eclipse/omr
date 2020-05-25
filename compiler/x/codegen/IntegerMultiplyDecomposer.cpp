@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -43,7 +43,7 @@ namespace TR { class Register; }
 // This is duplicated from TR::TreeEvaluator
 inline bool getNodeIs64Bit(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::Compiler->target.is64Bit() && node->getSize() > 4;
+   return cg->comp()->target().is64Bit() && node->getSize() > 4;
    }
 
 // tempRegArray is an array of temporary registers

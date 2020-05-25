@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -230,13 +230,24 @@ MM_VerboseHandlerOutput::handleInitializedRegion(J9HookInterface** hook, uintptr
 	MM_InitializedEvent* event = (MM_InitializedEvent*)eventData;
 	MM_VerboseWriterChain* writer = _manager->getWriterChain();
 	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(event->currentThread);
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+	bool isArrayletDoubleMapRequested = _extensions->isArrayletDoubleMapRequested;
+	const char *arrayletDoubleMappingStatus = _extensions->indexableObjectModel.isDoubleMappingEnabled() ? "enabled" : "disabled";
+	const char *arrayletDoubleMappingRequested = isArrayletDoubleMapRequested ? "true" : "false";
+#endif /* OMR_GC_DOUBLE_MAP_ARRAYLETS */
 
 	writer->formatAndOutput(env, 1, "<region>");
 	writer->formatAndOutput(env, 2, "<attribute name=\"regionSize\" value=\"%zu\" />", event->regionSize);
 	writer->formatAndOutput(env, 2, "<attribute name=\"regionCount\" value=\"%zu\" />", event->regionCount);
-#if defined(OMR_GC_ARRAYLETS)
 	writer->formatAndOutput(env, 2, "<attribute name=\"arrayletLeafSize\" value=\"%zu\" />", event->arrayletLeafSize);
-#endif	
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
+	if (_extensions->isVLHGC()) {
+		writer->formatAndOutput(env, 2, "<attribute name=\"arrayletDoubleMappingRequested\" value=\"%s\"/>", arrayletDoubleMappingRequested);
+		if (isArrayletDoubleMapRequested) {
+			writer->formatAndOutput(env, 2, "<attribute name=\"arrayletDoubleMapping\" value=\"%s\"/>", arrayletDoubleMappingStatus);
+		}
+	}
+#endif /* OMR_GC_DOUBLE_MAP_ARRAYLETS */
 	writer->formatAndOutput(env, 1, "</region>");
 }
 
@@ -299,7 +310,9 @@ MM_VerboseHandlerOutput::handleInitialized(J9HookInterface** hook, uintptr_t eve
 	}
 
 	writer->formatAndOutput(env, 1, "<attribute name=\"packetListSplit\" value=\"%zu\" />", _extensions->packetListSplit);
+#if defined(OMR_GC_MODRON_SCAVENGER)
 	writer->formatAndOutput(env, 1, "<attribute name=\"cacheListSplit\" value=\"%zu\" />", _extensions->cacheListSplit);
+#endif /* OMR_GC_MODRON_SCAVENGER */
 	writer->formatAndOutput(env, 1, "<attribute name=\"splitFreeListSplitAmount\" value=\"%zu\" />", _extensions->splitFreeListSplitAmount);
 	writer->formatAndOutput(env, 1, "<attribute name=\"numaNodes\" value=\"%zu\" />", event->numaNodes);
 

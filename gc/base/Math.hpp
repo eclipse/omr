@@ -113,6 +113,15 @@ public:
 
 		return number;
 	}
+
+	/**< return absolute value of a float */
+	static MMINLINE float abs(float number) {
+		if (number < 0) {
+			number = -number;
+		}
+		return number;
+	}
+
 };
 
 #endif /*MATH_HPP_*/

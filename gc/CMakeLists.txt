@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ add_tracegen(verbose/j9vgc.tdf)
 
 # Ideally We would handle the tracegen stuff like the hookgen stuff above
 # But for whatever reason that breaks the ninja builds
-add_library(omrgc_tracegen OBJECT
+omr_add_library(omrgc_tracegen OBJECT
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9mm.c
 	${CMAKE_CURRENT_BINARY_DIR}/ut_omrmm.c
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vgc.c
@@ -66,7 +66,7 @@ target_compile_definitions(omrgc_tracegen
 		$<TARGET_PROPERTY:omr_base,INTERFACE_COMPILE_DEFINITIONS>
 )
 
-add_library(omrgc STATIC
+omr_add_library(omrgc STATIC
 	base/AddressOrderedListPopulator.cpp
 	base/AllocationContext.cpp
 	base/AllocationInterfaceGeneric.cpp
@@ -169,6 +169,7 @@ add_library(omrgc STATIC
 	stats/CardCleaningStats.cpp
 	stats/ClassUnloadStats.cpp
 
+	stats/FreeEntrySizeClassStats.cpp
 	stats/HeapResizeStats.cpp
 	stats/LargeObjectAllocateStats.cpp
 	stats/MarkStats.cpp
@@ -200,6 +201,13 @@ add_library(omrgc STATIC
 	verbose/VerboseWriterStreamOutput.cpp
 	verbose/handler_standard/VerboseHandlerOutputStandard.cpp
 	$<TARGET_OBJECTS:omrgc_tracegen>
+)
+target_enable_ddr(omrgc EARLY_SOURCE_EVAL)
+ddr_set_add_targets(omrddr omrgc)
+ddr_add_headers(omrgc
+	base/HeapMap.hpp
+	include/omrmodroncore.h
+	structs/ForwardedHeader.hpp
 )
 
 if(OMR_GC_OBJECT_MAP)
@@ -287,7 +295,7 @@ if(OMR_GC_MODRON_STANDARD)
 				stats/ScavengerCopyScanRatio.cpp
 		)
 		if(OMR_GC_CONCURRENT_SCAVENGER)
-			ltarget_sources(omrgc
+			target_sources(omrgc
 				PRIVATE
 					base/standard/ConcurrentScavengeTask.cpp
 			)
@@ -320,6 +328,7 @@ if(OMR_GC_SEGREGATED_HEAP)
 			base/segregated/SweepSchemeSegregated.cpp
 			base/segregated/WorkPacketsSegregated.cpp
 	)
+	ddr_add_headers(omrgc base/segregated/RegionPoolSegregated.hpp)
 endif()
 
 if(OMR_GC_VLHGC)
@@ -335,14 +344,6 @@ if(OMR_GC_VLHGC)
 endif()
 
 add_dependencies(omrgc omrgc_hookgen)
-
-if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(omrgc PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-endif()
-
-if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(omrgc PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-endif()
 
 target_include_directories(omrgc
 	PUBLIC
@@ -372,7 +373,7 @@ target_link_libraries(omrgc
 		${OMR_PORT_LIB}
 		${OMR_HOOK_LIB}
 )
-target_enable_ddr(omrgc "${OMR_DDR_SET}" EARLY_SOURCE_EVAL)
+
 
 set_target_properties(omrgc omrgc_hookgen omrgc_tracegen PROPERTIES FOLDER gc)
 

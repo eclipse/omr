@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 
@@ -297,15 +297,13 @@ class MemToMemConstLenMacroOp : public MemToMemMacroOp
 
 class MemToMemVarLenMacroOp : public MemToMemMacroOp
    {
-   public:
-      bool needsLoop();
    protected:
       MemToMemVarLenMacroOp(TR::Node* rootNode, TR::Node* dstNode, TR::Node* srcNode, TR::CodeGenerator * cg, TR::Register* regLen, TR::Node * lenNode, bool lengthMinusOne=false, TR::InstOpCode::Mnemonic opcode = TR::InstOpCode::MVC, TR::Register * itersReg = 0, TR::Register * raReg = 0)
          : MemToMemMacroOp(rootNode, dstNode, srcNode, cg, lenNode, itersReg), _regLen(regLen), _raReg(raReg), _doneLabel(0), _opcode(opcode), _lengthMinusOne(lengthMinusOne)
          {}
       virtual TR::Instruction* generateLoop();
       virtual TR::Instruction* generateRemainder();
-      virtual intptrj_t getHelper()=0;
+      virtual intptr_t getHelper()=0;
       virtual TR::SymbolReference* getHelperSymRef()=0;
       virtual TR::Instruction* generateInstruction(int32_t offset, int64_t length)=0;
       TR::Register* _regLen;
@@ -436,7 +434,7 @@ class MemInitVarLenMacroOp : public MemToMemVarLenMacroOp
 
    protected:
       virtual TR::Instruction* generateInstruction(int32_t offset, int64_t length);
-      virtual intptrj_t getHelper();
+      virtual intptr_t getHelper();
       virtual TR::SymbolReference* getHelperSymRef();
       virtual TR::RegisterDependencyConditions* generateDependencies();
       virtual TR::Instruction* generateRemainder();
@@ -458,7 +456,7 @@ class MemClearVarLenMacroOp : public MemToMemVarLenMacroOp
          {}
    protected:
       virtual TR::Instruction* generateInstruction(int32_t offset, int64_t length);
-      virtual intptrj_t getHelper();
+      virtual intptr_t getHelper();
       virtual TR::SymbolReference* getHelperSymRef();
       virtual TR::RegisterDependencyConditions* generateDependencies();
       virtual TR::Instruction* generateRemainder();
@@ -488,7 +486,7 @@ class MemCmpVarLenMacroOp : public MemToMemVarLenMacroOp
       TR::Register * resultReg() { return _resultReg; }
    protected:
       virtual TR::Instruction* generateInstruction(int32_t offset, int64_t length);
-      virtual intptrj_t getHelper();
+      virtual intptr_t getHelper();
       virtual TR::SymbolReference* getHelperSymRef();
       virtual TR::RegisterDependencyConditions* generateDependencies();
       virtual Kind getKind() { return IsMemCmp; }
@@ -579,7 +577,7 @@ class MemCpyVarLenMacroOp : public MemToMemVarLenMacroOp
          {}
    protected:
       virtual TR::Instruction* generateInstruction(int32_t offset, int64_t length);
-      virtual intptrj_t getHelper();
+      virtual intptr_t getHelper();
       virtual TR::SymbolReference* getHelperSymRef();
       virtual TR::RegisterDependencyConditions* generateDependencies();
       virtual Kind getKind() { return IsMemCpy; }
@@ -594,7 +592,7 @@ class BitOpMemVarLenMacroOp : public MemToMemVarLenMacroOp
          {}
    protected:
       virtual TR::Instruction* generateInstruction(int32_t offset, int64_t length);
-      virtual intptrj_t getHelper();
+      virtual intptr_t getHelper();
       virtual TR::SymbolReference* getHelperSymRef();
       virtual TR::RegisterDependencyConditions* generateDependencies();
       virtual Kind getKind() { return IsBitOpMem; }

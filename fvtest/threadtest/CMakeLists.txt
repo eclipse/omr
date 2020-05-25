@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-add_executable(omrthreadtest
+omr_add_executable(omrthreadtest
 	abortTest.cpp
 	CEnterExit.cpp
 	CMonitor.cpp
@@ -79,8 +79,8 @@ endif()
 
 set_property(TARGET omrthreadtest PROPERTY FOLDER fvtest)
 
-add_test(NAME threadtest COMMAND omrthreadtest)
-add_test(NAME threadSetAttrThreadWeightTest COMMAND omrthreadtest --gtest_also_run_disabled_tests --gtest_filter=ThreadCreateTest.DISABLED_SetAttrThreadWeight)
+add_test(NAME threadtest COMMAND omrthreadtest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrthreadtest-results.xml)
+add_test(NAME threadSetAttrThreadWeightTest COMMAND omrthreadtest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrthreadtest-results.xml --gtest_also_run_disabled_tests --gtest_filter=ThreadCreateTest.DISABLED_SetAttrThreadWeight)
 if(OMR_HOST_OS STREQUAL "linux")
-	add_test(NAME threadRealtimeTest COMMAND omrthreadtest --gtest_filter=ThreadCreateTest.* -realtime)
+	add_test(NAME threadRealtimeTest COMMAND omrthreadtest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrthreadtest-results.xml --gtest_filter=ThreadCreateTest.* -realtime)
 endif()

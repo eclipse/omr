@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,9 +31,11 @@ class GC_IndexableObjectScanner : public GC_ObjectScanner
 private:
 
 protected:
-	fomrobject_t *_endPtr;	/**< pointer to end of last array element in scan segment */
-	fomrobject_t *_basePtr;	/**< pointer to base array element */
-	fomrobject_t *_limitPtr;/**< pointer to end of last array element */
+	omrobjectptr_t _arrayPtr; /**< pointer to array */
+	fomrobject_t *_basePtr; /**< pointer to base array element */
+	fomrobject_t *_limitPtr; /**< pointer to end of last array element */
+	fomrobject_t *_endPtr; /**< pointer to end of last array element in scan segment */
+	const uintptr_t _elementSize; /**> an array element size in bytes */
 
 public:
 
@@ -41,6 +43,24 @@ public:
 private:
 
 protected:
+
+	MMINLINE virtual fomrobject_t *
+	getNextSlotMap(uintptr_t *scanMap, bool *hasNextSlotMap)
+	{
+		Assert_MM_unreachable();
+		return NULL;
+	}
+
+#if defined(OMR_GC_LEAF_BITS)
+	MMINLINE virtual fomrobject_t *
+	getNextSlotMap(uintptr_t *scanMap, uintptr_t *leafMap, bool *hasNextSlotMap)
+	{
+		Assert_MM_unreachable();
+		return NULL;
+	}
+#endif /* OMR_GC_LEAF_BITS */
+
+public:
 	/**
 	 * @param env The scanning thread environment
 	 * @param[in] arrayPtr pointer to the array to be processed
@@ -48,6 +68,8 @@ protected:
 	 * @param[in] limitPtr pointer to end of last contiguous array cell
 	 * @param[in] scanPtr pointer to the array cell where scanning will start
 	 * @param[in] endPtr pointer to the array cell where scanning will stop
+	 * @param[in] scanMap first portion of bitmap for slots to scan
+	 * @param[in] elementSize array element size must be aligned to the size of an object to object reference
 	 * @param[in] flags scanning context flags
 	 */
 	GC_IndexableObjectScanner(
@@ -57,21 +79,19 @@ protected:
 		, fomrobject_t *limitPtr
 		, fomrobject_t *scanPtr
 		, fomrobject_t *endPtr
+		, uintptr_t scanMap
+		, uintptr_t elementSize
 		, uintptr_t flags
 	)
-		: GC_ObjectScanner(
-			env
-			, arrayPtr
-			, scanPtr
-			, ((endPtr - scanPtr) < _bitsPerScanMap) ? (((uintptr_t)1 << (endPtr - scanPtr)) - 1) : UDATA_MAX
-			, flags | GC_ObjectScanner::indexableObject
-		)
-		, _endPtr(endPtr)
+		: GC_ObjectScanner(env, scanPtr, scanMap, flags | GC_ObjectScanner::indexableObject)
+		, _arrayPtr(arrayPtr)
 		, _basePtr(basePtr)
 		, _limitPtr(limitPtr)
+		, _endPtr(endPtr)
+		, _elementSize(elementSize)
 	{
 		_typeId = __FUNCTION__;
-		if ((endPtr - scanPtr) <= _bitsPerScanMap) {
+		if (GC_SlotObject::subtractSlotAddresses(endPtr, scanPtr, env->compressObjectReferences()) <= _bitsPerScanMap) {
 			setNoMoreSlots();
 		}
 	}
@@ -89,17 +109,41 @@ protected:
 		GC_ObjectScanner::initialize(env);
 	}
 
-public:
+	/**
+	 * Get the current element of the array
+	 */
+	MMINLINE fomrobject_t *getScanPtr() { return _scanPtr; }
+
+	/**
+	 * Get the address of the next element in the array.
+	 * @return NULL if there are no more elements
+	 */
+	MMINLINE fomrobject_t *
+	nextIndexableElement()
+	{
+		fomrobject_t *result = NULL;
+		_scanPtr = (fomrobject_t*)((uintptr_t)_scanPtr + _elementSize);
+		if (_scanPtr < _endPtr) {
+			result =  _scanPtr;
+		}
+		return result;
+	}
+
 	/**
 	 * Get the maximal index for the array. Array indices are assumed to be zero-based.
 	 */
-	MMINLINE uintptr_t getIndexableRange() { return _limitPtr - _basePtr; }
+	MMINLINE uintptr_t getIndexableRange() { return ((uintptr_t)_limitPtr - (uintptr_t)_basePtr) / _elementSize; }
 
 	/**
 	 * Reset truncated end pointer to force scanning to limit pointer (scan to end of indexable object). This
 	 * must be called if this scanner cannot be split to hive off the tail
 	 */
 	MMINLINE void scanToLimit() { _endPtr = _limitPtr; }
+
+	/**
+	* Return pointer to array object
+	*/
+	MMINLINE omrobjectptr_t const getArrayObject() { return _arrayPtr; }
 
 	/**
 	 * Split this instance and set split scan/end pointers to indicate split scan range.
@@ -109,7 +153,11 @@ public:
 	 * @param splitAmount The maximum number of array elements to include
 	 * @return Pointer to split scanner in allocSpace
 	 */
-	virtual GC_IndexableObjectScanner *splitTo(MM_EnvironmentBase *env, void *allocSpace, uintptr_t splitAmount) = 0;
+	virtual GC_IndexableObjectScanner *splitTo(MM_EnvironmentBase *env, void *allocSpace, uintptr_t splitAmount)
+	{
+		Assert_MM_unreachable();
+		return NULL;
+	}
 };
 
 #endif /* INDEXABLEOBJECTSCANNER_HPP_ */

@@ -24,7 +24,7 @@
 
 #include <stddef.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
@@ -34,7 +34,7 @@
 #include "env/TRMemory.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/Flags.hpp"
 #include "infra/List.hpp"
@@ -72,7 +72,7 @@ OMR::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFact
          _flags.set(doesNotRequireAliasSets | canAddSymbolReference | verifyTrees | verifyBlocks | checkTheCFG | requiresAccurateNodeCount);
          break;
       case OMR::CFGSimplification:
-         _flags.set(verifyTrees | verifyBlocks | checkTheCFG);
+         _flags.set(verifyTrees | verifyBlocks | checkTheCFG | supportsIlGenOptLevel);
          break;
       case OMR::basicBlockExtension:
          _flags.set(requiresStructure);
@@ -114,7 +114,7 @@ OMR::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFact
          break;
       case OMR::tacticalGlobalRegisterAllocator:
          _flags.set(requiresStructure);
-         if (self()->comp()->getMethodHotness() >= hot && TR::Compiler->target.is64Bit())
+         if (self()->comp()->getMethodHotness() >= hot && o->comp()->target().is64Bit())
             _flags.set(requiresLocalsUseDefInfo | doesNotRequireLoadsAsDefs);
          break;
       case OMR::loopInversion:
@@ -122,8 +122,6 @@ OMR::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFact
          break;
       case OMR::fieldPrivatization:
          _flags.set(requiresStructure);
-         if(self()->comp()->getOption(TR_EnableElementPrivatization))
-            _flags.set(requiresLocalsUseDefInfo | requiresLocalsValueNumbering | requiresStructure);
          break;
       case OMR::catchBlockRemoval:
          _flags.set(verifyTrees | verifyBlocks | checkTheCFG);
@@ -182,7 +180,7 @@ OMR::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFact
       case OMR::loopStrider:
          _flags.set(requiresStructure);
          // get UseDefInfo for sign-extension elimination on 64-bit
-         if (TR::Compiler->target.is64Bit())
+         if (o->comp()->target().is64Bit())
             _flags.set(requiresLocalsUseDefInfo | doesNotRequireLoadsAsDefs);
          break;
       case OMR::profiledNodeVersioning:

@@ -87,7 +87,7 @@ omr_main_entry(int argc, char ** argv, char **envp)
 	omrtty_printf("allocation interface is %s\n", allocationInterface->getBaseVirtualTypeId());
 
 	/* Allocate objects without collection until heap exhausted */
-	uintptr_t allocatedFlags = 0;
+	uintptr_t allocatedFlags = OMR_GC_ALLOCATE_OBJECT_NO_GC;
 	uintptr_t allocSize = 24;
 	uintptr_t allocatedCount = 0;
 	while (true) {
@@ -113,7 +113,7 @@ omr_main_entry(int argc, char ** argv, char **envp)
 		allocationStats->tlhBytesAllocated(), allocationStats->nontlhBytesAllocated(), allocatedCount);
 
 	/* Force GC to print verbose system allocation stats -- should match thread allocation stats from before GC */
-	MM_ObjectAllocationModel allocationModel(env, allocSize, allocatedFlags);
+	MM_ObjectAllocationModel allocationModel(env, allocSize, 0);
 	omrobjectptr_t obj = (omrobjectptr_t)OMR_GC_AllocateObject(omrVMThread, &allocationModel);
 	Assert_MM_false(NULL == obj);
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,6 +58,8 @@ class MM_RSOverflow;
 class MM_SublistPool;
 
 struct OMR_VM;
+
+extern "C" void concurrentScavengerAsyncCallbackHandler(OMR_VMThread *omrVMThread);
 
 /**
  * @todo Provide class documentation
@@ -123,12 +125,14 @@ private:
 	MM_MasterGCThread _masterGCThread; /**< An object which manages the state of the master GC thread */
 	
 	volatile enum ConcurrentState {
-		concurrent_state_idle,
-		concurrent_state_init,
-		concurrent_state_roots,
-		concurrent_state_scan,
-		concurrent_state_complete
-	} _concurrentState;
+		concurrent_phase_idle,
+		concurrent_phase_init,
+		concurrent_phase_roots,
+		concurrent_phase_scan,
+		concurrent_phase_complete
+	} _concurrentPhase;
+	
+	bool _currentPhaseConcurrent;
 	
 	uint64_t _concurrentScavengerSwitchCount; /**< global counter of cycle start and cycle end transitions */
 	volatile bool _shouldYield; /**< Set by the first GC thread that observes that a criteria for yielding is met. Reset only when the concurrent phase is finished. */
@@ -148,12 +152,13 @@ public:
 	 */
 private:
 	/**
-	 * Flush the threads reference and remembered set caches before waiting in getNextScanCache.
+	 * Flush copy/scan count updates, the threads reference and remembered set caches before waiting in getNextScanCache.
 	 * This removes the requirement of a synchronization point after calls to completeScan when
 	 * it is followed by reference or remembered set processing.
 	 * @param env - current thread environment
+	 * @param finalFlush - lets the copy/scan flush know if it's the last thread performing the flush
 	 */
-	void flushBuffersForGetNextScanCache(MM_EnvironmentStandard *env);
+	void flushBuffersForGetNextScanCache(MM_EnvironmentStandard *env, bool finalFlush = false);
 	
 	void saveMasterThreadTenureTLHRemainders(MM_EnvironmentStandard *env);
 	void restoreMasterThreadTenureTLHRemainders(MM_EnvironmentStandard *env);
@@ -182,7 +187,7 @@ private:
 					 
 			shouldAbort = _shouldYield;
 			if (shouldAbort) {
-				Assert_MM_true(concurrent_state_scan == _concurrentState);
+				Assert_MM_true(concurrent_phase_scan == _concurrentPhase);
 				/* Since we are aborting the scan loop without synchornizing with other GC threads (before which we flush buffers),
 				 * we have to do it now. 
 				 * There should be no danger in not synchonizing with other threads, since we can only abort/yield in main scan loop
@@ -199,6 +204,11 @@ private:
 		
 		return shouldAbort;
 	}
+
+	/** 
+	 * A simple heuristic that projects the need for copy-scan cache size pool, based on heap size that Scavenger operates with)
+	 */	
+	uintptr_t calculateMaxCacheCount(uintptr_t activeMemorySize);
 
 public:
 	/**
@@ -250,7 +260,11 @@ public:
 	MMINLINE bool copyAndForward(MM_EnvironmentStandard *env, volatile omrobjectptr_t *objectPtrIndirect);
 
 	MMINLINE omrobjectptr_t copy(MM_EnvironmentStandard *env, MM_ForwardedHeader* forwardedHeader);
-
+	
+	/* Flush remaining Copy Scan updates which would otherwise be discarded 
+	 * @param majorFlush last thread to flush updates should perform a major flush (push accumulated updates to history record) 
+	 */ 
+	MMINLINE void flushCopyScanCounts(MM_EnvironmentBase* env, bool majorFlush);
 	MMINLINE void updateCopyScanCounts(MM_EnvironmentBase* env, uint64_t slotsScanned, uint64_t slotsCopied);
 	bool splitIndexableObjectScanner(MM_EnvironmentStandard *env, GC_ObjectScanner *objectScanner, uintptr_t startIndex, omrobjectptr_t *rememberedSetSlot);
 
@@ -263,7 +277,44 @@ public:
 	 * @return Whether or not objectPtr should be remembered.
 	 */
 	MMINLINE bool scavengeObjectSlots(MM_EnvironmentStandard *env, MM_CopyScanCacheStandard *scanCache, omrobjectptr_t objectPtr, uintptr_t flags, omrobjectptr_t *rememberedSetSlot);
-	MMINLINE MM_CopyScanCacheStandard *incrementalScavengeObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_CopyScanCacheStandard* scanCache);
+	MMINLINE MM_CopyScanCacheStandard *incrementalScavengeObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_CopyScanCacheStandard* scanCache);	
+	
+	/**
+	 * For fast traversal of deep structure nodes - scan objects with self referencing fields with priority
+	 * Split into two functions deepScan and deepScanOutline. Frequently called checks (see lazy start check) must be inlined
+	 * @param env The environment.
+	 * @param objectPtr The pointer to the object.
+	 * @param priorityFieldOffset1 Offset to the first priority field of the object
+	 * @param priorityFieldOffset2 Offset to the second priority field, if it can't follow through in one direction, 
+	 * it will attempt to use the second self referencing field 
+	 */
+	MMINLINE void
+	deepScan(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, uintptr_t priorityFieldOffset1, uintptr_t priorityFieldOffset2)
+	{
+		/**
+		* Inhibit the special treatment routine with relatively high probability to skip over most  
+		* false positives (shorter lists), while only marginally delay detection of very deep structures.
+		*/	
+		if (shouldStartDeepScan(env, objectPtr)) {
+			deepScanOutline(env, objectPtr, priorityFieldOffset1, priorityFieldOffset2);
+		}
+	}
+	
+	/**
+	 * Deep scan lazy start check - condition used for gatekeeping
+	 * @param env The environment.
+	 * @param objectPtr The pointer to the object.
+	 * @return True If deep scan should start
+	 */
+	MMINLINE bool
+	shouldStartDeepScan(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
+	{
+		/* Check last few LSB of the object address for probability 1/16 */
+		return (0 == ((uintptr_t)objectPtr & 0x78)); 
+	}
+	
+	
+	void deepScanOutline(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, uintptr_t priorityFieldOffset1, uintptr_t priorityFieldOffset2);
 
 	MMINLINE bool scavengeRememberedObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	void scavengeRememberedSetList(MM_EnvironmentStandard *env);
@@ -298,6 +349,13 @@ public:
 	
 	void scavengeRememberedSetListIndirect(MM_EnvironmentStandard *env);
 	void scavengeRememberedSetListDirect(MM_EnvironmentStandard *env);
+
+	MMINLINE void handleInactiveSurvivorCopyScanCache(MM_EnvironmentStandard *currentEnv, MM_EnvironmentStandard *targetEnv, bool flushCaches, bool final);
+	MMINLINE void handleSurvivorCopyScanCache(MM_EnvironmentStandard *currentEnv, MM_EnvironmentStandard *targetEnv, bool flushCaches, bool final);
+	MMINLINE void handleInactiveTenureCopyScanCache(MM_EnvironmentStandard *currentEnv, MM_EnvironmentStandard *targetEnv, bool flushCaches, bool final);
+	MMINLINE void handleTenureCopyScanCache(MM_EnvironmentStandard *currentEnv, MM_EnvironmentStandard *targetEnv, bool flushCaches, bool final);
+	MMINLINE void handleInactiveDeferredCopyScanCache(MM_EnvironmentStandard *currentEnv, MM_EnvironmentStandard *targetEnv, bool flushCaches, bool final);
+	MMINLINE void handleDeferredCopyScanCache(MM_EnvironmentStandard *currentEnv, MM_EnvironmentStandard *targetEnv, bool flushCaches, bool final);
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 	/**
@@ -329,28 +387,27 @@ public:
 	MMINLINE uintptr_t copyCacheDistanceMetric(MM_CopyScanCacheStandard* cache);
 
 	MMINLINE MM_CopyScanCacheStandard *getNextScanCacheFromList(MM_EnvironmentStandard *env);
-	void addCopyCachesToFreeList(MM_EnvironmentStandard *env);
+	/**
+	 * Called at the end of a task to return empty caches to the global free pool
+	 */
+	void finalReturnCopyCachesToFreeList(MM_EnvironmentStandard *env);
+	/* 
+	 * Used by CS to return empty caches during intermediate blocks, to aid with more precise counting of free/empty cache in the pool
+	 */
+	void returnEmptyCopyCachesToFreeList(MM_EnvironmentStandard *env);
 	MMINLINE void addCacheEntryToScanListAndNotify(MM_EnvironmentStandard *env, MM_CopyScanCacheStandard *newCacheEntry);
-
-	MMINLINE bool
-	isWorkAvailableInCache(MM_CopyScanCacheStandard *cache)
-	{
-		return (cache->scanCurrent < cache->cacheAlloc);
-	}
 
 	MMINLINE bool
 	isWorkAvailableInCacheWithCheck(MM_CopyScanCacheStandard *cache)
 	{
-		return ((NULL != cache) && isWorkAvailableInCache(cache));
+		return ((NULL != cache) && cache->isScanWorkAvailable());
 	}
 
-	/**
-	 * reinitializes the cache with the given base and top addresses.
-	 * @param cache cache to be reinitialized.
-	 * @param base base address of cache
-	 * @param top top address of cache
-	 */
-	MMINLINE void reinitCache(MM_CopyScanCacheStandard *cache, void *base, void *top);
+	MMINLINE bool
+	isEmptyCacheWithCheck(MM_CopyScanCacheStandard *cache)
+	{
+		return ((NULL != cache) && !cache->isScanWorkAvailable());
+	}
 
 	/**
 	 * An attempt to get a preallocated scan cache header, free list will be locked
@@ -406,6 +463,10 @@ public:
 	 */
 	void abandonSurvivorTLHRemainder(MM_EnvironmentStandard *env);
 	void abandonTenureTLHRemainder(MM_EnvironmentStandard *env, bool preserveRemainders = false);
+	
+	MMINLINE bool activateSurvivorCopyScanCache(MM_EnvironmentStandard *env);
+	MMINLINE bool activateTenureCopyScanCache(MM_EnvironmentStandard *env);
+	void activateDeferredCopyScanCache(MM_EnvironmentStandard *env);
 
 	void reportGCStart(MM_EnvironmentStandard *env);
 	void reportGCEnd(MM_EnvironmentStandard *env);
@@ -551,6 +612,21 @@ public:
 
 	/* API used by ParallelScavengeTask to set _waitingCountAliasThreshold. */
 	void setAliasThreshold(uintptr_t waitingCountAliasThreshold) { _waitingCountAliasThreshold = waitingCountAliasThreshold; }
+	
+	/**
+	 * Notify Collector that a thread is about to acquire Exclusive VM access.
+	 * This can be useful in scenario when GC is concurrent, and currently in progress.
+	 * env invoking thread that is about to acquire Exclusive VM access
+	 */
+	void externalNotifyToYield(MM_EnvironmentBase* env);
+	
+	/**
+	 * For CS, last thread to block, before notifying other threads to unblock 
+	 * will check if all caches are returned to the free global pool. If not,
+	 * it will activate Async Handler to force mutators to flush caches, 
+	 * and go back to scanning and eventually getting to this point again.
+	 */
+	bool shouldDoFinalNotify(MM_EnvironmentStandard *env);
 
 protected:
 	virtual void setupForGC(MM_EnvironmentBase *env);
@@ -624,10 +700,12 @@ public:
 	/* methods used by either mutator or GC threads */
 	/**
 	 * All open copy caches (even if not full) are pushed onto scan queue. Unused memory is abondoned.
-	 * @param env Invoking thread, for which copy caches are to be released. Could be either GC or mutator thread.
+	 * @param currentEnvBase Current thread in which context this is invoked from. Could be either GC or mutator thread.
+	 * @param targetEnvBase  Thread for which copy caches are to be released. Could be either GC or mutator thread.
+	 * @param flushCaches If true, really push caches to scan queue, otherwise just deactivate them for possible near future use
 	 * @param final If true (typically at the end of a cycle), abandon TLH remainders, too. Otherwise keep them for possible future copy cache refresh.
 	 */
-	void threadReleaseCaches(MM_EnvironmentBase *env, bool final);
+	void threadReleaseCaches(MM_EnvironmentBase *currentEnvBase, MM_EnvironmentBase *targetEnvBase, bool flushCaches, bool final);
 	
 	/**
 	 * trigger STW phase (either start or end) of a Concurrent Scavenger Cycle 
@@ -643,8 +721,25 @@ public:
 	void workThreadScan(MM_EnvironmentStandard *env);
 	void workThreadComplete(MM_EnvironmentStandard *env);
 
+	/**
+	 * GC threads may call it to determine if running in a context of 
+	 * concurrent or STW task
+	 */
+	bool isCurrentPhaseConcurrent() {
+		return _currentPhaseConcurrent;
+	}
+	
+	/**
+	 * True if CS cycle is active at any point (STW or concurrent task active,
+	 * or even short gaps between STW and concurrent tasks)
+	 */
+	bool isConcurrentCycleInProgress() {
+		return concurrent_phase_idle != _concurrentPhase;
+	}
+	
+	/* TODO: remove once downstream projects start using isConcurrentCycleInProgress/isCurrentPhaseConcurrent */
 	bool isConcurrentInProgress() {
-		return concurrent_state_idle != _concurrentState;
+		return concurrent_phase_idle != _concurrentPhase;
 	}
 	
 	bool isMutatorThreadInSyncWithCycle(MM_EnvironmentBase *env) {
@@ -778,8 +873,6 @@ public:
 	virtual bool canCollectorExpand(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, uintptr_t expandSize);
 	virtual uintptr_t getCollectorExpandSize(MM_EnvironmentBase *env);
 
-	virtual void heapReconfigured(MM_EnvironmentBase *env);
-
 	MM_Scavenger(MM_EnvironmentBase *env, MM_HeapRegionManager *regionManager) :
 		MM_Collector()
 		, _delegate(env)
@@ -821,9 +914,11 @@ public:
 		, _regionManager(regionManager)
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 		, _masterGCThread(env)
-		, _concurrentState(concurrent_state_idle)
+		, _concurrentPhase(concurrent_phase_idle)
+		, _currentPhaseConcurrent(false)
 		, _concurrentScavengerSwitchCount(0)
 		, _shouldYield(false)
+		, _concurrentPhaseStats()
 #endif /* #if defined(OMR_GC_CONCURRENT_SCAVENGER) */
 
 		, _omrVM(env->getOmrVM())

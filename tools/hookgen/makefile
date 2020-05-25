@@ -31,6 +31,10 @@ OBJECTS := $(patsubst %.cpp,%$(OBJEXT), $(wildcard *.cpp))
 OBJECTS += pugixml$(OBJEXT)
 
 MODULE_INCLUDES += $(OMR_PUGIXML_DIR)
+ifeq ($(I5_VERSION),I5_V7R3)
+  # __setjmp supported on pase 7.3, but doesn't support on AIX 7.1.1 which we run the build.
+  MODULE_LIBPATH += /osxpf/v7r2m0.cuep/bld/cmvc/pase.pgm/p5.cuep/lib
+endif
 
 vpath %.cpp $(OMR_PUGIXML_DIR)
 vpath %.c $(OMR_PUGIXML_DIR)

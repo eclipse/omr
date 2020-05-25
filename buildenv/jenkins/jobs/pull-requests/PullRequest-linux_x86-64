@@ -2,6 +2,7 @@ pipeline {
     agent{label 'Linux && x86'}
     environment {
         PATH = "/usr/lib/ccache/:$PATH"
+        GTEST_COLOR = "0"
     }
     stages {
         stage('Get Sources') {
@@ -19,7 +20,7 @@ pipeline {
                     
                     dir('build') {
                         echo 'Configure...'
-                        sh '''cmake -Wdev -C../cmake/caches/Travis.cmake ..''' 
+                        sh '''cmake -Wdev -C../cmake/caches/Travis.cmake -DOMR_OPT_CUDA=ON -DOMR_CUDA_HOME=/usr/local/cuda ..'''
                        
                         echo 'Compile...'
                         sh '''make -j4'''
@@ -36,6 +37,7 @@ pipeline {
                     dir('build') {
                         echo "Sanity Test..."
                         sh'''ctest -V'''
+                        junit '**/*results.xml'
                     }
                 }
             }

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 #TODO there is a bunch of stuff with vpaths, presumably for some extensibility reasons
 # need to figure out if its actually needed and implement properly if required
-add_library(j9hook_obj OBJECT
+omr_add_library(j9hook_obj OBJECT
 	${CMAKE_CURRENT_SOURCE_DIR}/hookable.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9hook.c
 )
@@ -49,21 +49,15 @@ omr_add_exports(j9hook_obj
 	omrhook_lib_control
 )
 
-target_enable_ddr(j9hook_obj "${OMR_DDR_SET}")
+target_enable_ddr(j9hook_obj)
+ddr_set_add_targets(omrddr j9hook_obj)
 
-add_library(j9hookstatic STATIC
+omr_add_library(j9hookstatic STATIC
 	$<TARGET_OBJECTS:j9hook_obj>
 )
-
-if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(j9hook_obj PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-	target_compile_options(j9hookstatic PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-endif()
-
-if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(j9hook_obj PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-	target_compile_options(j9hookstatic PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-endif()
+# Duplicate the export list onto the static library version
+get_target_property(hook_exports j9hook_obj EXPORTED_SYMBOLS)
+omr_add_exports(j9hookstatic ${hook_exports})
 
 target_include_directories(j9hookstatic
 	PUBLIC

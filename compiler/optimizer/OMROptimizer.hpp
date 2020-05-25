@@ -204,6 +204,23 @@ class Optimizer
    void setCantBuildGlobalsUseDefInfo(bool v) { _cantBuildGlobalsUseDefInfo = v; }
    void setCantBuildLocalsUseDefInfo(bool v)  { _cantBuildLocalsUseDefInfo = v; }
 
+  /**
+   * Constructs a TR_UseDefInfo instance with appropriate flags enabled.
+   *
+   * @param comp                   The compilation instance
+   * @param cfg                    The CFG being analysed
+   * @param opt                    The optimizer instance
+   * @param requiresGlobals
+   * @param prefersGlobals
+   * @param loadsShouldBeDefs
+   * @param cannotOmitTrivialDefs
+   * @param conversionRegsOnly
+   * @param doCompletion
+   */
+  TR_UseDefInfo* createUseDefInfo(TR::Compilation* comp,
+      bool requiresGlobals = true, bool prefersGlobals = true, bool loadsShouldBeDefs = true, bool cannotOmitTrivialDefs = false,
+      bool conversionRegsOnly = false, bool doCompletion = true);
+
    // Get value number information
    TR_ValueNumberInfo * getValueNumberInfo()   { return _valueNumberInfo; }
    TR_ValueNumberInfo *createValueNumberInfo(bool requiresGlobals = false, bool preferGlobals = true, bool noUseDefInfo = false );
@@ -216,6 +233,19 @@ class Optimizer
 
    bool canRunBlockByBlockOptimizations()          { return _canRunBlockByBlockOptimizations; }
    void setCanRunBlockByBlockOptimizations(bool v) { _canRunBlockByBlockOptimizations = v; }
+
+   /**
+    * Controls inclusion of calls as uses so that the alias analysis can detect
+    * when local (stack) variable has been aliased by a function call.
+    * This defaults to false which is fine for Java like languages where
+    * local (stack) variables cannot be passed by reference to function calls
+    * and hence cannot be aliased. However for C like languages this flag should be
+    * over-ridden by the optimizer in the front-end.
+    *
+    * This parameter is passed to the TR_UseDefInfo constructor.
+    * See createUseDefInfo().
+    */
+   virtual bool getCallsAsUses() { return false; }
 
    bool prepareForNodeRemoval(TR::Node *node , bool deferInvalidatingUseDefInfo = false);
    void prepareForTreeRemoval(TR::TreeTop *treeTop) { prepareForNodeRemoval(treeTop->getNode()); }

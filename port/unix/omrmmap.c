@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -279,6 +279,17 @@ omrmmap_shutdown(struct OMRPortLibrary *portLibrary)
 int32_t
 omrmmap_startup(struct OMRPortLibrary *portLibrary)
 {
+#if defined(LINUX)
+	uintptr_t handle;
+	/* If omrsl_open_shared_library fails it already reports error, and we'll treat as if memfd_create is not avaiable */
+	if (0 == omrsl_open_shared_library(portLibrary, NULL, &handle, 0)) {
+		uintptr_t func = 0;
+		omrsl_lookup_name(portLibrary, handle, "memfd_create", &func, NULL);
+		/* If omrsl_lookup_name does not succeed, func value remains 0 */
+		PPG_memfd_function = (memfd_function_t)func;
+	}
+#endif /* defined(LINUX) */
+
 	return 0;
 }
 /**
@@ -305,6 +316,7 @@ omrmmap_capabilities(struct OMRPortLibrary *portLibrary)
   || (defined(LINUX) && defined(J9HAMMER)) \
   || (defined(LINUX) && defined(ARM)) \
   || (defined(LINUX) && defined(AARCH64)) \
+  || (defined(LINUX) && defined(RISCV64)) \
   || (defined(AIXPPC)) \
   || (defined(OSX)))
 			| OMRPORT_MMAP_CAPABILITY_WRITE

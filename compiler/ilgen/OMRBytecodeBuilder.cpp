@@ -146,7 +146,7 @@ OMR::BytecodeBuilder::addAllSuccessorBuildersToWorklist()
 void
 OMR::BytecodeBuilder::AddFallThroughBuilder(TR::BytecodeBuilder *ftb)
    {
-   TR_ASSERT(comesBack(), "builder does not appear to have a fall through path");
+   TR_ASSERT_FATAL(comesBack(), "builder does not appear to have a fall through path");
 
    TraceIL("IlBuilder[ %p ]:: fallThrough successor [ %p ]\n", this, ftb);
 
@@ -212,7 +212,7 @@ OMR::BytecodeBuilder::propagateVMState(TR::VirtualMachineState *fromVMState)
 void
 OMR::BytecodeBuilder::transferVMState(TR::BytecodeBuilder **b)
    {
-   TR_ASSERT(_vmState != NULL, "asked to transfer a NULL vmState from builder %p [ bci %d ]", this, _bcIndex);
+   TR_ASSERT_FATAL(_vmState != NULL, "asked to transfer a NULL vmState from builder %p [ bci %d ]", this, _bcIndex);
    if ((*b)->initialVMState())
       {
       // there is already a vm state at the target builder
@@ -262,7 +262,7 @@ OMR::BytecodeBuilder::IfCmpEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR
 void
 OMR::BytecodeBuilder::IfCmpEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpEqual(dest, v1, v2);
    }
@@ -278,7 +278,7 @@ OMR::BytecodeBuilder::IfCmpEqualZero(TR::BytecodeBuilder **dest, TR::IlValue *c)
 void
 OMR::BytecodeBuilder::IfCmpEqualZero(TR::BytecodeBuilder *dest, TR::IlValue *c)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpEqualZero(dest, c);
    }
@@ -294,7 +294,7 @@ OMR::BytecodeBuilder::IfCmpNotEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1,
 void
 OMR::BytecodeBuilder::IfCmpNotEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpNotEqual(dest, v1, v2);
    }
@@ -310,7 +310,7 @@ OMR::BytecodeBuilder::IfCmpNotEqualZero(TR::BytecodeBuilder **dest, TR::IlValue 
 void
 OMR::BytecodeBuilder::IfCmpNotEqualZero(TR::BytecodeBuilder *dest, TR::IlValue *c)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpNotEqualZero(dest, c);
    }
@@ -326,7 +326,7 @@ OMR::BytecodeBuilder::IfCmpLessThan(TR::BytecodeBuilder **dest, TR::IlValue *v1,
 void
 OMR::BytecodeBuilder::IfCmpLessThan(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpLessThan(dest, v1, v2);
    }
@@ -342,7 +342,7 @@ OMR::BytecodeBuilder::IfCmpUnsignedLessThan(TR::BytecodeBuilder **dest, TR::IlVa
 void
 OMR::BytecodeBuilder::IfCmpUnsignedLessThan(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpUnsignedLessThan(dest, v1, v2);
    }
@@ -358,7 +358,7 @@ OMR::BytecodeBuilder::IfCmpLessOrEqual(TR::BytecodeBuilder **dest, TR::IlValue *
 void
 OMR::BytecodeBuilder::IfCmpLessOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpLessOrEqual(dest, v1, v2);
    }
@@ -374,7 +374,7 @@ OMR::BytecodeBuilder::IfCmpUnsignedLessOrEqual(TR::BytecodeBuilder **dest, TR::I
 void
 OMR::BytecodeBuilder::IfCmpUnsignedLessOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpUnsignedLessOrEqual(dest, v1, v2);
    }
@@ -390,7 +390,7 @@ OMR::BytecodeBuilder::IfCmpGreaterThan(TR::BytecodeBuilder **dest, TR::IlValue *
 void
 OMR::BytecodeBuilder::IfCmpGreaterThan(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpGreaterThan(dest, v1, v2);
    }
@@ -406,7 +406,7 @@ OMR::BytecodeBuilder::IfCmpUnsignedGreaterThan(TR::BytecodeBuilder **dest, TR::I
 void
 OMR::BytecodeBuilder::IfCmpUnsignedGreaterThan(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpUnsignedGreaterThan(dest, v1, v2);
    }
@@ -422,7 +422,7 @@ OMR::BytecodeBuilder::IfCmpGreaterOrEqual(TR::BytecodeBuilder **dest, TR::IlValu
 void
 OMR::BytecodeBuilder::IfCmpGreaterOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpGreaterOrEqual(dest, v1, v2);
    }
@@ -437,7 +437,7 @@ OMR::BytecodeBuilder::IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder **dest, TR
 void
 OMR::BytecodeBuilder::IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2)
    {
-   TR_ASSERT(dest != NULL, "service cannot be called with NULL destination builder");
+   TR_ASSERT_FATAL(dest != NULL, "service cannot be called with NULL destination builder");
    AddSuccessorBuilder(&dest);
    OMR::IlBuilder::IfCmpUnsignedGreaterOrEqual(dest, v1, v2);
    }

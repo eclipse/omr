@@ -32,7 +32,7 @@
 #include <stdint.h>
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Machine.hpp"
@@ -46,19 +46,18 @@
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/hashtab.h"
 #include "env/CompilerEnv.hpp"
 #include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "ras/Debug.hpp"
@@ -105,8 +104,6 @@ OMR::Z::RegisterDependencyConditions::RegisterDependencyConditions(TR::CodeGener
    _numPostConditions = totalNum;
    _addCursorForPost = 0;
    _isUsed = false;
-   _isHint = false;
-   _conflictsResolved = false;
 
    for (i = 0; i < totalNum; i++)
       {
@@ -172,9 +169,7 @@ OMR::Z::RegisterDependencyConditions::RegisterDependencyConditions(TR::RegisterD
      _addCursorForPre(0),
      _numPostConditions((iConds?iConds->getNumPostConditions():0)+numNewPostConds),
      _addCursorForPost(0),
-     _isHint(false),
      _isUsed(false),
-     _conflictsResolved(false),
      _cg(cg)
    {
      int32_t i;
@@ -234,8 +229,6 @@ OMR::Z::RegisterDependencyConditions::RegisterDependencyConditions(TR::RegisterD
      _numPostConditions(conds_1->getNumPostConditions()+conds_2->getNumPostConditions()),
      _addCursorForPost(0),
      _isUsed(false),
-     _isHint(false),
-     _conflictsResolved(false),
      _cg(cg)
    {
    int32_t i;
@@ -703,7 +696,7 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
                      TR_ASSERT( 0, "\nRegister kind not supported in OOL spill\n");
                      break;
                   }
-               
+
                bool isVector = (rk == TR_VRF);
 
                TR::Instruction *inst = isVector ? generateVRXInstruction(cg, opCode, currentNode, assignedReg, tempMR, 0, currentInstruction) :
@@ -743,7 +736,7 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
             }
          }
       }
-   
+
    uint32_t numGPRs = 0;
    uint32_t numFPRs = 0;
    uint32_t numVRFs = 0;
@@ -845,7 +838,7 @@ TR_S390RegisterDependencyGroup::assignRegisters(TR::Instruction   *currentInstru
             {
             TR::RealRegister::RegNum assignedRegNum = toRealRegister(virtReg->getAssignedRealRegister())->getRegisterNumber();
 
-            // Always block if the required register and assigned register match or if the assigned register is 
+            // Always block if the required register and assigned register match or if the assigned register is
             // required by another dependency but only if there are any spare registers left so as to avoid blocking
             // all existing registers
             if (_dependencies[i].getRealRegister() == assignedRegNum ||

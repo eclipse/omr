@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -200,7 +200,6 @@ private:
 	volatile uint32_t _conHelpersShutdownCount;
 	omrthread_monitor_t _conHelpersActivationMonitor;
 
-	bool _stwCollectionInProgress;  /**< if set, the final STW phase is in progress (mutators not running) */
 	bool _initializeMarkMap;
 	omrthread_monitor_t _initWorkMonitor;
 	omrthread_monitor_t _initWorkCompleteMonitor;
@@ -426,7 +425,7 @@ public:
 	
 	virtual bool heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress);
 	virtual bool heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress, void *lowValidAddress, void *highValidAddress);
-	virtual void heapReconfigured(MM_EnvironmentBase *env);
+	virtual void heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress);
 
 	void finalCleanCards(MM_EnvironmentBase *env);
 
@@ -460,14 +459,6 @@ public:
 		}	
 	}
 
-	/*
-	 * Return value of _stwCollectionInProgress flag
-	 */
-	virtual bool isStwCollectionInProgress()
-	{
-		return _stwCollectionInProgress;
-	}
-
 	/**
 	 * Return reference to Card Table
 	 */
@@ -494,7 +485,6 @@ public:
 		,_conHelpersStarted(0)
 		,_conHelpersShutdownCount(0)
 		,_conHelpersActivationMonitor(NULL)
-		,_stwCollectionInProgress(false)
 		,_initializeMarkMap(false)
 		,_initWorkMonitor(NULL)
 		,_initWorkCompleteMonitor(NULL)

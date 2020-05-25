@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,9 +36,9 @@
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "x/codegen/X86Instruction.hpp"
 #include "x/codegen/X86Ops.hpp"
@@ -77,7 +77,7 @@ TR::Register *IA32LinkageUtils::pushIntegerWordArg(
          if (sym)
             {
             TR_ASSERT(!symRef->isUnresolved(), "pushIntegerWordArg loadaddr expecting resolved symbol");
-            generateImmSymInstruction(PUSHImm4, child, (uintptrj_t)sym->getStaticAddress(), symRef, cg);
+            generateImmSymInstruction(PUSHImm4, child, (uintptr_t)sym->getStaticAddress(), symRef, cg);
             cg->decReferenceCount(child);
             return NULL;
             }

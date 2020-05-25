@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include "codegen/Analyser.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
@@ -41,9 +41,9 @@
 #include "env/TRMemory.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 
@@ -172,7 +172,7 @@ TR_S390BinaryAnalyser::genericAnalyser(TR::Node * root,
 
       bool done = false;
 
-      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+      if (cg()->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
          {
          if (getBinaryReg3Reg2() || secondRegister != NULL)
             {
@@ -311,7 +311,7 @@ TR_S390BinaryAnalyser::longSubtractAnalyser(TR::Node * root)
    /**  Attempt to use SGH to subtract halfword (64 <- 16).
     * The second child is a halfword from memory */
    bool is16BitMemory2Operand = false;
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z14) &&
+   if (cg()->comp()->target().cpu.getSupportsArch(TR::CPU::z14) &&
        secondChild->getOpCodeValue() == TR::s2l &&
        secondChild->getFirstChild()->getOpCodeValue() == TR::sloadi &&
        secondChild->isSingleRefUnevaluated() &&

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
 #include <stdint.h>
 #include "arm/codegen/ARMInstruction.hpp"
 #ifdef J9_PROJECT_SPECIFC
-#include "arm/codegen/ARMPrivateLinkage.hpp"
 #include "arm/codegen/ARMRecompilation.hpp"
 #endif
 #include "arm/codegen/ARMSystemLinkage.hpp"
@@ -49,8 +48,8 @@
 #include "env/jittypes.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
 
 TR_Processor OMR::ARM::CodeGenerator::_processor=TR_NullProcessor;
 
@@ -91,13 +90,13 @@ OMR::ARM::CodeGenerator::CodeGenerator()
    _unlatchedRegisterList[0] = 0; // mark that list is empty
 
    _linkageProperties = &self()->getLinkage()->getProperties();
-   _linkageProperties->setEndianness(TR::Compiler->target.cpu.isBigEndian());
+   _linkageProperties->setEndianness(self()->comp()->target().cpu.isBigEndian());
 
    if (!self()->comp()->getOption(TR_FullSpeedDebug))
       self()->setSupportsDirectJNICalls();
    self()->setSupportsVirtualGuardNOPing();
 
-   if(TR::Compiler->target.isLinux())
+   if(self()->comp()->target().isLinux())
       {
       // only hardhat linux-arm builds have the required gcc soft libraries
       // that allow the vm to be compiled with -msoft-float.
@@ -134,6 +133,8 @@ OMR::ARM::CodeGenerator::CodeGenerator()
    // TODO: Disable FP-GRA since current GRA does not work well with ARM linkage (where Float register usage is limited).
    self()->setDisableFpGRA();
 
+   self()->setSupportsRecompilation();
+
    self()->setSupportsGlRegDeps();
    self()->setSupportsGlRegDepOnFirstBlock();
    self()->setPerformsChecksExplicitly();
@@ -158,7 +159,7 @@ OMR::ARM::CodeGenerator::CodeGenerator()
    self()->setSupportsJavaFloatSemantics();
    self()->setSupportsInliningOfTypeCoersionMethods();
 
-   if (TR::Compiler->target.isLinux())
+   if (self()->comp()->target().isLinux())
       {
       // On AIX and Linux, we are very far away from address
       // wrapping-around.
@@ -218,7 +219,7 @@ OMR::ARM::CodeGenerator::CodeGenerator()
    for (i=0; i < linkageProperties.getNumFloatArgRegs(); i++)
      _fprLinkageGlobalRegisterNumbers[i] = globalRegNumbers[linkageProperties.getFloatArgumentRegister(i)];
 
-   if (self()->comp()->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+   if (self()->comp()->getOption(TR_TraceRA))
       {
       self()->setGPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstGPR, TR::RealRegister::LastGPR));
       self()->setFPRegisterIterator(new (self()->trHeapMemory()) TR::RegisterIterator(self()->machine(), TR::RealRegister::FirstFPR, TR::RealRegister::LastFPR));
@@ -262,7 +263,7 @@ directToInterpreterHelper(TR::ResolvedMethodSymbol *methodSymbol, TR::CodeGenera
       case TR::Int32:
          return sync?TR_ARMicallVMprJavaSendStaticSync1:TR_ARMicallVMprJavaSendStatic1;
       case TR::Address:
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             return sync?TR_ARMicallVMprJavaSendStaticSyncJ:TR_ARMicallVMprJavaSendStaticJ;
          else
             return sync?TR_ARMicallVMprJavaSendStaticSync1:TR_ARMicallVMprJavaSendStatic1;
@@ -285,14 +286,14 @@ TR::Instruction *OMR::ARM::CodeGenerator::generateSwitchToInterpreterPrePrologue
    TR::Register   *lr = self()->machine()->getRealRegister(TR::RealRegister::gr14); // link register
    TR::ResolvedMethodSymbol *methodSymbol = comp->getJittedMethodSymbol();
    TR::SymbolReference    *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMrevertToInterpreterGlue, false, false, false);
-   uintptrj_t             ramMethod = (uintptrj_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
+   uintptr_t             ramMethod = (uintptr_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
    TR::SymbolReference    *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(directToInterpreterHelper(methodSymbol, self()), false, false, false);
-   uintptrj_t             helperAddr = (uintptrj_t)helperSymRef->getMethodAddress();
+   uintptr_t             helperAddr = (uintptr_t)helperSymRef->getMethodAddress();
 
    // gr4 must contain the saved LR; see Recompilation.s
    cursor = new (self()->trHeapMemory()) TR::ARMTrg1Src1Instruction(cursor, ARMOp_mov, node, gr4, lr, self());
    cursor = self()->getLinkage()->flushArguments(cursor);
-   cursor = generateImmSymInstruction(self(), ARMOp_bl, node, (uintptrj_t)revertToInterpreterSymRef->getMethodAddress(), new (self()->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0,0, self()->trMemory()), revertToInterpreterSymRef, NULL, cursor);
+   cursor = generateImmSymInstruction(self(), ARMOp_bl, node, (uintptr_t)revertToInterpreterSymRef->getMethodAddress(), new (self()->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0,0, self()->trMemory()), revertToInterpreterSymRef, NULL, cursor);
    cursor = generateImmInstruction(self(), ARMOp_dd, node, (int32_t)ramMethod, TR_RamMethod, cursor);
 
    if (comp->getOption(TR_EnableHCR))
@@ -359,7 +360,7 @@ void OMR::ARM::CodeGenerator::beginInstructionSelection()
       TR::ResolvedMethodSymbol *methodSymbol  = comp->getMethodSymbol();
       if (methodSymbol->isJNI())
          {
-         uintptrj_t JNIMethodAddress = (uintptrj_t) methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp);
+         uintptr_t JNIMethodAddress = (uintptr_t) methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp);
          cursor = new (self()->trHeapMemory()) TR::ARMImmInstruction(cursor, ARMOp_dd, startNode, (int32_t)JNIMethodAddress, self());
          }
 
@@ -501,6 +502,9 @@ void OMR::ARM::CodeGenerator::doBinaryEncoding()
       self()->setBinaryBufferCursor(cursorInstruction->generateBinaryEncoding());
       cursorInstruction = cursorInstruction->getNext();
       }
+
+   self()->getLinkage()->performPostBinaryEncoding();
+
    }
 
 bool OMR::ARM::CodeGenerator::hasDataSnippets()
@@ -826,9 +830,9 @@ bool OMR::ARM::CodeGenerator::isGlobalRegisterAvailable(TR_GlobalRegisterNumber 
    }
 
 bool
-OMR::ARM::CodeGenerator::directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress)
+OMR::ARM::CodeGenerator::directCallRequiresTrampoline(intptr_t targetAddress, intptr_t sourceAddress)
    {
    return
-      !TR::Compiler->target.cpu.isTargetWithinBranchImmediateRange(targetAddress, sourceAddress) ||
+      !self()->comp()->target().cpu.isTargetWithinBranchImmediateRange(targetAddress, sourceAddress) ||
       self()->comp()->getOption(TR_StressTrampolines);
    }

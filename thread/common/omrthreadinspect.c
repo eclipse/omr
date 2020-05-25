@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -379,9 +379,5 @@ omrthread_monitor_get_tracing(omrthread_monitor_t monitor)
 static omrthread_library_t
 get_default_library(void)
 {
-#if defined (J9VM_OUT_OF_PROCESS)
-	return dbgGetThreadLibrary();
-#else
 	return GLOBAL_DATA(default_library);
-#endif
 }

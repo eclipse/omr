@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,6 +73,10 @@ MM_GCExtensionsBase::initialize(MM_EnvironmentBase* env)
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
 	_omrVM = env->getOmrVM();
+
+	if (compressObjectReferences()) {
+		heapCeiling = LOW_MEMORY_HEAP_CEILING; /* By default, compressed pointers builds run in the low 64GiB */
+	}
 
 #if defined(OMR_GC_MODRON_STANDARD)
 #if defined(OMR_GC_MODRON_SCAVENGER)
@@ -272,7 +276,7 @@ MM_GCExtensionsBase::isConcurrentScavengerInProgress()
 {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	if (NULL != scavenger) {
-		return scavenger->isConcurrentInProgress();
+		return scavenger->isConcurrentCycleInProgress();
 	} else {
 		return false;
 	}

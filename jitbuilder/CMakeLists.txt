@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,18 +22,21 @@
 
 include(OmrCompilerSupport)
 
-find_package(PythonInterp 3.1 REQUIRED)
+find_package(PythonInterp REQUIRED)
+
+set(OMR_WARNINGS_AS_ERRORS OFF)
 
 # JitBuilder Files
 set(JITBUILDER_OBJECTS
 	env/FrontEnd.cpp
-	compile/Method.cpp
+	compile/ResolvedMethod.cpp
 	control/Jit.cpp
 	ilgen/JBIlGeneratorMethodDetails.cpp
 	optimizer/JBOptimizer.hpp
 	optimizer/JBOptimizer.cpp
 	optimizer/Optimizer.hpp
 	runtime/JBCodeCacheManager.cpp
+	runtime/JBJitConfig.cpp
 )
 
 if(OMR_ARCH_X86)
@@ -138,6 +141,10 @@ if(OMR_JITBUILDER_TEST)
 		COMMAND ${PYTHON_EXECUTABLE} run_tests.py
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/apigen
 	)
+endif()
+
+if(OMR_LLJB)
+	add_subdirectory(lljb)
 endif()
 
 # install(TARGETS jitbuilder

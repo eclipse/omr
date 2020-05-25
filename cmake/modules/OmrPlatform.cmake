@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,26 +38,24 @@ if(NOT OMR_HOST_OS STREQUAL "zos")
 	enable_language(ASM)
 endif()
 
-# Pickup OS info
+# pick up OS info
 include(platform/os/${OMR_HOST_OS})
 
-# Pickup Arch Info
+# pick up architecture Info
 include(platform/arch/${OMR_HOST_ARCH})
 
-# Pickup toolconfig based on platform
+# pick up toolconfig based on platform
 include(platform/toolcfg/${OMR_TOOLCONFIG})
 
-# Verify toolconfig!
+# verify toolconfig
 include(platform/toolcfg/verify)
 
 macro(omr_platform_global_setup)
-
 	omr_assert(WARNING TEST NOT OMR_PLATFORM_GLOBALLY_INITIALIZED
 		MESSAGE "omr_platform_global_setup called twice."
 	)
 
 	set(OMR_PLATFORM_GLOBALLY_INITIALIZED 1)
-
 
 	omr_append_flags(CMAKE_C_FLAGS ${OMR_PLATFORM_COMPILE_OPTIONS})
 	omr_append_flags(CMAKE_CXX_FLAGS ${OMR_PLATFORM_COMPILE_OPTIONS})
@@ -98,7 +96,7 @@ macro(omr_platform_global_setup)
 		${OMR_PLATFORM_LIBRARIES}
 	)
 
-	# If the OS requires global setup, do it here.
+	# If the architecture requires global setup, do it here.
 	if(COMMAND omr_arch_global_setup)
 		omr_arch_global_setup()
 	endif()
@@ -108,19 +106,19 @@ macro(omr_platform_global_setup)
 		omr_os_global_setup()
 	endif()
 
-	# And now the toolconfig setup
+	# And now the toolconfig setup.
 	if(COMMAND omr_toolconfig_global_setup)
 		omr_toolconfig_global_setup()
 	endif()
 endmacro()
 
 # omr_process_exports(<target> [symbol]...)
-# performs appropriate processing to export symbols from a target.
-# Note: function is internaly guarded, so its safe to call multiple times
+# Performs appropriate processing to export symbols from a target.
+# Note: function is internaly guarded, so its safe to call multiple times.
 function(omr_process_exports target)
 	omr_assert(FATAL_ERROR TEST TARGET ${target} MESSAGE "omr_process_exports called on invalid target '${target}'")
 
-	# Check if we have already processed the exports
+	# Check if we have already processed the exports.
 	get_target_property(has_processed ${target} OMR_EXPORTS_PROCESSED)
 
 	if((NOT has_processed) AND (COMMAND _omr_toolchain_process_exports))
@@ -131,11 +129,48 @@ function(omr_process_exports target)
 endfunction()
 
 # omr_add_exports(<target>)
-# Exports given symbols from a given target, and calls omr_process_exports
+# Exports given symbols from a given target, and calls omr_process_exports.
 function(omr_add_exports target)
 	omr_assert(FATAL_ERROR TEST TARGET ${target} MESSAGE "omr_add_exports called on invalid target '${target}'")
 	set_property(TARGET ${target} APPEND PROPERTY EXPORTED_SYMBOLS ${ARGN})
 	omr_process_exports(${target})
+endfunction()
+
+# omr_process_split_debug(<target>)
+#   Process a target to generate split debug info if requested/required
+function(omr_process_split_debug target)
+	omr_assert(FATAL_ERROR TEST TARGET ${target} MESSAGE "omr_split_debug called on invalid target '${target}'")
+
+	# if we have already processed this target, skip it
+	get_target_property(is_split ${target} OMR_SPLIT_DEBUG_PROCESSED)
+	if(is_split)
+		return()
+	endif()
+
+	set_target_properties(${target} PROPERTIES OMR_SPLIT_DEBUG_PROCESSED TRUE)
+
+	get_target_property(target_type "${target}" TYPE)
+
+	# Only try making split debug info for exes/shared libs, and only if we have support from the toolchain
+	if((target_type MATCHES "EXECUTABLE|SHARED_LIBRARY") AND (COMMAND _omr_toolchain_separate_debug_symbols))
+		# Default to using config option.
+		set(use_split_debug ${OMR_SEPARATE_DEBUG_INFO})
+
+		# OMR_SEPARATE_DEBUG_INFO has no impact on Windows since it already
+		# uses separate .pdb files.
+		if(OMR_OS_WINDOWS)
+			set(use_split_debug FALSE)
+		endif()
+
+		# DDR requires separate debug info on OSX.
+		if(OMR_OS_OSX)
+			set(use_split_debug TRUE)
+		endif()
+
+		if(use_split_debug)
+			_omr_toolchain_separate_debug_symbols("${target}")
+		endif()
+	endif()
 endfunction()
 
 ###

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,7 +117,7 @@ flags32_t                 _flags;
 /** \brief
   *     The offset of the memory reference relative to the entity being referenced.
   */
-intptrj_t _offset;
+intptr_t _offset;
 
 TR_StorageReference       *_storageReference;
 
@@ -202,14 +202,14 @@ TR::Node *setIndexNode(TR::Node *in) {return _indexNode = in;}
   *    The offset may not represent the final displacement which will be used to encode the memory reference until the
   *    binary encoding of this memory reference is generated.
   */
-intptrj_t getOffset() {return _offset;}
+intptr_t getOffset() {return _offset;}
 
 /** \brief
   *    Sets the offset of the memory reference relative to the entity being referenced.
   */
-void setOffset(intptrj_t amount) {_offset = amount;}
+void setOffset(intptr_t amount) {_offset = amount;}
 
-void addToOffset(intptrj_t amount) {_offset += amount;}
+void addToOffset(intptr_t amount) {_offset += amount;}
 
 /**
  * An unresolved data snippet and constant data snippet are mutually exclusive for

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenPhase.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/InstOpCode.hpp"
@@ -56,32 +56,30 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
-#include "cs2/bitvectr.h"
 #include "cs2/hashtab.h"
-#include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/RawAllocator.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -409,10 +407,6 @@ TR_Debug::addInstructionComment(TR::Instruction *instr, char * comment, ...)
    if (comment == NULL || _comp->getOutFile() == NULL )
       return;
 
-   TR::SimpleRegex * regex = _comp->getOptions()->getTraceForCodeMining();
-   if (regex && !TR::SimpleRegex::match(regex, comment))
-      return;
-
    CS2::HashIndex hashIndex;
    if (_comp->getToCommentMap().Locate(instr, hashIndex))
       {
@@ -494,6 +488,16 @@ TR_Debug::getDiagnosticFormat(const char *format, char *buffer, int32_t length)
 bool
 TR_Debug::performTransformationImpl(bool canOmitTransformation, const char * format, ...)
    {
+   int32_t optIndex = _comp->getOptIndex();
+   int32_t firstOptIndex = _comp->getOptions()->getFirstOptIndex();
+   int32_t lastOptIndex = _comp->getOptions()->getLastOptIndex();
+   // An opt that is marked as MustBeDone will always run.
+   // However, we need to omit optional transformations when the opt is supposed
+   // to be prohibited by firstOptIndex and lastOptIndex
+   //
+   if (canOmitTransformation && (optIndex < firstOptIndex || optIndex > lastOptIndex))
+      return false;
+
    if (_comp->getOptimizer())
       _comp->getOptimizer()->incOptMessageIndex();
 
@@ -538,14 +542,14 @@ TR_Debug::performTransformationImpl(bool canOmitTransformation, const char * for
           curTransformationIndex > _comp->getOptions()->getLastOptTransformationIndex())
          return false;
 
-      if (  _comp->getOptIndex() == _comp->getOptions()->getLastOptIndex()
+      if (optIndex == lastOptIndex
          && _comp->getOptSubIndex() > _comp->getOptions()->getLastOptSubIndex())
          return false;
 
       //
       // Ok, we're doing this transformation
       //
-      if (comp()->getOptIndex() == comp()->getLastBegunOptIndex())
+      if (optIndex == comp()->getLastBegunOptIndex())
          comp()->recordPerformedOptTransformation();
       }
 
@@ -560,9 +564,9 @@ TR_Debug::performTransformationImpl(bool canOmitTransformation, const char * for
          trfprintf(_file, "\n"); // traceRA convention is a newline at the start rather than the end
 
       trfprintf(_file, "[%6d] ", curTransformationIndex);
-      if (_comp->getOptIndex() == _comp->getOptions()->getLastOptIndex())
+      if (optIndex == lastOptIndex)
          {
-         trfprintf(_file, "%3d.%-4d ", _comp->getOptIndex(), _comp->getOptSubIndex());
+         trfprintf(_file, "%3d.%-4d ", optIndex, _comp->getOptSubIndex());
          }
 
       if ((format[0] == '%' && format[1] == 's') || (format[0] == 'O' && format[1] == '^' && format[2] == 'O'))
@@ -749,12 +753,12 @@ TR_Debug::printPrefix(TR::FILE *pOutFile, TR::Instruction *instr, uint8_t *curso
 
       // Print machine code in bytes on X86, in words on PPC,ARM,ARM64
       // Stop if we try to run over the buffer.
-      if (TR::Compiler->target.cpu.isX86())
+      if (_comp->target().cpu.isX86())
          {
          for (int i = 0; i < size && p1 - p0 + 3 < prefixWidth; i++, p1 += 3)
             sprintf(p1, " %02x", *cursor++);
          }
-      else if (TR::Compiler->target.cpu.isPower() || TR::Compiler->target.cpu.isARM() || TR::Compiler->target.cpu.isARM64())
+      else if (_comp->target().cpu.isPower() || _comp->target().cpu.isARM() || _comp->target().cpu.isARM64())
          {
          for (int i = 0; i < size && p1 - p0 + 9 < prefixWidth; i += 4, p1 += 9, cursor += 4)
             sprintf(p1, " %08x", *((uint32_t *)cursor));
@@ -835,7 +839,7 @@ TR_Debug::printSnippetLabel(TR::FILE *pOutFile, TR::LabelSymbol *label, uint8_t 
    trfprintf(pOutFile, ":");
    if (comment1)
       {
-      trfprintf(pOutFile, "\t\t%c %s", (TR::Compiler->target.cpu.isX86() && TR::Compiler->target.isLinux()) ? '#' : ';', comment1);
+      trfprintf(pOutFile, "\t\t%c %s", (_comp->target().cpu.isX86() && _comp->target().isLinux()) ? '#' : ';', comment1);
       if (comment2)
          trfprintf(pOutFile, " (%s)", comment2);
       }
@@ -962,7 +966,7 @@ TR_Debug::signature(TR::ResolvedMethodSymbol *s)
 TR_OpaqueClassBlock *
 TR_Debug::containingClass(TR::SymbolReference *symRef)
    {
-   TR_Method *method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method *method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
 
    if (method)
       {
@@ -1097,6 +1101,7 @@ TR_Debug::nodePrintAllFlags(TR::Node *node, TR_PrettyPrinterString &output)
 #endif
    output.append(format, node->printIsHeapificationStore());
    output.append(format, node->printIsHeapificationAlloc());
+   output.append(format, node->printIsIdentityless());
    output.append(format, node->printIsLiveMonitorInitStore());
    output.append(format, node->printIsMethodEnterExitGuard());
    output.append(format, node->printReturnIsDummy());
@@ -1152,7 +1157,7 @@ TR_Debug::print(TR::SymbolReference * symRef, TR_PrettyPrinterString& output, bo
       symRefObjIndex.append( " (obj%d)", (int)symRef->getKnownObjectIndex());
    else if (sym && sym->isFixedObjectRef() && comp()->getKnownObjectTable() && !symRef->isUnresolved())
       {
-      TR::KnownObjectTable::Index i = comp()->getKnownObjectTable()->getExistingIndexAt((uintptrj_t*)sym->castToStaticSymbol()->getStaticAddress());
+      TR::KnownObjectTable::Index i = comp()->getKnownObjectTable()->getExistingIndexAt((uintptr_t*)sym->castToStaticSymbol()->getStaticAddress());
       if (i != TR::KnownObjectTable::UNKNOWN)
          symRefObjIndex.append( " (==obj%d)", (int)i);
       }
@@ -1653,6 +1658,8 @@ TR_Debug::getName(TR::SymbolReference * symRef)
              return "<potentialOSRPointHelper>";
          case TR::SymbolReferenceTable::osrFearPointHelperSymbol:
              return "<osrFearPointHelper>";
+         case TR::SymbolReferenceTable::eaEscapeHelperSymbol:
+             return "<eaEscapeHelper>";
          }
       }
 
@@ -1858,7 +1865,7 @@ TR_Debug::getParmName(TR::SymbolReference * symRef)
 const char *
 TR_Debug::getMethodName(TR::SymbolReference * symRef)
    {
-   TR_Method * method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method *method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
 
    if (method==NULL)
       {
@@ -1918,20 +1925,20 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
          {
          TR::StackMemoryRegion stackMemoryRegion(*comp()->trMemory());
          char *contents = NULL;
-         intptrj_t length = 0, prefixLength = 0, suffixOffset = 0;
+         intptr_t length = 0, prefixLength = 0, suffixOffset = 0;
          char *etc = "";
-         const intptrj_t LENGTH_LIMIT=80;
-         const intptrj_t PIECE_LIMIT=20;
+         const intptr_t LENGTH_LIMIT=80;
+         const intptr_t PIECE_LIMIT=20;
 
 #ifdef J9_PROJECT_SPECIFIC
          TR::VMAccessCriticalSection getStaticNameCriticalSection(comp(),
                                                                    TR::VMAccessCriticalSection::tryToAcquireVMAccess);
          if (!symRef->isUnresolved() && getStaticNameCriticalSection.acquiredVMAccess())
             {
-            uintptrj_t stringLocation = (uintptrj_t)sym->castToStaticSymbol()->getStaticAddress();
+            uintptr_t stringLocation = (uintptr_t)sym->castToStaticSymbol()->getStaticAddress();
             if (stringLocation)
                {
-               uintptrj_t string = comp()->fej9()->getStaticReferenceFieldAtAddress(stringLocation);
+               uintptr_t string = comp()->fej9()->getStaticReferenceFieldAtAddress(stringLocation);
                length = comp()->fej9()->getStringUTF8Length(string);
                contents = (char*)comp()->trMemory()->allocateMemory(length+1, stackAlloc, TR_MemoryBase::UnknownType);
                comp()->fej9()->getStringUTF8(string, contents, length+1);
@@ -1956,7 +1963,7 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
 
                // Stop before any non-printable characters (like newlines or UTF8 weirdness)
                //
-               intptrj_t i;
+               intptr_t i;
                for (i=0; i < prefixLength; i++)
                   if (!isprint(contents[i]))
                      {
@@ -2082,6 +2089,7 @@ static const char *commonNonhelperSymbolNames[] =
    "<osrReturnAddress>",
    "<potentialOSRPointHelper>",
    "<osrFearPointHelper>",
+   "<eaEscapeHelper>",
    "<lowTenureAddress>",
    "<highTenureAddress>",
    "<fragmentParent>",
@@ -2097,6 +2105,7 @@ static const char *commonNonhelperSymbolNames[] =
    "<j9methodConstantPoolField>",
    "<startPCLinkageInfo>",
    "<instanceShapeFromROMClass>",
+   "<objectEqualityComparison>",
    "<synchronizedFieldLoad>",
    "<atomicAdd>",
    "<atomicFetchAndAdd>",
@@ -2107,6 +2116,8 @@ static const char *commonNonhelperSymbolNames[] =
    "<atomicSwap64Bit>",
    "<atomicCompareAndSwapReturnStatus>",
    "<atomicCompareAndSwapReturnValue>",
+   "<jProfileValueSymbol>",
+   "<jProfileValueWithNullCHKSymbol>",
    };
 
 const char *
@@ -2541,7 +2552,7 @@ TR_Debug::dumpMethodInstrs(TR::FILE *pOutFile, const char *title, bool dumpTrees
            crtLineNo = lastLineNoPrinted;
            }
 
-        bool printEveryLine = TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isLinux();
+        bool printEveryLine = _comp->target().cpu.isZ() && _comp->target().isLinux();
         // Emit .line directive if there was change in line number, or source file or
         // inlined method state since last time
         if ((crtLineNo != -1) &&
@@ -2556,7 +2567,7 @@ TR_Debug::dumpMethodInstrs(TR::FILE *pOutFile, const char *title, bool dumpTrees
 
            int32_t lno;
 
-           if (TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isLinux())
+           if (_comp->target().cpu.isZ() && _comp->target().isLinux())
               {
               lno = crtLineNo - 1;
               }
@@ -2593,55 +2604,12 @@ TR_Debug::dumpMethodInstrs(TR::FILE *pOutFile, const char *title, bool dumpTrees
          printS390OOLSequences(pOutFile);
 #endif
 #elif defined(TR_TARGET_X86)
-      if (TR::Compiler->target.cpu.isX86())
+      if (_comp->target().cpu.isX86())
          printX86OOLSequences(pOutFile);
 #endif
 
    trfprintf(pOutFile,"\n</instructions>\n");
 
-   }
-
-// Prints info on Register killed (called just before register is to be killed)
-//
-void
-TR_Debug::printRegisterKilled(TR::Register *reg)
-   {
-   TR::FILE *pOutFile = _comp->getOutFile();
-   TR::Node *node;
-   // many nodes can reference one register, so it is misleading to report just the last one set
-   // better to report none.
-   // node = reg->isLive() ? reg->getLiveRegisterInfo()->getNode() : NULL;
-   node = NULL;
-
-   if (node)
-      {
-      trfprintf(pOutFile, " [%s] (%3d)%*s%s   ",
-         getName(node), node->getReferenceCount(),
-         _comp->cg()->_indentation, " ",
-         getName(node->getOpCode()));
-      }
-   else
-      {
-      trfprintf(pOutFile, "  %*s       %*s", addressWidth, " ", _comp->cg()->_indentation, " ");
-      }
-   trfprintf(pOutFile, "%s%s\n",
-      reg->getRegisterName(_comp),
-      reg->isLive() ? " (killed)" : " (killed, already dead)");
-   }
-
-// Prints info on node and register under evaluation
-//
-void
-TR_Debug::printNodeEvaluation(TR::Node *node, const char *relationship, TR::Register *reg, bool printOpCode)
-   {
-   if (!node) return;
-   TR::FILE *pOutFile = _comp->getOutFile();
-   trfprintf(pOutFile, " [%s] (%3d)%*s%s%s%s%s\n",
-      getName(node), node->getReferenceCount(), _comp->cg()->_indentation, " ",
-      (printOpCode) ? getName(node->getOpCode()) : "",
-      relationship,
-      (reg) ? reg->getRegisterName(_comp) : "",
-      (reg) ? (reg->isLive() ? " (live)" : " (dead)") : "");
    }
 
 void
@@ -2707,54 +2675,9 @@ TR_Debug::dumpInstructionComments(TR::FILE *pOutFile, TR::Instruction *instr, bo
       for(data=itr.getFirst(); data!=NULL; data= itr.getNext()) trfprintf(pOutFile, " %s", data);
 
       }
-
-   // Print common data mining annotations for all platforms
-   printCommonDataMiningAnnotations(pOutFile, instr, needsStartComment);
-
    }
 
-void
-TR_Debug::printCommonDataMiningAnnotations(TR::FILE *pOutFile, TR::Instruction * inst, bool needsStartComment)
-  {
-  if (inst!=NULL && inst->getNode())
-    {
-    const static char IL_KEY[]  = "IL";
-    const static char FRQ_KEY[] = "FRQ";
-    const static char CLD_KEY[] = "CLD";
-    TR::SimpleRegex * regex = _comp->getOptions()->getTraceForCodeMining();
-    if (regex &&
-        (TR::SimpleRegex::match(regex, "ALL") || TR::SimpleRegex::match(regex, IL_KEY) || TR::SimpleRegex::match(regex, FRQ_KEY)|| TR::SimpleRegex::match(regex, CLD_KEY)))
-       {
-       if (needsStartComment)
-          {
-          trfprintf(pOutFile, " ;");
-          needsStartComment = false;
-          }
-
-       TR::ILOpCode& opcode = inst->getNode()->getOpCode();
-       if (TR::SimpleRegex::match(regex, IL_KEY))
-          {
-          trfprintf(pOutFile, " IL=%s", opcode.getName());
-          }
-       if (inst->getNode()->getOpCodeValue() == TR::BBStart)
-          {
-          _lastFrequency = inst->getNode()->getBlock()->getFrequency();
-          _isCold = inst->getNode()->getBlock()->isCold();
-          }
-       if (TR::SimpleRegex::match(regex, FRQ_KEY))
-          {
-          trfprintf(pOutFile, " FRQ=%d", _lastFrequency);
-          }
-       if (TR::SimpleRegex::match(regex, CLD_KEY))
-          {
-          trfprintf(pOutFile, " CLD=%d", _isCold);
-          }
-       }
-    }
-  }
-
-
-#if !defined(TR_TARGET_POWER) && !defined(TR_TARGET_ARM) && !defined(TR_TARGET_ARM64)
+#if !defined(TR_TARGET_POWER) && !defined(TR_TARGET_ARM) && !defined(TR_TARGET_ARM64) && !defined(TR_TARGET_RISCV)
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * inst)
    {
@@ -2769,7 +2692,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * inst, const char *title)
       return;
 
 #if defined(TR_TARGET_X86)
-   if (TR::Compiler->target.cpu.isX86())
+   if (_comp->target().cpu.isX86())
       {
       printx(pOutFile, inst);
       return;
@@ -2777,7 +2700,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * inst, const char *title)
 #endif
 
 #if defined(TR_TARGET_POWER)
-   if (TR::Compiler->target.cpu.isPower())
+   if (_comp->target().cpu.isPower())
       {
       print(pOutFile, inst);
       return;
@@ -2785,7 +2708,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * inst, const char *title)
 #endif
 
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
+   if (_comp->target().cpu.isARM())
       {
       print(pOutFile, inst);
       return;
@@ -2793,15 +2716,23 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction * inst, const char *title)
 #endif
 
 #if defined(TR_TARGET_ARM64)
-   if (TR::Compiler->target.cpu.isARM64())
+   if (_comp->target().cpu.isARM64())
       {
       print(pOutFile, inst);
       return;
       }
 #endif
 
+#if defined(TR_TARGET_RISCV)
+   if (TR::Compiler->target.cpu.isRISCV())
+      {
+      print(pOutFile, inst);
+      return;
+      }
+#endif      
+
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       {
       printz(pOutFile, inst, title);
       return;
@@ -2817,7 +2748,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::GCRegisterMap * map)
       return;
 
 #if defined(TR_TARGET_X86)
-   if (TR::Compiler->target.cpu.isX86())
+   if (_comp->target().cpu.isX86())
       {
       printX86GCRegisterMap(pOutFile, map);
       return;
@@ -2825,7 +2756,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::GCRegisterMap * map)
 #endif
 
 #if defined(TR_TARGET_POWER)
-   if (TR::Compiler->target.cpu.isPower())
+   if (_comp->target().cpu.isPower())
       {
       printPPCGCRegisterMap(pOutFile, map);
       return;
@@ -2833,7 +2764,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::GCRegisterMap * map)
 #endif
 
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
+   if (_comp->target().cpu.isARM())
       {
       printARMGCRegisterMap(pOutFile, map);
       return;
@@ -2841,7 +2772,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::GCRegisterMap * map)
 #endif
 
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       {
       printS390GCRegisterMap(pOutFile, map);
       return;
@@ -2849,9 +2780,17 @@ TR_Debug::print(TR::FILE *pOutFile, TR::GCRegisterMap * map)
 #endif
 
 #if defined(TR_TARGET_ARM64)
-   if (TR::Compiler->target.cpu.isARM64())
+   if (_comp->target().cpu.isARM64())
       {
       printARM64GCRegisterMap(pOutFile, map);
+      return;
+      }
+#endif
+
+#if defined(TR_TARGET_RISCV)
+   if (TR::Compiler->target.cpu.isRISCV())
+      {
+      printRVGCRegisterMap(pOutFile, map);
       return;
       }
 #endif
@@ -2896,12 +2835,16 @@ const char *
 TR_Debug::getName(TR::Snippet *snippet)
    {
 #if defined(TR_TARGET_X86)
-   if (TR::Compiler->target.cpu.isX86())
+   if (_comp->target().cpu.isX86())
       return getNamex(snippet);
 #endif
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
+   if (_comp->target().cpu.isARM())
       return getNamea(snippet);
+#endif
+#if defined(TR_TARGET_ARM64)
+   if (_comp->target().cpu.isARM64())
+      return getNamea64(snippet);
 #endif
    return "<unknown snippet>"; // TODO: Return a more informative name
    }
@@ -2910,30 +2853,37 @@ void
 TR_Debug::print(TR::FILE *pOutFile, TR::Snippet * snippet)
    {
 #if defined(TR_TARGET_X86)
-   if (TR::Compiler->target.cpu.isX86())
+   if (_comp->target().cpu.isX86())
       {
       printx(pOutFile, snippet);
       return;
       }
 #endif
 #if defined(TR_TARGET_POWER)
-   if (TR::Compiler->target.cpu.isPower())
+   if (_comp->target().cpu.isPower())
       {
       printp(pOutFile, snippet);
       return;
       }
 #endif
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
+   if (_comp->target().cpu.isARM())
       {
       printa(pOutFile, snippet);
       return;
       }
 #endif
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       {
       printz(pOutFile, (TR::Snippet *)snippet);
+      return;
+      }
+#endif
+#if defined(TR_TARGET_ARM64)
+   if (_comp->target().cpu.isARM64())
+      {
+      printa64(pOutFile, snippet);
       return;
       }
 #endif
@@ -2970,25 +2920,30 @@ TR_Debug::getName(TR::Register *reg, TR_RegisterSizes size)
    if (reg->getRealRegister())
       {
 #if defined(TR_TARGET_X86)
-      if (TR::Compiler->target.cpu.isX86())
+      if (_comp->target().cpu.isX86())
          return getName((TR::RealRegister *)reg, size);
 #endif
 #if defined(TR_TARGET_POWER)
-      if (TR::Compiler->target.cpu.isPower())
+      if (_comp->target().cpu.isPower())
          return getName((TR::RealRegister *)reg, size);
 #endif
 #if defined(TR_TARGET_ARM)
-      if (TR::Compiler->target.cpu.isARM())
+      if (_comp->target().cpu.isARM())
          return getName((TR::RealRegister *)reg, size);
 #endif
 #if defined(TR_TARGET_S390)
-      if (TR::Compiler->target.cpu.isZ())
+      if (_comp->target().cpu.isZ())
          return getName(toRealRegister(reg), size);
 #endif
 #if defined(TR_TARGET_ARM64)
-      if (TR::Compiler->target.cpu.isARM64())
+      if (_comp->target().cpu.isARM64())
          return getName((TR::RealRegister *)reg, size);
 #endif
+#if defined(TR_TARGET_RISCV)
+      if (TR::Compiler->target.cpu.isRISCV())
+         return getName((TR::RealRegister *)reg, size);
+#endif
+
       TR_ASSERT(0, "TR_Debug::getName() ==> unknown target platform for given real register\n");
       }
 
@@ -3034,7 +2989,7 @@ TR_Debug::getName(TR::Register *reg, TR_RegisterSizes size)
    else if (_comp->getAddressEnumerationOption(TR_EnumerateRegister) && _comp->getToNumberMap().Locate((void *)reg, hashIndex))
       {
       char *buf = (char *)_comp->trMemory()->allocateHeapMemory(maxPrefixSize + 6 + 11); // max register kind name size plus underscore plus 10-digit reg num plus null terminator
-      uint32_t regNum = (uint32_t)(intptrj_t)_comp->getToNumberMap().DataAt(hashIndex);
+      uint32_t regNum = (uint32_t)(intptr_t)_comp->getToNumberMap().DataAt(hashIndex);
       sprintf(buf, "%s%s_%04d", prefix, getRegisterKindName(reg->getKind()), regNum);
       _comp->getToStringMap().Add((void *)reg, buf);
       return buf;
@@ -3055,20 +3010,24 @@ const char *TR_Debug::getGlobalRegisterName(TR_GlobalRegisterNumber regNum, TR_R
    {
    uint32_t realRegNum = _comp->cg()->getGlobalRegister(regNum);
 #if defined(TR_TARGET_X86)
-   if (TR::Compiler->target.cpu.isX86())
+   if (_comp->target().cpu.isX86())
       return getName(realRegNum, size);
 #endif
 #if defined(TR_TARGET_POWER)
-   if (TR::Compiler->target.cpu.isPower())
+   if (_comp->target().cpu.isPower())
       return getPPCRegisterName(realRegNum);
 #endif
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       return getS390RegisterName(realRegNum);
 #endif
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
+   if (_comp->target().cpu.isARM())
       return getName(realRegNum, size);
+#endif
+#if defined(TR_TARGET_ARM64)
+   if (_comp->target().cpu.isARM64())
+      return getARM64RegisterName(realRegNum, size);
 #endif
    return "???";
    }
@@ -3126,7 +3085,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Register * reg, TR_RegisterSizes size)
    if (pOutFile == NULL)
       return;
 #if defined(TR_TARGET_S390)
-   if (reg == NULL && TR::Compiler->target.cpu.isZ()) // zero based ptr
+   if (reg == NULL && _comp->target().cpu.isZ()) // zero based ptr
       {
       trfprintf(pOutFile, "%s", "GPR0");
       return;
@@ -3136,35 +3095,42 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Register * reg, TR_RegisterSizes size)
    if (reg->getRealRegister())
       {
 #if defined(TR_TARGET_X86)
-      if (TR::Compiler->target.cpu.isX86())
+      if (_comp->target().cpu.isX86())
          {
          print(pOutFile, (TR::RealRegister *)reg, size);
          return;
          }
 #endif
 #if defined(TR_TARGET_POWER)
-      if (TR::Compiler->target.cpu.isPower())
+      if (_comp->target().cpu.isPower())
          {
          print(pOutFile, (TR::RealRegister *)reg, size);
          return;
          }
 #endif
 #if defined(TR_TARGET_ARM)
-      if (TR::Compiler->target.cpu.isARM())
+      if (_comp->target().cpu.isARM())
          {
          print(pOutFile, (TR::RealRegister *)reg, size);
          return;
          }
 #endif
 #if defined(TR_TARGET_S390)
-      if (TR::Compiler->target.cpu.isZ())
+      if (_comp->target().cpu.isZ())
          {
          print(pOutFile, toRealRegister(reg), size);
          return;
          }
 #endif
 #if defined(TR_TARGET_ARM64)
-      if (TR::Compiler->target.cpu.isARM64())
+      if (_comp->target().cpu.isARM64())
+         {
+         print(pOutFile, (TR::RealRegister *)reg, size);
+         return;
+         }
+#endif
+#if defined(TR_TARGET_RISCV)
+      if (TR::Compiler->target.cpu.isRISCV())
          {
          print(pOutFile, (TR::RealRegister *)reg, size);
          return;
@@ -3303,7 +3269,7 @@ TR_Debug::printGPRegisterStatus(TR::FILE *pOutFile, OMR::MachineConnector *machi
    if (pOutFile == NULL)
       return;
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       {
       printGPRegisterStatus(pOutFile, (TR::Machine *)machine);
       return;
@@ -3316,7 +3282,7 @@ TR_Debug::printFPRegisterStatus(TR::FILE *pOutFile, OMR::MachineConnector *machi
    if (pOutFile == NULL)
       return;
 #if defined(TR_TARGET_S390)
-   if (TR::Compiler->target.cpu.isZ())
+   if (_comp->target().cpu.isZ())
       {
       printFPRegisterStatus(pOutFile, (TR::Machine *)machine);
       return;
@@ -3625,7 +3591,7 @@ TR_Debug::dump(TR::FILE *pOutFile, TR_CHTable * chTable)
 
          char *sig = TR::Compiler->cls.classNameChars(comp(), clazz, len);
 
-         if (len>256) len = 256;
+         if (len>255) len = 255;
          strncpy(buf, sig, len);
          buf[len] = 0;
 
@@ -3675,6 +3641,8 @@ TR_Debug::getRuntimeHelperName(int32_t index)
 
          case TR_newObject:                 return "jitNewObject";
          case TR_newObjectNoZeroInit:       return "jitNewObjectNoZeroInit";
+         case TR_newValue:                  return "jitNewValue";
+         case TR_newValueNoZeroInit:        return "jitNewValueNoZeroInit";
          case TR_newArray:                  return "jitNewArray";
          case TR_newArrayNoZeroInit:        return "jitNewArrayNoZeroInit";
          case TR_aNewArray:                 return "jitANewArray";
@@ -3714,6 +3682,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_releaseVMAccess:           return "jitReleaseVMAccess";
          case TR_throwCurrentException:     return "jitThrowCurrentException";
          case TR_throwClassCastException:   return "jitThrowClassCastException";
+         case TR_acmpHelper:                return "jitAcmpHelper";
 
          case TR_IncompatibleClassChangeError:return "jitThrowIncompatibleClassChangeError";
          case TR_newInstanceImplAccessCheck:return "jitNewInstanceImplAccessCheck";
@@ -3763,7 +3732,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          }
       }
 #ifdef TR_TARGET_X86
-   else if ((TR::Compiler->target.cpu.isI386() || TR::Compiler->target.cpu.isAMD64()) && !inDebugExtension())
+   else if ((_comp->target().cpu.isI386() || _comp->target().cpu.isAMD64()) && !inDebugExtension())
       {
       if (index < TR_LXRH)
          {
@@ -3794,10 +3763,6 @@ TR_Debug::getRuntimeHelperName(int32_t index)
             case TR_X86PatchSingleComparePIC_je:                      return "jitX86PatchSingleComparePIC_je";
             case TR_X86PatchMultipleComparePIC_mov:                   return "jitX86PatchMultipleComparePIC_mov";
             case TR_X86PatchMultipleComparePIC_je:                    return "jitX86PatchMultipleComparePIC_je";
-            case TR_X86OutlinedNew:                                   return "outlinedNew";
-            case TR_X86OutlinedNewArray:                              return "outlinedNewArray";
-            case TR_X86OutlinedNewNoZeroInit:                         return "outlinedNewNoZeroInit";
-            case TR_X86OutlinedNewArrayNoZeroInit:                    return "outlinedNewArrayNoZeroInit";
             case TR_X86CodeCachePrefetchHelper:                       return "per code cache TLH prefetch helper";
 
             case TR_outlinedPrologue_0preserved:         return "outlinedPrologue_0preserved";
@@ -3811,7 +3776,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
             case TR_outlinedPrologue_8preserved:         return "outlinedPrologue_8preserved";
             }
          }
-      else if (TR::Compiler->target.cpu.isI386())
+      else if (_comp->target().cpu.isI386())
          {
          switch (index)
             {
@@ -3872,7 +3837,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          }
       }
 #elif defined (TR_TARGET_POWER)
-   else if (TR::Compiler->target.cpu.isPower() && !inDebugExtension())
+   else if (_comp->target().cpu.isPower() && !inDebugExtension())
       {
       switch (index)
          {
@@ -3972,7 +3937,6 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_PPCarrayAnd:                                      return "_arrayand";
          case TR_PPCarrayCmp:                                      return "_arraycmp";
          case TR_PPCoverlapArrayCopy:                              return "overlapArrayCopy";
-         case TR_PPCarrayTranslateTRTOSimpleVMX:                   return "__arrayTranslateTRTOSimpleVMX";
          case TR_PPCarrayCmpVMX:                                   return "__arrayCmpVMX";
          case TR_PPCarrayCmpLenVMX:                                return "__arrayCmpLenVMX";
          case TR_PPCarrayCmpScalar:                                return "__arrayCmpScalar";
@@ -3989,7 +3953,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          }
       }
 #elif defined (TR_TARGET_S390)
-   else if (TR::Compiler->target.cpu.isZ() && !inDebugExtension())
+   else if (_comp->target().cpu.isZ() && !inDebugExtension())
       {
       switch (index)
          {
@@ -4086,7 +4050,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          }
       }
 #elif defined (TR_TARGET_ARM)
-   else if (TR::Compiler->target.cpu.isARM() && !inDebugExtension())
+   else if (_comp->target().cpu.isARM() && !inDebugExtension())
       {
       switch (index)
          {
@@ -4219,8 +4183,53 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_ARMrevertToInterpreterGlue:                   return "_revertToInterpreterGlue";
          }
       }
+#elif defined (TR_TARGET_ARM64)
+   else if (_comp->target().cpu.isARM64() && !inDebugExtension())
+      {
+      switch (index)
+         {
+         case TR_ARM64interpreterUnresolvedStaticGlue:             return "_interpreterUnresolvedStaticGlue";
+         case TR_ARM64interpreterUnresolvedSpecialGlue:            return "_interpreterUnresolvedSpecialGlue";
+         case TR_ARM64interpreterUnresolvedDirectVirtualGlue:      return "_interpreterUnresolvedDirectVirtualGlue";
+         case TR_ARM64interpreterUnresolvedClassGlue:              return "_interpreterUnresolvedClassGlue";
+         case TR_ARM64interpreterUnresolvedClassGlue2:             return "_interpreterUnresolvedClassGlue2";
+         case TR_ARM64interpreterUnresolvedStringGlue:             return "_interpreterUnresolvedStringGlue";
+         case TR_ARM64interpreterUnresolvedConstantDynamicGlue:    return "_interpreterUnresolvedConstantDynamicGlue";
+         case TR_ARM64interpreterUnresolvedStaticDataGlue:         return "_interpreterUnresolvedStaticDataGlue";
+         case TR_ARM64interpreterUnresolvedInstanceDataGlue:       return "_interpreterUnresolvedInstanceDataGlue";
+         case TR_ARM64interpreterUnresolvedStaticDataStoreGlue:    return "_interpreterUnresolvedStaticDataStoreGlue";
+         case TR_ARM64interpreterUnresolvedInstanceDataStoreGlue:  return "_interpreterUnresolvedInstanceDataStoreGlue";
+         case TR_ARM64virtualUnresolvedHelper:                     return "_virtualUnresolvedHelper";
+         case TR_ARM64interfaceCallHelper:                         return "_interfaceCallHelper";
+         case TR_ARM64icallVMprJavaSendVirtual0:                   return "icallVMprJavaSendVirtual0";
+         case TR_ARM64icallVMprJavaSendVirtual1:                   return "icallVMprJavaSendVirtual1";
+         case TR_ARM64icallVMprJavaSendVirtualJ:                   return "icallVMprJavaSendVirtualJ";
+         case TR_ARM64icallVMprJavaSendVirtualF:                   return "icallVMprJavaSendVirtualF";
+         case TR_ARM64icallVMprJavaSendVirtualD:                   return "icallVMprJavaSendVirtualD";
+         case TR_ARM64interpreterVoidStaticGlue:                   return "_interpreterVoidStaticGlue";
+         case TR_ARM64interpreterSyncVoidStaticGlue:               return "_interpreterSyncVoidStaticGlue";
+         case TR_ARM64interpreterIntStaticGlue:                    return "_interpreterIntStaticGlue";
+         case TR_ARM64interpreterSyncIntStaticGlue:                return "_interpreterSyncIntStaticGlue";
+         case TR_ARM64interpreterLongStaticGlue:                   return "_interpreterLongStaticGlue";
+         case TR_ARM64interpreterSyncLongStaticGlue:               return "_interpreterSyncLongStaticGlue";
+         case TR_ARM64interpreterFloatStaticGlue:                  return "_interpreterFloatStaticGlue";
+         case TR_ARM64interpreterSyncFloatStaticGlue:              return "_interpreterSyncFloatStaticGlue";
+         case TR_ARM64interpreterDoubleStaticGlue:                 return "_interpreterDoubleStaticGlue";
+         case TR_ARM64interpreterSyncDoubleStaticGlue:             return "_interpreterSyncDoubleStaticGlue";
+         case TR_ARM64nativeStaticHelper:                          return "_nativeStaticHelper";
+         case TR_ARM64interfaceDispatch:                           return "_interfaceDispatch";
+         case TR_ARM64samplingRecompileMethod:                     return "_samplingRecompileMethod";
+         case TR_ARM64countingRecompileMethod:                     return "_countingRecompileMethod";
+         case TR_ARM64samplingPatchCallSite:                       return "_samplingPatchCallSite";
+         case TR_ARM64countingPatchCallSite:                       return "_countingPatchCallSite";
+         case TR_ARM64induceRecompilation:                         return "_induceRecompilation";
+         case TR_ARM64revertToInterpreterGlue:                     return "_revertToInterpreterGlue";
+         case TR_ARM64doubleRemainder:                             return "doubleRemainder";
+         case TR_ARM64floatRemainder:                              return "floatRemainder";
+         }
+      }
 #endif
-#endif
+#endif // J9_PROJECT_SPECIFIC
 
    if (inDebugExtension())
       return "platform specific - not implemented";
@@ -4555,7 +4564,7 @@ TR_Debug::startTracingRegisterAssignment(const char *direction, TR_RegisterKinds
    {
    if (_file == NULL)
       return;
-   if (!_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRABasic))
+   if (!_comp->getOption(TR_TraceRA))
       return;
    trfprintf(_file, "\n\n<regassign direction=\"%s\" method=\"%s\">\n", direction, jitdCurrentMethodSignature(_comp));
    trfprintf(_file, "<legend>\n"
@@ -4598,7 +4607,7 @@ TR_Debug::stopTracingRegisterAssignment()
    {
    if (_file == NULL)
       return;
-   if (!_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRABasic))
+   if (!_comp->getOption(TR_TraceRA))
       return;
    if (_registerAssignmentTraceCursor)
       trfprintf(_file, "\n");
@@ -4612,7 +4621,7 @@ TR_Debug::traceRegisterAssignment(const char *format, va_list args)
    {
    if (_file == NULL)
       return;
-   if (!_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRADetails))
+   if (!_comp->getOption(TR_TraceRA))
       return;
    if (_registerAssignmentTraceCursor)
       {
@@ -4679,14 +4688,12 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
    TR_ASSERT( instr, "cannot trace assignment of NULL instructions\n");
    if (_file == NULL)
       return;
-   if (!_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRABasic))
+   if (!_comp->getOption(TR_TraceRA))
       return;
    if (insertedByRA)
       _registerAssignmentTraceFlags |=  TRACERA_INSTRUCTION_INSERTED;
    else if (postRA)
       _registerAssignmentTraceFlags &= ~TRACERA_INSTRUCTION_INSERTED;
-   else if (!_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRAPreAssignmentInstruction))
-      return;
    print(_file, instr);
    if (_registerAssignmentTraceCursor)
       {
@@ -4694,7 +4701,7 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
       _registerAssignmentTraceCursor = 0;
       if (postRA)
          {
-         if (_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRARegisterStates))
+         if (_comp->getOption(TR_TraceRA))
             {
             trfprintf(_file, "<regstates>\n");
 #if 0
@@ -4756,10 +4763,7 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
                }
             trfprintf(_file, "</regstates>\n");
             }
-         if (_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRAPreAssignmentInstruction))
-            {
-            trfprintf(_file, "\n");
-            }
+         trfprintf(_file, "\n");
          }
       }
    }
@@ -4771,11 +4775,11 @@ TR_Debug::traceRegisterAssigned(TR_RegisterAssignmentFlags flags, TR::Register *
    TR_ASSERT(virtReg, "Cannot trace assignment of NULL Virtual Register\n");
 
    if (_file == NULL ||
-       !_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRABasic))
+       !_comp->getOption(TR_TraceRA))
       return;
    // Avoid superfluous traces, unless the user asks for them.
    if (virtReg->isPlaceholderReg() &&
-       !_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRADependencies))
+       !_comp->getOption(TR_TraceRA))
       return;
    char buf[30];
    const char *preCoercionSymbol = flags.testAny(TR_PreDependencyCoercion) ? "!" : "";
@@ -4816,11 +4820,11 @@ TR_Debug::traceRegisterFreed(TR::Register *virtReg, TR::Register *realReg)
    TR_ASSERT(virtReg, "Cannot trace assignment of NULL Virtual Register\n");
 
    if (_file == NULL ||
-       !_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRABasic))
+       !_comp->getOption(TR_TraceRA))
       return;
    // Avoid superfluous traces, unless the user asks for them.
    if (virtReg->isPlaceholderReg() &&
-       !_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRADependencies))
+       !_comp->getOption(TR_TraceRA))
       return;
    char buf[30];
    sprintf(buf, "%s(%d/%d)~%s ",
@@ -4846,7 +4850,7 @@ TR_Debug::traceRegisterInterference(TR::Register *virtReg, TR::Register *interfe
    TR_ASSERT( virtReg && interferingVirtual, "cannot trace assignment of NULL registers\n");
    if (_file == NULL)
       return;
-   if (!_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRADetails))
+   if (!_comp->getOption(TR_TraceRA))
       return;
    char buf[40];
    sprintf(buf, "%s{%d,%d}? ", getName(interferingVirtual), interferingVirtual->getAssociation(), distance);
@@ -4868,7 +4872,7 @@ TR_Debug::traceRegisterWeight(TR::Register *realReg, uint32_t weight)
    TR_ASSERT( realReg, "cannot trace weight of NULL register\n");
    if (_file == NULL)
       return;
-   if (!_comp->getOptions()->getRegisterAssignmentTraceOption(TR_TraceRADetails))
+   if (!_comp->getOption(TR_TraceRA))
       return;
    char buf[30];
    sprintf(buf, "%s[0x%x]? ", getName(realReg), weight);
@@ -4994,22 +4998,11 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
                printf("\n methodStartAddress = %p",startaddr);
                printf("\n methodEndAddress = %p\n",endaddr);
                fprintf(cf, "break *%p\n",startaddr);
-
-               // Insert breakpoints requested by codegen
-               //
-               for (auto bpIterator = _comp->cg()->getBreakPointList().begin();
-                    bpIterator != _comp->cg()->getBreakPointList().end();
-                    ++bpIterator)
-                  {
-                  fprintf(cf, "break *%p\n",*bpIterator);
-                  }
-
                fprintf(cf, "disassemble %p %p\n",startaddr,endaddr);
                }
 
             fprintf(cf, "finish\n");
             fprintf(cf, "shell rm %s\n",cfname);
-            fprintf(cf, "");
             fclose(cf);
 
             Argv[1] = "-x";
@@ -5075,15 +5068,6 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
                {
                printf("\n methodStartAddress = %p",startaddr);
                printf("\n methodEndAddress = %p\n",endaddr);
-
-               // Insert breakpoints requested by codegen
-               //
-               for (auto bpIterator = _comp->cg()->getBreakPointList().begin();
-                    bpIterator != _comp->cg()->getBreakPointList().end(); ++bpIterator)
-                  {
-                  fprintf(cf, "stopi at 0x%p\n",*bpIterator);
-                  }
-
                fprintf(cf, "stopi at 0x%p\n" ,startaddr);
                }
 

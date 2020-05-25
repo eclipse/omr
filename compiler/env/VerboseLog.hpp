@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +69,8 @@ enum TR_VlogTag
    TR_Vlog_DISPATCH,
    TR_Vlog_RECLAMATION,
    TR_Vlog_PROFILING,
-   TR_Vlog_JITaaS,
+   TR_Vlog_JITServer,
+   TR_Vlog_AOTCOMPRESSION,
    TR_Vlog_numTags
    };
 

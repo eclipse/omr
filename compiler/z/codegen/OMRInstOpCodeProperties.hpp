@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1033,7 +1033,7 @@
    /* .description = */ "BRANCH ON CONDITION",
    /* .opcode[0]   = */ 0x47,
    /* .opcode[1]   = */ 0x00,
-   /* .format      = */ RXb_FORMAT,
+   /* .format      = */ RXa_FORMAT,
    /* .minimumALS  = */ CPU::Architecture::z900,
    /* .properties  = */ S390OpProp_BranchOp |
                         S390OpProp_ReadsCC |
@@ -4886,7 +4886,7 @@
    {
    /* .mnemonic    = */ OMR::InstOpCode::NOP,
    /* .name        = */ "NOP",
-   /* .description = */ "No-Op (for Labels)",
+   /* .description = */ "No-Op",
    /* .opcode[0]   = */ 0x07,
    /* .opcode[1]   = */ 0x00,
    /* .format      = */ PSEUDO,

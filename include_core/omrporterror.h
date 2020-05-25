@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -310,6 +310,26 @@
 #define OMRPORT_ERROR_STRING_ICONV_OPEN_FAILED (OMRPORT_ERROR_STRING_BASE - 2)
 #define OMRPORT_ERROR_STRING_UNSUPPORTED_ENCODING (OMRPORT_ERROR_STRING_BASE - 3)
 #define OMRPORT_ERROR_STRING_MEM_ALLOCATE_FAILED (OMRPORT_ERROR_STRING_BASE - 4)
+/**
+ * @}
+ */
+
+/**
+ * @name OMR Socket API Errors
+ * Error code returned by the socket API
+ *
+ * @internal OMRPORT_ERROR_SOCK_* range from -500 to -549 avoid overlap
+ * @{
+ */
+#define OMRPORT_ERROR_SOCK_BASE -500
+#define OMRPORT_ERROR_SOCK_PTB_FAILED (OMRPORT_ERROR_SOCK_BASE - 0)
+#define OMRPORT_ERROR_SOCK_SYSTEM_FULL (OMRPORT_ERROR_SOCK_BASE - 1)
+#define OMRPORT_ERROR_SOCK_ADDRINFO_FAILED (OMRPORT_ERROR_SOCK_BASE - 2)
+#define OMRPORT_ERROR_SOCK_SOCKET_CREATION_FAILED (OMRPORT_ERROR_SOCK_BASE - 3)
+#define OMRPORT_ERROR_SOCK_SOCKET_CLOSE_FAILED (OMRPORT_ERROR_SOCK_BASE - 4)
+#define OMRPORT_ERROR_SOCK_INET_PTON_FAILED (OMRPORT_ERROR_SOCK_BASE - 5)
+#define OMRPORT_ERROR_SOCK_BIND_FAILED (OMRPORT_ERROR_SOCK_BASE - 6)
+#define OMRPORT_ERROR_SOCK_LISTEN_FAILED (OMRPORT_ERROR_SOCK_BASE - 7)
 /**
  * @}
  */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ class X86OpCodesTest : public OpCodesTest
    virtual void compileBitwiseTestMethods();
    virtual void compileDirectCallTestMethods();
    virtual void compileCompareTestMethods();
-   virtual void compileTernaryTestMethods();
+   virtual void compileSelectTestMethods();
    virtual void compileAddressTestMethods();
 
    virtual void invokeIntegerArithmeticTests();
@@ -43,7 +43,7 @@ class X86OpCodesTest : public OpCodesTest
    virtual void invokeBitwiseTests();
    virtual void invokeDirectCallTests();
    virtual void invokeCompareTests();
-   virtual void invokeTernaryTests();
+   virtual void invokeSelectTests();
    virtual void invokeAddressTests();
    virtual void UnsupportedOpCodesTests();
 

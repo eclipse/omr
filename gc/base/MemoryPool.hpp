@@ -64,6 +64,9 @@ class MM_MemoryPool : public MM_BaseVirtual
 	 * Data members
 	 */
 private:
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool const _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	MM_MemoryPool *_next;
 	MM_MemoryPool *_previous;
 	MM_MemoryPool *_children;
@@ -136,6 +139,23 @@ public:
 		_largeObjectAllocateStats->getTlhAllocSizeClassStats()->resetCounts();
 #endif
 	}
+
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool const compressObjectReferences() {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* defined(OMR_GC_FULL_POINTERS) */
+		return true;
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return false;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	}
+
 	/**
 	 * initialize frequentAllocation and reset the count of FreeEntrySizeClassStats
 	 * @param[in] largeObjectAllocateStats
@@ -223,12 +243,10 @@ public:
 	 * VMs, and arraylet spines (including their leaves, if inline) take this path.
 	 */
 	virtual void *allocateObject(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription) = 0;
-#if defined(OMR_GC_ARRAYLETS)
 	/**
 	 * Allocate an arraylet leaf.
 	 */	
 	virtual void *allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocDesc);
-#endif /* OMR_GC_ARRAYLETS */
 	virtual void *collectorAllocate(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, bool lockingRequired);
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 	virtual void *allocateTLH(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, uintptr_t maximumSizeInBytesRequired, void * &addrBase, void * &addrTop);
@@ -346,6 +364,9 @@ public:
 	 */
 	MM_MemoryPool(MM_EnvironmentBase *env, uintptr_t minimumFreeEntrySize) :
 		MM_BaseVirtual(),
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		_compressObjectReferences(env->compressObjectReferences()),
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		_next(NULL),
 		_previous(NULL),
 		_children(NULL),
@@ -375,6 +396,9 @@ public:
 	 */
 	MM_MemoryPool(MM_EnvironmentBase *env, uintptr_t minimumFreeEntrySize, const char *name) :
 		MM_BaseVirtual(),
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		_compressObjectReferences(env->compressObjectReferences()),
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		_next(NULL),
 		_previous(NULL),
 		_children(NULL),

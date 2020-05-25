@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,13 +39,13 @@
    TR::TreeEvaluator::bloadEvaluator,       // TR::bload
    TR::TreeEvaluator::sloadEvaluator,       // TR::sload
    TR::TreeEvaluator::lloadEvaluator,       // TR::lload
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::irdbar
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::frdbar
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::drdbar
+   TR::TreeEvaluator::irdbarEvaluator,      // TR::irdbar
+   TR::TreeEvaluator::frdbarEvaluator,      // TR::frdbar
+   TR::TreeEvaluator::drdbarEvaluator,      // TR::drdbar
    TR::TreeEvaluator::ardbarEvaluator,      // TR::ardbar
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::brdbar
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::srdbar
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::lrdbar
+   TR::TreeEvaluator::brdbarEvaluator,      // TR::brdbar
+   TR::TreeEvaluator::srdbarEvaluator,      // TR::srdbar
+   TR::TreeEvaluator::lrdbarEvaluator,      // TR::lrdbar
    TR::TreeEvaluator::iloadEvaluator,       // TR::iloadi
    TR::TreeEvaluator::floadEvaluator,       // TR::floadi
    TR::TreeEvaluator::dloadEvaluator,       // TR::dloadi
@@ -53,13 +53,13 @@
    TR::TreeEvaluator::bloadEvaluator,       // TR::bloadi
    TR::TreeEvaluator::sloadEvaluator,       // TR::sloadi
    TR::TreeEvaluator::lloadEvaluator,       // TR::lloadi
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::irdbari
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::frdbari
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::drdbari
-   TR::TreeEvaluator::ardbarEvaluator,      // TR::ardbari
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::brdbari
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::srdbari
-   TR::TreeEvaluator::unImpOpEvaluator,     // TR::lrdbari
+   TR::TreeEvaluator::irdbariEvaluator,     // TR::irdbari
+   TR::TreeEvaluator::frdbariEvaluator,     // TR::frdbari
+   TR::TreeEvaluator::drdbariEvaluator,     // TR::drdbari
+   TR::TreeEvaluator::ardbariEvaluator,     // TR::ardbari
+   TR::TreeEvaluator::brdbariEvaluator,     // TR::brdbari
+   TR::TreeEvaluator::srdbariEvaluator,     // TR::srdbari
+   TR::TreeEvaluator::lrdbariEvaluator,     // TR::lrdbari
    TR::TreeEvaluator::istoreEvaluator,      // TR::istore
    TR::TreeEvaluator::lstoreEvaluator,      // TR::lstore
    TR::TreeEvaluator::fstoreEvaluator,      // TR::fstore
@@ -67,13 +67,13 @@
    TR::TreeEvaluator::astoreEvaluator,      // TR::astore
    TR::TreeEvaluator::bstoreEvaluator,      // TR::bstore
    TR::TreeEvaluator::sstoreEvaluator,      // TR::sstore
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::iwrtbar
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::lwrtbar
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::fwrtbar
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::dwrtbar
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::awrtbar
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::bwrtbar
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::swrtbar
+   TR::TreeEvaluator::iwrtbarEvaluator,     // TR::iwrtbar
+   TR::TreeEvaluator::lwrtbarEvaluator,     // TR::lwrtbar
+   TR::TreeEvaluator::fwrtbarEvaluator,     // TR::fwrtbar
+   TR::TreeEvaluator::dwrtbarEvaluator,     // TR::dwrtbar
+   TR::TreeEvaluator::awrtbarEvaluator,     // TR::awrtbar
+   TR::TreeEvaluator::bwrtbarEvaluator,     // TR::bwrtbar
+   TR::TreeEvaluator::swrtbarEvaluator,     // TR::swrtbar
    TR::TreeEvaluator::lstoreEvaluator,      // TR::lstorei
    TR::TreeEvaluator::fstoreEvaluator,      // TR::fstorei
    TR::TreeEvaluator::dstoreEvaluator,      // TR::dstorei
@@ -81,13 +81,13 @@
    TR::TreeEvaluator::bstoreEvaluator,      // TR::bstorei
    TR::TreeEvaluator::sstoreEvaluator,      // TR::sstorei
    TR::TreeEvaluator::istoreEvaluator,      // TR::istorei
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::lwrtbari
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::fwrtbari
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::dwrtbari
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::awrtbari
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::bwrtbari
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::swrtbari
-   TR::TreeEvaluator::badILOpEvaluator,     // TR::iwrtbari
+   TR::TreeEvaluator::lwrtbariEvaluator,    // TR::lwrtbari
+   TR::TreeEvaluator::fwrtbariEvaluator,    // TR::fwrtbari
+   TR::TreeEvaluator::dwrtbariEvaluator,    // TR::dwrtbari
+   TR::TreeEvaluator::awrtbariEvaluator,    // TR::awrtbari
+   TR::TreeEvaluator::bwrtbariEvaluator,    // TR::bwrtbari
+   TR::TreeEvaluator::swrtbariEvaluator,    // TR::swrtbari
+   TR::TreeEvaluator::iwrtbariEvaluator,    // TR::iwrtbari
    TR::TreeEvaluator::gotoEvaluator,        // TR::Goto
    TR::TreeEvaluator::returnEvaluator,      // TR::ireturn
    TR::TreeEvaluator::returnEvaluator,      // TR::lreturn
@@ -120,9 +120,8 @@
    TR::TreeEvaluator::lmulEvaluator,        // TR::lmul
    TR::TreeEvaluator::fmulEvaluator,        // TR::fmul
    TR::TreeEvaluator::dmulEvaluator,        // TR::dmul
-   TR::TreeEvaluator::unImpOpEvaluator,        // TR::bmul
-   TR::TreeEvaluator::unImpOpEvaluator,        // TR::smul
-   TR::TreeEvaluator::imulEvaluator,        // TR::iumul
+   TR::TreeEvaluator::bmulEvaluator,        // TR::bmul
+   TR::TreeEvaluator::smulEvaluator,        // TR::smul
    TR::TreeEvaluator::idivEvaluator,        // TR::idiv
    TR::TreeEvaluator::ldivEvaluator,        // TR::ldiv
    TR::TreeEvaluator::fdivEvaluator,        // TR::fdiv
@@ -438,13 +437,13 @@
    TR::TreeEvaluator::iRegStoreEvaluator,   // TR::sRegStore
    TR::TreeEvaluator::iRegStoreEvaluator,   // TR::bRegStore
    TR::TreeEvaluator::GlRegDepsEvaluator,   // TR::GlRegDeps
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::iternary
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::lternary
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::bternary
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::sternary
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::aternary
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::fternary
-   TR::TreeEvaluator::dternaryEvaluator,     // TR::dternary
+   TR::TreeEvaluator::selectEvaluator,      // TR::iselect
+   TR::TreeEvaluator::selectEvaluator,      // TR::lselect
+   TR::TreeEvaluator::selectEvaluator,      // TR::bselect
+   TR::TreeEvaluator::selectEvaluator,      // TR::sselect
+   TR::TreeEvaluator::selectEvaluator,      // TR::aselect
+   TR::TreeEvaluator::dselectEvaluator,      // TR::fselect
+   TR::TreeEvaluator::dselectEvaluator,     // TR::dselect
    TR::TreeEvaluator::treetopEvaluator,     // TR::treetop
    TR::TreeEvaluator::badILOpEvaluator,     // TR::MethodEnterHook
    TR::TreeEvaluator::badILOpEvaluator,     // TR::MethodExitHook
@@ -479,7 +478,7 @@
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vicmpanylt
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vicmpanyle
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vnot
-   TR::TreeEvaluator::vselEvaluator,        //  TR::vselect
+   TR::TreeEvaluator::vselEvaluator,        //  TR::vbitselect
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vperm
    TR::TreeEvaluator::vsplatsEvaluator,     //  TR::vsplats
    TR::TreeEvaluator::unImpOpEvaluator,         //  TR::vdmergel
@@ -547,7 +546,7 @@
    TR::TreeEvaluator::vreturnEvaluator,     // TR::vreturn
    TR::TreeEvaluator::directCallEvaluator,  // TR::vcall
    TR::TreeEvaluator::indirectCallEvaluator,// TR::vcalli
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::vternary
+   TR::TreeEvaluator::unImpOpEvaluator,      // TR::vselect
    TR::TreeEvaluator::passThroughEvaluator, // TR::v2v
    TR::TreeEvaluator::vl2vdEvaluator,       // TR::vl2vd 
    TR::TreeEvaluator::vconstEvaluator,      // TR::vconst
@@ -598,8 +597,6 @@
    TR::TreeEvaluator::bsubEvaluator,        // TR::busub
    TR::TreeEvaluator::inegEvaluator,        // TR::iuneg
    TR::TreeEvaluator::lnegEvaluator,        // TR::luneg
-   TR::TreeEvaluator::ishlEvaluator,        // TR::iushl
-   TR::TreeEvaluator::lshlEvaluator,        // TR::lushl
    TR::TreeEvaluator::f2iEvaluator,         // TR::f2iu
    TR::TreeEvaluator::f2lEvaluator,         // TR::f2lu
    TR::TreeEvaluator::f2iEvaluator,         // TR::f2bu
@@ -612,10 +609,6 @@
    TR::TreeEvaluator::lRegLoadEvaluator,    // TR::luRegLoad
    TR::TreeEvaluator::iRegStoreEvaluator,   // TR::iuRegStore
    TR::TreeEvaluator::lRegStoreEvaluator,   // TR::luRegStore
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::iuternary
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::luternary
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::buternary
-   TR::TreeEvaluator::ternaryEvaluator,     // TR::suternary
    TR::TreeEvaluator::cconstEvaluator,      // TR::cconst
    TR::TreeEvaluator::sloadEvaluator,       // TR::cload
    TR::TreeEvaluator::sloadEvaluator,       // TR::cloadi
@@ -631,6 +624,7 @@
    TR::TreeEvaluator::badILOpEvaluator,     // TR::checkcast
    TR::TreeEvaluator::badILOpEvaluator,     // TR::checkcastAndNULLCHK
    TR::TreeEvaluator::badILOpEvaluator,     // TR::New
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::newvalue (should be lowered before evaluation)
    TR::TreeEvaluator::badILOpEvaluator,     // TR::newarray
    TR::TreeEvaluator::badILOpEvaluator,     // TR::anewarray
    TR::TreeEvaluator::badILOpEvaluator,     // TR::variableNew
@@ -672,9 +666,9 @@
    TR::TreeEvaluator::tableEvaluator,       // TR::table
    TR::TreeEvaluator::unImpOpEvaluator,       // TR::exceptionRangeFence
    TR::TreeEvaluator::unImpOpEvaluator,       // TR::dbgFence
-   TR::TreeEvaluator::NULLCHKEvaluator,     // TR::NULLCHK
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::NULLCHK (J9)
    TR::TreeEvaluator::badILOpEvaluator,     // TR::ResolveCHK
-   TR::TreeEvaluator::resolveAndNULLCHKEvaluator, // TR::ResolveAndNULLCHK
+   TR::TreeEvaluator::badILOpEvaluator,     // TR::ResolveAndNULLCHK (J9)
    TR::TreeEvaluator::badILOpEvaluator,     // TR::DIVCHK
    TR::TreeEvaluator::badILOpEvaluator,     // TR::OverflowCHK
    TR::TreeEvaluator::badILOpEvaluator,     // TR::UnsignedOverflowCHK
@@ -767,15 +761,6 @@
    TR::TreeEvaluator::unImpOpEvaluator,    // TR::getstack
    TR::TreeEvaluator::unImpOpEvaluator,    // TR::dealloca
 
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::ishfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::lshfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::iushfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::lushfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::bshfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::sshfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::bushfl
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::sushfl
-
    TR::TreeEvaluator::unImpOpEvaluator,         // TR::idoz
 
    TR::TreeEvaluator::libmFuncEvaluator,    // TR::dcos
@@ -795,7 +780,6 @@
    TR::TreeEvaluator::libmFuncEvaluator,    // TR::dlog
 
 
-   TR::TreeEvaluator::unImpOpEvaluator,         // TR::imulover
    TR::TreeEvaluator::dfloorEvaluator,      // TR::dfloor
    TR::TreeEvaluator::ffloorEvaluator,      // TR::ffloor
    TR::TreeEvaluator::dceilEvaluator,       // TR::dceil
@@ -806,19 +790,19 @@
    TR::TreeEvaluator::setpmEvaluator,       // TR::setpm
    TR::TreeEvaluator::loadAutoOffsetEvaluator,// TR::loadAutoOffset
 
-   TR::TreeEvaluator::maxEvaluator,         // TR::imax
-   TR::TreeEvaluator::maxEvaluator,         // TR::iumax
-   TR::TreeEvaluator::maxEvaluator,         // TR::lmax
-   TR::TreeEvaluator::maxEvaluator,         // TR::lumax
-   TR::TreeEvaluator::maxEvaluator,         // TR::fmax
-   TR::TreeEvaluator::maxEvaluator,         // TR::dmax
+   TR::TreeEvaluator::imaxEvaluator,         // TR::imax
+   TR::TreeEvaluator::imaxEvaluator,         // TR::iumax
+   TR::TreeEvaluator::lmaxEvaluator,         // TR::lmax
+   TR::TreeEvaluator::lmaxEvaluator,         // TR::lumax
+   TR::TreeEvaluator::fmaxEvaluator,     // TR::fmax
+   TR::TreeEvaluator::dmaxEvaluator,     // TR::dmax
 
-   TR::TreeEvaluator::minEvaluator,         // TR::imin
-   TR::TreeEvaluator::minEvaluator,         // TR::iumin
-   TR::TreeEvaluator::minEvaluator,         // TR::lmin
-   TR::TreeEvaluator::minEvaluator,         // TR::lumin
-   TR::TreeEvaluator::minEvaluator,         // TR::fmin
-   TR::TreeEvaluator::minEvaluator,         // TR::dmin
+   TR::TreeEvaluator::iminEvaluator,         // TR::imin
+   TR::TreeEvaluator::iminEvaluator,         // TR::iumin
+   TR::TreeEvaluator::lminEvaluator,         // TR::lmin
+   TR::TreeEvaluator::lminEvaluator,         // TR::lumin
+   TR::TreeEvaluator::fminEvaluator,     // TR::fmin
+   TR::TreeEvaluator::dminEvaluator,     // TR::dmin
    TR::TreeEvaluator::trtEvaluator,         // TR::trt
    TR::TreeEvaluator::trtEvaluator,         // TR::trtSimple
 

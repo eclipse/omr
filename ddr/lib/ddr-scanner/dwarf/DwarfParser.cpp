@@ -50,7 +50,7 @@ dwarf_finish(Dwarf_Debug dbg, Dwarf_Error *error)
 		delete Dwarf_CU_Context::_currentCU;
 		Dwarf_CU_Context::_currentCU = nextCU;
 	}
-	Dwarf_CU_Context::_fileList.clear();
+	Dwarf_CU_Context::_fileId.clear();
 	Dwarf_CU_Context::_currentCU = NULL;
 	Dwarf_CU_Context::_firstCU = NULL;
 	return DW_DLV_OK;
@@ -465,8 +465,12 @@ parseAttribute(char *line, Dwarf_Die *lastCreatedDie,
 					setError(error, DW_DLE_MAF);
 					newAttr->_udata = 0;
 				} else if (DW_TAG_unknown != (*lastCreatedDie)->_tag) {
-					Dwarf_CU_Context::_fileList.push_back(string(newAttr->_stringdata));
-					newAttr->_udata = Dwarf_CU_Context::_fileList.size();
+					string fileName = string(newAttr->_stringdata);
+					unordered_map<string, size_t>::const_iterator insertIt = Dwarf_CU_Context::_fileId.insert(make_pair(fileName, Dwarf_CU_Context::_fileId.size())).first;
+					/* whether the insert succeeded or not due to duplicates, the pair at the iterator will have the right index value */
+					newAttr->_udata = insertIt->second + 1; /* since this attribute is indexed at 1 */
+
+
 				}
 			} else if (DW_FORM_string == form) {
 				char *valueStart = line + span + 3;

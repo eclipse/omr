@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,11 +31,6 @@
 #include "objectdescription.h"
 
 #include "HeapLinkedFreeHeader.hpp"
-
-
-#if defined(OMR_GC_COMPRESSED_POINTERS) != defined(OMR_GC_COMPRESSED_POINTERS)
-#error "MutableHeaderFields requires sizeof(fomrobject_t) == sizeof(j9objectclass_t)"
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) != defined(OMR_GC_COMPRESSED_POINTERS) */
 
 /* Source object header bits */
 #define OMR_FORWARDED_TAG 4
@@ -84,53 +79,141 @@ class MM_ForwardedHeader
 public:
 protected:
 private:
-	/*
-	 * First slot in preserved header fields is always aligned to uintptr_t (compressed or not)
-	 * so forwarded pointer is stored in uintptr_t word at forwarding slot address and overlaps
-	 * next slot for compressed. So, in any case this reads all preserved header fields:
-	 *
-	 *	*(uintptr_t *)&a.slot = *((uintptr_t *)&b.slot);
-	 *
-	 *	for MutableHeaderFields a, b.
-	 */
-	struct MutableHeaderFields {
-		/* first slot must be always aligned as for an object slot */
-		fomrobject_t slot;
-
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		/* this field must be here to reserve space if slots are 4 bytes long (extend to 8 bytes starting from &MutableHeaderFields.clazz) */
-		uint32_t overlap;
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
-	};
-
 	omrobjectptr_t _objectPtr;					/**< the object on which to act */
-	MutableHeaderFields _preserved; 			/**< a backup copy of the header fields which may be modified by this class */
-	const uintptr_t _forwardingSlotOffset;		/**< fomrobject_t offset from _objectPtr to fomrobject_t slot that will hold the forwarding pointer */
+	uintptr_t _preserved; 						/**< a backup copy of the header fields which may be modified by this class */
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool const _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+
 	static const uintptr_t _forwardedTag = OMR_FORWARDED_TAG;	/**< bit mask used to mark forwarding slot value as forwarding pointer */
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	static const fomrobject_t _selfForwardedTag = (fomrobject_t)(_forwardedTag | OMR_SELF_FORWARDED_TAG);	
-	static const fomrobject_t _beingCopiedHint = (fomrobject_t)OMR_BEING_COPIED_HINT; /**< used in source object f/w pointer to hint that object might still be being copied */
-	static const fomrobject_t _beingCopiedTag = (fomrobject_t)OMR_BEING_COPIED_TAG; /**< used in destination object, but using the same bit as _forwardedTag in source object */
-	static const fomrobject_t _remainingSizeMask = (fomrobject_t)REMAINING_SIZE_MASK; 
-	static const fomrobject_t _copyProgressInfoMask = (fomrobject_t)(_remainingSizeMask | OUTSTANDING_COPIES_MASK);
+	static const uintptr_t _selfForwardedTag = (uintptr_t)(_forwardedTag | OMR_SELF_FORWARDED_TAG);	
+	static const uintptr_t _beingCopiedHint = (uintptr_t)OMR_BEING_COPIED_HINT; /**< used in source object f/w pointer to hint that object might still be being copied */
+	static const uintptr_t _beingCopiedTag = (uintptr_t)OMR_BEING_COPIED_TAG; /**< used in destination object, but using the same bit as _forwardedTag in source object */
+	static const uintptr_t _remainingSizeMask = (uintptr_t)REMAINING_SIZE_MASK; 
+	static const uintptr_t _copyProgressInfoMask = (uintptr_t)(_remainingSizeMask | OUTSTANDING_COPIES_MASK);
 	static const uintptr_t _copySizeAlignement = (uintptr_t)SIZE_ALIGNMENT;
 	static const uintptr_t _minIncrement = (131072 & _remainingSizeMask); /**< min size of copy section; does not have to be a power of 2, but it has to be aligned with _copySizeAlignement */ 
-	
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
 /*
  * Function members
  */
 private:
-	MMINLINE_DEBUG static fomrobject_t
-	lockCompareExchangeObjectHeader(volatile fomrobject_t *address, fomrobject_t oldValue, fomrobject_t newValue)
+	/**
+	 * Return the size of an object to object reference
+	 */
+	MMINLINE uintptr_t
+	referenceSize()
 	{
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-		return MM_AtomicOperations::lockCompareExchangeU32((volatile uint32_t*)address, oldValue, newValue);
-#else /* OMR_GC_COMPRESSED_POINTERS */
-		return MM_AtomicOperations::lockCompareExchange((volatile uintptr_t*)address, oldValue, newValue);
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+		uintptr_t size = sizeof(uintptr_t);
+		if (compressObjectReferences()) {
+			size = sizeof(uint32_t);
+		}
+		return size;
 	}
-	
+
+	/**
+	 * Fetch the class portion of the preserved data (with any tags).
+	 * 
+	 * @return the class and tags
+	 */
+	MMINLINE uintptr_t
+	getPreservedClassAndTags()
+	{
+		uintptr_t result = _preserved;
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+		if (compressObjectReferences()) {
+#if defined(OMR_ENV_LITTLE_ENDIAN)
+			result &= 0xFFFFFFFF;
+#else /* defined(OMR_ENV_LITTLE_ENDIAN) */
+			result >>= 32;
+#endif /* defined(OMR_ENV_LITTLE_ENDIAN) */
+		} 
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return result;
+	}
+
+	/**
+	 * Fetch the complete preserved value in memory order.
+	 * 
+	 * @return the preserved value
+	 */
+	MMINLINE uintptr_t
+	getPreserved()
+	{
+		return _preserved;
+	}
+
+	/**
+	 * Fetch the complete preserved value, endian flipping if necessary to ensure
+	 * any tag bits appear in the low-order bits.
+	 * 
+	 * @return the preserved value in canonical format
+	 */
+	MMINLINE uintptr_t
+	getCanonicalPreserved()
+	{
+		return flipValue(getPreserved());
+	}
+
+	/**
+	 * Endian flip a 64-bit value if running on compressed big endian.
+	 * 
+	 * @return the flipped value on compressed big endian, the input value otherwise
+	 */
+	MMINLINE uintptr_t
+	flipValue(uintptr_t value)
+	{
+#if defined(OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN)
+		if (compressObjectReferences()) {
+			value = (value >> 32) | (value << 32);
+		}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN) */
+		return value;
+	}
+
+	MMINLINE_DEBUG uintptr_t
+	lockCompareExchangeObjectHeader(volatile omrobjectptr_t address, uintptr_t oldValue, uintptr_t newValue)
+	{
+		uintptr_t result = 0;
+		if (compressObjectReferences()) {
+			result = MM_AtomicOperations::lockCompareExchangeU32((volatile uint32_t*)address, (uint32_t)oldValue, (uint32_t)newValue);
+		} else {
+			result = MM_AtomicOperations::lockCompareExchange((volatile uintptr_t*)address, oldValue, newValue);
+		}
+		return result;
+	}
+
+	/**
+	 * Write the class slot of an object pointer
+	 */
+	MMINLINE void
+	writeClassSlot(omrobjectptr_t destinationObjectPtr, uintptr_t newValue)
+	{
+		if (compressObjectReferences()) {
+			*(uint32_t*)destinationObjectPtr = (uint32_t)newValue;
+		} else {
+			*(uintptr_t*)destinationObjectPtr = newValue;
+		}
+	}
+
+	/**
+	 * Read the class slot from an object pointer
+	 * @return the slot value, zero-extended to uintptr_t (for compressed refs)
+	 */
+	MMINLINE uintptr_t
+	readClassSlot(omrobjectptr_t destinationObjectPtr)
+	{
+		uintptr_t value = 0;
+		if (compressObjectReferences()) {
+			value = *(volatile uint32_t*)destinationObjectPtr;
+		} else {
+			value = *(volatile uintptr_t*)destinationObjectPtr;
+		}
+		return value;
+	}
+
 	/**
 	 * Atomically try to win forwarding. It's internal implementation of public setForwardedObject()
 	 */
@@ -140,7 +223,7 @@ private:
 	/**
 	 * Try to win a section of large object that is still being copied
 	 */
-	static uintptr_t winObjectSectionToCopy(volatile fomrobject_t *copyProgressSlot, fomrobject_t oldValue, uintptr_t *remainingSizeToCopy, uintptr_t outstandingCopies);
+	 uintptr_t winObjectSectionToCopy(volatile omrobjectptr_t copyProgressSlot, uintptr_t oldValue, uintptr_t *remainingSizeToCopy, uintptr_t outstandingCopies);
 	
 	/**
 	 * Just spin (or pause) for certain amount of cycles
@@ -154,7 +237,7 @@ private:
 	isBeingCopied()
 	{
 		/* strictly forwarded object with _beingCopiedHint set */
-		return (_beingCopiedHint | _forwardedTag) == (_preserved.slot & (_beingCopiedHint | _selfForwardedTag));
+		return (_beingCopiedHint | _forwardedTag) == (getPreservedClassAndTags() & (_beingCopiedHint | _selfForwardedTag));
 	}
 	
 	/**
@@ -165,6 +248,22 @@ private:
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	
 public:
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool compressObjectReferences() {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* defined(OMR_GC_FULL_POINTERS) */
+		return true;
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return false;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	}
+
 #if defined(FORWARDEDHEADER_DEBUG)
 #define ForwardedHeaderAssertCondition(condition) #condition
 #define ForwardedHeaderAssert(condition) MM_ForwardedHeader::Assert((condition), ForwardedHeaderAssertCondition(((condition))), __FILE__, __LINE__)
@@ -216,7 +315,7 @@ public:
 	MMINLINE bool
 	isForwardedPointer()
 	{
-		return _forwardedTag == ((uintptr_t)_preserved.slot & _forwardedTag);
+		return _forwardedTag == (getPreservedClassAndTags() & _forwardedTag);
 	}
 	
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
@@ -228,14 +327,14 @@ public:
 	MMINLINE bool
 	isSelfForwardedPointer()
 	{
-		return _selfForwardedTag == (_preserved.slot & _selfForwardedTag);
+		return _selfForwardedTag == (getPreservedClassAndTags() & _selfForwardedTag);
 	}
 	
 	MMINLINE bool
 	isStrictlyForwardedPointer()
 	{
 		/* only _forwardedTag set ('self forwarded bit' reset) */
-		return _forwardedTag == (_preserved.slot & _selfForwardedTag);
+		return _forwardedTag == (getPreservedClassAndTags() & _selfForwardedTag);
 	}
 	
 	omrobjectptr_t setSelfForwardedObject();
@@ -243,19 +342,21 @@ public:
 	void restoreSelfForwardedPointer();
 	
 	/**
-	 * Initial step for destination object fixup - restore object flags and overlap, while still maintaining progess info and being copied bit.
+	 * Initial step for destination object fixup - restore object flags and overlap, while still maintaining progress info and being copied bit.
 	 */
 	MMINLINE void
 	commenceFixup(omrobjectptr_t destinationObjectPtr)
 	{
-		MutableHeaderFields* newHeader = (MutableHeaderFields *)((fomrobject_t *)destinationObjectPtr + _forwardingSlotOffset);
-		
-		/* copy preserved flags, and keep the rest (which should be all 0s) */
-		newHeader->slot = (_preserved.slot & ~_copyProgressInfoMask) | _beingCopiedTag;
-
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		newHeader->overlap = _preserved.overlap;
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+		uintptr_t mask = ~_copyProgressInfoMask;
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+		if (compressObjectReferences()) {
+			/* _copyProgressInfoMask has the high 32 bits set, so they will be 0 in mask.
+			 * Update mask to not remove the overlap.
+			 */
+			mask |= 0xFFFFFFFF00000000;
+		}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		*(uintptr_t*)destinationObjectPtr = flipValue((getCanonicalPreserved() & mask) | _beingCopiedTag);
 	}	
 	
 	/**
@@ -265,17 +366,16 @@ public:
 	MMINLINE void
 	commitFixup(omrobjectptr_t destinationObjectPtr)
 	{
-		MutableHeaderFields* newHeader = (MutableHeaderFields *)((fomrobject_t *)destinationObjectPtr + _forwardingSlotOffset);
-
 		/* before we announce this copy of the object is available, do a write sync */
 		MM_AtomicOperations::storeSync();
-		
+
 		/* get flags */
-		newHeader->slot = (_preserved.slot & _copyProgressInfoMask) | (newHeader->slot & ~_copyProgressInfoMask & ~(fomrobject_t)_beingCopiedTag);
-		
+		uintptr_t newValue = (getPreservedClassAndTags() & _copyProgressInfoMask) | (readClassSlot(destinationObjectPtr) & ~(_copyProgressInfoMask | _beingCopiedTag));
+		writeClassSlot(destinationObjectPtr, newValue);
+
 		/* remove the hint in the source object */
-		volatile MutableHeaderFields* objectHeader = (volatile MutableHeaderFields *)((fomrobject_t*)_objectPtr + _forwardingSlotOffset);
-		objectHeader->slot &= ~_beingCopiedHint;
+		newValue = readClassSlot(getObject()) & ~_beingCopiedHint;
+		writeClassSlot(getObject(), newValue);
 	}
 	
 	/**
@@ -326,14 +426,32 @@ public:
 	 *
 	 * @see isForwardedPointer()
 	 */
-	MMINLINE fomrobject_t
+	MMINLINE uintptr_t
 	getPreservedSlot()
 	{
 		ForwardedHeaderAssert(!isForwardedPointer());
-		return _preserved.slot;
+		return getPreservedClassAndTags();
 	}
 
 #if defined (OMR_GC_COMPRESSED_POINTERS)
+	/**
+	 * Fetch the overlap portion of the preserved data (with any tags).
+	 * 
+	 * @return the class and tags
+	 */
+	MMINLINE uint32_t
+	getPreservedOverlapNoCheck()
+	{
+		ForwardedHeaderAssert(compressObjectReferences());
+		uintptr_t result = _preserved;
+#if defined(OMR_ENV_LITTLE_ENDIAN)
+		result >>= 32;
+#else /* defined(OMR_ENV_LITTLE_ENDIAN) */
+		result &= 0xFFFFFFFF;
+#endif /* defined(OMR_ENV_LITTLE_ENDIAN) */
+		return (uint32_t)result;
+	}
+
 	/**
 	 * This method will assert if the object has been forwarded. Use isForwardedPointer() to test before calling.
 	 *
@@ -345,7 +463,7 @@ public:
 	getPreservedOverlap()
 	{
 		ForwardedHeaderAssert(!isForwardedPointer());
-		return _preserved.overlap;
+		return getPreservedOverlapNoCheck();
 	}
 
 	/**
@@ -357,7 +475,9 @@ public:
 	MMINLINE void
 	restoreDestroyedOverlap(uint32_t restoredValue)
 	{
-		((MutableHeaderFields *)((fomrobject_t *)getObject() + _forwardingSlotOffset))->overlap = restoredValue;
+		ForwardedHeaderAssert(compressObjectReferences());
+		uint32_t *header = (uint32_t*)getObject();
+		header[1] = restoredValue;
 	}
 
 	/**
@@ -366,7 +486,8 @@ public:
 	MMINLINE void
 	restoreDestroyedOverlap()
 	{
-		restoreDestroyedOverlap(((MutableHeaderFields *)((fomrobject_t *)getForwardedObject() + _forwardingSlotOffset))->overlap);
+		uint32_t *header = (uint32_t*)getForwardedObject();
+		restoreDestroyedOverlap(header[1]);
 	}
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
@@ -382,11 +503,7 @@ public:
 	MMINLINE void
 	fixupForwardedObject(omrobjectptr_t destinationObjectPtr)
 	{
-		MutableHeaderFields* newHeader = (MutableHeaderFields *)((fomrobject_t *)destinationObjectPtr + _forwardingSlotOffset);
-		newHeader->slot = _preserved.slot;
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		newHeader->overlap = _preserved.overlap;
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+		*(uintptr_t*)destinationObjectPtr = getPreserved();
 	}
 	
 	/**
@@ -400,7 +517,7 @@ public:
 	MMINLINE bool
 	isReverseForwardedPointer()
 	{
-		return J9_GC_MULTI_SLOT_HOLE == ((uintptr_t)getPreservedSlot() & J9_GC_OBJ_HEAP_HOLE_MASK);
+		return J9_GC_MULTI_SLOT_HOLE == (getPreservedSlot() & J9_GC_OBJ_HEAP_HOLE_MASK);
 	}
 
 	/**
@@ -415,22 +532,22 @@ public:
 	{
 		ForwardedHeaderAssert(isReverseForwardedPointer());
 		MM_HeapLinkedFreeHeader* freeHeader = MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(_objectPtr);
-		return (omrobjectptr_t) freeHeader->getNext();
+		return (omrobjectptr_t) freeHeader->getNext(compressObjectReferences());
 	}
 
 	/**
 	 * Constructor.
 	 *
 	 * @param[in] objectPtr pointer to the object, which may or may not have been forwarded
-	 * @param[in] forwardingSlotOffset fomrobject_t offset to uintptr_t size slot that will hold the forwarding pointer
+	 * @param[in] compressed bool describing whether object references are compressed or not
 	 */
-	MM_ForwardedHeader(omrobjectptr_t objectPtr)
+	MM_ForwardedHeader(omrobjectptr_t objectPtr, bool compressed)
 	: _objectPtr(objectPtr)
-	, _forwardingSlotOffset(0)
+	, _preserved(*(volatile uintptr_t *)_objectPtr)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	, _compressObjectReferences(compressed)
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	{
-		/* TODO: Fix the constraint that the object header/forwarding slot offset must be zero. */
-		volatile MutableHeaderFields* originalHeader = (volatile MutableHeaderFields *)((fomrobject_t*)_objectPtr + _forwardingSlotOffset);
-		*(uintptr_t *)&_preserved.slot = *((uintptr_t *)&originalHeader->slot);
 	}
 
 protected:

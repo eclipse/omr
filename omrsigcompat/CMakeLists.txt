@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,17 +22,9 @@
 
 include(OmrMsvcRuntime)
 
-add_library(omrsig SHARED
+omr_add_library(omrsig SHARED
 	omrsig.cpp
 )
-
-if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(omrsig PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-endif()
-
-if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(omrsig PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-endif()
 
 if(OMR_HOST_OS STREQUAL "win")
 	target_compile_definitions(omrsig PRIVATE -DMSVC_RUNTIME_DLL="${OMR_MSVC_CRT}")
@@ -104,4 +96,5 @@ install(
 	LIBRARY DESTINATION ${OMR_INSTALL_LIB_DIR}/
 )
 
-target_enable_ddr(omrsig "${OMR_DDR_SET}")
+target_enable_ddr(omrsig)
+ddr_set_add_targets(omrddr omrsig)

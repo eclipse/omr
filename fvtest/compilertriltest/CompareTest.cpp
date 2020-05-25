@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ TEST_P(Int32Compare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -92,7 +92,7 @@ TEST_P(Int32Compare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -105,20 +105,13 @@ TEST_P(Int32Compare, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(CompareTest, Int32Compare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int32_t, int32_t>()),
     ::testing::Values(
-        std::make_tuple("icmpeq", icmpeq),
-        std::make_tuple("icmpne", icmpne),
-        std::make_tuple("icmpgt", icmpgt),
-        std::make_tuple("icmpge", icmpge),
-        std::make_tuple("icmplt", icmplt),
-        std::make_tuple("icmple", icmple) )));
-
-int32_t iucmpeq(uint32_t l, uint32_t r) {
-    return (l == r) ? 1 : 0;
-}
-
-int32_t iucmpne(uint32_t l, uint32_t r) {
-    return (l != r) ? 1 : 0;
-}
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("icmpeq", icmpeq),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("icmpne", icmpne),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("icmpgt", icmpgt),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("icmpge", icmpge),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("icmplt", icmplt),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("icmple", icmple)
+    )));
 
 int32_t iucmpgt(uint32_t l, uint32_t r) {
     return (l > r) ? 1 : 0;
@@ -154,7 +147,7 @@ TEST_P(UInt32Compare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -180,7 +173,7 @@ TEST_P(UInt32Compare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -193,12 +186,11 @@ TEST_P(UInt32Compare, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(CompareTest, UInt32Compare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<uint32_t, uint32_t>()),
     ::testing::Values(
-        std::make_tuple("iucmpeq", iucmpeq),
-        std::make_tuple("iucmpne", iucmpne),
-        std::make_tuple("iucmpgt", iucmpgt),
-        std::make_tuple("iucmpge", iucmpge),
-        std::make_tuple("iucmplt", iucmplt),
-        std::make_tuple("iucmple", iucmple) )));
+        std::make_tuple<const char*, int32_t(*)(uint32_t, uint32_t)>("iucmpgt", iucmpgt),
+        std::make_tuple<const char*, int32_t(*)(uint32_t, uint32_t)>("iucmpge", iucmpge),
+        std::make_tuple<const char*, int32_t(*)(uint32_t, uint32_t)>("iucmplt", iucmplt),
+        std::make_tuple<const char*, int32_t(*)(uint32_t, uint32_t)>("iucmple", iucmple)
+    )));
 
 int32_t lcmpeq(int64_t l, int64_t r) {
     return (l == r) ? 1 : 0;
@@ -246,7 +238,7 @@ TEST_P(Int64Compare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -272,7 +264,7 @@ TEST_P(Int64Compare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -285,22 +277,15 @@ TEST_P(Int64Compare, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(CompareTest, Int64Compare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int64_t, int64_t>()),
     ::testing::Values(
-        std::make_tuple("lcmpeq", lcmpeq),
-        std::make_tuple("lcmpne", lcmpne),
-        std::make_tuple("lcmpgt", lcmpgt),
-        std::make_tuple("lcmpge", lcmpge),
-        std::make_tuple("lcmplt", lcmplt),
-        std::make_tuple("lcmple", lcmple),
-        std::make_tuple("lcmp", lcmp)
- )));
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("lcmpeq", lcmpeq),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("lcmpne", lcmpne),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("lcmpgt", lcmpgt),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("lcmpge", lcmpge),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("lcmplt", lcmplt),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("lcmple", lcmple),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("lcmp", lcmp)
+    )));
 
-int32_t lucmpeq(uint64_t l, uint64_t r) {
-    return (l == r) ? 1 : 0;
-}
-
-int32_t lucmpne(uint64_t l, uint64_t r) {
-    return (l != r) ? 1 : 0;
-}
 
 int32_t lucmpgt(uint64_t l, uint64_t r) {
     return (l > r) ? 1 : 0;
@@ -336,7 +321,7 @@ TEST_P(UInt64Compare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -362,7 +347,7 @@ TEST_P(UInt64Compare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -375,12 +360,11 @@ TEST_P(UInt64Compare, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(CompareTest, UInt64Compare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<uint64_t, uint64_t>()),
     ::testing::Values(
-        std::make_tuple("lucmpeq", lucmpeq),
-        std::make_tuple("lucmpne", lucmpne),
-        std::make_tuple("lucmpgt", lucmpgt),
-        std::make_tuple("lucmpge", lucmpge),
-        std::make_tuple("lucmplt", lucmplt),
-        std::make_tuple("lucmple", lucmple) )));
+        std::make_tuple<const char*, int32_t(*)(uint64_t, uint64_t)>("lucmpgt", lucmpgt),
+        std::make_tuple<const char*, int32_t(*)(uint64_t, uint64_t)>("lucmpge", lucmpge),
+        std::make_tuple<const char*, int32_t(*)(uint64_t, uint64_t)>("lucmplt", lucmplt),
+        std::make_tuple<const char*, int32_t(*)(uint64_t, uint64_t)>("lucmple", lucmple)
+    )));
 
 static const int32_t IFCMP_TRUE_NUM = 123;
 static const int32_t IFCMP_FALSE_NUM = -456;
@@ -429,7 +413,7 @@ TEST_P(Int32IfCompare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -457,7 +441,7 @@ TEST_P(Int32IfCompare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -470,21 +454,13 @@ TEST_P(Int32IfCompare, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(CompareTest, Int32IfCompare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int32_t, int32_t>()),
     ::testing::Values(
-        std::make_tuple("ificmpeq", ificmpeq),
-        std::make_tuple("ificmpne", ificmpne),
-        std::make_tuple("ificmplt", ificmplt),
-        std::make_tuple("ificmple", ificmple),
-        std::make_tuple("ificmpge", ificmpge),
-        std::make_tuple("ificmpgt", ificmpgt)
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("ificmpeq", ificmpeq),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("ificmpne", ificmpne),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("ificmplt", ificmplt),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("ificmple", ificmple),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("ificmpge", ificmpge),
+        std::make_tuple<const char*, int32_t(*)(int32_t, int32_t)>("ificmpgt", ificmpgt)
     )));
-
-int32_t ifiucmpeq(uint32_t l, uint32_t r) {
-    return (l == r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
-}
-
-int32_t ifiucmpne(uint32_t l, uint32_t r) {
-    return (l != r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
-}
 
 int32_t ifiucmplt(uint32_t l, uint32_t r) {
     return (l < r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
@@ -522,7 +498,7 @@ TEST_P(UInt32IfCompare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -550,7 +526,7 @@ TEST_P(UInt32IfCompare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -563,12 +539,10 @@ TEST_P(UInt32IfCompare, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(CompareTest, UInt32IfCompare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<uint32_t, uint32_t>()),
     ::testing::Values(
-        std::make_tuple("ifiucmpeq", ifiucmpeq),
-        std::make_tuple("ifiucmpne", ifiucmpne),
-        std::make_tuple("ifiucmplt", ifiucmplt),
-        std::make_tuple("ifiucmple", ifiucmple),
-        std::make_tuple("ifiucmpge", ifiucmpge),
-        std::make_tuple("ifiucmpgt", ifiucmpgt)
+        std::make_tuple<const char*, int32_t(*)(uint32_t, uint32_t)>("ifiucmplt", ifiucmplt),
+        std::make_tuple<const char*, int32_t(*)(uint32_t, uint32_t)>("ifiucmple", ifiucmple),
+        std::make_tuple<const char*, int32_t(*)(uint32_t, uint32_t)>("ifiucmpge", ifiucmpge),
+        std::make_tuple<const char*, int32_t(*)(uint32_t, uint32_t)>("ifiucmpgt", ifiucmpgt)
     )));
 
 int32_t iflcmpeq(int64_t l, int64_t r) {
@@ -615,7 +589,7 @@ TEST_P(Int64IfCompare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -643,7 +617,7 @@ TEST_P(Int64IfCompare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -656,21 +630,13 @@ TEST_P(Int64IfCompare, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(CompareTest, Int64IfCompare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int64_t, int64_t>()),
     ::testing::Values(
-        std::make_tuple("iflcmpeq", iflcmpeq),
-        std::make_tuple("iflcmpne", iflcmpne),
-        std::make_tuple("iflcmplt", iflcmplt),
-        std::make_tuple("iflcmple", iflcmple),
-        std::make_tuple("iflcmpge", iflcmpge),
-        std::make_tuple("iflcmpgt", iflcmpgt)
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("iflcmpeq", iflcmpeq),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("iflcmpne", iflcmpne),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("iflcmplt", iflcmplt),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("iflcmple", iflcmple),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("iflcmpge", iflcmpge),
+        std::make_tuple<const char*, int32_t(*)(int64_t, int64_t)>("iflcmpgt", iflcmpgt)
     )));
-
-int32_t iflucmpeq(uint64_t l, uint64_t r) {
-    return (l == r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
-}
-
-int32_t iflucmpne(uint64_t l, uint64_t r) {
-    return (l != r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
-}
 
 int32_t iflucmplt(uint64_t l, uint64_t r) {
     return (l < r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
@@ -708,7 +674,7 @@ TEST_P(UInt64IfCompare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -736,7 +702,7 @@ TEST_P(UInt64IfCompare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -749,12 +715,10 @@ TEST_P(UInt64IfCompare, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(CompareTest, UInt64IfCompare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<uint64_t, uint64_t>()),
     ::testing::Values(
-        std::make_tuple("iflucmpeq", iflucmpeq),
-        std::make_tuple("iflucmpne", iflucmpne),
-        std::make_tuple("iflucmplt", iflucmplt),
-        std::make_tuple("iflucmple", iflucmple),
-        std::make_tuple("iflucmpge", iflucmpge),
-        std::make_tuple("iflucmpgt", iflucmpgt)
+        std::make_tuple<const char*, int32_t(*)(uint64_t, uint64_t)>("iflucmplt", iflucmplt),
+        std::make_tuple<const char*, int32_t(*)(uint64_t, uint64_t)>("iflucmple", iflucmple),
+        std::make_tuple<const char*, int32_t(*)(uint64_t, uint64_t)>("iflucmpge", iflucmpge),
+        std::make_tuple<const char*, int32_t(*)(uint64_t, uint64_t)>("iflucmpgt", iflucmpgt)
     )));
 
 template <typename T>
@@ -767,26 +731,38 @@ bool smallFp_filter(std::tuple<T, T> a)
    }
 
 int32_t fcmpeq(float l, float r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l == r) ? 1 : 0;
 }
 
 int32_t fcmpne(float l, float r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l != r) ? 1 : 0;
 }
 
 int32_t fcmpgt(float l, float r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l > r) ? 1 : 0;
 }
 
 int32_t fcmpge(float l, float r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l >= r) ? 1 : 0;
 }
 
 int32_t fcmplt(float l, float r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l < r) ? 1 : 0;
 }
 
 int32_t fcmple(float l, float r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l <= r) ? 1 : 0;
 }
 
@@ -794,6 +770,13 @@ class FloatCompare : public TRTest::OpCodeTest<int32_t, float, float> {};
 
 TEST_P(FloatCompare, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
+
+    if ( param.opcode == "fcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_POWER(KnownBug) << "fcmpne returns wrong value on POWER (see #5152)";
+    }
+    if ( std::isnan(param.lhs) || std::isnan(param.rhs) ) {
+       SKIP_ON_ZOS(KnownBug) << "TRIL parser cannot handle NaN values on zOS (see issue #5183)";
+    }
 
     char inputTrees[1024] = {0};
     std::snprintf(inputTrees, 1024,
@@ -808,7 +791,7 @@ TEST_P(FloatCompare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -820,6 +803,10 @@ TEST_P(FloatCompare, UsingConst) {
 
 TEST_P(FloatCompare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
+
+    if ( param.opcode == "fcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_POWER(KnownBug) << "fcmpne returns wrong value on POWER (see #5152)";
+    }
 
     char inputTrees[160] = {0};
     std::snprintf(inputTrees, 160,
@@ -834,7 +821,7 @@ TEST_P(FloatCompare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -848,35 +835,47 @@ INSTANTIATE_TEST_CASE_P(CompareTest, FloatCompare, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<float, float>(), smallFp_filter<float>)),
     ::testing::Values(
-        std::make_tuple("fcmpeq", fcmpeq),
-        std::make_tuple("fcmpne", fcmpne),
-        std::make_tuple("fcmpgt", fcmpgt),
-        std::make_tuple("fcmpge", fcmpge),
-        std::make_tuple("fcmplt", fcmplt),
-        std::make_tuple("fcmple", fcmple)
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmpeq", fcmpeq),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmpne", fcmpne),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmpgt", fcmpgt),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmpge", fcmpge),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmplt", fcmplt),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmple", fcmple)
     )));
 
 int32_t dcmpeq(double l, double r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l == r) ? 1 : 0;
 }
 
 int32_t dcmpne(double l, double r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l != r) ? 1 : 0;
 }
 
 int32_t dcmpgt(double l, double r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l > r) ? 1 : 0;
 }
 
 int32_t dcmpge(double l, double r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l >= r) ? 1 : 0;
 }
 
 int32_t dcmplt(double l, double r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l < r) ? 1 : 0;
 }
 
 int32_t dcmple(double l, double r) {
+    if (std::isnan(l)) return 0;
+    if (std::isnan(r)) return 0;
     return (l <= r) ? 1 : 0;
 }
 
@@ -884,6 +883,13 @@ class DoubleCompare : public TRTest::OpCodeTest<int32_t, double, double> {};
 
 TEST_P(DoubleCompare, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
+
+    if ( param.opcode == "dcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_POWER(KnownBug) << "dcmpne returns wrong value on POWER (see #5152)";
+    }
+    if ( std::isnan(param.lhs) || std::isnan(param.rhs) ) {
+       SKIP_ON_ZOS(KnownBug) << "TRIL parser cannot handle NaN values on zOS (see issue #5183)";
+    }
 
     char inputTrees[1024] = {0};
     std::snprintf(inputTrees, 1024,
@@ -898,7 +904,7 @@ TEST_P(DoubleCompare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -910,6 +916,10 @@ TEST_P(DoubleCompare, UsingConst) {
 
 TEST_P(DoubleCompare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
+
+    if ( param.opcode == "dcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_POWER(KnownBug) << "dcmpne returns wrong value on POWER (see #5152)";
+    }
 
     char inputTrees[160] = {0};
     std::snprintf(inputTrees, 160,
@@ -924,7 +934,7 @@ TEST_P(DoubleCompare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -938,42 +948,63 @@ INSTANTIATE_TEST_CASE_P(CompareTest, DoubleCompare, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<double, double>(), smallFp_filter<double>)),
     ::testing::Values(
-        std::make_tuple("dcmpeq", dcmpeq),
-        std::make_tuple("dcmpne", dcmpne),
-        std::make_tuple("dcmpgt", dcmpgt),
-        std::make_tuple("dcmpge", dcmpge),
-        std::make_tuple("dcmplt", dcmplt),
-        std::make_tuple("dcmple", dcmple)
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmpeq", dcmpeq),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmpne", dcmpne),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmpgt", dcmpgt),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmpge", dcmpge),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmplt", dcmplt),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmple", dcmple)
     )));
 
 int32_t iffcmpeq(float l, float r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l == r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 int32_t iffcmpne(float l, float r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l != r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 int32_t iffcmplt(float l, float r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l < r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 int32_t iffcmple(float l, float r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l <= r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 int32_t iffcmpge(float l, float r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l >= r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 int32_t iffcmpgt(float l, float r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l > r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 class FloatIfCompare : public TRTest::OpCodeTest<int32_t, float, float> {};
 
 TEST_P(FloatIfCompare, UsingConst) {
+    SKIP_ON_RISCV(MissingImplementation);
+
     auto param = TRTest::to_struct(GetParam());
+
+    if ( param.opcode == "iffcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_POWER(KnownBug) << "iffcmpne returns wrong value on POWER (see #5152)";
+    }
+    if ( std::isnan(param.lhs) || std::isnan(param.rhs) ) {
+       SKIP_ON_ZOS(KnownBug) << "TRIL parser cannot handle NaN values on zOS (see issue #5183)";
+    }
 
     char inputTrees[256] = {0};
     std::snprintf(inputTrees, 256,
@@ -990,7 +1021,7 @@ TEST_P(FloatIfCompare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1001,7 +1032,13 @@ TEST_P(FloatIfCompare, UsingConst) {
 }
 
 TEST_P(FloatIfCompare, UsingLoadParam) {
+    SKIP_ON_RISCV(MissingImplementation);
+
     auto param = TRTest::to_struct(GetParam());
+
+    if ( param.opcode == "iffcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_POWER(KnownBug) << "iffcmpne returns wrong value on POWER (see #5152)";
+    }
 
     char inputTrees[256] = {0};
     std::snprintf(inputTrees, 256,
@@ -1018,7 +1055,7 @@ TEST_P(FloatIfCompare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1032,42 +1069,63 @@ INSTANTIATE_TEST_CASE_P(CompareTest, FloatIfCompare, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<float, float>(), smallFp_filter<float>)),
     ::testing::Values(
-        std::make_tuple("iffcmpeq", iffcmpeq),
-        std::make_tuple("iffcmpne", iffcmpne),
-        std::make_tuple("iffcmplt", iffcmplt),
-        std::make_tuple("iffcmple", iffcmple),
-        std::make_tuple("iffcmpge", iffcmpge),
-        std::make_tuple("iffcmpgt", iffcmpgt)
+        std::make_tuple<const char*, int32_t (*)(float, float)>("iffcmpeq", iffcmpeq),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("iffcmpne", iffcmpne),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("iffcmplt", iffcmplt),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("iffcmple", iffcmple),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("iffcmpge", iffcmpge),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("iffcmpgt", iffcmpgt)
     )));
 
 int32_t ifdcmpeq(double l, double r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l == r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 int32_t ifdcmpne(double l, double r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l != r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 int32_t ifdcmplt(double l, double r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l < r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 int32_t ifdcmple(double l, double r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l <= r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 int32_t ifdcmpge(double l, double r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l >= r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 int32_t ifdcmpgt(double l, double r) {
+    if (std::isnan(l)) return IFCMP_FALSE_NUM;
+    if (std::isnan(r)) return IFCMP_FALSE_NUM;
     return (l > r) ? IFCMP_TRUE_NUM : IFCMP_FALSE_NUM;
 }
 
 class DoubleIfCompare : public TRTest::OpCodeTest<int32_t, double, double> {};
 
 TEST_P(DoubleIfCompare, UsingConst) {
+    SKIP_ON_RISCV(MissingImplementation);
+
     auto param = TRTest::to_struct(GetParam());
+
+    if ( param.opcode == "ifdcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_POWER(KnownBug) << "ifdcmpne returns wrong value on POWER (see #5152)";
+    }
+    if ( std::isnan(param.lhs) || std::isnan(param.rhs) ) {
+       SKIP_ON_ZOS(KnownBug) << "TRIL parser cannot handle NaN values on zOS (see issue #5183)";
+    }
 
     char inputTrees[1024] = {0};
     std::snprintf(inputTrees, 1024,
@@ -1084,7 +1142,7 @@ TEST_P(DoubleIfCompare, UsingConst) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1095,7 +1153,13 @@ TEST_P(DoubleIfCompare, UsingConst) {
 }
 
 TEST_P(DoubleIfCompare, UsingLoadParam) {
+    SKIP_ON_RISCV(MissingImplementation);
+
     auto param = TRTest::to_struct(GetParam());
+
+    if ( param.opcode == "ifdcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_POWER(KnownBug) << "ifdcmpne returns wrong value on POWER (see #5152)";
+    }
 
     char inputTrees[256] = {0};
     std::snprintf(inputTrees, 256,
@@ -1112,7 +1176,7 @@ TEST_P(DoubleIfCompare, UsingLoadParam) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
 
@@ -1126,10 +1190,239 @@ INSTANTIATE_TEST_CASE_P(CompareTest, DoubleIfCompare, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<double, double>(), smallFp_filter<double>)),
     ::testing::Values(
-        std::make_tuple("ifdcmpeq", ifdcmpeq),
-        std::make_tuple("ifdcmpne", ifdcmpne),
-        std::make_tuple("ifdcmplt", ifdcmplt),
-        std::make_tuple("ifdcmple", ifdcmple),
-        std::make_tuple("ifdcmpge", ifdcmpge),
-        std::make_tuple("ifdcmpgt", ifdcmpgt)
+        std::make_tuple<const char*, int32_t (*)(double, double)>("ifdcmpeq", ifdcmpeq),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("ifdcmpne", ifdcmpne),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("ifdcmplt", ifdcmplt),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("ifdcmple", ifdcmple),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("ifdcmpge", ifdcmpge),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("ifdcmpgt", ifdcmpgt)
+    )));
+
+int32_t fcmpequ(float l, float r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l == r) ? 1 : 0;
+}
+
+int32_t fcmpneu(float l, float r) {
+   if (std::isnan(l)) return 1;
+   if (std::isnan(r)) return 1;
+   return (l != r) ? 1 : 0;
+}
+
+int32_t fcmpgtu(float l, float r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l > r) ? 1 : 0;
+}
+
+int32_t fcmpgeu(float l, float r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l >= r) ? 1 : 0;
+}
+
+int32_t fcmpltu(float l, float r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l < r) ? 1 : 0;
+}
+
+int32_t fcmpleu(float l, float r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l <= r) ? 1 : 0;
+}
+
+class FloatCompareOrUnordered : public TRTest::OpCodeTest<int32_t, float, float> {};
+
+TEST_P(FloatCompareOrUnordered, UsingConst) {
+    SKIP_ON_HAMMER(KnownBug) << "The x86_64 code generator crashes (see issue #5122)";
+    SKIP_ON_AARCH64(MissingImplementation);
+    SKIP_ON_RISCV(MissingImplementation);
+
+    auto param = TRTest::to_struct(GetParam());
+
+    if ( std::isnan(param.lhs) || std::isnan(param.rhs) ) {
+       SKIP_ON_ZOS(KnownBug) << "TRIL parser cannot handle NaN values on zOS (see issue #5183)";
+    }
+
+    char inputTrees[1024] = {0};
+    std::snprintf(inputTrees, 1024,
+       "(method return=Int32 "
+         "(block "
+           "(ireturn "
+             "(%s "
+               "(fconst %f) "
+               "(fconst %f)))))",
+       param.opcode.c_str(), param.lhs, param.rhs);
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<int32_t (*)(void)>();
+    volatile auto exp = param.oracle(param.lhs, param.rhs);
+    volatile auto act = entry_point();
+    ASSERT_EQ(exp, act);
+}
+
+TEST_P(FloatCompareOrUnordered, UsingLoadParam) {
+    SKIP_ON_HAMMER(KnownBug) << "The x86_64 code generator crashes (see issue #5122)";
+    SKIP_ON_AARCH64(MissingImplementation);
+    SKIP_ON_RISCV(MissingImplementation);
+
+    auto param = TRTest::to_struct(GetParam());
+
+    char inputTrees[160] = {0};
+    std::snprintf(inputTrees, 160,
+       "(method return=Int32 args=[Float, Float] "
+         "(block "
+           "(ireturn "
+             "(%s "
+               "(fload parm=0) "
+               "(fload parm=1)))))",
+       param.opcode.c_str());
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<int32_t (*)(float, float)>();
+    volatile auto exp = param.oracle(param.lhs, param.rhs);
+    volatile auto act = entry_point(param.lhs, param.rhs);
+    ASSERT_EQ(exp, act);
+}
+
+INSTANTIATE_TEST_CASE_P(CompareTest, FloatCompareOrUnordered, ::testing::Combine(
+    ::testing::ValuesIn(
+        TRTest::filter(TRTest::const_value_pairs<float, float>(), smallFp_filter<float>)),
+    ::testing::Values(
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmpequ", fcmpequ),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmpneu", fcmpneu),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmpgtu", fcmpgtu),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmpgeu", fcmpgeu),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmpltu", fcmpltu),
+        std::make_tuple<const char*, int32_t (*)(float, float)>("fcmpleu", fcmpleu)
+    )));
+
+int32_t dcmpequ(double l, double r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l == r) ? 1 : 0;
+}
+
+int32_t dcmpneu(double l, double r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l != r) ? 1 : 0;
+}
+
+int32_t dcmpgtu(double l, double r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l > r) ? 1 : 0;
+}
+
+int32_t dcmpgeu(double l, double r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l >= r) ? 1 : 0;
+}
+
+int32_t dcmpltu(double l, double r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l < r) ? 1 : 0;
+}
+
+int32_t dcmpleu(double l, double r) {
+    if (std::isnan(l)) return 1;
+    if (std::isnan(r)) return 1;
+    return (l <= r) ? 1 : 0;
+}
+
+class DoubleCompareOrUnordered : public TRTest::OpCodeTest<int32_t, double, double> {};
+
+TEST_P(DoubleCompareOrUnordered, UsingConst) {
+    SKIP_ON_HAMMER(KnownBug) << "The x86_64 code generator crashes (see issue #5122)";
+    SKIP_ON_AARCH64(MissingImplementation);
+    SKIP_ON_RISCV(MissingImplementation);
+
+    auto param = TRTest::to_struct(GetParam());
+
+    if ( std::isnan(param.lhs) || std::isnan(param.rhs) ) {
+       SKIP_ON_ZOS(KnownBug) << "TRIL parser cannot handle NaN values on zOS (see issue #5183)";
+    }
+
+    char inputTrees[1024] = {0};
+    std::snprintf(inputTrees, 1024,
+       "(method return=Int32 "
+         "(block "
+           "(ireturn "
+             "(%s "
+               "(dconst %f) "
+               "(dconst %f)))))",
+       param.opcode.c_str(), param.lhs, param.rhs);
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<int32_t (*)(void)>();
+    volatile auto exp = param.oracle(param.lhs, param.rhs);
+    volatile auto act = entry_point();
+    ASSERT_EQ(exp, act);
+}
+
+TEST_P(DoubleCompareOrUnordered, UsingLoadParam) {
+    SKIP_ON_HAMMER(KnownBug) << "The x86_64 code generator crashes (see issue #5122)";
+    SKIP_ON_AARCH64(MissingImplementation);
+    SKIP_ON_RISCV(MissingImplementation);
+
+    auto param = TRTest::to_struct(GetParam());
+
+    char inputTrees[160] = {0};
+    std::snprintf(inputTrees, 160,
+       "(method return=Int32 args=[Double, Double] "
+         "(block "
+           "(ireturn "
+             "(%s "
+               "(dload parm=0) "
+               "(dload parm=1)))))",
+       param.opcode.c_str());
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<int32_t (*)(double, double)>();
+    volatile auto exp = param.oracle(param.lhs, param.rhs);
+    volatile auto act = entry_point(param.lhs, param.rhs);
+    ASSERT_EQ(exp, act);
+}
+
+INSTANTIATE_TEST_CASE_P(CompareTest, DoubleCompareOrUnordered, ::testing::Combine(
+    ::testing::ValuesIn(
+        TRTest::filter(TRTest::const_value_pairs<double, double>(), smallFp_filter<double>)),
+    ::testing::Values(
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmpequ", dcmpequ),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmpneu", dcmpneu),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmpgtu", dcmpgtu),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmpgeu", dcmpgeu),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmpltu", dcmpltu),
+        std::make_tuple<const char*, int32_t (*)(double, double)>("dcmpleu", dcmpleu)
+
     )));

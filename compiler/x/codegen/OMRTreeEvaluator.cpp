@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
@@ -50,19 +50,19 @@
 #include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
 #include "infra/List.hpp"
@@ -70,10 +70,6 @@
 #include "ras/Debug.hpp"
 #include "ras/DebugCounter.hpp"
 #include "runtime/Runtime.hpp"
-#ifdef J9_PROJECT_SPECIFIC
-#include "runtime/J9Profiler.hpp"
-#include "runtime/J9ValueProfiler.hpp"
-#endif
 #include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/OutlinedInstructions.hpp"
 #include "x/codegen/RegisterRematerialization.hpp"
@@ -144,7 +140,7 @@ TR::Instruction *OMR::X86::TreeEvaluator::compareGPMemoryToImmediate(TR::Node   
    {
    // On IA32, this is called to do half of an 8-byte compare, so even though
    // the node is 64 bit, we should do a 32-bit compare
-   bool is64Bit = TR::Compiler->target.is64Bit()? TR::TreeEvaluator::getNodeIs64Bit(node->getFirstChild(), cg) : false;
+   bool is64Bit = cg->comp()->target().is64Bit()? TR::TreeEvaluator::getNodeIs64Bit(node->getFirstChild(), cg) : false;
    TR_X86OpCodes cmpOp = (value >= -128 && value <= 127) ? CMPMemImms(is64Bit) : CMPMemImm4(is64Bit);
    TR::Instruction *instr = generateMemImmInstruction(cmpOp, node, mr, value, cg);
    cg->setImplicitExceptionPoint(instr);
@@ -158,7 +154,7 @@ void OMR::X86::TreeEvaluator::compareGPRegisterToImmediate(TR::Node          *no
    {
    // On IA32, this is called to do half of an 8-byte compare, so even though
    // the node is 64 bit, we should do a 32-bit compare
-   bool is64Bit = TR::Compiler->target.is64Bit()? TR::TreeEvaluator::getNodeIs64Bit(node->getFirstChild(), cg) : false;
+   bool is64Bit = cg->comp()->target().is64Bit()? TR::TreeEvaluator::getNodeIs64Bit(node->getFirstChild(), cg) : false;
    TR_X86OpCodes cmpOp = (value >= -128 && value <= 127) ? CMPRegImms(is64Bit) : CMPRegImm4(is64Bit);
    generateRegImmInstruction(cmpOp, node, cmpRegister, value, cg);
    }
@@ -170,7 +166,7 @@ void OMR::X86::TreeEvaluator::compareGPRegisterToImmediateForEquality(TR::Node  
    {
    // On IA32, this is called to do half of an 8-byte compare, so even though
    // the node is 64 bit, we should do a 32-bit compare
-   bool is64Bit = TR::Compiler->target.is64Bit()? TR::TreeEvaluator::getNodeIs64Bit(node->getFirstChild(), cg) : false;
+   bool is64Bit = cg->comp()->target().is64Bit()? TR::TreeEvaluator::getNodeIs64Bit(node->getFirstChild(), cg) : false;
    TR_X86OpCodes cmpOp = (value >= -128 && value <= 127) ? CMPRegImms(is64Bit) : CMPRegImm4(is64Bit);
    if (value==0)
       generateRegRegInstruction(TESTRegReg(is64Bit), node, cmpRegister, cmpRegister, cg);
@@ -180,7 +176,7 @@ void OMR::X86::TreeEvaluator::compareGPRegisterToImmediateForEquality(TR::Node  
 
 TR::Instruction *OMR::X86::TreeEvaluator::insertLoadConstant(TR::Node                  *node,
                                                         TR::Register              *target,
-                                                        intptrj_t                 value,
+                                                        intptr_t                 value,
                                                         TR_RematerializableTypes  type,
                                                         TR::CodeGenerator         *cg,
                                                         TR::Instruction           *currentInstruction)
@@ -201,7 +197,7 @@ TR::Instruction *OMR::X86::TreeEvaluator::insertLoadConstant(TR::Node           
    bool is64Bit = false;
 
    int opsRow = type;
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       if (type == TR_RematerializableAddress)
          {
@@ -258,7 +254,7 @@ TR::Instruction *OMR::X86::TreeEvaluator::insertLoadConstant(TR::Node           
          if (cg->constantAddressesCanChangeSize(node) && node && node->getOpCodeValue() == TR::aconst &&
              (node->isClassPointerConstant() || node->isMethodPointerConstant()))
             {
-            movInstruction = generateRegImm64Instruction(MOV8RegImm64, node, target, value, cg, reloKind);
+            movInstruction = generateRegImm64Instruction(currentInstruction, MOV8RegImm64, target, value, cg, reloKind);
             }
          else if (IS_32BIT_UNSIGNED(value))
             {
@@ -387,7 +383,7 @@ TR::Instruction *OMR::X86::TreeEvaluator::insertLoadConstant(TR::Node           
       }
    }
 
-TR::Register *OMR::X86::TreeEvaluator::loadConstant(TR::Node * node, intptrj_t value, TR_RematerializableTypes type, TR::CodeGenerator *cg, TR::Register *targetRegister)
+TR::Register *OMR::X86::TreeEvaluator::loadConstant(TR::Node * node, intptr_t value, TR_RematerializableTypes type, TR::CodeGenerator *cg, TR::Register *targetRegister)
    {
    if (targetRegister == NULL)
       {
@@ -399,7 +395,7 @@ TR::Register *OMR::X86::TreeEvaluator::loadConstant(TR::Node * node, intptrj_t v
    if (cg->enableRematerialisation())
       {
       if (node && node->getOpCode().hasSymbolReference() && node->getSymbol() && node->getSymbol()->isClassObject())
-         (TR::Compiler->om.generateCompressedObjectHeaders() || TR::Compiler->target.is32Bit()) ? type = TR_RematerializableInt : type = TR_RematerializableLong;
+         (TR::Compiler->om.generateCompressedObjectHeaders() || cg->comp()->target().is32Bit()) ? type = TR_RematerializableInt : type = TR_RematerializableLong;
 
       setDiscardableIfPossible(type, targetRegister, node, instr, value, cg);
       }
@@ -429,7 +425,7 @@ OMR::X86::TreeEvaluator::insertLoadMemory(
       };
 
    TR_X86OpCodes opCode = ops[type];
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       if (type == TR_RematerializableAddress)
          {
@@ -501,7 +497,7 @@ void OMR::X86::TreeEvaluator::padUnresolvedDataReferences(
 
    TR::Compilation *comp = cg->comp();
    uint8_t padBytes = 0;
-   if (TR::Compiler->target.is32Bit())
+   if (cg->comp()->target().is32Bit())
       padBytes = 2; // needs at least 2 bytes as we are patching 8 bytes at a time
    else
       {
@@ -542,7 +538,7 @@ OMR::X86::TreeEvaluator::loadMemory(
    if (cg->enableRematerialisation())
       {
       if (node && node->getOpCode().hasSymbolReference() && node->getSymbol() && node->getSymbol()->isClassObject())
-         (TR::Compiler->om.generateCompressedObjectHeaders() || TR::Compiler->target.is32Bit()) ? type = TR_RematerializableInt : type = TR_RematerializableLong;
+         (TR::Compiler->om.generateCompressedObjectHeaders() || cg->comp()->target().is32Bit()) ? type = TR_RematerializableInt : type = TR_RematerializableLong;
 
       setDiscardableIfPossible(type, targetRegister, node, instr, sourceMR, cg);
       }
@@ -758,84 +754,28 @@ TR::Register *OMR::X86::TreeEvaluator::sloadEvaluator(TR::Node *node, TR::CodeGe
    return reg;
    }
 
-TR::Register *OMR::X86::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *
+OMR::X86::TreeEvaluator::fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::iloadEvaluator(node,cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::aloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::floadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::dloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::bloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::sloadEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   if (node->getSymbolReference()->getSymbol()->isStatic())
-      cg->decReferenceCount(node->getFirstChild());
-   return TR::TreeEvaluator::lloadEvaluator(node, cg);
-   }
-
-
-TR::Register *OMR::X86::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
-   return TR::TreeEvaluator::istoreEvaluator(node,cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
    return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
    }
 
-TR::Register *OMR::X86::TreeEvaluator::bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *
+OMR::X86::TreeEvaluator::fwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
-   return TR::TreeEvaluator::bstoreEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
-   return TR::TreeEvaluator::sstoreEvaluator(node, cg);
-   }
-
-TR::Register *OMR::X86::TreeEvaluator::lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
-   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
    }
 
 // cloadEvaluator handled by sloadEvaluator
@@ -1004,7 +944,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerStoreEvaluator(TR::Node *node, TR:
            valueChild->getOpCodeValue() == TR::l2b))
          {
          valueChild = valueChild->getFirstChild();
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             translatedReg = cg->evaluate(valueChild);
          else
             translatedReg = cg->evaluate(valueChild)->getLowOrder();
@@ -1098,7 +1038,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerStoreEvaluator(TR::Node *node, TR:
                   case TR::Address:
                        {
                      if (node && node->getOpCode().hasSymbolReference() && node->getSymbol() && node->getSymbol()->isClassObject())
-                        (TR::Compiler->om.generateCompressedObjectHeaders() || TR::Compiler->target.is32Bit()) ? type = TR_RematerializableInt : type = TR_RematerializableLong;
+                        (TR::Compiler->om.generateCompressedObjectHeaders() || cg->comp()->target().is32Bit()) ? type = TR_RematerializableInt : type = TR_RematerializableLong;
                      else
                         type = TR_RematerializableAddress;
 
@@ -1566,7 +1506,7 @@ void OMR::X86::TreeEvaluator::genArithmeticInstructionsForOverflowCHK(TR::Node *
    TR::Node *operand2 = node->getThirdChild();
    //it is fine that nodeIs64Bit is false for long operand on 32bits platform because
    //the analyzers below don't use *op* in this case anyways
-   bool nodeIs64Bit = TR::Compiler->target.is32Bit()? false: TR::TreeEvaluator::getNodeIs64Bit(operand1, cg);
+   bool nodeIs64Bit = cg->comp()->target().is32Bit()? false: TR::TreeEvaluator::getNodeIs64Bit(operand1, cg);
    switch (node->getOverflowCheckOperation())
       {
       //add group
@@ -1602,7 +1542,7 @@ void OMR::X86::TreeEvaluator::genArithmeticInstructionsForOverflowCHK(TR::Node *
          // Therefore the usual way of only detecting the OF for the last instruction of sequence won't work for this case.
          // The implementation needs to detect OF flags after all the instructions involving higher parts of the registers for
          // both operands and intermediate results.
-         TR_ASSERT(TR::Compiler->target.is64Bit(), "overflowCHK for lmul on 32 bits is not currently supported\n");
+         TR_ASSERT(cg->comp()->target().is64Bit(), "overflowCHK for lmul on 32 bits is not currently supported\n");
          op = IMULRegReg(nodeIs64Bit);
          break;
       default:
@@ -1635,7 +1575,7 @@ void OMR::X86::TreeEvaluator::genArithmeticInstructionsForOverflowCHK(TR::Node *
             addMulAnalyser.integerAddAnalyserWithExplicitOperands(node, operand1, operand2, op, BADIA32Op, needsEflags);
             break;
          case TR::ladd:
-            TR::Compiler->target.is32Bit() ? addMulAnalyser.longAddAnalyserWithExplicitOperands(node, operand1, operand2)
+            cg->comp()->target().is32Bit() ? addMulAnalyser.longAddAnalyserWithExplicitOperands(node, operand1, operand2)
                                            : addMulAnalyser.integerAddAnalyserWithExplicitOperands(node, operand1, operand2, op, BADIA32Op, needsEflags);
             break;
          // sub group
@@ -1647,7 +1587,7 @@ void OMR::X86::TreeEvaluator::genArithmeticInstructionsForOverflowCHK(TR::Node *
             subAnalyser.integerSubtractAnalyserWithExplicitOperands(node, operand1, operand2, op, BADIA32Op, MOV4RegReg, needsEflags);
             break;
          case TR::lsub:
-            TR::Compiler->target.is32Bit() ? subAnalyser.longSubtractAnalyserWithExplicitOperands(node, operand1, operand2)
+            cg->comp()->target().is32Bit() ? subAnalyser.longSubtractAnalyserWithExplicitOperands(node, operand1, operand2)
                                            : subAnalyser.integerSubtractAnalyserWithExplicitOperands(node, operand1, operand2, op, BADIA32Op, MOV8RegReg, needsEflags);
             break;
          // mul group
@@ -1856,6 +1796,7 @@ static void arrayCopy16BitPrimitive(TR::Node* node, TR::Register* dstReg, TR::Re
       generateRepMovsInstruction(REPMOVSW, node, sizeReg, NULL, cg);
       generateInstruction(CLD, node, cg);
       generateLabelInstruction(JMP4, node, mainEndLabel, cg);
+      og.endOutlinedInstructionSequence();
       }
       }
    generateLabelInstruction(LABEL, node, mainEndLabel, dependencies, cg);
@@ -1936,6 +1877,7 @@ static void arrayCopyDefault(TR::Node* node, uint8_t elementSize, TR::Register* 
       generateRepMovsInstruction(repmovs, node, sizeReg, NULL, cg);
       generateInstruction(CLD, node, cg);
       generateLabelInstruction(JMP4, node, mainEndLabel, cg);
+      og.endOutlinedInstructionSequence();
       }
 
       generateLabelInstruction(LABEL, node, mainEndLabel, dependencies, cg);
@@ -2306,7 +2248,7 @@ TR::Register *OMR::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Co
    bool isShortConstArrayWithDirection = false;
    bool isShortConstArrayWithoutDirection = false;
    uint32_t size;
-   if (sizeNode->getOpCode().isLoadConst() && TR::Compiler->target.is64Bit() && optimizeForConstantLengthArrayCopy)
+   if (sizeNode->getOpCode().isLoadConst() && cg->comp()->target().is64Bit() && optimizeForConstantLengthArrayCopy)
       {
       size = TR::TreeEvaluator::integerConstNodeValue(sizeNode, cg);
       if ((node->isForwardArrayCopy() || node->isBackwardArrayCopy()) && !ignoreDirectionForConstantLengthArrayCopy)
@@ -2333,11 +2275,11 @@ TR::Register *OMR::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Co
       {
       bool isSize64Bit = TR::TreeEvaluator::getNodeIs64Bit(sizeNode, cg);
       TR::Register* sizeReg = cg->gprClobberEvaluate(sizeNode, MOVRegReg(isSize64Bit));
-      if (TR::Compiler->target.is64Bit() && !isSize64Bit)
+      if (cg->comp()->target().is64Bit() && !isSize64Bit)
          {
          generateRegRegInstruction(MOVZXReg8Reg4, node, sizeReg, sizeReg, cg);
          }
-      if (elementSize == 8 && TR::Compiler->target.is32Bit())
+      if (elementSize == 8 && cg->comp()->target().is32Bit())
          {
          arrayCopy64BitPrimitiveOnIA32(node, dstReg, srcReg, sizeReg, cg);
          }
@@ -2416,16 +2358,16 @@ TR::Register *OMR::X86::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, T
       TR_ASSERT(!node->isTargetByteArrayTranslate(), "Both source and target are byte for array translate");
       if (arraytranslateOT)
       {
-         helper = TR::Compiler->target.is64Bit() ? TR_AMD64arrayTranslateTROT : TR_IA32arrayTranslateTROT;
+         helper = cg->comp()->target().is64Bit() ? TR_AMD64arrayTranslateTROT : TR_IA32arrayTranslateTROT;
          dependencies->addPostCondition(termCharReg, TR::RealRegister::edx, cg);
       }
       else
-         helper = TR::Compiler->target.is64Bit() ? TR_AMD64arrayTranslateTROTNoBreak : TR_IA32arrayTranslateTROTNoBreak;
+         helper = cg->comp()->target().is64Bit() ? TR_AMD64arrayTranslateTROTNoBreak : TR_IA32arrayTranslateTROTNoBreak;
       }
    else
       {
       TR_ASSERT(node->isTargetByteArrayTranslate(), "Both source and target are word for array translate");
-      helper = TR::Compiler->target.is64Bit() ? TR_AMD64arrayTranslateTRTO : TR_IA32arrayTranslateTRTO;
+      helper = cg->comp()->target().is64Bit() ? TR_AMD64arrayTranslateTRTO : TR_IA32arrayTranslateTRTO;
       dependencies->addPostCondition(termCharReg, TR::RealRegister::edx, cg);
       }
    dependencies->stopAddingConditions();
@@ -2501,7 +2443,7 @@ static void packXMMWithMultipleValues(TR::Node* node, TR::Register* XMMReg, TR::
       }
    }
 
-static void arraySetToZeroForShortConstantArrays(TR::Node* node, TR::Register* addressReg, uintptrj_t size, TR::CodeGenerator* cg)
+static void arraySetToZeroForShortConstantArrays(TR::Node* node, TR::Register* addressReg, uintptr_t size, TR::CodeGenerator* cg)
    {
    // We do special optimization for zero because it happens very frequent.
    // if size < 16:
@@ -2545,7 +2487,7 @@ static void arraySetToZeroForShortConstantArrays(TR::Node* node, TR::Register* a
    cg->stopUsingRegister(tempReg);
    }
 
-static void arraySetForShortConstantArrays(TR::Node* node, uint8_t elementSize, TR::Register* addressReg, TR::Register* valueReg, uintptrj_t size, TR::CodeGenerator* cg)
+static void arraySetForShortConstantArrays(TR::Node* node, uint8_t elementSize, TR::Register* addressReg, TR::Register* valueReg, uintptr_t size, TR::CodeGenerator* cg)
    {
    const int32_t notWorthPacking = 5;
    const int32_t totalSize = elementSize*size;
@@ -2772,8 +2714,8 @@ TR::Register *OMR::X86::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::Cod
    TR::Node* valueNode    = node->getChild(1); // Value
    TR::Node* sizeNode     = node->getChild(2); // Size
 
-   TR::Register* addressReg = TR::TreeEvaluator::intOrLongClobberEvaluate(addressNode, TR::Compiler->target.is64Bit(), cg);
-   uintptrj_t size;
+   TR::Register* addressReg = TR::TreeEvaluator::intOrLongClobberEvaluate(addressNode, cg->comp()->target().is64Bit(), cg);
+   uintptr_t size;
    bool isSizeConst = false;
    bool isValueZero = false;
 
@@ -2781,7 +2723,7 @@ TR::Register *OMR::X86::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::Cod
    bool isShortConstantArrayWithZero = false;
 
    static bool isConstArraysetEnabled = (NULL == feGetEnv("TR_DisableConstArrayset"));
-   if (isConstArraysetEnabled && cg->getX86ProcessorInfo().supportsSSSE3() && TR::Compiler->target.is64Bit())
+   if (isConstArraysetEnabled && cg->getX86ProcessorInfo().supportsSSSE3() && cg->comp()->target().is64Bit())
       {
       if (valueNode->getOpCode().isLoadConst() && !valueNode->getOpCode().isFloat() && !valueNode->getOpCode().isDouble())
          {
@@ -2842,11 +2784,11 @@ TR::Register *OMR::X86::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::Cod
       TR::Register* valueReg = cg->evaluate(valueNode);
 
       // Zero-extend array size if passed in as 32-bit on 64-bit architecture
-      if (TR::Compiler->target.is64Bit() && !TR::TreeEvaluator::getNodeIs64Bit(sizeNode, cg))
+      if (cg->comp()->target().is64Bit() && !TR::TreeEvaluator::getNodeIs64Bit(sizeNode, cg))
          {
          generateRegRegInstruction(MOVZXReg8Reg4, node, sizeReg, sizeReg, cg);
          }
-      if (elementSize == 8 && TR::Compiler->target.is32Bit())
+      if (elementSize == 8 && cg->comp()->target().is32Bit())
          {
          arraySet64BitPrimitiveOnIA32(node, addressReg, valueReg, sizeReg, cg);
          }
@@ -2864,10 +2806,10 @@ TR::Register *OMR::X86::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::Cod
    return NULL;
    }
 
-bool OMR::X86::TreeEvaluator::constNodeValueIs32BitSigned(TR::Node *node, intptrj_t *value, TR::CodeGenerator *cg)
+bool OMR::X86::TreeEvaluator::constNodeValueIs32BitSigned(TR::Node *node, intptr_t *value, TR::CodeGenerator *cg)
    {
    *value = TR::TreeEvaluator::integerConstNodeValue(node, cg);
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       return IS_32BIT_SIGNED(*value);
       }
@@ -2890,15 +2832,15 @@ bool OMR::X86::TreeEvaluator::getNodeIs64Bit(TR::Node *node, TR::CodeGenerator *
     * not a hinderance, because 64-bit code on IA32 uses register pairs and other
     * things that are totally different from their 32-bit counterparts.
     */
-   TR_ASSERT(TR::Compiler->target.is64Bit() || node->getSize() <= 4, "64-bit nodes on 32-bit platforms shouldn't use getNodeIs64Bit");
-   return TR::Compiler->target.is64Bit() && node->getSize() > 4;
+   TR_ASSERT(cg->comp()->target().is64Bit() || node->getSize() <= 4, "64-bit nodes on 32-bit platforms shouldn't use getNodeIs64Bit");
+   return cg->comp()->target().is64Bit() && node->getSize() > 4;
    }
 
-intptrj_t OMR::X86::TreeEvaluator::integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg)
+intptr_t OMR::X86::TreeEvaluator::integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg)
    {
    if (TR::TreeEvaluator::getNodeIs64Bit(node, cg))
       {
-      return (intptrj_t)node->getLongInt(); // Cast to satisfy 32-bit compilers, even though they never take this path
+      return (intptr_t)node->getLongInt(); // Cast to satisfy 32-bit compilers, even though they never take this path
       }
    else
       {
@@ -3022,7 +2964,7 @@ static TR::Register * inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerato
  */
 static TR::Register* inlineAtomicMemoryUpdate(TR::Node* node, TR_X86OpCodes op, TR::CodeGenerator* cg)
    {
-   TR_ASSERT((!TR_X86OpCode(op).hasLongSource() && !TR_X86OpCode(op).hasLongTarget()) || TR::Compiler->target.is64Bit(), "64-bit instruction not supported on IA32");
+   TR_ASSERT((!TR_X86OpCode(op).hasLongSource() && !TR_X86OpCode(op).hasLongTarget()) || cg->comp()->target().is64Bit(), "64-bit instruction not supported on IA32");
    TR::Register* address = cg->evaluate(node->getChild(0));
    TR::Register* value   = cg->gprClobberEvaluate(node->getChild(1), MOVRegReg());
 
@@ -3048,7 +2990,7 @@ static TR::Register* inlineAtomicMemoryUpdate(TR::Node* node, TR_X86OpCodes op, 
  */
 static TR::Register* inline64BitAtomicCompareAndMemoryUpdateOn32Bit(TR::Node* node, bool returnValue, TR::CodeGenerator* cg)
    {
-   TR_ASSERT(TR::Compiler->target.is32Bit(), "32-bit only");
+   TR_ASSERT(cg->comp()->target().is32Bit(), "32-bit only");
    TR::Register* address  = cg->evaluate(node->getChild(0));
    TR::Register* oldvalue = cg->longClobberEvaluate(node->getChild(1));
    TR::Register* newvalue = cg->evaluate(node->getChild(2));
@@ -3097,7 +3039,7 @@ static TR::Register* inline64BitAtomicCompareAndMemoryUpdateOn32Bit(TR::Node* no
 static TR::Register* inlineAtomicCompareAndMemoryUpdate(TR::Node* node, bool returnValue, TR::CodeGenerator* cg)
    {
    bool isNode64Bit = node->getChild(1)->getDataType().isInt64();
-   if (TR::Compiler->target.is32Bit() && isNode64Bit)
+   if (cg->comp()->target().is32Bit() && isNode64Bit)
       {
       return inline64BitAtomicCompareAndMemoryUpdateOn32Bit(node, returnValue, cg);
       }
@@ -3273,7 +3215,7 @@ TR::Register *OMR::X86::TreeEvaluator::fenceEvaluator(TR::Node *node, TR::CodeGe
       }
    else
       {
-      assert(0);
+      TR::trap();
       }
    return NULL;
    }
@@ -3314,7 +3256,7 @@ TR::Register *OMR::X86::TreeEvaluator::generateLEAForLoadAddr(TR::Node *node,
        TR_RematerializableTypes type;
 
        if (node && node->getOpCode().hasSymbolReference() && node->getSymbol() && node->getSymbol()->isClassObject())
-          (TR::Compiler->om.generateCompressedObjectHeaders() || TR::Compiler->target.is32Bit()) ? type = TR_RematerializableInt : type = TR_RematerializableLong;
+          (TR::Compiler->om.generateCompressedObjectHeaders() || cg->comp()->target().is32Bit()) ? type = TR_RematerializableInt : type = TR_RematerializableLong;
        else
           type = TR_RematerializableAddress;
 
@@ -3332,7 +3274,7 @@ TR::Register *OMR::X86::TreeEvaluator::loadaddrEvaluator(TR::Node *node, TR::Cod
    // for loadaddr, directly allocated register according to its symRef, since memRef only represents symRef
    TR::Register *targetRegister = TR::TreeEvaluator::generateLEAForLoadAddr(node, memRef, symRef, cg, false);
 
-   if (symRef->isUnresolved() && TR::Compiler->target.is32Bit())
+   if (symRef->isUnresolved() && cg->comp()->target().is32Bit())
       {
       TR::TreeEvaluator::padUnresolvedDataReferences(node, memRef->getSymbolReference(), cg);
       }
@@ -3385,7 +3327,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerRegLoadEvaluator(TR::Node *node, T
    // Everything that can put a value in a global reg (iRegStore, method parameters)
    // zeroes out the upper bits.
    //
-   if (TR::Compiler->target.is64Bit() && node->getOpCodeValue()==TR::iRegLoad && performTransformation(comp, "TREE EVALUATION: setUpperBitsAreZero on iRegLoad %s\n", cg->getDebug()->getName(node)))
+   if (cg->comp()->target().is64Bit() && node->getOpCodeValue()==TR::iRegLoad && performTransformation(comp, "TREE EVALUATION: setUpperBitsAreZero on iRegLoad %s\n", cg->getDebug()->getName(node)))
       globalReg->setUpperBitsAreZero();
 
    return globalReg;
@@ -3397,7 +3339,7 @@ TR::Register *OMR::X86::TreeEvaluator::iRegStoreEvaluator(TR::Node *node, TR::Co
    TR::Node *child = node->getFirstChild();
    TR::Register *globalReg = cg->evaluate(child);
 
-   if (TR::Compiler->target.is64Bit() && node->getDataType() == TR::Int32)
+   if (cg->comp()->target().is64Bit() && node->getDataType() == TR::Int32)
       {
       // We disregard needsSignExtension here intentionally.  By always zero-extending
       // at iRegStores, we are free to setUpperBitsAreZero at every iRegLoad, and lots
@@ -3781,7 +3723,7 @@ OMR::X86::TreeEvaluator::icmpsetEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       generateRegisterDependencyConditions((uint8_t)1, (uint8_t)1, cg);
    deps->addPreCondition (compareReg, TR::RealRegister::eax, cg);
    deps->addPostCondition(compareReg, TR::RealRegister::eax, cg);
-   generateMemRegInstruction(TR::Compiler->target.isSMP() ? LCMPXCHGMemReg(nodeIs64Bit) : CMPXCHGMemReg(nodeIs64Bit), node, memRef, replaceReg, deps, cg);
+   generateMemRegInstruction(cg->comp()->target().isSMP() ? LCMPXCHGMemReg(nodeIs64Bit) : CMPXCHGMemReg(nodeIs64Bit), node, memRef, replaceReg, deps, cg);
 
    cg->stopUsingRegister(compareReg);
 
@@ -3876,7 +3818,7 @@ TR::Register *OMR::X86::TreeEvaluator::PrefetchEvaluator(TR::Node *node, TR::Cod
       // Offset node is a constant.
       if (secondChild->getOpCode().isLoadConst())
          {
-         uintptrj_t offset = secondChild->getInt();
+         uintptr_t offset = secondChild->getInt();
          TR::Register *addrReg = cg->evaluate(firstChild);
          generateMemInstruction(prefetchOp.getOpCodeValue(), node, generateX86MemoryReference(addrReg, offset, cg), cg);
 
@@ -4363,8 +4305,8 @@ OMR::X86::TreeEvaluator::bitpermuteEvaluator(TR::Node *node, TR::CodeGenerator *
    if (length->getOpCode().isLoadConst())
       {
       // Manage the constant length case
-      uintptrj_t arrayLen = TR::TreeEvaluator::integerConstNodeValue(length, cg);
-      for (uintptrj_t x = 0; x < arrayLen; ++x)
+      uintptr_t arrayLen = TR::TreeEvaluator::integerConstNodeValue(length, cg);
+      for (uintptr_t x = 0; x < arrayLen; ++x)
          {
          // Zero tmpReg if SET won't do it
          if (x >= 8)

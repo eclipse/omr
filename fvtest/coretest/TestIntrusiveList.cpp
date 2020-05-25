@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2018, 2018 IBM and others
+ *  Copyright (c) 2018, 2020 IBM and others
  *
  *  This program and the accompanying materials are made available under
  *  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 
 #include <OMR/IntrusiveList.hpp>
 #include <gtest/gtest.h>
+#include <ostream>
 
 namespace OMR
 {
@@ -53,6 +54,18 @@ typedef IntrusiveList<LinkedInt>  LinkedIntList;
 typedef LinkedIntList::Iterator LinkedIntListIterator;
 
 typedef LinkedIntList::ConstIterator ConstLinkedIntListIterator;
+
+
+// Custom gtest printers
+template<typename T, typename A>
+void PrintTo(const IntrusiveListConstIterator<T,A> &it, ::std::ostream *os){
+	*os << it.current();
+}
+
+template<typename T, typename A>
+void PrintTo(const IntrusiveListIterator<T,A> &it, ::std::ostream *os){
+	*os << it.current();
+}
 
 TEST(TestIntrusiveList, Empty)
 {

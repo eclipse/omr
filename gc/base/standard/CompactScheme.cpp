@@ -321,13 +321,14 @@ MM_CompactScheme::setFreeChunkSize(omrobjectptr_t deadObject, uintptr_t deadObje
 	if (deadObjectSize == 0) {
 		return;
 	}
+	bool const compressed = _extensions->compressObjectReferences();
 
 #if defined(DEBUG_PAINT_FREE)
 	memset(deadObject, 0xAA, deadObjectSize);
 #endif /* DEBUG_PAINT_FREE */
 	assume0(deadObjectSize >= sizeof(uintptr_t));
 
-	MM_HeapLinkedFreeHeader::fillWithHoles(deadObject, deadObjectSize);
+	MM_HeapLinkedFreeHeader::fillWithHoles(deadObject, deadObjectSize, compressed);
 }
 
 size_t

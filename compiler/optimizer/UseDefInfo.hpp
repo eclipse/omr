@@ -43,6 +43,7 @@ namespace TR { class CFG; }
 namespace TR { class ILOpCode; }
 namespace TR { class Optimizer; }
 namespace TR { class TreeTop; }
+namespace OMR { class Optimizer; }
 
 /**
  * Use/def information.
@@ -153,12 +154,31 @@ class TR_UseDefInfo
       friend class TR_OSRDefInfo;
       };
 
-
-   TR_UseDefInfo(TR::Compilation *, TR::CFG * cfg, TR::Optimizer *,
-         bool requiresGlobals = true, bool prefersGlobals = true, bool loadsShouldBeDefs = true, bool cannotOmitTrivialDefs = false,
-         bool conversionRegsOnly = false, bool doCompletion = true);
+   friend class OMR::Optimizer;
 
    protected:
+   /**
+    * Constructs TR_UseDefInfo instance. Note that this should not be called directly.
+    * Instead construction is handled by OMR::Optimizer::createUseDefInfo() method.
+    *
+    * @param cfg                        The compilation instance
+    * @param requiresGlobals
+    * @param prefersGlobals
+    * @param loadsShouldBeDefs
+    * @param cannotOmitTrivialDefs
+    * @param conversionRegsOnly
+    * @param doCompletion
+    * @param callsShouldBeUses          Enables inclusion of calls as uses so that the alias analysis can detect
+    *                                   when local (stack) variable has been aliased by a function call.
+    *                                   A value of false is fine for Java like languages where
+    *                                   local (stack) variables cannot be passed by reference to function calls
+    *                                   and hence cannot be aliased. However for C like languages this flag should be
+    *                                   set to true.
+    */
+   TR_UseDefInfo(TR::Compilation *, TR::CFG * cfg, TR::Optimizer *,
+         bool requiresGlobals = true, bool prefersGlobals = true, bool loadsShouldBeDefs = true, bool cannotOmitTrivialDefs = false,
+         bool conversionRegsOnly = false, bool doCompletion = true, bool callsShouldBeUses = false);
+
    void prepareUseDefInfo(bool requiresGlobals, bool prefersGlobals, bool cannotOmitTrivialDefs, bool conversionRegsOnly);
    void invalidateUseDefInfo();
    virtual bool performAnalysis(AuxiliaryData &aux);

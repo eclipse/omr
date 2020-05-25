@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/CompilerEnv.hpp"
@@ -256,7 +256,7 @@ void TR_PrefetchInsertion::insertPrefetchInstructions()
 #endif
 
          static char * disablePrefetchStore = feGetEnv("TR_DISABLEPrefetchStore");
-         typeNode = TR::Node::iconst(addressNode, (TR::Compiler->target.cpu.isZ() && foundStore && !disablePrefetchStore) ?
+         typeNode = TR::Node::iconst(addressNode, (comp()->target().cpu.isZ() && foundStore && !disablePrefetchStore) ?
                                                             (int32_t)PrefetchStore :
                                                             (int32_t)PrefetchLoad);
 
@@ -298,7 +298,7 @@ TR::Node *TR_PrefetchInsertion::createDeltaNode(TR::Node *node, TR::Node *pivNod
    else
       newNode = TR::Node::create(node, node->getOpCodeValue(), node->getNumChildren());
 
-   for (intptrj_t i = 0; i < node->getNumChildren(); i++)
+   for (intptr_t i = 0; i < node->getNumChildren(); i++)
       {
       newNode->setAndIncChild(i, createDeltaNode(node->getChild(i), pivNode, deltaOnBackEdge));
       }
@@ -310,7 +310,7 @@ TR::Node *TR_PrefetchInsertion::createDeltaNode(TR::Node *node, TR::Node *pivNod
 //
 void TR_PrefetchInsertion::examineLoop(TR_RegionStructure *loop)
    {
-   intptrj_t visitCount = comp()->incVisitCount();
+   intptr_t visitCount = comp()->incVisitCount();
 
    TR_ScratchList<TR::Block> blocksInLoop(trMemory());
    loop->getBlocks(&blocksInLoop);
@@ -331,7 +331,7 @@ void TR_PrefetchInsertion::examineLoop(TR_RegionStructure *loop)
    }
 
 
-void TR_PrefetchInsertion::examineNode(TR::TreeTop *treeTop, TR::Block *block, TR::Node *node, intptrj_t visitCount, TR_RegionStructure *loop)
+void TR_PrefetchInsertion::examineNode(TR::TreeTop *treeTop, TR::Block *block, TR::Node *node, intptr_t visitCount, TR_RegionStructure *loop)
    {
    // If we have seen this node before, we are done
    // Otherwise, set visit count
@@ -456,7 +456,7 @@ void TR_PrefetchInsertion::examineNode(TR::TreeTop *treeTop, TR::Block *block, T
       }
 
    /* Walk its children */
-   for (intptrj_t i = 0; i < node->getNumChildren(); i++)
+   for (intptr_t i = 0; i < node->getNumChildren(); i++)
       {
       examineNode(treeTop, block, node->getChild(i), visitCount, loop);
       }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,18 +19,17 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "infra/TrilDumper.hpp"
-
-#include "infra/List.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
+#include "compile/ResolvedMethod.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/Block_inlines.hpp"
+#include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/ILOps.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "infra/List.hpp"
+#include "infra/TrilDumper.hpp"
 
 #include "stdio.h"
 

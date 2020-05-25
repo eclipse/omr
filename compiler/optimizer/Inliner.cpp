@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@
 #include <exception>
 #include <vector>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "compile/Compilation.hpp"
@@ -60,22 +60,22 @@
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "ilgen/IlGenRequest.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
@@ -255,8 +255,7 @@ TR_InlinerBase::TR_InlinerBase(TR::Optimizer * optimizer, TR::Optimization *opti
      _disableTailRecursion(false),
      _currentNumberOfNodes(optimizer->comp()->getAccurateNodeCount()),
      _disableInnerPrex(false),
-     _aggressivelyInlineInLoops(false),
-     _GlobalLabels(_trMemory)
+     _aggressivelyInlineInLoops(false)
    {
    _policy = optimization->manager()->getOptPolicy() ? static_cast<OMR_InlinerPolicy*>(optimization->manager()->getOptPolicy()) : optimizer->getInlinerPolicy();
    _util = optimizer->getInlinerUtil();
@@ -268,8 +267,6 @@ TR_InlinerBase::TR_InlinerBase(TR::Optimizer * optimizer, TR::Optimization *opti
    setInlineVirtuals(true);
    if (optimizer->getInlineSynchronized())
       setInlineSynchronized(true);
-
-   _GlobalLabels.init();
 
    _tracer = _util->getInlinerTracer(optimization);
 
@@ -295,7 +292,7 @@ TR_InlinerBase::setSizeThreshold(uint32_t size)
 
    _methodByteCodeSizeThreshold = size;
 
-   alwaysTrace(tracer(),"Setting method size threshold (_methodByteCodeSizeThreshold) to %d\n",_methodByteCodeSizeThreshold);
+   heuristicTrace(tracer(),"Setting method size threshold (_methodByteCodeSizeThreshold) to %d\n",_methodByteCodeSizeThreshold);
    }
 
 void
@@ -413,7 +410,7 @@ TR_InlinerBase::linkOSRCodeBlocks()
    {
    TR_OSRCompilationData* compData = comp()->getOSRCompilationData();
    const TR_Array<TR_OSRMethodData *>& methodDataArray = compData->getOSRMethodDataArray();
-   for (intptrj_t i = 0; i < methodDataArray.size(); ++i)
+   for (intptr_t i = 0; i < methodDataArray.size(); ++i)
       {
       TR_OSRMethodData *osrMethodData = methodDataArray[i];
       if (osrMethodData == NULL
@@ -684,7 +681,7 @@ TR_InlinerBase::exceedsSizeThreshold(TR_CallSite *callsite, int bytecodeSize, TR
 void
 TR_InlinerBase::createParmMap(TR::ResolvedMethodSymbol *calleeSymbol, TR_LinkHead<TR_ParameterMapping> &map)
    {
-   ListIterator<TR::ParameterSymbol> parms(&calleeSymbol->getLogicalParameterList(comp()));
+   ListIterator<TR::ParameterSymbol> parms(&calleeSymbol->getParameterList());
 
    for (TR::ParameterSymbol * p = parms.getFirst(); p; p = parms.getNext())
       {
@@ -1364,7 +1361,6 @@ TR_DumbInliner::analyzeCallSite(
 //---------------------------------------------------------------------
 
 static TR::TreeTop * cloneAndReplaceCallNodeReference(TR::TreeTop *, TR::Node *, TR::Node *, TR::TreeTop *, TR::Compilation *);
-static void addSymRefsToList(List<TR::SymbolReference> &, List<TR::SymbolReference> &);
 
 static TR::Node *findPotentialDecompilationPoint(TR::ResolvedMethodSymbol *calleeSymbol, TR::Compilation *comp)
    {
@@ -1516,7 +1512,7 @@ TR_InlinerBase::createVirtualGuard(
       {
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
       if (knot)
-         heuristicTrace(tracer(),"  createVirtualGuard: MutableCallSite.epoch is %p.obj%d (%p.%p)", guard->_mutableCallSiteObject, guard->_mutableCallSiteEpoch, *guard->_mutableCallSiteObject, *knot->getPointerLocation(guard->_mutableCallSiteEpoch));
+         heuristicTrace(tracer(),"  createVirtualGuard: MutableCallSite.epoch is %p.obj%d (%p.%p)", guard->_mutableCallSiteObject, guard->_mutableCallSiteEpoch, *guard->_mutableCallSiteObject, knot->getPointer(guard->_mutableCallSiteEpoch));
       return TR_VirtualGuard::createMutableCallSiteTargetGuard(comp(), calleeIndex, callNode, destination, guard->_mutableCallSiteObject, guard->_mutableCallSiteEpoch);
       }
 
@@ -1819,6 +1815,10 @@ TR_InlinerBase::addGuardForVirtual(
    if (!disableHCRGuards && comp()->getHCRMode() != TR::none && guard->_kind != TR_HCRGuard && !skipHCRGuardForCallee)
       {
       createdHCRAndVirtualGuard = true;
+      TR_OpaqueClassBlock* methodClass = calleeSymbol->getResolvedMethod()->classOfMethod();
+      TR_ASSERT(methodClass, "Class of inlined method shoun't be null");
+      if (comp()->trace(OMR::inlining))
+         traceMsg(comp(), "HCR guard method class is %p\n", methodClass);
 
       // we merge virtual guards and OSR guards for simplicity in most modes
       // when using OSR to implement HCR we keep the HCR guards distinct since they
@@ -1830,10 +1830,14 @@ TR_InlinerBase::addGuardForVirtual(
          if (guardNode)
             {
             TR_VirtualGuard *virtualGuard = comp()->findVirtualGuardInfo(guardNode);
-            if (virtualGuard)
+            if (virtualGuard &&
+                virtualGuard->getThisClass() &&
+                virtualGuard->getThisClass() == methodClass)
                {
                virtualGuard->setMergedWithHCRGuard();
                skipHCRGuardCreation = true;
+               if (comp()->trace(OMR::inlining))
+                  traceMsg(comp(), "Merge HCR guard with virtual guard %p n%dn\n", guardNode, guardNode->getGlobalIndex());
                }
             }
          }
@@ -1851,7 +1855,7 @@ TR_InlinerBase::addGuardForVirtual(
          hcrTreeTop = hcrBlock->append(TR::TreeTop::create(comp(),
                                        createVirtualGuard(callNode, calleeSymbol, block4->getEntry(),
                                           calleeSymbol->getFirstTreeTop()->getNode()->getInlinedSiteIndex(),
-                                          thisClass, tif.favourVftCompare(), hcrGuard)));
+                                          methodClass, tif.favourVftCompare(), hcrGuard)));
          hcrBlock->setDoNotProfile();
          block1->getExit()->join(hcrBlock->getEntry());
          hcrBlock->getExit()->join(block2->getEntry());
@@ -2010,8 +2014,14 @@ TR_InlinerBase::addGuardForVirtual(
    // When running with HCR implemented using OSR plain HCR guards will be processed later in the
    // compilation and those later processes will handle them using OSR so we don't want to complicate
    // that with additional OSR at this point
+
+   // Late inlining may result in callerSymbol not being the resolved method that actually calls the inlined method
+   // This is problematic for linking OSR blocks
+   TR::ResolvedMethodSymbol *callingMethod = callNode->getByteCodeInfo().getCallerIndex() == -1 ?
+      comp()->getMethodSymbol() : comp()->getInlinedResolvedMethodSymbol(callNode->getByteCodeInfo().getCallerIndex());
+
    if ((comp()->getHCRMode() != TR::osr || guard->_kind != TR_HCRGuard)
-       && callNode->getSymbolReference()->getOwningMethodSymbol(comp())->supportsInduceOSR(callNode->getByteCodeInfo(), block1, comp(), false))
+       && callingMethod->supportsInduceOSR(callNode->getByteCodeInfo(), block1, comp(), false))
       {
       bool shouldUseOSR = heuristicForUsingOSR(callNode, calleeSymbol, callerSymbol, createdHCRAndVirtualGuard);
 
@@ -2022,11 +2032,6 @@ TR_InlinerBase::addGuardForVirtual(
            createdHCRGuard ||
            (osrForNonHCRGuards && shouldAttemptOSR)))
          {
-         // Late inlining may result in callerSymbol not being the resolved method that actually calls the inlined method
-         // This is problematic for linking OSR blocks
-         TR::ResolvedMethodSymbol *callingMethod = callNode->getByteCodeInfo().getCallerIndex() == -1 ?
-            comp()->getMethodSymbol() : comp()->getInlinedResolvedMethodSymbol(callNode->getByteCodeInfo().getCallerIndex());
-
          TR::TreeTop *induceTree = callingMethod->genInduceOSRCall(guardedCallNodeTreeTop, callNode->getByteCodeInfo().getCallerIndex(), (callNode->getNumChildren() - callNode->getFirstArgumentIndex()), false, false, callerSymbol->getFlowGraph());
          if (induceOSRCallTree)
             *induceOSRCallTree = induceTree;
@@ -2215,12 +2220,13 @@ bool rematerializeConstant(TR::Node *node, TR::Compilation *comp)
 ///////////////////////////////////////////////////////////////
 
 TR_ParameterToArgumentMapper::TR_ParameterToArgumentMapper(
-   TR::ResolvedMethodSymbol * callerSymbol, TR::ResolvedMethodSymbol * calleeSymbol, TR::Node * callNode,
+   TR::ResolvedMethodSymbol * callerSymbol, TR::ResolvedMethodSymbol * calleeSymbol, TR::Node * callNode, TR_PrexArgInfo *argInfo,
    List<TR::SymbolReference> & temps, List<TR::SymbolReference> & availableTemps, List<TR::SymbolReference> & availableTemps2,
    TR_InlinerBase *inliner)
    : _callerSymbol(callerSymbol),
      _calleeSymbol(calleeSymbol),
      _callNode(callNode),
+     _argInfo(argInfo),
      _tempList(temps),
      _availableTemps(availableTemps),
      _availableTemps2(availableTemps2),
@@ -2354,12 +2360,22 @@ TR_ParameterToArgumentMapper::initialize(TR_CallStack *callStack)
             else
                {
                TR::SymbolReference * symRef = NULL;
-
+               const static bool disableUseKnownObjectTempsForParms = feGetEnv("TR_DisableUseKnownObjectTempsForParmsInCallee") ? true: false;
+               int argOrdinal = argIndex - _callNode->getFirstArgumentIndex();
+               TR_PrexArgument * prexArgument = _argInfo->get(argOrdinal);
+               // use known object temp if the argument is a known object
+               if (!disableUseKnownObjectTempsForParms && prexArgument
+                   && !parmMap->_parmIsModified
+                   && TR_PrexArgument::knowledgeLevel(prexArgument) == KNOWN_OBJECT
+                   && !prexArgument->isTypeInfoForInlinedBody())
                   {
-                  tt = OMR_InlinerUtil::storeValueInATemp(comp(), arg, symRef, 0, _calleeSymbol, _tempList, _availableTemps, &_availableTemps2, false, &newValueStoreTreeTop);
+                  symRef  = comp()->getSymRefTab()->findOrCreateTemporaryWithKnowObjectIndex(_callerSymbol, prexArgument->getKnownObjectIndex());
+                  debugTrace(tracer(),"map arg %p into known object temp #%d as priv arg\n", arg, symRef->getReferenceNumber());
                   }
 
+               tt = OMR_InlinerUtil::storeValueInATemp(comp(), arg, symRef, 0, _calleeSymbol, _tempList, _availableTemps, &_availableTemps2, false, &newValueStoreTreeTop);
                symRef->getSymbol()->setBehaveLikeNonTemp();
+
                // set flag only if there is a virtual guard
                if (!hasStaticCallStack && !neverNeedPrivatizedArguments
                      && tt->getNode()->getOpCode().isStoreDirectOrReg()) // compjazz 53912: PLX sometimes privatizes using indirect stores
@@ -2367,32 +2383,35 @@ TR_ParameterToArgumentMapper::initialize(TR_CallStack *callStack)
                   tt->getNode()->setIsPrivatizedInlinerArg(true);
                   }
                parmMap->_replacementSymRef = symRef;
+
+
+               if (!disableUseKnownObjectTempsForParms && prexArgument
+                  && !parmMap->_parmIsModified
+                  && TR_PrexArgument::knowledgeLevel(prexArgument) == KNOWN_OBJECT
+                  && prexArgument->isTypeInfoForInlinedBody())  // use known object temp in inlined body only
+                  {
+                  TR::SymbolReference *origTempSymRef = symRef;
+                  TR::SymbolReference *knownObjectTempSymRef = comp()->getSymRefTab()->findOrCreateTemporaryWithKnowObjectIndex(_callerSymbol, prexArgument->getKnownObjectIndex());
+                  TR::TreeTop *storeToKnownObjTemp = TR::TreeTop::create(comp(), TR::Node::createStore(knownObjectTempSymRef, TR::Node::createLoad(_calleeSymbol->getFirstTreeTop()->getNode(), origTempSymRef)));
+                  storeToKnownObjTemp->insertNewTreeTop(_calleeSymbol->getFirstTreeTop(), _calleeSymbol->getFirstTreeTop()->getNextTreeTop());
+                  parmMap->_replacementSymRefForInlinedBody = knownObjectTempSymRef;
+                  debugTrace(tracer(),"created tree n%dn to store the priv arg #%d into a known object temp #%d on entry of the inlined body\n", storeToKnownObjTemp->getNode()->getGlobalIndex(), symRef->getReferenceNumber(), knownObjectTempSymRef->getReferenceNumber());
+                  }
                }
             }
 
-         if (_lastTempTreeTop)
-            {
-            if (newValueStoreTreeTop)
-               {
-               tt->join(newValueStoreTreeTop);
-               _lastTempTreeTop->join(tt);
-               _lastTempTreeTop = newValueStoreTreeTop;
-               }
-            else
-               {
-               _lastTempTreeTop->join(tt);
-               _lastTempTreeTop = tt;
-               }
-            }
-         else if (newValueStoreTreeTop)
-            {
+
+         if (!_firstTempTreeTop)
             _firstTempTreeTop = tt;
-            _firstTempTreeTop->join(newValueStoreTreeTop);
+         else
+            _lastTempTreeTop->join(tt);
+         _lastTempTreeTop = tt;
+
+         if (newValueStoreTreeTop)
+            {
+            _lastTempTreeTop->join(newValueStoreTreeTop);
             _lastTempTreeTop = newValueStoreTreeTop;
             }
-         else
-            _firstTempTreeTop = _lastTempTreeTop = tt;
-
 
          parmMap = parmMap->getNext();
          }
@@ -2519,13 +2538,13 @@ TR_ParameterToArgumentMapper::map(TR::Node * node, TR::ParameterSymbol * parm, b
             return newNode;
             }
 
-         if (parmMap->_addressTaken && parmMap->_replacementSymRef->getSymbol()->isAuto())
-            {
-            parmMap->_replacementSymRef->getSymbol()->setAutoAddressTaken();
-            }
-         intptrj_t offset= node->getSymbolReference()->getOffset();
+         intptr_t offset= node->getSymbolReference()->getOffset();
 
-         node->setSymbolReference(parmMap->_replacementSymRef);
+
+         if (!parmMap->_parmIsModified && parmMap->_replacementSymRefForInlinedBody && performTransformation(comp(), "%s set symRef on node n%dn to be known object symRef %p\n", OPT_DETAILS, node->getGlobalIndex(), parmMap->_replacementSymRefForInlinedBody))
+            node->setSymbolReference(parmMap->_replacementSymRefForInlinedBody);
+         else
+            node->setSymbolReference(parmMap->_replacementSymRef);
 
          if (offset != 0)
             {
@@ -2634,7 +2653,6 @@ TR_TransformInlinedFunction::TR_TransformInlinedFunction(
      _processingExceptionHandlers(false),
      _treeTopsToRemove(c->trMemory()),
      _blocksWithEdgesToTheEnd(c->trMemory()),
-     _traceVIP(c->getOption(TR_TraceVIP)),
      _favourVftCompare(false),
      findCallNodeRecursionDepth(0),
      onlyMultiRefNodeIsCallNodeRecursionDepth(0)
@@ -2791,6 +2809,7 @@ TR_TransformInlinedFunction::transformNode(TR::Node * node, TR::Node * parent, u
       if (symbol->isParm())
          {
          TR::Node * newNode = _parameterMapper.map(node, symbol->getParmSymbol(), _crossedBasicBlock);
+
          if (newNode && newNode != node)
             {
             if (newNode->getOpCode().isLoadConst() && newNode->getType().isInt32() && node->getType().isInt8())
@@ -3119,6 +3138,9 @@ TR_HandleInjectedBasicBlock::createTemps(bool replaceAllReferences)
                TR::Node      *valueToTempConv = TR::Node::create(convOpCode, 1, value);
                value = valueToTempConv;
                }
+
+            if (value->getOpCode().hasSymbolReference() && value->getSymbolReference()->hasKnownObjectIndex())
+               symRef = comp()->getSymRefTab()->findOrCreateTemporaryWithKnowObjectIndex(_methodSymbol, value->getSymbolReference()->getKnownObjectIndex());
 
             OMR_InlinerUtil::storeValueInATemp(comp(), value, symRef, tt, _methodSymbol, _injectedBasicBlockTemps, _availableTemps, 0);
             }
@@ -3669,17 +3691,6 @@ TR::TreeTop * TR_TransformInlinedFunction::findSimpleCallReference(TR::TreeTop *
       }
    return 0;
    }
-//migrated
-
-static void addSymRefsToList(List<TR::SymbolReference> & calleeSymRefs, List<TR::SymbolReference> & callerSymRefs)
-   {
-   ListIterator<TR::SymbolReference> i(&calleeSymRefs);
-   for (TR::SymbolReference * symRef = i.getFirst(); symRef; symRef = i.getNext())
-      callerSymRefs.add(symRef);
-   }
-
-//new findInlineTargets API
-
 
 bool TR_CallSite::findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner)
    {
@@ -3850,8 +3861,6 @@ TR_IndirectCallSite::addTargetIfThereIsSingleImplementer (TR_InlinerBase* inline
 
 bool TR_IndirectCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner)
    {
-   //inliner->tracer()->dumpPrexArgInfo(_ecsPrexArgInfo);
-
    if (addTargetIfMethodIsNotOverriden(inliner) ||
        addTargetIfMethodIsNotOverridenInReceiversHierarchy(inliner) ||
        addTargetIfThereIsSingleImplementer(inliner) ||
@@ -3932,6 +3941,7 @@ void TR_InlinerBase::getSymbolAndFindInlineTargets(TR_CallStack *callStack, TR_C
 
    if (callsite->_initialCalleeSymbol)
       {
+      callsite->_initialCalleeMethod = callsite->_initialCalleeSymbol->getResolvedMethod();
       if (getPolicy()->supressInliningRecognizedInitialCallee(callsite, comp()))
          isInlineable = Recognized_Callee;
 
@@ -3948,9 +3958,6 @@ void TR_InlinerBase::getSymbolAndFindInlineTargets(TR_CallStack *callStack, TR_C
          TR_VirtualGuardSelection *guard = new (trStackMemory()) TR_VirtualGuardSelection(TR_NoGuard);
          callsite->addTarget(trMemory(),this ,guard ,callsite->_initialCalleeSymbol->getResolvedMethod(),callsite->_receiverClass);
          }
-
-      callsite->_initialCalleeMethod = callsite->_initialCalleeSymbol->getResolvedMethod();
-
       }
    else if ((isInlineable = static_cast<TR_InlinerFailureReason> (checkInlineableWithoutInitialCalleeSymbol (callsite, comp()))) != InlineableTarget)
       {
@@ -4072,56 +4079,6 @@ void TR_InlinerBase::applyPolicyToTargets(TR_CallStack *callStack, TR_CallSite *
          continue;
          }
 
-      int32_t bytecodeSize = getPolicy()->getInitialBytecodeSize(calltarget->_calleeMethod, calltarget->_calleeSymbol, comp());
-
-      getUtil()->estimateAndRefineBytecodeSize(callsite, calltarget, callStack, bytecodeSize);
-      if (calltarget->_calleeSymbol && strstr(calltarget->_calleeSymbol->signature(trMemory()), "FloatingDecimal"))
-         {
-         bytecodeSize >>= 1;
-
-         if (comp()->trace(OMR::inlining))
-            traceMsg( comp(), "Reducing bytecode size to %d because it's method of FloatingDecimal\n", bytecodeSize);
-         }
-
-      bool toInline = getPolicy()->tryToInline(calltarget, callStack, true);
-
-      TR_ByteCodeInfo &bcInfo = callsite->_bcInfo;
-      // get the number of locals in the callee
-      int32_t numberOfLocalsInCallee = calltarget->_calleeMethod->numberOfParameterSlots();// + calleeResolvedMethod->numberOfTemps();
-      if (!forceInline(calltarget) &&
-            exceedsSizeThreshold(callsite, bytecodeSize,
-                                   (callsite->_callerBlock != NULL) ? callsite->_callerBlock :
-                                      (callsite->_callNodeTreeTop ? callsite->_callNodeTreeTop->getEnclosingBlock() : 0),
-                                   bcInfo, numberOfLocalsInCallee, callsite->_callerResolvedMethod,
-                                   calltarget->_calleeMethod,callsite->_callNode,callsite->_allConsts)
-
-         )
-         {
-         if (toInline)
-            {
-            if (comp()->trace(OMR::inlining))
-               traceMsg(comp(), "tryToInline pattern matched.  Skipping size check for %s\n", calltarget->_calleeMethod->signature(comp()->trMemory()));
-            callsite->tagcalltarget(i, tracer(), OverrideInlineTarget);
-            }
-         else
-           {
-            // debugging counters inserted in call
-            callsite->removecalltarget(i, tracer(), Exceeds_ByteCode_Threshold);
-            i--;
-            continue;
-            }
-         }
-      else
-         {
-         if (toInline)
-            {
-            if (comp()->trace(OMR::inlining))
-               traceMsg(comp(), "tryToInline pattern matched.  Within the size check for %s\n", calltarget->_calleeMethod->signature(comp()->trMemory()));
-            // change the default InlineableTarget
-            callsite->tagcalltarget(i,tracer(),TryToInlineTarget);
-            }
-         }
-
       // only inline recursive calls once
       //
       static char *selfInliningLimitStr = feGetEnv("TR_selfInliningLimit");
@@ -4226,7 +4183,57 @@ void TR_InlinerBase::applyPolicyToTargets(TR_CallStack *callStack, TR_CallSite *
             }
          }
 
+      int32_t bytecodeSize = getPolicy()->getInitialBytecodeSize(calltarget->_calleeMethod, calltarget->_calleeSymbol, comp());
 
+      if (!forceInline(calltarget))
+         getUtil()->estimateAndRefineBytecodeSize(callsite, calltarget, callStack, bytecodeSize);
+
+      if (calltarget->_calleeSymbol && strstr(calltarget->_calleeSymbol->signature(trMemory()), "FloatingDecimal"))
+         {
+         bytecodeSize >>= 1;
+
+         if (comp()->trace(OMR::inlining))
+            traceMsg( comp(), "Reducing bytecode size to %d because it's method of FloatingDecimal\n", bytecodeSize);
+         }
+
+      bool toInline = getPolicy()->tryToInline(calltarget, callStack, true);
+
+      TR_ByteCodeInfo &bcInfo = callsite->_bcInfo;
+      // get the number of locals in the callee
+      int32_t numberOfLocalsInCallee = calltarget->_calleeMethod->numberOfParameterSlots();// + calleeResolvedMethod->numberOfTemps();
+      if (!forceInline(calltarget) &&
+            exceedsSizeThreshold(callsite, bytecodeSize,
+                                   (callsite->_callerBlock != NULL) ? callsite->_callerBlock :
+                                      (callsite->_callNodeTreeTop ? callsite->_callNodeTreeTop->getEnclosingBlock() : 0),
+                                   bcInfo, numberOfLocalsInCallee, callsite->_callerResolvedMethod,
+                                   calltarget->_calleeMethod,callsite->_callNode,callsite->_allConsts)
+
+         )
+         {
+         if (toInline)
+            {
+            if (comp()->trace(OMR::inlining))
+               traceMsg(comp(), "tryToInline pattern matched.  Skipping size check for %s\n", calltarget->_calleeMethod->signature(comp()->trMemory()));
+            callsite->tagcalltarget(i, tracer(), OverrideInlineTarget);
+            }
+         else
+           {
+            // debugging counters inserted in call
+            callsite->removecalltarget(i, tracer(), Exceeds_ByteCode_Threshold);
+            i--;
+            continue;
+            }
+         }
+      else
+         {
+         if (toInline)
+            {
+            if (comp()->trace(OMR::inlining))
+               traceMsg(comp(), "tryToInline pattern matched.  Within the size check for %s\n", calltarget->_calleeMethod->signature(comp()->trMemory()));
+            // change the default InlineableTarget
+            callsite->tagcalltarget(i,tracer(),TryToInlineTarget);
+            }
+         }
       }
 
    return;
@@ -4319,9 +4326,14 @@ TR_CallSite* TR_InlinerBase::findAndUpdateCallSiteInGraph(TR_CallStack *callStac
    TR_CallSite *callsite = 0;
    for (callsite = calltarget->_myCallees.getFirst() ; callsite ; callsite = callsite->getNext())
       {
-      debugTrace(tracer(),"callNode->getByteCodeIndex = %d callsite->_byteCodeIndex = %d",callNode->getByteCodeIndex(),callsite->_byteCodeIndex);
+      debugTrace(tracer(),"callNode->getByteCodeIndex = %d callsite->_byteCodeIndex = %d callsite %p",callNode->getByteCodeIndex(), callsite->_byteCodeIndex, callsite);
       if (callNode->getByteCodeIndex() == callsite->_byteCodeIndex)     // we have the call
          {
+         if (callsite->_callNode != NULL)
+            {
+            debugTrace(tracer(),"findAndUpdateCallsiteInGraaph: call at callsite %p has been mapped to callNode %p", callsite, callsite->_callNode);
+            return 0;
+            }
          foundCall = true;
          break;
          }
@@ -4372,12 +4384,6 @@ TR_CallSite* TR_InlinerBase::findAndUpdateCallSiteInGraph(TR_CallStack *callStac
       return 0;
       }
 
-   //updating the fields on the callsite now that I have the info.  The rest should be filled out properly in estimatecodesize.
-   callsite->_callNode = callNode;
-   callsite->_callNodeTreeTop = tt;
-   callsite->_parent = parent;
-   callsite->_initialCalleeSymbol = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getResolvedMethodSymbol();
-
    if (foundDeadCall)
       {
       int32_t k=0;
@@ -4394,13 +4400,19 @@ TR_CallSite* TR_InlinerBase::findAndUpdateCallSiteInGraph(TR_CallStack *callStac
    if (!foundCall)
       return 0;
 
+   if (tracer()->heuristicLevel())
+     {
+     tracer()->dumpCallSite(callsite, "before findAndUpdateCallSiteInGraph for %p", callsite);
+     }
+
+   //updating the fields on the callsite now that I have the info.  The rest should be filled out properly in estimatecodesize.
+   callsite->_callNode = callNode;
+   callsite->_callNodeTreeTop = tt;
+   callsite->_parent = parent;
+   callsite->_initialCalleeSymbol = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getResolvedMethodSymbol();
+
    if (callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->isInterface() && callsite->_initialCalleeSymbol)
       debugTrace(tracer(), "findAndUpdateCallSiteInGraph: BAD: Interface call has an initialCalleeSYmbol %p for calNode %p", callsite->_initialCalleeSymbol, callNode);
-
-   if (tracer()->heuristicLevel())
-      {
-      tracer()->dumpCallSite(callsite, "before findAndUpdateCallSiteInGraph for %p", callsite);
-      }
 
    //if ilgen and localopts decided that this was a direct call
    //there isn't much sense to deal with more than one target
@@ -4509,7 +4521,6 @@ TR_CallSite* TR_InlinerBase::findAndUpdateCallSiteInGraph(TR_CallStack *callStac
 
    }
 
-
 void TR_InlinerBase::inlineFromGraph(TR_CallStack *prevCallStack, TR_CallTarget *calltarget, TR_InnerPreexistenceInfo *innerPrexInfo)
    {
    bool trace = comp()->trace(OMR::inlining);
@@ -4584,7 +4595,7 @@ void TR_InlinerBase::inlineFromGraph(TR_CallStack *prevCallStack, TR_CallTarget 
                for (int32_t i = 0; i < site->numTargets(); i++)
                   {
                   TR_CallTarget *target = site->getTarget(i);
-                  getUtil()->computePrexInfo(target);
+                  getUtil()->computePrexInfo(target, calltarget->_prexArgInfo);
                   targetsToInline.add(target);
                   }
                }
@@ -4801,6 +4812,9 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
       }
 
 
+   // We have the trees now, we can check if each argument is invariant and clear the prex arg for the ones that are not
+   getUtil()->clearArgInfoForNonInvariantArguments(calltarget, tracer());
+
    TR_InnerPreexistenceInfo *innerPrexInfo = getUtil()->createInnerPrexInfo(comp(), calleeSymbol, callStack, callNodeTreeTop, callNode, guard->_kind);
    if (calleeSymbol->mayHaveInlineableCall())
       {
@@ -4817,6 +4831,8 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
          comp()->dumpMethodTrees("after inlining while inlining", calleeSymbol);
          }
       }
+
+   getUtil()->requestAdditionalOptimizations(calltarget);
 
    if (comp()->getOption(TR_FullSpeedDebug) && !getPolicy()->mustBeInlinedEvenInDebug(calleeSymbol->getResolvedMethod(), callNodeTreeTop) && (!comp()->getOption(TR_EnableOSR) || comp()->getOption(TR_MimicInterpreterFrameShape)))
       {
@@ -4910,7 +4926,7 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
       }
 
    TR_ScratchList<TR::SymbolReference> tempList(trMemory());
-   TR_ParameterToArgumentMapper pam(callerSymbol, calleeSymbol, callNode, tempList, _availableTemps, _availableBasicBlockTemps, this);
+   TR_ParameterToArgumentMapper pam(callerSymbol, calleeSymbol, callNode, calltarget->_prexArgInfo, tempList, _availableTemps, _availableBasicBlockTemps, this);
    pam.initialize(callStack);
 
    pam.printMapping();
@@ -5419,14 +5435,6 @@ bool TR_InlinerBase::inlineCallTarget2(TR_CallStack * callStack, TR_CallTarget *
 
    updateCallersFlags(callerSymbol, calleeSymbol, _optimizer);
 
-
-   if (getUtil()->needTargetedInlining(calleeSymbol))
-      {
-      _optimizer->setRequestOptimization(OMR::methodHandleInvokeInliningGroup);
-      if (comp()->trace(OMR::inlining))
-         heuristicTrace(tracer(),"Requesting another pass of targeted inlining due to %s\n", tracer()->traceSignature(calleeSymbol));
-      }
-
    // Append the callee's catch block to the end of the caller
    //
    if (tif->firstCatchBlock() && callerCFG->getNodes().find(tif->firstCatchBlock()))
@@ -5617,7 +5625,7 @@ TR_CallSite::TR_CallSite(TR_ResolvedMethod *callerResolvedMethod,
                          TR::TreeTop *callNodeTreeTop,
                          TR::Node *parent,
                          TR::Node *callNode,
-                         TR_Method * interfaceMethod,
+                         TR::Method *interfaceMethod,
                          TR_OpaqueClassBlock *receiverClass,
                          int32_t vftSlot,
                          int32_t cpIndex,
@@ -6274,30 +6282,6 @@ TR_InlinerDelimiter::~TR_InlinerDelimiter()
    debugTrace(_tracer,"</%s>",_tag);
    }
 
-void TR_InlinerTracer::dumpPrexArgInfo(TR_PrexArgInfo* argInfo)
-   {
-   if (!argInfo || !heuristicLevel())
-      return;
-
-   traceMsg( comp(),  "<argInfo address = %p numArgs = %d>\n", argInfo, argInfo->getNumArgs());
-   for (int i = 0 ; i < argInfo->getNumArgs(); i++)
-
-      {
-      TR_PrexArgument* arg = argInfo->get(i);
-      if (arg && arg->getClass())
-         {
-         char* className = TR::Compiler->cls.classSignature(comp(), arg->getClass(), trMemory());
-         traceMsg( comp(),  "<Argument no=%d address=%p classIsFixed=%d classIsPreexistent=%d class=%p className= %s/>\n",
-         i, arg, arg->classIsFixed(), arg->classIsPreexistent(), arg->getClass(), className);
-         }
-      else
-         {
-         traceMsg( comp(),  "<Argument no=%d address=%p classIsFixed=%d classIsPreexistent=%d/>\n", i, arg, arg ? arg->classIsFixed() : 0, arg ? arg->classIsPreexistent() : 0);
-         }
-      }
-      traceMsg( comp(),  "</argInfo>\n");
-   }
-
 bool
 OMR_InlinerPolicy::willBeInlinedInCodeGen(TR::RecognizedMethod method)
    {
@@ -6368,6 +6352,81 @@ TR_PrexArgInfo *
 OMR_InlinerUtil::computePrexInfo(TR_CallTarget *target)
    {
    return NULL;
+   }
+
+/**
+ * \brief
+ *    collect arguments information for the given target and caller arg info and store into TR_CallTarget::_prexArgInfo
+ *    the default implementation does nothing
+ *
+ * \parm target
+ *    Call target whose prex info is to be computed
+ *
+ * \parm callerArgInfo
+ *    Arg info of caller to be propagated to the callee
+ */
+TR_PrexArgInfo *
+OMR_InlinerUtil::computePrexInfo(TR_CallTarget *target, TR_PrexArgInfo *callerArgInfo)
+   {
+   return NULL;
+   }
+
+/**
+ * \brief
+ *    Clear non-invariant argument arg info for target
+ *
+ * \parm target
+ *    Call target whose arg info is to be cleared for non-invariant arguments
+ *
+ * \parm tracer
+ *    Inliner tracer used for trace message
+ */
+void
+OMR_InlinerUtil::clearArgInfoForNonInvariantArguments(TR_CallTarget *target, TR_InlinerTracer* tracer)
+   {
+   if (comp()->getOption(TR_DisableInlinerArgsPropagation))
+      return;
+
+   bool tracePrex = comp()->trace(OMR::inlining) || comp()->trace(OMR::invariantArgumentPreexistence);
+   if (tracePrex)
+      traceMsg(comp(), "Clearing arg info for non invariant arguments\n");
+
+   TR::ResolvedMethodSymbol* methodSymbol = target->_calleeSymbol;
+   TR_PrexArgInfo* argInfo = target->_prexArgInfo;
+   if (!argInfo)
+      {
+      if (tracePrex)
+         traceMsg(comp(), "Prex arg info not avaiable\n");
+      return;
+      }
+
+   bool cleanedAnything = false;
+   for (TR::TreeTop * tt = methodSymbol->getFirstTreeTop(); tt; tt = tt->getNextTreeTop())
+      {
+      TR::Node* storeNode = tt->getNode()->getStoreNode();
+
+
+      if (!storeNode || !storeNode->getSymbolReference()->getSymbol()->isParm())
+         continue;
+
+      TR_ASSERT(storeNode->getSymbolReference(), "stores should have symRefs");
+      TR::ParameterSymbol*  parmSymbol = storeNode->getSymbolReference()->getSymbol()->getParmSymbol();
+      if (parmSymbol->getOrdinal() < argInfo->getNumArgs())
+         {
+         if (tracePrex)
+            traceMsg(comp(), "ARGS PROPAGATION: unsetting an arg [%i] of argInfo %p", parmSymbol->getOrdinal(), argInfo);
+         argInfo->set(parmSymbol->getOrdinal(), NULL);
+         cleanedAnything = true;
+         }
+      }
+
+   if (cleanedAnything)
+      {
+      if (tracePrex)
+         traceMsg(comp(), "ARGS PROPAGATION: argInfo %p after clear arg info for non-invariant arguments", argInfo);
+      if (tracer->heuristicLevel())
+         argInfo->dumpTrace();
+      }
    }
 
 bool
@@ -6459,4 +6518,17 @@ TR_InlinerTracer *
 OMR_InlinerUtil::getInlinerTracer(TR::Optimization *optimization)
    {
    return new (comp()->trHeapMemory()) TR_InlinerTracer(comp(),fe(),optimization);
+   }
+
+
+void
+OMR_InlinerUtil::requestAdditionalOptimizations(TR_CallTarget *calltarget)
+   {
+   // This code will be removed once the dependent down stream project is merged properly
+   if (needTargetedInlining(calltarget->_calleeSymbol))
+      {
+      inliner()->getOptimizer()->setRequestOptimization(OMR::methodHandleInvokeInliningGroup);
+      if (comp()->trace(OMR::inlining))
+         heuristicTrace(tracer(),"Requesting another pass of targeted inlining due to %s\n", tracer()->traceSignature(calltarget->_calleeSymbol));
+      }
    }

@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/IO.hpp"
@@ -627,7 +627,7 @@ TR::Block *TR::SwitchAnalyzer::peelOffTheHottestValue(TR_LinkHead<SwitchInfo> *c
 
       TR::Block *newBlock = NULL;
 
-      cmpOp = _isInt64 ? (_signed ? TR::iflcmpeq : TR::iflucmpeq) : (_signed ? TR::ificmpeq : TR::ifiucmpeq);
+      cmpOp = _isInt64 ? TR::iflcmpeq : TR::ificmpeq;
       newBlock = addIfBlock(cmpOp, topNode->_min, topNode->_target);
 
       if (trace())
@@ -960,7 +960,7 @@ TR::Block *TR::SwitchAnalyzer::binSearch(SwitchInfo *startNode, SwitchInfo *endN
       else
          {
          addGotoBlock(_defaultDest);
-         cmpOp = _isInt64 ? (_signed ? TR::iflcmpeq : TR::iflucmpeq) : (_signed ? TR::ificmpeq : TR::ifiucmpeq);
+         cmpOp = _isInt64 ? TR::iflcmpeq : TR::ificmpeq;
          return addIfBlock  (cmpOp, endNode->_max, endNode->_target);
          }
       }
@@ -1175,7 +1175,7 @@ TR::Block *TR::SwitchAnalyzer::linearSearch(SwitchInfo *start)
       {
       if (cursor->_kind == Unique)
          {
-         cmpOp = _isInt64 ? (_signed ? TR::iflcmpeq : TR::iflucmpeq) : (_signed ? TR::ificmpeq : TR::ifiucmpeq);
+         cmpOp = _isInt64 ? TR::iflcmpeq : TR::ificmpeq;
          newBlock = addIfBlock(cmpOp, cursor->_min, cursor->_target);
          }
       else if (cursor->_kind == Range)
@@ -1224,7 +1224,7 @@ TR::Block *TR::SwitchAnalyzer::addGotoBlock(TR::TreeTop *dest)
    }
 TR::Block *TR::SwitchAnalyzer::addIfBlock(TR::ILOpCodes opCode, CASECONST_TYPE val, TR::TreeTop *dest)
    {
-   TR::Node *constNode = TR::Node::create(_switch, _isInt64 ? (_signed ? TR::lconst : TR::luconst) : (_signed ? TR::iconst : TR::iuconst), 0);
+   TR::Node *constNode = TR::Node::create(_switch, _isInt64 ? TR::lconst : TR::iconst , 0);
    constNode->set64bitIntegralValue(val);
    TR::Node *node = TR::Node::createif(opCode,
                                      TR::Node::createLoad(_switch, _temp),
@@ -1265,14 +1265,9 @@ TR::Block *TR::SwitchAnalyzer::addTableBlock(SwitchInfo *dense)
    if(_switch && _switch->chkCannotOverflow())
      node->setCannotOverflow(true); // Pass on info to code gen that table will have all cases covered and not use default case
 
-   if (_signed)
-      node->setAndIncChild(0, TR::Node::create(TR::isub, 2,
-                                           (_isInt64 ? TR::Node::create(TR::l2i, 1, TR::Node::createLoad(_switch, _temp)) : TR::Node::createLoad(_switch, _temp)),
-                                           TR::Node::create(_switch, TR::iconst, 0, dense->_min)));
-   else
-      node->setAndIncChild(0, TR::Node::create(TR::iusub, 2,
-                                           (_isInt64 ? TR::Node::create(TR::l2i, 1, TR::Node::createLoad(_switch, _temp)) : TR::Node::createLoad(_switch, _temp)),
-                                           TR::Node::create(_switch, TR::iuconst, 0, dense->_min)));
+   node->setAndIncChild(0, TR::Node::create(TR::isub, 2,
+                                          (_isInt64 ? TR::Node::create(TR::l2i, 1, TR::Node::createLoad(_switch, _temp)) : TR::Node::createLoad(_switch, _temp)),
+                                          TR::Node::create(_switch, TR::iconst, 0, dense->_min)));
 
    node->setAndIncChild(1, TR::Node::createCase(_switch, _defaultDest));
 
@@ -1327,8 +1322,8 @@ int32_t *TR::SwitchAnalyzer::setupFrequencies(TR::Node *node)
    {
    if (!_haveProfilingInfo) return 0;
 
-   int8_t *targetCounts = (int8_t*)   trMemory()->allocateStackMemory(_cfg->getNextNodeNumber() * sizeof(int8_t));
-   memset (targetCounts, 0, sizeof(int8_t) * _cfg->getNextNodeNumber());
+   int32_t *targetCounts = (int32_t*)   trMemory()->allocateStackMemory(_cfg->getNextNodeNumber() * sizeof(int32_t));
+   memset (targetCounts, 0, sizeof(int32_t) * _cfg->getNextNodeNumber());
    int32_t *frequencies = (int32_t *) trMemory()->allocateStackMemory(node->getCaseIndexUpperBound() * sizeof(int32_t));
    memset  (frequencies, 0, sizeof(int32_t) * node->getCaseIndexUpperBound());
 
@@ -1348,7 +1343,7 @@ int32_t *TR::SwitchAnalyzer::setupFrequencies(TR::Node *node)
       TR::Node *caseNode = node->getChild(i);
       TR::Block *targetBlock = caseNode->getBranchDestination()->getNode()->getBlock();
       int32_t targetCount = targetCounts[targetBlock->getNumber()];
-      TR_ASSERT(targetCount != 0, "unreachle successor of switch statement");
+      TR_ASSERT_FATAL(targetCount > 0, "Successor block_%d of switch statement has non-sense successsor count", targetBlock->getNumber());
       int32_t frequency = targetBlock->getFrequency() / targetCount;
       frequencies[i] = frequency;
 

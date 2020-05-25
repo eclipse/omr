@@ -240,6 +240,12 @@ protected:
 	 */
 	virtual void processLargeAllocateStatsAfterSweep(MM_EnvironmentBase *env);
 
+	/**
+	 * compaction would change freeEntries stats, merge FreeEntryAllocateStats after compaction.
+	 * currently processLargeAllocateStatsAfterCompact() is same as processLargeAllocateStatsAfterSweep()
+	 */
+	void processLargeAllocateStatsAfterCompact(MM_EnvironmentBase *env);
+
 	virtual void postMark(MM_EnvironmentBase *env);
 
 	MM_ParallelSweepScheme*
@@ -283,7 +289,7 @@ public:
 
 	virtual bool heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress);
 	virtual bool heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress, void *lowValidAddress, void *highValidAddress);
-	virtual void heapReconfigured(MM_EnvironmentBase *env);
+	virtual void heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress);
 
 	virtual	uint32_t getGCTimePercentage(MM_EnvironmentBase *env);
 
@@ -318,6 +324,11 @@ public:
 #endif /* OMR_GC_MODRON_COMPACTION */
 
 	virtual void completeExternalConcurrentCycle(MM_EnvironmentBase *env);
+	/**
+	 * Notify any (concurrent) collector (like Concurrent Scavenger) that might block and hold VM access
+	 * that an Exclusive VM Access is to be requested so that VM access can be released
+	 */	
+	virtual void notifyAcquireExclusiveVMAccess(MM_EnvironmentBase *env);
 
 	MM_ParallelGlobalGC(MM_EnvironmentBase *env)
 		: MM_GlobalCollector()

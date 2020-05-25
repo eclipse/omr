@@ -49,6 +49,29 @@ namespace OMR
 class OMR_EXTENSIBLE TreeEvaluator
    {
    public:
+   static TR::Register *brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *brdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *srdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *irdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lrdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *frdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *drdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *swrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *bwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *iwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
    static bool instanceOfOrCheckCastNeedEqualityTest(TR::Node * castClassNode, TR::CodeGenerator *cg);
    static bool instanceOfOrCheckCastNeedSuperTest(TR::Node * castClassNode, TR::CodeGenerator *cg);
 

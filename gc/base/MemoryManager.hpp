@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,15 +94,6 @@ private:
 		return result;
 	}
 
-	/**
-	 * Check is provided page size larger then default page size from port library
-	 *
-	 * @param env environment
-	 * @param pageSize requested page size
-	 * @return true if page size is larger then default
-	 */
-	bool isLargePage(MM_EnvironmentBase* env, uintptr_t pageSize);
-
 protected:
 	/**
 	 * Provide an initialization for the class
@@ -126,6 +117,15 @@ public:
 	 * @return pointer to created instance of class
 	 */
 	static MM_MemoryManager* newInstance(MM_EnvironmentBase* env);
+
+	/**
+	 * Check is provided page size larger then default page size from port library
+	 *
+	 * @param env environment
+	 * @param pageSize requested page size
+	 * @return true if page size is larger then default
+	 */
+	bool isLargePage(MM_EnvironmentBase* env, uintptr_t pageSize);
 
 	/**
 	 * Kill this instance of the class

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 
 #include <sys/stat.h>
 #include <errno.h>
+#include <string.h>
 
 #include "omrport.h"
 #include "omrportasserts.h"
@@ -115,21 +116,25 @@ omrmmap_unmap_file(struct OMRPortLibrary *portLibrary, J9MmapHandle *handle)
 		portLibrary->mem_free_memory(portLibrary, handle);
 	}
 }
+
 intptr_t
 omrmmap_msync(struct OMRPortLibrary *portLibrary, void *start, uintptr_t length, uint32_t flags)
 {
 	Trc_PRT_mmap_msync_default_entered(start, length, flags);
 	return -1;
 }
+
 int32_t
 omrmmap_startup(struct OMRPortLibrary *portLibrary)
 {
 	return 0;
 }
+
 void
 omrmmap_shutdown(struct OMRPortLibrary *portLibrary)
 {
 }
+
 int32_t
 omrmmap_capabilities(struct OMRPortLibrary *portLibrary)
 {
@@ -156,6 +161,7 @@ int omrdiscard_data(void *address, int numFrames);
 #endif /*OMR_ENV_DATA64 */
 
 intptr_t Pgser_Release(void *address, int byteAmount);
+
 void
 omrmmap_dont_need(struct OMRPortLibrary *portLibrary, const void *startAddress, size_t length)
 {
@@ -168,7 +174,6 @@ omrmmap_dont_need(struct OMRPortLibrary *portLibrary, const void *startAddress, 
 		uintptr_t roundedStart = ROUND_UP_TO_POWEROF2((uintptr_t) startAddress, pageSize);
 		size_t roundedLength = ROUND_DOWN_TO_POWEROF2(endAddress - roundedStart, pageSize);
 		if (roundedLength >= pageSize) {
-
 			Trc_PRT_mmap_dont_need_oscall(roundedStart, roundedLength);
 
 #if defined(OMR_ENV_DATA64)
@@ -183,7 +188,3 @@ omrmmap_dont_need(struct OMRPortLibrary *portLibrary, const void *startAddress, 
 		}
 	}
 }
-
-
-
-

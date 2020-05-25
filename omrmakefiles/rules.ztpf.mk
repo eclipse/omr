@@ -96,7 +96,7 @@ endif
 ifeq (s390,$(OMR_HOST_ARCH))
     GLOBAL_CFLAGS+=$(J9M31) -fno-strict-aliasing
     GLOBAL_CXXFLAGS+=$(J9M31) -fno-strict-aliasing
-    GLOBAL_CPPFLAGS+=-DS390 -D_LONG_LONG -DJ9VM_TIERED_CODE_CACHE
+    GLOBAL_CPPFLAGS+=-DS390 -D_LONG_LONG
     ifeq (1,$(OMR_ENV_DATA64))
         GLOBAL_CPPFLAGS+=-DS39064
     endif
@@ -108,7 +108,7 @@ ifneq (,$(findstring executable,$(ARTIFACT_TYPE)))
     GLOBAL_LDFLAGS+=$(DEFAULT_LIBS)
 endif
 
-TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /ztpf/svtcur/gnu/all /ztpf/commit
+TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /zbld/svtcur/gnu/all /ztpf/commit
 
 ###
 ### Shared Libraries
@@ -200,9 +200,14 @@ TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d/noship/include)
 TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d)
 
 TPF_FLAGS += -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -ffloat-store -gdwarf-2 -Wno-format-extra-args -Wno-int-to-pointer-cast -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-write-strings
-TPF_FLAGS += -Wno-unused
+###
+### Add for gcc7 builds.
+###
+TPF_FLAGS += -Wno-unused -fno-tree-dse -fno-optimize-strlen -fabi-version=2
+TPF_FLAGS += -fno-delete-null-pointer-checks -fno-lifetime-dse -fno-optimize-strlen
+TPF_C_FLAGS := -std=gnu90
 
-GLOBAL_CFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES) -Wa,-alshd=$*.lst
+GLOBAL_CFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES) $(TPF_C_FLAGS) -Wa,-alshd=$*.lst
 GLOBAL_CXXFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES) -Wa,-alshd=$*.lst
 
 ###

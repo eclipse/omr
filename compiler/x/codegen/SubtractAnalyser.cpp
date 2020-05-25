@@ -236,7 +236,8 @@ TR::Register* TR_X86SubtractAnalyser::integerSubtractAnalyserImpl(TR::Node     *
 //
 static bool isVolatileMemoryOperand(TR::Node *node)
    {
-   if (TR::Compiler->target.isSMP() && node->getOpCode().isMemoryReference())
+   TR::Compilation *comp = TR::comp();
+   if (comp->target().isSMP() && node->getOpCode().isMemoryReference())
       {
       TR_ASSERT(node->getSymbolReference(), "expecting a symbol reference\n");
       TR::Symbol *sym = node->getSymbolReference()->getSymbol();

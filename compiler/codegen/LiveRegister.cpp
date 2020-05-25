@@ -161,11 +161,6 @@ TR_LiveRegisters::stopUsingRegister(TR::Register *reg)
 void
 TR_LiveRegisters::registerIsDead(TR::Register *reg, bool updateInterferences)
    {
-   if (comp()->getOptions()->getTraceCGOption(TR_TraceCGEvaluation))
-      {
-      getDebug()->printRegisterKilled(reg);
-      }
-
    if (!reg->isLive())
       return;
 

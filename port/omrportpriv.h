@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,6 +114,9 @@ typedef struct OMRPortLibraryGlobalData {
 	struct J9PortControlData control;
 	struct J9NLSDataCache nls_data;
 	omrthread_tls_key_t tls_key;
+#if defined(OMR_PORT_SOCKET_SUPPORT)
+	omrthread_tls_key_t socketTlsKey;
+#endif /* defined(OMR_PORT_SOCKET_SUPPORT) */
 	MUTEX tls_mutex;
 	void *buffer_list;
 	void *procSelfMap;
@@ -130,6 +133,9 @@ typedef struct OMRPortLibraryGlobalData {
 #if defined(OMR_OPT_CUDA)
 	J9CudaGlobalData cudaGlobals;
 #endif /* OMR_OPT_CUDA */
+	uintptr_t vmemEnableMadvise;					/* madvise to use Transparent HugePage (THP) for Virtual memory allocated by mmap */
+	J9SysinfoCPUTime oldestCPUTime;
+	J9SysinfoCPUTime latestCPUTime;
 } OMRPortLibraryGlobalData;
 
 /* J9SourceJ9CPUControl*/
@@ -472,6 +478,12 @@ extern J9_CFUNC uintptr_t
 omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t type);
 extern J9_CFUNC const char *
 omrsysinfo_get_CPU_architecture(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC intptr_t
+omrsysinfo_get_processor_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc);
+extern J9_CFUNC BOOLEAN
+omrsysinfo_processor_has_feature(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc, uint32_t feature);
+extern J9_CFUNC intptr_t
+omrsysinfo_processor_set_feature(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc, uint32_t feature, BOOLEAN enable);
 extern J9_CFUNC const char *
 omrsysinfo_get_OS_version(struct OMRPortLibrary *portLibrary);
 extern J9_CFUNC int32_t
@@ -506,6 +518,8 @@ extern J9_CFUNC int32_t
 omrsysinfo_env_iterator_next(struct OMRPortLibrary *portLibrary, J9SysinfoEnvIteratorState *state, J9SysinfoEnvElement *envElement);
 extern J9_CFUNC intptr_t
 omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9SysinfoCPUTime *cpuTime);
+extern J9_CFUNC intptr_t
+omrsysinfo_get_CPU_load(struct OMRPortLibrary *portLibrary, double *cpuLoad);
 extern J9_CFUNC void
 omrsysinfo_set_number_user_specified_CPUs(struct OMRPortLibrary *portLibrary, uintptr_t number);
 extern J9_CFUNC intptr_t
@@ -598,6 +612,60 @@ extern J9_CFUNC uintptr_t
 omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintptr_t *descriptor, uintptr_t flags);
 extern J9_CFUNC void
 omrsl_shutdown(struct OMRPortLibrary *portLibrary);
+
+/* J9SourceJ9Sock*/
+#if defined(OMR_PORT_SOCKET_SUPPORT)
+extern J9_CFUNC int32_t
+omrsock_startup(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC int32_t
+omrsock_getaddrinfo_create_hints(struct OMRPortLibrary *portLibrary, omrsock_addrinfo_t *hints, int32_t family, int32_t socktype, int32_t protocol, int32_t flags);
+extern J9_CFUNC int32_t
+omrsock_getaddrinfo(struct OMRPortLibrary *portLibrary, const char *node, const char *service, omrsock_addrinfo_t hints, omrsock_addrinfo_t result);
+extern J9_CFUNC int32_t
+omrsock_addrinfo_length(struct OMRPortLibrary *portLibrary, omrsock_addrinfo_t handle, uint32_t *result);
+extern J9_CFUNC int32_t
+omrsock_addrinfo_family(struct OMRPortLibrary *portLibrary, omrsock_addrinfo_t handle, uint32_t index,int32_t *result);
+extern J9_CFUNC int32_t
+omrsock_addrinfo_socktype(struct OMRPortLibrary *portLibrary, omrsock_addrinfo_t handle, uint32_t index, int32_t *result);
+extern J9_CFUNC int32_t
+omrsock_addrinfo_protocol(struct OMRPortLibrary *portLibrary, omrsock_addrinfo_t handle, uint32_t index,int32_t *result);
+extern J9_CFUNC int32_t
+omrsock_addrinfo_address(struct OMRPortLibrary *portLibrary, omrsock_addrinfo_t handle, uint32_t index, omrsock_sockaddr_t result);
+extern J9_CFUNC int32_t
+omrsock_freeaddrinfo(struct OMRPortLibrary *portLibrary, omrsock_addrinfo_t handle);
+extern J9_CFUNC int32_t
+omrsock_sockaddr_init(struct OMRPortLibrary *portLibrary, omrsock_sockaddr_t handle, int32_t family, uint8_t *addrNetworkOrder, uint16_t portNetworkOrder);
+extern J9_CFUNC int32_t
+omrsock_sockaddr_init6(struct OMRPortLibrary *portLibrary, omrsock_sockaddr_t handle, int32_t family, uint8_t *addrNetworkOrder, uint16_t portNetworkOrder, uint32_t flowinfo, uint32_t scope_id);
+extern J9_CFUNC int32_t
+omrsock_socket(struct OMRPortLibrary *portLibrary, omrsock_socket_t *sock, int32_t family, int32_t socktype, int32_t protocol);
+extern J9_CFUNC int32_t
+omrsock_bind(struct OMRPortLibrary *portLibrary, omrsock_socket_t sock, omrsock_sockaddr_t addr);
+extern J9_CFUNC int32_t
+omrsock_listen(struct OMRPortLibrary *portLibrary, omrsock_socket_t sock, int32_t backlog);
+extern J9_CFUNC int32_t
+omrsock_connect(struct OMRPortLibrary *portLibrary, omrsock_socket_t sock, omrsock_sockaddr_t addr);
+extern J9_CFUNC int32_t
+omrsock_accept(struct OMRPortLibrary *portLibrary, omrsock_socket_t serverSock, omrsock_sockaddr_t addrHandle, omrsock_socket_t *sockHandle);
+extern J9_CFUNC int32_t
+omrsock_send(struct OMRPortLibrary *portLibrary, omrsock_socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags);
+extern J9_CFUNC int32_t
+omrsock_sendto(struct OMRPortLibrary *portLibrary, omrsock_socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags, omrsock_sockaddr_t addrHandle);
+extern J9_CFUNC int32_t
+omrsock_recv(struct OMRPortLibrary *portLibrary, omrsock_socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags);
+extern J9_CFUNC int32_t
+omrsock_recvfrom(struct OMRPortLibrary *portLibrary, omrsock_socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags, omrsock_sockaddr_t addrHandle);
+extern J9_CFUNC int32_t
+omrsock_close(struct OMRPortLibrary *portLibrary, omrsock_socket_t *sock);
+extern J9_CFUNC int32_t
+omrsock_shutdown(struct OMRPortLibrary *portLibrary);
+extern J9_CFUNC uint16_t
+omrsock_htons(struct OMRPortLibrary *portLibrary, uint16_t val);
+extern J9_CFUNC uint32_t
+omrsock_htonl(struct OMRPortLibrary *portLibrary, uint32_t val);
+extern J9_CFUNC int32_t
+omrsock_inet_pton(struct OMRPortLibrary *portLibrary, int32_t addrFamily, const char *addr, uint8_t *addrNetworkOrder);
+#endif /* defined(OMR_PORT_SOCKET_SUPPORT) */
 
 /* J9SourceJ9Str*/
 extern J9_CFUNC uintptr_t

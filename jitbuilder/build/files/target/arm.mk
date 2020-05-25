@@ -27,6 +27,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/arm/codegen/ARMDisassem.cpp \
     $(JIT_OMR_DIRTY_DIR)/arm/codegen/ARMGenerateInstructions.cpp \
     $(JIT_OMR_DIRTY_DIR)/arm/codegen/OMRInstruction.cpp \
+    $(JIT_OMR_DIRTY_DIR)/arm/codegen/OMRInstructionDelegate.cpp \
     $(JIT_OMR_DIRTY_DIR)/arm/codegen/OMRMachine.cpp \
     $(JIT_OMR_DIRTY_DIR)/arm/codegen/OMRLinkage.cpp \
     $(JIT_OMR_DIRTY_DIR)/arm/codegen/ARMOperand2.cpp \

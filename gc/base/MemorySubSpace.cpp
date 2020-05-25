@@ -1052,11 +1052,9 @@ MM_MemorySubSpace::allocateGeneric(MM_EnvironmentBase* env, MM_AllocateDescripti
 	case ALLOCATION_TYPE_OBJECT:
 		result = attemptSubspace->allocateObject(env, allocateDescription, this, this, false);
 		break;
-#if defined(OMR_GC_ARRAYLETS)
 	case ALLOCATION_TYPE_LEAF:
 		result = attemptSubspace->allocateArrayletLeaf(env, allocateDescription, this, this, false);
 		break;
-#endif /* defined(OMR_GC_ARRAYLETS) */
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 	case ALLOCATION_TYPE_TLH:
 		result = attemptSubspace->allocateTLH(env, allocateDescription, objectAllocationInterface, this, this, false);
@@ -1382,16 +1380,16 @@ MM_MemorySubSpace::heapRemoveRange(MM_EnvironmentBase* env, MM_MemorySubSpace* s
  * 
  */
 void
-MM_MemorySubSpace::heapReconfigured(MM_EnvironmentBase* env)
+MM_MemorySubSpace::heapReconfigured(MM_EnvironmentBase* env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress)
 {
 	if (!_usesGlobalCollector && (NULL != _collector)) {
-		_collector->heapReconfigured(env);
+		_collector->heapReconfigured(env, reason, subspace, lowAddress, highAddress);
 	}
 
 	if (_parent) {
-		_parent->heapReconfigured(env);
+		_parent->heapReconfigured(env, reason, subspace, lowAddress, highAddress);
 	} else if (_memorySpace) {
-		_memorySpace->heapReconfigured(env);
+		_memorySpace->heapReconfigured(env, reason, subspace, lowAddress, highAddress);
 	}
 }
 

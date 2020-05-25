@@ -52,6 +52,11 @@ protected:
 public:
 	MM_GlobalCollectorDelegate *getGlobalCollectorDelegate() { return &_delegate; }
 
+
+	/*
+	 * Determine if a collector (some parent, typically the global collector) wishes to usurp any minor collection.
+	 * @return boolean indicating if the parent collector should be invoked in place of a child.
+	 */
 	virtual bool isTimeForGlobalGCKickoff();
 
 	virtual bool condYield(MM_EnvironmentBase *env, uint64_t timeSlackNanoSec)
@@ -65,11 +70,6 @@ public:
 	}
 
 	virtual void yield(MM_EnvironmentBase *env) {};
-	
-	virtual bool isStwCollectionInProgress()
-	{
-		return false;
-	}
 
 	/**
  	 * Perform any collector-specific initialization.

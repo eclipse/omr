@@ -38,13 +38,13 @@ namespace OMR { typedef OMR::ARM::MemoryReference MemoryReferenceConnector; }
 #include <stdint.h>
 #include "codegen/ARMOps.hpp"
 #include "env/jittypes.h"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 
 namespace TR { class ARMPairedRelocation; }
 namespace TR { class CodeGenerator; }
@@ -238,7 +238,7 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
    void fixupVFPOffset(TR::Node *node, TR::CodeGenerator *cg);
 #endif
 
-   void addToOffset(TR::Node * node, intptrj_t amount, TR::CodeGenerator *cg);
+   void addToOffset(TR::Node * node, intptr_t amount, TR::CodeGenerator *cg);
 
    void adjustForResolution(TR::CodeGenerator *cg);
 

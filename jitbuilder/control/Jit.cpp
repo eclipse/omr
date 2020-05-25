@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2019 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,10 @@
 #include "runtime/CodeCache.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/JBJitConfig.hpp"
+
+#if defined(AIXPPC)
+#include "p/codegen/PPCTableOfConstants.hpp"
+#endif
 
 extern TR_RuntimeHelperTable runtimeHelpers;
 extern void setupCodeCacheParameters(int32_t *, OMR::CodeCacheCodeGenCallbacks *callBacks, int32_t *numHelpers, int32_t *CCPreLoadedCodeSize);
@@ -185,18 +189,22 @@ internal_compileMethodBuilder(TR::MethodBuilder *m, void **entry)
    {
    auto rc = m->Compile(entry);
 
-#if defined(J9ZOS390)
+#if defined(AIXPPC)
    struct FunctionDescriptor
-   {
-      uint64_t environment;
+      {
       void* func;
-   };
+      void* toc;
+      void* environment;
+      };
 
    FunctionDescriptor* fd = new FunctionDescriptor();
-   fd->environment = 0;
    fd->func = *entry;
+   // TODO: There should really be a better way to get this. Usually, we would use
+   // cg->getTOCBase(), but the code generator has already been destroyed by now...
+   fd->toc = toPPCTableOfConstants(TR_PersistentMemory::getNonThreadSafePersistentInfo()->getPersistentTOC())->getTOCBase();
+   fd->environment = NULL;
 
-   *entry = (void*) fd;
+   *entry = (uint8_t*) fd;
 #endif
 
    return rc;
@@ -209,4 +217,6 @@ internal_shutdownJit()
 
    TR::CodeCacheManager &codeCacheManager = fe->codeCacheManager();
    codeCacheManager.destroy();
+
+   TR::CompilationController::shutdown();
    }

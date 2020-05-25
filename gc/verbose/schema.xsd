@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2010, 2019 IBM Corp. and others
+Copyright (c) 2010, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -656,7 +656,7 @@ xmlns:vgc="http://www.ibm.com/j9/verbosegc">
 	
 	<complexType name="region">
 		<sequence maxOccurs="1" minOccurs="1">
-			<element ref="vgc:attribute" maxOccurs="3" minOccurs="0" />
+			<element ref="vgc:attribute" maxOccurs="5" minOccurs="0" />
 		</sequence>
 	</complexType>	
 

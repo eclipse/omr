@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,9 +36,9 @@ TEST_P(SingleNodeWithName, VerifyNode) {
 
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ(GetParam().second, trees->getName());
-    ASSERT_NULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), trees->getArgs());
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -54,15 +54,15 @@ TEST(ParserTest, TwoNodesWithJustName) {
 
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
-    ASSERT_NULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), trees->getArgs());
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
     ASSERT_NOTNULL(trees->next);
 
     trees = trees->next;
     ASSERT_STREQ("otherNode", trees->getName());
-    ASSERT_NULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), trees->getArgs());
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 }
 
 TEST(ParserTest, SingleNodeWithChild) {
@@ -70,15 +70,15 @@ TEST(ParserTest, SingleNodeWithChild) {
 
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
-    ASSERT_NULL(trees->getArgs());
+    ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), trees->getArgs());
     ASSERT_NOTNULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     trees = trees->getChildren();
     ASSERT_STREQ("childNode", trees->getName());
-    ASSERT_NULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), trees->getArgs());
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 }
 
 TEST(ParserTest, NodeWithChildAndSibling) {
@@ -86,21 +86,21 @@ TEST(ParserTest, NodeWithChildAndSibling) {
 
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
-    ASSERT_NULL(trees->getArgs());
+    ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), trees->getArgs());
     ASSERT_NOTNULL(trees->getChildren());
     ASSERT_NOTNULL(trees->next);
 
     auto child = trees->getChildren();
     ASSERT_STREQ("childNode", child->getName());
-    ASSERT_NULL(child->getArgs());
-    ASSERT_NULL(child->getChildren());
-    ASSERT_NULL(child->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), child->getArgs());
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), child->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), child->next);
 
     auto sibling = trees->next;
     ASSERT_STREQ("siblingNode", sibling->getName());
-    ASSERT_NULL(sibling->getArgs());
-    ASSERT_NULL(sibling->getChildren());
-    ASSERT_NULL(sibling->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), sibling->getArgs());
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), sibling->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), sibling->next);
 }
 
 typedef std::pair<const char *, ASTValue::Integer_t> TestParamWithExpectedResultInt;
@@ -113,14 +113,14 @@ TEST_P(SingleNodeWithIntArg, VerifyNode) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("", arg->getName());
     ASSERT_EQ(ASTValue::Integer, arg->getValue()->getType());
     ASSERT_EQ(GetParam().second, arg->getValue()->getInteger());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -153,14 +153,14 @@ TEST_P(SingleNodeWithFloatArg, VerifyNode) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("", arg->getName());
     ASSERT_EQ(ASTValue::FloatingPoint, arg->getValue()->getType());
     ASSERT_EQ(GetParam().second, arg->getValue()->getFloatingPoint());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -178,14 +178,14 @@ TEST(ParserTest, SingleNodeWithStringArg) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("", arg->getName());
     ASSERT_EQ(ASTValue::String, arg->getValue()->getType());
     ASSERT_STREQ("foo", arg->getValue()->getString());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 class SingleNodeWithUnnamedArg : public testing::TestWithParam<TestParamWithExpectedResultString> {};
@@ -196,14 +196,14 @@ TEST_P(SingleNodeWithUnnamedArg, VerifyNode) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("", arg->getName());
     ASSERT_EQ(ASTValue::String, arg->getValue()->getType());
     ASSERT_STREQ(GetParam().second, arg->getValue()->getString());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -220,14 +220,14 @@ TEST(ParserTest, SingleNodeWithNamedArg) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("arg", arg->getName());
     ASSERT_EQ(ASTValue::FloatingPoint, arg->getValue()->getType());
     ASSERT_EQ(3.14, arg->getValue()->getFloatingPoint());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ParserTest, SingleNodeWithNamedIdentifierArg) {
@@ -236,14 +236,14 @@ TEST(ParserTest, SingleNodeWithNamedIdentifierArg) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("arg", arg->getName());
     ASSERT_EQ(ASTValue::String, arg->getValue()->getType());
     ASSERT_STREQ("ID", arg->getValue()->getString());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ParserTest, SingleNodeWithNamedCommandArg) {
@@ -252,14 +252,14 @@ TEST(ParserTest, SingleNodeWithNamedCommandArg) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("arg", arg->getName());
     ASSERT_EQ(ASTValue::String, arg->getValue()->getType());
     ASSERT_STREQ("@cmd", arg->getValue()->getString());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ParserTest, SingleNodeWithNamedArgAndAnonymousArg) {
@@ -268,8 +268,8 @@ TEST(ParserTest, SingleNodeWithNamedArgAndAnonymousArg) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("arg", arg->getName());
@@ -281,7 +281,7 @@ TEST(ParserTest, SingleNodeWithNamedArgAndAnonymousArg) {
     ASSERT_STREQ("", arg->getName());
     ASSERT_EQ(ASTValue::FloatingPoint, arg->getValue()->getType());
     ASSERT_EQ(6.33, arg->getValue()->getFloatingPoint());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ParserTest, SingleNodeWithNamedListArg) {
@@ -290,8 +290,8 @@ TEST(ParserTest, SingleNodeWithNamedListArg) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("arg", arg->getName());
@@ -310,7 +310,7 @@ TEST(ParserTest, SingleNodeWithNamedListArg) {
     value = value->next;
     ASSERT_EQ(ASTValue::String, value->getType());
     ASSERT_STREQ("foo", value->getString());
-    ASSERT_NULL(value->next);
+    ASSERT_EQ(reinterpret_cast<ASTValue*>(NULL), value->next);
 }
 
 TEST(ParserTest, SingleNodeWithAnonymousArgAndNamedArg) {
@@ -319,8 +319,8 @@ TEST(ParserTest, SingleNodeWithAnonymousArgAndNamedArg) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("", arg->getName());
@@ -332,7 +332,7 @@ TEST(ParserTest, SingleNodeWithAnonymousArgAndNamedArg) {
     ASSERT_STREQ("arg2", arg->getName());
     ASSERT_EQ(ASTValue::Integer, arg->getValue()->getType());
     ASSERT_EQ(2, arg->getValue()->getInteger());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ParserTest, SingleNodeWithNamedArgAndChild) {
@@ -342,19 +342,19 @@ TEST(ParserTest, SingleNodeWithNamedArgAndChild) {
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
     ASSERT_NOTNULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("arg", arg->getName());
     ASSERT_EQ(ASTValue::Integer, arg->getValue()->getType());
     ASSERT_EQ(3, arg->getValue()->getInteger());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 
     trees = trees->getChildren();
     ASSERT_STREQ("childNode", trees->getName());
-    ASSERT_NULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNodeArg*>(NULL), trees->getArgs());
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 }
 
 TEST(ParserTest, SingleNodeWithAnonymousArgAndChildWithNamedArg) {
@@ -364,25 +364,25 @@ TEST(ParserTest, SingleNodeWithAnonymousArgAndChildWithNamedArg) {
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
     ASSERT_NOTNULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("", arg->getName());
     ASSERT_EQ(ASTValue::String, arg->getValue()->getType());
     ASSERT_STREQ("bar", arg->getValue()->getString());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 
     trees = trees->getChildren();
     ASSERT_STREQ("childNode", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     arg = trees->getArgs();
     ASSERT_STREQ("arg", arg->getName());
     ASSERT_EQ(ASTValue::FloatingPoint, arg->getValue()->getType());
     ASSERT_EQ(4.0, arg->getValue()->getFloatingPoint());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ParserTest, SingleNodeWithTwoAnonymousArgs) {
@@ -391,8 +391,8 @@ TEST(ParserTest, SingleNodeWithTwoAnonymousArgs) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("", arg->getName());
@@ -404,7 +404,7 @@ TEST(ParserTest, SingleNodeWithTwoAnonymousArgs) {
     ASSERT_STREQ("", arg->getName());
     ASSERT_EQ(ASTValue::FloatingPoint, arg->getValue()->getType());
     ASSERT_EQ(3.14159, arg->getValue()->getFloatingPoint());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
 TEST(ParserTest, SingleNodeWithTwoNamedArgs) {
@@ -413,8 +413,8 @@ TEST(ParserTest, SingleNodeWithTwoNamedArgs) {
     ASSERT_NOTNULL(trees);
     ASSERT_STREQ("nodeName", trees->getName());
     ASSERT_NOTNULL(trees->getArgs());
-    ASSERT_NULL(trees->getChildren());
-    ASSERT_NULL(trees->next);
+    ASSERT_EQ(reinterpret_cast<const ASTNode*>(NULL), trees->getChildren());
+    ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 
     auto arg = trees->getArgs();
     ASSERT_STREQ("pi", arg->getName());
@@ -426,5 +426,5 @@ TEST(ParserTest, SingleNodeWithTwoNamedArgs) {
     ASSERT_STREQ("e", arg->getName());
     ASSERT_EQ(ASTValue::FloatingPoint, arg->getValue()->getType());
     ASSERT_EQ(2.71828, arg->getValue()->getFloatingPoint());
-    ASSERT_NULL(arg->next);
+    ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }

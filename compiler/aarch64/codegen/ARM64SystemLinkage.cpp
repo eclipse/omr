@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include <algorithm>
+#include <iterator>
+
 #include "codegen/ARM64SystemLinkage.hpp"
 
 #include "codegen/ARM64Instruction.hpp"
@@ -28,9 +31,79 @@
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "env/StackMemoryRegion.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
+#include "il/ParameterSymbol.hpp"
 
+uint32_t TR::ARM64SystemLinkage::_globalRegisterNumberToRealRegisterMap[] =
+   {
+   // GPRs
+   TR::RealRegister::x15,
+   TR::RealRegister::x14,
+   TR::RealRegister::x13,
+   TR::RealRegister::x12,
+   TR::RealRegister::x11,
+   TR::RealRegister::x10,
+   TR::RealRegister::x9,
+   TR::RealRegister::x8, // indirect result location register
+   TR::RealRegister::x18, // platform register
+   // callee-saved registers
+   TR::RealRegister::x28,
+   TR::RealRegister::x27,
+   TR::RealRegister::x26,
+   TR::RealRegister::x25,
+   TR::RealRegister::x24,
+   TR::RealRegister::x23,
+   TR::RealRegister::x22,
+   TR::RealRegister::x21,
+   TR::RealRegister::x20,
+   TR::RealRegister::x19,
+   // parameter registers
+   TR::RealRegister::x7,
+   TR::RealRegister::x6,
+   TR::RealRegister::x5,
+   TR::RealRegister::x4,
+   TR::RealRegister::x3,
+   TR::RealRegister::x2,
+   TR::RealRegister::x1,
+   TR::RealRegister::x0,
+
+   // FPRs
+   TR::RealRegister::v31,
+   TR::RealRegister::v30,
+   TR::RealRegister::v29,
+   TR::RealRegister::v28,
+   TR::RealRegister::v27,
+   TR::RealRegister::v26,
+   TR::RealRegister::v25,
+   TR::RealRegister::v24,
+   TR::RealRegister::v23,
+   TR::RealRegister::v22,
+   TR::RealRegister::v21,
+   TR::RealRegister::v20,
+   TR::RealRegister::v19,
+   TR::RealRegister::v18,
+   TR::RealRegister::v17,
+   TR::RealRegister::v16,
+   // callee-saved registers
+   TR::RealRegister::v15,
+   TR::RealRegister::v14,
+   TR::RealRegister::v13,
+   TR::RealRegister::v12,
+   TR::RealRegister::v11,
+   TR::RealRegister::v10,
+   TR::RealRegister::v9,
+   TR::RealRegister::v8,
+   // parameter registers
+   TR::RealRegister::v7,
+   TR::RealRegister::v6,
+   TR::RealRegister::v5,
+   TR::RealRegister::v4,
+   TR::RealRegister::v3,
+   TR::RealRegister::v2,
+   TR::RealRegister::v1,
+   TR::RealRegister::v0
+   };
 
 TR::ARM64SystemLinkage::ARM64SystemLinkage(TR::CodeGenerator *cg)
    : TR::Linkage(cg)
@@ -99,6 +172,8 @@ TR::ARM64SystemLinkage::ARM64SystemLinkage(TR::CodeGenerator *cg)
    _properties._argumentRegisters[14] = TR::RealRegister::v6;
    _properties._argumentRegisters[15] = TR::RealRegister::v7;
 
+   std::copy(std::begin(_globalRegisterNumberToRealRegisterMap), std::end(_globalRegisterNumberToRealRegisterMap), std::begin(_properties._allocationOrder));
+
    _properties._firstIntegerReturnRegister = 0;
    _properties._firstFloatReturnRegister   = 1;
 
@@ -108,9 +183,13 @@ TR::ARM64SystemLinkage::ARM64SystemLinkage(TR::CodeGenerator *cg)
    _properties._numAllocatableIntegerRegisters = 27;
    _properties._numAllocatableFloatRegisters   = 32;
 
+   _properties._preservedRegisterMapForGC   = 0x00000000; // ToDo: Determine the value
    _properties._methodMetaDataRegister      = TR::RealRegister::NoReg;
    _properties._stackPointerRegister        = TR::RealRegister::sp;
    _properties._framePointerRegister        = TR::RealRegister::x29;
+   _properties._computedCallTargetRegister  = TR::RealRegister::NoReg;
+   _properties._vtableIndexArgumentRegister = TR::RealRegister::NoReg;
+   _properties._j9methodArgumentRegister    = TR::RealRegister::NoReg;
 
    _properties._numberOfDependencyGPRegisters = 32; // To be determined
    _properties._offsetToFirstParm             = 0; // To be determined
@@ -365,6 +444,48 @@ TR::ARM64SystemLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &sta
    p->setOffset(stackIndex -= roundedSize);
    }
 
+void
+TR::ARM64SystemLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method)
+   {
+   ListIterator<TR::ParameterSymbol> paramIterator(&(method->getParameterList()));
+   TR::ParameterSymbol *paramCursor = paramIterator.getFirst();
+   int32_t numIntArgs = 0, numFloatArgs = 0;
+   const TR::ARM64LinkageProperties& properties = getProperties();
+
+   while ( (paramCursor!=NULL) &&
+           ( (numIntArgs < properties.getNumIntArgRegs()) ||
+             (numFloatArgs < properties.getNumFloatArgRegs()) ) )
+      {
+      int32_t index = -1;
+
+      switch (paramCursor->getDataType())
+         {
+         case TR::Int8:
+         case TR::Int16:
+         case TR::Int32:
+         case TR::Int64:
+         case TR::Address:
+            if (numIntArgs < properties.getNumIntArgRegs())
+               {
+               index = numIntArgs;
+               }
+            numIntArgs++;
+            break;
+
+         case TR::Float:
+         case TR::Double:
+            if (numFloatArgs < properties.getNumFloatArgRegs())
+               {
+               index = numFloatArgs;
+               }
+            numFloatArgs++;
+            break;
+         }
+
+      paramCursor->setLinkageRegisterIndex(index);
+      paramCursor = paramIterator.getNext();
+      }
+   }
 
 void
 TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor)
@@ -401,56 +522,6 @@ TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::Paramet
       cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, firstNode, stackSlot, machine->getRealRegister(TR::RealRegister::x30), cursor);
       }
 
-   // spill argument registers
-   int32_t nextIntArgReg = 0;
-   int32_t nextFltArgReg = 0;
-   ListIterator<TR::ParameterSymbol> parameterIterator(&parmList);
-   for (TR::ParameterSymbol *parameter = parameterIterator.getFirst();
-        parameter != NULL && (nextIntArgReg < getProperties().getNumIntArgRegs() || nextFltArgReg < getProperties().getNumFloatArgRegs());
-        parameter = parameterIterator.getNext())
-      {
-      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, parameter->getParameterOffset(), codeGen);
-      TR::InstOpCode::Mnemonic op;
-
-      switch (parameter->getDataType())
-         {
-         case TR::Int8:
-         case TR::Int16:
-         case TR::Int32:
-         case TR::Int64:
-         case TR::Address:
-            if (nextIntArgReg < getProperties().getNumIntArgRegs())
-               {
-               op = (parameter->getSize() == 8) ? TR::InstOpCode::strimmx : TR::InstOpCode::strimmw;
-               cursor = generateMemSrc1Instruction(cg(), op, firstNode, stackSlot, machine->getRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::x0 + nextIntArgReg)), cursor);
-               nextIntArgReg++;
-               }
-            else
-               {
-               nextIntArgReg = getProperties().getNumIntArgRegs() + 1;
-               }
-            break;
-         case TR::Float:
-         case TR::Double:
-            if (nextFltArgReg < getProperties().getNumFloatArgRegs())
-               {
-               op = (parameter->getSize() == 8) ? TR::InstOpCode::vstrimmd : TR::InstOpCode::vstrimms;
-               cursor = generateMemSrc1Instruction(cg(), op, firstNode, stackSlot, machine->getRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::v0 + nextFltArgReg)), cursor);
-               nextFltArgReg++;
-               }
-            else
-               {
-               nextFltArgReg = getProperties().getNumFloatArgRegs() + 1;
-               }
-            break;
-         case TR::Aggregate:
-            TR_ASSERT(false, "Function parameters of aggregate types are not currently supported on AArch64.");
-            break;
-         default:
-            TR_ASSERT(false, "Unknown parameter type.");
-         }
-      }
-
    // save callee-saved registers
    uint32_t offset = bodySymbol->getLocalMappingCursor();
    for (int r = TR::RealRegister::x19; r <= TR::RealRegister::x28; r++)
@@ -473,6 +544,7 @@ TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::Paramet
          offset += 8;
          }
       }
+   cursor = copyParametersToHomeLocation(cursor);
    }
 
 
@@ -813,12 +885,10 @@ TR::Register *TR::ARM64SystemLinkage::buildDirectDispatch(TR::Node *callNode)
    switch(callNode->getOpCodeValue())
       {
       case TR::icall:
-      case TR::iucall:
          retReg = dependencies->searchPostConditionRegister(
                      pp.getIntegerReturnRegister());
          break;
       case TR::lcall:
-      case TR::lucall:
       case TR::acall:
          retReg = dependencies->searchPostConditionRegister(
                      pp.getLongReturnRegister());
@@ -846,3 +916,15 @@ TR::Register *TR::ARM64SystemLinkage::buildIndirectDispatch(TR::Node *callNode)
    TR_UNIMPLEMENTED();
    return NULL;
    }
+
+
+intptr_t TR::ARM64SystemLinkage::entryPointFromCompiledMethod()
+   {
+   return reinterpret_cast<intptr_t>(cg()->getCodeStart());
+   }
+
+intptr_t TR::ARM64SystemLinkage::entryPointFromInterpretedMethod()
+   {
+   return reinterpret_cast<intptr_t>(cg()->getCodeStart());
+   }
+

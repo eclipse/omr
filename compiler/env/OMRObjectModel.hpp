@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,32 +71,32 @@ class ObjectModel
 
    int32_t maxContiguousArraySizeInBytes() { return 0; }
 
-   uintptrj_t contiguousArrayHeaderSizeInBytes() { return 0; }
+   uintptr_t contiguousArrayHeaderSizeInBytes() { return 0; }
 
-   uintptrj_t discontiguousArrayHeaderSizeInBytes() { return 0; }
+   uintptr_t discontiguousArrayHeaderSizeInBytes() { return 0; }
 
    bool isDiscontiguousArray(int32_t sizeInBytes) { return false; }
    bool isDiscontiguousArray(int32_t sizeInElements, int32_t elementSize) { return false; }
-   bool isDiscontiguousArray(TR::Compilation* comp, uintptrj_t objectPointer);
-   intptrj_t getArrayLengthInElements(TR::Compilation* comp, uintptrj_t objectPointer);
-   uintptrj_t getArrayLengthInBytes(TR::Compilation* comp, uintptrj_t objectPointer);
-   uintptrj_t getArrayElementWidthInBytes(TR::DataType type);
-   uintptrj_t getArrayElementWidthInBytes(TR::Compilation* comp, uintptrj_t objectPointer);
-   uintptrj_t decompressReference(TR::Compilation* comp, uintptrj_t compressedReference);
+   bool isDiscontiguousArray(TR::Compilation* comp, uintptr_t objectPointer);
+   intptr_t getArrayLengthInElements(TR::Compilation* comp, uintptr_t objectPointer);
+   uintptr_t getArrayLengthInBytes(TR::Compilation* comp, uintptr_t objectPointer);
+   uintptr_t getArrayElementWidthInBytes(TR::DataType type);
+   uintptr_t getArrayElementWidthInBytes(TR::Compilation* comp, uintptr_t objectPointer);
+   uintptr_t decompressReference(TR::Compilation* comp, uintptr_t compressedReference);
 
 
    int32_t compressedReferenceShiftOffset();
 
    int32_t compressedReferenceShift();
 
-   uintptrj_t offsetOfObjectVftField() { return 0; }
+   uintptr_t offsetOfObjectVftField() { return 0; }
 
    // --------------------------------------------------------------------------
    // Object shape
    //
    int32_t sizeofReferenceField();
-   intptrj_t sizeofReferenceAddress();
-   uintptrj_t elementSizeOfBooleanArray();
+   intptr_t sizeofReferenceAddress();
+   uintptr_t elementSizeOfBooleanArray();
    uint32_t getSizeOfArrayElement(TR::Node * node);
    int64_t maxArraySizeInElementsForAllocation(TR::Node *newArray, TR::Compilation *comp);
    int64_t maxArraySizeInElements(int32_t knownMinElementSize, TR::Compilation *comp);
@@ -106,10 +106,10 @@ class ObjectModel
    int32_t arrayletMask(int32_t width) { return 0; }
    int32_t arrayletLeafIndex(int32_t index, int32_t elementSize) { return 0; }
    int32_t objectAlignmentInBytes() { return 0; }
-   uintptrj_t offsetOfContiguousArraySizeField() { return 0; }
-   uintptrj_t offsetOfDiscontiguousArraySizeField() { return 0; }
-   uintptrj_t objectHeaderSizeInBytes() { return 0; }
-   uintptrj_t offsetOfIndexableSizeField() { return 0; }
+   uintptr_t offsetOfContiguousArraySizeField() { return 0; }
+   uintptr_t offsetOfDiscontiguousArraySizeField() { return 0; }
+   uintptr_t objectHeaderSizeInBytes() { return 0; }
+   uintptr_t offsetOfIndexableSizeField() { return 0; }
 
    /**
    * @brief: Returns the read barrier type of VM's GC

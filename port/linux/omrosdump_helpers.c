@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,14 +26,11 @@
  * @brief Dump formatting
  */
 
-
-
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #if defined(LINUX)
 #include <sys/prctl.h>
-#include <linux/prctl.h>
 #include <sys/resource.h>
 #endif
 #include <elf.h>
@@ -47,7 +44,7 @@
 #include "portnls.h"
 #include "omrosdump_helpers.h"
 
-#define MAX_PTR_SIZE_BYTES		8
+#define MAX_PTR_SIZE_BYTES 8
 
 static intptr_t waitCore(char *path);
 static void setChecksumMarkAllPagesWritableHeader(MarkAllPagesWritableHeader *header);
@@ -59,7 +56,7 @@ static uintptr_t findProgramHeader(struct OMRPortLibrary *portLibrary, intptr_t 
 static void copyDataIntoELFCore(struct OMRPortLibrary *portLibrary, intptr_t fd_core, uintptr_t addrSize, Elf64_Off phoff);
 static intptr_t getContentsFromProcFileSystem(struct OMRPortLibrary *portLibrary, const char *fileName, char *buffer, size_t buflen);
 static void insertSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, char *corePath);
-static intptr_t deriveCoreFileName(struct OMRPortLibrary *portLibrary, char *corePatterFormat, BOOLEAN coreUsesPID, char *baseDir, char *derivedCoreFileName, uintptr_t derivedCoreFileNameLen, pid_t pid, int signalNumber);
+static intptr_t deriveCoreFileName(struct OMRPortLibrary *portLibrary, char *corePatternFormat, BOOLEAN coreUsesPID, char *baseDir, char *derivedCoreFileName, uintptr_t derivedCoreFileNameLen, pid_t pid, int signalNumber);
 
 #ifdef DUMP_DBG
 static void printMemoryMap(struct OMRPortLibrary *portLibrary, uintptr_t addrSize);
@@ -67,22 +64,20 @@ static void printProgramHeader(struct OMRPortLibrary *portLibrary, uintptr_t add
 static void printProgramHeaders(struct OMRPortLibrary *portLibrary, intptr_t fd, uintptr_t addrSize, Elf64_Off phoff, Elf64_Half phnum);
 #endif
 
-
 /* @internal
  *
- * @param[in]	fileName	absolute path of name of file to open
- * @param[out]	buffer		user allocated buffer to write contents to
- * @param[in]	bufLen		the size of @ref buffer.
+ * @param[in]   fileName    absolute path of name of file to open
+ * @param[out]  buffer      user allocated buffer to write contents to
+ * @param[in]   bufLen      the size of @ref buffer.
  *
  * @return:
- *	1 file does not exist
- *	0 file exists and buffer contains the contents.
- *	negative value on error (in which case there was a problem looking for or opening the file).
+ *  1 file does not exist
+ *  0 file exists and buffer contains the contents.
+ *  negative value on error (in which case there was a problem looking for or opening the file).
 */
 static intptr_t
 getContentsFromProcFileSystem(struct OMRPortLibrary *portLibrary, const char *fileName, char *buffer, size_t buflen)
 {
-
 	J9FileStat j9fstat;
 	int32_t j9fstatRc;
 	intptr_t fd;
@@ -124,9 +119,9 @@ getContentsFromProcFileSystem(struct OMRPortLibrary *portLibrary, const char *fi
  *  If @ref filename is an empty string, renameDump writes in the name of the OS-generated core file.
  *
  * @param[in]
- * @param[in]	filename	user-allocated buffer of size EsMaxPath containing the desired core filename
- * @param[out]	filename	on success, the name of the generated core file, otherwise, the error message
- * @param[in]	pid			pid of process that generated the core file.
+ * @param[in]   filename    user-allocated buffer of size EsMaxPath containing the desired core filename
+ * @param[out]  filename    on success, the name of the generated core file, otherwise, the error message
+ * @param[in]   pid         pid of process that generated the core file.
  *
  * @return 0 on success, otherwise non-zero and @ref filename contains error message.
  *
@@ -144,8 +139,8 @@ renameDump(struct OMRPortLibrary *portLibrary, char *filename, pid_t pid, int si
 	BOOLEAN coreUsesPID = FALSE;
 	intptr_t procRC = -1;
 	intptr_t waitCoreRC = -1;
-	char *lastSep;
-	intptr_t createCoreFileNameRC;
+	char *lastSep = NULL;
+	intptr_t createCoreFileNameRC = 0;
 	intptr_t renameRC = -1;
 	struct stat attrBuf;
 
@@ -273,7 +268,10 @@ renameDump(struct OMRPortLibrary *portLibrary, char *filename, pid_t pid, int si
 	insertSharedAndPrivateDataSegments(portLibrary, derivedAbsoluteCorePath);
 
 	/* Rename the file as required by the specified (or default) -Xdump agent file option */
-	if (filename[0] != '\0') {
+	if ('\0' == filename[0]) {
+		/* filename is empty */
+		portLibrary->str_printf(portLibrary, filename, EsMaxPath, "%s", derivedAbsoluteCorePath);
+	} else {
 		renameRC = rename(derivedAbsoluteCorePath, filename);
 
 		if ((0 != renameRC) && (errno == EXDEV)) { /* failed with 'cross device rename error' */
@@ -295,7 +293,7 @@ renameDump(struct OMRPortLibrary *portLibrary, char *filename, pid_t pid, int si
 			portLibrary->tty_printf(portLibrary, "Warning: unable to move dump to \"%s\" across file systems (check kernel core_pattern). Using alternate file location \"%s\"\n",
 									filename, tempPath);
 			/* copy the new file destination back into the supplied filename for the RAS messages */
-			strncpy(filename, tempPath, EsMaxPath);
+			portLibrary->str_printf(portLibrary, filename, EsMaxPath, "%s", tempPath);
 			renameRC = rename(derivedAbsoluteCorePath, filename);
 		}
 
@@ -303,15 +301,10 @@ renameDump(struct OMRPortLibrary *portLibrary, char *filename, pid_t pid, int si
 			portLibrary->tty_printf(portLibrary, "Attempt to rename \"%s\" to \"%s\" failed with error: %s\n", derivedAbsoluteCorePath, filename, strerror(errno));
 			return 1;
 		}
-
-	} else {
-		/* filename was empty */
-		strncpy(filename, derivedAbsoluteCorePath, EsMaxPath);
 	}
 
 	return 0;
 }
-
 
 /*
  * @internal Parse the corePatternString following the rules from the linux man pages, replace the tokens and store the
@@ -321,43 +314,43 @@ renameDump(struct OMRPortLibrary *portLibrary, char *filename, pid_t pid, int si
  *
  * If corePatternString does not specify an absolute path and and baseDir is not empty, use the absolute path in baseDir as the base directory for the core file.
  *
- * 		%%  A single % character
- * 		%p  PID of dumped process
- * 		%u  real UID of dumped process
- * 		%g  real GID of dumped process
- * 		%s  number of signal causing dump
- * 		%t  time of dump (seconds since 0:00h, 1 Jan 1970)
- * 		%h  hostname (same as 'nodename' returned by uname(2))
- * 		%e  executable filename
+ *      %%  A single % character
+ *      %p  PID of dumped process
+ *      %u  real UID of dumped process
+ *      %g  real GID of dumped process
+ *      %s  number of signal causing dump
+ *      %t  time of dump (seconds since 0:00h, 1 Jan 1970)
+ *      %h  hostname (same as 'nodename' returned by uname(2))
+ *      %e  executable filename
  *
- * 	Note: We cannot determine the exact time of the dump, as set by the OS. If we find a %t token, and %p is also specified, we use a wildcard to
- * 		  obtain a filename match. The child process PID provides reasonable confidence that we will find the correct dump. Otherwise return failure.
+ *  Note: We cannot determine the exact time of the dump, as set by the OS. If we find a %t token, and %p is also specified, we use a wildcard to
+ *        obtain a filename match. The child process PID provides reasonable confidence that we will find the correct dump. Otherwise return failure.
  *  Note: From the man pages: "A single % at the end of the template is dropped from the core filename, as is the combination of a % followed by any character other than those listed above."
  *
  * If we cannot reasonably infer what the fileName should be, return -1
  *
  * @param[in] corePatternFormat the null-terminated string, with no line delimiters, representing the format of the core file name.
- * 									- if there was no core_pattern file, corePatternFormat should be empty string.
- * @param[in] coreUsesPID		TRUE indicates that core_uses_pid indicated that the PID should be appended to the filename
- * @param[in] baseDir			the null-terminated string indicating the absolute path (with trailing dir separator) of the base directory to use if corePatternFormat does not
- * 									specify an absolute path.
- * 									- should be empty string if no baseDirectory was specified.
+ *                                  - if there was no core_pattern file, corePatternFormat should be empty string.
+ * @param[in] coreUsesPID       TRUE indicates that core_uses_pid indicated that the PID should be appended to the filename
+ * @param[in] baseDir           the null-terminated string indicating the absolute path (with trailing dir separator) of the base directory to use if corePatternFormat does not
+ *                                  specify an absolute path.
+ *                                  - should be empty string if no baseDirectory was specified.
  *
  * @param[out] derivedCoreFileName user-allocated buffer containing the constructed absolute path.
- * 					- derivedCoreFileName will always contain a null-terminated string.
- * 					- On success, derivedCoreFileName contains the name of the core file.
- * 					- On failure, derivedCoreFileName contains a message detailing the cause.
- * @param[in]	corePathLen	the size of the buffer @ref corePath.
- * @param[in]	pid	the process ID of the child process that triggered the core file generation.
+ *                  - derivedCoreFileName will always contain a null-terminated string.
+ *                  - On success, derivedCoreFileName contains the name of the core file.
+ *                  - On failure, derivedCoreFileName contains a message detailing the cause.
+ * @param[in]   corePathLen the size of the buffer @ref corePath.
+ * @param[in]   pid the process ID of the child process that triggered the core file generation.
  */
 static intptr_t
-deriveCoreFileName(struct OMRPortLibrary *portLibrary, char *corePatterFormat, BOOLEAN coreUsesPID, char *baseDir, char *derivedCoreFileName, uintptr_t derivedCoreFileNameLen, pid_t pid, int signalNumber)
+deriveCoreFileName(struct OMRPortLibrary *portLibrary, char *corePatternFormat, BOOLEAN coreUsesPID, char *baseDir, char *derivedCoreFileName, uintptr_t derivedCoreFileNameLen, pid_t pid, int signalNumber)
 {
-	char *inCursor = corePatterFormat;
+	char *inCursor = corePatternFormat;
 	char *outCursor = derivedCoreFileName;
 	BOOLEAN corePatternSpecifiesPercentP = FALSE;
 	int numWildcards = 0;
-	intptr_t charsPrinted;
+	intptr_t charsPrinted = 0;
 	char scratchSpace[PATH_MAX];
 
 	while ('\0' != *inCursor) {
@@ -502,8 +495,8 @@ deriveCoreFileName(struct OMRPortLibrary *portLibrary, char *corePatterFormat, B
 		/* no PID in the filename, indicate unsupported dump pattern and bail out*/
 		portLibrary->str_printf(portLibrary, derivedCoreFileName, PATH_MAX, "%s", "\"%t\",\"%P\",\"%I\"  specifiers are not supported without \"%p\".");
 		return -1;
-	}	
-	
+	}
+
 	if (1 < numWildcards) {
 		portLibrary->str_printf(portLibrary, derivedCoreFileName, PATH_MAX, "%s", "only one instance of \"%t\",\"%P\", or\"%I\"  is supported.");
 		return -1;
@@ -516,27 +509,23 @@ deriveCoreFileName(struct OMRPortLibrary *portLibrary, char *corePatterFormat, B
 	}
 
 	/* if derivedCoreFileName does not specify an absolute path, use the one provided in baseDir (if there is one)
-	 * 	- check for directory separator in derivedCoreFileName */
-	if (NULL == strchr(derivedCoreFileName, '/')) {
-		if (0 != strlen(baseDir)) {
-			strncpy(scratchSpace, baseDir, PATH_MAX);
-			strncat(scratchSpace, derivedCoreFileName, PATH_MAX - (strlen(scratchSpace) + 1));
-			strncpy(derivedCoreFileName, scratchSpace, PATH_MAX);
-		}
+	 * - check for directory separator in derivedCoreFileName
+	 */
+	if (('\0' != *baseDir) && (NULL == strchr(derivedCoreFileName, '/'))) {
+		charsPrinted = portLibrary->str_printf(portLibrary, scratchSpace, PATH_MAX, "%s%s", baseDir, derivedCoreFileName);
+		memcpy(derivedCoreFileName, scratchSpace, charsPrinted + 1);
 	}
 
 	return 0;
 }
 
-
-
 /**
  * Wait for the core dump file to be written..
  *
- * @param[in] path	absolute path of the expected core file, null terminated, maximum length including null is PATH_MAX.
- *					the filename portion of the path may contain a single '*' wildcard.
+ * @param[in] path  absolute path of the expected core file, null terminated, maximum length including null is PATH_MAX.
+ *                  the filename portion of the path may contain a single '*' wildcard.
  *
- * @return intptr_t	0 if the file was found, otherwise 1 indicating timeout while looking for the file
+ * @return intptr_t 0 if the file was found, otherwise 1 indicating timeout while looking for the file
  *
  */
 static intptr_t
@@ -629,7 +618,6 @@ setChecksumMarkAllPagesWritableHeader(MarkAllPagesWritableHeader *header)
 	}
 	header->checksum = sum;
 }
-
 
 /**
  * @internal  read /proc/self/maps to determine what pages are mapped for this process.
@@ -1284,4 +1272,3 @@ insertSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, char *cor
 		portLibrary->file_close(portLibrary, fd_maps);
 	}
 }
-

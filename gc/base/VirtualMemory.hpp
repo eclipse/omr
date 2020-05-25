@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -175,6 +175,14 @@ protected:
 	MMINLINE void decrementConsumerCount()
 	{
 		_consumerCount -= 1;
+	}
+
+	/**
+	 * Returns true if double map API is available in the system and false otherwise
+	 */
+	MMINLINE bool isDoubleMapAvailable()
+	{
+		return 0 != (OMRPORT_VMEM_MEMORY_MODE_DOUBLE_MAP_AVAILABLE & _identifier.mode);
 	}
 
 public:

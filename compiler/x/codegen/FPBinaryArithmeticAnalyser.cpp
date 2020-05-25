@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
@@ -38,7 +38,7 @@
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "codegen/X86Instruction.hpp"
 #include "x/codegen/X86Ops.hpp"
 

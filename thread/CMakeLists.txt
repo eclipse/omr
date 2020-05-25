@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,7 +111,7 @@ include_directories(common)
 
 #TODO also should be able to build dynamic lib
 
-add_library(j9thr_obj OBJECT
+omr_add_library(j9thr_obj OBJECT
 	${resolvedPaths}
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9thr.c
 )
@@ -126,21 +126,20 @@ target_compile_definitions(j9thr_obj
 		$<TARGET_PROPERTY:omr_base,INTERFACE_COMPILE_DEFINITIONS>
 )
 
-if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(j9thr_obj PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-endif()
+target_enable_ddr(j9thr_obj)
+ddr_add_headers(j9thr_obj
+	${omr_SOURCE_DIR}/include_core/omrthread.h
+	${omr_SOURCE_DIR}/include_core/omrthread_generated.h
+	${omr_SOURCE_DIR}/include_core/thread_api.h
+	${omr_SOURCE_DIR}/include_core/thrtypes.h
+)
+ddr_set_add_targets(omrddr j9thr_obj)
 
-if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(j9thr_obj PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
-endif()
-
-include(exports.cmake)
-
-target_enable_ddr(j9thr_obj "${OMR_DDR_SET}")
-
-add_library(j9thrstatic STATIC
+omr_add_library(j9thrstatic STATIC
 	$<TARGET_OBJECTS:j9thr_obj>
 )
+
+include(exports.cmake)
 
 target_include_directories(j9thrstatic
 	INTERFACE

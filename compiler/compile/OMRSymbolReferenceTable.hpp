@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,13 +31,12 @@ namespace OMR { class SymbolReferenceTable; }
 namespace OMR { typedef OMR::SymbolReferenceTable SymbolReferenceTableConnector; }
 #endif
 
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 
 #include <map>
 #include <stddef.h>
 #include <stdint.h>
 #include "env/TRMemory.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "codegen/RegisterConstants.hpp"
@@ -46,9 +45,10 @@ namespace OMR { typedef OMR::SymbolReferenceTable SymbolReferenceTableConnector;
 #include "cs2/hashtab.h"
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -175,6 +175,21 @@ class SymbolReferenceTable
        *   The call is not to be codegen evaluated, it should be cleaned up before codegen.
        */
       osrFearPointHelperSymbol,
+      /** \brief
+       * 
+       * A call with this symbol marks a place where we want/need escape analysis to add heapifications for any stack allocated
+       * objects. The primary use case is to force escape of all live local objects ahead of a throw to an OSR catch block
+       * but they may also be inserted to facilitate peeking of methods under HCR or other uses. Calls to this helper should
+       * only exist while escape analysis is running
+       *
+       * \code
+       *   call <eaEscapeHelperSymbol>
+       * \endcode
+       *
+       * \note
+       *   The call is not to be codegen evaluated, it should be cleaned up by postEscapeAnalysis.
+       */
+      eaEscapeHelperSymbol,
       lowTenureAddressSymbol,    // on j9vmthread
       highTenureAddressSymbol,   // on j9vmthread
       fragmentParentSymbol,
@@ -190,6 +205,13 @@ class SymbolReferenceTable
       j9methodConstantPoolSymbol,
       startPCLinkageInfoSymbol,
       instanceShapeFromROMClassSymbol,
+
+      /** \brief Performs an equality comparison between two objects.
+       *
+       * The comparison takes two references to objects as arguments.
+       * It is up to users to define to define and implement the semantics of this operation.
+       */
+      objectEqualityComparisonSymbol,
 
       /** \brief
        *
@@ -334,6 +356,19 @@ class SymbolReferenceTable
        */
       atomicCompareAndSwapReturnValueSymbol,
 
+      /** \brief
+       *  
+       * These symbols represent placeholder calls for profiling value which will be lowered into trees later.
+       * 
+       * \code
+       *    call <jProfileValue/jProfileValueWithNullCHK>
+       *       <value to be profiled>
+       *       <table address>
+       * \endcode
+       */
+      jProfileValueSymbol, 
+      jProfileValueWithNullCHKSymbol,
+
       firstPerCodeCacheHelperSymbol,
       lastPerCodeCacheHelperSymbol = firstPerCodeCacheHelperSymbol + TR_numCCPreLoadedCode - 1,
 
@@ -444,17 +479,81 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateRuntimeHelper(TR_RuntimeHelper index, bool canGCandReturn, bool canGCandExcept, bool preservesAllRegisters);
 
    TR::SymbolReference * findOrCreateCodeGenInlinedHelper(CommonNonhelperSymbol index);
+   TR::SymbolReference * findOrCreateJProfileValuePlaceHolderSymbolRef();
+   TR::SymbolReference * findOrCreateJProfileValuePlaceHolderWithNullCHKSymbolRef();
    TR::SymbolReference * findOrCreatePotentialOSRPointHelperSymbolRef();
    TR::SymbolReference * findOrCreateOSRFearPointHelperSymbolRef();
+   TR::SymbolReference * findOrCreateEAEscapeHelperSymbolRef();
    TR::SymbolReference * findOrCreateInduceOSRSymbolRef(TR_RuntimeHelper induceOSRHelper);
 
    TR::ParameterSymbol * createParameterSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType, TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN);
    TR::SymbolReference * findOrCreateAutoSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType, bool isReference = true,
          bool isInternalPointer = false, bool reuseAuto = true, bool isAdjunct = false, size_t size = 0);
    TR::SymbolReference * createTemporary(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::DataType, bool isInternalPointer = false, size_t size = 0);
-   TR::SymbolReference * createCoDependentTemporary(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::DataType, bool isInternalPointer, size_t size,
-         TR::Symbol *coDependent, int32_t offset);
+
+   /**
+    * Create a named static symbol
+    * @param[in] owningMethodSymbol symbol of the method for which the static symbol is defined
+    * @param[in] type data type of the named static symbol
+    * @param[in] name name of the static symbol
+    * @returns the symbol reference of the created static symbol
+    */
+   TR::SymbolReference * createNamedStatic(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::DataType type, const char * name);
    TR::SymbolReference * findStaticSymbol(TR_ResolvedMethod * owningMethod, int32_t cpIndex, TR::DataType);
+
+   /** \brief
+    *     Returns a symbol reference for an entity in the source program.
+    *
+    *     Symrefs returned by this function correspond to entities that
+    *     appear in the source program. When a symref is created, it is cached
+    *     so that subsequent invocations will return the cached symref
+    *     instead of creating a new one for the same entity. Once created,
+    *     a symref can be returned by both findOrCreateShadowSymbol
+    *     and findOrFabricateShadowSymbol.
+    *
+    *  \param owningMethodSymbol
+    *     The method that owns the field for which a symbol reference needs to be created.
+    *  \param cpIndex
+    *     Constant pool index.
+    *  \param isStore
+    *     Specifies whether the shadow is generated from a store.
+    *  \return
+    *     Returns a symbol reference created for the field.
+    */
+   TR::SymbolReference * findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore);
+
+   /** \brief
+    *     Returns a symbol reference for an entity not present in the
+    *     source program.
+    *
+    *     Symrefs returned by this function do not directly correspond to
+    *     any entities that appear in the source program. Instead, they
+    *     represent entities the compiler "fabricates." When a symref is
+    *     fabricated, it is cached so that subsequent invocations will return
+    *     the cached symref instead of fabricating a new one. Once fabricated,
+    *     a symref can be returned by both findOrCreateShadowSymbol
+    *     and findOrFabricateShadowSymbol.
+    *
+    *  \param containingClass
+    *     The class that contains the field.
+    *  \param type
+    *     The data type of the field.
+    *  \param offset
+    *     The offset of the field.
+    *  \param isVolatile
+    *     Specifies whether the field is volatile.
+    *  \param isPrivate
+    *     Specifies whether the field is private.
+    *  \param isFinal
+    *     Specifies whether the field is final.
+    *  \param name
+    *     The name of the field.
+    *  \param signature
+    *     The signature of the field.
+    *  \return
+    *     Returns a symbol reference fabricated for the field.
+    */
+   TR::SymbolReference * findOrFabricateShadowSymbol(TR_OpaqueClassBlock *containingClass, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, const char * name, const char * signature);
 
    // --------------------------------------------------------------------------
    // OMR
@@ -469,7 +568,7 @@ class SymbolReferenceTable
 
    TR::SymbolReference * methodSymRefFromName(TR::ResolvedMethodSymbol *owningMethodSymbol, char *className, char *methodName, char *signature, TR::MethodSymbol::Kinds kind, int32_t cpIndex=-1);
 
-   TR::SymbolReference *createSymbolReference(TR::Symbol *sym, intptrj_t o = 0);
+   TR::SymbolReference *createSymbolReference(TR::Symbol *sym, intptr_t o = 0);
 
    TR::Symbol * findOrCreateConstantAreaSymbol();
    TR::SymbolReference * findOrCreateConstantAreaSymbolReference();
@@ -539,8 +638,8 @@ class SymbolReferenceTable
    // CG, optimizer
    TR::SymbolReference * findThisRangeExtensionSymRef(TR::ResolvedMethodSymbol *owningMethodSymbol = 0);
 
-   TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, uintptrj_t *referenceLocation);
-   TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, uintptrj_t *referenceLocation, bool isArrayWithConstantElements);
+   TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, uintptr_t *referenceLocation);
+   TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, uintptr_t *referenceLocation, bool isArrayWithConstantElements);
    TR::SymbolReference * findOrCreateSymRefWithKnownObject(TR::SymbolReference *original, TR::KnownObjectTable::Index objectIndex);
    /*
     * The public API that should be used when the caller needs a temp to hold a known object
@@ -553,6 +652,8 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateNewArrayNoZeroInitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateNewObjectSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateNewObjectNoZeroInitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
+   TR::SymbolReference * findOrCreateNewValueSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
+   TR::SymbolReference * findOrCreateNewValueNoZeroInitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateArrayStoreExceptionSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateArrayShadowSymbolRef(TR::DataType, TR::Node * baseAddress = 0);
    TR::SymbolReference * findOrCreateImmutableArrayShadowSymbolRef(TR::DataType);
@@ -587,14 +688,10 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateMonitorEntrySymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateMonitorExitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
 
-   // Z
-   TR::SymbolReference * findDLPStaticSymbolReference(TR::SymbolReference * staticSymbolReference);
-   TR::SymbolReference * findOrCreateDLPStaticSymbolReference(TR::SymbolReference * staticSymbolReference);
-
-   TR::SymbolReference * findOrCreateGenericIntShadowSymbolReference(intptrj_t offset, bool allocateUseDefBitVector = false);
-   TR::SymbolReference * createGenericIntShadowSymbolReference(intptrj_t offset, bool allocateUseDefBitVector = false);
-   TR::SymbolReference * findOrCreateGenericIntArrayShadowSymbolReference(intptrj_t offset);
-   TR::SymbolReference * findOrCreateGenericIntNonArrayShadowSymbolReference(intptrj_t offset);
+   TR::SymbolReference * findOrCreateGenericIntShadowSymbolReference(intptr_t offset, bool allocateUseDefBitVector = false);
+   TR::SymbolReference * createGenericIntShadowSymbolReference(intptr_t offset, bool allocateUseDefBitVector = false);
+   TR::SymbolReference * findOrCreateGenericIntArrayShadowSymbolReference(intptr_t offset);
+   TR::SymbolReference * findOrCreateGenericIntNonArrayShadowSymbolReference(intptr_t offset);
 
    TR::SymbolReference * findOrCreateArrayCopySymbol();
    TR::SymbolReference * findOrCreateArraySetSymbol();
@@ -606,7 +703,7 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateCounterAddressSymbolRef();
    TR::SymbolReference * findOrCreateCounterSymRef(char *name, TR::DataType d, void *address);
    TR::SymbolReference * createRefinedArrayShadowSymbolRef(TR::DataType);
-   TR::SymbolReference * createRefinedArrayShadowSymbolRef(TR::DataType, TR::Symbol *); // TODO: to be changed to a special sym ref
+   TR::SymbolReference * createRefinedArrayShadowSymbolRef(TR::DataType, TR::Symbol *, TR::SymbolReference *original); // TODO: to be changed to a special sym ref
    bool                 isRefinedArrayShadow(TR::SymbolReference *symRef);
    bool                 isImmutableArrayShadow(TR::SymbolReference *symRef);
 
@@ -627,6 +724,9 @@ class SymbolReferenceTable
    void makeSharedAliases(TR::SymbolReference *sr1, TR::SymbolReference *sr2);
    // Retrieve shared aliases bitvector for a given symbol reference
    TR_BitVector *getSharedAliases(TR::SymbolReference *sr);
+
+   // For code motion
+   TR::SymbolReference *getOriginalUnimprovedSymRef(TR::SymbolReference *symRef);
 
    protected:
    /** \brief
@@ -667,6 +767,8 @@ class SymbolReferenceTable
 
    char *strdup(const char *arg);
 
+   void rememberOriginalUnimprovedSymRef(TR::SymbolReference *improved, TR::SymbolReference *original);
+
    TR::Symbol *                       _genericIntShadowSymbol;
 
    TR::Symbol *                         _constantAreaSymbol;
@@ -683,7 +785,6 @@ class SymbolReferenceTable
    List<TR::SymbolReference>            _vtableEntrySymbolRefs;
    List<TR::SymbolReference>            _classLoaderSymbolRefs;
    List<TR::SymbolReference>            _classStaticsSymbolRefs;
-   List<TR::SymbolReference>            _classDLPStaticsSymbolRefs;
    List<TR::SymbolReference>            _debugCounterSymbolRefs;
 
    uint32_t                            _nextRegShadowIndex;
@@ -705,6 +806,14 @@ class SymbolReferenceTable
    typedef TR::typed_allocator<std::pair<int32_t const, TR_BitVector * >, TR::Allocator> AliasMapAllocator;
    typedef std::map<int32_t, TR_BitVector *, std::less<int32_t>, AliasMapAllocator> AliasMap;
    AliasMap                            *_sharedAliasMap;
+
+   // _originalUnimprovedSymRefs maps the reference number of an
+   // improved/refined symbol reference to the reference number of the original
+   // unimproved/unrefined symbol reference, which is suitable for code motion
+   // in case the improvement was due to a flow-sensitive analysis.
+   typedef TR::typed_allocator<std::pair<const int32_t, int32_t>, TR::Allocator> OriginalUnimprovedMapAlloc;
+   typedef std::map<int32_t, int32_t, std::less<int32_t>, OriginalUnimprovedMapAlloc> OriginalUnimprovedMap;
+   OriginalUnimprovedMap               _originalUnimprovedSymRefs;
 
    TR_FrontEnd *_fe;
    TR::Compilation *_compilation;

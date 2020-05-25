@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,12 +19,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "codegen/OMRTreeEvaluator.hpp"
+#include "codegen/TreeEvaluator.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
@@ -39,11 +39,11 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "ras/Debug.hpp"
@@ -428,6 +428,7 @@ TR::Register *OMR::X86::AMD64::TreeEvaluator::dbits2lEvaluator(TR::Node *node, T
          TR_OutlinedInstructionsGenerator og(slowPathLabel, node, cg);
          generateRegImm64Instruction(MOV8RegImm64, node, treg, DOUBLE_NAN, cg);
          generateLabelInstruction(JMP4, node, endLabel, cg);
+         og.endOutlinedInstructionSequence();
          }
 
          // Merge point
@@ -442,13 +443,47 @@ TR::Register *OMR::X86::AMD64::TreeEvaluator::dbits2lEvaluator(TR::Node *node, T
 
 TR::Register *OMR::X86::AMD64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
    return TR::TreeEvaluator::lstoreEvaluator(node, cg);
    }
 
-TR::Register *OMR::X86::AMD64::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *OMR::X86::AMD64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   cg->recursivelyDecReferenceCount(node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild() : node->getThirdChild());
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::X86::AMD64::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getSecondChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
+   return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
+   }
+
+TR::Register *
+OMR::X86::AMD64::TreeEvaluator::dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The wrtbar IL op represents a store with side effects.
+   // Currently we don't use the side effect node. So just evaluate it and decrement the reference count.
+   TR::Node *sideEffectNode = node->getThirdChild();
+   cg->evaluate(sideEffectNode);
+   cg->decReferenceCount(sideEffectNode);
+   // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
    return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
    }
 

@@ -190,6 +190,7 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 void
 MM_ScavengerDelegate::fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, MM_MemorySubSpaceSemiSpace *subSpaceNew)
 {
+	bool const compressed = _extensions->compressObjectReferences();
 	/* This method must be implemented if (and only if) the object header is stored in a compressed slot. in that
 	 * case the other half of the full (omrobjectptr_t sized) slot may hold a compressed object reference that
 	 * must be restored by this method.
@@ -207,7 +208,7 @@ MM_ScavengerDelegate::fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHe
 			void *topOfObject = (void *)((uintptr_t *)survivingCopyAddress + 1);
 			if (subSpaceNew->isObjectInNewSpace(survivingCopyAddress, topOfObject) || _extensions->isOld(survivingCopyAddress, topOfObject)) {
 				/* if the slot points to a reverse-forwarded object, restore the original location (in evacuate space) */
-				MM_ForwardedHeader reverseForwardedHeader(survivingCopyAddress);
+				MM_ForwardedHeader reverseForwardedHeader(survivingCopyAddress, compressed);
 				if (reverseForwardedHeader.isReverseForwardedPointer()) {
 					/* overlapped slot must be fixed up */
 					fomrobject_t fixupSlot = 0;

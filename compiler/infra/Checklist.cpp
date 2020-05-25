@@ -32,18 +32,32 @@ namespace TR
    Checklist::~Checklist()                            {      _comp->getBitVectorPool().release(_v); };
 
    NodeChecklist::NodeChecklist(TR::Compilation* c): Checklist(c) {};
-   bool NodeChecklist::contains(TR::Node* n)  { return _v->isSet(n->getGlobalIndex()); }
+   bool NodeChecklist::contains(TR::Node* n) const { return _v->isSet(n->getGlobalIndex()); }
    void NodeChecklist::add(TR::Node* n)       {        _v->set(n->getGlobalIndex()); }
    void NodeChecklist::remove(TR::Node* n)    {        _v->reset(n->getGlobalIndex()); }
-   void NodeChecklist::add(NodeChecklist &other)       {        *_v |= *(other._v); }
-   void NodeChecklist::remove(NodeChecklist &other)    { return *_v -= *(other._v); }
+   void NodeChecklist::add(const NodeChecklist &other)    {        *_v |= *(other._v); }
+   void NodeChecklist::remove(const NodeChecklist &other) { return *_v -= *(other._v); }
    bool NodeChecklist::operator==(const NodeChecklist &other) const { return *_v == *(other._v); }
+   bool NodeChecklist::contains(const NodeChecklist &other) const
+      {
+      NodeChecklist diff(_comp);
+      diff.add(other);
+      diff.remove(*this);
+      return diff.isEmpty();
+      }
 
    BlockChecklist::BlockChecklist(TR::Compilation* c): Checklist(c) {};
-   bool BlockChecklist::contains(TR::Block* b)   { return _v->isSet(b->getNumber()); }
+   bool BlockChecklist::contains(TR::Block* b) const { return _v->isSet(b->getNumber()); }
    void BlockChecklist::add(TR::Block* b)        {        _v->set(b->getNumber()); }
    void BlockChecklist::remove(TR::Block* b)     {        _v->reset(b->getNumber()); }
-   void BlockChecklist::add(BlockChecklist &other)       {        *_v |= *(other._v); }
-   void BlockChecklist::remove(BlockChecklist &other)    { return *_v -= *(other._v); }
+   void BlockChecklist::add(const BlockChecklist &other)    {        *_v |= *(other._v); }
+   void BlockChecklist::remove(const BlockChecklist &other) { return *_v -= *(other._v); }
    bool BlockChecklist::operator==(const BlockChecklist &other) const { return *_v == *(other._v); }
+   bool BlockChecklist::contains(const BlockChecklist &other) const
+      {
+      BlockChecklist diff(_comp);
+      diff.add(other);
+      diff.remove(*this);
+      return diff.isEmpty();
+      }
 }

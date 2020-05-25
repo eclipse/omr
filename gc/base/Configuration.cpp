@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -448,35 +448,27 @@ MM_Configuration::initializeGCParameters(MM_EnvironmentBase* env)
 	
 	/* TODO 108399: May need to adjust -Xmn*, -Xmo* values here if not fully specified on startup options */
 
+	Assert_MM_true(0 < extensions->gcThreadCount);
+
 	/* initialize packet lock splitting factor */
 	if (0 == extensions->packetListSplit) {
-		if (16 >= extensions->gcThreadCount) {
-			extensions->packetListSplit = extensions->gcThreadCount;
-		} else if (32 >= extensions->gcThreadCount) {
-			extensions->packetListSplit = 16 + ((extensions->gcThreadCount - 16) / 4);
-		} else {
-			extensions->packetListSplit = 20 + ((extensions->gcThreadCount - 32) / 8);
-		}
+		extensions->packetListSplit = (extensions->gcThreadCount - 1) / 8  +  1;
 	}
 
+#if defined(OMR_GC_MODRON_SCAVENGER)
 	/* initialize scan cache lock splitting factor */
 	if (0 == extensions->cacheListSplit) {
-		if (16 >= extensions->gcThreadCount) {
-			extensions->cacheListSplit = extensions->gcThreadCount;
-		} else if (32 >= extensions->gcThreadCount) {
-			extensions->cacheListSplit = 16 + ((extensions->gcThreadCount - 16) / 4);
-		} else {
-			extensions->cacheListSplit = 20 + ((extensions->gcThreadCount - 32) / 8);
-		}
+		extensions->cacheListSplit = (extensions->gcThreadCount - 1) / 8  +  1;
 	}
+#endif /* OMR_GC_MODRON_SCAVENGER */
 
 	/* initialize default split freelist split amount */
 	if (0 == extensions->splitFreeListSplitAmount) {
-	#if defined(OMR_GC_MODRON_SCAVENGER)
+#if defined(OMR_GC_MODRON_SCAVENGER)
 		if (extensions->scavengerEnabled) {
 			extensions->splitFreeListSplitAmount = (extensions->gcThreadCount - 1) / 8  +  1;
 		} else
-	#endif /* J9VM_GC_MODRON_SCAVENGER */
+#endif /* OMR_GC_MODRON_SCAVENGER */
 		{
 			OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 			extensions->splitFreeListSplitAmount = (omrsysinfo_get_number_CPUs_by_type(OMRPORT_CPU_ONLINE) - 1) / 8  +  1;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include <math.h>
 
 #include "omrcfg.h"
 #include "modronopt.h"
@@ -161,7 +162,6 @@ MM_MemorySubSpaceSemiSpace::allocationRequestFailed(MM_EnvironmentBase *env, MM_
 	return addr;
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 void *
 MM_MemorySubSpaceSemiSpace::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure)
 {
@@ -187,7 +187,6 @@ MM_MemorySubSpaceSemiSpace::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_All
 	
 	return addr;	
 }
-#endif /* OMR_GC_ARRAYLETS */
 
 void *
 MM_MemorySubSpaceSemiSpace::allocateTLH(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_ObjectAllocationInterface *objectAllocationInterface, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure)
@@ -211,6 +210,11 @@ MM_MemorySubSpaceSemiSpace::systemGarbageCollect(MM_EnvironmentBase *env, uint32
 		reportSystemGCStart(env, gcCode);
 
 		_collector->garbageCollect(env, this, NULL, gcCode, NULL, NULL, NULL);
+
+		/* Handle abort from local collect */
+		if (_extensions->isScavengerBackOutFlagRaised()) {
+			_parent->getCollector()->garbageCollect(env, this, NULL, gcCode, NULL, NULL, NULL);
+		}
 		
 		reportSystemGCEnd(env);
 		env->releaseExclusiveVMAccessForGC();
@@ -417,6 +421,13 @@ MM_MemorySubSpaceSemiSpace::initialize(MM_EnvironmentBase *env)
 	_previousBytesFlipped = getMinimumSize() / 2;
 	_tiltedAverageBytesFlipped = _previousBytesFlipped;
 	_tiltedAverageBytesFlippedDelta = _previousBytesFlipped;
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	/* we are clueless about initial allocation rate and its deviation, but small non-zero values
+	 * are still better than 0 values, to help with faster learning of real values.
+	 */
+	_avgBytesAllocatedDuringConcurrent = getMinimumSize() / 10;
+	_deviationBytesAllocatedDuringConcurrent = (float)_avgBytesAllocatedDuringConcurrent / 10;
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	
 	/* register the children */
 	registerMemorySubSpace(_memorySubSpaceSurvivor);
@@ -480,7 +491,11 @@ MM_MemorySubSpaceSemiSpace::flip(MM_EnvironmentBase *env, Flip_step step)
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 		_bytesAllocatedDuringConcurrent = _extensions->allocationStats.bytesAllocated();
 		_avgBytesAllocatedDuringConcurrent = (uintptr_t)MM_Math::weightedAverage((float)_avgBytesAllocatedDuringConcurrent,
-											 (float)(_bytesAllocatedDuringConcurrent), 0.5);
+											 (float)(_bytesAllocatedDuringConcurrent), 0.7f);
+		_deviationBytesAllocatedDuringConcurrent = ((float)_bytesAllocatedDuringConcurrent - (float)_avgBytesAllocatedDuringConcurrent);
+		_avgDeviationBytesAllocatedDuringConcurrent =
+				sqrtf(MM_Math::weightedAverage(_avgDeviationBytesAllocatedDuringConcurrent * _avgDeviationBytesAllocatedDuringConcurrent,
+												(float)_deviationBytesAllocatedDuringConcurrent * _deviationBytesAllocatedDuringConcurrent, 0.7f));
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 		break;
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
@@ -765,9 +780,14 @@ MM_MemorySubSpaceSemiSpace::checkSubSpaceMemoryPostCollectTilt(MM_EnvironmentBas
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 		if (_extensions->isConcurrentScavengerEnabled()) {
 			/* Account for mutator allocated objects in hybrid survivor/allocated during concurrent phase of Concurrent Scavenger */
-			desiredSurvivorSize += _avgBytesAllocatedDuringConcurrent * 1.2 + extensions->concurrentScavengerSlack;
+			desiredSurvivorSize += _avgBytesAllocatedDuringConcurrent * 1.1
+									 + extensions->concurrentScavengerAllocDeviationBoost * (uintptr_t)_avgDeviationBytesAllocatedDuringConcurrent
+									 + extensions->concurrentScavengerSlack;
 			if (debug) {
 				omrtty_printf("\tmutator bytesAllocated current %zu average %zu\n", _bytesAllocatedDuringConcurrent, _avgBytesAllocatedDuringConcurrent);
+				omrtty_printf("\tmutator bytesAllocated deviation current %f average %f (%f%% of average allocation)\n",
+						_deviationBytesAllocatedDuringConcurrent, _avgDeviationBytesAllocatedDuringConcurrent,
+						_avgDeviationBytesAllocatedDuringConcurrent * 100 / _avgBytesAllocatedDuringConcurrent);
 			}
 		}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
@@ -848,7 +868,7 @@ MM_MemorySubSpaceSemiSpace::checkSubSpaceMemoryPostCollectResize(MM_EnvironmentB
 			doDynamicNewSpaceSizing = false;
 		}
 
-		uint64_t intervalTime = omrtime_hires_delta(_lastScavengeEndTime, extensions->scavengerStats._endTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS);
+		uint64_t intervalTime = omrtime_hires_delta(_lastScavengeEndTime, extensions->scavengerStats._endTime, OMRPORT_TIME_DELTA_IN_MICROSECONDS);
 
 		if(0 == intervalTime) {
 			if(debug) {
@@ -857,7 +877,7 @@ MM_MemorySubSpaceSemiSpace::checkSubSpaceMemoryPostCollectResize(MM_EnvironmentB
 			doDynamicNewSpaceSizing = false;
 		}
 
-		uint64_t scavengeTime = omrtime_hires_delta(extensions->scavengerStats._startTime, extensions->scavengerStats._endTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS );
+		uint64_t scavengeTime = omrtime_hires_delta(extensions->scavengerStats._startTime, extensions->scavengerStats._endTime, OMRPORT_TIME_DELTA_IN_MICROSECONDS );
 
 		if(0 == scavengeTime) {
 			if(debug) {

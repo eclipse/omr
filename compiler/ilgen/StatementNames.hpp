@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #ifndef OMR_STATEMENTNAMES_INCL
 #define OMR_STATEMENTNAMES_INCL
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace OMR
 {
@@ -116,6 +116,7 @@ static const char * const STATEMENT_UNSIGNEDSHIFTR               = "UnsignedShif
 static const char * const STATEMENT_RETURN                       = "Return";
 static const char * const STATEMENT_RETURNVALUE                  = "ReturnValue";
 static const char * const STATEMENT_IFTHENELSE                   = "IfThenElse";
+static const char * const STATEMENT_SELECT                       = "Select";
 static const char * const STATEMENT_IFCMPEQUALZERO               = "IfCmpEqualZero";
 static const char * const STATEMENT_IFCMPNOTEQUALZERO            = "IfCmpNotEqualZero";
 static const char * const STATEMENT_IFCMPNOTEQUAL                = "IfCmpNotEqual";

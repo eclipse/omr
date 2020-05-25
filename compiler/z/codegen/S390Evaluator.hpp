@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,8 +125,8 @@ TR::Instruction* generateS390ImmToRegister(TR::CodeGenerator * cg,
 TR::Instruction* generateLoad32BitConstant(TR::CodeGenerator* cg, TR::Node* node, int32_t value, TR::Register* targetRegister, bool canSetConditionCode, TR::Instruction* cursor = NULL, TR::RegisterDependencyConditions* dependencies = NULL, TR::Register* literalPoolRegister = NULL);
 
 TR::Instruction * genLoadLongConstant(TR::CodeGenerator *cg, TR::Node *node, int64_t value, TR::Register *targetRegister, TR::Instruction *cursor=NULL,TR::RegisterDependencyConditions *cond = 0, TR::Register *base = 0);
-TR::Instruction * genLoadAddressConstant(TR::CodeGenerator *cg, TR::Node *node, uintptrj_t value, TR::Register *targetRegister, TR::Instruction *cursor=NULL,TR::RegisterDependencyConditions *cond = 0, TR::Register *base = 0);
-TR::Instruction * genLoadAddressConstantInSnippet(TR::CodeGenerator *cg, TR::Node *node, uintptrj_t value, TR::Register *targetRegister, TR::Instruction *cursor=NULL,TR::RegisterDependencyConditions *cond = 0, TR::Register *base = 0, bool isPICCandidate=false);
+TR::Instruction * genLoadAddressConstant(TR::CodeGenerator *cg, TR::Node *node, uintptr_t value, TR::Register *targetRegister, TR::Instruction *cursor=NULL,TR::RegisterDependencyConditions *cond = 0, TR::Register *base = 0);
+TR::Instruction * genLoadAddressConstantInSnippet(TR::CodeGenerator *cg, TR::Node *node, uintptr_t value, TR::Register *targetRegister, TR::Instruction *cursor=NULL,TR::RegisterDependencyConditions *cond = 0, TR::Register *base = 0, bool isPICCandidate=false);
 
 TR::MemoryReference * sstoreHelper(TR::Node * node, TR::CodeGenerator * cg, bool isReversed=false);
 TR::MemoryReference * istoreHelper(TR::Node * node, TR::CodeGenerator * cg, bool isReversed=false);

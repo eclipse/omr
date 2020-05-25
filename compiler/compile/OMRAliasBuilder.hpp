@@ -33,6 +33,7 @@ namespace OMR { typedef OMR::AliasBuilder AliasBuilderConnector; }
 
 #include "compile/Method.hpp"
 #include "env/TRMemory.hpp"
+#include "il/Node.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Array.hpp"
 #include "infra/List.hpp"

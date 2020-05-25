@@ -47,7 +47,7 @@
 #ifndef TR_SYMBOL_INCL
 #define TR_SYMBOL_INCL
 
-#include "il/symbol/OMRSymbol.hpp"
+#include "il/OMRSymbol.hpp"
 
 #include <stdint.h>
 #include "il/DataTypes.hpp"

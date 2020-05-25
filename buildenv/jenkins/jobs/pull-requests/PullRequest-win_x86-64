@@ -1,8 +1,8 @@
 pipeline {
     agent{label 'Windows && x86'}
     environment {
-        GTEST_FILTER="-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended:PortSysinfoTest.sysinfo_test0:PortSysinfoTest.sysinfo_test_get_tmp3:ThreadExtendedTest.TestOtherThreadCputime"
-        GTEST_COLOR="1"
+        GTEST_FILTER="-*dump_test_create_dump_*:*NumaSetAffinity:*NumaSetAffinitySuspended:PortSysinfoTest.sysinfo_test_get_tmp3:ThreadExtendedTest.TestOtherThreadCputime"
+        GTEST_COLOR="0"
     }
     stages {
         stage('Get Sources') {
@@ -31,6 +31,7 @@ pipeline {
                     dir('build') {
                         echo "Sanity Test..."
                         sh'''ctest -V -C Debug -j1'''
+                        junit '**/*results.xml'
                     }
                 }
             }

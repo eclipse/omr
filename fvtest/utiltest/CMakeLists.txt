@@ -19,7 +19,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-add_executable(omrutiltest
+omr_add_executable(omrutiltest
 	main.cpp
 )
 
@@ -40,4 +40,4 @@ endif()
 
 set_property(TARGET omrutiltest PROPERTY FOLDER fvtest)
 
-add_test(NAME utiltest COMMAND omrutiltest)
+add_test(NAME utiltest COMMAND omrutiltest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrutiltest-results.xml)

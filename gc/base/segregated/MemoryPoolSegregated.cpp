@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,9 +29,7 @@
 #include <string.h>
 
 #include "AllocateDescription.hpp"
-#if defined(OMR_GC_ARRAYLETS)
 #include "ArrayletObjectModel.hpp"
-#endif /* OMR_GC_ARRAYLETS */
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
@@ -123,7 +121,6 @@ MM_MemoryPoolSegregated::moveInUseToSweep(MM_EnvironmentBase *env)
 	_regionPool->moveInUseToSweep(env);
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 void*
 MM_MemoryPoolSegregated::allocateChunkedArray(MM_EnvironmentBase *env, MM_AllocateDescription *allocDesc, MM_AllocationContextSegregated *ac)
 {
@@ -142,6 +139,7 @@ MM_MemoryPoolSegregated::allocateChunkedArray(MM_EnvironmentBase *env, MM_Alloca
 		fomrobject_t *arrayoidPtr = _extensions->indexableObjectModel.getArrayoidPointer(spine);
 		Assert_MM_true(totalBytes >= spineBytes);
 		uintptr_t bytesRemaining = totalBytes - spineBytes;
+		GC_SlotObject arrayletSlotObject(env->getOmrVM(), arrayoidPtr);
 		for (uintptr_t i=0; i<numberArraylets; i++) {
 			uintptr_t* arraylet = NULL;
 			if (0 < bytesRemaining) {
@@ -150,9 +148,9 @@ MM_MemoryPoolSegregated::allocateChunkedArray(MM_EnvironmentBase *env, MM_Alloca
 					/* allocation failed; release all storage include spine. */
 					env->getAllocationContext()->flush(env);
 	
+					GC_SlotObject backoutSlotObject(env->getOmrVM(), arrayoidPtr);
 					for (uintptr_t j=0; j<i; j++) {
-						GC_SlotObject slotObject(env->getOmrVM(), &arrayoidPtr[j]);
-						arraylet = (uintptr_t*)slotObject.readReferenceFromSlot();
+						arraylet = (uintptr_t*)backoutSlotObject.readReferenceFromSlot();
 						
 						MM_HeapRegionDescriptorSegregated *region = (MM_HeapRegionDescriptorSegregated *)regionManager->tableDescriptorForAddress(arraylet);
 						region->clearArraylet(region->whichArraylet(arraylet, arrayletLeafLogSize));
@@ -160,6 +158,7 @@ MM_MemoryPoolSegregated::allocateChunkedArray(MM_EnvironmentBase *env, MM_Alloca
 						 * their un-allocation
 						 */
 						region->addBytesFreedToArrayletBackout(env);
+						backoutSlotObject.addToSlotAddress(1);
 					}
 					MM_HeapRegionDescriptorSegregated *region = (MM_HeapRegionDescriptorSegregated *)regionManager->tableDescriptorForAddress((uintptr_t *)spine);
 					if (region->isSmall()) {
@@ -183,8 +182,8 @@ MM_MemoryPoolSegregated::allocateChunkedArray(MM_EnvironmentBase *env, MM_Alloca
 				 */
 				Assert_MM_true(i == numberArraylets - 1);
 			}
-			GC_SlotObject slotObject(env->getOmrVM(), &arrayoidPtr[i]);
-			slotObject.writeReferenceToSlot((omrobjectptr_t)arraylet);
+			arrayletSlotObject.writeReferenceToSlot((omrobjectptr_t)arraylet);
+			arrayletSlotObject.addToSlotAddress(1);
 			bytesRemaining = MM_Math::saturatingSubtract(bytesRemaining, arrayletLeafSize);
 		}
 	}
@@ -203,7 +202,6 @@ MM_MemoryPoolSegregated::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_Alloca
 	
 	return allocationContext->allocateArraylet(env, spine);
 }
-#endif /* OMR_GC_ARRAYLETS */
 
 /**
  * @todo Provide function documentation
@@ -214,7 +212,6 @@ MM_MemoryPoolSegregated::allocateObject(MM_EnvironmentBase *env, MM_AllocateDesc
 	void *result = NULL;
 	MM_AllocationContextSegregated *allocationContext = (MM_AllocationContextSegregated *)env->getAllocationContext();
 
-#if defined(OMR_GC_ARRAYLETS)
 	if (allocDesc->isArrayletSpine()) {
 		result = (void *) allocateContiguous(env, allocDesc, allocationContext);
 	} else if (allocDesc->isChunkedArray()) {
@@ -222,9 +219,6 @@ MM_MemoryPoolSegregated::allocateObject(MM_EnvironmentBase *env, MM_AllocateDesc
 	} else {
 		result = (void *) allocateContiguous(env, allocDesc, allocationContext);
 	}
-#else /* defined(OMR_GC_ARRAYLETS) */
-	result = (void *) allocateContiguous(env, allocDesc, allocationContext);
-#endif /* defined(OMR_GC_ARRAYLETS) */
 	return result;
 }
 
@@ -329,10 +323,9 @@ MM_MemoryPoolSegregated::getActualFreeMemorySize()
 {
 	uintptr_t single = 0;
 	uintptr_t multi = 0;
-	uintptr_t maxMulti = 0;
 	uintptr_t coalesce = 0;
 	
-	_regionPool->countFreeRegions(&single, &multi, &maxMulti, &coalesce);
+	_regionPool->countFreeRegions(&single, &multi, &coalesce);
 	
 	return (single + multi + coalesce) * _extensions->getHeap()->getHeapRegionManager()->getRegionSize();
 }

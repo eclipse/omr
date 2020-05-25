@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,13 +107,14 @@ public:
 	{
 		OMRPORT_ACCESS_FROM_OMRVM(env->getOmrVM());
 		OMR_VM_Example *omrVM = (OMR_VM_Example *)env->getOmrVM()->_language_vm;
+		bool const compressed = env->compressObjectReferences();
 		if (NULL != omrVM->objectTable) {
 			if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
 				J9HashTableState state;
 				ObjectEntry *objectEntry = (ObjectEntry *)hashTableStartDo(omrVM->objectTable, &state);
 				while (NULL != objectEntry) {
 					if (_scavenger->isObjectInEvacuateMemory(objectEntry->objPtr)) {
-						MM_ForwardedHeader fwdHeader(objectEntry->objPtr);
+						MM_ForwardedHeader fwdHeader(objectEntry->objPtr, compressed);
 						if (fwdHeader.isForwardedPointer()) {
 							objectEntry->objPtr = fwdHeader.getForwardedObject();
 						} else {

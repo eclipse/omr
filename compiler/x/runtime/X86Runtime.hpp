@@ -41,6 +41,20 @@ inline unsigned long long _xgetbv(unsigned int ecx)
    }
 #endif /* defined(OMR_OS_WINDOWS) */
 
+/**
+ * @brief maskProcessorFlags
+ * @param pBuffer
+ *
+ * Masks out the processor features the compiler does not
+ * care about.
+ */
+inline void maskProcessorFlags(TR_X86CPUIDBuffer* pBuffer)
+   {
+   pBuffer->_featureFlags  &= getFeatureFlagsMask();
+   pBuffer->_featureFlags2 &= getFeatureFlags2Mask();
+   pBuffer->_featureFlags8 &= getFeatureFlags8Mask();
+   }
+
 char* feGetEnv(const char*);
 inline bool jitGetCPUID(TR_X86CPUIDBuffer* pBuffer)
    {
@@ -73,14 +87,20 @@ inline bool jitGetCPUID(TR_X86CPUIDBuffer* pBuffer)
       pBuffer->_featureFlags8 = CPUInfo[EBX];
 
       // Check for XSAVE
-      if(pBuffer->_featureFlags2 & 0x08000000) // OSXSAVE
+      if(pBuffer->_featureFlags2 & TR_OSXSAVE)
          {
          if(((6 & _xgetbv(0)) != 6) || feGetEnv("TR_DisableAVX")) // '6' = mask for XCR0[2:1]='11b' (XMM state and YMM state are enabled)
             {
             // Unset OSXSAVE if not enabled via CR0
-            pBuffer->_featureFlags2 &= ~0x08000000; // OSXSAVE
+            pBuffer->_featureFlags2 &= ~TR_OSXSAVE;
             }
          }
+
+      /* Mask out the bits the compiler does not care about.
+       * This is necessary for relocatable compilations; without
+       * this step, validations might fail because of mismatches
+       * in unused hardware features */
+      maskProcessorFlags(pBuffer);
       return true;
       }
    else

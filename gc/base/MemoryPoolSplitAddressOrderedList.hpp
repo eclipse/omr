@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,6 +82,7 @@ private:
 
 	MMINLINE MM_HeapLinkedFreeHeader* getReservedFreeEntry()
 	{
+		bool const compressed = compressObjectReferences();
 		MM_HeapLinkedFreeHeader* freeEntry = NULL;
 		if (_reservedFreeEntryAvaliable) {
 			Assert_MM_true(_heapFreeListCount > _reservedFreeListIndex);
@@ -89,7 +90,7 @@ private:
 			if (NULL == _previousReservedFreeEntry) {
 				freeEntry = _heapFreeLists[_reservedFreeListIndex]._freeList;
 			} else {
-				freeEntry = _previousReservedFreeEntry->getNext();
+				freeEntry = _previousReservedFreeEntry->getNext(compressed);
 			}
 			Assert_MM_true(_reservedFreeEntrySize == freeEntry->getSize());
 		}
@@ -98,13 +99,14 @@ private:
 
 	MMINLINE  bool	reservedFreeEntryConsistencyCheck()
 	{
+		bool const compressed = compressObjectReferences();
 		bool ret = true;
 		if (_reservedFreeEntryAvaliable) {
 			MM_HeapLinkedFreeHeader* freeEntry = NULL;
 			if (NULL == _previousReservedFreeEntry) {
 				freeEntry = _heapFreeLists[_reservedFreeListIndex]._freeList;
 			} else {
-				freeEntry = _previousReservedFreeEntry->getNext();
+				freeEntry = _previousReservedFreeEntry->getNext(compressed);
 			}
 			ret = (_reservedFreeEntrySize == freeEntry->getSize());
 		}
@@ -115,13 +117,14 @@ private:
 	 */
 	MMINLINE bool isCurrentReservedFreeEntry(MM_HeapLinkedFreeHeader* curFreeEntry, uintptr_t curFreeList)
 	{
+		bool const compressed = compressObjectReferences();
 		bool retValue = (curFreeList == _reservedFreeListIndex);
 		
 		if (retValue) {
 			if (NULL == _previousReservedFreeEntry) {
 				retValue = (_heapFreeLists[curFreeList]._freeList == curFreeEntry);
 			} else {
-				retValue = (_previousReservedFreeEntry->getNext() == curFreeEntry);
+				retValue = (_previousReservedFreeEntry->getNext(compressed) == curFreeEntry);
 			}
 		}
 		

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,13 +32,12 @@
 #include "compile/Compilation.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 
-namespace TR { class S390JNICallDataSnippet; }
 namespace TR { class Block; }
 namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
@@ -116,11 +115,11 @@ class SystemLinkage : public TR::Linkage
       }
 
    virtual void generateInstructionsForCall(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
-         intptrj_t targetAddress, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
-         TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint = true);
+         intptr_t targetAddress, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
+         TR::Snippet * callDataSnippet, bool isJNIGCPoint = true);
 
    virtual TR::Register * callNativeFunction(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
-      intptrj_t targetAddress, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel, TR::S390JNICallDataSnippet * jniCallDataSnippet,
+      intptr_t targetAddress, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel, TR::Snippet * callDataSnippet,
       bool isJNIGCPoint = true);
 
    virtual TR::Register *
@@ -150,6 +149,34 @@ class SystemLinkage : public TR::Linkage
    virtual TR::RealRegister::RegNum getAlternateStackPointerRegister()   { return _alternateStackPointerRegister; }
    virtual TR::RealRegister *getAlternateStackPointerRealRegister() {return getRealRegister(_alternateStackPointerRegister);}
    virtual void initParamOffset(TR::ResolvedMethodSymbol * method, int32_t stackIndex, List<TR::ParameterSymbol> *parameterList=0);
+
+   /**
+    * @brief Provides the entry point in a method to use when that method is invoked
+    *        from a method compiled with the same linkage.
+    *
+    * @details
+    *    When asked on the method currently being compiled, this API will return 0 if
+    *    asked before code memory has been allocated.
+    *
+    *    The compiled method entry point may be the same as the interpreter entry point.
+    *
+    * @return The entry point for compiled methods to use; 0 if the entry point is unknown
+    */
+   virtual intptr_t entryPointFromCompiledMethod();
+
+   /**
+    * @brief Provides the entry point in a method to use when that method is invoked
+    *        from an interpreter using the same linkage.
+    *
+    * @details
+    *    When asked on the method currently being compiled, this API will return 0 if
+    *    asked before code memory has been allocated.
+    *
+    *    The compiled method entry point may be the same as the interpreter entry point.
+    *
+    * @return The entry point for interpreted methods to use; 0 if the entry point is unknown
+    */
+   virtual intptr_t entryPointFromInterpretedMethod();
 
    protected:
 

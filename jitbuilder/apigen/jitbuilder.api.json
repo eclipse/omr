@@ -1374,6 +1374,16 @@
                     {"name":"condition","type":"IlValue"}
                     ]
                 },
+                { "name": "Select"
+                , "overloadsuffix": ""
+                , "flags": []
+                , "return": "IlValue"
+                , "parms": [
+                    {"name":"condition","type":"IlValue"},
+                    {"name":"trueValue","type":"IlValue"},
+                    {"name":"falseValue","type":"IlValue"}
+                    ]
+                },
                 { "name": "ForLoop"
                 , "overloadsuffix": ""
                 , "flags": []
@@ -1458,7 +1468,7 @@
                 , "flags": []
                 , "return": "none"
                 , "parms": [
-                    {"name":"selectionVar","type":"constString"},
+                    {"name":"selectorValue","type":"IlValue"},
                     {"name":"defaultBuilder","type":"IlBuilder","attributes":["in_out"]},
                     {"name":"numCases","type":"int32"},
                     {"name":"cases","type":"JBCase","attributes":["array","can_be_vararg"],"array-len":"numCases"}
@@ -1469,9 +1479,9 @@
                 , "flags": []
                 , "return": "none"
                 , "parms": [
-                    {"name":"selectionVar","type":"constString"},
+                    {"name":"selectorValue","type":"IlValue"},
                     {"name":"defaultBuilder","type":"IlBuilder","attributes":["in_out"]},
-                    {"name":"generateBoundsCheck","type":"boolean"},
+                    {"name": "generateBoundsCheck", "type": "boolean"},
                     {"name":"numCases","type":"int32"},
                     {"name":"cases","type":"JBCase","attributes":["array","can_be_vararg"],"array-len":"numCases"}
                     ]
@@ -1645,6 +1655,16 @@
                 , "parms": [
                     {"name":"name","type":"constString"},
                     {"name":"type","type":"IlType"}
+                    ]
+                },
+		{ "name": "DefineGlobal"
+                , "overloadsuffix": ""
+                , "flags": []
+                , "return": "none"
+                , "parms": [
+                    {"name":"name","type":"constString"},
+                    {"name":"type","type":"IlType"},
+                    {"name":"location","type":"pointer"}
                     ]
                 },
                 { "name": "DefineMemory"
@@ -2220,7 +2240,7 @@
                 , "return": "none"
                 , "parms": [
                     {"name":"b","type":"IlBuilder"},
-                    {"name":"amount","type":"int64"}
+                    {"name":"amount","type":"unsignedInteger"}
                     ]
                 },
                 { "name": "Load"

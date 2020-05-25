@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,7 @@ class OMR_EXTENSIBLE Snippet : public OMR::Snippet
    flags16_t  _zflags;
 
    /** For trace files: Snippet Target Address (addr of helper method/trampoline). */
-   intptrj_t  _snippetDestAddr;
+   intptr_t  _snippetDestAddr;
 
    public:
 
@@ -102,8 +102,8 @@ class OMR_EXTENSIBLE Snippet : public OMR::Snippet
    int8_t setPadBytes(int8_t numOfBytes) { return _pad_bytes=numOfBytes; }
    int8_t getPadBytes() { return _pad_bytes; }
 
-   intptrj_t setSnippetDestAddr(intptrj_t addr) {return _snippetDestAddr = addr;}
-   intptrj_t getSnippetDestAddr()               {return _snippetDestAddr;}
+   intptr_t setSnippetDestAddr(intptr_t addr) {return _snippetDestAddr = addr;}
+   intptr_t getSnippetDestAddr()               {return _snippetDestAddr;}
 
    uint8_t *generatePICBinary(TR::CodeGenerator *, uint8_t *, TR::SymbolReference *);
    uint32_t getPICBinaryLength(TR::CodeGenerator *);

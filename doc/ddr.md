@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2018 IBM Corp. and others
+Copyright (c) 2016, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,8 +62,8 @@ Make sure that OMR was configured to output debug information (Enabled by
 default, or pass --enable-debug as above)
 
 ```sh
-find -name "*.dbg" >filelist
-make -f ddr_artifacts.mk TOP_SRCDIR=. DBG_FILE_LIST=./filelist
+find -name "*.debuginfo" >filelist
+make -f ddr_artifacts.mk TOP_SRCDIR=. DBG_FILE_LIST=filelist
 ```
 
 ## Using DDR for other projects
@@ -75,5 +75,5 @@ other artifacts, such as libraries, you will need to add them as well.
 You need to call a special makefile, which will run ddrgen on your project.
 
 ```sh
-make -f omr/ddr_artifacts.mk TOP_SRCDIR=. DBG_FILE_LIST=./<filelist>
+make -f omr/ddr_artifacts.mk TOP_SRCDIR=. DBG_FILE_LIST=filelist
 ```

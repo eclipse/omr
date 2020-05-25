@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,11 +21,12 @@
 
 #ifndef JITTEST_HPP
 #define JITTEST_HPP
-
 #include <gtest/gtest.h>
 #include <vector>
 #include <stdexcept>
 #include <iostream>
+#include <cstring>
+#include <cmath>
 #include "control/Options.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "ilgen/MethodBuilder.hpp"
@@ -36,6 +37,7 @@
 #define ASSERT_NOTNULL(pointer) ASSERT_TRUE(NULL != (pointer))
 #define EXPECT_NULL(pointer) EXPECT_EQ(NULL, (pointer))
 #define EXPECT_NOTNULL(pointer) EXPECT_TRUE(NULL != (pointer))
+
 
 #define TRIL(code) #code
 
@@ -250,7 +252,7 @@ class JitOptTest : public JitTest
 template <typename L, typename R>
 std::vector<std::tuple<typename L::value_type, typename R::value_type>> combine(L l, R r)
    {
-   auto v = std::vector<std::tuple<typename L::value_type, typename R::value_type>>{};
+   auto v = std::vector<std::tuple<typename L::value_type, typename R::value_type>>();
    v.reserve((l.end() - l.begin())*(r.end() - r.begin()));
    for (auto i = l.begin(); i != l.end(); ++i)
       for (auto j = r.begin(); j != r.end(); ++j)
@@ -276,10 +278,10 @@ std::vector<std::tuple<typename L::value_type, typename R::value_type>> combine(
  *
  */
 template <typename L, typename R>
-std::vector<std::tuple<L, R>> combine(std::initializer_list<L> l, std::initializer_list<R> r)
+std::vector<std::tuple<L, R>> combine(std::vector<L> l, std::vector<R> r)
    {
-   auto v = std::vector<std::tuple<L, R>>{};
-   v.reserve((l.end() - l.begin())*(r.end() - r.begin()));
+   auto v = std::vector<std::tuple<L, R>>();
+   v.reserve(l.size() * r.size());
    for (auto i = l.begin(); i != l.end(); ++i)
       for (auto j = r.begin(); j != r.end(); ++j)
          v.push_back(std::make_tuple(*i, *j));
@@ -305,6 +307,7 @@ template <typename T> const T one_value() { return static_cast<T>(1); }
 template <typename T> const T negative_one_value() { return static_cast<T>(-1); }
 template <typename T> const T positive_value() { return static_cast<T>(42); }
 template <typename T> const T negative_value() { return static_cast<T>(-42); }
+template <typename T> const T two_square_value() { return static_cast<T>(64); }
 
 /**
  * @brief Convenience function returning possible test inputs of the specified type
@@ -317,6 +320,7 @@ std::vector<T> const_values()
                       negative_one_value<T>(),
                       positive_value<T>(),
                       negative_value<T>(),
+                      two_square_value<T>(),
                       std::numeric_limits<T>::min(),
                       std::numeric_limits<T>::max(),
                       static_cast<T>(std::numeric_limits<T>::min() + 1),
@@ -337,6 +341,7 @@ inline std::vector<int64_t> const_values<int64_t>()
                       negative_one_value<int64_t>(),
                       positive_value<int64_t>(),
                       negative_value<int64_t>(),
+                      two_square_value<int64_t>(),
                       std::numeric_limits<int64_t>::min(),
                       std::numeric_limits<int64_t>::max(),
                       static_cast<int64_t>(std::numeric_limits<int64_t>::min() + 1),
@@ -365,6 +370,7 @@ inline std::vector<uint64_t> const_values<uint64_t>()
                       negative_one_value<uint64_t>(),
                       positive_value<uint64_t>(),
                       negative_value<uint64_t>(),
+                      two_square_value<uint64_t>(),
                       std::numeric_limits<uint64_t>::min(),
                       std::numeric_limits<uint64_t>::max(),
                       static_cast<uint64_t>(std::numeric_limits<uint64_t>::min() + 1),
@@ -397,6 +403,7 @@ inline std::vector<int32_t> const_values<int32_t>()
                       negative_one_value<int32_t>(),
                       positive_value<int32_t>(),
                       negative_value<int32_t>(),
+                      two_square_value<int32_t>(),
                       std::numeric_limits<int32_t>::min(),
                       std::numeric_limits<int32_t>::max(),
                       static_cast<int32_t>(std::numeric_limits<int32_t>::min() + 1),
@@ -423,6 +430,7 @@ inline std::vector<uint32_t> const_values<uint32_t>()
                       negative_one_value<uint32_t>(),
                       positive_value<uint32_t>(),
                       negative_value<uint32_t>(),
+                      two_square_value<uint32_t>(),
                       std::numeric_limits<uint32_t>::min(),
                       std::numeric_limits<uint32_t>::max(),
                       static_cast<uint32_t>(std::numeric_limits<uint32_t>::min() + 1),
@@ -458,6 +466,10 @@ inline std::vector<float> const_values<float>()
       std::numeric_limits<float>::max(),
       static_cast<float>(std::numeric_limits<float>::min() + 1),
       static_cast<float>(std::numeric_limits<float>::max() - 1),
+      std::numeric_limits<float>::infinity(),
+      -std::numeric_limits<float>::infinity(),
+      std::numeric_limits<float>::quiet_NaN(),
+      -std::numeric_limits<float>::quiet_NaN(),
       0x0000005F,
       0x00000088,
       static_cast<float>(0x80FF0FF0),
@@ -487,6 +499,10 @@ inline std::vector<double> const_values<double>()
       std::numeric_limits<double>::max(),
       static_cast<double>(std::numeric_limits<double>::min() + 1),
       static_cast<double>(std::numeric_limits<double>::max() - 1),
+      std::numeric_limits<double>::infinity(),
+      -std::numeric_limits<double>::infinity(),
+      std::numeric_limits<double>::quiet_NaN(),
+      -std::numeric_limits<double>::quiet_NaN(),
       0x0000005F,
       0x00000088,
       static_cast<double>(0x80FF0FF0),
@@ -592,6 +608,53 @@ class SkipHelper
    SkipReason reason_;
    };
 
+/*
+ * A workaround for XLC which does not have std::isnan()
+ */
+#if defined(J9ZOS390) || defined(AIXPPC)
+namespace std
+{
+   using ::isnan;
+}
+#endif
+
+/*
+ * To allow testing against NaNs in floating-point tests using standard
+ * ASSERT_EQ() and EXPECT_EQ(), we provide specialized comparator for
+ * float and double types that makes NaN equal to NaN (for testing
+ * purposes)
+ */
+namespace testing {
+namespace internal {
+
+template<>
+AssertionResult CmpHelperEQ<float, float>(const char* lhs_expression,
+                            const char* rhs_expression,
+                            const float& lhs,
+                            const float& rhs);
+template<>
+AssertionResult CmpHelperEQ<volatile float, volatile float>(const char* lhs_expression,
+                            const char* rhs_expression,
+                            const volatile float& lhs,
+                            const volatile float& rhs);
+
+template<>
+AssertionResult CmpHelperEQ<double, double>(const char* lhs_expression,
+                            const char* rhs_expression,
+                            const double& lhs,
+                            const double& rhs);
+
+template<>
+AssertionResult CmpHelperEQ<volatile double, volatile double>(const char* lhs_expression,
+                            const char* rhs_expression,
+                            const volatile double& lhs,
+                            const volatile double& rhs);
+
+
+} // namespace internal
+} // namespace testing
+
+
 /**
  * @brief A macro to allow a test to be conditionally skipped
  *
@@ -600,7 +663,7 @@ class SkipHelper
  * anywhere within the scope of a test, it is best to only use at at the beginning,
  * before the main body of a test.
  *
- * To skip a test, a condition aswell as a "reason" for skipping must be specified.
+ * To skip a test, a condition as well as a "reason" for skipping must be specified.
  * The condition may be any boolean expression. The "reason" must be a value from
  * the `SkipReason` enum (see its documentation for further details). Optionally,
  * a more detailed message can also be specified using the `<<` stream operator;
@@ -617,5 +680,181 @@ class SkipHelper
    if (!(condition)) { /* allow test to proceed normally */ } \
    else \
       return SkipHelper(SkipReason::reason) = ::testing::Message()
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on given platform
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON(<OMRPORT_ARCH_*>, <reason>) << <message>;
+ *
+ */
+#define SKIP_ON(arch, reason) \
+   SKIP_IF(!strcmp(arch, omrsysinfo_get_CPU_architecture()), reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on X86
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_X86(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_X86(reason) \
+   SKIP_ON(OMRPORT_ARCH_X86, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on POWER
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_PPC(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_PPC(reason) \
+   SKIP_ON(OMRPORT_ARCH_PPC, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on POWER 64
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_PPC64(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_PPC64(reason) \
+   SKIP_ON(OMRPORT_ARCH_PPC64, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on POWER 64le
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_PPC64LE(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_PPC64LE(reason) \
+   SKIP_ON(OMRPORT_ARCH_PPC64LE, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped all supported POWER
+ * architectures (PPC, PPC64, PPC64le)
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_POWER(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_POWER(reason) \
+    SKIP_IF(   !strcmp(OMRPORT_ARCH_PPC,     omrsysinfo_get_CPU_architecture()) \
+            || !strcmp(OMRPORT_ARCH_PPC64,   omrsysinfo_get_CPU_architecture()) \
+            || !strcmp(OMRPORT_ARCH_PPC64LE, omrsysinfo_get_CPU_architecture()), reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on S390
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_S390(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_S390(reason) \
+   SKIP_ON(OMRPORT_ARCH_S390, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on S390 running under the Linux operating system.
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_S390_LINUX(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_S390_LINUX(reason) \
+   switch (0) case 0: default: /* guard against ambiguous else */ \
+   if (strcmp("Linux", omrsysinfo_get_OS_type()) != 0) { /* allow test to proceed normally */ } \
+   else \
+      SKIP_ON(OMRPORT_ARCH_S390X, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on S390X
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_S390X(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_S390X(reason) \
+   SKIP_ON(OMRPORT_ARCH_S390X, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on S390X running under the Linux operating system.
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_S390X_LINUX(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_S390X_LINUX(reason) \
+   switch (0) case 0: default: /* guard against ambiguous else */ \
+   if (strcmp("Linux", omrsysinfo_get_OS_type()) != 0) { /* allow test to proceed normally */ } \
+   else \
+      SKIP_ON(OMRPORT_ARCH_S390X, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on z/OS.
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_ZOS(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_ZOS(reason) \
+    SKIP_IF(    (!strcmp(OMRPORT_ARCH_S390, omrsysinfo_get_CPU_architecture()) || !strcmp(OMRPORT_ARCH_S390X, omrsysinfo_get_CPU_architecture())) \
+            &&  strcmp("Linux", omrsysinfo_get_OS_type()), reason)
+
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on AMD64
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_HAMMER(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_HAMMER(reason) \
+   SKIP_ON(OMRPORT_ARCH_HAMMER, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on ARM (AArch32)
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_ARM(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_ARM(reason) \
+   SKIP_ON(OMRPORT_ARCH_ARM, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on AArch64
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_AARCH64(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_AARCH64(reason) \
+   SKIP_ON(OMRPORT_ARCH_AARCH64, reason)
+
+/*
+ * @brief A macro to allow a test to be conditionally skipped on RISC-V
+ *
+ * The basic syntax for using this macro is:
+ *
+ *    SKIP_ON_RISCV(<reason>) << <message>;
+ *
+ */
+#define SKIP_ON_RISCV(reason) \
+   SKIP_ON(OMRPORT_ARCH_RISCV, reason)
 
 #endif // JITTEST_HPP

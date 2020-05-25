@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
-#include "compile/Method.hpp"
 #include "env/jittypes.h"
 #include "gtest/gtest.h"
 
@@ -214,15 +213,8 @@ X86OpCodesTest::compileCompareTestMethods()
    compileOpCodeMethod(_bCmpge, _numberOfBinaryArgs, TR::bcmpge, "bCmpge", _argTypesBinaryByte, TR::Int32, rc);
    compileOpCodeMethod(_bCmple, _numberOfBinaryArgs, TR::bcmple, "bCmple", _argTypesBinaryByte, TR::Int32, rc);
 
-   compileOpCodeMethod(_iuCmpeq, _numberOfBinaryArgs, TR::iucmpeq, "iuCmpeq", _argTypesBinaryInt, TR::Int32, rc);
-   compileOpCodeMethod(_iuCmpne, _numberOfBinaryArgs, TR::iucmpne, "iuCmpne", _argTypesBinaryInt, TR::Int32, rc);
    compileOpCodeMethod(_iuCmpge, _numberOfBinaryArgs, TR::iucmpge, "iuCmpge", _argTypesBinaryInt, TR::Int32, rc);
 
-   compileOpCodeMethod(_buCmpeq, _numberOfBinaryArgs, TR::bucmpeq, "buCmpeq", _argTypesBinaryByte, TR::Int32, rc);
-   compileOpCodeMethod(_buCmpne, _numberOfBinaryArgs, TR::bucmpne, "buCmpne", _argTypesBinaryByte, TR::Int32, rc);
-
-   compileOpCodeMethod(_suCmpeq, _numberOfBinaryArgs, TR::sucmpeq, "suCmpeq", _argTypesBinaryShort, TR::Int32, rc);
-   compileOpCodeMethod(_suCmpne, _numberOfBinaryArgs, TR::sucmpne, "suCmpne", _argTypesBinaryShort, TR::Int32, rc);
    compileOpCodeMethod(_suCmplt, _numberOfBinaryArgs, TR::sucmplt, "suCmplt", _argTypesBinaryShort, TR::Int32, rc);
    compileOpCodeMethod(_suCmpge, _numberOfBinaryArgs, TR::sucmpge, "suCmpge", _argTypesBinaryShort, TR::Int32, rc);
    compileOpCodeMethod(_suCmpgt, _numberOfBinaryArgs, TR::sucmpgt, "suCmpgt", _argTypesBinaryShort, TR::Int32, rc);
@@ -268,16 +260,11 @@ X86OpCodesTest::compileCompareTestMethods()
    compileOpCodeMethod(_ifBcmpge, _numberOfBinaryArgs, TR::ifbcmpge, "ifBcmpge", _argTypesBinaryByte, TR::Int32, rc);
    compileOpCodeMethod(_ifBcmple, _numberOfBinaryArgs, TR::ifbcmple, "ifBcmple", _argTypesBinaryByte, TR::Int32, rc);
 
-
-   compileOpCodeMethod(_ifBuCmpeq, _numberOfBinaryArgs, TR::ifbucmpeq, "ifBuCmpeq", _argTypesBinaryByte, TR::Int32, rc);
-   compileOpCodeMethod(_ifBuCmpne, _numberOfBinaryArgs, TR::ifbucmpne, "ifBuCmpne", _argTypesBinaryByte, TR::Int32, rc);
    compileOpCodeMethod(_ifBuCmplt, _numberOfBinaryArgs, TR::ifbucmplt, "ifBuCmplt", _argTypesBinaryByte, TR::Int32, rc);
    compileOpCodeMethod(_ifBuCmpge, _numberOfBinaryArgs, TR::ifbucmpge, "ifBuCmpge", _argTypesBinaryByte, TR::Int32, rc);
    compileOpCodeMethod(_ifBuCmpgt, _numberOfBinaryArgs, TR::ifbucmpgt, "ifBuCmpgt", _argTypesBinaryByte, TR::Int32, rc);
    compileOpCodeMethod(_ifBuCmple, _numberOfBinaryArgs, TR::ifbucmple, "ifBuCmple", _argTypesBinaryByte, TR::Int32, rc);
 
-   compileOpCodeMethod(_ifSuCmpeq, _numberOfBinaryArgs, TR::ifsucmpeq, "ifSuCmpeq", _argTypesBinaryShort, TR::Int32, rc);
-   compileOpCodeMethod(_ifSuCmpne, _numberOfBinaryArgs, TR::ifsucmpne, "ifSuCmpne", _argTypesBinaryShort, TR::Int32, rc);
    compileOpCodeMethod(_ifSuCmpgt, _numberOfBinaryArgs, TR::ifsucmpgt, "ifSuCmpgt", _argTypesBinaryShort, TR::Int32, rc);
    compileOpCodeMethod(_ifSuCmple, _numberOfBinaryArgs, TR::ifsucmple, "ifSuCmple", _argTypesBinaryShort, TR::Int32, rc);
    compileOpCodeMethod(_ifSuCmplt, _numberOfBinaryArgs, TR::ifsucmplt, "ifSuCmplt", _argTypesBinaryShort, TR::Int32, rc);
@@ -286,10 +273,10 @@ X86OpCodesTest::compileCompareTestMethods()
    }
 
 void
-X86OpCodesTest::compileTernaryTestMethods()
+X86OpCodesTest::compileSelectTestMethods()
    {
    int32_t rc = 0;
-   compileOpCodeMethod(_lternary, _numberOfTernaryArgs, TR::lternary, "lTernary", _argTypesTernaryLong, TR::Int64, rc);
+   compileOpCodeMethod(_lselect, _numberOfSelectArgs, TR::lselect, "lselect", _argTypesSelectLong, TR::Int64, rc);
 
    }
 
@@ -304,7 +291,7 @@ X86OpCodesTest::compileAddressTestMethods()
 #if defined(TR_TARGET_64BIT)
    compileOpCodeMethod(_l2a, _numberOfUnaryArgs, TR::l2a, "l2a", _argTypesUnaryLong, TR::Address, rc);
    compileOpCodeMethod(_a2l, _numberOfUnaryArgs, TR::a2l, "a2l", _argTypesUnaryAddress, TR::Int64, rc);
-   compileOpCodeMethod(_aternary, _numberOfTernaryArgs, TR::aternary, "aternary", _argTypesTernaryAddress, TR::Address, rc);
+   compileOpCodeMethod(_aselect, _numberOfSelectArgs, TR::aselect, "aselect", _argTypesSelectAddress, TR::Address, rc);
 #endif
 
    compileOpCodeMethod(_acmpeq, _numberOfBinaryArgs, TR::acmpeq, "acmpeq", _argTypesBinaryAddress, TR::Int32, rc);
@@ -924,7 +911,7 @@ X86OpCodesTest::invokeMemoryOperationTests()
    int64_t longDataArray[] = {LONG_NEG, LONG_POS, LONG_MAXIMUM, LONG_MINIMUM, LONG_ZERO};
    float floatDataArray[] = {FLOAT_NEG, FLOAT_POS, FLOAT_MAXIMUM, FLOAT_MINIMUM, FLOAT_ZERO};
    double doubleDataArray[] = {DOUBLE_NEG, DOUBLE_POS, DOUBLE_MAXIMUM, DOUBLE_MINIMUM, DOUBLE_ZERO};
-   uintptrj_t addressDataArray[] = {(uintptrj_t)&INT_NEG, (uintptrj_t)&LONG_POS, (uintptrj_t)&BYTE_MAXIMUM, (uintptrj_t)&SHORT_MINIMUM, (uintptrj_t)&FLOAT_ZERO};
+   uintptr_t addressDataArray[] = {(uintptr_t)&INT_NEG, (uintptr_t)&LONG_POS, (uintptr_t)&BYTE_MAXIMUM, (uintptr_t)&SHORT_MINIMUM, (uintptr_t)&FLOAT_ZERO};
 
    OMR_CT_EXPECT_EQ(_bLoad, BYTE_ZERO, _bLoad(BYTE_ZERO));
    OMR_CT_EXPECT_EQ(_bLoad, BYTE_NEG, _bLoad(BYTE_NEG));
@@ -990,7 +977,7 @@ X86OpCodesTest::invokeMemoryOperationTests()
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       sprintf(resolvedMethodName, "iLoadiConst%d", i + 1);
-      uintptrj_t intDataAddress = (uintptrj_t)(&intDataArray[i]);
+      uintptr_t intDataAddress = (uintptr_t)(&intDataArray[i]);
       compileOpCodeMethod(iLoadiCons, _numberOfUnaryArgs, TR::iloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int32, rc, 2, 1, &intDataAddress);
       OMR_CT_EXPECT_EQ(iLoadiCons, intDataArray[i], iLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
@@ -1000,7 +987,7 @@ X86OpCodesTest::invokeMemoryOperationTests()
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       sprintf(resolvedMethodName, "sLoadiConst%d", i + 1);
-      uintptrj_t shortDataAddress = (uintptrj_t)(&shortDataArray[i]);
+      uintptr_t shortDataAddress = (uintptr_t)(&shortDataArray[i]);
       compileOpCodeMethod(sLoadiCons, _numberOfUnaryArgs, TR::sloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int16, rc, 2, 1, &shortDataAddress);
       OMR_CT_EXPECT_EQ(sLoadiCons, shortDataArray[i], sLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
@@ -1010,7 +997,7 @@ X86OpCodesTest::invokeMemoryOperationTests()
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       sprintf(resolvedMethodName, "bLoadiConst%d", i + 1);
-      uintptrj_t byteDataAddress = (uintptrj_t)(&byteDataArray[i]);
+      uintptr_t byteDataAddress = (uintptr_t)(&byteDataArray[i]);
       compileOpCodeMethod(bLoadiCons, _numberOfUnaryArgs, TR::bloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int8, rc, 2, 1, &byteDataAddress);
       OMR_CT_EXPECT_EQ(bLoadiCons, byteDataArray[i], bLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
@@ -1020,7 +1007,7 @@ X86OpCodesTest::invokeMemoryOperationTests()
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       sprintf(resolvedMethodName, "lLoadiConst%d", i + 1);
-      uintptrj_t longDataAddress = (uintptrj_t)(&longDataArray[i]);
+      uintptr_t longDataAddress = (uintptr_t)(&longDataArray[i]);
       compileOpCodeMethod(lLoadiCons, _numberOfUnaryArgs, TR::lloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Int64, rc, 2, 1, &longDataAddress);
       OMR_CT_EXPECT_EQ(lLoadiCons, longDataArray[i], lLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
@@ -1030,7 +1017,7 @@ X86OpCodesTest::invokeMemoryOperationTests()
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       sprintf(resolvedMethodName, "dLoadiConst%d", i + 1);
-      uintptrj_t doubleDataAddress = (uintptrj_t)(&doubleDataArray[i]);
+      uintptr_t doubleDataAddress = (uintptr_t)(&doubleDataArray[i]);
       compileOpCodeMethod(dLoadiCons, _numberOfUnaryArgs, TR::dloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Double, rc, 2, 1, &doubleDataAddress);
       OMR_CT_EXPECT_EQ(dLoadiCons, doubleDataArray[i], dLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
@@ -1040,7 +1027,7 @@ X86OpCodesTest::invokeMemoryOperationTests()
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       sprintf(resolvedMethodName, "fLoadiConst%d", i + 1);
-      uintptrj_t floatDataAddress = (uintptrj_t)(&floatDataArray[i]);
+      uintptr_t floatDataAddress = (uintptr_t)(&floatDataArray[i]);
       compileOpCodeMethod(fLoadiCons, _numberOfUnaryArgs, TR::floadi, resolvedMethodName, _argTypesUnaryAddress, TR::Float, rc, 2, 1, &floatDataAddress);
       OMR_CT_EXPECT_EQ(fLoadiCons, floatDataArray[i], fLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
@@ -1050,7 +1037,7 @@ X86OpCodesTest::invokeMemoryOperationTests()
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       sprintf(resolvedMethodName, "aLoadiConst%d", i + 1);
-      uintptrj_t addressDataAddress = (uintptrj_t)(&addressDataArray[i]);
+      uintptr_t addressDataAddress = (uintptr_t)(&addressDataArray[i]);
       compileOpCodeMethod(aLoadiCons, _numberOfUnaryArgs, TR::aloadi, resolvedMethodName, _argTypesUnaryAddress, TR::Address, rc, 2, 1, &addressDataAddress);
       OMR_CT_EXPECT_EQ(aLoadiCons, addressDataArray[i], aLoadiCons(ADDRESS_PLACEHOLDER_1));
       }
@@ -1062,39 +1049,39 @@ X86OpCodesTest::invokeMemoryOperationTests()
    int16_t shortStoreDataArray[] = {0, 0, 0, 0, 0};
    float floatStoreDataArray[] = {0, 0, 0, 0, 0};
    double doubleStoreDataArray[] = {0, 0, 0, 0, 0};
-   uintptrj_t addressStoreDataArray[] = {0, 0, 0, 0, 0};
+   uintptr_t addressStoreDataArray[] = {0, 0, 0, 0, 0};
 
    testCaseNum = sizeof(intDataArray) / sizeof(intDataArray[0]);
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
       if (_iStorei != NULL)
          {
-         _iStorei((uintptrj_t)(&intStoreDataArray[i]) , intDataArray[i]);
+         _iStorei((uintptr_t)(&intStoreDataArray[i]) , intDataArray[i]);
          EXPECT_EQ(intDataArray[i], intStoreDataArray[i]);
          }
        if (_lStorei != NULL)
          {
-         _lStorei((uintptrj_t)(&longStoreDataArray[i]) , longDataArray[i]);
+         _lStorei((uintptr_t)(&longStoreDataArray[i]) , longDataArray[i]);
          EXPECT_EQ(longDataArray[i], longStoreDataArray[i]);
          }
       if (_sStorei != NULL)
          {
-         _sStorei((uintptrj_t)(&shortStoreDataArray[i]) , shortDataArray[i]);
+         _sStorei((uintptr_t)(&shortStoreDataArray[i]) , shortDataArray[i]);
          EXPECT_EQ(shortDataArray[i], shortStoreDataArray[i]);
          }
       if (_fStorei != NULL)
          {
-         _fStorei((uintptrj_t)(&floatStoreDataArray[i]) , floatDataArray[i]);
+         _fStorei((uintptr_t)(&floatStoreDataArray[i]) , floatDataArray[i]);
          EXPECT_EQ(floatDataArray[i], floatStoreDataArray[i]);
          }
       if (_dStorei != NULL)
          {
-         _dStorei((uintptrj_t)(&doubleStoreDataArray[i]) , doubleDataArray[i]);
+         _dStorei((uintptr_t)(&doubleStoreDataArray[i]) , doubleDataArray[i]);
          EXPECT_EQ(doubleDataArray[i], doubleStoreDataArray[i]);
          }
       if (_aStorei != NULL)
          {
-         _aStorei((uintptrj_t)(&addressStoreDataArray[i]) , addressDataArray[i]);
+         _aStorei((uintptr_t)(&addressStoreDataArray[i]) , addressDataArray[i]);
          EXPECT_EQ(addressDataArray[i], addressStoreDataArray[i]);
          }
       }
@@ -1503,7 +1490,7 @@ X86OpCodesTest::invokeUnaryTests()
       {
       OMR_CT_EXPECT_EQ(_fAbs, abs(floatDataArray[i]), _fAbs(floatDataArray[i]));
       sprintf(resolvedMethodName, "fAbsConst%d", i + 1);
-      compileOpCodeMethod(fUnaryCons, 
+      compileOpCodeMethod(fUnaryCons,
             _numberOfUnaryArgs, TR::fabs, resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &floatDataArray[i]);
       OMR_CT_EXPECT_EQ(fUnaryCons, abs(floatDataArray[i]), fUnaryCons(FLOAT_PLACEHOLDER_1));
       }
@@ -1514,7 +1501,7 @@ X86OpCodesTest::invokeUnaryTests()
       {
       OMR_CT_EXPECT_EQ(_dAbs, abs(doubleDataArray[i]), _dAbs(doubleDataArray[i]));
       sprintf(resolvedMethodName, "dAbsConst%d", i + 1);
-      compileOpCodeMethod(dUnaryCons, 
+      compileOpCodeMethod(dUnaryCons,
             _numberOfUnaryArgs, TR::dabs, resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &doubleDataArray[i]);
       OMR_CT_EXPECT_EQ(dUnaryCons, abs(doubleDataArray[i]), dUnaryCons(DOUBLE_PLACEHOLDER_1));
       }
@@ -1532,7 +1519,7 @@ X86OpCodesTest::invokeUnaryTests()
       result.f = _fSqrt(floatDataArray[i]);
       OMR_CT_EXPECT_EQ(_fSqrt, gold.ui32, result.ui32);
       sprintf(resolvedMethodName, "fSqrtConst%d", i + 1);
-      compileOpCodeMethod(fUnaryCons, 
+      compileOpCodeMethod(fUnaryCons,
             _numberOfUnaryArgs, TR::fsqrt, resolvedMethodName, _argTypesUnaryFloat, TR::Float, rc, 2, 1, &floatDataArray[i]);
       gold.f = sqrt(floatDataArray[i]);
       result.f = fUnaryCons(FLOAT_PLACEHOLDER_1);
@@ -1552,7 +1539,7 @@ X86OpCodesTest::invokeUnaryTests()
       result.d = _dSqrt(doubleDataArray[i]);
       OMR_CT_EXPECT_EQ(_dSqrt, gold.ui64, result.ui64);
       sprintf(resolvedMethodName, "dSqrtConst%d", i + 1);
-      compileOpCodeMethod(dUnaryCons, 
+      compileOpCodeMethod(dUnaryCons,
             _numberOfUnaryArgs, TR::dsqrt, resolvedMethodName, _argTypesUnaryDouble, TR::Double, rc, 2, 1, &doubleDataArray[i]);
       gold.d = sqrt(doubleDataArray[i]);
       result.d = dUnaryCons(DOUBLE_PLACEHOLDER_1);
@@ -2223,61 +2210,11 @@ X86OpCodesTest::invokeCompareTests()
          BYTE_MINIMUM, BYTE_NEG,
          BYTE_NEG, BYTE_MINIMUM
          };
-
-   uint32_t iuCmpeqDataArr[][2] =
-         {
-         UINT_POS, UINT_MINIMUM,
-         UINT_MINIMUM, UINT_POS,
-         UINT_MAXIMUM, UINT_MINIMUM,
-         UINT_MINIMUM, UINT_MAXIMUM,
-         UINT_MAXIMUM, UINT_MAXIMUM
-         };
-   uint32_t iuCmpneDataArr[][2] =
-         {
-         UINT_MAXIMUM, UINT_POS,
-         UINT_POS, UINT_MAXIMUM,
-         UINT_MINIMUM, UINT_POS,
-         UINT_POS, UINT_MINIMUM,
-         UINT_MAXIMUM, UINT_MAXIMUM
-         };
    uint32_t iuCmpgeDataArr[][2] =
          {
          UINT_MAXIMUM, UINT_MAXIMUM,
          UINT_POS, UINT_MINIMUM,
          UINT_MINIMUM, UINT_POS
-         };
-
-   uint8_t buCmpeqDataArr[][2] =
-         {
-         UBYTE_POS, UBYTE_MINIMUM,
-         UBYTE_MINIMUM, UBYTE_POS,
-         UBYTE_MAXIMUM, UBYTE_MINIMUM,
-         UBYTE_MINIMUM, UBYTE_MAXIMUM,
-         UBYTE_MAXIMUM, UBYTE_MAXIMUM
-         };
-   uint8_t buCmpneDataArr[][2] =
-         {
-         UBYTE_MAXIMUM, UBYTE_POS,
-         UBYTE_POS, UBYTE_MAXIMUM,
-         UBYTE_MINIMUM, UBYTE_POS,
-         UBYTE_POS, UBYTE_MINIMUM,
-         UBYTE_MAXIMUM, UBYTE_MAXIMUM
-         };
-   uint8_t ifBuCmpeqDataArr[][2] =
-         {
-         UBYTE_POS, UBYTE_MINIMUM,
-         UBYTE_MINIMUM, UBYTE_POS,
-         UBYTE_MAXIMUM, UBYTE_MINIMUM,
-         UBYTE_MINIMUM, UBYTE_MAXIMUM,
-         UBYTE_MAXIMUM, UBYTE_MAXIMUM
-         };
-   uint8_t ifBuCmpneDataArr[][2] =
-         {
-         UBYTE_MAXIMUM, UBYTE_POS,
-         UBYTE_POS, UBYTE_MAXIMUM,
-         UBYTE_MINIMUM, UBYTE_POS,
-         UBYTE_POS, UBYTE_MINIMUM,
-         UBYTE_MAXIMUM, UBYTE_MAXIMUM
          };
    uint8_t ifBuCmpgtDataArr[][2] =
          {
@@ -2299,18 +2236,6 @@ X86OpCodesTest::invokeCompareTests()
          UBYTE_MINIMUM, UBYTE_POS,
          UBYTE_POS, UBYTE_MINIMUM
          };
-   uint16_t suCmpeqDataArr[][2] =
-         {
-         USHORT_MINIMUM, USHORT_MAXIMUM,
-         USHORT_MAXIMUM, USHORT_MINIMUM,
-         USHORT_POS, USHORT_POS
-         };
-   uint16_t suCmpneDataArr[][2] =
-         {
-         USHORT_POS, USHORT_MINIMUM,
-         USHORT_MINIMUM, USHORT_POS,
-         USHORT_POS, USHORT_POS
-         };
    uint16_t suCmpltDataArr[][2] =
          {
          USHORT_MAXIMUM, USHORT_MINIMUM,
@@ -2330,17 +2255,6 @@ X86OpCodesTest::invokeCompareTests()
          {
          USHORT_MAXIMUM, USHORT_MINIMUM,
          USHORT_MINIMUM, USHORT_MAXIMUM
-         };
-   uint16_t ifSuCmpeqDataArr[][2] =
-         {
-         USHORT_POS, USHORT_POS,
-         USHORT_MAXIMUM, USHORT_POS
-         };
-   uint16_t ifSuCmpneDataArr[][2] =
-         {
-         USHORT_MAXIMUM, USHORT_MINIMUM,
-         USHORT_MINIMUM, USHORT_MAXIMUM,
-         USHORT_MAXIMUM, USHORT_MAXIMUM
          };
    uint16_t ifSuCmpgtDataArr[][2] =
          {
@@ -3628,49 +3542,6 @@ X86OpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(bCompareConst, compareLE(ifBcmpleDataArr[i][0], ifBcmpleDataArr[i][1]), bCompareConst(ifBcmpleDataArr[i][0], BYTE_PLACEHOLDER_2));
       }
 
-   //iuCompare
-   testCaseNum = sizeof(iuCmpeqDataArr) / sizeof(iuCmpeqDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_iuCmpeq, compareEQ(iuCmpeqDataArr[i][0], iuCmpeqDataArr[i][1]), _iuCmpeq(iuCmpeqDataArr[i][0], iuCmpeqDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "iuCmpeqConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(iuCompareConst,
-            _numberOfBinaryArgs, TR::iucmpeq, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 4, 1, &(iuCmpeqDataArr[i][0]), 2, &(iuCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(iuCompareConst, compareEQ(iuCmpeqDataArr[i][0], iuCmpeqDataArr[i][1]), iuCompareConst(INT_PLACEHOLDER_1, INT_PLACEHOLDER_2));
-
-      sprintf(resolvedMethodName, "iuCmpeqConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(iuCompareConst,
-            _numberOfBinaryArgs, TR::iucmpeq, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 1, &(iuCmpeqDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(iuCompareConst, compareEQ(iuCmpeqDataArr[i][0], iuCmpeqDataArr[i][1]), iuCompareConst(INT_PLACEHOLDER_1, iuCmpeqDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "iuCmpeqConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(iuCompareConst,
-            _numberOfBinaryArgs, TR::iucmpeq, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &(iuCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(iuCompareConst, compareEQ(iuCmpeqDataArr[i][0], iuCmpeqDataArr[i][1]), iuCompareConst(iuCmpeqDataArr[i][0], INT_PLACEHOLDER_2));
-      }
-
-   testCaseNum = sizeof(iuCmpneDataArr) / sizeof(iuCmpneDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_iuCmpne, compareNE(iuCmpneDataArr[i][0], iuCmpneDataArr[i][1]), _iuCmpne(iuCmpneDataArr[i][0], iuCmpneDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "iuCmpneConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(iuCompareConst,
-            _numberOfBinaryArgs, TR::iucmpne, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 4, 1, &(iuCmpneDataArr[i][0]), 2, &(iuCmpneDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(iuCompareConst, compareNE(iuCmpneDataArr[i][0], iuCmpneDataArr[i][1]), iuCompareConst(INT_PLACEHOLDER_1, INT_PLACEHOLDER_2));
-
-      sprintf(resolvedMethodName, "iuCmpneConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(iuCompareConst,
-            _numberOfBinaryArgs, TR::iucmpne, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 1, &(iuCmpneDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(iuCompareConst, compareNE(iuCmpneDataArr[i][0], iuCmpneDataArr[i][1]), iuCompareConst(INT_PLACEHOLDER_1, iuCmpneDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "iuCmpneConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(iuCompareConst,
-            _numberOfBinaryArgs, TR::iucmpne, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &(iuCmpneDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(iuCompareConst, compareNE(iuCmpneDataArr[i][0], iuCmpneDataArr[i][1]), iuCompareConst(iuCmpneDataArr[i][0], INT_PLACEHOLDER_2));
-      }
-
    testCaseNum = sizeof(iuCmpgeDataArr) / sizeof(iuCmpgeDataArr[0]);
    for(uint32_t i = 0; i < testCaseNum; ++i)
       {
@@ -3690,92 +3561,6 @@ X86OpCodesTest::invokeCompareTests()
       compileOpCodeMethod(iuCompareConst,
             _numberOfBinaryArgs, TR::iucmpge, resolvedMethodName, _argTypesBinaryInt, TR::Int32, rc, 2, 2, &(iuCmpgeDataArr[i][1]));
       OMR_CT_EXPECT_EQ(iuCompareConst, compareGE(iuCmpgeDataArr[i][0], iuCmpgeDataArr[i][1]), iuCompareConst(iuCmpgeDataArr[i][0], INT_PLACEHOLDER_2));
-      }
-
-   //buCompare equal and not-equal
-   testCaseNum = sizeof(buCmpeqDataArr) / sizeof(buCmpeqDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_buCmpeq, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), _buCmpeq(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "buCmpeqConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(buCmpeqDataArr[i][0]), 2, &(buCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
-
-      sprintf(resolvedMethodName, "buCmpeqConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(buCmpeqDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, buCmpeqDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "buCmpeqConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::bucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(buCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(buCmpeqDataArr[i][0], buCmpeqDataArr[i][1]), buCompareConst(buCmpeqDataArr[i][0], BYTE_PLACEHOLDER_2));
-      }
-
-   testCaseNum = sizeof(buCmpneDataArr) / sizeof(buCmpneDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_buCmpne, compareNE(buCmpneDataArr[i][0], buCmpneDataArr[i][1]), _buCmpne(buCmpneDataArr[i][0], buCmpneDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "buCmpneConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::bucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(buCmpneDataArr[i][0]), 2, &(buCmpneDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareNE(buCmpneDataArr[i][0], buCmpneDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
-
-      sprintf(resolvedMethodName, "buCmpneConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::bucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(buCmpneDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareNE(buCmpneDataArr[i][0], buCmpneDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, buCmpneDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "buCmpneConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::bucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(buCmpneDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareNE(buCmpneDataArr[i][0], buCmpneDataArr[i][1]), buCompareConst(buCmpneDataArr[i][0], BYTE_PLACEHOLDER_2));
-      }
-
-   //suCompare
-   testCaseNum = sizeof(suCmpeqDataArr) / sizeof(suCmpeqDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_suCmpeq, compareEQ(suCmpeqDataArr[i][0], suCmpeqDataArr[i][1]), _suCmpeq(suCmpeqDataArr[i][0], suCmpeqDataArr[i][1])) << suCmpeqDataArr[i][0] << " : " << suCmpeqDataArr[i][1];
-
-      sprintf(resolvedMethodName, "suCmpeqConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::sucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpeqDataArr[i][0]), 2, &(suCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(suCmpeqDataArr[i][0], suCmpeqDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << suCmpeqDataArr[i][0] << " : " << suCmpeqDataArr[i][1];
-
-      sprintf(resolvedMethodName, "suCmpeqConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::sucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpeqDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(suCmpeqDataArr[i][0], suCmpeqDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, suCmpeqDataArr[i][1])) << suCmpeqDataArr[i][0] << " : " << suCmpeqDataArr[i][1];
-
-      sprintf(resolvedMethodName, "suCmpeqConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::sucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(suCmpeqDataArr[i][0], suCmpeqDataArr[i][1]), suCompareConst(suCmpeqDataArr[i][0], SHORT_PLACEHOLDER_2)) << suCmpeqDataArr[i][0] << " : " << suCmpeqDataArr[i][1];
-      }
-
-   testCaseNum = sizeof(suCmpneDataArr) / sizeof(suCmpneDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_suCmpne, compareNE(suCmpneDataArr[i][0], suCmpneDataArr[i][1]), _suCmpne(suCmpneDataArr[i][0], suCmpneDataArr[i][1])) << suCmpneDataArr[i][0] << " : " << suCmpneDataArr[i][1];
-
-      sprintf(resolvedMethodName, "suCmpneConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::sucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(suCmpneDataArr[i][0]), 2, &(suCmpneDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareNE(suCmpneDataArr[i][0], suCmpneDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << suCmpneDataArr[i][0] << " : " << suCmpneDataArr[i][1];
-
-      sprintf(resolvedMethodName, "suCmpneConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::sucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(suCmpneDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareNE(suCmpneDataArr[i][0], suCmpneDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, suCmpneDataArr[i][1])) << suCmpneDataArr[i][0] << " : " << suCmpneDataArr[i][1];
-
-      sprintf(resolvedMethodName, "suCmpneConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::sucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(suCmpneDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareNE(suCmpneDataArr[i][0], suCmpneDataArr[i][1]), suCompareConst(suCmpneDataArr[i][0], SHORT_PLACEHOLDER_2)) << suCmpneDataArr[i][0] << " : " << suCmpneDataArr[i][1];
       }
 
    testCaseNum = sizeof(suCmpgtDataArr) / sizeof(suCmpgtDataArr[0]);
@@ -3862,49 +3647,6 @@ X86OpCodesTest::invokeCompareTests()
       OMR_CT_EXPECT_EQ(suCompareConst, compareLE(suCmpleDataArr[i][0], suCmpleDataArr[i][1]), suCompareConst(suCmpleDataArr[i][0], SHORT_PLACEHOLDER_2)) << suCmpleDataArr[i][0] << " : " << suCmpleDataArr[i][1];
       }
 
-   //ifBuCompare
-   testCaseNum = sizeof(ifBuCmpeqDataArr) / sizeof(ifBuCmpeqDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_ifBuCmpeq, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), _ifBuCmpeq(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "ifBuCmpeqConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpeqDataArr[i][0]), 2, &(ifBuCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
-
-      sprintf(resolvedMethodName, "ifBuCmpeqConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpeqDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, ifBuCmpeqDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "ifBuCmpeqConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::ifbucmpeq, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareEQ(ifBuCmpeqDataArr[i][0], ifBuCmpeqDataArr[i][1]), buCompareConst(ifBuCmpeqDataArr[i][0], BYTE_PLACEHOLDER_2));
-      }
-
-   testCaseNum = sizeof(ifBuCmpneDataArr) / sizeof(ifBuCmpneDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_ifBuCmpne, compareNE(ifBuCmpneDataArr[i][0], ifBuCmpneDataArr[i][1]), _ifBuCmpne(ifBuCmpneDataArr[i][0], ifBuCmpneDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "ifBuCmpneConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::ifbucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 4, 1, &(ifBuCmpneDataArr[i][0]), 2, &(ifBuCmpneDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareNE(ifBuCmpneDataArr[i][0], ifBuCmpneDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, BYTE_PLACEHOLDER_2));
-
-      sprintf(resolvedMethodName, "ifBuCmpneConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::ifbucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 1, &(ifBuCmpneDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareNE(ifBuCmpneDataArr[i][0], ifBuCmpneDataArr[i][1]), buCompareConst(BYTE_PLACEHOLDER_1, ifBuCmpneDataArr[i][1]));
-
-      sprintf(resolvedMethodName, "ifBuCmpneConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(buCompareConst,
-            _numberOfBinaryArgs, TR::ifbucmpne, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpneDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(buCompareConst, compareNE(ifBuCmpneDataArr[i][0], ifBuCmpneDataArr[i][1]), buCompareConst(ifBuCmpneDataArr[i][0], BYTE_PLACEHOLDER_2));
-      }
-
    testCaseNum = sizeof(ifBuCmpgtDataArr) / sizeof(ifBuCmpgtDataArr[0]);
    for(uint32_t i = 0; i < testCaseNum; ++i)
       {
@@ -3987,49 +3729,6 @@ X86OpCodesTest::invokeCompareTests()
       compileOpCodeMethod(buCompareConst,
             _numberOfBinaryArgs, TR::ifbucmple, resolvedMethodName, _argTypesBinaryByte, TR::Int32, rc, 2, 2, &(ifBuCmpleDataArr[i][1]));
       OMR_CT_EXPECT_EQ(buCompareConst, compareLE(ifBuCmpleDataArr[i][0], ifBuCmpleDataArr[i][1]), buCompareConst(ifBuCmpleDataArr[i][0], BYTE_PLACEHOLDER_2));
-      }
-
-   //ifSuCompare
-   testCaseNum = sizeof(ifSuCmpeqDataArr) / sizeof(ifSuCmpeqDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_ifSuCmpeq, compareEQ(ifSuCmpeqDataArr[i][0], ifSuCmpeqDataArr[i][1]), _ifSuCmpeq(ifSuCmpeqDataArr[i][0], ifSuCmpeqDataArr[i][1])) << ifSuCmpeqDataArr[i][0] << " : " << ifSuCmpeqDataArr[i][1];
-
-      sprintf(resolvedMethodName, "ifSuCmpeqConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::ifsucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpeqDataArr[i][0]), 2, &(ifSuCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(ifSuCmpeqDataArr[i][0], ifSuCmpeqDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << ifSuCmpeqDataArr[i][0] << " : " << ifSuCmpeqDataArr[i][1];
-
-      sprintf(resolvedMethodName, "ifSuCmpeqConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::ifsucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpeqDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(ifSuCmpeqDataArr[i][0], ifSuCmpeqDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, ifSuCmpeqDataArr[i][1])) << ifSuCmpeqDataArr[i][0] << " : " << ifSuCmpeqDataArr[i][1];
-
-      sprintf(resolvedMethodName, "ifSuCmpeqConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::ifsucmpeq, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpeqDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareEQ(ifSuCmpeqDataArr[i][0], ifSuCmpeqDataArr[i][1]), suCompareConst(ifSuCmpeqDataArr[i][0], SHORT_PLACEHOLDER_2)) << ifSuCmpeqDataArr[i][0] << " : " << ifSuCmpeqDataArr[i][1];
-      }
-
-   testCaseNum = sizeof(ifSuCmpneDataArr) / sizeof(ifSuCmpneDataArr[0]);
-   for(uint32_t i = 0; i < testCaseNum; ++i)
-      {
-      OMR_CT_EXPECT_EQ(_ifSuCmpne, compareNE(ifSuCmpneDataArr[i][0], ifSuCmpneDataArr[i][1]), _ifSuCmpne(ifSuCmpneDataArr[i][0], ifSuCmpneDataArr[i][1])) << ifSuCmpneDataArr[i][0] << " : " << ifSuCmpneDataArr[i][1];
-
-      sprintf(resolvedMethodName, "ifSuCmpneConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::ifsucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 4, 1, &(ifSuCmpneDataArr[i][0]), 2, &(ifSuCmpneDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareNE(ifSuCmpneDataArr[i][0], ifSuCmpneDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, SHORT_PLACEHOLDER_2)) << ifSuCmpneDataArr[i][0] << " : " << ifSuCmpneDataArr[i][1];
-
-      sprintf(resolvedMethodName, "ifSuCmpneConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::ifsucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 1, &(ifSuCmpneDataArr[i][0]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareNE(ifSuCmpneDataArr[i][0], ifSuCmpneDataArr[i][1]), suCompareConst(SHORT_PLACEHOLDER_1, ifSuCmpneDataArr[i][1])) << ifSuCmpneDataArr[i][0] << " : " << ifSuCmpneDataArr[i][1];
-
-      sprintf(resolvedMethodName, "ifSuCmpneConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(suCompareConst,
-            _numberOfBinaryArgs, TR::ifsucmpne, resolvedMethodName, _argTypesBinaryShort, TR::Int32, rc, 2, 2, &(ifSuCmpneDataArr[i][1]));
-      OMR_CT_EXPECT_EQ(suCompareConst, compareNE(ifSuCmpneDataArr[i][0], ifSuCmpneDataArr[i][1]), suCompareConst(ifSuCmpneDataArr[i][0], SHORT_PLACEHOLDER_2)) << ifSuCmpneDataArr[i][0] << " : " << ifSuCmpneDataArr[i][1];
       }
 
    testCaseNum = sizeof(ifSuCmpgtDataArr) / sizeof(ifSuCmpgtDataArr[0]);
@@ -4125,96 +3824,96 @@ X86OpCodesTest::invokeAddressTests()
    int64_t longDataArr[] = {LONG_NEG, LONG_POS, LONG_MAXIMUM, LONG_MINIMUM, LONG_ZERO};
    int32_t intDataArr[] = {INT_NEG, INT_POS, INT_MAXIMUM, INT_MINIMUM, INT_ZERO};
    uint32_t uintDataArr[] = {UINT_POS, UINT_MAXIMUM, UINT_MINIMUM};
-   uintptrj_t aUnaryDataArr[] =
+   uintptr_t aUnaryDataArr[] =
       {
-      (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_ZERO,
-      (uintptrj_t) &LONG_POS,
-      (uintptrj_t) &LONG_MAXIMUM,
-      (uintptrj_t) &LONG_ZERO
+      (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_ZERO,
+      (uintptr_t) &LONG_POS,
+      (uintptr_t) &LONG_MAXIMUM,
+      (uintptr_t) &LONG_ZERO
       };
 
-   uintptrj_t acmpeqDataArr[][2] =
+   uintptr_t acmpeqDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_MINIMUM
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_MINIMUM
       };
-   uintptrj_t acmpneDataArr[][2] =
+   uintptr_t acmpneDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_MINIMUM,
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_MINIMUM,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_POS
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_MINIMUM,
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_MINIMUM,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_POS
       };
-   uintptrj_t acmpltDataArr[][2] =
+   uintptr_t acmpltDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_MINIMUM
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_MINIMUM
       };
-   uintptrj_t acmpgeDataArr[][2] =
+   uintptr_t acmpgeDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_MINIMUM
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_MINIMUM
       };
-   uintptrj_t acmpleDataArr[][2] =
+   uintptr_t acmpleDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_MINIMUM,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_MAXIMUM
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_MINIMUM,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_MAXIMUM
       };
-   uintptrj_t acmpgtDataArr[][2] =
+   uintptr_t acmpgtDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_MINIMUM,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_POS
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_MINIMUM,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_POS
       };
-   uintptrj_t ifacmpeqDataArr[][2] =
+   uintptr_t ifacmpeqDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_MINIMUM
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_MINIMUM
       };
-   uintptrj_t ifacmpneDataArr[][2] =
+   uintptr_t ifacmpneDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_MINIMUM,
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_MINIMUM,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_POS
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_MINIMUM,
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_MINIMUM,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_POS
       };
-   uintptrj_t ifacmpltDataArr[][2] =
+   uintptr_t ifacmpltDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_MINIMUM
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_MINIMUM
       };
-   uintptrj_t ifacmpgeDataArr[][2] =
+   uintptr_t ifacmpgeDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_MINIMUM
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_MINIMUM
       };
-   uintptrj_t ifacmpleDataArr[][2] =
+   uintptr_t ifacmpleDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_MINIMUM,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_MAXIMUM
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_MINIMUM,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_MAXIMUM
       };
-   uintptrj_t ifacmpgtDataArr[][2] =
+   uintptr_t ifacmpgtDataArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM,  (uintptrj_t) &INT_MINIMUM,
-      (uintptrj_t) &INT_MINIMUM,  (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_POS,   (uintptrj_t) &INT_POS
+      (uintptr_t) &INT_MAXIMUM,  (uintptr_t) &INT_MINIMUM,
+      (uintptr_t) &INT_MINIMUM,  (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_POS,   (uintptr_t) &INT_POS
       };
 
-   int32_t aternaryChild1Arr[] =
+   int32_t aselectChild1Arr[] =
       {
          INT_MAXIMUM,
          INT_MAXIMUM,
@@ -4232,23 +3931,23 @@ X86OpCodesTest::invokeAddressTests()
          INT_ZERO,
          INT_ZERO
       };
-   uintptrj_t aternaryArr[][2] =
+   uintptr_t aselectArr[][2] =
       {
-      (uintptrj_t) &INT_MAXIMUM, (uintptrj_t) &INT_ZERO,
-      (uintptrj_t) &INT_POS,     (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_ZERO,    (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_MAXIMUM, (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_POS,     (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_ZERO,    (uintptrj_t) &INT_ZERO,
-      (uintptrj_t) &INT_MAXIMUM, (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_POS,     (uintptrj_t) &INT_ZERO,
-      (uintptrj_t) &INT_ZERO,    (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_MAXIMUM, (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_POS,     (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_ZERO,    (uintptrj_t) &INT_ZERO,
-      (uintptrj_t) &INT_MAXIMUM, (uintptrj_t) &INT_ZERO,
-      (uintptrj_t) &INT_POS,     (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_ZERO,    (uintptrj_t) &INT_MAXIMUM
+      (uintptr_t) &INT_MAXIMUM, (uintptr_t) &INT_ZERO,
+      (uintptr_t) &INT_POS,     (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_ZERO,    (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_MAXIMUM, (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_POS,     (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_ZERO,    (uintptr_t) &INT_ZERO,
+      (uintptr_t) &INT_MAXIMUM, (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_POS,     (uintptr_t) &INT_ZERO,
+      (uintptr_t) &INT_ZERO,    (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_MAXIMUM, (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_POS,     (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_ZERO,    (uintptr_t) &INT_ZERO,
+      (uintptr_t) &INT_MAXIMUM, (uintptr_t) &INT_ZERO,
+      (uintptr_t) &INT_POS,     (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_ZERO,    (uintptr_t) &INT_MAXIMUM
       };
 
    uint32_t testCaseNum = 0;
@@ -4262,7 +3961,7 @@ X86OpCodesTest::invokeAddressTests()
    unsignedSignatureCharI_L_testMethodType *iu2aConst = 0;
 
    signatureCharLL_I_testMethodType *aCompareConst = 0;
-   signatureCharILL_L_testMethodType *aTernaryConst = 0;
+   signatureCharILL_L_testMethodType *aSelectConst = 0;
 
    testCaseNum = sizeof(aUnaryDataArr) / sizeof(aUnaryDataArr[0]);
    for (int32_t i = 0 ; i < testCaseNum ; i++)
@@ -4343,48 +4042,48 @@ X86OpCodesTest::invokeAddressTests()
       OMR_CT_EXPECT_EQ(a2lConst, convert(aUnaryDataArr[i], LONG_POS), a2lConst(ADDRESS_PLACEHOLDER_1));
       }
 
-   //aternary
-   TR_ASSERT((sizeof(aternaryChild1Arr) / sizeof(aternaryChild1Arr[0])) == sizeof(aternaryArr) / sizeof(aternaryArr[0]),
+   //aselect
+   TR_ASSERT((sizeof(aselectChild1Arr) / sizeof(aselectChild1Arr[0])) == sizeof(aselectArr) / sizeof(aselectArr[0]),
          "Child1 array is not equal to Child2 and Child3 array");
-   testCaseNum = sizeof(aternaryChild1Arr) / sizeof(aternaryChild1Arr[0]);
+   testCaseNum = sizeof(aselectChild1Arr) / sizeof(aselectChild1Arr[0]);
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
-      OMR_CT_EXPECT_EQ(_aternary, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), _aternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]));
+      OMR_CT_EXPECT_EQ(_aselect, select(aselectChild1Arr[i], aselectArr[i][0], aselectArr[i][1]), _aselect(aselectChild1Arr[i], aselectArr[i][0], aselectArr[i][1]));
 
-      sprintf(resolvedMethodName, "aTernaryConst1_TestCase%d", i + 1);
-      compileOpCodeMethod(aTernaryConst,
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 6, 1, &aternaryChild1Arr[i], 2, &aternaryArr[i][0], 3, &aternaryArr[i][1]);
-      OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2, ADDRESS_PLACEHOLDER_3));
+      sprintf(resolvedMethodName, "aSelectConst1_TestCase%d", i + 1);
+      compileOpCodeMethod(aSelectConst,
+            _numberOfSelectArgs, TR::aselect, resolvedMethodName, _argTypesSelectAddress, TR::Address, rc, 6, 1, &aselectChild1Arr[i], 2, &aselectArr[i][0], 3, &aselectArr[i][1]);
+      OMR_CT_EXPECT_EQ(aSelectConst, select(aselectChild1Arr[i], aselectArr[i][0], aselectArr[i][1]), aSelectConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2, ADDRESS_PLACEHOLDER_3));
 
-      sprintf(resolvedMethodName, "aTernaryConst2_TestCase%d", i + 1);
-      compileOpCodeMethod(aTernaryConst,
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 4, 1, &aternaryChild1Arr[i], 2, &aternaryArr[i][0]);
-      OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2, aternaryArr[i][1]));
+      sprintf(resolvedMethodName, "aSelectConst2_TestCase%d", i + 1);
+      compileOpCodeMethod(aSelectConst,
+            _numberOfSelectArgs, TR::aselect, resolvedMethodName, _argTypesSelectAddress, TR::Address, rc, 4, 1, &aselectChild1Arr[i], 2, &aselectArr[i][0]);
+      OMR_CT_EXPECT_EQ(aSelectConst, select(aselectChild1Arr[i], aselectArr[i][0], aselectArr[i][1]), aSelectConst(ADDRESS_PLACEHOLDER_1, ADDRESS_PLACEHOLDER_2, aselectArr[i][1]));
 
-      sprintf(resolvedMethodName, "aTernaryConst3_TestCase%d", i + 1);
-      compileOpCodeMethod(aTernaryConst,
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 4, 1, &aternaryChild1Arr[i], 3, &aternaryArr[i][1]);
-      OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(ADDRESS_PLACEHOLDER_1, aternaryArr[i][0], ADDRESS_PLACEHOLDER_3));
+      sprintf(resolvedMethodName, "aSelectConst3_TestCase%d", i + 1);
+      compileOpCodeMethod(aSelectConst,
+            _numberOfSelectArgs, TR::aselect, resolvedMethodName, _argTypesSelectAddress, TR::Address, rc, 4, 1, &aselectChild1Arr[i], 3, &aselectArr[i][1]);
+      OMR_CT_EXPECT_EQ(aSelectConst, select(aselectChild1Arr[i], aselectArr[i][0], aselectArr[i][1]), aSelectConst(ADDRESS_PLACEHOLDER_1, aselectArr[i][0], ADDRESS_PLACEHOLDER_3));
 
-      sprintf(resolvedMethodName, "aTernaryConst4_TestCase%d", i + 1);
-      compileOpCodeMethod(aTernaryConst,
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 4, 2, &aternaryArr[i][0], 3, &aternaryArr[i][1]);
-      OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(aternaryChild1Arr[i], ADDRESS_PLACEHOLDER_2, ADDRESS_PLACEHOLDER_3));
+      sprintf(resolvedMethodName, "aSelectConst4_TestCase%d", i + 1);
+      compileOpCodeMethod(aSelectConst,
+            _numberOfSelectArgs, TR::aselect, resolvedMethodName, _argTypesSelectAddress, TR::Address, rc, 4, 2, &aselectArr[i][0], 3, &aselectArr[i][1]);
+      OMR_CT_EXPECT_EQ(aSelectConst, select(aselectChild1Arr[i], aselectArr[i][0], aselectArr[i][1]), aSelectConst(aselectChild1Arr[i], ADDRESS_PLACEHOLDER_2, ADDRESS_PLACEHOLDER_3));
 
-      sprintf(resolvedMethodName, "aTernaryConst5_TestCase%d", i + 1);
-      compileOpCodeMethod(aTernaryConst,
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 2, 1, &aternaryChild1Arr[i]);
-      OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(ADDRESS_PLACEHOLDER_1, aternaryArr[i][0], aternaryArr[i][1]));
+      sprintf(resolvedMethodName, "aSelectConst5_TestCase%d", i + 1);
+      compileOpCodeMethod(aSelectConst,
+            _numberOfSelectArgs, TR::aselect, resolvedMethodName, _argTypesSelectAddress, TR::Address, rc, 2, 1, &aselectChild1Arr[i]);
+      OMR_CT_EXPECT_EQ(aSelectConst, select(aselectChild1Arr[i], aselectArr[i][0], aselectArr[i][1]), aSelectConst(ADDRESS_PLACEHOLDER_1, aselectArr[i][0], aselectArr[i][1]));
 
-      sprintf(resolvedMethodName, "aTernaryConst6_TestCase%d", i + 1);
-      compileOpCodeMethod(aTernaryConst,
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 2, 2, &aternaryArr[i][0]);
-      OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(aternaryChild1Arr[i], ADDRESS_PLACEHOLDER_1, aternaryArr[i][1]));
+      sprintf(resolvedMethodName, "aSelectConst6_TestCase%d", i + 1);
+      compileOpCodeMethod(aSelectConst,
+            _numberOfSelectArgs, TR::aselect, resolvedMethodName, _argTypesSelectAddress, TR::Address, rc, 2, 2, &aselectArr[i][0]);
+      OMR_CT_EXPECT_EQ(aSelectConst, select(aselectChild1Arr[i], aselectArr[i][0], aselectArr[i][1]), aSelectConst(aselectChild1Arr[i], ADDRESS_PLACEHOLDER_1, aselectArr[i][1]));
 
-      sprintf(resolvedMethodName, "aTernaryConst7_TestCase%d", i + 1);
-      compileOpCodeMethod(aTernaryConst,
-            _numberOfTernaryArgs, TR::aternary, resolvedMethodName, _argTypesTernaryAddress, TR::Address, rc, 2, 3, &aternaryArr[i][1]);
-      OMR_CT_EXPECT_EQ(aTernaryConst, ternary(aternaryChild1Arr[i], aternaryArr[i][0], aternaryArr[i][1]), aTernaryConst(aternaryChild1Arr[i], aternaryArr[i][0], ADDRESS_PLACEHOLDER_1));
+      sprintf(resolvedMethodName, "aSelectConst7_TestCase%d", i + 1);
+      compileOpCodeMethod(aSelectConst,
+            _numberOfSelectArgs, TR::aselect, resolvedMethodName, _argTypesSelectAddress, TR::Address, rc, 2, 3, &aselectArr[i][1]);
+      OMR_CT_EXPECT_EQ(aSelectConst, select(aselectChild1Arr[i], aselectArr[i][0], aselectArr[i][1]), aSelectConst(aselectChild1Arr[i], aselectArr[i][0], ADDRESS_PLACEHOLDER_1));
       }
 #endif //defined(TR_TARGET_64BIT)
 
@@ -4644,14 +4343,14 @@ X86OpCodesTest::invokeAddressTests()
    }
 
 void
-X86OpCodesTest::invokeTernaryTests()
+X86OpCodesTest::invokeSelectTests()
    {
    int32_t rc = 0;
    char resolvedMethodName [RESOLVED_METHOD_NAME_LENGTH];
    uint32_t testCaseNum = 0;
    uint32_t testCaseNumCheck = 0;
 
-   int32_t lternaryChild1Arr[] =
+   int32_t lselectChild1Arr[] =
       {
       INT_ZERO,INT_MINIMUM,INT_NEG,INT_MAXIMUM,INT_POS,INT_MINIMUM,
       INT_MAXIMUM,INT_POS,INT_ZERO,INT_MAXIMUM,INT_MAXIMUM
@@ -4672,42 +4371,42 @@ X86OpCodesTest::invokeTernaryTests()
       LONG_MAXIMUM, LONG_NEG
       };
 
-   testCaseNum = sizeof(lternaryChild1Arr) / sizeof(lternaryChild1Arr[0]);
+   testCaseNum = sizeof(lselectChild1Arr) / sizeof(lselectChild1Arr[0]);
    testCaseNumCheck = sizeof(longArr) / sizeof(longArr[0]);
-   TR_ASSERT( (testCaseNum > 0) && (testCaseNum == testCaseNumCheck), "There is problem in lternary input array");
-   signatureCharIJJ_J_testMethodType * lTernaryConst = 0;
+   TR_ASSERT( (testCaseNum > 0) && (testCaseNum == testCaseNumCheck), "There is problem in lselect input array");
+   signatureCharIJJ_J_testMethodType * lSelectConst = 0;
    for (int32_t i = 0 ; i < testCaseNum ; i++)
       {
-      sprintf(resolvedMethodName, "lTernaryConst%d", i + 1);
-      OMR_CT_EXPECT_EQ(_lternary, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), _lternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]));
+      sprintf(resolvedMethodName, "lSelectConst%d", i + 1);
+      OMR_CT_EXPECT_EQ(_lselect, select(lselectChild1Arr[i], longArr[i][0], longArr[i][1]), _lselect(lselectChild1Arr[i], longArr[i][0], longArr[i][1]));
 
-      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 6, 1, &lternaryChild1Arr[i], 2, &longArr[i][0], 3, &longArr[i][1]);
-      OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2, LONG_PLACEHOLDER_3));
+      compileOpCodeMethod(lSelectConst, _numberOfSelectArgs, TR::lselect,
+            resolvedMethodName, _argTypesSelectLong, TR::Int64, rc, 6, 1, &lselectChild1Arr[i], 2, &longArr[i][0], 3, &longArr[i][1]);
+      OMR_CT_EXPECT_EQ(lSelectConst, select(lselectChild1Arr[i], longArr[i][0], longArr[i][1]), lSelectConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2, LONG_PLACEHOLDER_3));
 
-      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 4, 1, &lternaryChild1Arr[i], 2, &longArr[i][0]);
-      OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2, longArr[i][1]));
+      compileOpCodeMethod(lSelectConst, _numberOfSelectArgs, TR::lselect,
+            resolvedMethodName, _argTypesSelectLong, TR::Int64, rc, 4, 1, &lselectChild1Arr[i], 2, &longArr[i][0]);
+      OMR_CT_EXPECT_EQ(lSelectConst, select(lselectChild1Arr[i], longArr[i][0], longArr[i][1]), lSelectConst(LONG_PLACEHOLDER_1, LONG_PLACEHOLDER_2, longArr[i][1]));
 
-      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 4, 1, &lternaryChild1Arr[i], 3, &longArr[i][1]);
-      OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(LONG_PLACEHOLDER_1, longArr[i][0], LONG_PLACEHOLDER_3));
+      compileOpCodeMethod(lSelectConst, _numberOfSelectArgs, TR::lselect,
+            resolvedMethodName, _argTypesSelectLong, TR::Int64, rc, 4, 1, &lselectChild1Arr[i], 3, &longArr[i][1]);
+      OMR_CT_EXPECT_EQ(lSelectConst, select(lselectChild1Arr[i], longArr[i][0], longArr[i][1]), lSelectConst(LONG_PLACEHOLDER_1, longArr[i][0], LONG_PLACEHOLDER_3));
 
-      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 4, 2, &longArr[i][0], 3, &longArr[i][1]);
-      OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(lternaryChild1Arr[i], LONG_PLACEHOLDER_2, LONG_PLACEHOLDER_3));
+      compileOpCodeMethod(lSelectConst, _numberOfSelectArgs, TR::lselect,
+            resolvedMethodName, _argTypesSelectLong, TR::Int64, rc, 4, 2, &longArr[i][0], 3, &longArr[i][1]);
+      OMR_CT_EXPECT_EQ(lSelectConst, select(lselectChild1Arr[i], longArr[i][0], longArr[i][1]), lSelectConst(lselectChild1Arr[i], LONG_PLACEHOLDER_2, LONG_PLACEHOLDER_3));
 
-      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 2, 1, &lternaryChild1Arr[i]);
-      OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(LONG_PLACEHOLDER_1, longArr[i][0], longArr[i][1]));
+      compileOpCodeMethod(lSelectConst, _numberOfSelectArgs, TR::lselect,
+            resolvedMethodName, _argTypesSelectLong, TR::Int64, rc, 2, 1, &lselectChild1Arr[i]);
+      OMR_CT_EXPECT_EQ(lSelectConst, select(lselectChild1Arr[i], longArr[i][0], longArr[i][1]), lSelectConst(LONG_PLACEHOLDER_1, longArr[i][0], longArr[i][1]));
 
-      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 2, 2, &longArr[i][0]);
-      OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(lternaryChild1Arr[i], LONG_PLACEHOLDER_1, longArr[i][1]));
+      compileOpCodeMethod(lSelectConst, _numberOfSelectArgs, TR::lselect,
+            resolvedMethodName, _argTypesSelectLong, TR::Int64, rc, 2, 2, &longArr[i][0]);
+      OMR_CT_EXPECT_EQ(lSelectConst, select(lselectChild1Arr[i], longArr[i][0], longArr[i][1]), lSelectConst(lselectChild1Arr[i], LONG_PLACEHOLDER_1, longArr[i][1]));
 
-      compileOpCodeMethod(lTernaryConst, _numberOfTernaryArgs, TR::lternary,
-            resolvedMethodName, _argTypesTernaryLong, TR::Int64, rc, 2, 3, &longArr[i][1]);
-      OMR_CT_EXPECT_EQ(lTernaryConst, ternary(lternaryChild1Arr[i], longArr[i][0], longArr[i][1]), lTernaryConst(lternaryChild1Arr[i], longArr[i][0], LONG_PLACEHOLDER_1));
+      compileOpCodeMethod(lSelectConst, _numberOfSelectArgs, TR::lselect,
+            resolvedMethodName, _argTypesSelectLong, TR::Int64, rc, 2, 3, &longArr[i][1]);
+      OMR_CT_EXPECT_EQ(lSelectConst, select(lselectChild1Arr[i], longArr[i][0], longArr[i][1]), lSelectConst(lselectChild1Arr[i], longArr[i][0], LONG_PLACEHOLDER_1));
       }
    }
 
@@ -4719,11 +4418,9 @@ X86OpCodesTest::UnsupportedOpCodesTests()
    addUnsupportedOpCodeTest(_numberOfUnaryArgs, TR::lu2f, "lu2f", _argTypesUnaryLong, TR::Float);
    addUnsupportedOpCodeTest(_numberOfUnaryArgs, TR::lu2d, "lu2d", _argTypesUnaryLong, TR::Double);
 
-   //bternary, sternary, fternary, dternary
-   addUnsupportedOpCodeTest(_numberOfTernaryArgs, TR::bternary, "bTernary", _argTypesTernaryByte, TR::Int8);
-   addUnsupportedOpCodeTest(_numberOfTernaryArgs, TR::sternary, "sTernary", _argTypesTernaryShort, TR::Int16);
-   addUnsupportedOpCodeTest(_numberOfTernaryArgs, TR::fternary, "fTernary", _argTypesTernaryFloat, TR::Float);
-   addUnsupportedOpCodeTest(_numberOfTernaryArgs, TR::dternary, "dTernary", _argTypesTernaryDouble, TR::Double);
+   //bselect, sselect, fselect, dselect
+   addUnsupportedOpCodeTest(_numberOfSelectArgs, TR::fselect, "fSelect", _argTypesSelectFloat, TR::Float);
+   addUnsupportedOpCodeTest(_numberOfSelectArgs, TR::dselect, "dSelect", _argTypesSelectDouble, TR::Double);
 
    //iu2f, iu2d
    addUnsupportedOpCodeTest(_numberOfUnaryArgs, TR::iu2f, "iu2f", _argTypesUnaryInt, TR::Float);
@@ -4785,19 +4482,12 @@ X86OpCodesTest::compileDisabledIntegerArithmeticTestMethods()
    //Jazz103 Work Item 103809
    //Testrossa Work Item 121966
    compileOpCodeMethod(_iuDiv, _numberOfBinaryArgs, TR::iudiv, "iuDiv", _argTypesBinaryInt, TR::Int32, rc);
-   compileOpCodeMethod(_iuMul, _numberOfBinaryArgs, TR::iumul, "iuMul", _argTypesBinaryInt, TR::Int32, rc);
    compileOpCodeMethod(_iuRem, _numberOfBinaryArgs, TR::iurem, "iuRem", _argTypesBinaryInt, TR::Int32, rc);
    }
 
 void
 X86OpCodesTest::invokeDisabledIntegerArithmeticTests()
    {
-   //unsigned integer constant test will be enabled in another work item.
-   //iumul : overflow just cut
-   OMR_CT_EXPECT_EQ(_iuMul, mul(UINT_MAXIMUM, UINT_MINIMUM), _iuMul(UINT_MAXIMUM, UINT_MINIMUM));
-   OMR_CT_EXPECT_EQ(_iuMul, mul(UINT_MINIMUM, UINT_POS), _iuMul(UINT_MINIMUM, UINT_POS));
-   OMR_CT_EXPECT_EQ(_iuMul, mul(UINT_POS, UINT_MAXIMUM), _iuMul(UINT_POS, UINT_MAXIMUM));
-
    //iudiv
    // TODO: Use ASSERT_DEATH() to catch Remainder by zero which will get "Floating point exception (core dumped)"
    // Test secnario : _iuDiv(UINT_MAXIMUM, 0)
@@ -4826,14 +4516,14 @@ X86OpCodesTest::invokeDisabledConvertOpCodesTest()
    {
 
    int32_t rc = 0;
-   uintptrj_t aUnaryDataArr[] =
+   uintptr_t aUnaryDataArr[] =
       {
-      (uintptrj_t) &INT_POS,
-      (uintptrj_t) &INT_MAXIMUM,
-      (uintptrj_t) &INT_ZERO,
-      (uintptrj_t) &LONG_POS,
-      (uintptrj_t) &LONG_MAXIMUM,
-      (uintptrj_t) &LONG_ZERO
+      (uintptr_t) &INT_POS,
+      (uintptr_t) &INT_MAXIMUM,
+      (uintptr_t) &INT_ZERO,
+      (uintptr_t) &LONG_POS,
+      (uintptr_t) &LONG_MAXIMUM,
+      (uintptr_t) &LONG_ZERO
       };
 
    uint32_t testCaseNum = 0;
@@ -4871,7 +4561,7 @@ X86OpCodesTest::invokeDisabledMemoryOpCodesTest()
    uint32_t testCaseNum = sizeof(byteDataArray) / sizeof(byteDataArray[0]);
    for (int32_t i = 0 ; _bStorei != NULL && i < testCaseNum ; i++)
       {
-      _bStorei((uintptrj_t)(&byteStoreDataArray[i]) , byteDataArray[i]);
+      _bStorei((uintptr_t)(&byteStoreDataArray[i]) , byteDataArray[i]);
       EXPECT_EQ(byteDataArray[i], byteStoreDataArray[i]);
       }
 
@@ -4929,11 +4619,11 @@ TEST(JITX86OpCodesTest, CompareTest)
    X86CompareTest.invokeCompareTests();
    }
 
-TEST(JITX86OpCodesTest, TernaryTest)
+TEST(JITX86OpCodesTest, SelectTest)
    {
-   ::TestCompiler::X86OpCodesTest X86TernaryTest;
-   X86TernaryTest.compileTernaryTestMethods();
-   X86TernaryTest.invokeTernaryTests();
+   ::TestCompiler::X86OpCodesTest X86SelectTest;
+   X86SelectTest.compileSelectTestMethods();
+   X86SelectTest.invokeSelectTests();
    }
 
 TEST(JITX86OpCodesTest, X86AddressTest)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ namespace OMR { typedef OMR::CodeGenerator CodeGeneratorConnector; }
 #include <stdint.h>
 #include <map>
 #include "codegen/CodeGenPhase.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "codegen/RegisterConstants.hpp"
@@ -266,7 +266,6 @@ class OMR_EXTENSIBLE CodeGenerator
 
    TR_BitVector *_localsThatAreStored;
    int32_t _numLocalsWhenStoreAnalysisWasDone;
-   TR_HashTabInt _uncommmonedNodes;               // uncommoned nodes keyed by the original nodes
    List<TR_Pair<TR::Node, int32_t> > _ialoadUnneeded;
 
    public:
@@ -369,12 +368,10 @@ class OMR_EXTENSIBLE CodeGenerator
    void setNextAvailableBlockIndex(int32_t blockIndex) {}
    int32_t getNextAvailableBlockIndex() { return -1; }
 
-   bool supportsMethodEntryPadding() { return true; }
    bool mustGenerateSwitchToInterpreterPrePrologue() { return false; }
    bool buildInterpreterEntryPoint() { return false; }
    void generateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction) { return; }
    bool supportsUnneededLabelRemoval() { return true; }
-   bool allowSplitWarmAndColdBlocks() { return false; }
 
    TR_HasRandomGenerator randomizer;
 
@@ -419,7 +416,6 @@ class OMR_EXTENSIBLE CodeGenerator
    void identifyUnneededByteConvNodes(TR::Node*, TR::TreeTop *, vcount_t, TR::DataType);
    void identifyUnneededByteConvNodes();
 
-   bool afterRA() { return _afterRA; }
    TR::CodeGenPhase& getCodeGeneratorPhase() {return _codeGenPhase;}
 
    void prepareNodeForInstructionSelection(TR::Node*node);
@@ -431,6 +427,8 @@ class OMR_EXTENSIBLE CodeGenerator
    void processReference(TR::Node*reference, TR::Node*parent, TR::TreeTop *treeTop);
    void spillLiveReferencesToTemps(TR::TreeTop *insertionTree, std::list<TR::SymbolReference*, TR::typed_allocator<TR::SymbolReference*, TR::Allocator> >::iterator firstAvailableSpillTemp);
    void needSpillTemp(TR_LiveReference * cursor, TR::Node*parent, TR::TreeTop *treeTop);
+
+   void expandInstructions() {}
 
    friend void OMR::CodeGenPhase::performEmitSnippetsPhase(TR::CodeGenerator*, TR::CodeGenPhase *);
    friend void OMR::CodeGenPhase::performCleanUpFlagsPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase);
@@ -470,7 +468,7 @@ class OMR_EXTENSIBLE CodeGenerator
    rcount_t recursivelyDecReferenceCount(TR::Node*node);
    void evaluateChildrenWithMultipleRefCount(TR::Node*node);
 
-   void incRefCountForOpaquePseudoRegister(TR::Node * node, TR::CodeGenerator * cg, TR::Compilation * comp) {}
+   void incRefCountForOpaquePseudoRegister(TR::Node * node) {}
 
    void startUsingRegister(TR::Register *reg);
    void stopUsingRegister(TR::Register *reg);
@@ -549,20 +547,17 @@ class OMR_EXTENSIBLE CodeGenerator
    // Z only
    //
 
-   TR::list<uint8_t*>& getBreakPointList() {return _breakPointList;}
-   void addBreakPointAddress(uint8_t *b) {_breakPointList.push_front(b);}
-
    bool AddArtificiallyInflatedNodeToStack(TR::Node* n);
 
    // --------------------------------------------------------------------------
    // P only
    //
-   intptrj_t hiValue(intptrj_t address);
+   intptr_t hiValue(intptr_t address);
 
    // --------------------------------------------------------------------------
    // Lower trees
    //
-   void rematerializeCmpUnderTernary(TR::Node*node);
+   void rematerializeCmpUnderSelect(TR::Node*node);
    bool yankIndexScalingOp() {return false;}
 
    void cleanupFlags(TR::Node*node);
@@ -680,9 +675,6 @@ class OMR_EXTENSIBLE CodeGenerator
    bool getSupportsTenuredObjectAlignment() { return false; }
    bool isObjectOfSizeWorthAligning(uint32_t size) { return false; }
 
-   // J9
-   int32_t getInternalPtrMapBit() { return 31;}
-
    uint32_t getMaxObjectSizeGuaranteedNotToOverflow() { return _maxObjectSizeGuaranteedNotToOverflow; }
 
    // --------------------------------------------------------------------------
@@ -769,6 +761,28 @@ class OMR_EXTENSIBLE CodeGenerator
 
    uint32_t getPreJitMethodEntrySize() {return _preJitMethodEntrySize;}
    uint32_t setPreJitMethodEntrySize(uint32_t s) {return (_preJitMethodEntrySize = s);}
+
+   /** \brief
+    *     Determines whether the code generator supports or allows JIT-to-JIT method entry point alignment.
+    */
+   bool supportsJitMethodEntryAlignment();
+
+   /** \brief
+    *     Determines the byte boundary at which to align the JIT-to-JIT method entry point. If the boundary is
+    *     specified to be \c x and the JIT-to-JIT method entry point to be \c y then <c>y & (x - 1) == 0</c>.
+    */
+   uint32_t getJitMethodEntryAlignmentBoundary();
+
+   /** \brief
+    *     Determines the byte threshold at which the JIT-to-JIT method entry point boundary alignment will not be
+    *     performed. If the JIT-to-JIT method entry point is already close to the boundary then it may not make sense
+    *     to perform the boundary alignment as much code cache can be wasted. This threshold can be used to avoid such
+    *     situations.
+    *
+    *  \note
+    *     This value must be less than or equal to the boundary returned via \see getJitMethodEntryAlignmentBoundary.
+    */
+   uint32_t getJitMethodEntryAlignmentThreshold();
 
    uint32_t getJitMethodEntryPaddingSize() {return _jitMethodEntryPaddingSize;}
    uint32_t setJitMethodEntryPaddingSize(uint32_t s) {return (_jitMethodEntryPaddingSize = s);}
@@ -1031,7 +1045,6 @@ class OMR_EXTENSIBLE CodeGenerator
    // --------------------------------------------------------------------------
    // Register assignment tracing
    //
-   bool getTraceRAOption(uint32_t mask);
    void traceRAInstruction(TR::Instruction *instr);
    void tracePreRAInstruction(TR::Instruction *instr);
    void tracePostRAInstruction(TR::Instruction *instr);
@@ -1059,7 +1072,7 @@ class OMR_EXTENSIBLE CodeGenerator
 
    TR::list<TR::Register*> *getSpilledRegisterList() {return _spilledRegisterList;}
    TR::list<TR::Register*> *setSpilledRegisterList(TR::list<TR::Register*> *r) {return _spilledRegisterList = r;}
-   
+
    TR_BackingStore *allocateSpill(bool containsCollectedReference, int32_t *offset, bool reuse=true);
    TR_BackingStore *allocateSpill(int32_t size, bool containsCollectedReference, int32_t *offset, bool reuse=true);
    TR_BackingStore *allocateInternalPointerSpill(TR::AutomaticSymbol *pinningArrayPointer);
@@ -1139,12 +1152,17 @@ class OMR_EXTENSIBLE CodeGenerator
    void apply32BitLabelRelativeRelocation(int32_t * cursor, TR::LabelSymbol *);
    void apply32BitLabelTableRelocation(int32_t * cursor, TR::LabelSymbol *);
 
-   TR::list<TR_Pair<TR_ResolvedMethod,TR::Instruction> *> &getJNICallSites() { return _jniCallSites; }  // registerAssumptions()
 
-   bool needClassAndMethodPointerRelocations() { return false; }
-   bool needRelocationsForStatics() { return false; }
-   bool needRelocationsForBodyInfoData() { return false; }
-   bool needRelocationsForPersistentInfoData() { return false; }
+   bool needClassAndMethodPointerRelocations();
+   bool needRelocationsForStatics();
+   bool needRelocationsForBodyInfoData();
+   bool needRelocationsForPersistentInfoData();
+   bool needRelocationsForLookupEvaluationData();
+   bool needRelocationsForCurrentMethodPC();
+
+   // This query can be used if we need to decide whether data represented by TR_HelperAddress or TR_AbsoluteHelperAddress
+   // relocation type needs a relocation record.
+   bool needRelocationsForHelpers();
 
    // --------------------------------------------------------------------------
    // Snippets
@@ -1326,19 +1344,13 @@ class OMR_EXTENSIBLE CodeGenerator
 
    // the following functions evaluate whether a codegen for the node or for static
    // symbol reference requires entry in the literal pool
-   bool arithmeticNeedsLiteralFromPool(TR::Node *node) { return false; }
    bool bitwiseOpNeedsLiteralFromPool(TR::Node *parent, TR::Node *child) { return false; }
-   bool bndsChkNeedsLiteralFromPool(TR::Node *node) { return false; }
-   bool constLoadNeedsLiteralFromPool(TR::Node *node) { return false; }
    void setOnDemandLiteralPoolRun(bool answer) {}
    bool isLiteralPoolOnDemandOn () { return false; }
    bool supportsOnDemandLiteralPool() { return false; }
    bool supportsDirectIntegralLoadStoresFromLiteralPool() { return false; }
 
    bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg) { return false; }
-
-   // J9 only, move to trj9
-   TR_OpaqueClassBlock* getMonClass(TR::Node* monNode);
 
    void setCurrentBlock(TR::Block *b);
    TR::Block *getCurrentBlock() { return _currentBlock; }
@@ -1381,28 +1393,39 @@ class OMR_EXTENSIBLE CodeGenerator
     *
     * @return : true, but will assert fatally before returning.
     */
-   bool directCallRequiresTrampoline(intptrj_t targetAddress, intptrj_t sourceAddress)
+   bool directCallRequiresTrampoline(intptr_t targetAddress, intptr_t sourceAddress)
       {
       TR_ASSERT_FATAL(0, "An architecture specialization of this function must be provided.");
       return true;
       }
 
-   // --------------------------------------------------------------------------
+   /**
+    * @brief
+    *    Redo the trampoline reservation for a call target, if a trampoline might be
+    *    required for the target.  This is typically required if a new code cache is
+    *    allocated between the instruction selection and binary encoding phases.
+    *
+    * @details
+    *    Note that the instructionSymRef cannot simply be read from the provided instruction
+    *    because this function is shared across multiple architectures with incompatible
+    *    instruction hierarchies.
+    *
+    * @param[in] callInstr : the call instruction to which this trampoline applies
+    * @param[in] instructionSymRef : the TR::SymbolReference present on the instruction
+    *
+    */
+   void redoTrampolineReservationIfNecessary(TR::Instruction *callInstr, TR::SymbolReference *instructionSymRef);
 
-   TR::Node *createOrFindClonedNode(TR::Node *node, int32_t numChildren);
+   // --------------------------------------------------------------------------
 
    bool constantAddressesCanChangeSize(TR::Node *node);
    bool profiledPointersRequireRelocation();
    bool needGuardSitesEvenWhenGuardRemoved();
-   bool supportVMInternalNatives();
 
    // will a BCD left shift always leave the sign code unchanged and thus allow it to be propagated through and upwards
    bool propagateSignThroughBCDLeftShift(TR::DataType type) { return false; }
 
    bool supportsLengthMinusOneForMemoryOpts() {return false;}
-
-   // Java, likely Z
-   bool supportsTrapsInTMRegion() { return true; }
 
    // Allows a platform code generator to assert that a particular node operation will use 64 bit values
    // that are not explicitly present in the node datatype.
@@ -1428,6 +1451,17 @@ class OMR_EXTENSIBLE CodeGenerator
 
    bool getSupportsGlRegDeps() {return _flags1.testAny(SupportsGlRegDeps);}
    void setSupportsGlRegDeps() {_flags1.set(SupportsGlRegDeps);}
+
+   /**
+    * @brief Query whether this code generator supports recompilation
+    * @return true if recompilation supported; false otherwise
+    */
+   bool getSupportsRecompilation() {return _flags1.testAny(SupportsRecompilation);}
+
+   /**
+    * @brief Indicate code generator support for recompilation
+    */
+   void setSupportsRecompilation() {_flags1.set(SupportsRecompilation);}
 
    bool getSupportsVectorRegisters() {return _flags1.testAny(SupportsVectorRegisters);}
    void setSupportsVectorRegisters() {_flags1.set(SupportsVectorRegisters);}
@@ -1470,6 +1504,9 @@ class OMR_EXTENSIBLE CodeGenerator
 
    bool getSupportsArrayTranslateTRxx() {return _flags2.testAny(SupportsArrayTranslate);}
    void setSupportsArrayTranslateTRxx() {_flags2.set(SupportsArrayTranslate);}
+
+   bool getSupportsSelect() {return _flags2.testAny(SupportsSelect);}
+   void setSupportsSelect() {_flags2.set(SupportsSelect);}
 
    bool getSupportsArrayTranslateTRTO255() {return _flags4.testAny(SupportsArrayTranslateTRTO255);}
    void setSupportsArrayTranslateTRTO255() {_flags4.set(SupportsArrayTranslateTRTO255);}
@@ -1516,9 +1553,6 @@ class OMR_EXTENSIBLE CodeGenerator
    bool getAccessStaticsIndirectly() {return _flags1.testAny(AccessStaticsIndirectly);}
    void setAccessStaticsIndirectly(bool b) {_flags1.set(AccessStaticsIndirectly, b);}
 
-   bool getSupportsBigDecimalLongLookasideVersioning() { return _flags3.testAny(SupportsBigDecimalLongLookasideVersioning);}
-   void setSupportsBigDecimalLongLookasideVersioning() { _flags3.set(SupportsBigDecimalLongLookasideVersioning);}
-
    bool getSupportsBDLLHardwareOverflowCheck() { return _flags3.testAny(SupportsBDLLHardwareOverflowCheck);}
    void setSupportsBDLLHardwareOverflowCheck() { _flags3.set(SupportsBDLLHardwareOverflowCheck);}
 
@@ -1533,9 +1567,6 @@ class OMR_EXTENSIBLE CodeGenerator
 
    bool getSupportsTM() { return _flags4.testAny(SupportsTM);}
    void setSupportsTM() { _flags4.set(SupportsTM);}
-
-   bool getSupportsLM() { return _flags4.testAny(SupportsLM);}
-   void setSupportsLM() { _flags4.set(SupportsLM);}
 
    virtual bool getSupportsTLE();
 
@@ -1689,7 +1720,7 @@ class OMR_EXTENSIBLE CodeGenerator
       SupportsReferenceArrayCopy                         = 0x00000200,
       SupportsJavaFloatSemantics                         = 0x00000400,
       SupportsInliningOfTypeCoersionMethods              = 0x00000800,
-      // AVAILABLE                                       = 0x00001000,
+      SupportsRecompilation                              = 0x00001000,
       SupportsVectorRegisters                            = 0x00002000,
       SupportsGlRegDepOnFirstBlock                       = 0x00004000,
       SupportsRemAsThirdChildOfDiv                       = 0x00008000,
@@ -1726,7 +1757,7 @@ class OMR_EXTENSIBLE CodeGenerator
       SupportsReadOnlyLocks                               = 0x00000400,
       SupportsArrayTranslateAndTest                       = 0x00000800,
       SupportsDynamicANewArray                            = 0x00001000,
-      // AVAILABLE                                        = 0x00002000,
+      SupportsSelect                                      = 0x00002000,
       // AVAILABLE                                        = 0x00004000,
       SupportsPostProcessArrayCopy                        = 0x00008000,
       // AVAILABLE                                        = 0x00010000,
@@ -1762,7 +1793,7 @@ class OMR_EXTENSIBLE CodeGenerator
       // AVAILABLE                                        = 0x00000400,
       HasCCCarry                                          = 0x00000800,
       // AVAILABLE                                        = 0x00001000,
-      SupportsBigDecimalLongLookasideVersioning           = 0x00002000,
+      // AVAILABLE                                        = 0x00002000,
       RemoveRegisterHogsInLowerTreesWalk                  = 0x00004000,
       SupportsBDLLHardwareOverflowCheck                   = 0x00008000,
       InlinedGetCurrentThreadMethod                       = 0x00010000,
@@ -1815,7 +1846,7 @@ class OMR_EXTENSIBLE CodeGenerator
       // AVAILABLE                                        = 0x04000000,
       // AVAILABLE                                        = 0x08000000,
       // AVAILABLE                                        = 0x10000000,
-      SupportsLM                                          = 0x20000000,
+      // AVAILABLE                                        = 0x20000000,
 
       DummyLastEnum4
       };
@@ -1875,7 +1906,6 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::list<TR::Relocation *> _relocationList;
    TR::list<TR::Relocation *> _externalRelocationList;
    TR::list<TR::StaticRelocation> _staticRelocationList;
-   TR::list<uint8_t*> _breakPointList;
 
    TR::list<TR::SymbolReference*> _variableSizeSymRefPendingFreeList;
    TR::list<TR::SymbolReference*> _variableSizeSymRefFreeList;
@@ -1886,13 +1916,8 @@ class OMR_EXTENSIBLE CodeGenerator
    TR::list<TR::Register*> *_spilledRegisterList;
    TR::list<OMR::RegisterUsage*> *_referencedRegistersList;
    int32_t _currentPathDepth;
-   TR::list<TR::Node*> _nodesSpineCheckedList;
 
-   TR::list<TR_Pair<TR_ResolvedMethod, TR::Instruction> *> _jniCallSites; // list of instrutions representing direct jni call sites
 
-   TR_Array<void *> _monitorMapping;
-
-   TR::list<TR::Node*> _compressedRefs;
 
    uint32_t _largestOutgoingArgSize;
 
@@ -1933,20 +1958,12 @@ class OMR_EXTENSIBLE CodeGenerator
    uint8_t _globalFPRPartitionLimit;
    flags16_t _enabledFlags;
 
-   bool _afterRA;
-
-   // MOVE TO J9 Z CodeGenerator
-   // isTemporaryBased storageReferences just have a symRef but some other routines expect a node so use the below to fill in this symRef on this node
-   TR::Node *_dummyTempStorageRefNode;
-
    public:
    static TR_TreeEvaluatorFunctionPointer _nodeToInstrEvaluators[];
 
    protected:
 
    bool _disableInternalPointers;
-
-   void addMonClass(TR::Node* monNode, TR_OpaqueClassBlock* clazz);
 
    TR::RegisterIterator *_gpRegisterIterator;
    TR::RegisterIterator *_fpRegisterIterator;

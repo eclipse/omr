@@ -138,7 +138,7 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDsplatsEvaluator(TR::Node* node, TR::C
          generateRegRegImmInstruction(PSHUFDRegRegImm1, node, resultReg, resultReg, 0x00, cg); // 00 00 00 00 shuffle xxxA to AAAA
          break;
       case TR::VectorInt64:
-         if (TR::Compiler->target.is32Bit())
+         if (cg->comp()->target().is32Bit())
             {
             TR::Register* tempVectorReg = cg->allocateRegister(TR_VRF);
             generateRegRegInstruction(MOVDRegReg4, node, tempVectorReg, childReg->getHighOrder(), cg);
@@ -194,7 +194,7 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDgetvelemEvaluator(TR::Node* node, TR:
          break;
       case TR::VectorInt64:
          elementCount = 2;
-         if (TR::Compiler->target.is32Bit())
+         if (cg->comp()->target().is32Bit())
             {
             lowResReg = cg->allocateRegister();
             highResReg = cg->allocateRegister();
@@ -302,7 +302,7 @@ TR::Register* OMR::X86::TreeEvaluator::SIMDgetvelemEvaluator(TR::Node* node, TR:
 
          if (TR::VectorInt64 == firstChild->getDataType())
             {
-            if (TR::Compiler->target.is32Bit())
+            if (cg->comp()->target().is32Bit())
                {
                generateRegRegInstruction(MOVDReg4Reg, node, lowResReg, dstReg, cg);
                generateRegRegImmInstruction(PSHUFDRegRegImm1, node, dstReg, srcVectorReg, (0 == elem) ? 0x03 : 0x01, cg);

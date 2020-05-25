@@ -198,7 +198,7 @@ const char *TR_BitVector::getHexString()
    #endif
    for (int32_t i = _numChunks-1; i >= 0; i--)
       {
-      sprintf(pos, "%0*llX", chunk_hexlen, _chunks[i]);
+      sprintf(pos, "%0*lX", chunk_hexlen, _chunks[i]);
       pos += chunk_hexlen;
       }
    return buf;

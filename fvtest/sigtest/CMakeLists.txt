@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-add_executable(omrsigtest
+omr_add_executable(omrsigtest
 	sigTest.cpp
 	sigTestHelpers.cpp
 	main.cpp
@@ -87,4 +87,4 @@ endif()
 
 set_property(TARGET omrsigtest PROPERTY FOLDER fvtest)
 
-add_test(NAME sigtest COMMAND omrsigtest)
+add_test(NAME sigtest COMMAND omrsigtest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrsigtest-results.xml)

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,12 +44,11 @@ elseif(OMR_HOST_ARCH STREQUAL "s390")
 
 	list(APPEND OMR_PLATFORM_DEFINITIONS
 		-DS390
-		-D_LONG_LONG
 	)
 endif()
 
-# Check if OMR need to use librt.  This variable is used by containing projects
-# properly link against OMR.
+# Check if OMR needs to use librt. This variable is used by containing projects.
+# to properly link against OMR.
 if(NOT DEFINED OMR_NEED_LIBRT)
 	check_symbol_exists(clock_gettime time.h OMR_LIBC_HAS_CLOCK_GETTIME)
 	if(OMR_LIBC_HAS_CLOCK_GETTIME)
@@ -62,6 +61,5 @@ if(NOT DEFINED OMR_NEED_LIBRT)
 endif()
 
 # Testarossa build variables. Longer term the distinction between TR and the rest
-# of the OMR code should be heavily reduced. In the mean time, we keep
-# the distinction
+# of the OMR code should be heavily reduced. In the mean time, we keep the distinction.
 list(APPEND TR_COMPILE_DEFINITIONS -DSUPPORTS_THREAD_LOCAL -DLINUX)

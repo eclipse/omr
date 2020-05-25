@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,9 @@
 #if defined(LINUX) && !defined(OMRZTPF)
 
 /* defining _GNU_SOURCE allows the use of dladdr() in dlfcn.h */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #elif defined(OSX)
 #define _XOPEN_SOURCE
 #endif /* defined(LINUX)  && !defined(OMRZTPF) */
@@ -160,7 +162,7 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 	/* dlopen(2) called with NULL filename opens a handle to current executable. */
 	handle = dlopen(openExec ? NULL : openName, lazyOrNow);
 
-#if defined(LINUX) || defined(OSX)
+#if defined(OMR_HAVE_DLADDR)
 	if ((NULL == handle) && !openExec) {
 		/* last ditch, try dir port lib DLL is in */
 		char portLibDir[MAX_STRING_LENGTH];
@@ -195,7 +197,7 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 			}
 		}
 	}
-#endif /* defined(LINUX) || defined(OSX) */
+#endif /* defined(OMR_HAS_DLADDR) */
 
 	if (NULL == handle) {
 		getDLError(portLibrary, errBuf, sizeof(errBuf));

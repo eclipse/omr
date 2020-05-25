@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +69,14 @@ enum TestAction {
 #endif /* defined(OMR_OS_WINDOWS) || defined(J9ZOS390) */
 #endif
 
-static jmp_buf env;
+/* Windows does not have sigsetjmp, siglongjump, or sigjmp_buf */
+#if defined(OMR_OS_WINDOWS)
+#define sigsetjmp(env, savesigs) setjmp(env)
+#define siglongjmp(env, val) longjmp(env, val)
+typedef jmp_buf sigjmp_buf;
+#endif /* defined(OMR_OS_WINDOWS) */
+
+static sigjmp_buf env;
 static volatile int handlerCalls;
 static void handlerPrimary(int sig);
 static void handlerPrimaryInstaller(int sig);
@@ -77,8 +84,6 @@ static void handlerSecondary(int sig);
 static void handlerSecondaryInstaller(int sig);
 static void handlerTertiaryInstaller(int sig);
 #if defined(OMR_OS_WINDOWS)
-#define sigsetjmp(env, savesigs) setjmp(env)
-#define siglongjmp(env, val) longjmp(env, val)
 static int signumOptions[] = {SIGABRT, 10000};
 #define NUM_TEST_CONDITIONS (2*2*4*2)
 #else /* defined(OMR_OS_WINDOWS) */
@@ -605,7 +610,7 @@ runHandlerTest(int *expectedHandlerCalls, bool existingPrimary, bool existingSec
 		*expectedHandlerCalls += 1;
 	}
 #endif /* defined(OMR_OS_WINDOWS) */
-	if (0 == setjmp(env) && (signum != signumOptions[1])) {
+	if (0 == sigsetjmp(env,0) && (signum != signumOptions[1])) {
 		int ret = omrsig_handler(signum, NULL, NULL);
 		if ((OMRSIG_RC_SIGNAL_HANDLED != ret)
 			== ((signum != signumOptions[1]) && existingSecondary)) {

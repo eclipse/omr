@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2019 IBM Corp. and others
+# Copyright (c) 2015, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,7 @@ AC_ARG_VAR([OMRGLUE_INCLUDES], [Extra include directories to be passed to the C 
 AC_ARG_VAR([lib_output_dir], [The output directory for libraries. (Default: $top_srcdir/lib)])
 AC_ARG_VAR([exe_output_dir], [The output directory for executables. (Default: $top_srcdir)])
 AC_ARG_VAR([OMR_HOST_OS], [The operating system where the package will run. One of: aix,linux,osx,win,zos])
-AC_ARG_VAR([OMR_HOST_ARCH], [The architecture of the CPU where the package will run. One of: aarch64,arm,ppc,s390,x86])
+AC_ARG_VAR([OMR_HOST_ARCH], [The architecture of the CPU where the package will run. One of: aarch64,arm,ppc,riscv,s390,x86])
 AC_ARG_VAR([OMR_TARGET_DATASIZE], [Specifies whether the package will run in 32- or 64-bit mode. One of: 31,32,64])
 AC_ARG_VAR([OMR_TOOLCHAIN], [The toolchain used to build the package. One of: gcc,xlc,msvc])
 AC_ARG_VAR([OMR_TOOLS_CC], [The C compiler to use for building tools (can differ from CC).])
@@ -156,6 +156,14 @@ BUILD_CC=$CC
 # Prevent AC_PROG_CXX() from defaulting CXXFLAGS to -g -O2 for g++.
 : ${CXXFLAGS=""}
 
+AS_IF([test "x$OMR_CROSS_CONFIGURE" != "xyes"],
+	[
+		AC_PROG_CC()
+		AC_PROG_CXX()
+		AC_PROG_CPP()
+	]
+)
+
 # If OMR_HOST_OS is set, use it.
 # Otherwise, calculate it from the canonical host.
 AC_MSG_CHECKING([OMR_HOST_OS])
@@ -215,12 +223,6 @@ AC_MSG_RESULT([$OMR_TOOLCHAIN])
 
 # Default OMRGLUE to example/glue if it was not specified
 OMRGLUE=${OMRGLUE:-"./example/glue"}
-
-## Default Variables
-
-# Set program defaults if they are undefined
-AC_PROG_CC()
-AC_PROG_CXX()
 
 CCLINK=${CCLINK:-"\$(CC)"}
 CCLINKSHARED=${CCLINKSHARED:-"\$(CCLINK)"}
@@ -378,11 +380,9 @@ OMRCFG_DEFINE_FLAG_OFF([OMR_RTTI], [], [Whether we are building OMR with RTTI. (
 # Each flag must have a corresponding entry in omrcfg.h.in
 
 OMRCFG_DEFINE_FLAG_ON([OMR_GC_ALLOCATION_TAX])
-OMRCFG_DEFINE_FLAG_ON([OMR_GC_ARRAYLETS])
 OMRCFG_DEFINE_FLAG_ON([OMR_GC_BATCH_CLEAR_TLH])
 OMRCFG_DEFINE_FLAG_ON([OMR_GC_COMBINATION_SPEC])
 OMRCFG_DEFINE_FLAG_ON([OMR_GC_DEBUG_ASSERTS])
-OMRCFG_DEFINE_FLAG_ON([OMR_GC_HEAP_CARD_TABLE])
 OMRCFG_DEFINE_FLAG_ON([OMR_GC_LARGE_OBJECT_AREA])
 OMRCFG_DEFINE_FLAG_ON([OMR_GC_MINIMUM_OBJECT_SIZE])
 OMRCFG_DEFINE_FLAG_ON([OMR_GC_MODRON_STANDARD])
@@ -410,10 +410,10 @@ OMRCFG_DEFINE_FLAG_OFF([OMR_GC_MODRON_SCAVENGER])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_DOUBLE_MAP_ARRAYLETS])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_CONCURRENT_SCAVENGER])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_CONCURRENT_SWEEP])
-OMRCFG_DEFINE_FLAG_OFF([OMR_GC_HYBRID_ARRAYLETS])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_LEAF_BITS])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_OBJECT_ALLOCATION_NOTIFY])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_REALTIME])
+OMRCFG_DEFINE_FLAG_OFF([OMR_GC_SCAN_OBJECT_GLUE])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_SEGREGATED_HEAP])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_VLHGC])
 OMRCFG_DEFINE_FLAG_OFF([OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD])
@@ -423,6 +423,7 @@ OMRCFG_DEFINE_FLAG_OFF([OMR_ARCH_ARM])
 OMRCFG_DEFINE_FLAG_OFF([OMR_ARCH_AARCH64])
 OMRCFG_DEFINE_FLAG_OFF([OMR_ARCH_X86])
 OMRCFG_DEFINE_FLAG_OFF([OMR_ARCH_S390])
+OMRCFG_DEFINE_FLAG_OFF([OMR_ARCH_RISCV])
 
 OMRCFG_DEFINE_FLAG([OMR_ENV_DATA64],[],
 	[AS_IF([test "$OMR_TARGET_DATASIZE" = 64],
@@ -431,9 +432,26 @@ OMRCFG_DEFINE_FLAG([OMR_ENV_DATA64],[],
 	)]
 )
 
-OMRCFG_DEFINE_FLAG_OFF([OMR_GC_COMPRESSED_POINTERS])
-OMRCFG_DEFINE_FLAG_OFF([OMR_INTERP_COMPRESSED_OBJECT_HEADER])
-OMRCFG_DEFINE_FLAG_OFF([OMR_INTERP_SMALL_MONITOR_SLOT])
+AC_MSG_CHECKING([OMR_GC_POINTER_MODE])
+AC_ARG_VAR([OMR_GC_POINTER_MODE], [The mode of pointers.  Must be "full", "compressed", or "mixed"])
+: ${OMR_GC_POINTER_MODE="full"}
+AC_MSG_RESULT([$OMR_GC_POINTER_MODE])
+
+AS_IF([[test "x$OMR_GC_POINTER_MODE" = "xmixed"] || [test "x$OMR_GC_POINTER_MODE" = "xcompressed"]],
+	[AS_IF([test "x$OMR_TARGET_DATASIZE" = "x32"],
+		[AC_MSG_ERROR([\$OMR_GC_POINTER_MODE=$OMR_GC_POINTER_MODE requires 64 bit target datasize])])])
+
+AS_CASE(["x$OMR_GC_POINTER_MODE"],
+	[xfull],
+		[OMRCFG_ENABLE_FLAG([OMR_GC_FULL_POINTERS])
+		 OMRCFG_DISABLE_FLAG([OMR_GC_COMPRESSED_POINTERS])],
+	[xcompressed],
+		[OMRCFG_DISABLE_FLAG([OMR_GC_FULL_POINTERS])
+		 OMRCFG_ENABLE_FLAG([OMR_GC_COMPRESSED_POINTERS])],
+	[xmixed],
+		[OMRCFG_ENABLE_FLAG([OMR_GC_FULL_POINTERS])
+		 OMRCFG_ENABLE_FLAG([OMR_GC_COMPRESSED_POINTERS])],
+	[AC_MSG_ERROR([OMR_GC_FULL_POINTERS must be set to one of \"full\", \"compressed\", or \"mixed\"])])
 
 OMRCFG_DEFINE_FLAG_OFF([OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS])
 
@@ -472,8 +490,6 @@ OMRCFG_DEFINE_FLAG([OMR_GC_TLH_PREFETCH_FTA],[],
 	)]
 )
 
-OMRCFG_DEFINE_FLAG_OFF([OMR_ENV_GCC])
-
 OMRCFG_DEFINE_FLAG([OMR_PORT_NUMA_SUPPORT],[],
 	[
 	if test "x$OMR_CROSS_CONFIGURE" != "xyes"
@@ -503,6 +519,8 @@ OMRCFG_DEFINE_FLAG_OFF([OMR_OPT_CUDA])
 OMRCFG_DEFINE_FLAG_OFF([OMR_PORT_ALLOCATE_TOP_DOWN])
 OMRCFG_DEFINE_FLAG_OFF([OMR_PORT_ZOS_CEEHDLRSUPPORT])
 OMRCFG_DEFINE_FLAG_OFF([OMRPORT_OMRSIG_SUPPORT])
+OMRCFG_DEFINE_FLAG_OFF([OMR_PORT_SOCKET_SUPPORT])
+OMRCFG_DEFINE_FLAG_OFF([OMR_THR_MCS_LOCKS])
 
 OMRCFG_DEFINE_FLAG([OMRTHREAD_LIB_AIX],[1],
 	[AS_IF([test "$OMR_HOST_OS" = aix],

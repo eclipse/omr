@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -432,6 +432,8 @@ MM_EnvironmentBase::acquireExclusiveVMAccessForGC(MM_Collector *collector, bool 
 	/* thread is the winner for requesting a GC (possibly through recursive
 	 * calls).  proceed with acquiring exclusive access. */
 	Assert_MM_true(_omrVMThread == extensions->gcExclusiveAccessThreadId);
+
+	collector->notifyAcquireExclusiveVMAccess(this);
 
 	acquireExclusiveVMAccess();
 

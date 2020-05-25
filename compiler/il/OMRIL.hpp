@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,12 +68,12 @@ class OMR_EXTENSIBLE IL
    static TR::ILOpCodes opCodesForCompareGreaterOrEquals[];
    static TR::ILOpCodes opCodesForIfCompareGreaterThan[];
    static TR::ILOpCodes opCodesForIfCompareGreaterOrEquals[];
-   static TR::ILOpCodes opCodesForTernarySelect[];
+   static TR::ILOpCodes opCodesForSelect[];
 
    TR::ILOpCodes opCodeForCorrespondingIndirectLoad(TR::ILOpCodes loadOpCode);
    TR::ILOpCodes opCodeForCorrespondingIndirectStore(TR::ILOpCodes storeOpCode);
 
-   TR::ILOpCodes opCodeForTernarySelect(TR::DataType dt);
+   TR::ILOpCodes opCodeForSelect(TR::DataType dt);
    TR::ILOpCodes opCodeForConst(TR::DataType dt);
    TR::ILOpCodes opCodeForDirectLoad(TR::DataType dt);
    TR::ILOpCodes opCodeForDirectReadBarrier(TR::DataType dt);

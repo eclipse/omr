@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ GC_OMRVMThreadInterface::flushCachesForWalk(MM_EnvironmentBase *env)
 	env->_objectAllocationInterface->flushCache(env);
 	/* If we are in a middle of a concurrent GC, we want to flush GC caches, typically for mutator threads doing GC work.
 	 * (GC threads are  smart enough to do it themselves, before they let the walk occur) */
-	env->flushGCCaches();
+	env->flushGCCaches(true);
 }
 
 void

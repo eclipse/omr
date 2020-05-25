@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -158,6 +158,36 @@ J9CAS8Helper(volatile uint64_t *addr, uint32_t compareLo, uint32_t compareHi, ui
 
 #endif /* !OMR_ENV_DATA64 && (AIXPPC || LINUXPPC) */
 
+
+#if defined(__riscv)
+/* ---------------- cas32helper.s ---------------- */
+/**
+ * @brief Perform a compare and swap of a 32-bit value.
+ *
+ * @param[in] addr          The address of the memory address
+ * @param[in] compareValue  The value to be compared
+ * @param[in] swapValue     The new value to be swapped to the specified memory address
+ *
+ * @return  The old value read from addr
+ */
+uint32_t
+RiscvCAS32Helper(volatile uint32_t *addr, uint32_t compareValue, uint32_t swapValue);
+
+/* ---------------- cas64helper.s ---------------- */
+#if defined(OMR_ENV_DATA64)
+/**
+ * @brief Perform a compare and swap of a 64-bit value on a 64-bit system.
+ *
+ * @param[in] addr          The address of the memory address
+ * @param[in] compareValue  The value to be compared
+ * @param[in] swapValue     The new value to be swapped to the specified memory address
+ *
+ * @return  The old value read from addr
+ */
+uint64_t
+RiscvCAS64Helper(volatile uint64_t *addr, uint64_t compareValue, uint64_t swapValue);
+#endif /* OMR_ENV_DATA64 */
+#endif /* __riscv */
 
 /* ---------------- gettimebase.c ---------------- */
 

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2016 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -232,6 +232,7 @@ define WRITE_COMMON_THREAD_EXPORTS
 @echo omrthread_attr_set_priority >>$@
 @echo omrthread_attr_set_stacksize >>$@
 @echo omrthread_attr_set_category >>$@
+@echo omrthread_attr_set_detachstate>>$@
 
 @# for builder use only
 @echo omrthread_monitor_lock >>$@

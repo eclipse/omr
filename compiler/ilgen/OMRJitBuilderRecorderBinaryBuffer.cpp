@@ -43,7 +43,7 @@ OMR::JitBuilderRecorderBinaryBuffer::String(const char * const string)
    // length(int16) characters
    const size_t len = strlen(string);
    const int max = std::numeric_limits<int16_t>::max();
-   TR_ASSERT(len < max, "JBIL: binary String format limited to %d characters", max);
+   TR_ASSERT_FATAL(len < max, "JBIL: binary String format limited to %d characters", max);
 
    Number((int16_t)len);
    for (int16_t i=0;i < len;i++)
@@ -138,7 +138,7 @@ OMR::JitBuilderRecorderBinaryBuffer::ID(TypeID id)
       Number(*num);
       }
    else
-      TR_ASSERT(0, "Unexpected id size value %d", _idSize);
+      TR_ASSERT_FATAL(0, "Unexpected id size value %d", _idSize);
    }
 
 void

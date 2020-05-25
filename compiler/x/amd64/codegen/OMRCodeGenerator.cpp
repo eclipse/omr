@@ -24,7 +24,7 @@
 
 #include <limits.h>
 #include <stdint.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/RealRegister.hpp"
@@ -125,7 +125,7 @@ OMR::X86::AMD64::CodeGenerator::CodeGenerator() :
 TR::Register *
 OMR::X86::AMD64::CodeGenerator::longClobberEvaluate(TR::Node *node)
    {
-   TR_ASSERT(TR::Compiler->target.is64Bit(), "assertion failure");
+   TR_ASSERT(self()->comp()->target().is64Bit(), "assertion failure");
    TR_ASSERT(node->getOpCode().is8Byte() || node->getOpCode().isRef(), "assertion failure");
    return self()->gprClobberEvaluate(node, MOV8RegReg);
    }

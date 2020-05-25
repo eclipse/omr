@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
@@ -34,12 +34,12 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "optimizer/PreExistence.hpp"
 
@@ -134,10 +134,18 @@ TR_VirtualGuard::createVftGuard
 (TR_VirtualGuardKind kind, TR::Compilation * comp, int16_t calleeIndex,
  TR::Node* callNode, TR::TreeTop * destination, TR_OpaqueClassBlock *thisClass)
    {
+   return createVftGuardWithReceiver(kind, comp, calleeIndex, callNode, destination, thisClass, callNode->getFirstArgument());
+   }
+
+TR::Node*
+TR_VirtualGuard::createVftGuardWithReceiver
+(TR_VirtualGuardKind kind, TR::Compilation * comp, int16_t calleeIndex,
+ TR::Node* callNode, TR::TreeTop * destination, TR_OpaqueClassBlock *thisClass, TR::Node* receiverNode)
+   {
    TR::SymbolReferenceTable *symRefTab = comp->getSymRefTab();
 
-   TR::Node* vft = TR::Node::createWithSymRef(TR::aloadi, 1, 1, callNode->getSecondChild(), symRefTab->findOrCreateVftSymbolRef());
-   TR::Node* aconstNode = TR::Node::aconst(callNode, (uintptrj_t)thisClass);
+   TR::Node* vft = TR::Node::createWithSymRef(TR::aloadi, 1, 1, receiverNode, symRefTab->findOrCreateVftSymbolRef());
+   TR::Node* aconstNode = TR::Node::aconst(callNode, (uintptr_t)thisClass);
    aconstNode->setIsClassPointerConstant(true);
    aconstNode->setInlinedSiteIndex(calleeIndex);
    aconstNode->setByteCodeIndex(0);
@@ -159,7 +167,7 @@ TR_VirtualGuard::createMethodGuard
 (TR_VirtualGuardKind kind, TR::Compilation * comp, int16_t calleeIndex,
  TR::Node* callNode, TR::TreeTop * destination, TR::ResolvedMethodSymbol * calleeSymbol, TR_OpaqueClassBlock *thisClass)
    {
-   return createMethodGuardWithReceiver (kind, comp, calleeIndex, callNode, destination, calleeSymbol, thisClass, callNode->getSecondChild());
+   return createMethodGuardWithReceiver (kind, comp, calleeIndex, callNode, destination, calleeSymbol, thisClass, callNode->getFirstArgument());
    }
 
 /*
@@ -182,7 +190,7 @@ TR_VirtualGuard::createBreakpointGuardNode
  */
    TR::SymbolReferenceTable * symRefTab = comp->getSymRefTab();
    TR::SymbolReference * fieldSymRef = symRefTab->findOrCreateJ9MethodConstantPoolFieldSymbolRef(offsetof(struct J9Method, constantPool));
-   TR::Node * aconstNode = TR::Node::aconst(callNode, (uintptrj_t)calleeSymbol->getResolvedMethod()->getPersistentIdentifier());
+   TR::Node * aconstNode = TR::Node::aconst(callNode, (uintptr_t)calleeSymbol->getResolvedMethod()->getPersistentIdentifier());
    TR::Node * constantPool = NULL;
    aconstNode->setIsMethodPointerConstant(true);
    aconstNode->setInlinedSiteIndex(calleeIndex);
@@ -190,7 +198,7 @@ TR_VirtualGuard::createBreakpointGuardNode
    TR::Node * flagBit = NULL;
    TR::Node *guard = NULL;
    TR::Node * zero = NULL;
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       flagBit = TR::Node::create(callNode, TR::lconst, 0, 0);
       flagBit->setLongInt(comp->fej9()->offsetOfMethodIsBreakpointedBit());
@@ -263,7 +271,7 @@ TR_VirtualGuard::createMethodGuardWithReceiver
             symRefTab->findOrCreateVtableEntrySymbolRef(calleeSymbol,
                          comp->fej9()->virtualCallOffsetToVTableSlot(offset)));
 
-   TR::Node * aconstNode = TR::Node::aconst(callNode, (uintptrj_t)calleeSymbol->getResolvedMethod()->getPersistentIdentifier());
+   TR::Node * aconstNode = TR::Node::aconst(callNode, (uintptr_t)calleeSymbol->getResolvedMethod()->getPersistentIdentifier());
    aconstNode->setIsMethodPointerConstant(true);
    aconstNode->setInlinedSiteIndex(calleeIndex);
    aconstNode->setByteCodeIndex(0);
@@ -291,7 +299,7 @@ TR_VirtualGuard::createNonoverriddenGuard
    TR::SymbolReference * addressSymRef = symRefTab->createIsOverriddenSymbolRef(calleeSymbol);
 
    TR::Node * guard = NULL;
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       TR::Node * load = TR::Node::createWithSymRef(callNode, TR::lload, 0, addressSymRef);
       TR::Node * flagBit = TR::Node::create(callNode, TR::lconst, 0, 0);
@@ -334,7 +342,7 @@ TR_VirtualGuard::createNonoverriddenGuard
 
 
 TR::Node *
-TR_VirtualGuard::createMutableCallSiteTargetGuard(TR::Compilation * comp, int16_t calleeIndex, TR::Node * node, TR::TreeTop * destination, uintptrj_t *mcsObject, TR::KnownObjectTable::Index mcsEpoch)
+TR_VirtualGuard::createMutableCallSiteTargetGuard(TR::Compilation * comp, int16_t calleeIndex, TR::Node * node, TR::TreeTop * destination, uintptr_t *mcsObject, TR::KnownObjectTable::Index mcsEpoch)
    {
    TR::SymbolReferenceTable *symRefTab = comp->getSymRefTab();
    TR::SymbolReference *addressSymRef = symRefTab->createKnownStaticDataSymbolRef(0, TR::Address, mcsEpoch);

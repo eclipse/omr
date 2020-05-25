@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -228,10 +228,10 @@ public:
    bool isRotate()                   const { return properties2().testAny(ILProp2::LeftRotate); }
    bool isUnsignedCompare()          const { return properties2().testAny(ILProp2::UnsignedCompare); }
    bool isOverflowCompare()          const { return properties2().testAny(ILProp2::OverflowCompare); }
-   bool isTernary()                  const { return properties2().testAny(ILProp2::Ternary); }
-   bool isTernaryAdd()               const { return properties2().testAny(ILProp2::TernaryAdd); }
-   bool isTernarySub()               const { return properties2().testAny(ILProp2::TernarySub); }
-   bool isArithmetic()               const { return isAdd() || isSub() || isMul() || isDiv() || isRem() || isLeftShift() || isRightShift() || isShiftLogical() || isAnd() || isXor() || isOr() || isNeg() || isTernaryAdd() || isTernarySub(); }
+   bool isSelect()                   const { return properties2().testAny(ILProp2::Select); }
+   bool isSelectAdd()                const { return properties2().testAny(ILProp2::SelectAdd); }
+   bool isSelectSub()                const { return properties2().testAny(ILProp2::SelectSub); }
+   bool isArithmetic()               const { return isAdd() || isSub() || isMul() || isDiv() || isRem() || isLeftShift() || isRightShift() || isShiftLogical() || isAnd() || isXor() || isOr() || isNeg() || isSelectAdd() || isSelectSub(); }
    bool isCondCodeComputation()      const { return properties2().testAny(ILProp2::CondCodeComputation); }
    bool isJumpWithMultipleTargets()  const { return properties2().testAny(ILProp2::JumpWithMultipleTargets); }  // Transactional Memory uses this
    bool isLoadAddr()                 const { return properties2().testAny(ILProp2::LoadAddress); }
@@ -279,9 +279,7 @@ public:
    bool hasPinningArrayPointer()
       {
       return (getOpCodeValue() == TR::aiadd)  ||
-             (getOpCodeValue() == TR::aladd)  ||
-             (getOpCodeValue() == TR::aiuadd) ||
-             (getOpCodeValue() == TR::aluadd);
+             (getOpCodeValue() == TR::aladd);
       }
 
    bool isLongCompare() const
@@ -294,8 +292,6 @@ public:
              (getOpCodeValue() == TR::lcmpgt)  ||
              (getOpCodeValue() == TR::lcmple)  ||
              (getOpCodeValue() == TR::lucmp)   ||
-             (getOpCodeValue() == TR::lucmpeq) ||
-             (getOpCodeValue() == TR::lucmpne) ||
              (getOpCodeValue() == TR::lucmplt) ||
              (getOpCodeValue() == TR::lucmpge) ||
              (getOpCodeValue() == TR::lucmpgt) ||
@@ -358,20 +354,14 @@ public:
              getOpCodeValue() == TR::iflucmpgt ||
              getOpCodeValue() == TR::iadd      ||
              getOpCodeValue() == TR::ladd      ||
-             getOpCodeValue() == TR::iuadd     ||
              getOpCodeValue() == TR::iuaddc    ||
              getOpCodeValue() == TR::aiadd     ||
-             getOpCodeValue() == TR::aiuadd    ||
-             getOpCodeValue() == TR::luadd     ||
              getOpCodeValue() == TR::luaddc    ||
              getOpCodeValue() == TR::aladd     ||
-             getOpCodeValue() == TR::aluadd    ||
              getOpCodeValue() == TR::isub      ||
              getOpCodeValue() == TR::lsub      ||
-             getOpCodeValue() == TR::iusub     ||
              getOpCodeValue() == TR::iusubb    ||
              getOpCodeValue() == TR::asub      ||
-             getOpCodeValue() == TR::lusub     ||
              getOpCodeValue() == TR::lusubb;
       }
 
@@ -621,12 +611,9 @@ public:
          {
          case TR::ificmpeq:
          case TR::iflcmpeq:
-         case TR::ifiucmpeq:
-         case TR::iflucmpeq:
          case TR::ifacmpeq:
          case TR::ifbcmpeq:
          case TR::ifscmpeq:
-         case TR::ifsucmpeq:
          case TR::iffcmpeq:
          case TR::ifdcmpeq:
             return true;
@@ -641,12 +628,9 @@ public:
          {
          case TR::ificmpne:
          case TR::iflcmpne:
-         case TR::ifiucmpne:
-         case TR::iflucmpne:
          case TR::ifacmpne:
          case TR::ifbcmpne:
          case TR::ifscmpne:
-         case TR::ifsucmpne:
          case TR::iffcmpne:
          case TR::ifdcmpne:
             return true;
@@ -710,11 +694,11 @@ public:
       {
       switch(type)
          {
-         case TR::Int8:     return TR::buadd;
-         case TR::Int16:    return TR::cadd;
-         case TR::Int32:    return TR::iuadd;
-         case TR::Int64:    return TR::luadd;
-	 case TR::Address:  return (is64Bit) ? TR::aladd : TR::aiadd;
+         case TR::Int8:     return TR::badd;
+         case TR::Int16:    return TR::sadd;
+         case TR::Int32:    return TR::iadd;
+         case TR::Int64:    return TR::ladd;
+	      case TR::Address:  return (is64Bit) ? TR::aladd : TR::aiadd;
          default: TR_ASSERT(0, "no add opcode for this datatype");
          }
       return TR::BadILOp;
@@ -745,12 +729,9 @@ public:
       {
       switch(type)
          {
-         case TR::Int8:    return TR::busub;
-         case TR::Int16:   return TR::csub;
-         case TR::Int32:   return TR::iusub;
-         case TR::Int64:   return TR::lusub;
          default: TR_ASSERT(0, "no unsigned sub opcode for this datatype");
          }
+      TR_ASSERT_FATAL(0, "all unsigned subtract opcode has been deprecated. (eclipse/omr#2657)");
       return TR::BadILOp;
       }
 
@@ -874,17 +855,6 @@ public:
       return TR::BadILOp;
       }
 
-   static TR::ILOpCodes unsignedShiftLeftOpCode(TR::DataType type)
-      {
-      switch(type)
-         {
-         case TR::Int32:  return TR::iushl;
-         case TR::Int64:  return TR::lushl;
-         default: TR_ASSERT(false, "no ushl opcode for datatype %s",type.toString());
-         }
-      return TR::BadILOp;
-      }
-
    static TR::ILOpCodes shiftRightOpCode(TR::DataType type)
       {
       switch(type)
@@ -929,15 +899,12 @@ public:
       switch (longOp)
          {
          case TR::ladd:   return TR::iadd;
-         case TR::luadd:  return TR::iuadd;
          case TR::lsub:   return TR::isub;
-         case TR::lusub:  return TR::iusub;
          case TR::lmul:   return TR::imul;
          case TR::ldiv:   return TR::idiv;
          case TR::lrem:   return TR::irem;
          case TR::labs:   return TR::iabs;
          case TR::lneg:   return TR::ineg;
-         case TR::luneg:  return TR::iuneg;
          case TR::lshr:   return TR::ishr;
          case TR::lushr:  return TR::iushr;
          case TR::lshl:   return TR::ishl;
@@ -1149,6 +1116,19 @@ public:
       return TR::BadILOp;
       }
 
+   static TR::ILOpCodes selectOpCode(TR::DataType type)
+      {
+      switch(type)
+         {
+         case TR::Int8:     return TR::bselect;
+         case TR::Int16:    return TR::sselect;
+         case TR::Int32:    return TR::iselect;
+         case TR::Int64:    return TR::lselect;
+         case TR::Address:  return TR::aselect;
+         default: return TR::BadILOp;
+         }
+      }
+
    static TR::ILOpCodes getCorrespondingLogicalComparison(TR::ILOpCodes op)
          {
          switch (op)
@@ -1221,9 +1201,7 @@ public:
       switch (ind)
          {
          case TR::icalli:    return TR::icall;
-         case TR::iucalli:   return TR::iucall;
          case TR::lcalli:    return TR::lcall;
-         case TR::lucalli:   return TR::lucall;
          case TR::fcalli:    return TR::fcall;
          case TR::dcalli:    return TR::dcall;
          case TR::acalli:    return TR::acall;
@@ -1307,7 +1285,6 @@ public:
          case TR::dstorei:
             return TR::vstorei;
          case TR::badd:
-         case TR::cadd:
          case TR::sadd:
          case TR::iadd:
          case TR::ladd:
@@ -1315,7 +1292,6 @@ public:
          case TR::dadd:
             return TR::vadd;
          case TR::bsub:
-         case TR::csub:
          case TR::ssub:
          case TR::isub:
          case TR::lsub:
@@ -1337,7 +1313,6 @@ public:
          case TR::ddiv:
             return TR::vdiv;
          case TR::bconst:
-         case TR::cconst:
          case TR::sconst:
          case TR::iconst:
          case TR::lconst:
@@ -1448,43 +1423,43 @@ private:
  * FIXME: I suspect that these templates may be an antipattern, involving a fair
  *        amount of mixing between host and target types...
  */
-template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode< uint8_t>() { return TR::buconst; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode< uint8_t>() { return TR::bconst; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<  int8_t>() { return TR::bconst; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<uint16_t>() { return TR::cconst; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<uint16_t>() { return TR::sconst; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode< int16_t>() { return TR::sconst; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<uint32_t>() { return TR::iuconst; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<uint32_t>() { return TR::iconst; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode< int32_t>() { return TR::iconst; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<uint64_t>() { return TR::luconst; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<uint64_t>() { return TR::lconst; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode< int64_t>() { return TR::lconst; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<   float>() { return TR::fconst; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<  double>() { return TR::dconst; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getConstOpCode<   void*>() { return TR::aconst; }
 
-template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode< uint8_t>() { return TR::buadd; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode< uint8_t>() { return TR::badd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<  int8_t>() { return TR::badd; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<uint16_t>() { return TR::cadd; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<uint16_t>() { return TR::sadd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode< int16_t>() { return TR::sadd; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<uint32_t>() { return TR::iuadd; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<uint32_t>() { return TR::iadd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode< int32_t>() { return TR::iadd; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<uint64_t>() { return TR::luadd; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<uint64_t>() { return TR::ladd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode< int64_t>() { return TR::ladd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<   float>() { return TR::fadd; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getAddOpCode<  double>() { return TR::dadd; }
 
-template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode< uint8_t>() { return TR::busub; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode< uint8_t>() { return TR::bsub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<  int8_t>() { return TR::bsub; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<uint16_t>() { return TR::csub; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<uint16_t>() { return TR::ssub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode< int16_t>() { return TR::ssub; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<uint32_t>() { return TR::iusub; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<uint32_t>() { return TR::isub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode< int32_t>() { return TR::isub; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<uint64_t>() { return TR::lusub; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<uint64_t>() { return TR::lsub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode< int64_t>() { return TR::lsub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<   float>() { return TR::fsub; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getSubOpCode<  double>() { return TR::dsub; }
 
 template <> inline TR::ILOpCodes OMR::ILOpCode::getMulOpCode<  int8_t>() { return TR::bmul; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getMulOpCode< int16_t>() { return TR::smul; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getMulOpCode<uint32_t>() { return TR::iumul; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getMulOpCode<uint32_t>() { return TR::imul; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getMulOpCode< int32_t>() { return TR::imul; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getMulOpCode<uint64_t>() { return TR::lmul; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getMulOpCode< int64_t>() { return TR::lmul; }
@@ -1493,9 +1468,9 @@ template <> inline TR::ILOpCodes OMR::ILOpCode::getMulOpCode<  double>() { retur
 
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<  int8_t>() { return TR::bneg; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode< int16_t>() { return TR::sneg; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<uint32_t>() { return TR::iuneg; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<uint32_t>() { return TR::ineg; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode< int32_t>() { return TR::ineg; }
-template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<uint64_t>() { return TR::luneg; }
+template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<uint64_t>() { return TR::lneg; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode< int64_t>() { return TR::lneg; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<   float>() { return TR::fneg; }
 template <> inline TR::ILOpCodes OMR::ILOpCode::getNegOpCode<  double>() { return TR::dneg; }

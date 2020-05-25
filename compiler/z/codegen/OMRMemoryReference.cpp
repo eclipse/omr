@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
@@ -55,27 +55,26 @@
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "cs2/sparsrbit.h"
 #include "env/CompilerEnv.hpp"
 #include "env/ObjectModel.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
 #include "env/defines.h"
 #include "env/jittypes.h"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
@@ -555,9 +554,9 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
             }
          else
             {
-            uintptrj_t staticAddressValue = (uintptrj_t) symbol->getStaticSymbol()->getStaticAddress();
+            uintptr_t staticAddressValue = (uintptr_t) symbol->getStaticSymbol()->getStaticAddress();
             TR::S390ConstantDataSnippet * targetsnippet;
-            if (TR::Compiler->target.is64Bit())
+            if (cg->comp()->target().is64Bit())
                {
                targetsnippet = cg->findOrCreate8ByteConstant(0, staticAddressValue);
                }
@@ -597,7 +596,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
                {
                // Storing to the symbol reference
                TR::Register * tempReg;
-               if (TR::Compiler->target.is64Bit())
+               if (cg->comp()->target().is64Bit())
                   tempReg = cg->allocateRegister();
                else
                   tempReg = cg->allocateRegister();
@@ -612,7 +611,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
                else
                   self()->setBaseRegister(tempReg, cg);
                }
-            genLoadAddressConstant(cg, rootLoadOrStore, (uintptrj_t) symRef->getSymbol()->getStaticSymbol()->getStaticAddress(),
+            genLoadAddressConstant(cg, rootLoadOrStore, (uintptr_t) symRef->getSymbol()->getStaticSymbol()->getStaticAddress(),
                _baseRegister);
             cg->stopUsingRegister(tempReg);
             }
@@ -859,7 +858,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Snippet * s, TR::CodeGenerator * cg
       {
       if (cg->isLiteralPoolOnDemandOn())
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             self()->setBaseRegister(cg->allocateRegister(), cg);
          else
             self()->setBaseRegister(cg->allocateRegister(), cg);
@@ -1148,7 +1147,7 @@ OMR::Z::MemoryReference::bookKeepingRegisterUses(TR::Instruction * instr, TR::Co
       _baseRegister->setIsUsedInMemRef();
       // Set addressing register to 64 bit data
       // but be careful of instructions using X type operand to specify something else other then memory
-      if(TR::Compiler->target.is64Bit() && (instr->getOpCode().isLoad() || instr->getOpCode().isStore() ||
+      if(cg->comp()->target().is64Bit() && (instr->getOpCode().isLoad() || instr->getOpCode().isStore() ||
                                  instr->getOpCodeValue() == TR::InstOpCode::LA || instr->getOpCodeValue() == TR::InstOpCode::LARL ||
                                  instr->getOpCodeValue() == TR::InstOpCode::LAY || instr->getOpCodeValue() == TR::InstOpCode::LAE ||
                                  instr->getOpCodeValue() == TR::InstOpCode::LAEY) )
@@ -1160,7 +1159,7 @@ OMR::Z::MemoryReference::bookKeepingRegisterUses(TR::Instruction * instr, TR::Co
       {
       instr->useRegister(_indexRegister);
       _indexRegister->setIsUsedInMemRef();
-      if(TR::Compiler->target.is64Bit() && (instr->getOpCode().isLoad() || instr->getOpCode().isStore() ||
+      if(cg->comp()->target().is64Bit() && (instr->getOpCode().isLoad() || instr->getOpCode().isStore() ||
                                  instr->getOpCodeValue() == TR::InstOpCode::LA || instr->getOpCodeValue() == TR::InstOpCode::LARL ||
                                  instr->getOpCodeValue() == TR::InstOpCode::LAY || instr->getOpCodeValue() == TR::InstOpCode::LAE ||
                                  instr->getOpCodeValue() == TR::InstOpCode::LAEY) )
@@ -1274,7 +1273,7 @@ void ArtificiallyInflateReferenceCountWhenNecessary(TR::MemoryReference * mr, co
             cg->incReferenceCount(nodeArray[i]);
 
             // Reference count is now 2.
-            cg->incRefCountForOpaquePseudoRegister(nodeArray[i], cg, comp);
+            cg->incRefCountForOpaquePseudoRegister(nodeArray[i]);
             }
          else
             {
@@ -1308,9 +1307,7 @@ OMR::Z::MemoryReference::populateAddTree(TR::Node * subTree, TR::CodeGenerator *
        (integerChild->getLongInt() != TR::Compiler->vm.heapBaseAddress())))
       {
       self()->populateMemoryReference(addressChild, cg);
-      if ((subTree->getOpCodeValue() != TR::iadd) && (subTree->getOpCodeValue() != TR::aiadd) &&
-          (subTree->getOpCodeValue() != TR::iuadd) && (subTree->getOpCodeValue() != TR::aiuadd) &&
-          (subTree->getOpCodeValue() != TR::isub))
+      if ((subTree->getOpCodeValue() != TR::iadd) && (subTree->getOpCodeValue() != TR::aiadd) && (subTree->getOpCodeValue() != TR::isub))
          {
          if (subTree->getOpCode().isSub())
             _offset -= integerChild->getLongInt();
@@ -1334,13 +1331,13 @@ OMR::Z::MemoryReference::populateAddTree(TR::Node * subTree, TR::CodeGenerator *
       // catch the pattern of aiadd on iaload <base> / isub of <expression> and -<constant> and
       // convert it into LA Rx,<constant>(R<expression>,R<base>)
       //
-      bool usingAladd = (TR::Compiler->target.is64Bit()) ? true : false;
+      bool usingAladd = (cg->comp()->target().is64Bit()) ? true : false;
 
       TR::Node * firstSubChild = integerChild->getFirstChild();
       TR::Node * secondSubChild = integerChild->getSecondChild();
       if (secondSubChild->getOpCode().isLoadConst())
          {
-         intptrj_t value;
+         intptr_t value;
          if (usingAladd)
             {
             if (secondSubChild->getType().isInt32())
@@ -1357,7 +1354,7 @@ OMR::Z::MemoryReference::populateAddTree(TR::Node * subTree, TR::CodeGenerator *
             value = secondSubChild->getInt();
             }
 
-         intptrj_t totalOff = _offset - value;
+         intptr_t totalOff = _offset - value;
 
          if (cg->isDispInRange(totalOff) && integerChild->getRegister() == NULL)
             {
@@ -1408,11 +1405,37 @@ OMR::Z::MemoryReference::populateAddTree(TR::Node * subTree, TR::CodeGenerator *
 
    if ((integerChild->getOpCodeValue() == TR::isub || integerChild->getOpCodeValue() == TR::lsub))
       {
-      if (integerChild->getRegister() == NULL && _indexRegister->isLive())
+      /*
+       * arraycopy
+       *   aladd
+       *     ==>aRegLoad
+       *     lsub
+       *       ==>lRegLoad
+       *       lconst
+       *   aladd
+       *     ==>aconst NULL
+       *     lsub
+       *       ==>lRegLoad
+       *       ==>lconst
+       *
+       * With this tree, the first and second aladd get handled slightly differently.
+       * The first has a non NULL addressChild so that get's set as the _baseRegister.
+       * We will fold the lsub into the aladd's memref so the lRegLoad becomes the _indexRegister
+       * and the lconst becomes the offset.
+       * For the second aladd, the NULL addressChild means we use the integerChild as the _baseRegister.
+       * This is needed to prevent Zero Address Detection events on z/OS which happen when the base register of an instruction is zero.
+       * When we fold the lsub the lRegLoad becomes the _baseRegister and the lconst becomes offset.
+       * The important point is that in this case the _indexRegister is NULL.
+       * Thus we need to take care to select the appropriate register in the code below.
+       */
+
+      TR::Register *integerChildRegister = (_indexRegister != NULL) ? _indexRegister : _baseRegister;
+
+      if (integerChild->getRegister() == NULL && integerChildRegister->isLive())
          {
-         TR_LiveRegisterInfo * liveRegister = _indexRegister->getLiveRegisterInfo();
+         TR_LiveRegisterInfo * liveRegister = integerChildRegister->getLiveRegisterInfo();
          int32_t owningNodeCount = 0;
-         integerChild->setRegister(_indexRegister);
+         integerChild->setRegister(integerChildRegister);
          owningNodeCount = liveRegister->getNodeCount();
          cg->decReferenceCount(integerChild);
          if (liveRegister->getNodeCount() == owningNodeCount)
@@ -1583,12 +1606,11 @@ bool OMR::Z::MemoryReference::tryBaseIndexDispl(TR::CodeGenerator* cg, TR::Node*
    TR::Node* sub = NULL;
    TR::Node* base = NULL;
    TR::Node* index = NULL;
-   intptrj_t offset = 0;
+   intptr_t offset = 0;
    bool big = topAdd->getOpCodeValue() == TR::aladd;
    bool debug = false;
    TR::Register* breg = NULL;
    TR::Register* ireg= NULL;
-   static int folded = 0;
 
    // From here, down, stack memory allocations will expire / die when the function returns
    TR::StackMemoryRegion stackMemoryRegion(*cg->trMemory());
@@ -1675,7 +1697,6 @@ bool OMR::Z::MemoryReference::tryBaseIndexDispl(TR::CodeGenerator* cg, TR::Node*
       if (sub)
          traceMsg(comp, "&&& TBID sub rc %d\n", sub->getReferenceCount());
       traceMsg(comp, "&&& TBID index rc %d\n", index->getReferenceCount());
-      traceMsg(comp, "&&& TBID folded %d\n", ++folded);
       }
 
    self()->setBaseRegister(breg, cg);
@@ -1714,13 +1735,9 @@ bool OMR::Z::MemoryReference::ZeroBasePtr_EvaluateSubtree(TR::Node * subTree, TR
       {
       case TR::aconst:    // load address constant (zero value means NULL)
       case TR::iconst:    // load integer constant (32-bit signed 2's complement)
-      case TR::iuconst:   // load unsigned integer constant (32-but unsigned)
       case TR::lconst:    // load long integer constant (64-bit signed 2's complement)
-      case TR::luconst:   // load unsigned long integer constant (64-bit unsigned)
       case TR::bconst:    // load byte integer constant (8-bit signed 2's complement)
-      case TR::buconst:   // load unsigned byte integer constant (8-bit unsigned)
       case TR::sconst:    // load short integer constant (16-bit signed 2's complement)
-      case TR::cconst:    // load unicode constant (16-bit unsigned)
          {
          if (subTree->getRegister()) return false;
 
@@ -1731,7 +1748,7 @@ bool OMR::Z::MemoryReference::ZeroBasePtr_EvaluateSubtree(TR::Node * subTree, TR
             return false;
             }
 #else // 32 bit
-         if ((dispVal >= TR::getMaxSigned<TR::Int32>()) || !cg->isDispInRange((intptrj_t)dispVal))
+         if ((dispVal >= TR::getMaxSigned<TR::Int32>()) || !cg->isDispInRange((intptr_t)dispVal))
             {
             return false;
             }
@@ -1749,7 +1766,7 @@ bool OMR::Z::MemoryReference::ZeroBasePtr_EvaluateSubtree(TR::Node * subTree, TR
          mr->setBaseRegister(NULL, cg);
 
          // The value of the const node refers to the offset from R0.
-         mr->addToOffset( (intptrj_t)( getIntegralValue( subTree ) & TR::getMaxUnsigned<TR::Int32>() ) );
+         mr->addToOffset( (intptr_t)( getIntegralValue( subTree ) & TR::getMaxUnsigned<TR::Int32>() ) );
          return true;
          }
       default:
@@ -1826,7 +1843,7 @@ OMR::Z::MemoryReference::populateMemoryReference(TR::Node * subTree, TR::CodeGen
          }
       else if (subTree->getOpCodeValue() == TR::aconst)
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             {
             _offset += subTree->getLongInt();
             }
@@ -1893,7 +1910,7 @@ OMR::Z::MemoryReference::consolidateRegisters(TR::Node * node, TR::CodeGenerator
       {
       if (node && node->isInternalPointer() && node->getPinningArrayPointer())
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg->comp()->target().is64Bit())
             tempTargetRegister = cg->allocateRegister();
          else
             tempTargetRegister = cg->allocateRegister();
@@ -1908,7 +1925,7 @@ OMR::Z::MemoryReference::consolidateRegisters(TR::Node * node, TR::CodeGenerator
       }
    else
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          tempTargetRegister = cg->allocateRegister();
       else
          tempTargetRegister = cg->allocateRegister();
@@ -2074,7 +2091,7 @@ OMR::Z::MemoryReference::enforce4KDisplacementLimit(TR::Node * node, TR::CodeGen
        !self()->isAdjustedForLongDisplacement())
       {
       TR::Register * tempTargetRegister = NULL;
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          tempTargetRegister = cg->allocateRegister();
       else
          tempTargetRegister = cg->allocateRegister();
@@ -2144,7 +2161,7 @@ OMR::Z::MemoryReference::enforceDisplacementLimit(TR::Node * node, TR::CodeGener
       {
       TR_ASSERT( node,"node should be non-null for enforceDisplacementLimit\n");
       TR::Register * tempTargetRegister;
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          tempTargetRegister = cg->allocateRegister();
       else
          tempTargetRegister = cg->allocateRegister();
@@ -2197,7 +2214,7 @@ OMR::Z::MemoryReference::eliminateNegativeDisplacement(TR::Node * node, TR::Code
       {
 
       TR::Register * tempTargetRegister;
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          tempTargetRegister = cg->allocateRegister();
       else
          tempTargetRegister = cg->allocateRegister();
@@ -2246,7 +2263,7 @@ OMR::Z::MemoryReference::separateIndexRegister(TR::Node * node, TR::CodeGenerato
          return preced;
          }
       TR::Register * tempTargetRegister = NULL;
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          tempTargetRegister = cg->allocateRegister();
       else
          tempTargetRegister = cg->allocateRegister();
@@ -2390,7 +2407,7 @@ OMR::Z::MemoryReference::assignRegisters(TR::Instruction * currentInstruction, T
 bool
 OMR::Z::MemoryReference::needsAdjustDisp(TR::Instruction * instr, OMR::Z::MemoryReference * mRef, TR::CodeGenerator * cg)
    {
-   TR_ASSERT( TR::Compiler->target.is64Bit(), "needsAdjustDisp() call is for 64bit code-gen only");
+   TR_ASSERT( cg->comp()->target().is64Bit(), "needsAdjustDisp() call is for 64bit code-gen only");
 
    TR::SymbolReference * symRef = mRef->getSymbolReference();
    TR::Compilation *comp = cg->comp();
@@ -2472,7 +2489,7 @@ OMR::Z::MemoryReference::estimateBinaryLength(int32_t  currentEstimate, TR::Code
    else
       {
       length = instr->getOpCode().getInstructionLength();
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          {
          // most pessimistic case has LGHI/SLLG/LA/SLLG/LA + LA
          // LGHI/SLLG/LA/SLLG/LA + LA (4+6+4+6+4+4)
@@ -2754,7 +2771,7 @@ OMR::Z::MemoryReference::calcDisplacement(uint8_t * cursor, TR::Instruction * in
       if (symbol->isRegisterMappedSymbol())
          {
          disp += symbol->castToRegisterMappedSymbol()->getOffset();
-         if (TR::Compiler->target.is64Bit() && TR::MemoryReference::needsAdjustDisp(instr, this, cg) && !self()->getDispAdjusted())
+         if (cg->comp()->target().is64Bit() && TR::MemoryReference::needsAdjustDisp(instr, this, cg) && !self()->getDispAdjusted())
             {
             disp += 4;
             }
@@ -2783,7 +2800,7 @@ generateImmToRegister(TR::CodeGenerator * cg, TR::Node * node, TR::Register * ta
       low  = (value & 0xfff);
       cursor = generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node,  // LHI Rscrtch, (value>>12)&0xFFFF
                       targetRegister, (high&0xFFFF), cursor);
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
         {
         cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG,
                    node, targetRegister, targetRegister, 12, cursor); // SLLG Rscrtch,Rscrtch,12
@@ -2806,7 +2823,7 @@ generateImmToRegister(TR::CodeGenerator * cg, TR::Node * node, TR::Register * ta
                                      ((value >> 24) & 0xff),
                                      cursor);  // LHI Rscrtch,value>>24&0xFF
       // now shift that left by 12 bits
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          {
          cursor = generateRSInstruction(cg,
                                         TR::InstOpCode::SLLG,
@@ -2831,7 +2848,7 @@ generateImmToRegister(TR::CodeGenerator * cg, TR::Node * node, TR::Register * ta
                                      generateS390MemoryReference(targetRegister, ((value >> 12) & 0xfff), cg),
                                      cursor);         // LA  Rscrtch, value&0xFFF(,Rscrtch)
       // now shift those 20 bits left by 12 bits
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          {
          cursor = generateRSInstruction(cg,
                                         TR::InstOpCode::SLLG,
@@ -2977,7 +2994,7 @@ OMR::Z::MemoryReference::generateBinaryEncoding(uint8_t * cursor, TR::CodeGenera
             else
                {
                scratchReg  = instr->assignBestSpillRegister2();
-               if (TR::Compiler->target.is64Bit())
+               if (cg->comp()->target().is64Bit())
                   offsetToLongDispSlot += 8;
                else
                   offsetToLongDispSlot += 4;
@@ -3210,7 +3227,7 @@ OMR::Z::MemoryReference::generateBinaryEncodingTouchUpForLongDisp(uint8_t *curso
          scratchReg = instr->getLocalLocalSpillReg2();
          if (!scratchReg)
             scratchReg = instr->assignBestSpillRegister2();
-         if(TR::Compiler->target.is64Bit())
+         if(cg->comp()->target().is64Bit())
             offsetToLongDispSlot += 8;
          else
             offsetToLongDispSlot += 4;
@@ -3297,7 +3314,6 @@ TR::MemoryReference *
 generateS390MemoryReference(int32_t iValue, TR::DataType type, TR::CodeGenerator * cg, TR::Register * treg, TR::Node *node)
    {
    TR::S390ConstantDataSnippet * targetsnippet = cg->findOrCreate4ByteConstant(node, iValue);
-
    return generateS390MemoryReference(targetsnippet, cg, treg, node);
    }
 
@@ -3359,7 +3375,7 @@ generateS390MemoryReference(TR::Node * node, TR::CodeGenerator * cg, bool canUse
    // A symbol reference is needed to adjust memory reference displacement (TR::MemoryReference::calcDisplacement).
    // If the node has no sym ref, this memory reference's gets a NULL symbol reference, which can lead to crashes in displacement
    // calculations.
-   TR_ASSERT(node->getOpCode().hasSymbolReference(), "Memory reference generation API needs a node with symbol reference\n");
+   TR_ASSERT_FATAL(node->getOpCode().hasSymbolReference(), "Memory reference generation API needs a node with symbol reference\n");
    return new (cg->trHeapMemory()) TR::MemoryReference(node, cg, canUseRX);
    }
 
@@ -3368,8 +3384,8 @@ static TR::SymbolReference * findBestSymRefForArrayCopy(TR::CodeGenerator *cg, T
    TR::SymbolReference *sym = arrayCopyNode->getSymbolReference();
    TR::Compilation *comp = cg->comp();
 
-   if (srcNode->getOpCodeValue()==TR::aiadd || srcNode->getOpCodeValue()==TR::aiuadd ||
-       srcNode->getOpCodeValue()==TR::aladd || srcNode->getOpCodeValue()==TR::aluadd ||
+   if (srcNode->getOpCodeValue()==TR::aiadd ||
+       srcNode->getOpCodeValue()==TR::aladd ||
        srcNode->getOpCodeValue()==TR::asub)
       {
       TR::Node *firstChild = srcNode->getFirstChild();

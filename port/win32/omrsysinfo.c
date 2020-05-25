@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,7 @@
 #include "omrportpg.h"
 #include "omrportptb.h"
 #include "ut_omrport.h"
+#include "omrsysinfo_helpers.h"
 
 static int32_t copyEnvToBuffer(struct OMRPortLibrary *portLibrary, void *args);
 
@@ -88,6 +89,61 @@ omrsysinfo_get_CPU_architecture(struct OMRPortLibrary *portLibrary)
 #else
 	return "unknown";
 #endif
+}
+
+intptr_t
+omrsysinfo_get_processor_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc)
+{
+	intptr_t rc = -1;
+	Trc_PRT_sysinfo_get_processor_description_Entered(desc);
+	
+	if (NULL != desc) {
+		memset(desc, 0, sizeof(OMRProcessorDesc));
+		rc = omrsysinfo_get_x86_description(portLibrary, desc);
+	}
+	
+	Trc_PRT_sysinfo_get_processor_description_Exit(rc);
+	return rc;
+}
+
+BOOLEAN
+omrsysinfo_processor_has_feature(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc, uint32_t feature)
+{
+	BOOLEAN rc = FALSE;
+	Trc_PRT_sysinfo_processor_has_feature_Entered(desc, feature);
+
+	if ((NULL != desc) && (feature < (OMRPORT_SYSINFO_FEATURES_SIZE * 32))) {
+		uint32_t featureIndex = feature / 32;
+		uint32_t featureShift = feature % 32;
+
+		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1u << featureShift);
+	}
+
+	Trc_PRT_sysinfo_processor_has_feature_Exit((uintptr_t)rc);
+	return rc;
+}
+
+intptr_t
+omrsysinfo_processor_set_feature(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc, uint32_t feature, BOOLEAN enable)
+{
+	intptr_t rc = -1;
+	Trc_PRT_sysinfo_processor_set_feature_Entered(desc, feature, enable);
+
+	if ((NULL != desc) && (feature < (OMRPORT_SYSINFO_FEATURES_SIZE * 32))) {
+		uint32_t featureIndex = feature / 32;
+		uint32_t featureShift = feature % 32;
+
+		if (enable) {
+			desc->features[featureIndex] |= (1u << featureShift);
+		}
+		else {
+			desc->features[featureIndex] &= ~(1u << featureShift);
+		}
+		rc = 0;
+	}
+
+	Trc_PRT_sysinfo_processor_set_feature_Exit(rc);
+	return rc;
 }
 
 #define ENVVAR_VALUE_BUFFER_LENGTH 512
@@ -255,10 +311,13 @@ WIN32_WINNT version constants :
 				case 0:
 					PPG_si_osType = "Windows 2000";
 					break;
+				case 1:
+					PPG_si_osType = "Windows XP"; /* 32-bit */
+					break;
 				case 2:
 					switch (versionInfo.wProductType) {
 					case VER_NT_WORKSTATION:
-						PPG_si_osType = "Windows XP";
+						PPG_si_osType = "Windows XP"; /* 64-bit */
 						break;
 					case VER_NT_DOMAIN_CONTROLLER: /* FALLTHROUGH */
 					case VER_NT_SERVER:
@@ -1071,6 +1130,50 @@ omrsysinfo_get_CPU_utilization(struct OMRPortLibrary *portLibrary, struct J9Sysi
 	return 0;
 }
 
+intptr_t
+omrsysinfo_get_CPU_load(struct OMRPortLibrary *portLibrary, double *cpuLoad)
+{
+	J9SysinfoCPUTime currentCPUTime;
+	J9SysinfoCPUTime *oldestCPUTime = &portLibrary->portGlobals->oldestCPUTime;
+	J9SysinfoCPUTime *latestCPUTime = &portLibrary->portGlobals->latestCPUTime;
+
+	intptr_t portLibraryStatus = omrsysinfo_get_CPU_utilization(portLibrary, &currentCPUTime);
+	
+	if (portLibraryStatus < 0) {
+		return portLibraryStatus;
+	}
+
+	if (oldestCPUTime->timestamp == 0) {
+		*oldestCPUTime = currentCPUTime;
+		*latestCPUTime = currentCPUTime;
+		return OMRPORT_ERROR_OPFAILED;
+	}
+
+	/* Calculate using the most recent value in the history */
+	if (((currentCPUTime.timestamp - latestCPUTime->timestamp) >= 10000000) && (currentCPUTime.numberOfCpus != 0)) {
+		*cpuLoad = OMR_MIN((currentCPUTime.cpuTime - latestCPUTime->cpuTime) / ((double)currentCPUTime.numberOfCpus * (currentCPUTime.timestamp - latestCPUTime->timestamp)), 1.0);
+		if (*cpuLoad >= 0.0) {
+			*oldestCPUTime = *latestCPUTime;
+			*latestCPUTime = currentCPUTime;
+			return 0;
+		} else {
+			/* Either the latest or the current time are bogus, so discard the latest value and try with the oldest value */
+			*latestCPUTime = currentCPUTime;
+		}
+	}
+	
+	if (((currentCPUTime.timestamp - oldestCPUTime->timestamp) >= 10000000) && (currentCPUTime.numberOfCpus != 0)) {
+		*cpuLoad = OMR_MIN((currentCPUTime.cpuTime - oldestCPUTime->cpuTime) / ((double)currentCPUTime.numberOfCpus * (currentCPUTime.timestamp - oldestCPUTime->timestamp)), 1.0);
+		if (*cpuLoad >= 0.0) {
+			return 0;
+		} else {
+			*oldestCPUTime = currentCPUTime;
+		}
+	}
+
+	return OMRPORT_ERROR_OPFAILED;
+}
+
 int32_t
 omrsysinfo_limit_iterator_init(struct OMRPortLibrary *portLibrary, J9SysinfoLimitIteratorState *state)
 {
@@ -1659,7 +1762,7 @@ omrsysinfo_os_has_feature(struct OMRPortLibrary *portLibrary, struct OMROSDesc *
 		uint32_t featureIndex = feature / 32;
 		uint32_t featureShift = feature % 32;
 
-		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1 << featureShift);
+		rc = OMR_ARE_ALL_BITS_SET(desc->features[featureIndex], 1u << featureShift);
 	}
 
 	Trc_PRT_sysinfo_os_has_feature_Exit((uintptr_t)rc);

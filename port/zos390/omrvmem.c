@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -210,7 +210,7 @@ static void * reserve_memory_with_moservices(struct OMRPortLibrary *portLibrary,
 #define SET_PAGE_TYPE(pageFlags, pageType) ((pageFlags) = (((pageFlags) & ~OMRPORT_VMEM_PAGE_FLAG_TYPE_MASK) | pageType))
 
 #define IS_VMEM_PAGE_FLAG_NOT_USED(pageFlags)  (OMRPORT_VMEM_PAGE_FLAG_NOT_USED == (OMRPORT_VMEM_PAGE_FLAG_NOT_USED & (pageFlags)))
-
+#define IS_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE(pageFlags)  (OMRPORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE == (OMRPORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE & (pageFlags)))
 static BOOLEAN isStrictAndOutOfRange(struct J9PortVmemParams *, void *);
 static BOOLEAN rangeIsValid(struct J9PortVmemIdentifier *identifier, void *address, uintptr_t byteAmount);
 static void *reservePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier, struct J9PortVmemParams *params, OMRMemCategory *category);
@@ -1215,6 +1215,8 @@ omrvmem_startup(struct OMRPortLibrary *portLibrary)
 
 	/* set default value to advise OS about vmem that is no longer needed */
 	portLibrary->portGlobals->vmemAdviseOSonFree = 1;
+	/* set default value to advise OS about vmem to consider for Transparent HugePage (Only for Linux) */
+	portLibrary->portGlobals->vmemEnableMadvise = 0;
 
 	return 0;
 }
@@ -1274,16 +1276,20 @@ get_protectionBits(uintptr_t mode)
 void
 omrvmem_default_large_page_size_ex(struct OMRPortLibrary *portLibrary, uintptr_t mode, uintptr_t *pageSize, uintptr_t *pageFlags)
 {
-	uint32_t index = 0;
+	int32_t indexPageable = -1;
+	int32_t index = -1;
+	BOOLEAN pageablePreferableRequested = ((NULL != pageFlags) && (IS_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE(*pageFlags)));
 
 	if ((NULL == pageSize) &&
 		(NULL == pageFlags)
 	) {
 		return;
 	}
+
 	if (NULL != pageSize) {
 		*pageSize = 0;
 	}
+
 	if (NULL != pageFlags) {
 		*pageFlags = OMRPORT_VMEM_PAGE_FLAG_NOT_USED;
 	}
@@ -1294,30 +1300,37 @@ omrvmem_default_large_page_size_ex(struct OMRPortLibrary *portLibrary, uintptr_t
 	}
 #endif /* OMR_ENV_DATA64 */
 
-	while (0 != PPG_vmem_pageSize[index]) {
-		if (0 != (OMRPORT_VMEM_MEMORY_MODE_EXECUTE & mode)) {
-			if ((ONE_M == PPG_vmem_pageSize[index]) &&
-				(0 != (OMRPORT_VMEM_PAGE_FLAG_PAGEABLE & PPG_vmem_pageFlags[index]))
-			) {
-				break;
+	for (int i = 0; ((0 != PPG_vmem_pageSize[i]) && (ONE_M >= PPG_vmem_pageSize[i])); i++) {
+		if (ONE_M == PPG_vmem_pageSize[i]) {
+			if (0 != (OMRPORT_VMEM_PAGE_FLAG_PAGEABLE & PPG_vmem_pageFlags[i])) {
+				indexPageable = i;
 			}
 #if defined(OMR_ENV_DATA64)
-		} else {
-			if ((ONE_M == PPG_vmem_pageSize[index]) &&
-				(0 != (OMRPORT_VMEM_PAGE_FLAG_FIXED & PPG_vmem_pageFlags[index]))
-			) {
-				break;
+			else if (0 != (OMRPORT_VMEM_PAGE_FLAG_FIXED & PPG_vmem_pageFlags[i])) {
+				index = i;
 			}
-#endif
+#endif /* OMR_ENV_DATA64 */
 		}
-		index++;
 	}
-	if (NULL != pageSize) {
-		*pageSize = PPG_vmem_pageSize[index];
+
+	/* 
+	 * When mode is OMRPORT_VMEM_MEMORY_EXECUTE we will only consider pagable large pages. Return pageSize of 0 if 1M pageable is not configured on the system.
+	 * When flag is OMRPORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE, we prefer pageable 1M large pages unless they're not provisioned.
+	 */
+	if ((0 != (OMRPORT_VMEM_MEMORY_MODE_EXECUTE & mode)) ||
+	   (TRUE == pageablePreferableRequested && (-1 != indexPageable))) {
+		index = indexPageable;
 	}
-	if (NULL != pageFlags) {
-		*pageFlags = PPG_vmem_pageFlags[index];
+
+	if (-1 != index) {
+		if (NULL != pageSize) {
+			*pageSize = PPG_vmem_pageSize[index];
+		}
+		if (NULL != pageFlags) {
+			*pageFlags = PPG_vmem_pageFlags[index];
+		}
 	}
+
 	return;
 }
 
@@ -1332,8 +1345,14 @@ omrvmem_find_valid_page_size(struct OMRPortLibrary *portLibrary, uintptr_t mode,
 	uintptr_t validPageFlags = *pageFlags;
 	BOOLEAN pageSizeFound = FALSE;
 	BOOLEAN useExecutablePages = FALSE;
+	BOOLEAN isPageableAttempted = FALSE;
 
 	Assert_PRT_true_wrapper(0 != validPageFlags);
+
+	/* Reset pageFlags */
+	if (IS_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE(*pageFlags)) {
+		*pageFlags = OMRPORT_VMEM_PAGE_FLAG_NOT_USED;
+	}
 
 	if (0 != (mode & OMRPORT_VMEM_MEMORY_MODE_EXECUTE)) {
 		useExecutablePages = TRUE;
@@ -1350,9 +1369,26 @@ omrvmem_find_valid_page_size(struct OMRPortLibrary *portLibrary, uintptr_t mode,
 		uintptr_t defaultLargePageSize = 0;
 		uintptr_t defaultLargePageFlags = OMRPORT_VMEM_PAGE_FLAG_NOT_USED;
 
-		/* If the page type is NOT_USED (as with the -Xlp<size> options)
-		 * the legacy behavior is to default to FIXED pages.
-		 */
+		/* If the page type is PREFER_PAGEABLE try to get 1M pageable large pages. Otherwise, use a fixed large page. */
+		if ((IS_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE(validPageFlags))) {
+
+			/* Try 1M large pages */ 
+			if (ONE_M == validPageSize) {
+				/* Keep from calling this again if ONE_M fails. */
+				isPageableAttempted = TRUE;
+
+				pageSizeFound = isLargePageSizeSupported(portLibrary, ONE_M, OMRPORT_VMEM_PAGE_FLAG_PAGEABLE);
+				if (TRUE == pageSizeFound) {
+					SET_PAGE_TYPE(validPageFlags, OMRPORT_VMEM_PAGE_FLAG_PAGEABLE);
+					goto _end;
+				}
+			}
+
+			/* Continue searching for fixed large pages */
+			validPageFlags = OMRPORT_VMEM_PAGE_FLAG_FIXED;
+		}
+
+		/* If the page type is NOT_USED the legacy behavior is to default to FIXED pages. */
 		if (IS_VMEM_PAGE_FLAG_NOT_USED(validPageFlags)) {
 			SET_PAGE_TYPE(validPageFlags, OMRPORT_VMEM_PAGE_FLAG_FIXED);
 		}
@@ -1376,16 +1412,19 @@ omrvmem_find_valid_page_size(struct OMRPortLibrary *portLibrary, uintptr_t mode,
 #endif /* OMR_ENV_DATA64 */
 
 	/* If there is no default page size (or for executable pages), try 1MB pageable pages */
-	pageSizeFound = isLargePageSizeSupported(portLibrary, ONE_M, OMRPORT_VMEM_PAGE_FLAG_PAGEABLE);
-	if (TRUE == pageSizeFound) {
-		validPageSize = ONE_M;
-		SET_PAGE_TYPE(validPageFlags, OMRPORT_VMEM_PAGE_FLAG_PAGEABLE);
-	} else {
-		/* Use default page size, if everything else fails */
-		validPageSize = PPG_vmem_pageSize[0];
-		validPageFlags = PPG_vmem_pageFlags[0];
-	}
 
+	if (FALSE == isPageableAttempted) {
+		pageSizeFound = isLargePageSizeSupported(portLibrary, ONE_M, OMRPORT_VMEM_PAGE_FLAG_PAGEABLE);
+	
+		if (TRUE == pageSizeFound) {
+			validPageSize = ONE_M;
+			SET_PAGE_TYPE(validPageFlags, OMRPORT_VMEM_PAGE_FLAG_PAGEABLE);
+		} else {
+			/* Use default page size, if everything else fails */
+			validPageSize = PPG_vmem_pageSize[0];
+			validPageFlags = PPG_vmem_pageFlags[0];
+		}
+	}
 _end:
 	if (IS_VMEM_PAGE_FLAG_NOT_USED(*pageFlags)) {
 		/* In this case ignore page flags when setting isSizeSupported */

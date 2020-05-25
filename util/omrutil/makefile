@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2015 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,6 +74,17 @@ ifeq (ppc,$(OMR_HOST_ARCH))
       vpath cas8help.s unix/linux/ppc/32
     else
       vpath cas8help.s unix/aix/32
+    endif
+  endif
+endif
+
+ifeq (riscv,$(OMR_HOST_ARCH))
+  ifeq (linux,$(OMR_HOST_OS))
+    OBJECTS += cas32helper$(OBJEXT)
+    vpath cas32helper.s unix/linux/riscv/32
+    ifeq (1,$(OMR_ENV_DATA64))
+      OBJECTS += cas64helper$(OBJEXT)
+      vpath cas64helper.s unix/linux/riscv/64
     endif
   endif
 endif

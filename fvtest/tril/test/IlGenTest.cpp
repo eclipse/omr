@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 #include "il/ILOpCodes.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
-#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/CompileMethod.hpp"
 #include "env/jittypes.h"
 #include "gtest/gtest.h"
@@ -40,16 +40,22 @@
 
 class IlGenTest : public Tril::Test::JitTest {};
 
+// TODO (#4719): This test is currently broken on AIX, since it is not valid to use the return value of
+// compileMethodFromDetails as a function pointer.
+#if !defined(AIXPPC)
 TEST_F(IlGenTest, Return3) {
     auto trees = parseString("(block (ireturn (iconst 3)))");
 
     TR::TypeDictionary types;
     auto Int32 = types.PrimitiveType(TR::Int32);
-    TR::IlType* argTypes[] = {Int32};
+    TR::IlType* argTypes[] = { Int32 };
 
-    Tril::TRLangBuilder injector{trees, &types};
-    TR::ResolvedMethod compilee{__FILE__, LINETOSTR(__LINE__), "Return3InIL", sizeof(argTypes)/sizeof(TR::IlType*), argTypes, Int32, 0, &injector};
-    TR::IlGeneratorMethodDetails methodDetails{&compilee};
+    Tril::GenericNodeConverter genericNodeConverter;
+    Tril::CallConverter callConverter(&genericNodeConverter);
+
+    Tril::TRLangBuilder injector(trees, &types, &callConverter);
+    TR::ResolvedMethod compilee(__FILE__, LINETOSTR(__LINE__), "Return3InIL", sizeof(argTypes)/sizeof(TR::IlType*), argTypes, Int32, 0, &injector);
+    TR::IlGeneratorMethodDetails methodDetails(&compilee);
     int32_t rc = 0;
     auto entry_point = compileMethodFromDetails(NULL, methodDetails, warm, rc);
 
@@ -59,3 +65,4 @@ TEST_F(IlGenTest, Return3) {
     auto entry = reinterpret_cast<int32_t(*)(void)>(entry_point);
     ASSERT_EQ(3, entry()) << "Compiled body did not return expected value";
 }
+#endif

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-add_library(omrtrace STATIC
+omr_add_library(omrtrace STATIC
 	omrtraceapi.cpp
 	omrtracecomponent.cpp
 	omrtraceformatter.cpp
@@ -32,12 +32,10 @@ add_library(omrtrace STATIC
 	omrtracewrappers.cpp
 )
 
-if(OMR_WARNINGS_AS_ERRORS)
-	target_compile_options(omrtrace PRIVATE ${OMR_WARNING_AS_ERROR_FLAG})
-endif()
-
-if(OMR_ENHANCED_WARNINGS)
-	target_compile_options(omrtrace PRIVATE ${OMR_ENHANCED_WARNING_FLAG})
+# Avoid a problem verifying strncpys inlined to operate on array fields used
+# to implement variable length structs
+if (OMR_STRNCPY_FORTIFY_OPTIONS)
+	target_compile_options(omrtrace PRIVATE ${OMR_STRNCPY_FORTIFY_OPTIONS})
 endif()
 
 target_link_libraries(omrtrace
@@ -47,7 +45,11 @@ target_link_libraries(omrtrace
 		omrutil
 )
 
-target_enable_ddr(omrtrace "${OMR_DDR_SET}")
+target_enable_ddr(omrtrace)
+ddr_add_headers(omrtrace
+	${omr_SOURCE_DIR}/include_core/ute_module.h
+)
+ddr_set_add_targets(omrddr omrtrace)
 
 #TODO: check if following makefile fragment still required:
 #ifeq (gcc,$(OMR_TOOLCHAIN))

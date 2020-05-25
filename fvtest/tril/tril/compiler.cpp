@@ -47,7 +47,7 @@ int main(int argc, char** argv)
       if (!isDumper) 
          {
          initializeJit();
-         Tril::DefaultCompiler compiler{trees}; 
+         Tril::DefaultCompiler compiler(trees); 
          if (compiler.compile() != 0) { 
             fprintf(out, "Error compiling trees!"); 
          }

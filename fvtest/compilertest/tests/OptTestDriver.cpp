@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,13 +20,17 @@
  *******************************************************************************/
 
 #include "OptTestDriver.hpp"
-#include "compile/Method.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "ilgen/IlInjector.hpp"
 #include "ras/IlVerifierHelpers.hpp"
 #include "ilgen/MethodInfo.hpp"
+
+TestCompiler::OptTestDriver::OptTestDriver() : _compiledMethod(NULL), _methodInfo(NULL), _ilVer(NULL)
+   {
+   }
 
 TestCompiler::OptTestDriver::~OptTestDriver()
    {

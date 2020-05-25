@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,40 +24,18 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/modules"
 
 include(OmrUtility)
 
-find_package(BISON REQUIRED)
-find_package(FLEX REQUIRED)
-
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-list(APPEND TRIL_FLEX_FLAGS
-	--yylineno
-	--header-file=${CMAKE_CURRENT_BINARY_DIR}/tril.scanner.h
-)
-
-# There is no unistd.h on Windows, so if win_flex.exe is in use,
-# the --wincompat option must be added.
-if(OMR_HOST_OS STREQUAL "win")
-	list(APPEND TRIL_FLEX_FLAGS
-		"--wincompat"
-	)
-endif()
-
-omr_stringify(TRIL_FLEX_OPTIONS ${TRIL_FLEX_FLAGS})
-BISON_TARGET(tril_parser tril.y ${CMAKE_CURRENT_BINARY_DIR}/tril.parser.c)
-FLEX_TARGET(tril_scanner tril.l ${CMAKE_CURRENT_BINARY_DIR}/tril.scanner.c
-	COMPILE_FLAGS ${TRIL_FLEX_OPTIONS}
-)
-ADD_FLEX_BISON_DEPENDENCY(tril_scanner tril_parser)
-
 set(TRIL_BACKEND_LIB      testcompiler)
 
-add_library(tril STATIC
-	${BISON_tril_parser_OUTPUTS}
-	${FLEX_tril_scanner_OUTPUTS}
+omr_add_library(tril STATIC
 	ast.cpp
+	parser.cpp
 	ilgen.cpp
+	CallConverter.cpp
+	GenericNodeConverter.cpp
 	simple_compiler.cpp
 )
 
@@ -76,10 +54,18 @@ target_link_libraries(tril PUBLIC
 	${CMAKE_DL_LIBS}
 )
 
-add_executable(tril_dumper compiler.cpp)
+#TODO  system thread library should be linked in a more generic way.
+if(NOT OMR_HOST_OS STREQUAL "win")
+	if(NOT OMR_HOST_OS STREQUAL "zos")
+		target_link_libraries(tril PUBLIC pthread)
+	endif()
+endif()
+
+
+omr_add_executable(tril_dumper compiler.cpp)
 target_link_libraries(tril_dumper tril)
 
-add_executable(tril_compiler compiler.cpp)
+omr_add_executable(tril_compiler compiler.cpp)
 target_link_libraries(tril_compiler tril)
 
 # The platform specific ${TR_CXX_COMPILE_OPTIONS} and ${TR_C_COMPILE_OPTIONS} compile options

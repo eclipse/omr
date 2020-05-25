@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -147,6 +147,9 @@ public:
 	MM_FreeEntrySizeClassStats _freeEntrySizeClassStats;  /**< GC thread local statistics structure for heap free entry size (sizeClass) distribution */
 
 	uintptr_t _oolTraceAllocationBytes; /**< Tracks the bytes allocated since the last ool object trace */
+	uintptr_t _traceAllocationBytes;  /**< Tracks the bytes allocated since the last object trace include ool and allocation is completed from TLH */
+
+	uintptr_t approxScanCacheCount; /**< Local copy of approximate entries in global Cache Scan List. Updated upon allocation of new cache. */
 
 	MM_Validator *_activeValidator; /**< Used to identify and report crashes inside Validators */
 
@@ -250,6 +253,10 @@ public:
 		return getExtensions()->getObjectAlignmentInBytes();
 	}
 
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
 	MMINLINE bool compressObjectReferences() {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 #if defined(OMR_GC_FULL_POINTERS)
@@ -418,6 +425,11 @@ public:
 	 * Releases shared VM access.
 	 */
 	void releaseVMAccess();
+	
+	/**
+	 * Returns true if a mutator threads entered native code without releasing VM access
+	 */
+	MMINLINE bool inNative() { return _delegate.inNative(); }
 
 	/**
 	 * Acquire exclusive access to request a gc.
@@ -505,14 +517,12 @@ public:
 	 * @return true if we were beaten, false otherwise.
 	 */
 	bool exclusiveAccessBeatenByOtherThread() { return _exclusiveAccessBeatenByOtherThread; }
-
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	
 	/**
 	 * Force thread to use out-of-line request for VM access. This may be required if there
 	 * is there is an event waiting to be hooked the next time the thread acquires VM access.
 	 */
 	void forceOutOfLineVMAccess() { _delegate.forceOutOfLineVMAccess(); }
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 #if defined (OMR_GC_THREAD_LOCAL_HEAP)
 	/**
@@ -550,7 +560,18 @@ public:
 	/**
 	 * Initialization specifically for GC threads
 	 */
-	virtual void initializeGCThread() {}
+	virtual void initializeGCThread() {
+		/* Before a thread turning into a GC one, it shortly acted as a mutator (during thread attach sequence),
+		 * which means it may have allocated or executed an object access barrier.
+		 * We temporarily acquire VM access and to prevent 'bleeding' flushGCCaches into the final thread walk and flush that occurs under exclusive VM access.
+		 * Otherwise there would be:
+		 * 1) a race with abandoning remainder from both this thread and final walk thread
+		 * 2) a race between this thread creating remainder (since flushCaches is true) while final walk is trying to abandon it
+		 */		
+		acquireVMAccess();
+		flushGCCaches(true);
+		releaseVMAccess();
+	}
 
 	MM_GCCode getCycleStateGCCode() { return _cycleState->_gcCode; }
 
@@ -582,7 +603,11 @@ public:
 	MMINLINE MM_WorkStack *getWorkStack() { return &_workStack; }
 
 	virtual void flushNonAllocationCaches() { _delegate.flushNonAllocationCaches(); }
-	virtual void flushGCCaches() {}
+	/* Flush GC specific caches (of mutator thread involved in object graph traversal)
+	 * For example, push copy caches created by Read Barrier in Concurrent Scavenger to be scanned.  
+	 * @param final if true it's done in a STW pass at the start of GC. We may do some other things beyond pushing caches, like make the unused part of cache walkable. If false (called in a middle of a GC cycle) we don't care about having heap walkable)
+	 */
+	virtual void flushGCCaches(bool final) {}
 
 	/**
 	 * Get a pointer to common GC metadata attached to this environment. The GC environment structure
@@ -640,6 +665,8 @@ public:
 		,_slaveThreadCpuTimeNanos(0)
 		,_freeEntrySizeClassStats()
 		,_oolTraceAllocationBytes(0)
+		,_traceAllocationBytes(0)
+		,approxScanCacheCount(0)
 		,_activeValidator(NULL)
 		,_lastSyncPointReached(NULL)
 #if defined(OMR_GC_SEGREGATED_HEAP)
@@ -691,6 +718,8 @@ public:
 		,_slaveThreadCpuTimeNanos(0)
 		,_freeEntrySizeClassStats()
 		,_oolTraceAllocationBytes(0)
+		,_traceAllocationBytes(0)
+		,approxScanCacheCount(0)
 		,_activeValidator(NULL)
 		,_lastSyncPointReached(NULL)
 #if defined(OMR_GC_SEGREGATED_HEAP)

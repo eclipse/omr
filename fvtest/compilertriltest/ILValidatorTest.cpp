@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
 #include "JitTest.hpp"
 #include "default_compiler.hpp"
 #include "compile/OMRCompilation.hpp"
-
 #include <string>
 
 class IllformedTrees : public TRTest::JitTest, public ::testing::WithParamInterface<std::string> {};
@@ -33,12 +32,13 @@ TEST_P(IllformedTrees, FailCompilation) {
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(compiler.compile(), COMPILATION_IL_VALIDATION_FAILURE)  
             << "Compilation did not fail due to ill-formed input trees";
 }
 
+#ifdef OMR_ENV_DATA64
 INSTANTIATE_TEST_CASE_P(ILValidatorTest, IllformedTrees, ::testing::Values(
     "(method return=Int32 (block (ireturn (iadd (iconst 1) (sconst 3)))))",
     "(method return=Int32 (block (ireturn (sadd (iconst 1) (iconst 3)))))",
@@ -46,6 +46,7 @@ INSTANTIATE_TEST_CASE_P(ILValidatorTest, IllformedTrees, ::testing::Values(
     "(method return=Address (block (areturn (aladd (aconst 4) (iconst 1)))))",
     "(method return=Address (block (areturn (aiadd (iconst 1) (aconst 4)))))",
     "(method return=Address (block (areturn (aladd (lconst 1) (aconst 4)))))",
+    "(method return=Address (block (areturn (aiadd (aconst 1) (iconst 4)))))",
     "(method return=Int32 (block (ireturn (acmpeq (iconst 4) (aconst 4)))))",
     "(method return=Int32 (block (ireturn (acmpge (lconst 4) (aconst 4)))))",
     "(method return=NoType (block (return (GlRegDeps))))",
@@ -56,16 +57,40 @@ INSTANTIATE_TEST_CASE_P(ILValidatorTest, IllformedTrees, ::testing::Values(
     "(method return=Int64 (block (lreturn (sshl (sconst 1) (iconst 1)))))", // lreturn incorrect type. 
     "(method return=Int64 (block (lreturn (sconst 1) )))"                   // lreturn incorrect type. 
     ));
+#endif
+
+#ifdef OMR_ENV_DATA32
+INSTANTIATE_TEST_CASE_P(ILValidatorTest, IllformedTrees, ::testing::Values(
+    "(method return=Int32 (block (ireturn (iadd (iconst 1) (sconst 3)))))",
+    "(method return=Int32 (block (ireturn (sadd (iconst 1) (iconst 3)))))",
+    "(method return=Address (block (areturn (aiadd (aconst 4) (lconst 1)))))",
+    "(method return=Address (block (areturn (aladd (aconst 4) (iconst 1)))))",
+    "(method return=Address (block (areturn (aiadd (iconst 1) (aconst 4)))))",
+    "(method return=Address (block (areturn (aladd (lconst 1) (aconst 4)))))",
+    "(method return=Address (block (areturn (aladd (aconst 1) (lconst 4)))))",
+    "(method return=Int32 (block (ireturn (acmpeq (iconst 4) (aconst 4)))))",
+    "(method return=Int32 (block (ireturn (acmpge (lconst 4) (aconst 4)))))",
+    "(method return=NoType (block (return (GlRegDeps))))",
+    "(method return=Int32 (block (ireturn (GlRegDeps) (iconst 3))))",
+    "(method return=Int32 (block (ireturn (GlRegDeps) (iadd (iconst 1) (iconst 3)))))",
+    "(method return=Int32 (block (ireturn (iconst 3 (GlRegDeps)))))",
+    "(method return=Int32 (block (ireturn (iadd (GlRegDeps) (iconst 1) (iconst 3)))))"
+    "(method return=Int64 (block (lreturn (sshl (sconst 1) (iconst 1)))))", // lreturn incorrect type. 
+    "(method return=Int64 (block (lreturn (sconst 1) )))"                   // lreturn incorrect type. 
+    ));
+#endif
 
 class WellformedTrees : public TRTest::JitTest, public ::testing::WithParamInterface<std::string> {};
 
 TEST_P(WellformedTrees, CompileOnly) {
+    SKIP_ON_RISCV(MissingImplementation) << "Skipped in RISC-V because of missing implementation of acmpge";
+
     auto inputTrees = GetParam();
     auto trees = parseString(inputTrees.c_str());
 
     ASSERT_NOTNULL(trees);
 
-    Tril::DefaultCompiler compiler{trees};
+    Tril::DefaultCompiler compiler(trees);
 
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly";
 }
@@ -102,7 +127,7 @@ TEST_P(CommoningTest, CommoningUnderSameTree)
    auto ast = parseString(tril);
    ASSERT_NOTNULL(ast) << "Parsing failed unexpectedly";
 
-   Tril::DefaultCompiler compiler{ast};
+   Tril::DefaultCompiler compiler(ast);
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly";
 
    auto entry_point = compiler.getEntryPoint<int32_t (*)(int32_t, int32_t)>();
@@ -131,7 +156,7 @@ TEST_P(CommoningTest, CommoningWithinBlock)
    auto ast = parseString(tril);
    ASSERT_NOTNULL(ast) << "Parsing failed unexpectedly";
 
-   Tril::DefaultCompiler compiler{ast};
+   Tril::DefaultCompiler compiler(ast);
    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly";
 
    auto entry_point = compiler.getEntryPoint<int32_t (*)(int32_t, int32_t)>();
@@ -166,7 +191,7 @@ TEST_F(InvalidCommoningTest, CommoningAcrossBlock)
    auto ast = parseString(tril);
    ASSERT_NOTNULL(ast) << "Parsing failed unexpectedly";
 
-   Tril::DefaultCompiler compiler{ast};
+   Tril::DefaultCompiler compiler(ast);
 
    ASSERT_EQ(compiler.compile(), COMPILATION_IL_VALIDATION_FAILURE)
       << "Compilation did not fail due to ill-formed input trees";

@@ -21,6 +21,7 @@
 
 compiler_library(env
 	${CMAKE_CURRENT_LIST_DIR}/ExceptionTable.cpp
+	${CMAKE_CURRENT_LIST_DIR}/FrontEnd.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRCPU.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRObjectModel.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRArithEnv.cpp

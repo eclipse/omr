@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,19 +19,32 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "codegen/ARM64Instruction.hpp"
 #include "codegen/ARM64ShiftCode.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RegisterDependency.hpp"
+#include "codegen/Relocation.hpp"
 #include "codegen/TreeEvaluator.hpp"
+#include "il/AutomaticSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/StaticSymbol.hpp"
+
+TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg, TR::Node *node, intptr_t address, TR::Register *targetRegister, TR_ExternalRelocationTargetKind reloKind, TR::Instruction *cursor)
+   {
+   // We use LDR literal to load a value from the snippet. Offset to PC will be patched by LabelRelative24BitRelocation
+   auto snippet = cg->findOrCreate8ByteConstant(node, address);
+   auto labelSym = snippet->getSnippetLabel();
+   snippet->setReloType(reloKind);
+   return generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, node, targetRegister, 0, labelSym, cursor);
+   }
 
 TR::Instruction *loadConstant32(TR::CodeGenerator *cg, TR::Node *node, int32_t value, TR::Register *trgReg, TR::Instruction *cursor)
    {
@@ -170,6 +183,149 @@ TR::Instruction *loadConstant64(TR::CodeGenerator *cg, TR::Node *node, int64_t v
    return cursor;
    }
 
+/**
+ * Add meta data to instruction loading address constant
+ * @param[in] cg : CodeGenerator
+ * @param[in] node : node
+ * @param[in] firstInstruction : instruction cursor
+ * @param[in] typeAddress : type of address
+ * @param[in] value : address value
+ */
+static void
+addMetaDataForLoadAddressConstantFixed(TR::CodeGenerator *cg, TR::Node *node, TR::Instruction *firstInstruction, int16_t typeAddress, intptr_t value)
+   {
+   if (value == 0x0)
+      return;
+
+   if (typeAddress == -1)
+      typeAddress = TR_FixedSequenceAddress2;
+
+   TR::Compilation *comp = cg->comp();
+
+   TR::Relocation *relo = NULL;
+
+   switch (typeAddress)
+      {
+      case TR_DataAddress:
+         {
+         relo = new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+            firstInstruction,
+            (uint8_t *)node->getSymbolReference(),
+            (uint8_t *)node->getInlinedSiteIndex(),
+            TR_DataAddress, cg);
+         break;
+         }
+
+      case TR_DebugCounter:
+         {
+         TR::DebugCounterBase *counter = comp->getCounterFromStaticAddress(node->getSymbolReference());
+         if (counter == NULL)
+            comp->failCompilation<TR::CompilationException>("Could not generate relocation for debug counter in addMetaDataForLoadAddressConstantFixed\n");
+
+         TR::DebugCounter::generateRelocation(comp, firstInstruction, node, counter);
+         return;
+         }
+
+      case TR_ClassAddress:
+         {
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR::SymbolReference *symRef = (TR::SymbolReference *)value;
+
+            relo = new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+               firstInstruction,
+               (uint8_t *)symRef->getSymbol()->getStaticSymbol()->getStaticAddress(),
+               (uint8_t *)TR::SymbolType::typeClass,
+               TR_DiscontiguousSymbolFromManager, cg);
+            }
+         else
+            {
+            TR::SymbolReference *symRef = (TR::SymbolReference *)value;
+
+            relo = new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+               firstInstruction,
+               (uint8_t *)symRef,
+               (uint8_t *)(node == NULL ? -1 : node->getInlinedSiteIndex()),
+               TR_ClassAddress, cg);
+            }
+         break;
+         }
+
+      case TR_RamMethodSequence:
+         {
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            relo = new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+               firstInstruction,
+               (uint8_t *)comp->getJittedMethodSymbol()->getResolvedMethod()->resolvedMethodAddress(),
+               (uint8_t *)TR::SymbolType::typeMethod,
+               TR_DiscontiguousSymbolFromManager,
+               cg);
+            }
+         break;
+         }
+      }
+
+   if (!relo)
+      {
+      relo = new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+         firstInstruction,
+         (uint8_t *)value,
+         (TR_ExternalRelocationTargetKind)typeAddress,
+         cg);
+      }
+
+   cg->addExternalRelocation(
+      relo,
+      __FILE__,
+      __LINE__,
+      node);
+   }
+
+/**
+ * Generates relocatable instructions for loading 64-bit integer value to a register
+ * @param[in] cg : CodeGenerator
+ * @param[in] node : node
+ * @param[in] value : integer value
+ * @param[in] trgReg : target register
+ * @param[in] cursor : instruction cursor
+ * @param[in] typeAddress : type of address
+ */ 
+static TR::Instruction *
+loadAddressConstantRelocatable(TR::CodeGenerator *cg, TR::Node *node, intptr_t value, TR::Register *trgReg, TR::Instruction *cursor=NULL, int16_t typeAddress = -1)
+   {
+   TR::Compilation *comp = cg->comp();
+   // load a 64-bit constant into a register with a fixed 4 instruction sequence
+   TR::Instruction *temp = cursor;
+   TR::Instruction *firstInstruction;
+
+   if (cursor == NULL)
+      cursor = cg->getAppendInstruction();
+
+   cursor = firstInstruction = generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, trgReg, value & 0x0000ffff, cursor);
+   cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::movkx, node, trgReg, ((value >> 16) & 0x0000ffff) | TR::MOV_LSL16, cursor);
+   cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::movkx, node, trgReg, ((value >> 32) & 0x0000ffff) | (TR::MOV_LSL16 * 2) , cursor);
+   cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::movkx, node, trgReg, (value >> 48) | (TR::MOV_LSL16 * 3) , cursor);
+
+   addMetaDataForLoadAddressConstantFixed(cg, node, firstInstruction, typeAddress, value);
+
+   if (temp == NULL)
+      cg->setAppendInstruction(cursor);
+
+   return cursor;
+   }
+
+TR::Instruction *
+loadAddressConstant(TR::CodeGenerator *cg, TR::Node *node, intptr_t value, TR::Register *trgReg, TR::Instruction *cursor, bool isPicSite, int16_t typeAddress)
+   {
+   if (cg->comp()->compileRelocatableCode())
+      {
+      return loadAddressConstantRelocatable(cg, node, value, trgReg, cursor, typeAddress);
+      }
+
+   return loadConstant64(cg, node, value, trgReg, cursor);
+   }
+
 TR::Register *
 OMR::ARM64::TreeEvaluator::unImpOpEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
@@ -187,7 +343,7 @@ OMR::ARM64::TreeEvaluator::badILOpEvaluator(TR::Node *node, TR::CodeGenerator *c
 TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t memSize, TR::CodeGenerator *cg)
    {
    TR::Register *tempReg;
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
 
    if (op == TR::InstOpCode::vldrimms)
       {
@@ -205,13 +361,11 @@ TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, i
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, memSize, cg);
    generateTrg1MemInstruction(cg, op, node, tempReg, tempMR);
 
-   /*
-    * Enable this part when dmb instruction becomes available
    if (needSync)
       {
-      generateInstruction(cg, TR::InstOpCode::dmb, node);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
       }
-    */
+
    tempMR->decNodeReferenceCounts(cg);
 
    return tempReg;
@@ -247,17 +401,35 @@ OMR::ARM64::TreeEvaluator::aloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    node->setRegister(tempReg);
 
-   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, 8, cg);
-   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg, tempMR);
+   TR::InstOpCode::Mnemonic op;
+   int32_t sizeOfMR;
 
-   /*
-    * Enable this part when dmb instruction becomes available
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   if (TR::Compiler->om.generateCompressedObjectHeaders() &&
+       (node->getSymbol()->isClassObject() ||
+        (node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef())))
+      {
+      op = TR::InstOpCode::ldrimmw;
+      sizeOfMR = 4;
+      }
+   else
+      {
+      op = TR::InstOpCode::ldrimmx;
+      sizeOfMR = 8;
+      }
+   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, sizeOfMR, cg);
+   generateTrg1MemInstruction(cg, op, node, tempReg, tempMR);
+
+   if (node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef())
+      {
+      TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tempReg);
+      }
+
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
    if (needSync)
       {
-      generateInstruction(cg, TR::InstOpCode::dmb, node);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
       }
-    */
+
    tempMR->decNodeReferenceCounts(cg);
 
    return tempReg;
@@ -301,7 +473,7 @@ OMR::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *c
 TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t memSize, TR::CodeGenerator *cg)
    {
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, memSize, cg);
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
    TR::Node *valueChild;
 
    if (node->getOpCode().isIndirect())
@@ -313,21 +485,15 @@ TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, 
       valueChild = node->getFirstChild();
       }
 
-   /*
-    * Enable this part when dmb instruction becomes available
    if (needSync)
       {
-      generateInstruction(cg, TR::InstOpCode::dmb, node);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE); // dmb ST
       }
-    */
    generateMemSrc1Instruction(cg, op, node, tempMR, cg->evaluate(valueChild));
-   /*
-    * Enable this part when dmb instruction becomes available
    if (needSync)
       {
-      generateInstruction(cg, TR::InstOpCode::dmb, node);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
       }
-    */
 
    valueChild->decReferenceCount();
    tempMR->decNodeReferenceCounts(cg);
@@ -335,7 +501,7 @@ TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, 
    return NULL;
    }
 
-// also handles lstorei, astore, astorei
+// also handles lstorei
 TR::Register *
 OMR::ARM64::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -360,7 +526,28 @@ OMR::ARM64::TreeEvaluator::sstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg
 TR::Register *
 OMR::ARM64::TreeEvaluator::istoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return commonStoreEvaluator(node, TR::InstOpCode::strimmw, 4, cg);
+   TR::Compilation *comp = cg->comp();
+
+   commonStoreEvaluator(node, TR::InstOpCode::strimmw, 4, cg);
+
+   if (comp->useCompressedPointers() && node->getOpCode().isIndirect())
+      node->setStoreAlreadyEvaluated(true);
+
+   return NULL;
+   }
+
+// also handles astore, astorei
+TR::Register *
+OMR::ARM64::TreeEvaluator::astoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   bool isCompressedClassPointerOfObjectHeader = TR::Compiler->om.generateCompressedObjectHeaders() &&
+         (node->getSymbol()->isClassObject() ||
+         (node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef()));
+   auto sizeOfMR = isCompressedClassPointerOfObjectHeader ? 4 : 8;
+   TR::InstOpCode::Mnemonic op = isCompressedClassPointerOfObjectHeader ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
+
+   return commonStoreEvaluator(node, op, sizeOfMR, cg);
    }
 
 TR::Register *
@@ -374,13 +561,6 @@ TR::Register *
 OMR::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 	{
 	// TODO:ARM64: Enable TR::TreeEvaluator::monexitEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
-
-TR::Register *
-OMR::ARM64::TreeEvaluator::monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::monexitfenceEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
 	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
 	}
 
@@ -458,6 +638,17 @@ OMR::ARM64::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator
    return linkage->buildDirectDispatch(node);
    }
 
+// handles calli, icalli, lcalli, fcalli, dcalli, acalli
+TR::Register *
+OMR::ARM64::TreeEvaluator::indirectCallEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::SymbolReference *symRef = node->getSymbolReference();
+   TR::MethodSymbol *callee = symRef->getSymbol()->castToMethodSymbol();
+   TR::Linkage *linkage = cg->getLinkage(callee->getLinkageConvention());
+
+   return linkage->buildIndirectDispatch(node);
+   }
+
 TR::Register *
 OMR::ARM64::TreeEvaluator::treetopEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -475,10 +666,69 @@ OMR::ARM64::TreeEvaluator::exceptionRangeFenceEvaluator(TR::Node *node, TR::Code
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::loadaddrEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::loadaddrEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   TR::Register *resultReg;
+   TR::Symbol *sym = node->getSymbol();
+   TR::Compilation *comp = cg->comp();
+   TR::MemoryReference *mref = new (cg->trHeapMemory()) TR::MemoryReference(node, node->getSymbolReference(), 0, cg);
+
+   if (mref->getUnresolvedSnippet() != NULL)
+      {
+      resultReg = sym->isLocalObject() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+      if (mref->useIndexedForm())
+         {
+         TR_ASSERT(false, "Unresolved indexed snippet is not supported");
+         }
+      else
+         {
+         TR_UNIMPLEMENTED();
+         }
+      }
+   else
+      {
+      if (mref->useIndexedForm())
+         {
+         resultReg = sym->isLocalObject() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, resultReg, mref->getBaseRegister(), mref->getIndexRegister());
+         }
+      else
+         {
+         int32_t offset = mref->getOffset();
+         if (mref->hasDelayedOffset() || offset != 0)
+            {
+            resultReg = sym->isLocalObject() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+            if (mref->hasDelayedOffset())
+               {
+               generateTrg1MemInstruction(cg, TR::InstOpCode::addimmx, node, resultReg, mref);
+               }
+            else
+               {
+               if (offset >= 0 && constantIsUnsignedImm12(offset))
+                  {
+                  generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, resultReg, mref->getBaseRegister(), offset);
+                  }
+               else
+                  {
+                  loadConstant64(cg, node, offset, resultReg);
+                  generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, resultReg, mref->getBaseRegister(), resultReg);
+                  }
+               }
+            }
+         else
+            {
+            resultReg = mref->getBaseRegister();
+            if (resultReg == cg->getMethodMetaDataRegister())
+               {
+               resultReg = cg->allocateRegister();
+               generateMovInstruction(cg, node, resultReg, mref->getBaseRegister());
+               }
+            }
+         }
+      }
+   node->setRegister(resultReg);
+   mref->decNodeReferenceCounts(cg);
+   return resultReg;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::aRegLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -566,17 +816,22 @@ OMR::ARM64::TreeEvaluator::BBStartEvaluator(TR::Node *node, TR::CodeGenerator *c
             TR::ParameterSymbol *sym = child->getChild(i)->getSymbol()->getParmSymbol();
             if (sym != NULL)
                {
-               sym->setAllocatedIndex(cg->getGlobalRegister(child->getChild(i)->getGlobalRegisterNumber()));
+               sym->setAssignedGlobalRegisterIndex(cg->getGlobalRegister(child->getChild(i)->getGlobalRegisterNumber()));
                }
             }
          }
       child->decReferenceCount();
       }
 
-   if (node->getLabel() != NULL)
+   TR::LabelSymbol *labelSym = node->getLabel();
+   if (!labelSym)
       {
-      node->getLabel()->setInstruction(generateLabelInstruction(cg, TR::InstOpCode::label, node, node->getLabel(), deps));
+      labelSym = generateLabelSymbol(cg);
+      node->setLabel(labelSym);
       }
+   TR::Instruction *labelInst = generateLabelInstruction(cg, TR::InstOpCode::label, node, labelSym, deps);
+   labelSym->setInstruction(labelInst);
+   block->setFirstInstruction(labelInst);
 
    TR::Node *fenceNode = TR::Node::createRelative32BitFenceNode(node, &block->getInstructionBoundaries()._startPC);
    TR::Instruction *fence = generateAdminInstruction(cg, TR::InstOpCode::fence, node, fenceNode);
@@ -633,4 +888,54 @@ OMR::ARM64::TreeEvaluator::passThroughEvaluator(TR::Node *node, TR::CodeGenerato
    child->decReferenceCount();
    node->setRegister(trgReg);
    return trgReg;
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::PrefetchEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT(node->getNumChildren() == 4, "TR::Prefetch should contain 4 child nodes");
+
+   TR::Compilation *comp = cg->comp();
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getChild(1);
+   TR::Node *sizeChild = node->getChild(2);
+   TR::Node *typeChild = node->getChild(3);
+
+   // Do nothing for now
+
+   cg->recursivelyDecReferenceCount(firstChild);
+   cg->recursivelyDecReferenceCount(secondChild);
+   cg->recursivelyDecReferenceCount(sizeChild);
+   cg->recursivelyDecReferenceCount(typeChild);
+   return NULL;
+   }
+
+TR::Register *
+OMR::ARM64::TreeEvaluator::performCall(TR::Node *node, bool isIndirect, TR::CodeGenerator *cg)
+   {
+   TR::SymbolReference *symRef = node->getSymbolReference();
+   TR::MethodSymbol *callee = symRef->getSymbol()->castToMethodSymbol();
+   TR::Linkage *linkage = cg->getLinkage(callee->getLinkageConvention());
+   TR::Register *returnRegister;
+
+   if (isIndirect)
+      returnRegister = linkage->buildIndirectDispatch(node);
+   else
+      returnRegister = linkage->buildDirectDispatch(node);
+
+   return returnRegister;
+   }
+
+TR::Instruction *
+OMR::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *dstReg, TR::Register *srcReg, TR::Instruction *preced)
+   {
+   // Do nothing in OMR
+   return preced;
+   }
+
+TR::Instruction *
+OMR::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::Instruction *preced)
+   {
+   // Do nothing in OMR
+   return preced;
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,11 +41,6 @@ namespace OMR { typedef OMR::ARM64::Machine MachineConnector; }
 namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
 namespace TR { class Register; }
-
-#define NUM_ARM64_GPR 32
-#define MAX_ARM64_GLOBAL_GPRS 27 // excluding IP0, IP1, FP, LR, and SP
-#define NUM_ARM64_FPR 32
-#define MAX_ARM64_GLOBAL_FPRS 32
 
 #define NUM_ARM64_MAXR 32
 
@@ -145,25 +140,6 @@ public:
     */
    void restoreRegisterStateFromSnapShot();
 
-   /**
-    * @brief Answers global register table
-    * @return global register table
-    */
-   static uint32_t *getGlobalRegisterTable()
-      { return _globalRegisterNumberToRealRegisterMap; }
-   /**
-    * @brief Answers global register number of last GPR
-    * @return global register number
-    */
-   static TR_GlobalRegisterNumber getLastGlobalGPRRegisterNumber()
-      { return MAX_ARM64_GLOBAL_GPRS - 1; }
-   /**
-    * @brief Answers global register number of last FPR
-    * @return global register number
-    */
-   static TR_GlobalRegisterNumber getLastGlobalFPRRegisterNumber()
-      { return MAX_ARM64_GLOBAL_GPRS + MAX_ARM64_GLOBAL_FPRS - 1; }
-
 private:
 
    // For register snap shot
@@ -172,10 +148,6 @@ private:
    TR::Register               *_assignedRegisterSnapShot[TR::RealRegister::NumRegisters];
 
    void initializeRegisterFile();
-
-   // Tactical GRA
-   static uint32_t _globalRegisterNumberToRealRegisterMap[MAX_ARM64_GLOBAL_GPRS + MAX_ARM64_GLOBAL_FPRS];
-
    };
 }
 }

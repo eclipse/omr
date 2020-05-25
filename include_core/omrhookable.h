@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,7 +76,7 @@ typedef struct J9HookInterface {
 #define J9HOOK_AGENTID_LAST  ((uintptr_t)-1)
 
 /* time threshold (=100 milliseconds) for triggering the tracepoint  */
-#define OMRHOOK_DEFAULT_THRESHOLD_IN_MILLISECONDS_WARNING_CALLBACK_ELAPSED_TIME	100
+#define OMRHOOK_DEFAULT_THRESHOLD_IN_MICROSECONDS_WARNING_CALLBACK_ELAPSED_TIME	(100 * 1000)
 
 /* array of OMREventInfo4Dump is added in individual hookInterface by Hook generation tool to avoid
    rumtime native memory allocation(malloc), use this macro to access &infos4Dump[event]
@@ -96,6 +96,7 @@ typedef struct OMREventInfo4Dump {
 	struct OMRHookInfo4Dump longestHook;
 	struct OMRHookInfo4Dump lastHook;
 	volatile uintptr_t count;
+	volatile uintptr_t totalTime;
 }OMREventInfo4Dump;
 
 typedef struct J9CommonHookInterface {

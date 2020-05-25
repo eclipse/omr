@@ -62,7 +62,13 @@ TR_LoadExtensions::TR_LoadExtensions(TR::OptimizationManager *manager)
 
 int32_t TR_LoadExtensions::perform()
    {
-   if (comp()->getOptLevel() >= hot && !optimizer()->cantBuildGlobalsUseDefInfo())
+   static bool enableGRALoadExtensions = feGetEnv("TR_EnableGRALoadExtensions") != NULL;
+
+   // Make sure the UseDefInfo is set to NULL when GRA Load Extensions are disable.
+   if (!enableGRALoadExtensions)
+      optimizer()->setUseDefInfo(NULL);
+
+   if (comp()->getOptLevel() >= hot && !optimizer()->cantBuildGlobalsUseDefInfo() && enableGRALoadExtensions)
       {
       if (!comp()->getFlowGraph()->getStructure())
          {
@@ -73,7 +79,7 @@ int32_t TR_LoadExtensions::perform()
 
       optimizer()->setUseDefInfo(NULL);
 
-      TR_UseDefInfo* useDefInfo = new (comp()->allocator()) TR_UseDefInfo(comp(), comp()->getFlowGraph(), optimizer(), false, false, false, true, true);
+      TR_UseDefInfo* useDefInfo = optimizer()->createUseDefInfo(comp(), false, false, false, true, true);
 
       if (useDefInfo->infoIsValid())
          {
@@ -132,7 +138,7 @@ const bool TR_LoadExtensions::canSkipConversion(TR::Node* conversion, TR::Node* 
          conversion->getSize() > child->getSize() &&
 
          // Ensure we do not use register pairs for 64-bit loads on 32-bit platforms
-         (TR::Compiler->target.is64Bit() || comp()->cg()->use64BitRegsOn32Bit() || conversion->getSize() != 8) &&
+         (comp()->target().is64Bit() || comp()->cg()->use64BitRegsOn32Bit() || conversion->getSize() != 8) &&
 
          // Ensure the conversion matches our preferred extension on the load
          ((loadPrefersSignExtension && loadPrefersSignExtension == conversionOpCode.isSignExtension()) ||
@@ -359,7 +365,7 @@ void TR_LoadExtensions::flagPreferredLoadExtensions(TR::Node* parent)
             TR::ILOpCode& childOpCode = child->getOpCode();
 
             if (childOpCode.isLoadReg()
-               && !(parent->getSize() > 4 && TR::Compiler->target.is32Bit())
+               && !(parent->getSize() > 4 && comp()->target().is32Bit())
                && excludedNodes->count(parent) == 0)
                {
                TR::Node* useRegLoad = child;

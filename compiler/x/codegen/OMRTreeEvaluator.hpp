@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,18 +77,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *dloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *sloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *istoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *sstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -99,7 +89,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *tableEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *igotoEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *returnEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *iternaryEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *iselectEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *indirectCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *treetopEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -115,7 +105,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *csubEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fmulEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *dmulEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *cmulEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fdivEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ddivEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *cdivEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -124,7 +113,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *snegEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bshlEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *sshlEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *cshlEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bshrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *sshrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bushrEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -291,6 +279,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *fpReturnEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fpRemEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *fpSqrtEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dsqrtEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    // routines for floating point values that can fit in one GPR
    static TR::Register *floatingPointStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -316,7 +305,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static bool genNullTestSequence(TR::Node *node, TR::Register *opReg, TR::Register *targetReg, TR::CodeGenerator *cg);
    static TR::Instruction *insertLoadConstant(TR::Node *node,
                                              TR::Register *target,
-                                             intptrj_t value,
+                                             intptr_t value,
                                              TR_RematerializableTypes type,
                                              TR::CodeGenerator *cg,
                                              TR::Instruction *currentInstruction = NULL);
@@ -363,7 +352,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
 
    static bool getNodeIs64Bit(TR::Node *node, TR::CodeGenerator *cg);
 
-   static intptrj_t integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg);
+   static intptr_t integerConstNodeValue(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Block *getOverflowCatchBlock(TR::Node *node, TR::CodeGenerator *cg);
 
@@ -371,7 +360,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
 
    static TR::Register *performCall(TR::Node *node, bool isIndirect, bool spillFPRegs, TR::CodeGenerator *cg);
 
-   static TR::Register *loadConstant(TR::Node *node, intptrj_t value, TR_RematerializableTypes t, TR::CodeGenerator *cg, TR::Register *targetRegister = NULL);
+   static TR::Register *loadConstant(TR::Node *node, intptr_t value, TR_RematerializableTypes t, TR::CodeGenerator *cg, TR::Register *targetRegister = NULL);
 
    protected:
 
@@ -417,7 +406,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *commonFPRemEvaluator( TR::Node *node, TR::CodeGenerator *cg, bool isDouble);
    static TR::Register *generateLEAForLoadAddr(TR::Node *node, TR::MemoryReference *memRef, TR::SymbolReference *symRef,TR::CodeGenerator *cg, bool isInternalPointer);
 
-   static bool constNodeValueIs32BitSigned(TR::Node *node, intptrj_t *value, TR::CodeGenerator *cg);
+   static bool constNodeValueIs32BitSigned(TR::Node *node, intptr_t *value, TR::CodeGenerator *cg);
 
    static TR::Register *intOrLongClobberEvaluate(TR::Node *node, bool nodeIs64Bit, TR::CodeGenerator *cg);
 

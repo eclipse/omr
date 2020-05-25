@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -154,7 +154,7 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
                                                    _reloKind(-1) {}
 
    MemoryReference(TR::Register        *br,
-                          intptrj_t           disp,
+                          intptr_t           disp,
                           TR::CodeGenerator   *cg) : _baseRegister(br),
                                                    _baseNode(NULL),
                                                    _indexRegister(NULL),
@@ -169,7 +169,7 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
       _symbolReference.setOffset(disp);
       }
 
-   MemoryReference(intptrj_t           disp,
+   MemoryReference(intptr_t           disp,
                           TR::CodeGenerator   *cg) : _baseRegister(NULL),
                                                    _baseNode(NULL),
                                                    _indexRegister(NULL),
@@ -187,7 +187,7 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
    MemoryReference(TR::Register        *br,
                           TR::Register        *ir,
                           uint8_t             s,
-                          intptrj_t           disp,
+                          intptr_t           disp,
                           TR::CodeGenerator   *cg) : _baseRegister(br),
                                                    _baseNode(NULL),
                                                    _indexRegister(ir),
@@ -210,9 +210,9 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
 
    MemoryReference(TR::SymbolReference *symRef, TR::CodeGenerator *cg);
 
-   MemoryReference(TR::SymbolReference *symRef, intptrj_t displacement, TR::CodeGenerator *cg);
+   MemoryReference(TR::SymbolReference *symRef, intptr_t displacement, TR::CodeGenerator *cg);
 
-   MemoryReference(TR::MemoryReference& mr, intptrj_t n, TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm = NULL);
+   MemoryReference(TR::MemoryReference& mr, intptr_t n, TR::CodeGenerator *cg, TR_ScratchRegisterManager *srm = NULL);
 
    TR::Register *getBaseRegister()                {return _baseRegister;}
    TR::Register *setBaseRegister(TR::Register *br) {return (_baseRegister = br);}
@@ -226,7 +226,7 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
    TR::Node *getIndexNode()            {return _indexNode;}
    TR::Node *setIndexNode(TR::Node *in) {return (_indexNode = in);}
    TR::Register *getAddressRegister(){ return NULL; }
-   intptrj_t getDisplacement();
+   intptr_t getDisplacement();
 
    // An unresolved data snippet, unresolved virtual call snippet, and constant data snippet are mutually exclusive for
    // a given memory reference.  Hence, they share the same pointer.
@@ -431,15 +431,15 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
 ///////////////////////////////////////////////////////////
 
 TR::MemoryReference  * generateX86MemoryReference(TR::CodeGenerator *cg);
-TR::MemoryReference  * generateX86MemoryReference(intptrj_t, TR::CodeGenerator *cg);
-TR::MemoryReference  * generateX86MemoryReference(TR::Register * br, intptrj_t disp, TR::CodeGenerator *cg);
+TR::MemoryReference  * generateX86MemoryReference(intptr_t, TR::CodeGenerator *cg);
+TR::MemoryReference  * generateX86MemoryReference(TR::Register * br, intptr_t disp, TR::CodeGenerator *cg);
 TR::MemoryReference  * generateX86MemoryReference(TR::Register * br, TR::Register * ir, uint8_t s, TR::CodeGenerator *cg);
-TR::MemoryReference  * generateX86MemoryReference(TR::Register * br, TR::Register * ir, uint8_t s, intptrj_t disp, TR::CodeGenerator *cg);
+TR::MemoryReference  * generateX86MemoryReference(TR::Register * br, TR::Register * ir, uint8_t s, intptr_t disp, TR::CodeGenerator *cg);
 TR::MemoryReference  * generateX86MemoryReference(TR::Node *, TR::CodeGenerator *cg, bool canRematerializeAddressAdds = true);
-TR::MemoryReference  * generateX86MemoryReference(TR::MemoryReference  &, intptrj_t, TR::CodeGenerator *cg);
-TR::MemoryReference  * generateX86MemoryReference(TR::MemoryReference  &, intptrj_t, TR_ScratchRegisterManager *, TR::CodeGenerator *cg);
+TR::MemoryReference  * generateX86MemoryReference(TR::MemoryReference  &, intptr_t, TR::CodeGenerator *cg);
+TR::MemoryReference  * generateX86MemoryReference(TR::MemoryReference  &, intptr_t, TR_ScratchRegisterManager *, TR::CodeGenerator *cg);
 TR::MemoryReference  * generateX86MemoryReference(TR::SymbolReference *, TR::CodeGenerator *cg);
-TR::MemoryReference  * generateX86MemoryReference(TR::SymbolReference *, intptrj_t, TR::CodeGenerator *cg);
+TR::MemoryReference  * generateX86MemoryReference(TR::SymbolReference *, intptr_t, TR::CodeGenerator *cg);
 TR::MemoryReference  * generateX86MemoryReference(TR::X86DataSnippet  *, TR::CodeGenerator *cg);
 TR::MemoryReference  * generateX86MemoryReference(TR::LabelSymbol *, TR::CodeGenerator *cg);
 

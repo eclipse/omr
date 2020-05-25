@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,23 +26,30 @@
 
    IsNotExtended,
    IsImm,
+      IsSynchronization,
+      IsException,
    IsImmSym,
    IsLabel,
       IsConditionalBranch,
       IsCompareBranch,
+      IsVirtualGuardNOP,
    IsRegBranch,
    IsAdmin,
    IsTrg1,
       IsTrg1Cond,
       IsTrg1Imm,
+         IsTrg1ImmSym,
       IsTrg1Src1,
          IsTrg1Src1Imm,
          IsTrg1Src2,
+            IsCondTrg1Src2,
             IsTrg1Src2Shifted,
             IsTrg1Src2Extended,
             IsTrg1Src3,
       IsTrg1Mem,
+         IsTrg1MemSrc1,
    IsMem,
       IsMemSrc1,
+         IsMemSrc2,
    IsSrc1,
       IsSrc2,

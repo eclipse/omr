@@ -48,7 +48,7 @@ class ARM64HelperCallSnippet : public TR::Snippet
                           TR::LabelSymbol      *snippetlab,
                           TR::SymbolReference  *helper,
                           TR::LabelSymbol      *restartLabel=NULL)
-      : TR::Snippet(cg, node, snippetlab, (restartLabel!=NULL && helper->canCauseGC())),
+      : TR::Snippet(cg, node, snippetlab, helper->canCauseGC()),
         _destination(helper),
         _restartLabel(restartLabel)
       {

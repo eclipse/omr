@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -167,14 +167,19 @@ class TR_OutlinedInstructionsGenerator
       @brief Switch back to mainline code generation.
    */
    ~TR_OutlinedInstructionsGenerator();
+
    /**
-      @brief Obtain the underlying TR_OutlinedInstructions.
-   */
-   inline TR_OutlinedInstructions* obtain()     { return _oi; }
-   inline TR_OutlinedInstructions* operator->() { return obtain(); }
+    * @brief Performs post outlined instruction generation cleanup
+    *
+    * This function *must* be called after an outline instruction sequence
+    * is generated.
+    *
+    */
+   void endOutlinedInstructionSequence();
 
    private:
    TR_OutlinedInstructions* _oi;
+   bool _hasEnded;
    };
 
 #endif

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,15 +31,15 @@
 #include "env/IO.hpp"
 #include "env/jittypes.h"
 #include "il/AliasSetInterface.hpp"
+#include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/Block.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/Bit.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"
@@ -57,11 +57,11 @@
 // Determine the ordinal value associated with a node. This is used to determine
 // the order in which children of a commutative node should be placed.
 //
-static intptrj_t ordinalValue(TR::Node * node)
+static intptr_t ordinalValue(TR::Node * node)
    {
    if (node->getOpCode().hasSymbolReference())
-      return (intptrj_t)node->getSymbolReference()->getReferenceNumber();
-   return (intptrj_t)node->getOpCodeValue();
+      return (intptr_t)node->getSymbolReference()->getReferenceNumber();
+   return (intptr_t)node->getOpCodeValue();
    }
 
 //---------------------------------------------------------------------
@@ -72,8 +72,8 @@ static intptrj_t ordinalValue(TR::Node * node)
 //
 static bool shouldSwapChildren(TR::Node * firstChild, TR::Node * secondChild)
    {
-   intptrj_t firstOrdinal = ordinalValue(firstChild);
-   intptrj_t secondOrdinal = ordinalValue(secondChild);
+   intptr_t firstOrdinal = ordinalValue(firstChild);
+   intptr_t secondOrdinal = ordinalValue(secondChild);
    if (firstOrdinal < secondOrdinal)
       return false;
    if (firstOrdinal > secondOrdinal)
@@ -120,6 +120,16 @@ void simplifyChildren(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          {
          child = s->simplify(child, block);
          node->setChild(i, child);
+         }
+      // if simplification produced a PassThrough attach the child of the PassThrough here
+      // to keep the trees clean unless we are dealing with a node where a PassThrough is
+      // important - a null check or GlRegtDeps
+      if (!node->getOpCode().isNullCheck()
+          && node->getOpCodeValue() != TR::GlRegDeps
+          && child->getOpCodeValue() == TR::PassThrough)
+         {
+         node->setAndIncChild(i, child->getFirstChild());
+         child->recursivelyDecReferenceCount();
          }
       }
    }
@@ -197,7 +207,7 @@ void foldUIntConstant(TR::Node * node, uint32_t value, TR::Simplifier * s, bool 
 
    if (anchorChildrenP) s->anchorChildren(node, s->_curTree);
 
-   s->prepareToReplaceNode(node, TR::iuconst);
+   s->prepareToReplaceNode(node, TR::iconst);
    node->setUnsignedInt(value);
    dumpOptDetails(s->comp(), " to %s %d\n", node->getOpCode().getName(), node->getInt());
    }
@@ -211,7 +221,7 @@ void foldLongIntConstant(TR::Node * node, int64_t value, TR::Simplifier * s, boo
    s->prepareToReplaceNode(node, node->getOpCode().isRef() ? TR::aconst : TR::lconst);
 
    if (node->getOpCode().isRef())
-      node->setAddress((uintptrj_t)value);
+      node->setAddress((uintptr_t)value);
    else
       node->setLongInt(value);
 
@@ -251,18 +261,10 @@ void foldByteConstant(TR::Node * node, int8_t value, TR::Simplifier * s, bool an
 
    if (anchorChildrenP) s->anchorChildren(node, s->_curTree);
 
-   if (node->getOpCode().isUnsigned())
-      {
-      s->prepareToReplaceNode(node, TR::buconst);
-      node->setUnsignedByte((uint8_t)value);
-      dumpOptDetails(s->comp(), " to %s %d\n", node->getOpCode().getName(), node->getUnsignedByte());
-      }
-   else
-      {
-      s->prepareToReplaceNode(node, TR::bconst);
-      node->setByte(value);
-      dumpOptDetails(s->comp(), " to %s %d\n", node->getOpCode().getName(), node->getByte());
-      }
+   s->prepareToReplaceNode(node, TR::bconst);
+   node->setByte(value);
+   dumpOptDetails(s->comp(), " to %s %d\n", node->getOpCode().getName(), node->getByte());
+
    }
 
 void foldShortIntConstant(TR::Node * node, int16_t value, TR::Simplifier * s, bool anchorChildrenP)
@@ -354,7 +356,7 @@ TR::Node *foldRedundantAND(TR::Node * node, TR::ILOpCodes andOpCode, TR::ILOpCod
       {
       switch(constOpCode)
          {
-         case TR::sconst: case TR::cconst:
+         case TR::sconst:
             val = constChild->getShortInt(); break;
          case TR::iconst:
             val = constChild->getInt(); break;
@@ -607,10 +609,10 @@ TR::Node *reduceExpTwoAndGreaterToMultiplication(int32_t exponentValue, TR::Node
 
    TR::Node *resultNode = NULL;
 
-   // There are two algorithms here -- they are equivalent in the number 
-   // of multiply operations however the second is better for platforms 
-   // that have a destructive multiply instruction as less clobber evaluates 
-   // will be required. The second has the advantage that more parallel 
+   // There are two algorithms here -- they are equivalent in the number
+   // of multiply operations however the second is better for platforms
+   // that have a destructive multiply instruction as less clobber evaluates
+   // will be required. The second has the advantage that more parallel
    // multiply operations are created
    if (s->comp()->cg()->multiplyIsDestructive())
       {

@@ -19,7 +19,7 @@ pipeline {
                     sh '''ccache -s -z'''
                     
                     echo 'Configure...'
-                    sh '''make -f run_configure.mk OMRGLUE=./example/glue SPEC=linux_x86-64_cmprssptrs PLATFORM=amd64-linux64-gcc HAS_AUTOCONF=1 distclean all'''
+                    sh '''make -f run_configure.mk OMRGLUE=./example/glue SPEC=linux_x86-64_cmprssptrs PLATFORM=amd64-linux64-gcc HAS_AUTOCONF=1 all'''
                     
                     echo 'Compile...'
                     sh '''make -j4'''

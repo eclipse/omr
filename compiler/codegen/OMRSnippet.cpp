@@ -20,7 +20,7 @@
  *******************************************************************************/
 
 #include <stddef.h>
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "codegen/Snippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 
