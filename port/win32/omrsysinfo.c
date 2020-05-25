@@ -773,6 +773,7 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 	memInfo->availSwap = OMRPORT_MEMINFO_NOT_AVAILABLE;
 	memInfo->cached = OMRPORT_MEMINFO_NOT_AVAILABLE;
 	memInfo->buffered = OMRPORT_MEMINFO_NOT_AVAILABLE;
+	memInfo->swappiness = OMRPORT_MEMINFO_NOT_AVAILABLE;
 
 	aMemStatusEx.dwLength = sizeof(aMemStatusEx);
 	rc = GlobalMemoryStatusEx(&aMemStatusEx);

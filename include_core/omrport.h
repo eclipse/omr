@@ -596,15 +596,15 @@ typedef struct J9MemoryNodeDetail {
  * default OMRPORT_MEMINFO_NOT_AVAILABLE.
  */
 typedef struct J9MemoryInfo {
-	uint64_t totalPhysical;		/* Total physical memory in the system (in bytes). */
-	uint64_t availPhysical;		/* Available physical memory in the system (in bytes). */
-	uint64_t totalVirtual;		/* Total virtual memory addressable by the process (in bytes). */
-	uint64_t availVirtual;		/* Virtual memory available to the process (in bytes). */
-	uint64_t totalSwap;			/* Total swap memory (in bytes). */
-	uint64_t availSwap;			/* Total swap memory free (in bytes). */
-	uint64_t cached;			/* The physical RAM used as cache memory (in bytes). */
-	uint64_t buffered;			/* The physical RAM used for file buffers (in bytes). */
-	int64_t timestamp;			/* Sampling timestamp (in microseconds). */
+	uint64_t totalPhysical; /* Total physical memory in the system (in bytes). */
+	uint64_t availPhysical; /* Available physical memory in the system (in bytes). */
+	uint64_t totalVirtual; /* Total virtual memory addressable by the process (in bytes). */
+	uint64_t availVirtual; /* Virtual memory available to the process (in bytes). */
+	uint64_t totalSwap; /* Total swap memory (in bytes). */
+	uint64_t availSwap; /* Total swap memory free (in bytes). */
+	uint64_t cached; /* The physical RAM used as cache memory (in bytes). */
+	uint64_t buffered; /* The physical RAM used for file buffers (in bytes). */
+	int64_t timestamp; /* Sampling timestamp (in microseconds). */
 	/* Available physical memory on the host (in bytes) when process is in a cgroup.
 	 * When not in a cgroup, this will be identical to 'availPhysical' field above.
 	 */
@@ -617,6 +617,7 @@ typedef struct J9MemoryInfo {
 	 * When not in a cgroup, this will be identical to 'buffered' field above.
 	 */
 	uint64_t hostBuffered;
+	uint64_t swappiness; /* Indicates kernel aggressivenss (0-100) in swapping memory pages */
 } J9MemoryInfo;
 
 #define OMRPORT_MEMINFO_NOT_AVAILABLE ((uint64_t) -1)

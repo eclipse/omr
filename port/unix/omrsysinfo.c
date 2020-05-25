@@ -2394,6 +2394,8 @@ omrsysinfo_get_number_CPUs_by_type(struct OMRPortLibrary *portLibrary, uintptr_t
 #define BUFFERS_PREFIX      "Buffers:"
 #define BUFFERS_PREFIX_SZ   (sizeof(BUFFERS_PREFIX) - 1)
 
+#define PROC_SYS_VM_SWAPPINESS "/proc/sys/vm/swappiness"
+
 /**
  * Function collects memory usage statistics by reading /proc/meminfo on Linux platforms.
  *
@@ -2406,12 +2408,12 @@ static int32_t
 retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo *memInfo)
 {
 	int32_t rc = 0;
-	FILE *memStatFs = NULL;
+	FILE *fileHandle = NULL;
 	char lineString[MAX_LINE_LENGTH] = {0};
 
 	/* Open the memstat file on Linux for reading; this is readonly. */
-	memStatFs = fopen(MEMSTATPATH, "r");
-	if (NULL == memStatFs) {
+	fileHandle = fopen(MEMSTATPATH, "r");
+	if (NULL == fileHandle) {
 		Trc_PRT_retrieveLinuxMemoryStats_failedOpeningMemFs(errno);
 		rc = OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 		goto _cleanup;
@@ -2419,12 +2421,12 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 
 	Trc_PRT_retrieveLinuxMemoryStats_openedMemFs();
 
-	while (0 == feof(memStatFs)) {
+	while (0 == feof(fileHandle)) {
 		char *endPtr = NULL;
 		char *tmpPtr = NULL;
 
 		/* read a line from MEMSTATPATH. */
-		if (NULL == fgets(lineString, MAX_LINE_LENGTH, memStatFs)) {
+		if (NULL == fgets(lineString, MAX_LINE_LENGTH, fileHandle)) {
 			break;
 		}
 		tmpPtr = (char *)lineString;
@@ -2517,6 +2519,26 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 		} /* end if else-if */
 	} /* end while() */
 
+	fileHandle = fopen(PROC_SYS_VM_SWAPPINESS, "r");
+	if (NULL == fileHandle) {
+		Trc_PRT_retrieveLinuxMemoryStats_failedOpeningSwappinessFs(errno);
+		rc = OMRPORT_ERROR_SYSINFO_ERROR_SWAPPINESS_OPEN_FAILED;
+		goto _cleanup;
+	}
+
+	rc = fscanf(fileHandle, "%" SCNu64, &memInfo->swappiness);
+	if (1 != rc) {
+		if (EOF == rc) {
+			Trc_PRT_retrieveLinuxMemoryStats_failedReadingSwappiness(errno);
+		} else {
+			Trc_PRT_retrieveLinuxMemoryStats_unexpectedSwappinessFormat(1, rc);
+		}
+		rc = OMRPORT_ERROR_SYSINFO_ERROR_READING_SWAPPINESS;
+		goto _cleanup;
+	} else {
+		rc = 0; /* set it to 0 to indicates success */
+	}
+
 	/* Set hostXXX fields with memory stats from proc fs.
 	 * These may be used for calculating available physical memory on the host.
 	 */
@@ -2525,8 +2547,8 @@ retrieveLinuxMemoryStatsFromProcFS(struct OMRPortLibrary *portLibrary, struct J9
 	memInfo->hostBuffered = memInfo->buffered;
 
 _cleanup:
-	if (NULL != memStatFs) {
-		fclose(memStatFs);
+	if (NULL != fileHandle) {
+		fclose(fileHandle);
 	}
 
 	return rc;
@@ -2536,6 +2558,7 @@ _cleanup:
 #define CGROUP_MEMORY_USAGE_IN_BYTES_FILE "memory.usage_in_bytes"
 #define CGROUP_MEMORY_SWAP_LIMIT_IN_BYTES_FILE "memory.memsw.limit_in_bytes"
 #define CGROUP_MEMORY_SWAP_USAGE_IN_BYTES_FILE "memory.memsw.usage_in_bytes"
+#define CGROUP_MEMORY_SWAPPINESS "memory.swappiness"
 #define CGROUP_MEMORY_STAT_FILE "memory.stat"
 
 #define CGROUP_MEMORY_STAT_CACHE "cache"
@@ -2573,7 +2596,8 @@ retrieveLinuxCgroupMemoryStats(struct OMRPortLibrary *portLibrary, struct OMRCgr
 	if (0 != rc) {
 		goto _exit;
 	}
-	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAP_LIMIT_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryAndSwapLimit);
+
+	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAP_LIMIT_IN_BYTES_FILE, numItemsToRead, "%" SCNu64, &cgroupMemInfo->memoryAndSwapLimit);
 	if (0 != rc) {
 		if (OMRPORT_ERROR_FILE_NOENT == rc) {
 			/* It is possible file memory.memsw.limit_in_bytes is not present if
@@ -2596,6 +2620,11 @@ retrieveLinuxCgroupMemoryStats(struct OMRPortLibrary *portLibrary, struct OMRCgr
 		} else {
 			goto _exit;
 		}
+	}
+
+	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAPPINESS, numItemsToRead, "%" SCNu64, &cgroupMemInfo->swappiness);
+	if (0 != rc) {
+		goto _exit;
 	}
 
 	/* Read value of page cache memory from memory.stat file */
@@ -2717,6 +2746,8 @@ retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo
 			memInfo->availSwap = OMRPORT_MEMINFO_NOT_AVAILABLE;
 		}
 	}
+
+	memInfo->swappiness = cgroupMemInfo.swappiness;
 
 	memInfo->cached = cgroupMemInfo.cached;
 	/* Buffered value is not available when running in a cgroup.
@@ -2882,6 +2913,7 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 	memInfo->availSwap = OMRPORT_MEMINFO_NOT_AVAILABLE;
 	memInfo->cached = OMRPORT_MEMINFO_NOT_AVAILABLE;
 	memInfo->buffered = OMRPORT_MEMINFO_NOT_AVAILABLE;
+	memInfo->swappiness = OMRPORT_MEMINFO_NOT_AVAILABLE;
 
 	memInfo->hostAvailPhysical = OMRPORT_MEMINFO_NOT_AVAILABLE;
 	memInfo->hostCached = OMRPORT_MEMINFO_NOT_AVAILABLE;

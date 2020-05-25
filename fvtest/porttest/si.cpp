@@ -1266,6 +1266,9 @@ TEST(PortSysinfoTest, sysinfo_testMemoryInfo)
 #else /* defined (OSX) */
 			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.cached)
 #endif /* defined(OSX) */
+#if defined(LINUX)
+			|| (OMRPORT_MEMINFO_NOT_AVAILABLE == memInfo.swappiness)
+#endif /* defined(LINUX) */
 		) {
 
 			/* Fail pltest if one of these memory usage parameters were found inconsistent. */
