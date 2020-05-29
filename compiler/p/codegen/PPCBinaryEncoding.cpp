@@ -667,7 +667,9 @@ static void fillFieldDS(TR::Instruction *instr, uint32_t *cursor, uint32_t val)
  */
 static void fillFieldSI16(TR::Instruction *instr, uint32_t *cursor, uint32_t val)
    {
-   TR_ASSERT_FATAL_WITH_INSTRUCTION(instr, isValidInSignExtendedField(val, 0xffffu), "0x%x is out-of-range for SI(16) field", val);
+   // TODO: This assert is temporarily disabled due to a number of issues with invalid immediate
+   //       being passed to li/lis/addi/addis instructions in OpenJ9
+   //TR_ASSERT_FATAL_WITH_INSTRUCTION(instr, isValidInSignExtendedField(val, 0xffffu), "0x%x is out-of-range for SI(16) field", val);
    *cursor |= val & 0xffff;
    }
 
