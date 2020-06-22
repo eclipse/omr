@@ -29,7 +29,8 @@
 #include "runtime/TRRelocationRuntime.hpp"
 #include "runtime/TRRelocationTarget.hpp"
 
-bool OMR::RelocationTarget::isOrderedPairRelocation(TR::RelocationRecord *reloRecord, TR::RelocationTarget *reloTarget)
+bool
+OMR::RelocationTarget::isOrderedPairRelocation(TR::RelocationRecord *reloRecord, TR::RelocationTarget *reloTarget)
    {
    switch (reloRecord->type(reloTarget))
       {
