@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2019 IBM Corp. and others
+ * Copyright (c) 2014, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,8 +151,11 @@ FileUtils::visitDirectory(J9TDFOptions *options, const char *dirName, const char
 
 		struct J9FileStat buf;
 		if (RC_OK != Port::omrfile_stat(nextEntry, 0, &buf)) {
-			printError("stat failed %s\n", nextEntry);
-			goto failed;
+			/* if we failed to stat an entry, just skip it and move on to the next */
+			Port::omrmem_free((void **)&nextEntry);
+			Port::omrmem_free((void **)&resultBuffer);
+			rc = Port::omrfile_findnext(handle, &resultBuffer);
+			continue;
 		}
 
 		if (buf.isDir) {
