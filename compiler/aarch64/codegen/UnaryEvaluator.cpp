@@ -193,7 +193,19 @@ TR::Register *OMR::ARM64::TreeEvaluator::bu2iEvaluator(TR::Node *node, TR::CodeG
 
 TR::Register *OMR::ARM64::TreeEvaluator::su2iEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return extendToIntOrLongHelper(node, TR::InstOpCode::ubfmw, 15, cg);
+   TR::Node *child = node->getFirstChild();
+   TR::Register *trgReg = cg->gprClobberEvaluate(child);
+   if (child->getOpCodeValue() == TR::sload || child->getOpCodeValue() == TR::sloadi)
+      {
+      // No sign extension needed.
+      }
+   else
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ubfmw, node, trgReg, trgReg, 15);
+      }
+   node->setRegister(trgReg);
+   cg->decReferenceCount(child);
+   return trgReg;
    }
 
 TR::Register *OMR::ARM64::TreeEvaluator::bu2lEvaluator(TR::Node *node, TR::CodeGenerator *cg)
