@@ -818,7 +818,7 @@ void TR::SwitchAnalyzer::emit(TR_LinkHead<SwitchInfo> *chain, TR_LinkHead<Switch
       return;
 
    // Check if CannotOverflow flag on switch should be propagated
-   // This flag indicates that the possible values of the switch operand are withing the min max range of all the case statements
+   // This flag indicates that the possible values of the switch operand are within the min max range of all the case statements
    bool keepOverflow=true;
    if(majorsInBound!=0 || majorsInEarly!=0 || !_switch->chkCannotOverflow())
      keepOverflow=false;
@@ -1262,8 +1262,13 @@ TR::Block *TR::SwitchAnalyzer::addTableBlock(SwitchInfo *dense)
    int32_t branchTable = 0;
 
    TR::Node *node = TR::Node::create(_switch, TR::table, 3 + upperBound + branchTable);
+   // X and P use safeToSkipTableBounds to remove the bounds check
+   // Z reads safeToSkipTableBounds but appears to use cannotOverflow to remove the bounds check
+   // arm and aarch64 do not appear to ever remove the bounds checks
    if(_switch && _switch->chkCannotOverflow())
      node->setCannotOverflow(true); // Pass on info to code gen that table will have all cases covered and not use default case
+   if(_switch && _switch->chkSafeToSkipTableBoundCheck())
+     node->setIsSafeToSkipTableBoundCheck(true); // Pass on info to code gen that table will have all cases covered and not use default case
 
    node->setAndIncChild(0, TR::Node::create(TR::isub, 2,
                                           (_isInt64 ? TR::Node::create(TR::l2i, 1, TR::Node::createLoad(_switch, _temp)) : TR::Node::createLoad(_switch, _temp)),

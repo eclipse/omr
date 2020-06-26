@@ -10803,9 +10803,6 @@ TR::Node *constrainSwitch(OMR::ValuePropagation *vp, TR::Node *node)
 
    // if something is known about the selector, some
    // of the cases can be removed
-   //
-   // FIXME: process only lookupswitches for now
-   //
    if (node->getOpCodeValue() != TR::table)
       {
       TR::Node *selector = node->getFirstChild();
@@ -10924,6 +10921,30 @@ TR::Node *constrainSwitch(OMR::ValuePropagation *vp, TR::Node *node)
          if(low >= minCase && high <= maxCase)
            node->setCannotOverflow(true);  // Let evaluator know value range of selector is covered by min and max case
          } // ... else if LongConstraint
+      }
+   else
+      {
+      // TODO Can cases outside of the constraint range be removed?
+      TR::Node *selector = node->getFirstChild();
+      bool isGlobal;
+      TR::VPConstraint *constraint = vp->getConstraint(selector, isGlobal);
+      bool isInt64 = selector->getType().isInt64();
+      // TODO Is it worth it to handle 64 bit?
+      if (!isInt64 && constraint && constraint->asIntConstraint())
+         {
+         uint32_t numCases = node->getCaseIndexUpperBound() - 2;
+         int32_t low = constraint->asIntConstraint()->getLow();
+         int32_t high = constraint->asIntConstraint()->getHigh();
+         // Table entries are required to be contiguous. If numCases == constraint total range the selector is completely covered
+         if (numCases == ((high - low) + 1))
+            {
+            // Let evaluator know value range of selector is covered by low and high
+            if (vp->trace())
+               traceMsg(vp->comp(), "   All cases (%u) are covered by low %d to high %d. Bounds check can be removed\n", numCases, low, high);
+            node->setCannotOverflow(true);
+            node->setIsSafeToSkipTableBoundCheck(true);
+            }
+         }
       }
 
    // Fall-through is now unreachable
