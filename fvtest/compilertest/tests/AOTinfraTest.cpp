@@ -22,6 +22,7 @@
 #include "gtest/gtest.h"
 #include "tests/AOTinfraTest.hpp"
 #include "env/AOTMethodHeader.hpp"
+#include "env/AOTStorageInterface.hpp"
 
 namespace TestCompiler
 {
@@ -68,6 +69,42 @@ AOTinfraTest::AOTMethodHeaderTest()
    EXPECT_EQ(*firstRelocationsStart,*secondRelocationsStart);
    }
 
+void
+AOTinfraTest::AOTStorageTest()
+   {
+   uint8_t sizeFirst = 64;
+   uint8_t dataFirstArray[] = "64";
+   uint8_t* dataFirst = &dataFirstArray[0];
+   void* dataVoidFirst = &sizeFirst;
+   const char* keyFirst = "1";
+
+   uint8_t sizeSecond = 128;
+   uint8_t dataSecondArray[] = "128";
+   uint8_t* dataSecond = &dataSecondArray[0];
+   void* dataVoidSecond = &sizeSecond;
+   const char* keySecond = "2";
+
+   uint8_t sizeThird = 32;
+   uint8_t dataThirdArray[] = "32";
+   uint8_t* dataThird = &dataThirdArray[0];
+   void* dataVoidThird = &sizeThird;
+   const char* keyThird = "3";
+
+   AOTStorageInterface test;
+
+   test.storeEntry(keyFirst, dataVoidFirst, sizeFirst);
+   test.storeEntry(keySecond, dataVoidSecond, sizeSecond);
+   test.storeEntry(keyThird, dataVoidThird, sizeThird);
+
+   uint8_t* returnedFirst = test.loadEntry(keyFirst);
+   uint8_t* returnedSecond = test.loadEntry(keySecond);
+   uint8_t* returnedThird = test.loadEntry(keyThird);
+   
+   EXPECT_EQ(*dataFirst, *returnedFirst);
+   EXPECT_EQ(*dataSecond, *returnedSecond);
+   EXPECT_EQ(*dataThird, *returnedThird);
+   }
+
 }// namespace TestCompiler
 
 
@@ -77,3 +114,8 @@ TEST(JITILBuilderTest, AOTMethodHeaderTest)
    _aotinfraTest.AOTMethodHeaderTest();
    }
 
+TEST(JITILBuilderTest, AOTStorageTest)
+   {
+   TestCompiler::AOTinfraTest _aotinfraTest;
+   _aotinfraTest.AOTStorageTest();
+   }

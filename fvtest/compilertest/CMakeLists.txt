@@ -56,6 +56,12 @@ elseif(OMR_ARCH_S390)
 	)
 endif()
 
+if(OMR_AOT)
+    list(APPEND COMPILERTEST_FILES
+        env/TestAOTStorageInterface.cpp
+    )
+endif()
+
 create_omr_compiler_library(
 	NAME testcompiler
 	OBJECTS ${COMPILERTEST_FILES}

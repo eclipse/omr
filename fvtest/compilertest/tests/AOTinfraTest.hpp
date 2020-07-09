@@ -36,6 +36,10 @@ class AOTinfraTest
     * the serialization method works correctly for AOTMethodHeader.
     */
    void AOTMethodHeaderTest();
+   /**
+    * Checks whether storing and loading works correctly for AOTStorageInterface.
+    */
+   void AOTStorageTest();
    };
 
 } // namespace TestCompiler
