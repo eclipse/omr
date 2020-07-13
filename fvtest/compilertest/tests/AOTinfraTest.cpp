@@ -23,9 +23,38 @@
 #include "tests/AOTinfraTest.hpp"
 #include "env/AOTMethodHeader.hpp"
 #include "env/AOTStorageInterface.hpp"
+#include "compile/Compilation.hpp"
+#include "compiler/env/CompilerEnv.hpp"
+#include "il/DataTypes.hpp"
+#include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
+#include "ilgen/TypeDictionary.hpp"
 
 namespace TestCompiler
 {
+
+RecursiveFibFunctionType *AOTinfraTest::_recursiveFibMethod = 0;
+bool AOTinfraTest::_traceEnabled = false;
+
+void
+AOTinfraTest::compileTestMethods()
+   {
+   int32_t rc = 0;
+   uint8_t *entry=0;
+
+   TR::TypeDictionary types;
+
+   RecursiveFibMethod recFibMethodBuilder(&types, this);
+   rc = compileMethodBuilder(&recFibMethodBuilder, &entry);
+   _recursiveFibMethod = (RecursiveFibFunctionType *) entry;
+   }
+
+int32_t
+AOTinfraTest::recursiveFib(int32_t n)
+   {
+   if (n < 2)
+      return n;
+   return recursiveFib(n-1) + recursiveFib(n-2);
+   }
 
 void
 AOTinfraTest::AOTMethodHeaderTest()
@@ -105,6 +134,59 @@ AOTinfraTest::AOTStorageTest()
    EXPECT_EQ(*dataThird, *returnedThird);
    }
 
+void
+AOTinfraTest::AOTAdapterTest()
+   {
+   compileTestMethods();
+   TR::RelocationRuntime* rr = TR::Compiler->aotAdapter->getRelocationRuntime();
+   void* methodCode = TR::Compiler->aotAdapter->getMethodCode("fib_recur");
+   void* nullPtr = NULL;
+   EXPECT_NE(nullPtr, methodCode);
+   EXPECT_NE(nullPtr, rr);
+   }
+
+RecursiveFibMethod::RecursiveFibMethod(TR::TypeDictionary *types, AOTinfraTest *test)
+   : TR::MethodBuilder(types, test)
+   {
+   DefineLine(LINETOSTR(__LINE__));
+   DefineFile(__FILE__);
+
+   DefineName("fib_recur");
+   DefineParameter("n", Int32);
+   DefineReturnType(Int32);
+
+   DefineMemory("traceEnabled", Int32, test->traceEnabledLocation());
+   }
+
+bool
+RecursiveFibMethod::buildIL()
+   {
+   TR::IlBuilder *baseCase=NULL, *recursiveCase=NULL;
+   IfThenElse(&baseCase, &recursiveCase,
+      LessThan(
+         Load("n"),
+         ConstInt32(2)));
+
+   DefineLocal("result", Int32);
+
+   baseCase->Store("result",
+   baseCase->   Load("n"));
+   recursiveCase->Store("result",
+   recursiveCase->   Add(
+   recursiveCase->      Call("fib_recur", 1,
+   recursiveCase->         Sub(
+   recursiveCase->            Load("n"),
+   recursiveCase->            ConstInt32(1))),
+   recursiveCase->      Call("fib_recur", 1,
+   recursiveCase->         Sub(
+   recursiveCase->            Load("n"),
+   recursiveCase->            ConstInt32(2)))));
+
+   Return(
+      Load("result"));
+   return true;
+   }
+
 }// namespace TestCompiler
 
 
@@ -118,4 +200,10 @@ TEST(JITILBuilderTest, AOTStorageTest)
    {
    TestCompiler::AOTinfraTest _aotinfraTest;
    _aotinfraTest.AOTStorageTest();
+   }
+
+TEST(JITILBuilderTest, AOTAdapterTest)
+   {
+   TestCompiler::AOTinfraTest _aotinfraTest;
+   _aotinfraTest.AOTAdapterTest();
    }

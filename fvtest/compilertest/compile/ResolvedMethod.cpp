@@ -47,6 +47,7 @@ ResolvedMethod::ResolvedMethod(TR_OpaqueMethodBlock *method)
    _lineNumber = resolvedMethod->getLineNumber();
    _returnType = resolvedMethod->returnIlType();
    _signature = resolvedMethod->getSignature();
+   _externalName = 0;
    _entryPoint = resolvedMethod->getEntryPoint();
    strncpy(_signatureChars, resolvedMethod->signatureChars(), 62); // TODO: introduce concept of robustness
    }
@@ -60,6 +61,7 @@ ResolvedMethod::ResolvedMethod(TR::MethodBuilder *m)
      _returnType(m->getReturnType()),
      _entryPoint(0),
      _signature(0),
+     _externalName(0),
      _ilInjector(static_cast<TR::IlInjector *>(m))
    {
    computeSignatureChars();
@@ -80,6 +82,18 @@ ResolvedMethod::signature(TR_Memory * trMemory, TR_AllocationKind allocKind)
       }
    else
       return _signature;
+   }
+
+const char *
+ResolvedMethod::externalName(TR_Memory *trMemory, TR_AllocationKind allocKind)
+   {
+   if( !_externalName)
+      {
+      _name = nameChars();
+      _externalName = _name;
+      }
+
+   return _externalName;
    }
 
 TR::DataType

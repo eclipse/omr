@@ -174,6 +174,12 @@ initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t n
 
    initializeCodeCache(fe.codeCacheManager());
 
+   #ifdef OMR_RELOCATION_RUNTIME
+      TR::AOTAdapter* AOTAdapter = new (PERSISTENT_NEW) TR::AOTAdapter();
+      AOTAdapter->initializeAOTClasses(&(fe.codeCacheManager()));
+      TR::Compiler->aotAdapter = AOTAdapter;
+   #endif
+
    return true;
    }
 

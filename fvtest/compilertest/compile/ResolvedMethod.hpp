@@ -100,6 +100,7 @@ class ResolvedMethod : public ResolvedMethodBase, public Method
         _lineNumber(lineNumber),
         _name(name),
         _signature(0),
+        _externalName(0),
         _numParms(numParms),
         _parmTypes(parmTypes),
         _returnType(returnType),
@@ -112,6 +113,7 @@ class ResolvedMethod : public ResolvedMethodBase, public Method
    virtual TR::Method          * convertToMethod()                          { return this; }
 
    virtual const char          * signature(TR_Memory *, TR_AllocationKind);
+   virtual const char          * externalName(TR_Memory *, TR_AllocationKind);
    char                        * localName (uint32_t slot, uint32_t bcIndex, int32_t &nameLength, TR_Memory *trMemory);
 
    virtual char                * classNameChars()                           { return (char *)_fileName; }
@@ -158,6 +160,7 @@ class ResolvedMethod : public ResolvedMethodBase, public Method
    char *_name;
    char *_signature;
    char _signatureChars[64];
+   char *_externalName;
 
    int32_t          _numParms;
    TR::IlType    ** _parmTypes;

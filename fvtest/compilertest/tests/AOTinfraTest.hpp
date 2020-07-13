@@ -22,15 +22,22 @@
 #ifndef AOTINFRATEST_INCL
 #define AOTINFRATEST_INCL
 
+#include "TestDriver.hpp"
+#include "ilgen/IlBuilder.hpp"
+#include "ilgen/MethodBuilder.hpp"
+
 namespace TestCompiler
 {
 
 class AOTinfraTest;
+typedef int32_t (RecursiveFibFunctionType)(int32_t);
 
 
-class AOTinfraTest
+class AOTinfraTest : public TestDriver
    {
+
    public:
+   bool *traceEnabledLocation()    { return &_traceEnabled; }
    /**
     * Checks whether getting the variables, the constructors, and  
     * the serialization method works correctly for AOTMethodHeader.
@@ -40,6 +47,26 @@ class AOTinfraTest
     * Checks whether storing and loading works correctly for AOTStorageInterface.
     */
    void AOTStorageTest();
+   /**
+    * Checks whether creating an AOTMethodHeader from Compiler in the context of creating a new method works correctly using AOTAdapter.
+    */
+   void AOTAdapterTest();
+
+   protected:
+   virtual void compileTestMethods();
+   virtual void invokeTests() {}
+
+   private:
+   int32_t recursiveFib(int32_t n);
+   static RecursiveFibFunctionType *_recursiveFibMethod;
+   static bool _traceEnabled;
+   };
+
+class RecursiveFibMethod : public TR::MethodBuilder
+   {
+   public:
+   RecursiveFibMethod(TR::TypeDictionary *types, AOTinfraTest *test);
+   virtual bool buildIL();
    };
 
 } // namespace TestCompiler
