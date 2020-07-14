@@ -47,6 +47,9 @@ omr_add_executable(omrporttest
 	testProcessHelpers.cpp
 )
 
+if(OMR_OS_WINDOWS)
+target_link_libraries(omrporttest  StackWalker)
+endif()
 if(OMR_OPT_CUDA)
 	target_sources(omrporttest
 		PRIVATE
@@ -88,6 +91,7 @@ target_link_libraries(omrporttest
 if(OMR_HOST_OS STREQUAL "win")
 	target_link_libraries(omrporttest
 		ws2_32
+		dbghelp
 	)
 endif()
 

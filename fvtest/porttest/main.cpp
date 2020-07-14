@@ -19,6 +19,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if defined(OMR_OS_WINDOWS)
+#include <Windows.h>
+#include <stdio.h>
+#include <dbghelp.h>
+#include "StackWalker.h"
+#endif
+
 #include "omrTest.h"
 #include "omrport.h"
 #include "portTestHelpers.hpp"
@@ -30,8 +37,20 @@ extern int omrmmap_runTests(struct OMRPortLibrary *portLibrary, char *argv0, cha
 
 PortTestEnvironment *portTestEnv;
 
+#if defined(OMR_OS_WINDOWS)
+// The exception filter function:
+LONG WINAPI ExpFilter(EXCEPTION_POINTERS* pExp, DWORD dwExpCode)
+{
+	puts("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+	puts("Recieved SEH");
+	StackWalker sw;
+	sw.ShowCallstack(GetCurrentThread(), pExp->ContextRecord);
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif
+
 extern "C" int
-omr_main_entry(int argc, char **argv, char **envp)
+omr_main_entry_real(int argc, char **argv, char **envp)
 {
 	bool isChild = false;
 	bool earlyExit = false;
@@ -85,4 +104,21 @@ omr_main_entry(int argc, char **argv, char **envp)
 	}
 
 	return result;
+}
+
+extern "C" int
+omr_main_entry(int argc, char **argv, char **envp) {
+	HANDLE hProcess = GetCurrentProcess();
+#if  defined(OMR_OS_WINDOWS)
+	__try {
+#endif
+		return omr_main_entry_real(argc, argv, envp);
+#if defined(OMR_OS_WINDOWS)
+	}
+	__except (ExpFilter(GetExceptionInformation(), GetExceptionCode())) {
+		puts("SEH HANDLER!");
+		
+		return -1;
+	}
+#endif
 }

@@ -21,4 +21,8 @@
 ###############################################################################
 
 add_subdirectory(pugixml-1.5)
+if(OMR_OS_WINDOWS)
+add_subdirectory(StackWalker)
+
+endif()
 # TODO: gtest/gmock
