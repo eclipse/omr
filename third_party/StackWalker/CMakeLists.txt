@@ -102,16 +102,3 @@ install(FILES
     RENAME "${TARGET_StackWalker}.pdb"
     OPTIONAL)
 
-
-if (StackWalker_DISABLE_TESTS)
-    message(STATUS "Skipping tests")
-else()
-    enable_testing()
-
-    set(TARGET_StackWalker_tests StackWalker_test)
-    add_executable(${TARGET_StackWalker_tests}
-        Main/StackWalker/main.cpp)
-    target_link_libraries(${TARGET_StackWalker_tests} PUBLIC ${TARGET_StackWalker})
-
-    add_test(NAME ${TARGET_StackWalker_tests} COMMAND ${TARGET_StackWalker_tests})
-endif()
