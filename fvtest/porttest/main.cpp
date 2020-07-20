@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@ extern "C" int
 omr_main_entry(int argc, char **argv, char **envp)
 {
 	bool isChild = false;
+	bool isVerbose = false;
 	bool earlyExit = false;
 	int i = 0;
 	char testName[99] = "";
@@ -45,6 +46,8 @@ omr_main_entry(int argc, char **argv, char **envp)
 			strcpy(testName, &argv[i][7]);
 		} else if (0 == strcmp(argv[i], "-earlyExit")) {
 			earlyExit = true;
+		} else if (0 == strcmp(argv[i], "-verbose")) {
+			isVerbose = true;
 		}
 	}
 
@@ -52,7 +55,9 @@ omr_main_entry(int argc, char **argv, char **envp)
 		::testing::InitGoogleTest(&argc, argv);
 	}
 
-	OMREventListener::setDefaultTestListener();
+	if (!isVerbose) {
+		OMREventListener::setDefaultTestListener();
+	}
 
 	INITIALIZE_THREADLIBRARY_AND_ATTACH();
 
