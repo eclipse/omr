@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,11 +102,12 @@ MM_MemoryPoolBumpPointer::internalAllocate(MM_EnvironmentBase *env, uintptr_t si
 		_allocatePointer = (void *)((uintptr_t)_allocatePointer + sizeInBytesRequired);
 		uintptr_t newFreeSpace = spaceRemaining - sizeInBytesRequired;
 		if (0 == newFreeSpace) {
-			_freeEntryCount = 0;
-		} else {
-			_freeEntryCount = 1;
+//			Assert_MM_true(0 != _freeEntryCount);
+			_freeEntryCount -= 1;
 		}
-		_largestFreeEntry = newFreeSpace;
+		if (newFreeSpace > _largestFreeEntry) {
+			_largestFreeEntry = newFreeSpace;
+		}
 		Assert_MM_true(_allocatePointer <= _topPointer);
 	}
 	return result;
@@ -153,12 +154,13 @@ MM_MemoryPoolBumpPointer::internalAllocateTLH(MM_EnvironmentBase *env, uintptr_t
 			 */
 			addrTop = _topPointer;
 			newFreeSpace = 0;
-			_freeEntryCount = 0;
+//			Assert_MM_true(0 != _freeEntryCount);
+			_freeEntryCount -= 1;
 			_allocatePointer = _topPointer;
-		} else {
-			_freeEntryCount = 1;
 		}
-		_largestFreeEntry = newFreeSpace;
+		if (newFreeSpace > _largestFreeEntry) {
+			_largestFreeEntry = newFreeSpace;
+		}
 
 		success = true;
 	}
@@ -193,7 +195,38 @@ MM_MemoryPoolBumpPointer::allocateTLH(MM_EnvironmentBase *env, MM_AllocateDescri
 void *
 MM_MemoryPoolBumpPointer::collectorAllocate(MM_EnvironmentBase *env,  MM_AllocateDescription *allocDescription, bool lockingRequired)
 {
-	void * addr = internalAllocate(env, allocDescription->getContiguousBytes());
+	void *addr = NULL;
+	uintptr_t sizeInBytesRequired = allocDescription->getContiguousBytes();
+
+	if (NULL != _allocatePointer4Collector) {
+		uintptr_t spaceRemaining = (uintptr_t)_topPointer4Collector - (uintptr_t)_allocatePointer4Collector;
+		if (sizeInBytesRequired <= spaceRemaining) {
+			addr = _allocatePointer4Collector;
+			_allocatePointer4Collector = (void *)((uintptr_t)_allocatePointer4Collector + sizeInBytesRequired);
+			uintptr_t newFreeSpace = spaceRemaining - sizeInBytesRequired;
+			if (0 == newFreeSpace) {
+//				Assert_MM_true(0 != _freeEntryCount);
+				_freeEntryCount -= 1;
+			}
+			uintptr_t tailSize = (uintptr_t)_topPointer - (uintptr_t)_allocatePointer;
+			if (newFreeSpace >= tailSize) {
+				_largestFreeEntry = newFreeSpace;
+			} else {
+				_largestFreeEntry = tailSize;
+			}
+			Assert_MM_true(_allocatePointer4Collector <= _topPointer4Collector);
+		}
+	}
+
+	if (NULL == addr) {
+		addr = internalAllocate(env, allocDescription->getContiguousBytes());
+		if ((NULL != addr) && (NULL != _allocatePointer4Collector)) {
+			uintptr_t size = (uintptr_t)_topPointer4Collector - (uintptr_t)_allocatePointer4Collector;
+			if (size > _largestFreeEntry) {
+				_largestFreeEntry = size;
+			}
+		}
+	}
 
 	if (NULL != addr) {
 		allocDescription->setTLHAllocation(false);
@@ -209,8 +242,48 @@ MM_MemoryPoolBumpPointer::collectorAllocateTLH(MM_EnvironmentBase *env, MM_Alloc
 {
 	void *tlhBase = NULL;
 
-	if (internalAllocateTLH(env, maximumSizeInBytesRequired, addrBase, addrTop)) {
+	if (NULL != _allocatePointer4Collector) {
+		uintptr_t spaceRemaining = (uintptr_t)_topPointer4Collector - (uintptr_t)_allocatePointer4Collector;
+		if (_minimumFreeEntrySize <= spaceRemaining) {
+			addrBase = _allocatePointer4Collector;
+			uintptr_t sizeToAllocate = 0;
+			if (maximumSizeInBytesRequired < spaceRemaining) {
+				sizeToAllocate = maximumSizeInBytesRequired;
+			} else {
+				sizeToAllocate = spaceRemaining;
+			}
+			_allocatePointer4Collector = (void *)((uintptr_t)_allocatePointer4Collector + sizeToAllocate);
+			addrTop = _allocatePointer4Collector;
+
+			uintptr_t newFreeSpace = spaceRemaining - sizeToAllocate;
+			if (newFreeSpace < _minimumFreeEntrySize) {
+				/* We are trying to allocate a TLH which is permitted to be larger than the requested size.  If we were going to discard
+				 * the remainder of the region, anyway, return it as part of the TLH.
+				 */
+				addrTop = _topPointer4Collector;
+				newFreeSpace = 0;
+//				Assert_MM_true(0 != _freeEntryCount);
+				_freeEntryCount -= 1;
+				_allocatePointer4Collector = _topPointer4Collector;
+			}
+			uintptr_t tailSize = (uintptr_t)_topPointer - (uintptr_t)_allocatePointer;
+			if (newFreeSpace >= tailSize) {
+				_largestFreeEntry = newFreeSpace;
+			} else {
+				_largestFreeEntry = tailSize;
+			}
+			tlhBase = addrBase;
+		}
+	}
+
+	if ((NULL == tlhBase) && internalAllocateTLH(env, maximumSizeInBytesRequired, addrBase, addrTop)) {
 		tlhBase = addrBase;
+		if ((NULL != tlhBase) && (NULL != _allocatePointer4Collector)) {
+			uintptr_t size = (uintptr_t)_topPointer4Collector - (uintptr_t)_allocatePointer4Collector;
+			if (size > _largestFreeEntry) {
+				_largestFreeEntry = size;
+			}
+		}
 	}
 
 	if (NULL != tlhBase) {
@@ -237,7 +310,11 @@ MM_MemoryPoolBumpPointer::reset(Cause cause)
 	_nonScannableBytes = 0;
 
 	_allocatePointer = _topPointer;
+	_allocatePointer4Collector = NULL;
+	_topPointer4Collector = NULL;
+
 	_lastFreeEntry = NULL;
+	_largestFreeEntryAddr = NULL;
 }
 
 /**
@@ -252,6 +329,9 @@ MM_MemoryPoolBumpPointer::rebuildFreeListInRegion(MM_EnvironmentBase *env, MM_He
 	Assert_MM_true(0 == _nonScannableBytes);
 
 	_allocatePointer = region->getLowAddress();
+	_allocatePointer4Collector = NULL;
+	_topPointer4Collector = NULL;
+
 	uintptr_t newFreeSpace = (uintptr_t)_topPointer - (uintptr_t)_allocatePointer;
 	_freeMemorySize = newFreeSpace;
 	_freeEntryCount = 1;
@@ -280,6 +360,8 @@ MM_MemoryPoolBumpPointer::expandWithRange(MM_EnvironmentBase *env, uintptr_t exp
 {
 	_allocatePointer = lowAddress;
 	_topPointer = highAddress;
+	_allocatePointer4Collector = NULL;
+	_topPointer4Collector = NULL;
 	uintptr_t newFreeSpace = (uintptr_t)_topPointer - (uintptr_t)_allocatePointer;
 	/* we are currently assuming that we are expanding by full regions at a time */
 	Assert_MM_true(env->getExtensions()->regionSize == newFreeSpace);
@@ -358,6 +440,19 @@ MM_MemoryPoolBumpPointer::rewindAllocationPointerTo(void *pointer)
 {
 	Assert_MM_true(pointer < _allocatePointer);
 	_allocatePointer = pointer;
+}
+
+void *
+MM_MemoryPoolBumpPointer::alignWithCard(void *address, bool toFloor, uintptr_t alignmentMultiple)
+{
+	UDATA alignmentMask = alignmentMultiple - 1;
+	UDATA newSum = (UDATA)address + alignmentMask;
+	UDATA alignedValue = newSum & ~alignmentMask;
+	if (((UDATA) address != alignedValue) && toFloor) {
+		alignedValue -= alignmentMultiple;
+	}
+
+	return (void *) alignedValue;
 }
 
 void
@@ -471,5 +566,32 @@ MM_MemoryPoolBumpPointer::connectFinalMemoryToPool(MM_EnvironmentBase* env, void
 
 	/* Build the free header */
 	createFreeEntry(env, (MM_HeapLinkedFreeHeader*)address, (uint8_t*)address + size);
+}
+
+bool
+MM_MemoryPoolBumpPointer::recycleHeapChunk(void *addrBase, void *addrTop, MM_HeapLinkedFreeHeader *previousFreeEntry, MM_HeapLinkedFreeHeader *nextFreeEntry)
+{
+	bool const compressed = compressObjectReferences();
+	Assert_MM_true(addrBase <= addrTop);
+	Assert_MM_true((NULL == nextFreeEntry) || (addrTop <= nextFreeEntry));
+	if (internalRecycleHeapChunk(addrBase, addrTop, nextFreeEntry)) {
+		if (previousFreeEntry) {
+			Assert_MM_true(previousFreeEntry < addrBase);
+			previousFreeEntry->setNext((MM_HeapLinkedFreeHeader*)addrBase, compressed);
+		} else {
+			_heapFreeList = (MM_HeapLinkedFreeHeader *)addrBase;
+		}
+
+		return true;
+	}
+
+	if (previousFreeEntry) {
+		Assert_MM_true((NULL == nextFreeEntry) || (previousFreeEntry < nextFreeEntry));
+		previousFreeEntry->setNext(nextFreeEntry, compressed);
+	} else {
+		_heapFreeList = nextFreeEntry;
+	}
+
+	return false;
 }
 

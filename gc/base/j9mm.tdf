@@ -670,8 +670,8 @@ TraceException=Trc_MM_RegionValidator_previousObjectRegion Overhead=1 Level=1 gr
 TraceEvent=Trc_MM_VirtualMemory_commitMemory_success noEnv Overhead=1 Level=1 Template="Successfully committed memory: address=%p, size=%zu"
 TraceException=Trc_MM_VirtualMemory_commitMemory_failure noEnv Overhead=1 Level=1 Group=gclogger Template="Failed to commit memory: address=%p, size=%zu"
 
-TraceEntry=Trc_MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion_Entry Overhead=1 Level=1 Group=copyforwardscheme Template="MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion region=%p survivorBase=%p"
-TraceExit=Trc_MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion_Exit Overhead=1 Level=1 Group=copyforwardscheme Template="MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion"
+TraceEntry=Trc_MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion_Entry Obsolete Overhead=1 Level=1 Group=copyforwardscheme Template="MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion region=%p survivorBase=%p"
+TraceExit=Trc_MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion_Exit Obsolete Overhead=1 Level=1 Group=copyforwardscheme Template="MM_CopyForwardScheme_convertTailCandidateToSurvivorRegion"
 
 TraceEvent=Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists_rememberWeak Overhead=1 Level=1 Group=copyforwardscheme Template="Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists region=%p weak=%p "
 TraceEvent=Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists_rememberSoft Overhead=1 Level=1 Group=copyforwardscheme Template="Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists region=%p soft=%p"
@@ -928,3 +928,6 @@ TraceEvent=Trc_MM_Scavenger_percolate_delegate Overhead=1 Level=1 Group=percolat
 
 TraceEntry=Trc_MM_MemorySubSpaceUniSpace_getHeapFreeMaximumHeuristicMultiplier Overhead=1 Level=1 Group=resize Template="Trc_MM_MemorySubSpaceUniSpace_getHeapFreeMaximumHeuristicMultiplier Maximum free multiplier = %zu"
 TraceEntry=Trc_MM_MemorySubSpaceUniSpace_getHeapFreeMinimumHeuristicMultiplier Overhead=1 Level=1 Group=resize Template="Trc_MM_MemorySubSpaceUniSpace_getHeapFreeMinimumHeuristicMultiplier Minimum free multiplier = %zu"
+
+TraceEntry=Trc_MM_CopyForwardScheme_convertCandidateToSurvivorRegion_Entry Overhead=1 Level=1 Group=copyforwardscheme Template="MM_CopyForwardScheme_convertCandidateToSurvivorRegion region=%p survivorBase=%p survivorLow=%p survivorHigh=%p"
+TraceExit=Trc_MM_CopyForwardScheme_convertCandidateToSurvivorRegion_Exit Overhead=1 Level=1 Group=copyforwardscheme Template="MM_CopyForwardScheme_convertCandidateToSurvivorRegion"

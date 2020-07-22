@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 
 #include "MemoryPool.hpp"
 #include "EnvironmentBase.hpp"
+#include "Debug.hpp"
 
 class MM_AllocateDescription;
 class MM_SweepPoolManager;
@@ -49,7 +50,10 @@ class MM_MemoryPoolBumpPointer : public MM_MemoryPool
 private:
 	void *_allocatePointer;	/**< The base address of the unused portion of the receiver and the next pointer which could be returned by an allocation request */
 	void *_topPointer;	/**< The top of the memory area managed by the receiver */
-		
+
+	void *_allocatePointer4Collector;	/**< The base address of the unused portion of the receiver and the next pointer which could be returned by an collector allocation request - for second free chunk(the largest free chunk not region tail) used by collector only */
+	void *_topPointer4Collector;		/**< The top of the memory area managed by the receiver - for second free chunk(the largest free chunk not region tail) used by collector only */
+
 	uintptr_t _scannableBytes;	/**< estimate of scannable bytes in the pool (only out of sampled objects) */
 	uintptr_t _nonScannableBytes; /**< estimate of non-scannable bytes in the pool (only out of sampled objects) */
 
@@ -57,7 +61,8 @@ private:
 	MM_SweepPoolManager *_sweepPoolManager;		/**< pointer to SweepPoolManager class */
 
 	MM_HeapLinkedFreeHeader *_heapFreeList;
-	MM_HeapLinkedFreeHeader *_lastFreeEntry;							/**< address of the last free entry in the pool; valid after sweepforPGC; NOT maintained during allocation */
+	MM_HeapLinkedFreeHeader *_lastFreeEntry;		/**< address of the last free entry in the pool; valid after sweepforPGC; NOT maintained during allocation */
+	MM_HeapLinkedFreeHeader *_largestFreeEntryAddr;	/**< address of the largest free entry in the pool; valid after sweepforPGC; NOT maintained during allocation */
 protected:
 public:
 	
@@ -99,12 +104,23 @@ public:
 	virtual MM_HeapLinkedFreeHeader *rebuildFreeListInRegion(MM_EnvironmentBase *env, MM_HeapRegionDescriptor *region, MM_HeapLinkedFreeHeader *previousFreeEntry);
 
 	/**
-	 * Called by the WriteOnceCompactor after it has internally compacted a region to update the receiver's _allocatePointer so that it
-	 * is consistent with the objects in the receiver's managed memory.
+	 * Called by the WriteOnceCompactor after it has internally compacted a region or post-sweep after GMP
+	 * to update the receiver's _allocatePointer so that it is consistent with the objects in the receiver's managed memory.
 	 * @param env[in] A GC thread
 	 * @param allocatePointer[in] The first byte available for object allocations (if we were permitting fragmented allocates)
 	 */
 	void setAllocationPointer(MM_EnvironmentBase *env, void *allocatePointer);
+	/**
+	 * Called by post-sweep after GMP to update the receiver's _allocatePointer4Collector and _topPointer4Collector
+	 * @param env[in] A GC thread
+	 * @param allocatePointer[in]
+	 * @param topPointer[in]	between allocatePointer and topPointer are available for collector allocation
+	 */
+	void setAllocationPointer4Collector(MM_EnvironmentBase *env, void *allocatePointer, void *topPointer)
+	{
+		_allocatePointer4Collector = allocatePointer;
+		_topPointer4Collector = topPointer;
+	}
 	
 	virtual void expandWithRange(MM_EnvironmentBase *env, uintptr_t expandSize, void *lowAddress, void *highAddress, bool canCoalesce);
 	virtual void *contractWithRange(MM_EnvironmentBase *env, uintptr_t contractSize, void *lowAddress, void *highAddress);
@@ -171,6 +187,13 @@ public:
 	 * @return The point address where the next object will be allocated or _topPointer if the pool cannot satisfy any more allocates
 	 */
 	MMINLINE void *getAllocationPointer() { return _allocatePointer; }
+	/**
+	 * getAllocationPointer4Collector() and getAlloctionTop4Collector()
+	 * Used when a caller wishes to determine the range of the second allocation space in receiver, Note the range is between _allocatePointer4Collector and _topPointer4Collector.
+	 * @return low and high address of the range or NULL if there is no second allocation space.
+	 */
+	MMINLINE void *getAllocationPointer4Collector() { return _allocatePointer4Collector; }
+	MMINLINE void *getAlloctionTop4Collector() { return _topPointer4Collector; }
 
 	/**
 	 * Changes the allocation pointer to the given value.
@@ -188,12 +211,30 @@ public:
 	 * @return The number of bytes which can still be allocated out of the receiver
 	 */
 	MMINLINE uintptr_t getAllocatableBytes() { return (uintptr_t)_topPointer - (uintptr_t)getAllocationPointer(); }
+	/**
+	 * Returns the number of bytes remaining in the pool which can be used for allocation(collector Allocation only).
+	 * it includes tail and the second allocation space between objects(the largest free memory).
+	 * @return The number of bytes which can still be allocated out of the receiver.
+	 */
+	MMINLINE uintptr_t getAllocatableBytes4Collector() {
+		if ((NULL != _topPointer4Collector) && (NULL != _allocatePointer4Collector)) {
+			return (uintptr_t)_topPointer4Collector - (uintptr_t)_allocatePointer4Collector;
+		} else {
+			return 0;
+		}
+	}
 
 	/**
 	 * Rounds the receiver's _allocatePointer up to the nearest multiple of alignmentMultiple.
 	 * @param alignmentMultiple The multiple to which the _allocatePointer must be aligned (must be a power of 2)
 	 */
 	void alignAllocationPointer(uintptr_t alignmentMultiple);
+	/**
+	 * alignment the address with CARD_SIZE
+	 * @param toFloor = true, align to floor; =false, align to ceiling
+	 * @param alignmentMultiple The multiple to which the _allocatePointer must be aligned (must be a power of 2)
+	 */
+	void* alignWithCard(void *address, bool toFloor, uintptr_t alignmentMultiple);
 
 	MMINLINE MM_HeapLinkedFreeHeader *findLastFreeEntry(MM_EnvironmentBase *env, UDATA regionSize)
 	{
@@ -222,18 +263,76 @@ public:
 	virtual MM_HeapLinkedFreeHeader *getLastFreeEntry() { return _lastFreeEntry; }
 
 	/**
+	 * Find the address of the first entry on free list entry.
+	 *
+	 * @return The address of head of free chain
+	 */
+	void *getFirstFreeStartingAddr(MM_EnvironmentBase *env)
+	{
+		return _heapFreeList;
+	}
+
+	/**
+	 * Find the address of the next entry on free list entry.
+	 *
+	 * @return The address of next free entry or NULL
+	 */
+	void *getNextFreeStartingAddr(MM_EnvironmentBase *env, void *currentFree)
+	{
+		bool const compressed = compressObjectReferences();
+		assume0(currentFree != NULL);
+		return  ((MM_HeapLinkedFreeHeader *)currentFree)->getNext(compressed);
+	}
+
+	/**
+	 * remove a free entry from freelist
+	 */
+	void removeFromFreeList(void *addrBase, void *addrTop, MM_HeapLinkedFreeHeader *previousFreeEntry, MM_HeapLinkedFreeHeader *nextFreeEntry)
+	{
+		bool const compressed = compressObjectReferences();
+		uintptr_t freeEntrySize = ((uintptr_t)addrTop) - ((uintptr_t)addrBase);
+		MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, freeEntrySize, compressed);
+		if (previousFreeEntry) {
+			previousFreeEntry->setNext(nextFreeEntry, compressed);
+		}else {
+			_heapFreeList = nextFreeEntry;
+		}
+	}
+
+	void fillWithHoles(void *addrBase, void *addrTop)
+	{
+		bool const compressed = compressObjectReferences();
+		MM_HeapLinkedFreeHeader::fillWithHoles(addrBase, ((uintptr_t)addrTop) - ((uintptr_t)addrBase), compressed);
+	}
+
+	bool recycleHeapChunk(void *addrBase, void *addrTop, MM_HeapLinkedFreeHeader *previousFreeEntry, MM_HeapLinkedFreeHeader *nextFreeEntry);
+
+	MMINLINE void setLargestFreeEntryAddr(void *addr)
+	{
+		_largestFreeEntryAddr = (MM_HeapLinkedFreeHeader *) addr;
+	}
+
+	MMINLINE MM_HeapLinkedFreeHeader *getLargestFreeEntryAddr()
+	{
+		return _largestFreeEntryAddr;
+	}
+
+	/**
 	 * Create a MemoryPoolBumpPointer object.
 	 */
 	MM_MemoryPoolBumpPointer(MM_EnvironmentBase *env, uintptr_t minimumFreeEntrySize) :
 		MM_MemoryPool(env, minimumFreeEntrySize)
 		,_allocatePointer(NULL)
 		,_topPointer(NULL)
+		,_allocatePointer4Collector(NULL)
+		,_topPointer4Collector(NULL)
 		,_scannableBytes(0)
 		,_nonScannableBytes(0)
 		,_sweepPoolState(NULL)
 		,_sweepPoolManager(NULL)
 		,_heapFreeList(NULL)
 		,_lastFreeEntry(NULL)
+		,_largestFreeEntryAddr(NULL)
 	{
 		_typeId = __FUNCTION__;
 	};
