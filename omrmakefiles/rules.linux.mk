@@ -37,6 +37,12 @@ ifeq (gcc,$(OMR_TOOLCHAIN))
     GLOBAL_CFLAGS+=-MMD -MP
     GLOBAL_CXXFLAGS+=-MMD -MP
   endif
+
+  ifeq ($(shell expr `($(CC) -dumpversion 2>/dev/null || echo 1) | cut -d. -f1` \>= 10),1)
+    # Suppress stringop-overflow warning on GCC >=10
+    GLOBAL_CFLAGS+=-Wno-stringop-overflow
+    GLOBAL_CXXFLAGS+=-Wno-stringop-overflow
+  endif
 endif
 
 ###
