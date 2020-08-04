@@ -337,9 +337,6 @@ struct OMR_TI_MemoryCategory {
  * Description of a method that was sampled by the profiler, which is retrieved using GetMethodDescriptions() in OMR_TI.
  * The size of this structure is language-specific. Call GetMethodProperties() to determine its required size.
  */
-#if defined(_MSC_VER)
-#pragma warning(disable : 4200)
-#endif /* defined(_MSC_VER) */
 struct OMR_SampledMethodDescription {
 	/** See comments for GetMethodDescriptions(). */
 	omr_error_t reasonCode;

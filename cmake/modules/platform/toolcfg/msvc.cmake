@@ -30,6 +30,7 @@ list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
 	/Zm400  # Precompiled header memory allocation limit
 	/wd4577 # Disable warning: Specifying noexcept when exceptions are disabled
 	/wd4091 # Disable warning: Caused by broken windows SDK, see also https://connect.microsoft.com/VisualStudio/feedback/details/1302025/warning-c4091-in-sdk-7-1a-shlobj-h-1051-dbghelp-h-1054-3056
+	/wd4200 # Disable warning: FAM in struct/union is valid in C and widely supported in C++
 )
 
 if(OMR_ENV_DATA64)

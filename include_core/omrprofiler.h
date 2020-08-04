@@ -31,9 +31,6 @@ extern "C" {
 
 /* This file defines the interface used by omrglue/ code to access OMR profiling-related functions */
 
-#if defined(_MSC_VER)
-#pragma warning(disable : 4200)
-#endif /* defined(_MSC_VER) */
 typedef struct OMR_MethodDictionaryEntry {
 	const void *key;
 	const char *propertyValues[];

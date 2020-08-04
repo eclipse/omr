@@ -125,7 +125,7 @@ typedef struct UtTraceRecord {
 	uint64_t threadSyn2;	/* Thread synonym 2               */
 	int32_t firstEntry;		/* Offset to first trace entry    */
 	int32_t nextEntry;		/* Offset to next entry           */
-	char threadName[1];		/* Thread name                    */
+	char threadName[];		/* Thread name                    */
 } UtTraceRecord;
 
 /*
