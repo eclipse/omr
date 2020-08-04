@@ -33,7 +33,7 @@ list(APPEND OMR_PLATFORM_DEFINITIONS
 )
 
 list(APPEND OMR_PLATFORM_INCLUDE_DIRECTORIES
-	${CMAKE_SOURCE_DIR}/util/a2e/headers
+	${omr_SOURCE_DIR}/util/a2e/headers
 	/usr/lpp/cbclib/include
 	/usr/include
 )
