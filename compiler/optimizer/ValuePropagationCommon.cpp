@@ -946,90 +946,9 @@ bool OMR::ValuePropagation::canRunTransformToArrayCopy()
    return true;
    }
 
-bool OMR::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode)
+bool OMR::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arrayCopyNode)
    {
-   if (!canRunTransformToArrayCopy())
-      return false;
-
-   TR::TreeTop *tt = _curTree;
-   TR::Node *ttNode = tt->getNode();
-
-#ifdef J9_PROJECT_SPECIFIC
-   if (comp()->canTransformUnsafeCopyToArrayCopy()
-         && arraycopyNode->getOpCode().isCall()
-         && arraycopyNode->getSymbol()->isMethod()
-         && arraycopyNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::sun_misc_Unsafe_copyMemory)
-      {
-
-      if ((ttNode->getOpCodeValue() == TR::treetop || ttNode->getOpCode().isResolveOrNullCheck())
-            && performTransformation(comp(), "%sChanging call Unsafe.copyMemory [%p] to arraycopy\n", OPT_DETAILS, arraycopyNode))
-
-         {
-         TR::Node *unsafe     = arraycopyNode->getChild(0);
-         TR::Node *src        = arraycopyNode->getChild(1);
-         TR::Node *srcOffset  = arraycopyNode->getChild(2);
-         TR::Node *dest       = arraycopyNode->getChild(3);
-         TR::Node *destOffset = arraycopyNode->getChild(4);
-         TR::Node *len        = arraycopyNode->getChild(5);
-
-         int64_t srcOffLow;
-         int64_t srcOffHigh;
-         int64_t dstOffLow;
-         int64_t dstOffHigh;
-         int64_t copyLenLow;
-         int64_t copyLenHigh;
-
-         bool isGlobal;
-         TR::VPConstraint *srcOffsetConstraint = getConstraint(srcOffset, isGlobal);
-         TR::VPConstraint *dstOffsetConstraint = getConstraint(destOffset, isGlobal);
-         TR::VPConstraint *copyLenConstraint   = getConstraint(len, isGlobal);
-
-         srcOffLow   = srcOffsetConstraint ? srcOffsetConstraint->getLowInt() : TR::getMinSigned<TR::Int32>();
-         srcOffHigh  = srcOffsetConstraint ? srcOffsetConstraint->getHighInt() : TR::getMaxSigned<TR::Int32>();
-         dstOffLow   = dstOffsetConstraint ? dstOffsetConstraint->getLowInt() : TR::getMinSigned<TR::Int32>();
-         dstOffHigh  = dstOffsetConstraint ? dstOffsetConstraint->getHighInt() : TR::getMaxSigned<TR::Int32>();
-         copyLenLow  = copyLenConstraint   ? copyLenConstraint->getLowInt() : TR::getMinSigned<TR::Int32>();
-         copyLenHigh = copyLenConstraint   ? copyLenConstraint->getHighInt() : TR::getMaxSigned<TR::Int32>();
-
-         if (comp()->target().is64Bit())
-            {
-            src  = TR::Node::create(TR::aladd, 2, src, srcOffset);
-            dest = TR::Node::create(TR::aladd, 2, dest, destOffset);
-            }
-         else
-            {
-            srcOffset  = TR::Node::create(TR::l2i, 1, srcOffset);
-            destOffset = TR::Node::create(TR::l2i, 1, destOffset);
-            len        = TR::Node::create(TR::l2i, 1, len);
-            src  = TR::Node::create(TR::aiadd, 2, src, srcOffset);
-            dest = TR::Node::create(TR::aiadd, 2, dest, destOffset);
-            }
-
-         TR::Node    *oldArraycopyNode = arraycopyNode;
-         TR::TreeTop *oldTT = tt;
-
-         arraycopyNode = TR::Node::createArraycopy(src, dest, len);
-         TR::Node    *treeTopNode = TR::Node::create(TR::treetop, 1, arraycopyNode);
-         tt = TR::TreeTop::create(comp(), treeTopNode);
-
-         oldTT->insertAfter(tt);
-
-         if (ttNode->getOpCode().isNullCheck())
-            ttNode->setAndIncChild(0, TR::Node::create(TR::PassThrough, 1, unsafe));
-         else
-            ttNode->setAndIncChild(0, unsafe);
-
-         removeNode(oldArraycopyNode);
-
-         if ((srcOffLow >= dstOffHigh) || (srcOffHigh+copyLenHigh) <= dstOffLow)
-            arraycopyNode->setForwardArrayCopy(true);
-
-         return true;
-         }
-      }
-#endif
    return false;
-
    }
 
 void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)

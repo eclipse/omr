@@ -452,7 +452,7 @@ class ValuePropagation : public TR::Optimization
    int32_t getPrimitiveArrayType(char primitiveArrayChar);
 
    bool canRunTransformToArrayCopy();
-   bool transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode);
+   virtual bool transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode);
 
    static TR::CFGEdge *findOutEdge(TR::CFGEdgeList &edges, TR::CFGNode *target);
    bool isUnreachablePath(ValueConstraints &valueConstraints);
