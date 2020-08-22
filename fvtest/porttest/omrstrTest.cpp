@@ -263,7 +263,7 @@ test_omrstr_vprintfNulChar(struct OMRPortLibrary *portLibrary, const char *testN
  * @return TEST_PASS if buf and expectedBuf are identical, TEST_FAIL if not
  */
 static void
-test_omrstr_ftime(struct OMRPortLibrary *portLibrary, const char *testName, char *buf, uintptr_t bufLen, const char *format, I_64 timeMillis, const char *expectedBuf)
+test_omrstr_ftime(struct OMRPortLibrary *portLibrary, const char *testName, char *buf, uint32_t bufLen, const char *format, I_64 timeMillis, const char *expectedBuf)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
 

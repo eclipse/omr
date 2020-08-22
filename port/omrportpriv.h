@@ -756,8 +756,8 @@ extern J9_CFUNC int32_t
 omrstr_convert(struct OMRPortLibrary *portLibrary, int32_t fromCode, int32_t toCode, const char *inBuffer, uintptr_t inBufferSize, char *outBuffer, uintptr_t outBufferSize) ;
 
 /* J9SourceJ9StrFTime*/
-extern J9_CFUNC uintptr_t
-omrstr_ftime(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufLen, const char *format, int64_t timeMillis);
+extern J9_CFUNC uint32_t
+omrstr_ftime(struct OMRPortLibrary *portLibrary, char *buf, uint32_t bufLen, const char *format, int64_t timeMillis);
 
 /* J9SourceJ9Time*/
 extern J9_CFUNC uintptr_t

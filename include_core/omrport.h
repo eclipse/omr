@@ -2060,7 +2060,7 @@ typedef struct OMRPortLibrary {
 	/** see @ref omrfile_blockingasync.c::omrfile_blockingasync_lock_bytes "omrfile_blockingasync_lock_bytes"*/
 	int32_t (*file_blockingasync_lock_bytes)(struct OMRPortLibrary *portLibrary, intptr_t fd, int32_t lockFlags, uint64_t offset, uint64_t length) ;
 	/** see @ref omrstr.c::omrstr_ftime "omrstr_ftime"*/
-	uintptr_t (*str_ftime)(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufLen, const char *format, int64_t timeMillis) ;
+	uint32_t (*str_ftime)(struct OMRPortLibrary *portLibrary, char *buf, uint32_t bufLen, const char *format, int64_t timeMillis) ;
 	/** see @ref omrmmap.c::omrmmap_startup "omrmmap_startup"*/
 	int32_t (*mmap_startup)(struct OMRPortLibrary *portLibrary) ;
 	/** see @ref omrmmap.c::omrmmap_shutdown "omrmmap_shutdown"*/
