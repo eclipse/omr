@@ -434,8 +434,7 @@ omr_unlinkControlFile(struct OMRPortLibrary* portLibrary, const char *controlFil
 				controlFileStatus->errorMsg = omrmem_allocate_memory(portLibrary, msgLen+1, OMR_GET_CALLSITE(), 
 OMRMEM_CATEGORY_PORT_LIBRARY);
 				if (NULL != controlFileStatus->errorMsg) {
-					strncpy(controlFileStatus->errorMsg, unlinkErrMsg, msgLen);
-					controlFileStatus->errorMsg[msgLen] = '\0';
+					strncpy(controlFileStatus->errorMsg, unlinkErrMsg, msgLen+1);
 				}
 			}
 			rc = FALSE;
