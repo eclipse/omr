@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,6 +80,23 @@ OMR::ArithEnv::floatNegate(float a)
    return c;
    }
 
+int32_t
+OMR::ArithEnv::floatComparefloat(float a, float b)
+   {
+   if (a > b)
+      {
+      return 1; 
+      }
+   else if (a < b)
+      {
+      return -1; 
+      }
+   else
+      {
+      return 0;
+      }
+   }
+
 double
 OMR::ArithEnv::doubleAddDouble(double a, double b)
    {
@@ -120,6 +137,23 @@ OMR::ArithEnv::doubleNegate(double a)
    double c;
    c = -a;
    return c;
+   }
+
+int32_t
+OMR::ArithEnv::doubleComparedouble(double a, double b)
+   {
+   if (a > b)
+      {
+      return 1; 
+      }
+   else if (a < b)
+      {
+      return -1; 
+      }
+   else
+      {
+      return 0;
+      }
    }
 
 double

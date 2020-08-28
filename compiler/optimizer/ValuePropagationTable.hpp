@@ -84,6 +84,7 @@ TR::Node *constrainInstanceOf(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainIntAndFloatConstHelper(OMR::ValuePropagation *vp, TR::Node *node, int32_t value);
 TR::Node *constrainIntConst(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainFloatConst(OMR::ValuePropagation *vp, TR::Node *node);
+TR::Node *constrainDoubleConst(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainIntLoad(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainIntStore(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node *constrainIor(OMR::ValuePropagation *vp, TR::Node *node);
@@ -165,8 +166,8 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainAConst,          // TR::aconst
    constrainIntConst,        // TR::iconst
    constrainLongConst,       // TR::lconst
-   constrainFloatConst,        // TR::fconst
-   constrainLongConst,       // TR::dconst
+   constrainFloatConst,      // TR::fconst
+   constrainDoubleConst,     // TR::dconst
    constrainByteConst,       // TR::bconst
    constrainShortConst,      // TR::sconst
    constrainIntLoad,         // TR::iload
@@ -242,14 +243,14 @@ const ValuePropagationPtr constraintHandlers[] =
    constrainVcall,           // TR::call
    constrainAdd,             // TR::iadd
    constrainAdd,             // TR::ladd
-   constrainChildren,        // TR::fadd
-   constrainChildren,        // TR::dadd
+   constrainAdd,             // TR::fadd
+   constrainAdd,             // TR::dadd
    constrainAdd,             // TR::badd
    constrainAdd,             // TR::sadd
    constrainSubtract,        // TR::isub
    constrainSubtract,        // TR::lsub
-   constrainChildren,        // TR::fsub
-   constrainChildren,        // TR::dsub
+   constrainSubtract,        // TR::fsub
+   constrainSubtract,        // TR::dsub
    constrainSubtract,        // TR::bsub
    constrainSubtract,        // TR::ssub
    constrainSubtract,        // TR::asub    todo
