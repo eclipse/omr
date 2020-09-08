@@ -1636,7 +1636,7 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
                cg->addSnippet(snippet);
                }
 
-            TR::MemoryReference *fakeTocRef = new (cg->trHeapMemory()) TR::MemoryReference(NULL, 0, sizeof(uintptr_t), cg);
+            TR::MemoryReference *fakeTocRef = new (cg->trHeapMemory()) TR::MemoryReference(static_cast<TR::Register *>(NULL), 0, sizeof(uintptr_t), cg);
             fakeTocRef->setSymbol(symbol, cg);
             fakeTocRef->getSymbolReference()->copyFlags(ref);
             fakeTocRef->setUsingStaticTOC();
