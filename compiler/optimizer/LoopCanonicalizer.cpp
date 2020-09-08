@@ -1837,7 +1837,82 @@ void TR_LoopCanonicalizer::canonicalizeDoWhileLoop(TR_RegionStructure *doWhileLo
    return;
    }
 
+/**
+ * \brief
+ *    Determines whether the node is a trivial (arithmetic and checks only) array operation.
+ *
+ * \param visited
+ *    The list of visited descendants which should not be examined.
+ *
+ * \param node
+ *    The node to examine.
+ *
+ * \return
+ *    \c true if \p node is a trivial array operation; \c false otherwise.
+ *
+ * \details
+ *    This API is used to identify trivial array operations while performing induction variable elimination. In cases
+ *    where the array operation is considered trivial there may be a negative trade-off between eliminating an extra
+ *    induction variable compared to leaving it present. The typical scenario this can be encountered in is an array
+ *    copy operation which may look like this (in pseudocode):
+ *
+ *    ```
+ *    while (j < x) {
+ *        a[i++] = b[j++];
+ *    }
+ *    ```
+ *
+ *    If induction variables `i` and `j` are not known to be constants outside the loop then eliminating one induction
+ *    variable forces us to rewrite the above loop to be:
+ *
+ *    ```
+ *    temp = i - j;
+ *    while (j < x) {
+ *        a[temp + j] = b[j++]
+ *    }
+ *    i = temp + j;
+ *    ```
+ *
+ *    i.e. we have to rewrite one induction variable in terms of the other. The latter loop is more complex than the
+ *    former because the recalculation of the induction variable now dominates the computation within the loop and
+ *    hence it is not a worth while trade-off. Performing such an induction variable elimination can result in degraded
+ *    performance which could then be amplified by loop unrolling at later stages of the optimization strategy.
+ */
+bool TR_LoopCanonicalizer::trivialArrayOperationCheck(TR::NodeChecklist &visited, TR::Node *node)
+   {
+   if (visited.contains(node))
+       return true;
 
+   for (auto childIndex = 0; childIndex < node->getNumChildren(); ++childIndex)
+        {
+        if (trivialArrayOperationCheck(visited, node->getChild(childIndex)))
+            visited.add(node);
+        else
+            return false;
+        }
+
+   if (trace())
+      traceMsg(comp(), "Checking if opCode(%s) of node(%p) is part of the trivial array operation list\n", node->getOpCode().getName(), node);
+
+   TR::ILOpCode opCode = node->getOpCode();
+   if (!opCode.isAdd()
+       && !(opCode.isLong() || opCode.isIntegerOrAddress())
+       && !opCode.isLoad()
+       && !opCode.isSub()
+       && !opCode.isConversion()
+       && !opCode.isStore()
+       && !opCode.isIntegralConst()
+       && !opCode.isBndCheck()
+       && !opCode.isNullCheck()
+       && !(opCode.isAnchor() || opCode.isTreeTop())
+       && !(opCode.isBranch() && node->getBranchDestination()->getNode()->getBlock()->getFrequency() < MAX_WARM_BLOCK_COUNT))
+      {
+      if (trace())
+         traceMsg(comp(), "OpCode is not part of the trivial array operation list\n");
+      return false;
+      }
+   return true;
+   }
 
 void TR_LoopCanonicalizer::eliminateRedundantInductionVariablesFromLoop(TR_RegionStructure *naturalLoop)
    {
@@ -1999,6 +2074,38 @@ void TR_LoopCanonicalizer::eliminateRedundantInductionVariablesFromLoop(TR_Regio
                      }
                   }
                }
+            static bool disableTrivialArrayOperationCheck = (NULL != feGetEnv("TR_DisableTrivialArrayOperationCheck"));
+            bool isTrivialArrayOperation = false;
+            if (!disableTrivialArrayOperationCheck && !naturalLoop->isAcyclic())
+               {
+               if (trace())
+                  traceMsg(comp(), "Starting the trivial array operation check");
+
+               TR::Node *derivedInductionVarNode = NULL;
+               TR_RegionStructure::SubNodeList::iterator nodeIt = naturalLoop->begin();
+               TR_Structure *pred = toStructureSubGraphNode(*nodeIt)->getStructure();
+               for (TR::Block *derivedInductionVarBlock = pred->getEntryBlock();
+                    !derivedInductionVarNode && !derivedInductionVarBlock->isEndBlock();
+                    derivedInductionVarBlock = derivedInductionVarBlock->getNextBlock())
+                  {
+                  for (TR::TreeTopIterator treeTopIt(derivedInductionVarBlock->getEntry(), comp());
+                       !derivedInductionVarNode && treeTopIt != derivedInductionVarBlock->getExit();
+                       treeTopIt.stepForward())
+                     {
+                     if (treeTopIt.currentNode()->getSymbol() == derivedInductionVar->getSymbol())
+                        derivedInductionVarNode = treeTopIt.currentNode();
+                     }
+                  }
+
+               TR_ASSERT_FATAL_WITH_NODE(derivedInductionVarNode, derivedInductionVarNode != NULL, "Unable to find node containing the derived induction variable");
+               TR::NodeChecklist visited(comp());
+               isTrivialArrayOperation = trivialArrayOperationCheck(visited, derivedInductionVarNode);
+               if (isTrivialArrayOperation)
+                  isTrivialArrayOperation = performTransformation(comp(), "%sSkipping induction variable elimination for %d as it is involved in a trivial array operation.\n", OPT_DETAILS, derivedInductionVar->getReferenceNumber());
+               }
+            else if (naturalLoop->isAcyclic())
+               if (trace())
+                  traceMsg(comp(), "Skipping trivial array operation check because the region is acyclic");
 
             _primaryIncrementedFirst = 0;
             _primaryInductionIncrementBlock = NULL;
@@ -2011,7 +2118,7 @@ void TR_LoopCanonicalizer::eliminateRedundantInductionVariablesFromLoop(TR_Regio
             TR_ScratchList<TR::Block> derivedInductionVarIncrementBlocks(trMemory());
             TR_ScratchList<TR::Block> primaryInductionVarIncrementBlocks(trMemory());
             //comp()->incVisitCount();
-            bool incrementsInLockStep = incrementedInLockStep(naturalLoop, derivedInductionVar, symRefInCompare, nextIndVarIncr, primaryIncr, &derivedInductionVarIncrementBlocks, &primaryInductionVarIncrementBlocks);
+            bool incrementsInLockStep = !isTrivialArrayOperation && incrementedInLockStep(naturalLoop, derivedInductionVar, symRefInCompare, nextIndVarIncr, primaryIncr, &derivedInductionVarIncrementBlocks, &primaryInductionVarIncrementBlocks);
             if (incrementsInLockStep &&
                 (!derivedInductionVarIncrementBlocks.isEmpty() ||
                  !primaryInductionVarIncrementBlocks.isEmpty()))
