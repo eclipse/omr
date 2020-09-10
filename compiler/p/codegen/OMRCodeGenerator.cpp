@@ -405,9 +405,8 @@ OMR::Power::CodeGenerator::generateSwitchToInterpreterPrePrologue(
 
    // gr0 must contain the saved LR; see Recompilation.s
    cursor = new (self()->trHeapMemory()) TR::PPCTrg1Instruction(TR::InstOpCode::mflr, node, gr0, cursor, self());
-   cursor = self()->getLinkage()->flushArguments(cursor);
+   cursor = self()->getLinkage()->flushOrLoadUpArguments(cursor, true);
    cursor = generateDepImmSymInstruction(self(), TR::InstOpCode::bl, node, (uintptr_t)revertToInterpreterSymRef->getMethodAddress(), new (self()->trHeapMemory()) TR::RegisterDependencyConditions(0,0, self()->trMemory()), revertToInterpreterSymRef, NULL, cursor);
-
    if (self()->comp()->target().is64Bit())
       {
       int32_t highBits = (int32_t)(ramMethod>>32), lowBits = (int32_t)ramMethod;
@@ -714,7 +713,7 @@ void OMR::Power::CodeGenerator::generateBinaryEncodingPrologue(
    data->jitTojitStart = data->cursorInstruction;
    data->cursorInstruction = NULL;
 
-   self()->getLinkage()->loadUpArguments(data->cursorInstruction);
+   self()->getLinkage()->flushOrLoadUpArguments(data->cursorInstruction, false);
 
    data->cursorInstruction = self()->getFirstInstruction();
 

@@ -372,8 +372,7 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
    virtual TR::MemoryReference *getOutgoingArgumentMemRef(int32_t argSize, TR::Register *argReg, TR::InstOpCode::Mnemonic opCode, TR::PPCMemoryArgument &memArg, uint32_t len);
    virtual TR::Instruction *saveArguments(TR::Instruction *cursor, bool fsd=false, bool saveOnly=false);
    virtual TR::Instruction *saveArguments(TR::Instruction *cursor, bool fsd, bool saveOnly, List<TR::ParameterSymbol> &parmList);
-   virtual TR::Instruction *loadUpArguments(TR::Instruction *cursor);
-   virtual TR::Instruction *flushArguments(TR::Instruction *cursor);
+   virtual TR::Instruction *flushOrLoadUpArguments(TR::Instruction *cursor, bool flush);
    virtual void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method);
    TR::Register *pushIntegerWordArg(TR::Node *child);
 

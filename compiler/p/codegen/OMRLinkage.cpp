@@ -495,9 +495,15 @@ TR::Instruction *OMR::Power::Linkage::saveArguments(TR::Instruction *cursor, boo
    return(cursor);
    }
 
-TR::Instruction *OMR::Power::Linkage::loadUpArguments(TR::Instruction *cursor)
+
+/**
+ * @brief Flush or load the arguments onto or from the stack
+ * @param[in] flush : sets the operating mode of the function(e.g. flush arguemnts if bool flush is true; Load arguments otherwise)
+ * @param[in] cursor: preceding instruction
+ */
+TR::Instruction *OMR::Power::Linkage::flushOrLoadUpArguments(TR::Instruction *cursor, bool flush)
    {
-   if (!self()->cg()->buildInterpreterEntryPoint())
+   if (!flush && !self()->cg()->buildInterpreterEntryPoint())
       // would be better to use a different linkage for this purpose
       return cursor;
 
@@ -517,153 +523,97 @@ TR::Instruction *OMR::Power::Linkage::loadUpArguments(TR::Instruction *cursor)
       TR::RealRegister     *argRegister;
       int32_t                 offset = paramCursor->getParameterOffset();
 
-      bool hasToLoadFromStack = paramCursor->isReferencedParameter() || paramCursor->isParmHasToBeOnStack();
+      // If parm is referenced or required to be on stack (i.e. FSD), we have to flush or load.
+      bool hasToStoreOrLoadStack = paramCursor->isReferencedParameter() || paramCursor->isParmHasToBeOnStack();
 
       switch (paramCursor->getDataType())
          {
          case TR::Int8:
          case TR::Int16:
          case TR::Int32:
-            if (hasToLoadFromStack &&
+            if (hasToStoreOrLoadStack &&
                   numIntArgs<properties.getNumIntArgRegs())
                {
                argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
-               cursor = generateTrg1MemInstruction(self()->cg(), TR::InstOpCode::lwz, firstNode, argRegister,
-                     new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 4, self()->cg()), cursor);
-               }
-            numIntArgs++;
-            break;
-         case TR::Address:
-            if (numIntArgs<properties.getNumIntArgRegs())
-               {
-               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
-               cursor = generateTrg1MemInstruction(self()->cg(),TR::InstOpCode::Op_load, firstNode, argRegister,
-                     new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, TR::Compiler->om.sizeofReferenceAddress(), self()->cg()), cursor);
-               }
-            numIntArgs++;
-            break;
-         case TR::Int64:
-            if (hasToLoadFromStack &&
-                  numIntArgs<properties.getNumIntArgRegs())
-               {
-               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
-               if (self()->comp()->target().is64Bit())
-                  cursor = generateTrg1MemInstruction(self()->cg(), TR::InstOpCode::ld, firstNode, argRegister,
-                        new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 8, self()->cg()), cursor);
-               else
-                  {
-                  cursor = generateTrg1MemInstruction(self()->cg(), TR::InstOpCode::lwz, firstNode, argRegister,
-                        new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 4, self()->cg()), cursor);
-                  if (numIntArgs < properties.getNumIntArgRegs()-1)
-                     {
-                     argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs+1));
-                     cursor = generateTrg1MemInstruction(self()->cg(), TR::InstOpCode::lwz, firstNode, argRegister,
-                           new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset+4, 4, self()->cg()), cursor);
-                     }
-                  }
-               }
-            if (self()->comp()->target().is64Bit())
-               numIntArgs++;
-            else
-               numIntArgs+=2;
-            break;
-
-         case TR::Float:
-         case TR::Double:
-            if (hasToLoadFromStack &&
-                  numFloatArgs<properties.getNumFloatArgRegs())
-               {
-               argRegister = machine->getRealRegister(properties.getFloatArgumentRegister(numFloatArgs));
-
-               TR::InstOpCode::Mnemonic op;
-               int32_t length;
-
-               if (paramCursor->getDataType() == TR::Float)
-                  {
-                  op = TR::InstOpCode::lfs; length = 4;
-                  }
-               else
-                  {
-                  op = TR::InstOpCode::lfd; length = 8;
-                  }
-
-               cursor = generateTrg1MemInstruction(self()->cg(), op, firstNode, argRegister,
-                     new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, length, self()->cg()), cursor);
-               }
-            numFloatArgs++;
-            break;
-         }
-      paramCursor = paramIterator.getNext();
-      }
-   return(cursor);
-   }
-
-TR::Instruction *OMR::Power::Linkage::flushArguments(TR::Instruction *cursor)
-   {
-   TR::Machine *machine = self()->machine();
-   TR::RealRegister      *stackPtr   = self()->cg()->getStackPointerRegister();
-   TR::ResolvedMethodSymbol      *bodySymbol = self()->comp()->getJittedMethodSymbol();
-   ListIterator<TR::ParameterSymbol>   paramIterator(&(bodySymbol->getParameterList()));
-   TR::ParameterSymbol      *paramCursor = paramIterator.getFirst();
-   TR::Node                 *firstNode = self()->comp()->getStartTree()->getNode();
-   int32_t                  numIntArgs = 0, numFloatArgs = 0;
-   const TR::PPCLinkageProperties& properties = self()->getProperties();
-
-   while ( (paramCursor!=NULL) &&
-           ( (numIntArgs < properties.getNumIntArgRegs()) ||
-             (numFloatArgs < properties.getNumFloatArgRegs()) ) )
-      {
-      TR::RealRegister     *argRegister;
-      int32_t                 offset = paramCursor->getParameterOffset();
-
-      // If parm is referenced or required to be on stack (i.e. FSD), we have to flush.
-      bool hasToStoreToStack = paramCursor->isReferencedParameter() || paramCursor->isParmHasToBeOnStack();
-
-      switch (paramCursor->getDataType())
-         {
-         case TR::Int8:
-         case TR::Int16:
-         case TR::Int32:
-            if (hasToStoreToStack &&
-                  numIntArgs<properties.getNumIntArgRegs())
-               {
-               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
-               cursor = generateMemSrc1Instruction(self()->cg(), TR::InstOpCode::stw, firstNode,
-                     new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 4, self()->cg()),
-                     argRegister, cursor);
-               }
-            numIntArgs++;
-            break;
-         case TR::Address:
-            if (numIntArgs<properties.getNumIntArgRegs())
-               {
-               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
-               cursor = generateMemSrc1Instruction(self()->cg(),TR::InstOpCode::Op_st, firstNode,
-                     new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, TR::Compiler->om.sizeofReferenceAddress(), self()->cg()),
-                     argRegister, cursor);
-               }
-            numIntArgs++;
-            break;
-         case TR::Int64:
-            if (hasToStoreToStack &&
-                  numIntArgs<properties.getNumIntArgRegs())
-               {
-               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
-               if (self()->comp()->target().is64Bit())
-                  cursor = generateMemSrc1Instruction(self()->cg(),TR::InstOpCode::Op_st, firstNode,
-                        new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 8, self()->cg()),
-                        argRegister, cursor);
-               else
+               if (flush)
                   {
                   cursor = generateMemSrc1Instruction(self()->cg(), TR::InstOpCode::stw, firstNode,
+                     new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 4, self()->cg()),
+                     argRegister, cursor);
+                  }
+               else
+                  {
+                  cursor = cursor = generateTrg1MemInstruction(self()->cg(), TR::InstOpCode::lwz, firstNode, argRegister,
+                     new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 4, self()->cg()), cursor);
+                  }
+               }
+            numIntArgs++;
+            break;
+         case TR::Address:
+            if (numIntArgs<properties.getNumIntArgRegs())
+               {
+               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
+               if (flush)
+                  {
+                  cursor = generateMemSrc1Instruction(self()->cg(),TR::InstOpCode::Op_st, firstNode,
+                     new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, TR::Compiler->om.sizeofReferenceAddress(), self()->cg()),
+                     argRegister, cursor);
+                  }
+               else
+                  {
+                  cursor = generateTrg1MemInstruction(self()->cg(),TR::InstOpCode::Op_load, firstNode, argRegister,
+                     new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, TR::Compiler->om.sizeofReferenceAddress(), self()->cg()), cursor);
+                  }
+               }
+            numIntArgs++;
+            break;
+         case TR::Int64:
+            if (hasToStoreOrLoadStack &&
+                  numIntArgs<properties.getNumIntArgRegs())
+               {
+               argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs));
+               if (self()->comp()->target().is64Bit())
+                  {
+                     if (flush)
+                        {
+                        cursor = generateMemSrc1Instruction(self()->cg(),TR::InstOpCode::Op_st, firstNode,
+                           new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 8, self()->cg()),
+                           argRegister, cursor);
+                        }
+                     else
+                        {
+                        cursor = generateTrg1MemInstruction(self()->cg(), TR::InstOpCode::ld, firstNode, argRegister,
+                           new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 8, self()->cg()), cursor);
+                        }
+                  }
+               else
+                  {
+                  if (flush)
+                     {
+                     cursor = generateMemSrc1Instruction(self()->cg(), TR::InstOpCode::stw, firstNode,
                         new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 4, self()->cg()),
                         argRegister, cursor);
+                     }
+                  else
+                     {
+                     cursor = generateTrg1MemInstruction(self()->cg(), TR::InstOpCode::lwz, firstNode, argRegister,
+                        new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, 4, self()->cg()), cursor);
+                     }
+
                   if (numIntArgs < properties.getNumIntArgRegs()-1)
                      {
                      argRegister = machine->getRealRegister(properties.getIntegerArgumentRegister(numIntArgs+1));
-                     cursor = generateMemSrc1Instruction(self()->cg(), TR::InstOpCode::stw, firstNode,
+                     if (flush)
+                        {
+                        cursor = generateMemSrc1Instruction(self()->cg(), TR::InstOpCode::stw, firstNode,
                            new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset+4, 4, self()->cg()),
                            argRegister, cursor);
+                        }
+                     else
+                        {
+                        cursor = generateTrg1MemInstruction(self()->cg(), TR::InstOpCode::lwz, firstNode, argRegister,
+                           new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset+4, 4, self()->cg()), cursor);
+                        }
                      }
                   }
                }
@@ -675,7 +625,7 @@ TR::Instruction *OMR::Power::Linkage::flushArguments(TR::Instruction *cursor)
 
          case TR::Float:
          case TR::Double:
-            if (hasToStoreToStack &&
+            if (hasToStoreOrLoadStack &&
                   numFloatArgs<properties.getNumFloatArgRegs())
                {
                argRegister = machine->getRealRegister(properties.getFloatArgumentRegister(numFloatArgs));
@@ -685,16 +635,18 @@ TR::Instruction *OMR::Power::Linkage::flushArguments(TR::Instruction *cursor)
 
                if (paramCursor->getDataType() == TR::Float)
                   {
-                  op = TR::InstOpCode::stfs; length = 4;
+                  op = flush ? TR::InstOpCode::stfs : TR::InstOpCode::lfs; length = 4;
                   }
                else
                   {
-                  op = TR::InstOpCode::stfd; length = 8;
+                  op = flush ? TR::InstOpCode::stfd : TR::InstOpCode::lfd; length = 8;
                   }
 
-               cursor = generateMemSrc1Instruction(self()->cg(), op, firstNode,
+               cursor = flush ? generateMemSrc1Instruction(self()->cg(), op, firstNode,
                      new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, length, self()->cg()),
-                     argRegister, cursor);
+                     argRegister, cursor):
+                     generateTrg1MemInstruction(self()->cg(), op, firstNode, argRegister,
+                     new (self()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, length, self()->cg()), cursor);
                }
             numFloatArgs++;
             break;
