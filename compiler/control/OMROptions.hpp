@@ -406,7 +406,6 @@ enum TR_CompilationOptions
    TR_EnableSequentialLoadStoreWarm       = 0x00020000 + 10,
    TR_EnableSequentialLoadStoreCold       = 0x00040000 + 10,
    // Available                           = 0x00080000 + 10,
-   TR_EnableNewX86PrefetchTLH             = 0x00100000 + 10,
    // Available                           = 0x00200000 + 10,
    TR_ConservativeCompilation             = 0x00400000 + 10,
    // Available                           = 0x00800000 + 10,

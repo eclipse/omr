@@ -711,7 +711,6 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"enableMutableCallSiteGuards",       "O\tenable virgual guards for calls to java.lang.invoke.MutableCallSite.getTarget().invokeExact(...) (including invokedynamic)",   RESET_OPTION_BIT(TR_DisableMutableCallSiteGuards), "F"},
    {"enableNewAllocationProfiling",      "O\tenable profiling of new allocations", SET_OPTION_BIT(TR_EnableNewAllocationProfiling), "F"},
    {"enableNewCheckCastInstanceOf",      "O\tenable new Checkcast/InstanceOf evaluator", SET_OPTION_BIT(TR_EnableNewCheckCastInstanceOf), "F"},
-   {"enableNewX86PrefetchTLH",           "O\tenable new X86 TLH prefetch algorithm", SET_OPTION_BIT(TR_EnableNewX86PrefetchTLH), "F"},
    {"enableNodeGC",                      "M\tenable node recycling", SET_OPTION_BIT(TR_EnableNodeGC), "F"},
    {"enableOnsiteCacheForSuperClassTest", "O\tenable onsite cache for super class test",       SET_OPTION_BIT(TR_EnableOnsiteCacheForSuperClassTest), "F"},
    {"enableOSR",                          "O\tenable on-stack replacement", SET_OPTION_BIT(TR_EnableOSR), "F", NOT_IN_SUBSET},
