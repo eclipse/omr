@@ -889,7 +889,7 @@ MM_MemorySubSpaceSemiSpace::checkSubSpaceMemoryPostCollectResize(MM_EnvironmentB
 		_lastScavengeEndTime = extensions->scavengerStats._endTime;
 
 		if (doDynamicNewSpaceSizing) {
-			double expectedTimeRatio = (extensions->dnssExpectedTimeRatioMaximum + extensions->dnssExpectedTimeRatioMinimum) / 2;
+			double expectedTimeRatio = (extensions->dnssExpectedRatioMaximum._valueSpecified + extensions->dnssExpectedRatioMinimum._valueSpecified) / 2;
 
 			/* Find the ratio of time to scavenge versus the interval time since the last scavenge */
 			double timeRatio = (double)((int64_t)scavengeTime) / (double)((int64_t) intervalTime);
@@ -920,7 +920,7 @@ MM_MemorySubSpaceSemiSpace::checkSubSpaceMemoryPostCollectResize(MM_EnvironmentB
 			double weight;
 			if(timeRatio > _averageScavengeTimeRatio) {
 				if(timeRatio > expectedTimeRatio) {
-					if(timeRatio > extensions->dnssExpectedTimeRatioMaximum) {
+					if(timeRatio > extensions->dnssExpectedRatioMaximum._valueSpecified) {
 						weight = extensions->dnssWeightedTimeRatioFactorIncreaseLarge;
 					} else {
 						weight = extensions->dnssWeightedTimeRatioFactorIncreaseMedium;
@@ -940,7 +940,7 @@ MM_MemorySubSpaceSemiSpace::checkSubSpaceMemoryPostCollectResize(MM_EnvironmentB
 			}
 
 			/* If the average scavenge to interval ratio is greater than the maximum, try to expand */
-			if((_averageScavengeTimeRatio > extensions->dnssExpectedTimeRatioMaximum)
+			if((_averageScavengeTimeRatio > extensions->dnssExpectedRatioMaximum._valueSpecified)
 					&& (NULL != _physicalSubArena) && _physicalSubArena->canExpand(env) && (maxExpansionInSpace(env) != 0)) {
 				double desiredExpansionFactor, adjustedExpansionFactor;
 
@@ -971,12 +971,12 @@ MM_MemorySubSpaceSemiSpace::checkSubSpaceMemoryPostCollectResize(MM_EnvironmentB
 			}
 
 			/* If the average scavenge to interval ratio is less than the minimum, try to contract */
-			if(_averageScavengeTimeRatio < extensions->dnssExpectedTimeRatioMinimum
+			if(_averageScavengeTimeRatio < extensions->dnssExpectedRatioMinimum._valueSpecified
 					&& (NULL != _physicalSubArena) && _physicalSubArena->canContract(env) && (maxContractionInSpace(env) != 0)) {
 				double desiredContractionFactor, adjustedContractionFactor;
 
 				/* Try to reach 200% of the expected minimum time ratio through contraction */
-				desiredContractionFactor = OMR_MIN(extensions->dnssExpectedTimeRatioMinimum  * 2, expectedTimeRatio);
+				desiredContractionFactor = OMR_MIN(extensions->dnssExpectedRatioMinimum._valueSpecified  * 2, expectedTimeRatio);
 				desiredContractionFactor = desiredContractionFactor - _averageScavengeTimeRatio;
 
 				if (desiredContractionFactor > extensions->dnssMaximumContraction) {

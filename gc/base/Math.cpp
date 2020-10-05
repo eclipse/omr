@@ -47,3 +47,13 @@ MM_Math::weightedAverage(float currentAverage, float newValue, float weight)
 {
 	return ((currentAverage) * weight) + ((newValue) * ((float)1.0 - weight));
 }
+
+/**
+ * Return the weighted average through combining the new value to the current value.
+ * @return the weighted average of the combined parameters.
+ */
+double
+MM_Math::weightedAverage(double currentAverage, double newValue, double weight) 
+{
+	return ((currentAverage) * weight) + ((newValue) * ((double)1.0 - weight));
+} 

@@ -156,34 +156,34 @@ MM_MemorySubSpace::reportSystemGCEnd(MM_EnvironmentBase* env)
  * Report the start of a heap expansion event through hooks.
  */
 void
-MM_MemorySubSpace::reportHeapResizeAttempt(MM_EnvironmentBase* env, uintptr_t amount, uintptr_t type)
+MM_MemorySubSpace::reportHeapResizeAttempt(MM_EnvironmentBase* env, uintptr_t amount, uintptr_t resizeType, uintptr_t memoryType)
 {
 	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	MM_HeapResizeStats *resizeStats = _extensions->heap->getResizeStats();
 
-	uint64_t resizeTime = (type == HEAP_EXPAND)
+	uint64_t resizeTime = (resizeType == HEAP_EXPAND)
 						  ? resizeStats->getLastExpandTime()
 						  : resizeStats->getLastContractTime();
 
 	uint32_t gcTimeRatio = 0;
 
-	if (HEAP_EXPAND == type) {
+	if (HEAP_EXPAND == resizeType) {
 		gcTimeRatio = resizeStats->getRatioExpandPercentage();
-	} else if (HEAP_CONTRACT == type) {
+	} else if (HEAP_CONTRACT == resizeType) {
 		gcTimeRatio = resizeStats->getRatioContractPercentage();
 	}
 
 	uintptr_t reason = 0;
 
-	if (HEAP_EXPAND == type) {
+	if (HEAP_EXPAND == resizeType) {
 		reason = (uintptr_t)resizeStats->getLastExpandReason();
-	} else if (HEAP_CONTRACT == type) {
+	} else if (HEAP_CONTRACT == resizeType) {
 		reason = (uintptr_t)resizeStats->getLastContractReason();
-	} else if (HEAP_LOA_EXPAND == type) {
+	} else if (HEAP_LOA_EXPAND == resizeType) {
 		reason = (uintptr_t)resizeStats->getLastLoaResizeReason();
 		Assert_MM_true(reason <= LOA_EXPAND_LAST_RESIZE_REASON);
-	} else if (HEAP_LOA_CONTRACT == type) {
+	} else if (HEAP_LOA_CONTRACT == resizeType) {
 		reason = (uintptr_t)resizeStats->getLastLoaResizeReason();
 		Assert_MM_true(reason > LOA_EXPAND_LAST_RESIZE_REASON);
 	}
@@ -193,8 +193,8 @@ MM_MemorySubSpace::reportHeapResizeAttempt(MM_EnvironmentBase* env, uintptr_t am
 		env->getOmrVMThread(),
 		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_HEAP_RESIZE,
-		type,
-		getTypeFlags(),
+		resizeType,
+		memoryType,
 		gcTimeRatio,
 		amount,
 		getActiveMemorySize(),
@@ -1249,7 +1249,7 @@ MM_MemorySubSpace::expand(MM_EnvironmentBase* env, uintptr_t expandSize)
 	timeEnd = omrtime_hires_clock();
 	_extensions->heap->getResizeStats()->setLastExpandTime(timeEnd - timeStart);
 
-	reportHeapResizeAttempt(env, actualExpandAmount, HEAP_EXPAND);
+	reportHeapResizeAttempt(env, actualExpandAmount, HEAP_EXPAND, getTypeFlags());
 
 	Trc_MM_MemorySubSpace_expand_Exit2(env->getLanguageVMThread(), actualExpandAmount);
 	return actualExpandAmount;
@@ -1281,7 +1281,7 @@ MM_MemorySubSpace::contract(MM_EnvironmentBase* env, uintptr_t contractSize)
 	timeEnd = omrtime_hires_clock();
 	_extensions->heap->getResizeStats()->setLastContractTime(timeEnd - timeStart);
 
-	reportHeapResizeAttempt(env, actualContractAmount, HEAP_CONTRACT);
+	reportHeapResizeAttempt(env, actualContractAmount, HEAP_CONTRACT, getTypeFlags());
 
 	Trc_MM_MemorySubSpace_contract_Exit(env->getLanguageVMThread(), actualContractAmount);
 	return actualContractAmount;
@@ -1849,7 +1849,7 @@ MM_MemorySubSpace::runEnqueuedCounterBalancing(MM_EnvironmentBase* env)
 			_extensions->heap->getResizeStats()->setLastExpandTime(timeEnd - timeStart);
 
 			if (0 != expandSize) {
-				reportHeapResizeAttempt(env, expandSize, HEAP_EXPAND);
+				reportHeapResizeAttempt(env, expandSize, HEAP_EXPAND, getTypeFlags());
 			}
 
 			break;

@@ -47,6 +47,7 @@ public:
 	uintptr_t _bytesScanned;	/**< The number of bytes a given concurrent task did scan before it terminated (can be lower than _scanTargetInBytes if the termination was asynchronously requested) */
 	bool _terminationWasRequested;	/**< todo: remove after downstream projects start using _terminationRequestType */
 	uintptr_t _concurrentCycleType;	/**< The "type" of the corresponding cycle */
+	uintptr_t _concurrentMarkProcessStartTime; /**< CPU start time (user + sys time) at the start of a concurrent mark increment. This is not the same as wall clock time. Process system time might play a significant role when it comes to measuring GMP cost, so it is included here */
 	enum TerminationRequestType {
 		terminationRequest_None,
 		terminationRequest_ByGC,
@@ -71,6 +72,7 @@ public:
 		_scanTargetInBytes = 0;
 		_bytesScanned = 0;
 		_terminationWasRequested = false;
+		_concurrentMarkProcessStartTime = 0;
 		_terminationRequestType = terminationRequest_None;
 	}
 	 
@@ -81,6 +83,7 @@ public:
 		, _bytesScanned(0)
 		, _terminationWasRequested(false)
 		, _concurrentCycleType(concurrentCycleType)
+		, _concurrentMarkProcessStartTime(0)
 		, _terminationRequestType(terminationRequest_None)
 	{}
 }; 
