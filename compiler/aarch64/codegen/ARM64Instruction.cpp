@@ -671,6 +671,46 @@ void TR::ARM64CompareBranchInstruction::assignRegisters(TR_RegisterKinds kindToB
    assignRegistersForOutOfLineCodeSection(kindToBeAssigned);
    }
 
+// TR::ARM64TestBitBranchInstruction:: member functions
+
+bool TR::ARM64TestBitBranchInstruction::refsRegister(TR::Register *reg)
+   {
+   return (reg == getSource1Register());
+   }
+
+bool TR::ARM64TestBitBranchInstruction::usesRegister(TR::Register *reg)
+   {
+   return (reg == getSource1Register());
+   }
+
+bool TR::ARM64TestBitBranchInstruction::defsRegister(TR::Register *reg)
+   {
+   return false;
+   }
+
+bool TR::ARM64TestBitBranchInstruction::defsRealRegister(TR::Register *reg)
+   {
+   return false;
+   }
+
+void TR::ARM64TestBitBranchInstruction::assignRegisters(TR_RegisterKinds kindToBeAssigned)
+   {
+   TR::Machine *machine = cg()->machine();
+   TR::Register *source1Virtual = getSource1Register();
+
+   if (getDependencyConditions())
+      getDependencyConditions()->assignPostConditionRegisters(this, kindToBeAssigned, cg());
+
+   TR::RealRegister *assignedSource1Register = machine->assignOneRegister(this, source1Virtual);
+
+   if (getDependencyConditions())
+      getDependencyConditions()->assignPreConditionRegisters(this->getPrev(), kindToBeAssigned, cg());
+
+   setSource1Register(assignedSource1Register);
+
+   assignRegistersForOutOfLineCodeSection(kindToBeAssigned);
+   }
+
 // TR::ARM64RegBranchInstruction:: member functions
 
 bool TR::ARM64RegBranchInstruction::refsRegister(TR::Register *reg)

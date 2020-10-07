@@ -243,6 +243,48 @@ TR::Instruction *generateCompareBranchInstruction(
                    TR::Instruction *preced = NULL);
 
 /*
+ * @brief Generates test bit and branch instruction
+ * @param[in] cg : CodeGenerator
+ * @param[in] op : instruction opcode
+ * @param[in] node : node
+ * @param[in] sreg : source register
+ * @param[in] bitpos : bit position
+ * @param[in] sym : label symbol
+ * @param[in] cond : register dependency condition
+ * @param[in] preced : preceding instruction
+ * @return generated instruction
+ */
+TR::Instruction *generateTestBitBranchInstruction(
+                   TR::CodeGenerator *cg,
+                   TR::InstOpCode::Mnemonic op,
+                   TR::Node *node,
+                   TR::Register *sreg,
+                   uint32_t bitpos,
+                   TR::LabelSymbol *sym,
+                   TR::RegisterDependencyConditions *cond,
+                   TR::Instruction *preced = NULL);
+
+/*
+ * @brief Generates test bit and branch instruction
+ * @param[in] cg : CodeGenerator
+ * @param[in] op : instruction opcode
+ * @param[in] node : node
+ * @param[in] sreg : source register
+ * @param[in] bitpos : bit position
+ * @param[in] sym : label symbol
+ * @param[in] preced : preceding instruction
+ * @return generated instruction
+ */
+TR::Instruction *generateTestBitBranchInstruction(
+                   TR::CodeGenerator *cg,
+                   TR::InstOpCode::Mnemonic op,
+                   TR::Node *node,
+                   TR::Register *sreg,
+                   uint32_t bitpos,
+                   TR::LabelSymbol *sym,
+                   TR::Instruction *preced = NULL);
+
+/*
  * @brief Generates branch-to-register instruction
  * @param[in] cg : CodeGenerator
  * @param[in] op : instruction opcode

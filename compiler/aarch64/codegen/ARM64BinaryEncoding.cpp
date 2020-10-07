@@ -311,6 +311,34 @@ uint8_t *TR::ARM64CompareBranchInstruction::generateBinaryEncoding()
    return cursor;
    }
 
+uint8_t *TR::ARM64TestBitBranchInstruction::generateBinaryEncoding()
+   {
+   uint8_t *instructionStart = cg()->getBinaryBufferCursor();
+   uint8_t *cursor = instructionStart;
+   cursor = getOpCode().copyBinaryToBuffer(instructionStart);
+   insertSource1Register(toARM64Cursor(cursor));
+   insertBitposField(toARM64Cursor(cursor));
+
+   TR::LabelSymbol *label = getLabelSymbol();
+   uintptr_t destination = (uintptr_t)label->getCodeLocation();
+   if (destination != 0)
+      {
+      intptr_t distance = destination - (uintptr_t)cursor;
+      TR_ASSERT_FATAL(-0x8000 <= distance && distance < 0x8000, "Branch destination is too far away for tbz/tbnz.");
+
+      insertImmediateField(toARM64Cursor(cursor), distance);
+      }
+   else
+      {
+      cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelRelative24BitRelocation(cursor, label));
+      }
+
+   cursor += ARM64_INSTRUCTION_LENGTH;
+   setBinaryLength(ARM64_INSTRUCTION_LENGTH);
+   setBinaryEncoding(instructionStart);
+   return cursor;
+   }
+
 uint8_t *TR::ARM64RegBranchInstruction::generateBinaryEncoding()
    {
    uint8_t *instructionStart = cg()->getBinaryBufferCursor();
