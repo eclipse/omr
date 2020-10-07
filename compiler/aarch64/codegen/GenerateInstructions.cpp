@@ -125,6 +125,22 @@ TR::Instruction *generateCompareBranchInstruction(TR::CodeGenerator *cg, TR::Ins
    return new (cg->trHeapMemory()) TR::ARM64CompareBranchInstruction(op, node, sreg, sym, cond, cg);
    }
 
+TR::Instruction *generateTestBitBranchInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node *node,
+   TR::Register *sreg, uint32_t bitpos, TR::LabelSymbol *sym, TR::Instruction *preced)
+   {
+   if (preced)
+      return new (cg->trHeapMemory()) TR::ARM64TestBitBranchInstruction(op, node, sreg, bitpos, sym, preced, cg);
+   return new (cg->trHeapMemory()) TR::ARM64TestBitBranchInstruction(op, node, sreg, bitpos, sym, cg);
+   }
+
+TR::Instruction *generateTestBitBranchInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node *node,
+   TR::Register *sreg, uint32_t bitpos, TR::LabelSymbol *sym, TR::RegisterDependencyConditions *cond, TR::Instruction *preced)
+   {
+   if (preced)
+      return new (cg->trHeapMemory()) TR::ARM64TestBitBranchInstruction(op, node, sreg, bitpos, sym, cond, preced, cg);
+   return new (cg->trHeapMemory()) TR::ARM64TestBitBranchInstruction(op, node, sreg, bitpos, sym, cond, cg);
+   }
+
 TR::Instruction *generateRegBranchInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node *node,
    TR::Register *treg, TR::Instruction *preced)
    {

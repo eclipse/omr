@@ -861,6 +861,196 @@ class ARM64CompareBranchInstruction : public ARM64LabelInstruction
    virtual uint8_t *generateBinaryEncoding();
    };
 
+class ARM64TestBitBranchInstruction : public ARM64LabelInstruction
+   {
+   int32_t _estimatedBinaryLocation;
+   TR::Register *_source1Register;
+   uint32_t _bitpos;
+
+   public:
+
+   /*
+    * @brief Constructor
+    * @param[in] op     : instruction opcode
+    * @param[in] node   : node
+    * @param[in] sreg   : source register
+    * @param[in] bitpos : bit position to test
+    * @param[in] sym    : label symbol
+    * @param[in] cg     : CodeGenerator
+    */
+   ARM64TestBitBranchInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *sreg, uint32_t bitpos, TR::LabelSymbol *sym,
+                                 TR::CodeGenerator *cg)
+      : ARM64LabelInstruction(op, node, sym, cg), _source1Register(sreg),
+        _estimatedBinaryLocation(0), _bitpos(bitpos)
+      {
+      useRegister(sreg);
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op                   : instruction opcode
+    * @param[in] node                 : node
+    * @param[in] sreg                 : source register
+    * @param[in] bitpos               : bit position to test
+    * @param[in] sym                  : label symbol
+    * @param[in] precedingInstruction : preceding instruction
+    * @param[in] cg                   : CodeGenerator
+    */
+   ARM64TestBitBranchInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *sreg, uint32_t bitpos, TR::LabelSymbol *sym,
+                                 TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : ARM64LabelInstruction(op, node, sym, precedingInstruction, cg), _source1Register(sreg),
+        _estimatedBinaryLocation(0), _bitpos(bitpos)
+      {
+      useRegister(sreg);
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op     : instruction opcode
+    * @param[in] node   : node
+    * @param[in] sreg   : source register
+    * @param[in] bitpos : bit position to test
+    * @param[in] sym    : label symbol
+    * @param[in] cond   : register dependency condition
+    * @param[in] cg     : CodeGenerator
+    */
+   ARM64TestBitBranchInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *sreg, uint32_t bitpos, TR::LabelSymbol *sym,
+                                 TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg)
+      : ARM64LabelInstruction(op, node, sym, cond, cg), _source1Register(sreg),
+        _estimatedBinaryLocation(0), _bitpos(bitpos)
+      {
+      useRegister(sreg);
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op                   : instruction opcode
+    * @param[in] node                 : node
+    * @param[in] sreg                 : source register
+    * @param[in] bitpos               : bit position to test
+    * @param[in] sym                  : label symbol
+    * @param[in] cond                s : register dependency condition
+    * @param[in] precedingInstruction : preceding instruction
+    * @param[in] cg                   : CodeGenerator
+    */
+   ARM64TestBitBranchInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Register *sreg, uint32_t bitpos, TR::LabelSymbol *sym,
+                                 TR::RegisterDependencyConditions *cond, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : ARM64LabelInstruction(op, node, sym, cond, precedingInstruction, cg), _source1Register(sreg),
+        _estimatedBinaryLocation(0), _bitpos(bitpos)
+      {
+      useRegister(sreg);
+      }
+
+   /**
+    * @brief Gets instruction kind
+    * @return instruction kind
+    */
+   virtual Kind getKind() { return IsTestBitBranch; }
+
+   /**
+    * @brief Gets bit position
+    * @return bit position
+    */
+   uint32_t getBitPos() { return _bitpos; }
+
+   /**
+    * @brief Sets bit position
+    * @param[in] bitpos : bit position
+    * @return bit position
+    */
+   uint32_t setBitPos(uint32_t bitpos) { return (_bitpos = bitpos);}
+
+   /**
+    * @brief Gets estimated binary location
+    * @return estimated binary location
+    */
+   int32_t getEstimatedBinaryLocation() {return _estimatedBinaryLocation;}
+   /**
+    * @brief Sets estimated binary location
+    * @param[in] l : estimated binary location
+    * @return estimated binary location
+    */
+   int32_t setEstimatedBinaryLocation(int32_t l) {return (_estimatedBinaryLocation = l);}
+
+   /**
+    * @brief Gets source register
+    * @return source register
+    */
+   TR::Register *getSource1Register() {return _source1Register;}
+   /**
+    * @brief Sets source register
+    * @param[in] sr : source register
+    * @return source register
+    */
+   TR::Register *setSource1Register(TR::Register *sr) {return (_source1Register = sr);}
+   /**
+    * @brief Sets immediate field in binary encoding
+    * @param[in] instruction : instruction cursor
+    * @param[in] distance : branch distance
+    */
+   void insertImmediateField(uint32_t *instruction, int32_t distance)
+      {
+      TR_ASSERT_FATAL((distance & 0x3) == 0, "branch distance is not aligned");
+      *instruction |= ((distance >> 2) & 0x3fff) << 5;
+      }
+
+   /**
+    * @brief Sets source register in binary encoding
+    * @param[in] instruction : instruction cursor
+    */
+   void insertSource1Register(uint32_t *instruction)
+      {
+      TR::RealRegister *source1 = toRealRegister(_source1Register);
+      source1->setRegisterFieldRD(instruction);
+      }
+
+   /**
+    * @brief Sets bit position field in binary encoding
+    * @param[in] instruction : instruction cursor
+    */
+   void insertBitposField(uint32_t *instruction)
+      {
+      TR_ASSERT_FATAL(_bitpos <= 63, "bit position must be 0 to 63");
+      *instruction |= (((_bitpos >> 5) & 1) << 31) | ((_bitpos & 0x1f) << 19);
+      }
+
+   /**
+    * @brief Answers whether this instruction references the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction references the virtual register
+    */
+   virtual bool refsRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction uses the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction uses the virtual register
+    */
+   virtual bool usesRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction defines the given virtual register
+    * @param[in] reg : virtual register
+    * @return true when the instruction defines the virtual register
+    */
+   virtual bool defsRegister(TR::Register *reg);
+   /**
+    * @brief Answers whether this instruction defines the given real register
+    * @param[in] reg : real register
+    * @return true when the instruction defines the real register
+    */
+   virtual bool defsRealRegister(TR::Register *reg);
+   /**
+    * @brief Assigns registers
+    * @param[in] kindToBeAssigned : register kind
+    */
+   virtual void assignRegisters(TR_RegisterKinds kindToBeAssigned);
+
+   /**
+    * @brief Generates binary encoding of the instruction
+    * @return instruction cursor
+    */
+   virtual uint8_t *generateBinaryEncoding();
+   };
+
 class ARM64RegBranchInstruction : public TR::Instruction
    {
    TR::Register *_register;
