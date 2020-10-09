@@ -447,9 +447,9 @@ TR::Register *OMR::ARM::TreeEvaluator::lmulEvaluator(TR::Node *node, TR::CodeGen
       }
 
    generateImmSymInstruction(cg, ARMOp_bl,
-                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlongMultiply, false, false, false)->getMethodAddress(),
+                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlongMultiply)->getMethodAddress(),
                              dependencies,
-                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlongMultiply, false, false, false));
+                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlongMultiply));
 
    cg->machine()->setLinkRegisterKilled(true);
    node->setRegister(trgReg);
@@ -667,7 +667,7 @@ static TR::Register *idivAndIRemHelper(TR::Node *node, bool isDivide, TR::CodeGe
    TR::addDependency(dependencies, dd_reg, TR::RealRegister::gr0, TR_GPR, cg);
    TR::addDependency(dependencies, dr_reg, TR::RealRegister::gr1, TR_GPR, cg);
 
-   TR::SymbolReference *helper = cg->symRefTab()->findOrCreateRuntimeHelper(isDivide ? TR_ARMintDivide : TR_ARMintRemainder, false, false, false);
+   TR::SymbolReference *helper = cg->symRefTab()->findOrCreateRuntimeHelper(isDivide ? TR_ARMintDivide : TR_ARMintRemainder);
 
    generateImmSymInstruction(cg, ARMOp_bl,
                               node, (uintptr_t)helper->getMethodAddress(),
@@ -771,9 +771,9 @@ static TR::Register *ldivAndLRemHelper(TR::Node *node, bool isDivide, TR::CodeGe
       }
 
    generateImmSymInstruction(cg, ARMOp_bl,
-                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlongDivide, false, false, false)->getMethodAddress(),
+                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlongDivide)->getMethodAddress(),
                              dependencies,
-                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlongDivide, false, false, false));
+                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlongDivide));
 
    cg->machine()->setLinkRegisterKilled(true);
    node->setRegister(trgReg);
@@ -1005,7 +1005,7 @@ static TR::Register *longRightShiftEvaluator(TR::Node *node, bool isLogical, TR:
          TR::addDependency(dependencies, trgReg->getLowOrder(), TR::RealRegister::gr0, TR_GPR, cg);
          TR::addDependency(dependencies, trgReg->getHighOrder(), TR::RealRegister::gr1, TR_GPR, cg);
          TR::addDependency(dependencies, shiftAmountReg, TR::RealRegister::gr2, TR_GPR, cg);
-         TR::SymbolReference *longShiftHelper = cg->symRefTab()->findOrCreateRuntimeHelper(isLogical ? TR_ARMlongShiftRightLogical : TR_ARMlongShiftRightArithmetic, false, false, false);
+         TR::SymbolReference *longShiftHelper = cg->symRefTab()->findOrCreateRuntimeHelper(isLogical ? TR_ARMlongShiftRightLogical : TR_ARMlongShiftRightArithmetic);
 
          generateImmSymInstruction(cg, ARMOp_bl,
                                    node, (uintptr_t)longShiftHelper->getMethodAddress(),

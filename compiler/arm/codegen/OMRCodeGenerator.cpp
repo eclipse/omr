@@ -457,9 +457,9 @@ TR::Instruction *OMR::ARM::CodeGenerator::generateSwitchToInterpreterPrePrologue
    TR::Register   *gr4 = self()->machine()->getRealRegister(TR::RealRegister::gr4);
    TR::Register   *lr = self()->machine()->getRealRegister(TR::RealRegister::gr14); // link register
    TR::ResolvedMethodSymbol *methodSymbol = comp->getJittedMethodSymbol();
-   TR::SymbolReference    *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMrevertToInterpreterGlue, false, false, false);
+   TR::SymbolReference    *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMrevertToInterpreterGlue);
    uintptr_t             ramMethod = (uintptr_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
-   TR::SymbolReference    *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(directToInterpreterHelper(methodSymbol, self()), false, false, false);
+   TR::SymbolReference    *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(directToInterpreterHelper(methodSymbol, self()));
    uintptr_t             helperAddr = (uintptr_t)helperSymRef->getMethodAddress();
 
    // gr4 must contain the saved LR; see Recompilation.s

@@ -971,7 +971,7 @@ TR::Register *OMR::ARM::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Co
    TR::addDependency(deps, srcAddrReg, TR::RealRegister::gr1, TR_GPR, cg);
    TR::addDependency(deps, dstAddrReg, TR::RealRegister::gr2, TR_GPR, cg);
 
-   arrayCopyHelper = cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMarrayCopy, false, false, false);
+   arrayCopyHelper = cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMarrayCopy);
 
    generateImmSymInstruction(cg, ARMOp_bl,
                                    node, (uintptr_t)arrayCopyHelper->getMethodAddress(),

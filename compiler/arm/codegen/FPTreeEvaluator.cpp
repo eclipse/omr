@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -269,9 +269,9 @@ static TR::Register *callLong2DoubleHelper(TR::Node *node, TR::CodeGenerator *cg
    dependencies->stopAddingConditions();
 
    generateImmSymInstruction(cg, ARMOp_bl,
-                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlong2Double, false, false, false)->getMethodAddress(),
+                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlong2Double)->getMethodAddress(),
                              dependencies,
-                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlong2Double, false, false, false));
+                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlong2Double));
 
    if (noFPRA)
       {
@@ -356,9 +356,9 @@ static TR::Register *callLong2FloatHelper(TR::Node *node, TR::CodeGenerator *cg)
    dependencies->stopAddingConditions();
 
    generateImmSymInstruction(cg, ARMOp_bl,
-                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlong2Float, false, false, false)->getMethodAddress(),
+                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlong2Float)->getMethodAddress(),
                              dependencies,
-                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlong2Float, false, false, false));
+                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMlong2Float));
 
    if (noFPRA)
       {
@@ -467,9 +467,9 @@ static TR::Register *callDouble2LongHelper(TR::Node *node, TR::CodeGenerator *cg
    dependencies->stopAddingConditions();
 
    generateImmSymInstruction(cg, ARMOp_bl,
-                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMdouble2Long, false, false, false)->getMethodAddress(),
+                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMdouble2Long)->getMethodAddress(),
                              dependencies,
-                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMdouble2Long, false, false, false));
+                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMdouble2Long));
 
    //dependencies->stopUsingDepRegs(cg, trgReg);
 
@@ -554,9 +554,9 @@ static TR::Register *callFloat2LongHelper(TR::Node *node, TR::CodeGenerator *cg)
    dependencies->stopAddingConditions();
 
    generateImmSymInstruction(cg, ARMOp_bl,
-                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMfloat2Long, false, false, false)->getMethodAddress(),
+                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMfloat2Long)->getMethodAddress(),
                              dependencies,
-                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMfloat2Long, false, false, false));
+                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMfloat2Long));
 
    //dependencies->stopUsingDepRegs(cg, trgReg);
    //cg->stopUsingRegister(dummyReg);
@@ -676,9 +676,9 @@ static TR::Register *callDoubleRemainderHelper(TR::Node *node, TR::CodeGenerator
       }
    dependencies->stopAddingConditions();
    generateImmSymInstruction(cg, ARMOp_bl,
-                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMdoubleRemainder, false, false, false)->getMethodAddress(),
+                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMdoubleRemainder)->getMethodAddress(),
                              dependencies,
-                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMdoubleRemainder, false, false, false));
+                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMdoubleRemainder));
 
    if (noFPRA)
       {
@@ -779,9 +779,9 @@ static TR::Register *callFloatRemainderHelper(TR::Node *node, TR::CodeGenerator 
    dependencies->stopAddingConditions();
 
    generateImmSymInstruction(cg, ARMOp_bl,
-                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMfloatRemainder, false, false, false)->getMethodAddress(),
+                             node, (uintptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMfloatRemainder)->getMethodAddress(),
                              dependencies,
-                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMfloatRemainder, false, false, false));
+                             cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARMfloatRemainder));
 
    if (noFPRA)
       {
