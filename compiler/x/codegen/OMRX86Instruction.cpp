@@ -4554,7 +4554,7 @@ generateCallMemInstruction(TR::Instruction *prevInstr,
 TR::X86ImmSymInstruction  *
 generateHelperCallInstruction(TR::Instruction * cursor, TR_RuntimeHelper index, TR::CodeGenerator *cg)
    {
-   TR::SymbolReference * helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(index, false, false, false);
+   TR::SymbolReference * helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(index);
    cg->resetIsLeafMethod();
    return new (cg->trHeapMemory()) TR::X86ImmSymInstruction(cursor, CALLImm4, (uintptr_t)helperSymRef->getMethodAddress(), helperSymRef, cg);
    }
@@ -4562,7 +4562,7 @@ generateHelperCallInstruction(TR::Instruction * cursor, TR_RuntimeHelper index, 
 TR::X86ImmSymInstruction  *
 generateHelperCallInstruction(TR::Node * node, TR_RuntimeHelper index, TR::RegisterDependencyConditions  *dependencies, TR::CodeGenerator *cg)
    {
-   TR::SymbolReference * helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(index, false, false, false);
+   TR::SymbolReference * helperSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(index);
    cg->resetIsLeafMethod();
    return generateImmSymInstruction(
          CALLImm4,
