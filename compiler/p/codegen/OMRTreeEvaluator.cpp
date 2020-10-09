@@ -1713,7 +1713,7 @@ TR::Register *OMR::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::C
    cg->evaluate(sideEffectNode);
    cg->decReferenceCount(sideEffectNode);
    // Delegate the evaluation of the remaining children and the store operation to the storeEvaluator.
-   return TR::TreeEvaluator::astoreEvaluator(node, cg);  
+   return TR::TreeEvaluator::astoreEvaluator(node, cg);
    }
 
 TR::Register *OMR::Power::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -3302,7 +3302,7 @@ static void inlineArrayCopy(TR::Node *node, int64_t byteLen, TR::Register *src, 
       {
       TR::Register *cndReg = cg->allocateRegister(TR_CCR);
       TR::addDependency(conditions, cndReg, cndDep, TR_CCR, cg);
-   
+
       if (cg->comp()->target().is64Bit())
          {
          groups = byteLen >> 5;
@@ -3313,10 +3313,10 @@ static void inlineArrayCopy(TR::Node *node, int64_t byteLen, TR::Register *src, 
          groups = byteLen >> 4;
          residual = byteLen & 0x0000000F;
          }
-   
+
       regs[0] = cg->allocateRegister(TR_GPR);
       TR::addDependency(conditions, regs[0], tempDep, TR_GPR, cg);
-   
+
       if (groups != 0)
          {
          regs[1] = cg->allocateRegister(TR_GPR);
@@ -3326,24 +3326,24 @@ static void inlineArrayCopy(TR::Node *node, int64_t byteLen, TR::Register *src, 
          TR::addDependency(conditions, regs[2], TR::RealRegister::NoReg, TR_GPR, cg);
          TR::addDependency(conditions, regs[3], TR::RealRegister::NoReg, TR_GPR, cg);
          }
-   
+
       if (supportsLEArrayCopyInline)
          {
          fpRegs[0] = cg->allocateRegister(TR_FPR);
          fpRegs[1] = cg->allocateRegister(TR_FPR);
          fpRegs[2] = cg->allocateRegister(TR_FPR);
          fpRegs[3] = cg->allocateRegister(TR_FPR);
-   
+
          TR::addDependency(conditions, fpRegs[0], TR::RealRegister::NoReg, TR_FPR, cg);
          TR::addDependency(conditions, fpRegs[1], TR::RealRegister::NoReg, TR_FPR, cg);
          TR::addDependency(conditions, fpRegs[2], TR::RealRegister::NoReg, TR_FPR, cg);
          TR::addDependency(conditions, fpRegs[3], TR::RealRegister::NoReg, TR_FPR, cg);
          }
-   
+
       if (groups != 0)
          {
          TR::LabelSymbol *loopStart;
-   
+
          if (groups != 1)
             {
             if (groups <= UPPER_IMMED)
@@ -3351,7 +3351,7 @@ static void inlineArrayCopy(TR::Node *node, int64_t byteLen, TR::Register *src, 
             else
                loadConstant(cg, node, groups, regs[0]);
             generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, regs[0]);
-   
+
             loopStart = generateLabelSymbol(cg);
             generateLabelInstruction(cg, TR::InstOpCode::label, node, loopStart);
             }
@@ -3395,7 +3395,7 @@ static void inlineArrayCopy(TR::Node *node, int64_t byteLen, TR::Register *src, 
             ix = 4*memRefSize;
             }
          }
-   
+
       for (; residual>=memRefSize; residual-=memRefSize, ix+=memRefSize)
          {
          if (supportsLEArrayCopyInline)
@@ -3415,7 +3415,7 @@ static void inlineArrayCopy(TR::Node *node, int64_t byteLen, TR::Register *src, 
             generateMemSrc1Instruction(cg, store, node, TR::MemoryReference::createWithDisplacement(cg, dst, ix, memRefSize), oneReg);
             }
          }
-   
+
       if (residual != 0)
          {
          if (residual & 4)
@@ -3688,7 +3688,7 @@ TR::Register *OMR::Power::TreeEvaluator::arraytranslateEvaluator(TR::Node *node,
             TR_ASSERT(node->isTargetByteArrayTranslate(), "Both source and target are word for array translate");
             helper = arraytranslateTRTO255 ? TR_PPCarrayTranslateTRTO255 : TR_PPCarrayTranslateTRTO;
             }
-         TR::SymbolReference *helperSym = cg->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
+         TR::SymbolReference *helperSym = cg->symRefTab()->findOrCreateRuntimeHelper(helper);
          uintptr_t          addr = (uintptr_t)helperSym->getMethodAddress();
          generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, addr, deps, helperSym);
       }
@@ -4148,7 +4148,7 @@ OMR::Power::TreeEvaluator::generateHelperBranchAndLinkInstruction(
       TR::CodeGenerator* cg)
    {
    TR::SymbolReference *helperSym =
-      cg->symRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false);
+      cg->symRefTab()->findOrCreateRuntimeHelper(helperIndex);
 
    return generateDepImmSymInstruction(
       cg, TR::InstOpCode::bl, node,
@@ -4467,11 +4467,11 @@ TR::Register *OMR::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::
       {
       tmp3Reg = cg->allocateRegister(TR_GPR);
       TR::addDependency(conditions, tmp3Reg, TR::RealRegister::gr0, TR_GPR, cg);
-   
+
       // Call the right version of arrayCopy code to do the job
       TR::addDependency(conditions, tmp1Reg, TR::RealRegister::gr5, TR_GPR, cg);
       TR::addDependency(conditions, tmp2Reg, TR::RealRegister::gr6, TR_GPR, cg);
-   
+
       if (copyUsingVSX)
          {
          vec0Reg = cg->allocateRegister(TR_VRF);
@@ -4588,7 +4588,7 @@ TR::Register *OMR::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::
          }
       }
    TR::TreeEvaluator::generateHelperBranchAndLinkInstruction(helper, node, conditions, cg);
-         
+
    conditions->stopUsingDepRegs(cg);
 
 #ifdef J9_PROJECT_SPECIFIC

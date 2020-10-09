@@ -832,7 +832,7 @@ TR::Register *lsub64Evaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->decReferenceCount(secondChild);
    return trgReg;
    }
- 
+
 TR::Register *OMR::Power::TreeEvaluator::lsubEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    if (cg->comp()->target().is64Bit())
@@ -2104,7 +2104,7 @@ strengthReducingLongDivideOrRemainder32BitMode(TR::Node *node,      TR::CodeGene
    else
       helper = isSignedOp ? TR_PPClongDivide : TR_PPCunsignedLongDivide;
 
-   TR::SymbolReference *helperSym = cg->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
+   TR::SymbolReference *helperSym = cg->symRefTab()->findOrCreateRuntimeHelper(helper);
    uintptr_t addr = (uintptr_t)helperSym->getMethodAddress();
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 0, cg->trMemory());
 

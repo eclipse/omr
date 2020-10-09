@@ -303,62 +303,62 @@ public:
    int32_t getCurrentBlockIndex() { return _currentBlockIndex; }
    int32_t arrayInitMinimumNumberOfBytes() {return 32;}
 
-   TR::SymbolReference &getDouble2LongSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCdouble2Long, false, false, false); }
-   TR::SymbolReference &getDoubleRemainderSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCdoubleRemainder, false, false, false); }
-   TR::SymbolReference &getInteger2DoubleSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinteger2Double, false, false, false); }
-   TR::SymbolReference &getLong2DoubleSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPClong2Double, false, false, false); }
-   TR::SymbolReference &getLong2FloatSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPClong2Float, false, false, false); }
-   TR::SymbolReference &getLong2Float_mvSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPClong2Float_mv, false, false, false); }
-   TR::SymbolReference &getLongMultiplySymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPClongMultiply, false, false, false); }
-   TR::SymbolReference &getLongDivideSymbolReference()   { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPClongDivide, false, false, false); }
-   TR::SymbolReference &getUnresolvedStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStaticGlue, false, false, false); }
-   TR::SymbolReference &getUnresolvedSpecialGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedSpecialGlue, false, false, false); }
-   TR::SymbolReference &getUnresolvedDirectVirtualGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedDirectVirtualGlue, false, false, false); }
-   TR::SymbolReference &getUnresolvedClassGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedClassGlue, false, false, false); }
-   TR::SymbolReference &getUnresolvedClassGlue2SymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedClassGlue2, false, false, false); }
-   TR::SymbolReference &getUnresolvedStringGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStringGlue, false, false, false); }
-   TR::SymbolReference &getUnresolvedStaticDataGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStaticDataGlue, false, false, false); }
-   TR::SymbolReference &getUnresolvedStaticDataStoreGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStaticDataStoreGlue, false, false, false); }
-   TR::SymbolReference &getUnresolvedInstanceDataGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedInstanceDataGlue, false, false, false); }
-   TR::SymbolReference &getUnresolvedInstanceDataStoreGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedInstanceDataStoreGlue, false, false, false); }
-   TR::SymbolReference &getVirtualUnresolvedHelperSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCvirtualUnresolvedHelper, false, false, false); }
-   TR::SymbolReference &getInterfaceCallHelperSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterfaceCallHelper, false, false, false); }
-   TR::SymbolReference &getItrgSendVirtual0SymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtual0, false, false, false); }
-   TR::SymbolReference &getItrgSendVirtual1SymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtual1, false, false, false); }
-   TR::SymbolReference &getItrgSendVirtualJSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtualJ, false, false, false); }
-   TR::SymbolReference &getItrgSendVirtualFSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtualF, false, false, false); }
-   TR::SymbolReference &getItrgSendVirtualDSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtualD, false, false, false); }
-   TR::SymbolReference &getVoidStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterVoidStaticGlue, false, false, false); }
-   TR::SymbolReference &getSyncVoidStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterSyncVoidStaticGlue, false, false, false); }
-   TR::SymbolReference &getGPR3StaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterGPR3StaticGlue, false, false, false); }
-   TR::SymbolReference &getSyncGPR3StaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterSyncGPR3StaticGlue, false, false, false); }
-   TR::SymbolReference &getGPR3GPR4StaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterGPR3GPR4StaticGlue, false, false, false); }
-   TR::SymbolReference &getSyncGPR3GPR4StaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterSyncGPR3GPR4StaticGlue, false, false, false); }
-   TR::SymbolReference &getFPR0FStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterFPR0FStaticGlue, false, false, false); }
-   TR::SymbolReference &getSyncFPR0FStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterSyncFPR0FStaticGlue, false, false, false); }
-   TR::SymbolReference &getFPR0DStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterFPR0DStaticGlue, false, false, false); }
-   TR::SymbolReference &getSyncFPR0DStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterSyncFPR0DStaticGlue, false, false, false); }
-   TR::SymbolReference &getNativeStaticHelperForUnresolvedGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCnativeStaticHelperForUnresolvedGlue, false, false, false); }
-   TR::SymbolReference &getNativeStaticHelperSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCnativeStaticHelper, false, false, false); }
-   TR::SymbolReference &getCollapseJNIReferenceFrameSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCcollapseJNIReferenceFrame, false, false, false); }
+   TR::SymbolReference &getDouble2LongSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCdouble2Long); }
+   TR::SymbolReference &getDoubleRemainderSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCdoubleRemainder); }
+   TR::SymbolReference &getInteger2DoubleSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinteger2Double); }
+   TR::SymbolReference &getLong2DoubleSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPClong2Double); }
+   TR::SymbolReference &getLong2FloatSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPClong2Float); }
+   TR::SymbolReference &getLong2Float_mvSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPClong2Float_mv); }
+   TR::SymbolReference &getLongMultiplySymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPClongMultiply); }
+   TR::SymbolReference &getLongDivideSymbolReference()   { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPClongDivide); }
+   TR::SymbolReference &getUnresolvedStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStaticGlue); }
+   TR::SymbolReference &getUnresolvedSpecialGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedSpecialGlue); }
+   TR::SymbolReference &getUnresolvedDirectVirtualGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedDirectVirtualGlue); }
+   TR::SymbolReference &getUnresolvedClassGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedClassGlue); }
+   TR::SymbolReference &getUnresolvedClassGlue2SymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedClassGlue2); }
+   TR::SymbolReference &getUnresolvedStringGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStringGlue); }
+   TR::SymbolReference &getUnresolvedStaticDataGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStaticDataGlue); }
+   TR::SymbolReference &getUnresolvedStaticDataStoreGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedStaticDataStoreGlue); }
+   TR::SymbolReference &getUnresolvedInstanceDataGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedInstanceDataGlue); }
+   TR::SymbolReference &getUnresolvedInstanceDataStoreGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedInstanceDataStoreGlue); }
+   TR::SymbolReference &getVirtualUnresolvedHelperSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCvirtualUnresolvedHelper); }
+   TR::SymbolReference &getInterfaceCallHelperSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterfaceCallHelper); }
+   TR::SymbolReference &getItrgSendVirtual0SymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtual0); }
+   TR::SymbolReference &getItrgSendVirtual1SymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtual1); }
+   TR::SymbolReference &getItrgSendVirtualJSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtualJ); }
+   TR::SymbolReference &getItrgSendVirtualFSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtualF); }
+   TR::SymbolReference &getItrgSendVirtualDSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtualD); }
+   TR::SymbolReference &getVoidStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterVoidStaticGlue); }
+   TR::SymbolReference &getSyncVoidStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterSyncVoidStaticGlue); }
+   TR::SymbolReference &getGPR3StaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterGPR3StaticGlue); }
+   TR::SymbolReference &getSyncGPR3StaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterSyncGPR3StaticGlue); }
+   TR::SymbolReference &getGPR3GPR4StaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterGPR3GPR4StaticGlue); }
+   TR::SymbolReference &getSyncGPR3GPR4StaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterSyncGPR3GPR4StaticGlue); }
+   TR::SymbolReference &getFPR0FStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterFPR0FStaticGlue); }
+   TR::SymbolReference &getSyncFPR0FStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterSyncFPR0FStaticGlue); }
+   TR::SymbolReference &getFPR0DStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterFPR0DStaticGlue); }
+   TR::SymbolReference &getSyncFPR0DStaticGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinterpreterSyncFPR0DStaticGlue); }
+   TR::SymbolReference &getNativeStaticHelperForUnresolvedGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCnativeStaticHelperForUnresolvedGlue); }
+   TR::SymbolReference &getNativeStaticHelperSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCnativeStaticHelper); }
+   TR::SymbolReference &getCollapseJNIReferenceFrameSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCcollapseJNIReferenceFrame); }
    TR::SymbolReference &getArrayCopySymbolReference();
    TR::SymbolReference &getWordArrayCopySymbolReference();
    TR::SymbolReference &getHalfWordArrayCopySymbolReference();
    TR::SymbolReference &getForwardArrayCopySymbolReference();
    TR::SymbolReference &getForwardWordArrayCopySymbolReference();
    TR::SymbolReference &getForwardHalfWordArrayCopySymbolReference();
-   TR::SymbolReference &getReferenceArrayCopySymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCreferenceArrayCopy, false, false, false); }
-   TR::SymbolReference &getGeneralArrayCopySymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCgeneralArrayCopy, false, false, false); }
-   TR::SymbolReference &getArrayCmpVMXSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpVMX, false, false, false); }
-   TR::SymbolReference &getArrayCmpLenVMXSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpLenVMX, false, false, false); }
-   TR::SymbolReference &getArrayCmpScalarSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpScalar, false, false, false); }
-   TR::SymbolReference &getArrayCmpLenScalarSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpLenScalar, false, false, false); }
-   TR::SymbolReference &getSamplingPatchCallSiteSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCsamplingPatchCallSite, false, false, false); }
-   TR::SymbolReference &getSamplingRecompileMethodSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCsamplingRecompileMethod, false, false, false); }
-   TR::SymbolReference &getCountingPatchCallSiteSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCcountingPatchCallSite, false, false, false); }
-   TR::SymbolReference &getCountingRecompileMethodSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCcountingRecompileMethod, false, false, false); }
-   TR::SymbolReference &getInduceRecompilationSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinduceRecompilation, false, false, false); }
-   TR::SymbolReference &getRevertToInterpreterGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCrevertToInterpreterGlue, false, false, false); }
+   TR::SymbolReference &getReferenceArrayCopySymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCreferenceArrayCopy); }
+   TR::SymbolReference &getGeneralArrayCopySymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCgeneralArrayCopy); }
+   TR::SymbolReference &getArrayCmpVMXSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpVMX); }
+   TR::SymbolReference &getArrayCmpLenVMXSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpLenVMX); }
+   TR::SymbolReference &getArrayCmpScalarSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpScalar); }
+   TR::SymbolReference &getArrayCmpLenScalarSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCmpLenScalar); }
+   TR::SymbolReference &getSamplingPatchCallSiteSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCsamplingPatchCallSite); }
+   TR::SymbolReference &getSamplingRecompileMethodSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCsamplingRecompileMethod); }
+   TR::SymbolReference &getCountingPatchCallSiteSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCcountingPatchCallSite); }
+   TR::SymbolReference &getCountingRecompileMethodSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCcountingRecompileMethod); }
+   TR::SymbolReference &getInduceRecompilationSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCinduceRecompilation); }
+   TR::SymbolReference &getRevertToInterpreterGlueSymbolReference() { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCrevertToInterpreterGlue); }
 
    bool hasCall()                 {return _flags.testAny(HasCall);}
    bool noStackFrame()            {return _flags.testAny(NoStackFrame);}

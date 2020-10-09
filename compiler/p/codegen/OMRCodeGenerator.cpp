@@ -652,9 +652,9 @@ OMR::Power::CodeGenerator::generateSwitchToInterpreterPrePrologue(
    {
    TR::Register   *gr0 = self()->machine()->getRealRegister(TR::RealRegister::gr0);
    TR::ResolvedMethodSymbol *methodSymbol = self()->comp()->getJittedMethodSymbol();
-   TR::SymbolReference    *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCrevertToInterpreterGlue, false, false, false);
+   TR::SymbolReference    *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCrevertToInterpreterGlue);
    uintptr_t             ramMethod = (uintptr_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
-   TR::SymbolReference    *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(directToInterpreterHelper(methodSymbol, self()), false, false, false);
+   TR::SymbolReference    *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(directToInterpreterHelper(methodSymbol, self()));
    uintptr_t             helperAddr = (uintptr_t)helperSymRef->getMethodAddress();
 
    // gr0 must contain the saved LR; see Recompilation.s
@@ -2528,49 +2528,49 @@ void TR_PPCScratchRegisterManager::addScratchRegistersToDependencyList(
 TR::SymbolReference & OMR::Power::CodeGenerator::getArrayCopySymbolReference()
    {
    if (self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCopy_dp, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCopy_dp);
    else
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCopy, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCarrayCopy);
    }
 
 TR::SymbolReference & OMR::Power::CodeGenerator::getWordArrayCopySymbolReference()
    {
    if (self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCwordArrayCopy_dp, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCwordArrayCopy_dp);
    else
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCwordArrayCopy, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCwordArrayCopy);
    }
 
 TR::SymbolReference & OMR::Power::CodeGenerator::getHalfWordArrayCopySymbolReference()
    {
    if (self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPChalfWordArrayCopy_dp, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPChalfWordArrayCopy_dp);
    else
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPChalfWordArrayCopy, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPChalfWordArrayCopy);
    }
 
 TR::SymbolReference & OMR::Power::CodeGenerator::getForwardArrayCopySymbolReference()
    {
    if (self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardArrayCopy_dp, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardArrayCopy_dp);
    else
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardArrayCopy, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardArrayCopy);
    }
 
 TR::SymbolReference &OMR::Power::CodeGenerator::getForwardWordArrayCopySymbolReference()
    {
    if (self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardWordArrayCopy_dp, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardWordArrayCopy_dp);
    else
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardWordArrayCopy, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardWordArrayCopy);
    }
 
 TR::SymbolReference &OMR::Power::CodeGenerator::getForwardHalfWordArrayCopySymbolReference()
    {
    if (self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6))
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardHalfWordArrayCopy_dp, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardHalfWordArrayCopy_dp);
    else
-      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardHalfWordArrayCopy, false, false, false);
+      return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCforwardHalfWordArrayCopy);
    }
 
 bool OMR::Power::CodeGenerator::supportsTransientPrefetch()
