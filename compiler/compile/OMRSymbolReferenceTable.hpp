@@ -176,7 +176,7 @@ class SymbolReferenceTable
        */
       osrFearPointHelperSymbol,
       /** \brief
-       * 
+       *
        * A call with this symbol marks a place where we want/need escape analysis to add heapifications for any stack allocated
        * objects. The primary use case is to force escape of all live local objects ahead of a throw to an OSR catch block
        * but they may also be inserted to facilitate peeking of methods under HCR or other uses. Calls to this helper should
@@ -357,16 +357,16 @@ class SymbolReferenceTable
       atomicCompareAndSwapReturnValueSymbol,
 
       /** \brief
-       *  
+       *
        * These symbols represent placeholder calls for profiling value which will be lowered into trees later.
-       * 
+       *
        * \code
        *    call <jProfileValue/jProfileValueWithNullCHK>
        *       <value to be profiled>
        *       <table address>
        * \endcode
        */
-      jProfileValueSymbol, 
+      jProfileValueSymbol,
       jProfileValueWithNullCHKSymbol,
 
       /** \brief
@@ -495,7 +495,7 @@ class SymbolReferenceTable
    TR::SymbolReference * getSymRef(int32_t i) { return baseArray.element(i); }
 
    TR::SymbolReference * createRuntimeHelper(TR_RuntimeHelper index, bool canGCandReturn, bool canGCandExcept, bool preservesAllRegisters);
-   TR::SymbolReference * findOrCreateRuntimeHelper(TR_RuntimeHelper index, bool canGCandReturn, bool canGCandExcept, bool preservesAllRegisters);
+   TR::SymbolReference * findOrCreateRuntimeHelper(TR_RuntimeHelper index, bool canGCandReturn = false, bool canGCandExcept = false, bool preservesAllRegisters = false);
 
    TR::SymbolReference * findOrCreateCodeGenInlinedHelper(CommonNonhelperSymbol index);
    TR::SymbolReference * findOrCreateJProfileValuePlaceHolderSymbolRef();
