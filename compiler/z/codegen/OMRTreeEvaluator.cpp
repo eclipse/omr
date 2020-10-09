@@ -3051,7 +3051,7 @@ generateS390CompareAndBranchOpsHelper(TR::Node * node, TR::CodeGenerator * cg, T
       TR_S390BinaryCommutativeAnalyser temp(cg);
       TR_ASSERT_FATAL(firstChild->getDataType() == secondChild->getDataType(), "Data type of firstChild (%s) and secondChild (%s) should match for generating compare and branch", firstChild->getDataType().toString(), secondChild->getDataType().toString());
 
-      // On 64-Bit platforms with compressed references it is possible that one (or both) of the children of the 
+      // On 64-Bit platforms with compressed references it is possible that one (or both) of the children of the
       // compare is loading a class from the object (VFT symbol). This symbol is specially treated within the JIT at
       // the moment because it is an `aloadi` which loads a 32-bit value (64-bit compressed references) and zero
       // extends it to a 64-bit address. Unfortunately the generic analyzers used below are unaware of this fact
@@ -6122,7 +6122,7 @@ OMR::Z::TreeEvaluator::bstoreEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    // If the only consumer is the bstore, then don't bother extending
    //
    else if (valueChild->getReferenceCount() == 1 && valueChild->getRegister() == NULL &&
-               (valueChild->getOpCodeValue() == TR::bload || 
+               (valueChild->getOpCodeValue() == TR::bload ||
                 valueChild->getOpCodeValue() == TR::bloadi     ))
       {
       sourceRegister = cg->allocateRegister();
@@ -10138,7 +10138,7 @@ OMR::Z::TreeEvaluator::arraytranslateAndTestEvaluator(TR::Node * node, TR::CodeG
          // At first, load up the branch address into raReg, because
          // to ensure that no weird spilling happens if the code decides it needs
          // to allocate a register at this point for the literal pool base address.
-         intptr_t helper = (intptr_t) cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayTranslateAndTestHelper, false, false, false)->getMethodAddress();
+         intptr_t helper = (intptr_t) cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390arrayTranslateAndTestHelper)->getMethodAddress();
 
          TR::LabelSymbol * labelEntryElementChar = generateLabelSymbol(cg);
          TR::Instruction * cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelEntryElementChar);
@@ -11961,7 +11961,7 @@ OMR::Z::TreeEvaluator::long2StringEvaluator(TR::Node * node, TR::CodeGenerator *
    // At first, load up the branch address into raReg, because
    // to ensure that no weird spilling happens if the code decides it needs
    // to allocate a register at this point for the literal pool base address.
-   intptr_t helper = (intptr_t) cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390long2StringHelper,false,false,false)->getMethodAddress();
+   intptr_t helper = (intptr_t) cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390long2StringHelper)->getMethodAddress();
    genLoadAddressConstant(cg, node, helper, raReg);
 
    TR::MemoryReference * workTopMR = generateS390MemoryReference(workReg, 0, cg);

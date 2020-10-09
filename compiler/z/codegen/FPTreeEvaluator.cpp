@@ -874,7 +874,7 @@ OMR::Z::TreeEvaluator::floatRemHelper(TR::Node * node, TR::CodeGenerator * cg)
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, labelOK);        // it is not < +0
       generateRRInstruction(cg, TR::InstOpCode::LCEBR, node, targetRegister, targetRegister); // negate answer to be -0
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelOK);        // it is not < +0
-      TR::SymbolReference *helperCallSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitMathHelperFREM, false, false, false);
+      TR::SymbolReference *helperCallSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitMathHelperFREM);
       callNode = TR::Node::createWithSymRef(node, TR::fcall, 2, helperCallSymRef);
       }
    else
@@ -890,7 +890,7 @@ OMR::Z::TreeEvaluator::floatRemHelper(TR::Node * node, TR::CodeGenerator * cg)
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, labelOK);        // it is not < +0
       generateRRInstruction(cg, TR::InstOpCode::LCDBR, node, targetRegister, targetRegister); // negate answer to be -0
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelOK);        // it is not < +0
-      TR::SymbolReference *helperCallSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitMathHelperDREM, false, false, false);
+      TR::SymbolReference *helperCallSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitMathHelperDREM);
       callNode = TR::Node::createWithSymRef(node, TR::dcall, 2, helperCallSymRef);
       }
 
