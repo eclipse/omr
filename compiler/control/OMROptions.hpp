@@ -234,7 +234,7 @@ enum TR_CompilationOptions
    TR_EnableYieldVMAccess                 = 0x02000000 + 4,
    TR_DisableNoVMAccess                   = 0x04000000 + 4,
    TR_DisableStoreSinking                 = 0x08000000 + 4,
-   TR_EnableJVMPILineNumbers              = 0x10000000 + 4,
+   // Available                           = 0x10000000 + 4,
    TR_HWProfileDeleteEmptyBlocks          = 0x20000000 + 4,
    TR_DisableLiveMonitorMetadata          = 0x40000000 + 4,
    TR_DisableMonitorOpts                  = 0x80000000 + 4,
@@ -333,7 +333,7 @@ enum TR_CompilationOptions
    TR_EnableLowerCompilationLimitsDecisionMaking
                                           = 0x00000020 + 8,
    TR_DisableDirectToJNI                  = 0x00000040 + 8,
-   TR_OldJVMPI                            = 0x00000080 + 8,
+   // Available                           = 0x00000080 + 8,
    TR_EmitExecutableELFFile               = 0x00000100 + 8,
    TR_JITServerFollowRemoteCompileWithLocalCompile = 0x00000200 + 8,
    TR_EnableClassChainValidationCaching   = 0x00000800 + 8,
