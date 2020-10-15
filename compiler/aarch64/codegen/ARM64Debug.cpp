@@ -1220,7 +1220,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64ZeroSrc1ImmInstruction *instr)
          if (decodeBitMasks(n, immr, imms, immediate))
             {
             done = true;
-            trfprintf(pOutFile, "%tstimmw \t");
+            trfprintf(pOutFile, "tstimmw \t");
             print(pOutFile, instr->getSource1Register(), TR_WordReg);
             trfprintf(pOutFile, ", 0x%lx", immediate);
             }
