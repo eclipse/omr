@@ -161,6 +161,8 @@ MM_ScavengerStats::clear(bool firstIncrement)
 	_acquireScanListCount = 0;
 	_acquireListLockCount = 0;
 	_aliasToCopyCacheCount = 0;
+	_arraySplitCount = 0;
+	_arraySplitAmount = 0;
 	_workStallCount = 0;
 	_completeStallCount = 0;
 	_syncStallCount = 0;
