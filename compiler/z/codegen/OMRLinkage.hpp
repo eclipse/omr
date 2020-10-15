@@ -359,13 +359,13 @@ enum TR_DispatchType
 
    int64_t killAndAssignRegister(int64_t killMask, TR::RegisterDependencyConditions * deps,
       TR::Register ** virtualReg, TR::RealRegister::RegNum regNum,
-      TR::CodeGenerator * codeGen, bool isAllocate=false, bool isDummy=false);
+      TR::CodeGenerator * cg, bool isAllocate=false, bool isDummy=false);
 
    int64_t killAndAssignRegister(int64_t killMask, TR::RegisterDependencyConditions * deps,
       TR::Register ** virtualReg, TR::RealRegister* realReg,
-      TR::CodeGenerator * codeGen, bool isAllocate=false, bool isDummy=false);
+      TR::CodeGenerator * cg, bool isAllocate=false, bool isDummy=false);
 
-   virtual void generateDispatchReturnLable(TR::Node * callNode, TR::CodeGenerator * codeGen,
+   virtual void generateDispatchReturnLable(TR::Node * callNode, TR::CodeGenerator * cg,
 			TR::RegisterDependencyConditions * &deps, TR::Register * javaReturnRegister,bool hasGlRegDeps, TR::Node *GlobalRegDeps);
    virtual TR::Register * buildNativeDispatch(TR::Node * callNode, TR_DispatchType dispatchType);
    virtual TR::Register * buildNativeDispatch(TR::Node * callNode, TR_DispatchType dispatchType,

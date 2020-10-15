@@ -202,7 +202,7 @@ class OMR_EXTENSIBLE CodeCacheConfig
    bool _doSanityChecks;
    bool _codeCacheFreeBlockRecylingEnabled;
 
-   CodeCacheCodeGenCallbacks _mccCallbacks;              /*!< codeGen call backs */
+   CodeCacheCodeGenCallbacks _mccCallbacks;              /*!< cg call backs */
 
    bool _emitExecutableELF;                  /*!< emit code cache as ELF object on shutdown */
    bool _emitRelocatableELF;

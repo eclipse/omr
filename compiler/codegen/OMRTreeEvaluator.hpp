@@ -41,7 +41,7 @@ namespace TR { class SymbolReference; }
 namespace TR { class CodeGenerator; }
 namespace TR { class Register; }
 
-typedef TR::Register *(* TR_TreeEvaluatorFunctionPointer)(TR::Node *node, TR::CodeGenerator *codeGen);
+typedef TR::Register *(* TR_TreeEvaluatorFunctionPointer)(TR::Node *node, TR::CodeGenerator *cg);
 
 namespace OMR
 {

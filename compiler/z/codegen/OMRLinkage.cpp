@@ -100,8 +100,8 @@ extern bool storeHelperImmediateInstruction(TR::Node * valueChild, TR::CodeGener
 // TR::S390Linkage member functions
 ////////////////////////////////////////////////////////////////////////////////
 
-OMR::Z::Linkage::Linkage(TR::CodeGenerator * codeGen)
-   : OMR::Linkage(codeGen),
+OMR::Z::Linkage::Linkage(TR::CodeGenerator * cg)
+   : OMR::Linkage(cg),
       _explicitLinkageType(TR_S390LinkageDefault), _linkageType(TR_None), _stackSizeCheckNeeded(true), _raContextSaveNeeded(true),
       _integerReturnRegister(TR::RealRegister::NoReg),
       _floatReturnRegister(TR::RealRegister::NoReg),
@@ -135,8 +135,8 @@ OMR::Z::Linkage::Linkage(TR::CodeGenerator * codeGen)
  * convention.
  * Even though this method is common, its implementation is machine-specific.
  */
-OMR::Z::Linkage::Linkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
-   : OMR::Linkage(codeGen),
+OMR::Z::Linkage::Linkage(TR::CodeGenerator * cg,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
+   : OMR::Linkage(cg),
       _explicitLinkageType(elc), _linkageType(lc), _stackSizeCheckNeeded(true), _raContextSaveNeeded(true),
       _integerReturnRegister(TR::RealRegister::NoReg),
       _floatReturnRegister(TR::RealRegister::NoReg),
@@ -2351,12 +2351,12 @@ OMR::Z::Linkage::storeLongDoubleArgumentOnStack(TR::Node * callNode, TR::DataTyp
 int64_t
 OMR::Z::Linkage::killAndAssignRegister(int64_t killMask, TR::RegisterDependencyConditions * deps,
    TR::Register ** virtualRegPtr, TR::RealRegister::RegNum regNum,
-   TR::CodeGenerator * codeGen, bool isAllocate, bool isDummy)
+   TR::CodeGenerator * cg, bool isAllocate, bool isDummy)
    {
    TR::Register * depVirReg = deps->searchPostConditionRegister(regNum);
    if (depVirReg)
       {
-      if (*virtualRegPtr) codeGen->stopUsingRegister(*virtualRegPtr);
+      if (*virtualRegPtr) cg->stopUsingRegister(*virtualRegPtr);
       *virtualRegPtr = depVirReg;
       return killMask;
       }
@@ -2376,7 +2376,7 @@ OMR::Z::Linkage::killAndAssignRegister(int64_t killMask, TR::RegisterDependencyC
 
       deps->addPostCondition(*virtualRegPtr, regNum, DefinesDependentRegister);
       if (isAllocate)
-         codeGen->stopUsingRegister(*virtualRegPtr);
+         cg->stopUsingRegister(*virtualRegPtr);
 
       if (isDummy)
          {
@@ -2393,24 +2393,24 @@ OMR::Z::Linkage::killAndAssignRegister(int64_t killMask, TR::RegisterDependencyC
 int64_t
 OMR::Z::Linkage::killAndAssignRegister(int64_t killMask, TR::RegisterDependencyConditions * deps,
    TR::Register ** virtualRegPtr, TR::RealRegister* realReg,
-   TR::CodeGenerator * codeGen, bool isAllocate, bool isDummy)
+   TR::CodeGenerator * cg, bool isAllocate, bool isDummy)
    {
-   return self()->killAndAssignRegister(killMask, deps, virtualRegPtr, realReg->getRegisterNumber(), codeGen, isAllocate, isDummy );
+   return self()->killAndAssignRegister(killMask, deps, virtualRegPtr, realReg->getRegisterNumber(), cg, isAllocate, isDummy );
    }
 
 
-void OMR::Z::Linkage::generateDispatchReturnLable(TR::Node * callNode, TR::CodeGenerator * codeGen, TR::RegisterDependencyConditions * &deps,
+void OMR::Z::Linkage::generateDispatchReturnLable(TR::Node * callNode, TR::CodeGenerator * cg, TR::RegisterDependencyConditions * &deps,
       TR::Register * javaReturnRegister, bool hasGlRegDeps, TR::Node *GlobalRegDeps)
    {
    TR::LabelSymbol * endOfDirectToJNILabel = generateLabelSymbol(self()->cg());
    TR::RegisterDependencyConditions * postDeps = new (self()->trHeapMemory())
                TR::RegisterDependencyConditions(NULL, deps->getPostConditions(), 0, deps->getAddCursorForPost(), self()->cg());
 
-   generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, endOfDirectToJNILabel, postDeps);
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, endOfDirectToJNILabel, postDeps);
 
 #ifdef J9_PROJECT_SPECIFIC
-   if (codeGen->getSupportsRuntimeInstrumentation())
-      TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(codeGen, TR::InstOpCode::RION, callNode);
+   if (cg->getSupportsRuntimeInstrumentation())
+      TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg, TR::InstOpCode::RION, callNode);
 #endif
 
    callNode->setRegister(javaReturnRegister);

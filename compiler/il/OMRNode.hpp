@@ -891,7 +891,7 @@ public:
    TR::Register *  setRegister(TR::Register *reg);
    void *          unsetRegister();
 
-   int32_t         getEvaluationPriority(TR::CodeGenerator *codeGen);
+   int32_t         getEvaluationPriority(TR::CodeGenerator *cg);
    int32_t         setEvaluationPriority(int32_t p);
 
    /**

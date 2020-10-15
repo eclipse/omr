@@ -37,11 +37,11 @@ protected:
    LabelSymbol() :
       OMR::LabelSymbolConnector() { }
 
-   LabelSymbol(TR::CodeGenerator *codeGen) :
-      OMR::LabelSymbolConnector(codeGen) { }
+   LabelSymbol(TR::CodeGenerator *cg) :
+      OMR::LabelSymbolConnector(cg) { }
 
-   LabelSymbol(TR::CodeGenerator *codeGen, TR::Block *labb):
-      OMR::LabelSymbolConnector(codeGen, labb) { }
+   LabelSymbol(TR::CodeGenerator *cg, TR::Block *labb):
+      OMR::LabelSymbolConnector(cg, labb) { }
 
 private:
 

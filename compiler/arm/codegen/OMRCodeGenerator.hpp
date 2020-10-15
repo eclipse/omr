@@ -47,7 +47,7 @@ namespace TR { class Register; }
 extern TR::Instruction *armLoadConstant(TR::Node     *node,
                                     int32_t         value,
                                     TR::Register    *targetRegister,
-                                    TR::CodeGenerator *codeGen,
+                                    TR::CodeGenerator *cg,
                                     TR::Instruction *cursor=NULL);
 
 extern TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg,
