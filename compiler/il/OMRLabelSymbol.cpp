@@ -79,7 +79,7 @@ OMR::LabelSymbol::LabelSymbol() :
       comp->getDebug()->newLabelSymbol(self());
    }
 
-OMR::LabelSymbol::LabelSymbol(TR::CodeGenerator *codeGen) :
+OMR::LabelSymbol::LabelSymbol(TR::CodeGenerator *cg) :
    TR::Symbol(),
    _instruction(NULL),
    _codeLocation(NULL),
@@ -93,7 +93,7 @@ OMR::LabelSymbol::LabelSymbol(TR::CodeGenerator *codeGen) :
       comp->getDebug()->newLabelSymbol(self());
    }
 
-OMR::LabelSymbol::LabelSymbol(TR::CodeGenerator *codeGen, TR::Block *labb) :
+OMR::LabelSymbol::LabelSymbol(TR::CodeGenerator *cg, TR::Block *labb) :
    TR::Symbol(),
    _instruction(NULL),
    _codeLocation(NULL),

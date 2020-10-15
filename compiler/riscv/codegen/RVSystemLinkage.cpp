@@ -424,8 +424,8 @@ TR::RVSystemLinkage::createPrologue(TR::Instruction *cursor)
 void
 TR::RVSystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::ParameterSymbol> &parmList)
    {
-   TR::CodeGenerator *codeGen = cg();
-   TR::Machine *machine = codeGen->machine();
+   TR::CodeGenerator *cg = cg();
+   TR::Machine *machine = cg->machine();
    TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
    const TR::RVLinkageProperties& properties = getProperties();
    TR::RealRegister *sp = machine->getRealRegister(properties.getStackPointerRegister());
@@ -433,10 +433,10 @@ TR::RVSystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::ParameterS
    TR::Node *firstNode = comp()->getStartTree()->getNode();
 
    // allocate stack space
-   uint32_t frameSize = (uint32_t)codeGen->getFrameSizeInBytes();
+   uint32_t frameSize = (uint32_t)cg->getFrameSizeInBytes();
    if (VALID_ITYPE_IMM(frameSize))
       {
-      cursor = generateITYPE(TR::InstOpCode::_addi, firstNode, sp, sp, -frameSize, codeGen, cursor);
+      cursor = generateITYPE(TR::InstOpCode::_addi, firstNode, sp, sp, -frameSize, cg, cursor);
       }
    else
       {
@@ -446,8 +446,8 @@ TR::RVSystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::ParameterS
    // save link register (ra)
    if (machine->getLinkRegisterKilled())
       {
-      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, 0, codeGen);
-      cursor = generateSTORE(TR::InstOpCode::_sd, firstNode, stackSlot, ra, codeGen, cursor);
+      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, 0, cg);
+      cursor = generateSTORE(TR::InstOpCode::_sd, firstNode, stackSlot, ra, cg, cursor);
       }
 
    // spill argument registers
@@ -458,7 +458,7 @@ TR::RVSystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::ParameterS
         parameter != NULL && (nextIntArgReg < getProperties().getNumIntArgRegs() || nextFltArgReg < getProperties().getNumFloatArgRegs());
         parameter = parameterIterator.getNext())
       {
-      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, parameter->getParameterOffset(), codeGen);
+      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, parameter->getParameterOffset(), cg);
       TR::InstOpCode::Mnemonic op;
 
       switch (parameter->getDataType())
@@ -471,7 +471,7 @@ TR::RVSystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::ParameterS
             if (nextIntArgReg < getProperties().getNumIntArgRegs())
                {
                op = (parameter->getSize() == 8) ? TR::InstOpCode::_sd : TR::InstOpCode::_sw;
-               cursor = generateSTORE(op, firstNode, stackSlot, machine->getRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::a0 + nextIntArgReg)), codeGen, cursor);
+               cursor = generateSTORE(op, firstNode, stackSlot, machine->getRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::a0 + nextIntArgReg)), cg, cursor);
                nextIntArgReg++;
                }
             else
@@ -484,7 +484,7 @@ TR::RVSystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::ParameterS
             if (nextFltArgReg < getProperties().getNumFloatArgRegs())
                {
                op = (parameter->getSize() == 8) ? TR::InstOpCode::_fsd : TR::InstOpCode::_fsw;
-               cursor = generateSTORE(op, firstNode, stackSlot, machine->getRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::fa0 + nextFltArgReg)), codeGen, cursor);
+               cursor = generateSTORE(op, firstNode, stackSlot, machine->getRealRegister((TR::RealRegister::RegNum)(TR::RealRegister::fa0 + nextFltArgReg)), cg, cursor);
                nextFltArgReg++;
                }
             else
@@ -503,7 +503,7 @@ TR::RVSystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::ParameterS
    // save callee-saved registers
    uint32_t offset = bodySymbol->getLocalMappingCursor();
    FOR_EACH_ASSIGNED_CALLEE_SAVED_REGISTER(machine,
-      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, offset, codeGen);
+      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, offset, cg);
       cursor = generateSTORE(TR::InstOpCode::_sd, firstNode, stackSlot, reg, cg(), cursor);
       offset += 8;)
    }
@@ -512,9 +512,9 @@ TR::RVSystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::ParameterS
 void
 TR::RVSystemLinkage::createEpilogue(TR::Instruction *cursor)
    {
-   TR::CodeGenerator *codeGen = cg();
+   TR::CodeGenerator *cg = cg();
    const TR::RVLinkageProperties& properties = getProperties();
-   TR::Machine *machine = codeGen->machine();
+   TR::Machine *machine = cg->machine();
    TR::Node *lastNode = cursor->getNode();
    TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
    TR::RealRegister *sp = machine->getRealRegister(properties.getStackPointerRegister());
@@ -523,7 +523,7 @@ TR::RVSystemLinkage::createEpilogue(TR::Instruction *cursor)
    // restore callee-saved registers
    uint32_t offset = bodySymbol->getLocalMappingCursor();
    FOR_EACH_ASSIGNED_CALLEE_SAVED_REGISTER(machine,
-      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, offset, codeGen);
+      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, offset, cg);
       cursor = generateLOAD(TR::InstOpCode::_ld, lastNode, reg, stackSlot, cg(), cursor);
       offset += 8;)
 
@@ -531,15 +531,15 @@ TR::RVSystemLinkage::createEpilogue(TR::Instruction *cursor)
    TR::RealRegister *ra = machine->getRealRegister(TR::RealRegister::ra);
    if (machine->getLinkRegisterKilled())
       {
-      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, 0, codeGen);
+      TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, 0, cg);
       cursor = generateLOAD(TR::InstOpCode::_ld, lastNode, ra, stackSlot, cg(), cursor);
       }
 
    // remove space for preserved registers
-   uint32_t frameSize = codeGen->getFrameSizeInBytes();
+   uint32_t frameSize = cg->getFrameSizeInBytes();
    if (VALID_ITYPE_IMM(frameSize))
       {
-      cursor = generateITYPE(TR::InstOpCode::_addi, lastNode, sp, sp, frameSize, codeGen, cursor);
+      cursor = generateITYPE(TR::InstOpCode::_addi, lastNode, sp, sp, frameSize, cg, cursor);
       }
    else
       {
@@ -547,7 +547,7 @@ TR::RVSystemLinkage::createEpilogue(TR::Instruction *cursor)
       }
 
    // return
-   cursor = generateITYPE(TR::InstOpCode::_jalr, lastNode, zero, ra, 0, codeGen, cursor);
+   cursor = generateITYPE(TR::InstOpCode::_jalr, lastNode, zero, ra, 0, cg, cursor);
    }
 
 

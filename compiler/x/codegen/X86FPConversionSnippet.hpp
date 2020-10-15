@@ -42,12 +42,12 @@ class X86FPConversionSnippet : public TR::X86RestartSnippet
 
    public:
 
-   X86FPConversionSnippet(TR::CodeGenerator   *codeGen,
+   X86FPConversionSnippet(TR::CodeGenerator   *cg,
                           TR::Node            *node,
                           TR::LabelSymbol      *restartlab,
                           TR::LabelSymbol      *snippetlab,
                           TR::SymbolReference *helperSymRef)
-      : TR::X86RestartSnippet(codeGen, node, restartlab, snippetlab, helperSymRef->canCauseGC()),
+      : TR::X86RestartSnippet(cg, node, restartlab, snippetlab, helperSymRef->canCauseGC()),
            _helperSymRef(helperSymRef)
       {
       // The code generation for this snippet does not allow a proper GC map
@@ -76,8 +76,8 @@ class X86FPConvertToIntSnippet  : public TR::X86FPConversionSnippet
                             TR::LabelSymbol            *snippetlab,
                             TR::SymbolReference       *helperSymRef,
                             TR::X86RegInstruction     *convertInstr,
-                            TR::CodeGenerator *codeGen)
-      : TR::X86FPConversionSnippet(codeGen, convertInstr->getNode(), restartlab, snippetlab, helperSymRef),
+                            TR::CodeGenerator *cg)
+      : TR::X86FPConversionSnippet(cg, convertInstr->getNode(), restartlab, snippetlab, helperSymRef),
            _convertInstruction(convertInstr) {}
 
    TR::X86RegInstruction  * getConvertInstruction() {return _convertInstruction;}
@@ -119,8 +119,8 @@ class X86FPConvertToLongSnippet  : public TR::X86FPConversionSnippet
                              TR::X86FPST0STiRegRegInstruction  *clobInstr,
                              TR::X86RegMemInstruction          *loadHighInstr,
                              TR::X86RegMemInstruction          *loadLowInstr,
-                             TR::CodeGenerator *codeGen)
-      : TR::X86FPConversionSnippet(codeGen, clobInstr->getNode(), restartlab, snippetlab, helperSymRef),
+                             TR::CodeGenerator *cg)
+      : TR::X86FPConversionSnippet(cg, clobInstr->getNode(), restartlab, snippetlab, helperSymRef),
            _loadHighInstruction(loadHighInstr),
            _loadLowInstruction(loadLowInstr),
            _clobberInstruction(clobInstr),

@@ -271,8 +271,8 @@ public:
       return newMap;
       }
 
-   void addToAtlas(TR::Instruction *instruction, TR::CodeGenerator *codeGen);
-   void addToAtlas(uint8_t *callSiteAddress, TR::CodeGenerator *codeGen);
+   void addToAtlas(TR::Instruction *instruction, TR::CodeGenerator *cg);
+   void addToAtlas(uint8_t *callSiteAddress, TR::CodeGenerator *cg);
 
 private:
    friend class TR_Debug;
