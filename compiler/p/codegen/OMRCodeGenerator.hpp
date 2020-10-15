@@ -477,7 +477,7 @@ public:
    int32_t arrayTranslateMinimumNumberOfElements(bool isByteSource, bool isByteTarget) { return 8; } //FIXME
    int32_t arrayTranslateAndTestMinimumNumberOfIterations() { return 8; } //FIXME
 
-   // Provide codeGen-specific hooks for class unloading events
+   // Provide cg-specific hooks for class unloading events
    static void ppcCGOnClassUnloading(void * loaderPtr);
 
    TR::Instruction *loadAddressConstantFixed(

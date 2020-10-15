@@ -61,8 +61,8 @@ class OMR_EXTENSIBLE RegisterPair : public TR::Register
    virtual TR::Register     *getLowOrder();
    virtual TR::Register     *getHighOrder();
 
-   TR::Register     *setLowOrder(TR::Register *lo, TR::CodeGenerator *codeGen);
-   TR::Register     *setHighOrder(TR::Register *ho, TR::CodeGenerator *codeGen);
+   TR::Register     *setLowOrder(TR::Register *lo, TR::CodeGenerator *cg);
+   TR::Register     *setHighOrder(TR::Register *ho, TR::CodeGenerator *cg);
 
    virtual TR::Register     *getRegister();
    virtual TR::RegisterPair *getRegisterPair();
