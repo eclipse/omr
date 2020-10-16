@@ -501,7 +501,7 @@ TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor)
 void
 TR::ARM64SystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::ParameterSymbol> &parmList)
    {
-   TR::CodeGenerator *cg = cg();
+   TR::CodeGenerator *cg = this->cg();
    TR::Machine *machine = cg->machine();
    TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
    const TR::ARM64LinkageProperties& properties = getProperties();
