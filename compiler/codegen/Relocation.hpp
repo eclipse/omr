@@ -476,6 +476,33 @@ class BeforeBinaryEncodingExternalRelocation : public TR::ExternalRelocation
 
    };
 
+
+/**
+ * @class CompiledMethodEntryAbsoluteRelocation
+ *
+ * @brief Relocation for updating some location with the absolute address
+ *        of the method entry to use when dispatched from compiled methods
+ */
+class CompiledMethodEntryAbsoluteRelocation : public TR::Relocation
+   {
+public:
+
+   /**
+    * @param[in] updateLocation : absolute memory address to apply the relocation to
+    */
+   CompiledMethodEntryAbsoluteRelocation(uint8_t *updateLocation) :
+      TR::Relocation(updateLocation) {}
+
+   /**
+    * @brief Apply the relocation at the address returned from \c getUpdateLocation()
+    *
+    * @param[in] cg : \c TR::CodeGenerator object
+    */
+   virtual void apply(TR::CodeGenerator *cg);
+
+   };
+
+
 }
 
 #endif
