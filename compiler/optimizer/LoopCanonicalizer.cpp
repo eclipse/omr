@@ -1847,6 +1847,9 @@ void TR_LoopCanonicalizer::canonicalizeDoWhileLoop(TR_RegionStructure *doWhileLo
  * \param node
  *    The node to examine.
  *
+ * \param loopEntryBlockNumber
+ *    Required to detect midloop exits
+ *
  * \return
  *    \c true if \p node is a trivial array operation; \c false otherwise.
  *
@@ -1878,21 +1881,21 @@ void TR_LoopCanonicalizer::canonicalizeDoWhileLoop(TR_RegionStructure *doWhileLo
  *    hence it is not a worth while trade-off. Performing such an induction variable elimination can result in degraded
  *    performance which could then be amplified by loop unrolling at later stages of the optimization strategy.
  */
-bool TR_LoopCanonicalizer::trivialArrayOperationCheck(TR::NodeChecklist &visited, TR::Node *node)
+bool TR_LoopCanonicalizer::trivialArrayOperationCheck(TR::NodeChecklist &visited, TR::Node *node, int32_t loopEntryBlockNumber)
    {
    if (visited.contains(node))
        return true;
 
    for (auto childIndex = 0; childIndex < node->getNumChildren(); ++childIndex)
         {
-        if (trivialArrayOperationCheck(visited, node->getChild(childIndex)))
+        if (trivialArrayOperationCheck(visited, node->getChild(childIndex), loopEntryBlockNumber))
             visited.add(node);
         else
             return false;
         }
 
    if (trace())
-      traceMsg(comp(), "Checking if opCode(%s) of node(%p) is part of the trivial array operation list\n", node->getOpCode().getName(), node);
+      traceMsg(comp(), "        Checking if opCode(%s) of node(%p) is part of the trivial array operation list\n", node->getOpCode().getName(), node);
 
    TR::ILOpCode opCode = node->getOpCode();
    if (!opCode.isAdd()
@@ -1904,8 +1907,9 @@ bool TR_LoopCanonicalizer::trivialArrayOperationCheck(TR::NodeChecklist &visited
        && !opCode.isIntegralConst()
        && !opCode.isBndCheck()
        && !opCode.isNullCheck()
-       && !(opCode.isAnchor() || opCode.isTreeTop())
-       && !(opCode.isBranch() && node->getBranchDestination()->getNode()->getBlock()->getFrequency() < MAX_WARM_BLOCK_COUNT))
+       && !(!opCode.isBranch() && (opCode.isAnchor() || opCode.isTreeTop()))
+       && !(opCode.isBranch() && loopEntryBlockNumber == node->getBranchDestination()->getEnclosingBlock()->getNumber()
+            && node->getBranchDestination()->getNode()->getBlock()->getFrequency() < MAX_WARM_BLOCK_COUNT))
       {
       if (trace())
          traceMsg(comp(), "OpCode is not part of the trivial array operation list\n");
@@ -2075,37 +2079,40 @@ void TR_LoopCanonicalizer::eliminateRedundantInductionVariablesFromLoop(TR_Regio
                   }
                }
             static bool disableTrivialArrayOperationCheck = (NULL != feGetEnv("TR_DisableTrivialArrayOperationCheck"));
-            bool isTrivialArrayOperation = false;
+            bool isTrivialArrayOperation = !disableTrivialArrayOperationCheck;
             if (!disableTrivialArrayOperationCheck && !naturalLoop->isAcyclic())
                {
                if (trace())
-                  traceMsg(comp(), "Starting the trivial array operation check");
+                  traceMsg(comp(), "Starting the trivial array operation check\n");
 
-               TR::Node *derivedInductionVarNode = NULL;
-               TR_RegionStructure::SubNodeList::iterator nodeIt = naturalLoop->begin();
-               TR_Structure *pred = toStructureSubGraphNode(*nodeIt)->getStructure();
-               for (TR::Block *derivedInductionVarBlock = pred->getEntryBlock();
-                    !derivedInductionVarNode && !derivedInductionVarBlock->isEndBlock();
-                    derivedInductionVarBlock = derivedInductionVarBlock->getNextBlock())
+               TR::NodeChecklist visited(comp());
+               for (TR::Block *loopBlock = naturalLoop->getEntryBlock();
+                  isTrivialArrayOperation && loopBlock;
+                  loopBlock = loopBlock->getNextBlock())
                   {
-                  for (TR::TreeTopIterator treeTopIt(derivedInductionVarBlock->getEntry(), comp());
-                       !derivedInductionVarNode && treeTopIt != derivedInductionVarBlock->getExit();
-                       treeTopIt.stepForward())
+                  if (trace())
+                     traceMsg(comp(), "Block(%d): %p\n", loopBlock->getNumber(), loopBlock);
+
+                  for (TR::TreeTop * loopTreeTop = loopBlock->getEntry();
+                     isTrivialArrayOperation && loopTreeTop->getEnclosingBlock() == loopBlock;
+                     loopTreeTop = loopTreeTop->getNextTreeTop())
                      {
-                     if (treeTopIt.currentNode()->getSymbol() == derivedInductionVar->getSymbol())
-                        derivedInductionVarNode = treeTopIt.currentNode();
+                     if (trace())
+                        traceMsg(comp(), "    TreeTop: %p\n", loopTreeTop);
+
+                     isTrivialArrayOperation = trivialArrayOperationCheck(visited, loopTreeTop->getNode(), naturalLoop->getEntryBlock()->getNumber());
+
+                     if (trace())
+                        traceMsg(comp(), "    Node(%s): %p -- isTrivialArrayOperation: %d \n", loopTreeTop->getNode()->getOpCode().getName(), loopTreeTop->getNode(), isTrivialArrayOperation);
                      }
                   }
 
-               TR_ASSERT_FATAL_WITH_NODE(derivedInductionVarNode, derivedInductionVarNode != NULL, "Unable to find node containing the derived induction variable");
-               TR::NodeChecklist visited(comp());
-               isTrivialArrayOperation = trivialArrayOperationCheck(visited, derivedInductionVarNode);
                if (isTrivialArrayOperation)
                   isTrivialArrayOperation = performTransformation(comp(), "%sSkipping induction variable elimination for %d as it is involved in a trivial array operation.\n", OPT_DETAILS, derivedInductionVar->getReferenceNumber());
                }
             else if (naturalLoop->isAcyclic())
                if (trace())
-                  traceMsg(comp(), "Skipping trivial array operation check because the region is acyclic");
+                  traceMsg(comp(), "Skipping trivial array operation check because the region is acyclic\n");
 
             _primaryIncrementedFirst = 0;
             _primaryInductionIncrementBlock = NULL;

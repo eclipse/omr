@@ -256,7 +256,7 @@ class TR_LoopCanonicalizer : public TR_LoopTransformer
    void rewritePostToPreIncrementTestInRegion(TR_RegionStructure *region);
    void rewritePostToPreIncrementTestInBlock(TR::Block *block);
 
-   bool trivialArrayOperationCheck(TR::NodeChecklist &visited, TR::Node *node);
+   bool trivialArrayOperationCheck(TR::NodeChecklist &visited, TR::Node *node, int32_t loopEntryBlockNumber);
 
    TR::SymbolReference *_symRefBeingReplaced;
    TR::SymbolReference *_primaryInductionVariable;
