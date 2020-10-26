@@ -298,12 +298,14 @@ static TR::Register *icmpHelper(TR::InstOpCode::Mnemonic op1, TR::InstOpCode::Mn
    return trgReg;
    }
 
+// also handles bcmpeq and scmpeq
 TR::Register *
 OMR::RV::TreeEvaluator::icmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(TR::InstOpCode::_sub, TR::InstOpCode::_sltiu, 1, node, false, cg);
    }
 
+// also handles bcmpne and scmpne
 TR::Register *
 OMR::RV::TreeEvaluator::icmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -336,54 +338,63 @@ OMR::RV::TreeEvaluator::icmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    }
 
+// also handles bcmplt and scmplt
 TR::Register *
 OMR::RV::TreeEvaluator::icmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(TR::InstOpCode::_slt, TR::InstOpCode::bad, 0, node, false, cg);
    }
 
+// also handles bcmple and scmple
 TR::Register *
 OMR::RV::TreeEvaluator::icmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(TR::InstOpCode::_slt, TR::InstOpCode::_sltiu, 1, node, true, cg);
    }
 
+// also handles bcmpge and scmpge
 TR::Register *
 OMR::RV::TreeEvaluator::icmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(TR::InstOpCode::_slt, TR::InstOpCode::_xori, 1, node, false, cg);
    }
 
+// also handles bcmpgt and scmpgt
 TR::Register *
 OMR::RV::TreeEvaluator::icmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(TR::InstOpCode::_slt, TR::InstOpCode::bad, 0, node, true, cg);
    }
 
+// also handles bucmplt and sucmplt
 TR::Register *
 OMR::RV::TreeEvaluator::iucmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(TR::InstOpCode::_sltu, TR::InstOpCode::bad, 0, node, false, cg);
    }
 
+// also handles bucmple and sucmple
 TR::Register *
 OMR::RV::TreeEvaluator::iucmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(TR::InstOpCode::_sltu, TR::InstOpCode::_xori, 1, node, true, cg);
    }
 
+// also handles bucmpge and sucmpge
 TR::Register *
 OMR::RV::TreeEvaluator::iucmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(TR::InstOpCode::_sltu, TR::InstOpCode::_xori, 1, node, false, cg);
    }
 
+// also handles bucmpgt and sucmpgt
 TR::Register *
 OMR::RV::TreeEvaluator::iucmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return icmpHelper(TR::InstOpCode::_sltu, TR::InstOpCode::bad, 0, node, true, cg);
    }
 
+// also handles acmpeq
 TR::Register *
 OMR::RV::TreeEvaluator::lcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -391,6 +402,7 @@ OMR::RV::TreeEvaluator::lcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return icmpeqEvaluator(node, cg);
    }
 
+// also handles acmpne
 TR::Register *
 OMR::RV::TreeEvaluator::lcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -398,6 +410,7 @@ OMR::RV::TreeEvaluator::lcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return icmpneEvaluator(node, cg);
    }
 
+// also handles acmplt
 TR::Register *
 OMR::RV::TreeEvaluator::lcmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -405,6 +418,7 @@ OMR::RV::TreeEvaluator::lcmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return icmpltEvaluator(node, cg);
    }
 
+// also handles acmpge
 TR::Register *
 OMR::RV::TreeEvaluator::lcmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -412,6 +426,7 @@ OMR::RV::TreeEvaluator::lcmpgeEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return icmpgeEvaluator(node, cg);
    }
 
+// also handles acmpgt
 TR::Register *
 OMR::RV::TreeEvaluator::lcmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -419,6 +434,7 @@ OMR::RV::TreeEvaluator::lcmpgtEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return icmpgtEvaluator(node, cg);
    }
 
+// also handles acmple
 TR::Register *
 OMR::RV::TreeEvaluator::lcmpleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {

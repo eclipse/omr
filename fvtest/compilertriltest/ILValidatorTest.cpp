@@ -83,8 +83,6 @@ INSTANTIATE_TEST_CASE_P(ILValidatorTest, IllformedTrees, ::testing::Values(
 class WellformedTrees : public TRTest::JitTest, public ::testing::WithParamInterface<std::string> {};
 
 TEST_P(WellformedTrees, CompileOnly) {
-    SKIP_ON_RISCV(MissingImplementation) << "Skipped in RISC-V because of missing implementation of acmpge";
-
     auto inputTrees = GetParam();
     auto trees = parseString(inputTrees.c_str());
 

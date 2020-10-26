@@ -273,32 +273,32 @@
     TR::TreeEvaluator::dcmpgeuEvaluator ,	// TR::dcmpgeu		// double compare if greater than or equal or unordered
     TR::TreeEvaluator::dcmpgtuEvaluator ,	// TR::dcmpgtu		// double compare if greater than or unordered
     TR::TreeEvaluator::dcmpleuEvaluator ,	// TR::dcmpleu		// double compare if less than or equal or unordered
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::acmpeqEvaluator ,	// TR::acmpeq		// address compare if equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::acmpneEvaluator ,	// TR::acmpne		// address compare if not equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::acmpltEvaluator ,	// TR::acmplt		// address compare if less than
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::acmpgeEvaluator ,	// TR::acmpge		// address compare if greater than or equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::acmpgtEvaluator ,	// TR::acmpgt		// address compare if greater than
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::acmpleEvaluator ,	// TR::acmple		// address compare if less than or equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::bcmpeqEvaluator ,	// TR::bcmpeq		// byte compare if equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::bcmpneEvaluator ,	// TR::bcmpne		// byte compare if not equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::bcmpltEvaluator ,	// TR::bcmplt		// byte compare if less than
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::bcmpgeEvaluator ,	// TR::bcmpge		// byte compare if greater than or equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::bcmpgtEvaluator ,	// TR::bcmpgt		// byte compare if greater than
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::bcmpleEvaluator ,	// TR::bcmple		// byte compare if less than or equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::bucmpltEvaluator ,	// TR::bucmplt		// unsigned byte compare if less than
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::bucmpgeEvaluator ,	// TR::bucmpge		// unsigned byte compare if greater than or equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::bucmpgtEvaluator ,	// TR::bucmpgt		// unsigned byte compare if greater than
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::bucmpleEvaluator ,	// TR::bucmple		// unsigned byte compare if less than or equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::scmpeqEvaluator ,	// TR::scmpeq		// short integer compare if equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::scmpneEvaluator ,	// TR::scmpne		// short integer compare if not equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::scmpltEvaluator ,	// TR::scmplt		// short integer compare if less than
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::scmpgeEvaluator ,	// TR::scmpge		// short integer compare if greater than or equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::scmpgtEvaluator ,	// TR::scmpgt		// short integer compare if greater than
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::scmpleEvaluator ,	// TR::scmple		// short integer compare if less than or equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::sucmpltEvaluator ,	// TR::sucmplt		// char compare if less than
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::sucmpgeEvaluator ,	// TR::sucmpge		// char compare if greater than or equal
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::sucmpgtEvaluator ,	// TR::sucmpgt		// char compare if greater than
-    TR::TreeEvaluator::unImpOpEvaluator ,        // TODO:RV: Enable when Implemented: TR::TreeEvaluator::sucmpleEvaluator ,	// TR::sucmple		// char compare if less than or equal
+    TR::TreeEvaluator::lcmpeqEvaluator ,	// TR::acmpeq		// address compare if equal
+    TR::TreeEvaluator::lcmpneEvaluator ,	// TR::acmpne		// address compare if not equal
+    TR::TreeEvaluator::lcmpltEvaluator ,	// TR::acmplt		// address compare if less than
+    TR::TreeEvaluator::lcmpgeEvaluator ,	// TR::acmpge		// address compare if greater than or equal
+    TR::TreeEvaluator::lcmpgtEvaluator ,	// TR::acmpgt		// address compare if greater than
+    TR::TreeEvaluator::lcmpleEvaluator ,	// TR::acmple		// address compare if less than or equal
+    TR::TreeEvaluator::icmpeqEvaluator ,	// TR::bcmpeq		// byte compare if equal
+    TR::TreeEvaluator::icmpneEvaluator ,	// TR::bcmpne		// byte compare if not equal
+    TR::TreeEvaluator::icmpltEvaluator ,	// TR::bcmplt		// byte compare if less than
+    TR::TreeEvaluator::icmpgeEvaluator ,	// TR::bcmpge		// byte compare if greater than or equal
+    TR::TreeEvaluator::icmpgtEvaluator ,	// TR::bcmpgt		// byte compare if greater than
+    TR::TreeEvaluator::icmpleEvaluator ,	// TR::bcmple		// byte compare if less than or equal
+    TR::TreeEvaluator::iucmpltEvaluator ,	// TR::bucmplt		// unsigned byte compare if less than
+    TR::TreeEvaluator::iucmpgeEvaluator ,	// TR::bucmpge		// unsigned byte compare if greater than or equal
+    TR::TreeEvaluator::iucmpgtEvaluator ,	// TR::bucmpgt		// unsigned byte compare if greater than
+    TR::TreeEvaluator::iucmpleEvaluator ,	// TR::bucmple		// unsigned byte compare if less than or equal
+    TR::TreeEvaluator::icmpeqEvaluator ,	// TR::scmpeq		// short integer compare if equal
+    TR::TreeEvaluator::icmpneEvaluator ,	// TR::scmpne		// short integer compare if not equal
+    TR::TreeEvaluator::icmpltEvaluator ,	// TR::scmplt		// short integer compare if less than
+    TR::TreeEvaluator::icmpgeEvaluator ,	// TR::scmpge		// short integer compare if greater than or equal
+    TR::TreeEvaluator::icmpgtEvaluator ,	// TR::scmpgt		// short integer compare if greater than
+    TR::TreeEvaluator::icmpleEvaluator ,	// TR::scmple		// short integer compare if less than or equal
+    TR::TreeEvaluator::iucmpltEvaluator ,	// TR::sucmplt		// char compare if less than
+    TR::TreeEvaluator::iucmpgeEvaluator ,	// TR::sucmpge		// char compare if greater than or equal
+    TR::TreeEvaluator::iucmpgtEvaluator ,	// TR::sucmpgt		// char compare if greater than
+    TR::TreeEvaluator::iucmpleEvaluator ,	// TR::sucmple		// char compare if less than or equal
     TR::TreeEvaluator::lcmpEvaluator, // TR::lcmp		// long compare (1 if child1 > child2; 0 if child1 == child2; -1 if child1 < child2)
     TR::TreeEvaluator::dcmplEvaluator ,	// TR::fcmpl		// float compare l (1 if child1 > child2; 0 if child1 == child2; -1 if child1 < child2 or unordered)
     TR::TreeEvaluator::dcmpgEvaluator ,	// TR::fcmpg		// float compare g (1 if child1 > child2 or unordered; 0 if child1 == child2; -1 if child1 < child2)
