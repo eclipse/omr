@@ -60,10 +60,10 @@ OMR::RegisterPair::getLowOrder()
    }
 
 TR::Register *
-OMR::RegisterPair::setLowOrder(TR::Register *lo, TR::CodeGenerator *codeGen)
+OMR::RegisterPair::setLowOrder(TR::Register *lo, TR::CodeGenerator *cg)
    {
-   if (!lo->isLive() && codeGen->getLiveRegisters(lo->getKind())!=NULL)
-      codeGen->getLiveRegisters(lo->getKind())->addRegister(lo);
+   if (!lo->isLive() && cg->getLiveRegisters(lo->getKind())!=NULL)
+      cg->getLiveRegisters(lo->getKind())->addRegister(lo);
 
    return (_lowOrder = lo);
    }
@@ -75,10 +75,10 @@ OMR::RegisterPair::getHighOrder()
    }
 
 TR::Register *
-OMR::RegisterPair::setHighOrder(TR::Register *ho, TR::CodeGenerator *codeGen)
+OMR::RegisterPair::setHighOrder(TR::Register *ho, TR::CodeGenerator *cg)
    {
-   if (!ho->isLive() && codeGen->getLiveRegisters(ho->getKind())!=NULL)
-      codeGen->getLiveRegisters(ho->getKind())->addRegister(ho);
+   if (!ho->isLive() && cg->getLiveRegisters(ho->getKind())!=NULL)
+      cg->getLiveRegisters(ho->getKind())->addRegister(ho);
 
    return (_highOrder = ho);
    }

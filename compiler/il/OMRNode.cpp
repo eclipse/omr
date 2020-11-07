@@ -4503,7 +4503,7 @@ OMR::Node::unsetRegister()
 
 
 int32_t
-OMR::Node::getEvaluationPriority(TR::CodeGenerator * codeGen)
+OMR::Node::getEvaluationPriority(TR::CodeGenerator * cg)
    {
    if (_unionA._register == 0) // not evaluated into register & priority unknown
       {
@@ -4512,7 +4512,7 @@ OMR::Node::getEvaluationPriority(TR::CodeGenerator * codeGen)
       // This way we don't need to resort to visit counts
       self()->setEvaluationPriority(0); // FIXME: remove this once we have
       // dealt with the issue of cycles in nodes
-      return self()->setEvaluationPriority(codeGen->getEvaluationPriority(self()));
+      return self()->setEvaluationPriority(cg->getEvaluationPriority(self()));
       }
    if ((uintptr_t)(_unionA._register) & 1) // evaluation priority
       return (uintptr_t)(_unionA._register) >> 1;

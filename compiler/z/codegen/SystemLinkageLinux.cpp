@@ -403,10 +403,10 @@ TR::S390zLinuxSystemLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethod
 void
 TR::S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node* callNode, TR::RegisterDependencyConditions* deps, intptr_t targetAddress, TR::Register* methodAddressReg, TR::Register* javaLitOffsetReg, TR::LabelSymbol* returnFromJNICallLabel, TR::Snippet* callDataSnippet, bool isJNIGCPoint)
    {
-   TR::CodeGenerator * codeGen = cg();
+   TR::CodeGenerator * cg = this->cg();
 
    TR::RegisterDependencyConditions * postDeps = new (trHeapMemory())
-      TR::RegisterDependencyConditions(NULL, deps->getPostConditions(), 0, deps->getAddCursorForPost(), cg());
+      TR::RegisterDependencyConditions(NULL, deps->getPostConditions(), 0, deps->getAddCursorForPost(), this->cg());
 
    TR::Register * systemReturnAddressRegister =
       deps->searchPostConditionRegister(getReturnAddressRegister());
@@ -420,15 +420,15 @@ TR::S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node* callNode, TR:
          {
          TR_ASSERT(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->isComputed(), "system linkage only supports computed indirect call for now %p\n", callNode);
          // get the address of the function descriptor
-         TR::Register *targetReg = codeGen->evaluate(callNode->getFirstChild());
-         generateRRInstruction(codeGen, TR::InstOpCode::BASR, callNode, systemReturnAddressRegister, targetReg, deps);
+         TR::Register *targetReg = cg->evaluate(callNode->getFirstChild());
+         generateRRInstruction(cg, TR::InstOpCode::BASR, callNode, systemReturnAddressRegister, targetReg, deps);
          }
       else
          {
          TR::SymbolReference *callSymRef = callNode->getSymbolReference();
          TR::Symbol *callSymbol = callSymRef->getSymbol();
          TR::Register * fpReg = systemReturnAddressRegister;
-         TR::Instruction * callInstr = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRASL, callNode, fpReg, callSymbol, callSymRef, codeGen);
+         TR::Instruction * callInstr = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRASL, callNode, fpReg, callSymbol, callSymRef, cg);
          callInstr->setDependencyConditions(deps);
          }
       }

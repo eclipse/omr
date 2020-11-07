@@ -43,7 +43,7 @@ class ARMSystemLinkage : public TR::Linkage
 
    public:
 
-   ARMSystemLinkage(TR::CodeGenerator *codeGen);
+   ARMSystemLinkage(TR::CodeGenerator *cg);
 
    virtual uint32_t getRightToLeft();
    virtual void mapStack(TR::ResolvedMethodSymbol *method);

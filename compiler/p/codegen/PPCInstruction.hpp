@@ -68,14 +68,14 @@ class PPCAlignmentNopInstruction : public TR::Instruction
       }
 
 public:
-   PPCAlignmentNopInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t alignment, TR::CodeGenerator *codeGen)
-      : TR::Instruction(op, n, codeGen)
+   PPCAlignmentNopInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t alignment, TR::CodeGenerator *cg)
+      : TR::Instruction(op, n, cg)
       {
       setAlignment(alignment);
       }
 
-   PPCAlignmentNopInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t alignment, TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : TR::Instruction(op, n, precedingInstruction, codeGen)
+   PPCAlignmentNopInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t alignment, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : TR::Instruction(op, n, precedingInstruction, cg)
       {
       setAlignment(alignment);
       }
@@ -103,43 +103,43 @@ public:
    // 3. Has a specified preceding instruction, or it does not.
 
    //Without relocation types here.
-   PPCImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t imm, TR::CodeGenerator *codeGen, uint32_t bf = 0)
-      : TR::Instruction(op, n, codeGen), _sourceImmediate(imm), _reloKind(TR_NoRelocation), _symbolReference(NULL)
+   PPCImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t imm, TR::CodeGenerator *cg, uint32_t bf = 0)
+      : TR::Instruction(op, n, cg), _sourceImmediate(imm), _reloKind(TR_NoRelocation), _symbolReference(NULL)
       {
       }
 
    PPCImmInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, uint32_t       imm,
-                        TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen, uint32_t bf = 0)
-      : TR::Instruction(op, n, precedingInstruction, codeGen), _sourceImmediate(imm), _reloKind(TR_NoRelocation), _symbolReference(NULL)
+                        TR::Instruction *precedingInstruction, TR::CodeGenerator *cg, uint32_t bf = 0)
+      : TR::Instruction(op, n, precedingInstruction, cg), _sourceImmediate(imm), _reloKind(TR_NoRelocation), _symbolReference(NULL)
       {
       }
 
    //With relocation types here.
    PPCImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t imm, TR_ExternalRelocationTargetKind relocationKind,
-                        TR::CodeGenerator *codeGen, uint32_t bf = 0)
-      : TR::Instruction(op, n, codeGen), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(NULL)
+                        TR::CodeGenerator *cg, uint32_t bf = 0)
+      : TR::Instruction(op, n, cg), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(NULL)
       {
       setNeedsAOTRelocation(true);
       }
 
    PPCImmInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, uint32_t imm, TR_ExternalRelocationTargetKind relocationKind,
-                        TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen, uint32_t bf = 0)
-      : TR::Instruction(op, n, precedingInstruction, codeGen), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(NULL)
+                        TR::Instruction *precedingInstruction, TR::CodeGenerator *cg, uint32_t bf = 0)
+      : TR::Instruction(op, n, precedingInstruction, cg), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(NULL)
       {
       setNeedsAOTRelocation(true);
       }
 
    //With relocation types and associated symbol references here.
    PPCImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t imm, TR_ExternalRelocationTargetKind relocationKind,
-                        TR::SymbolReference *sr, TR::CodeGenerator *codeGen, uint32_t bf = 0)
-      : TR::Instruction(op, n, codeGen), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(sr)
+                        TR::SymbolReference *sr, TR::CodeGenerator *cg, uint32_t bf = 0)
+      : TR::Instruction(op, n, cg), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(sr)
       {
       setNeedsAOTRelocation(true);
       }
 
    PPCImmInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, uint32_t imm, TR_ExternalRelocationTargetKind relocationKind,
-                        TR::SymbolReference *sr, TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen, uint32_t bf = 0)
-      : TR::Instruction(op, n, precedingInstruction, codeGen), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(sr)
+                        TR::SymbolReference *sr, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg, uint32_t bf = 0)
+      : TR::Instruction(op, n, precedingInstruction, cg), _sourceImmediate(imm), _reloKind(relocationKind), _symbolReference(sr)
       {
       setNeedsAOTRelocation(true);
       }
@@ -175,14 +175,14 @@ class PPCImm2Instruction : public PPCImmInstruction
 
    public:
 
-   PPCImm2Instruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t imm, uint32_t imm2, TR::CodeGenerator *codeGen)
-      : PPCImmInstruction(op, n, imm, codeGen), _sourceImmediate2(imm2)
+   PPCImm2Instruction(TR::InstOpCode::Mnemonic op, TR::Node * n, uint32_t imm, uint32_t imm2, TR::CodeGenerator *cg)
+      : PPCImmInstruction(op, n, imm, cg), _sourceImmediate2(imm2)
       {
       }
 
    PPCImm2Instruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, uint32_t       imm, uint32_t imm2,
-                        TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCImmInstruction(op, n, imm, precedingInstruction, codeGen), _sourceImmediate2(imm2)
+                        TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : PPCImmInstruction(op, n, imm, precedingInstruction, cg), _sourceImmediate2(imm2)
       {
       }
 
@@ -201,15 +201,15 @@ class PPCSrc1Instruction : public PPCImmInstruction
    public:
 
    PPCSrc1Instruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, TR::Register   *sreg,
-                         uint32_t       imm, TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCImmInstruction(op, n, imm, precedingInstruction, codeGen),
+                         uint32_t       imm, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : PPCImmInstruction(op, n, imm, precedingInstruction, cg),
         _source1Register(sreg)
       {
       useRegister(sreg);
       }
 
-   PPCSrc1Instruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register *sreg, uint32_t imm, TR::CodeGenerator *codeGen)
-      : PPCImmInstruction(op, n, imm, codeGen), _source1Register(sreg)
+   PPCSrc1Instruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register *sreg, uint32_t imm, TR::CodeGenerator *cg)
+      : PPCImmInstruction(op, n, imm, cg), _source1Register(sreg)
       {
       useRegister(sreg);
       }
@@ -242,21 +242,21 @@ class PPCDepInstruction : public TR::Instruction
    public:
 
    PPCDepInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n,
-      TR::RegisterDependencyConditions *cond, TR::CodeGenerator *codeGen)
-      : TR::Instruction(op, n, codeGen), _conditions(cond)
+      TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg)
+      : TR::Instruction(op, n, cg), _conditions(cond)
       {
       if( op != TR::InstOpCode::assocreg )
-         cond->bookKeepingRegisterUses(this, codeGen);
+         cond->bookKeepingRegisterUses(this, cg);
       }
 
    PPCDepInstruction(TR::InstOpCode::Mnemonic                       op,
                         TR::Node                            *n,
                         TR::RegisterDependencyConditions *cond,
-                        TR::Instruction                     *precedingInstruction, TR::CodeGenerator *codeGen)
-      : TR::Instruction(op, n, precedingInstruction, codeGen), _conditions(cond)
+                        TR::Instruction                     *precedingInstruction, TR::CodeGenerator *cg)
+      : TR::Instruction(op, n, precedingInstruction, cg), _conditions(cond)
       {
       if( op != TR::InstOpCode::assocreg )
-         cond->bookKeepingRegisterUses(this, codeGen);
+         cond->bookKeepingRegisterUses(this, cg);
       }
 
    virtual Kind getKind() { return IsDep; }
@@ -300,8 +300,8 @@ class PPCLabelInstruction : public TR::Instruction
 
    public:
 
-   PPCLabelInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::LabelSymbol *sym, TR::CodeGenerator *codeGen)
-      : TR::Instruction(op, n, codeGen), _symbol(sym)
+   PPCLabelInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::LabelSymbol *sym, TR::CodeGenerator *cg)
+      : TR::Instruction(op, n, cg), _symbol(sym)
       {
       if (sym!=NULL && op==TR::InstOpCode::label)
          sym->setInstruction(this);
@@ -310,8 +310,8 @@ class PPCLabelInstruction : public TR::Instruction
       }
 
    PPCLabelInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, TR::LabelSymbol *sym,
-                          TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : TR::Instruction(op, n, precedingInstruction, codeGen), _symbol(sym)
+                          TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : TR::Instruction(op, n, precedingInstruction, cg), _symbol(sym)
       {
       if (sym!=NULL && op==TR::InstOpCode::label)
          sym->setInstruction(this);
@@ -348,21 +348,21 @@ class PPCDepLabelInstruction : public PPCLabelInstruction
    PPCDepLabelInstruction(TR::InstOpCode::Mnemonic                       op,
                              TR::Node                            *n,
                              TR::LabelSymbol                      *sym,
-                             TR::RegisterDependencyConditions *cond, TR::CodeGenerator *codeGen)
-      : PPCLabelInstruction(op, n, sym, codeGen), _conditions(cond)
+                             TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg)
+      : PPCLabelInstruction(op, n, sym, cg), _conditions(cond)
       {
-      cond->bookKeepingRegisterUses(this, codeGen);
+      cond->bookKeepingRegisterUses(this, cg);
       }
 
    PPCDepLabelInstruction(TR::InstOpCode::Mnemonic                        op,
                              TR::Node                             *n,
                              TR::LabelSymbol                       *sym,
                              TR::RegisterDependencyConditions  *cond,
-                             TR::Instruction             *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCLabelInstruction(op, n, sym, precedingInstruction, codeGen),
+                             TR::Instruction             *precedingInstruction, TR::CodeGenerator *cg)
+      : PPCLabelInstruction(op, n, sym, precedingInstruction, cg),
         _conditions(cond)
       {
-      cond->bookKeepingRegisterUses(this, codeGen);
+      cond->bookKeepingRegisterUses(this, cg);
       }
 
    virtual Kind getKind() { return IsDepLabel; }
@@ -411,8 +411,8 @@ class PPCConditionalBranchInstruction : public PPCLabelInstruction
    public:
 
    PPCConditionalBranchInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, TR::LabelSymbol *sym,
-                                      TR::Register    *cr, TR::CodeGenerator *codeGen, bool likeliness)
-      : PPCLabelInstruction(op, n, sym, codeGen), _conditionRegister(cr),
+                                      TR::Register    *cr, TR::CodeGenerator *cg, bool likeliness)
+      : PPCLabelInstruction(op, n, sym, cg), _conditionRegister(cr),
         _estimatedBinaryLocation(0),  _farRelocation(false),_exceptBranch(false),
         _haveHint(true),  _likeliness(likeliness)
       {
@@ -420,8 +420,8 @@ class PPCConditionalBranchInstruction : public PPCLabelInstruction
       }
 
    PPCConditionalBranchInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, TR::LabelSymbol *sym,
-                                      TR::Register    *cr, TR::CodeGenerator *codeGen)
-      : PPCLabelInstruction(op, n, sym, codeGen), _conditionRegister(cr),
+                                      TR::Register    *cr, TR::CodeGenerator *cg)
+      : PPCLabelInstruction(op, n, sym, cg), _conditionRegister(cr),
         _estimatedBinaryLocation(0),  _farRelocation(false),_exceptBranch(false),
         _haveHint(false), _likeliness(false)
       {
@@ -430,8 +430,8 @@ class PPCConditionalBranchInstruction : public PPCLabelInstruction
 
    PPCConditionalBranchInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, TR::LabelSymbol *sym,
                                       TR::Register    *cr,
-                                      TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen, bool likeliness)
-      : PPCLabelInstruction(op, n, sym, precedingInstruction, codeGen),
+                                      TR::Instruction *precedingInstruction, TR::CodeGenerator *cg, bool likeliness)
+      : PPCLabelInstruction(op, n, sym, precedingInstruction, cg),
         _conditionRegister(cr), _estimatedBinaryLocation(0),_exceptBranch(false),
         _farRelocation(false), _haveHint(true), _likeliness(likeliness)
       {
@@ -440,8 +440,8 @@ class PPCConditionalBranchInstruction : public PPCLabelInstruction
 
    PPCConditionalBranchInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, TR::LabelSymbol *sym,
                                       TR::Register    *cr,
-                                      TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCLabelInstruction(op, n, sym, precedingInstruction, codeGen),
+                                      TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : PPCLabelInstruction(op, n, sym, precedingInstruction, cg),
         _conditionRegister(cr), _estimatedBinaryLocation(0),_exceptBranch(false),
         _farRelocation(false), _haveHint(false), _likeliness(false)
       {
@@ -495,10 +495,10 @@ class PPCDepConditionalBranchInstruction : public PPCConditionalBranchInstructio
                              TR::Node                             *n,
                              TR::LabelSymbol                       *sym,
                              TR::Register                         *cr,
-                             TR::RegisterDependencyConditions  *cond, TR::CodeGenerator *codeGen, bool likeliness)
-      : PPCConditionalBranchInstruction(op, n, sym, cr, codeGen, likeliness), _conditions(cond)
+                             TR::RegisterDependencyConditions  *cond, TR::CodeGenerator *cg, bool likeliness)
+      : PPCConditionalBranchInstruction(op, n, sym, cr, cg, likeliness), _conditions(cond)
       {
-      cond->bookKeepingRegisterUses(this, codeGen);
+      cond->bookKeepingRegisterUses(this, cg);
       }
 
    PPCDepConditionalBranchInstruction(
@@ -506,10 +506,10 @@ class PPCDepConditionalBranchInstruction : public PPCConditionalBranchInstructio
                              TR::Node                             *n,
                              TR::LabelSymbol                       *sym,
                              TR::Register                         *cr,
-                             TR::RegisterDependencyConditions  *cond, TR::CodeGenerator *codeGen)
-      : PPCConditionalBranchInstruction(op, n, sym, cr, codeGen), _conditions(cond)
+                             TR::RegisterDependencyConditions  *cond, TR::CodeGenerator *cg)
+      : PPCConditionalBranchInstruction(op, n, sym, cr, cg), _conditions(cond)
       {
-      cond->bookKeepingRegisterUses(this, codeGen);
+      cond->bookKeepingRegisterUses(this, cg);
       }
 
    PPCDepConditionalBranchInstruction(
@@ -518,11 +518,11 @@ class PPCDepConditionalBranchInstruction : public PPCConditionalBranchInstructio
                              TR::LabelSymbol                      *sym,
                              TR::Register                        *cr,
                              TR::RegisterDependencyConditions *cond,
-                             TR::Instruction                     *precedingInstruction, TR::CodeGenerator *codeGen, bool likeliness)
-      : PPCConditionalBranchInstruction(op, n, sym, cr, precedingInstruction, codeGen, likeliness),
+                             TR::Instruction                     *precedingInstruction, TR::CodeGenerator *cg, bool likeliness)
+      : PPCConditionalBranchInstruction(op, n, sym, cr, precedingInstruction, cg, likeliness),
         _conditions(cond)
       {
-      cond->bookKeepingRegisterUses(this, codeGen);
+      cond->bookKeepingRegisterUses(this, cg);
       }
 
    PPCDepConditionalBranchInstruction(
@@ -531,11 +531,11 @@ class PPCDepConditionalBranchInstruction : public PPCConditionalBranchInstructio
                              TR::LabelSymbol                      *sym,
                              TR::Register                        *cr,
                              TR::RegisterDependencyConditions *cond,
-                             TR::Instruction                     *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCConditionalBranchInstruction(op, n, sym, cr, precedingInstruction, codeGen),
+                             TR::Instruction                     *precedingInstruction, TR::CodeGenerator *cg)
+      : PPCConditionalBranchInstruction(op, n, sym, cr, precedingInstruction, cg),
         _conditions(cond)
       {
-      cond->bookKeepingRegisterUses(this, codeGen);
+      cond->bookKeepingRegisterUses(this, cg);
       }
 
    virtual Kind getKind() { return IsDepConditionalBranch; }
@@ -578,12 +578,12 @@ class PPCAdminInstruction : public TR::Instruction
 
    public:
 
-   PPCAdminInstruction(TR::InstOpCode::Mnemonic op, TR::Node *n, TR::Node * fenceNode, TR::CodeGenerator *codeGen) :
-      TR::Instruction(op, n, codeGen), _fenceNode(fenceNode) {}
+   PPCAdminInstruction(TR::InstOpCode::Mnemonic op, TR::Node *n, TR::Node * fenceNode, TR::CodeGenerator *cg) :
+      TR::Instruction(op, n, cg), _fenceNode(fenceNode) {}
 
    PPCAdminInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, TR::Node *fenceNode,
-                          TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen) :
-      TR::Instruction(op, n, precedingInstruction, codeGen), _fenceNode(fenceNode) {}
+                          TR::Instruction *precedingInstruction, TR::CodeGenerator *cg) :
+      TR::Instruction(op, n, precedingInstruction, cg), _fenceNode(fenceNode) {}
 
    virtual Kind getKind() { return IsAdmin; }
 
@@ -611,8 +611,8 @@ class PPCDepImmSymInstruction : public PPCDepInstruction
                               uintptr_t                           imm,
                               TR::RegisterDependencyConditions *cond,
                               TR::SymbolReference                 *sr,
-                              TR::Snippet                         *s, TR::CodeGenerator *codeGen)
-      : PPCDepInstruction(op, n, cond, codeGen), _addrImmediate(imm), _symbolReference(sr),
+                              TR::Snippet                         *s, TR::CodeGenerator *cg)
+      : PPCDepInstruction(op, n, cond, cg), _addrImmediate(imm), _symbolReference(sr),
         _snippet(s) {}
 
    PPCDepImmSymInstruction(
@@ -622,8 +622,8 @@ class PPCDepImmSymInstruction : public PPCDepInstruction
                               TR::RegisterDependencyConditions *cond,
                               TR::SymbolReference                 *sr,
                               TR::Snippet                         *s,
-                              TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCDepInstruction(op, n, cond, precedingInstruction, codeGen),
+                              TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : PPCDepInstruction(op, n, cond, precedingInstruction, cg),
         _addrImmediate(imm), _symbolReference(sr), _snippet(s) {}
 
    virtual Kind getKind() { return IsDepImmSym; }
@@ -651,15 +651,15 @@ class PPCTrg1Instruction : public TR::Instruction
 
    public:
 
-   PPCTrg1Instruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register  *reg, TR::CodeGenerator *codeGen)
-      : TR::Instruction(op, n, codeGen), _target1Register(reg)
+   PPCTrg1Instruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register  *reg, TR::CodeGenerator *cg)
+      : TR::Instruction(op, n, cg), _target1Register(reg)
       {
       useRegister(reg);
       }
 
    PPCTrg1Instruction(TR::InstOpCode::Mnemonic  op, TR::Node * n, TR::Register *reg,
-                        TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : TR::Instruction(op, n, precedingInstruction, codeGen), _target1Register(reg)
+                        TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : TR::Instruction(op, n, precedingInstruction, cg), _target1Register(reg)
       {
       useRegister(reg);
       }
@@ -697,13 +697,13 @@ class PPCTrg1ImmInstruction : public PPCTrg1Instruction
    public:
 
    PPCTrg1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register  *treg,
-                            uint32_t     imm, TR::CodeGenerator *codeGen)
-           : PPCTrg1Instruction(op, n, treg, codeGen), _sourceImmediate(imm) {};
+                            uint32_t     imm, TR::CodeGenerator *cg)
+           : PPCTrg1Instruction(op, n, treg, cg), _sourceImmediate(imm) {};
 
    PPCTrg1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register  *treg,
                             uint32_t       imm,
-                            TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-           : PPCTrg1Instruction(op, n, treg, precedingInstruction, codeGen), _sourceImmediate(imm) {};
+                            TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+           : PPCTrg1Instruction(op, n, treg, precedingInstruction, cg), _sourceImmediate(imm) {};
 
    virtual Kind getKind() { return IsTrg1Imm; }
 
@@ -724,11 +724,11 @@ class PPCSrc2Instruction : public TR::Instruction
    public:
 
    PPCSrc2Instruction(TR::InstOpCode::Mnemonic op, TR::Node *n, TR::Register   *s1reg,
-                         TR::Register   *s2reg, TR::CodeGenerator *codeGen);
+                         TR::Register   *s2reg, TR::CodeGenerator *cg);
 
    PPCSrc2Instruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register   *s1reg,
                          TR::Register    *s2reg,
-                         TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen);
+                         TR::Instruction *precedingInstruction, TR::CodeGenerator *cg);
 
    virtual Kind getKind() { return IsSrc2; }
 
@@ -806,11 +806,11 @@ class PPCTrg1Src1Instruction : public PPCTrg1Instruction
    public:
 
    PPCTrg1Src1Instruction(TR::InstOpCode::Mnemonic op,  TR::Node * n, TR::Register   *treg,
-                             TR::Register   *sreg, TR::CodeGenerator *codeGen);
+                             TR::Register   *sreg, TR::CodeGenerator *cg);
 
    PPCTrg1Src1Instruction(TR::InstOpCode::Mnemonic op, TR::Node * n,  TR::Register   *treg,
                              TR::Register    *sreg,
-                             TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen);
+                             TR::Instruction *precedingInstruction, TR::CodeGenerator *cg);
 
    virtual Kind getKind() { return IsTrg1Src1; }
 
@@ -841,37 +841,37 @@ class PPCTrg1Src1ImmInstruction : public PPCTrg1Src1Instruction
    public:
 
    PPCTrg1Src1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register    *treg,
-                                TR::Register    *sreg, uintptr_t imm, TR::CodeGenerator *codeGen)
-           : PPCTrg1Src1Instruction(op, n, treg, sreg, codeGen),
+                                TR::Register    *sreg, uintptr_t imm, TR::CodeGenerator *cg)
+           : PPCTrg1Src1Instruction(op, n, treg, sreg, cg),
              _source1Immediate(imm) {};
 
    PPCTrg1Src1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register    *treg,
                                 TR::Register    *sreg, uintptr_t imm,
-                                TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-           : PPCTrg1Src1Instruction(op, n, treg, sreg, precedingInstruction, codeGen),
+                                TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+           : PPCTrg1Src1Instruction(op, n, treg, sreg, precedingInstruction, cg),
              _source1Immediate(imm) {};
 
    PPCTrg1Src1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register    *treg,
-                                TR::Register *sreg, TR::Register *cr0reg, uintptr_t imm, TR::CodeGenerator *codeGen)
-           : PPCTrg1Src1Instruction(op, n, treg, sreg, codeGen),
+                                TR::Register *sreg, TR::Register *cr0reg, uintptr_t imm, TR::CodeGenerator *cg)
+           : PPCTrg1Src1Instruction(op, n, treg, sreg, cg),
              _source1Immediate(imm)
       {
-      TR::RegisterDependencyConditions *cond = new (codeGen->trHeapMemory()) TR::RegisterDependencyConditions( 0, 1, codeGen->trMemory() );
+      TR::RegisterDependencyConditions *cond = new (cg->trHeapMemory()) TR::RegisterDependencyConditions( 0, 1, cg->trMemory() );
       cond->addPostCondition(cr0reg, TR::RealRegister::cr0, DefinesDependentRegister );
       setDependencyConditions( cond );
-      cond->bookKeepingRegisterUses(this, codeGen);
+      cond->bookKeepingRegisterUses(this, cg);
       }
 
    PPCTrg1Src1ImmInstruction(TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register    *treg,
                                 TR::Register *sreg, TR::Register *cr0reg, uintptr_t imm,
-                                TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-           : PPCTrg1Src1Instruction(op, n, treg, sreg, precedingInstruction, codeGen),
+                                TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+           : PPCTrg1Src1Instruction(op, n, treg, sreg, precedingInstruction, cg),
              _source1Immediate(imm)
       {
-      TR::RegisterDependencyConditions *cond = new (codeGen->trHeapMemory()) TR::RegisterDependencyConditions( 0, 1, codeGen->trMemory() );
+      TR::RegisterDependencyConditions *cond = new (cg->trHeapMemory()) TR::RegisterDependencyConditions( 0, 1, cg->trMemory() );
       cond->addPostCondition(cr0reg, TR::RealRegister::cr0, DefinesDependentRegister );
       setDependencyConditions( cond );
-      cond->bookKeepingRegisterUses(this, codeGen);
+      cond->bookKeepingRegisterUses(this, cg);
       }
 
    virtual Kind getKind() { return IsTrg1Src1Imm; }
@@ -900,8 +900,8 @@ class PPCTrg1Src1Imm2Instruction : public PPCTrg1Src1ImmInstruction
                                  TR::Register    *sreg,
                                  uint32_t       imm,
                                  uint64_t       m,
-                                 TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-           : PPCTrg1Src1ImmInstruction(op, n, treg, sreg, imm, precedingInstruction, codeGen),
+                                 TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+           : PPCTrg1Src1ImmInstruction(op, n, treg, sreg, imm, precedingInstruction, cg),
              _mask(m) {}
 
    PPCTrg1Src1Imm2Instruction(TR::InstOpCode::Mnemonic  op,
@@ -909,8 +909,8 @@ class PPCTrg1Src1Imm2Instruction : public PPCTrg1Src1ImmInstruction
                                  TR::Register    *treg,
                                  TR::Register    *sreg,
                                  uint32_t       imm,
-                                 uint64_t       m, TR::CodeGenerator *codeGen)
-           : PPCTrg1Src1ImmInstruction(op, n, treg, sreg, imm, codeGen),
+                                 uint64_t       m, TR::CodeGenerator *cg)
+           : PPCTrg1Src1ImmInstruction(op, n, treg, sreg, imm, cg),
              _mask(m) {}
 
    PPCTrg1Src1Imm2Instruction(TR::InstOpCode::Mnemonic  op,
@@ -919,8 +919,8 @@ class PPCTrg1Src1Imm2Instruction : public PPCTrg1Src1ImmInstruction
                                  TR::Register    *sreg,
                                  TR::Register    *cr0reg,
                                  uint32_t       imm,
-                                 uint64_t       m, TR::CodeGenerator *codeGen)
-           : PPCTrg1Src1ImmInstruction(op, n, treg, sreg, cr0reg, imm, codeGen),
+                                 uint64_t       m, TR::CodeGenerator *cg)
+           : PPCTrg1Src1ImmInstruction(op, n, treg, sreg, cr0reg, imm, cg),
              _mask(m) {}
 
    PPCTrg1Src1Imm2Instruction(TR::InstOpCode::Mnemonic  op,
@@ -930,8 +930,8 @@ class PPCTrg1Src1Imm2Instruction : public PPCTrg1Src1ImmInstruction
                                  TR::Register    *cr0reg,
                                  uint32_t       imm,
                                  uint64_t       m,
-                                 TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-           : PPCTrg1Src1ImmInstruction(op, n, treg, sreg, cr0reg, imm, precedingInstruction, codeGen),
+                                 TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+           : PPCTrg1Src1ImmInstruction(op, n, treg, sreg, cr0reg, imm, precedingInstruction, cg),
              _mask(m) {}
 
    virtual Kind getKind() { return IsTrg1Src1Imm2; }
@@ -955,8 +955,8 @@ class PPCTrg1Src2Instruction : public PPCTrg1Src1Instruction
                               TR::Node       *n,
                               TR::Register   *treg,
                               TR::Register   *s1reg,
-                              TR::Register   *s2reg, TR::CodeGenerator *codeGen)
-      : PPCTrg1Src1Instruction(op, n, treg, s1reg, codeGen), _source2Register(s2reg)
+                              TR::Register   *s2reg, TR::CodeGenerator *cg)
+      : PPCTrg1Src1Instruction(op, n, treg, s1reg, cg), _source2Register(s2reg)
       {
       useRegister(s2reg);
       }
@@ -966,8 +966,8 @@ class PPCTrg1Src2Instruction : public PPCTrg1Src1Instruction
                               TR::Register   *treg,
                               TR::Register   *s1reg,
                               TR::Register   *s2reg,
-                             TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCTrg1Src1Instruction(op, n, treg, s1reg, precedingInstruction, codeGen),
+                             TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : PPCTrg1Src1Instruction(op, n, treg, s1reg, precedingInstruction, cg),
                              _source2Register(s2reg)
       {
       useRegister(s2reg);
@@ -979,15 +979,15 @@ class PPCTrg1Src2Instruction : public PPCTrg1Src1Instruction
                               TR::Register   *s1reg,
                               TR::Register   *s2reg,
                               TR::Register   *cr0reg,
-                             TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCTrg1Src1Instruction(op, n, treg, s1reg, precedingInstruction, codeGen),
+                             TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : PPCTrg1Src1Instruction(op, n, treg, s1reg, precedingInstruction, cg),
                              _source2Register(s2reg)
       {
       useRegister(s2reg);
-      TR::RegisterDependencyConditions *cond = new (codeGen->trHeapMemory()) TR::RegisterDependencyConditions( 0, 1, codeGen->trMemory() );
+      TR::RegisterDependencyConditions *cond = new (cg->trHeapMemory()) TR::RegisterDependencyConditions( 0, 1, cg->trMemory() );
       cond->addPostCondition(cr0reg, TR::RealRegister::cr0, DefinesDependentRegister );
       setDependencyConditions( cond );
-      cond->bookKeepingRegisterUses(this, codeGen);
+      cond->bookKeepingRegisterUses(this, cg);
       }
 
    virtual Kind getKind() { return IsTrg1Src2; }
@@ -1023,8 +1023,8 @@ class PPCTrg1Src2ImmInstruction : public PPCTrg1Src2Instruction
                                  TR::Register   *treg,
                                  TR::Register   *s1reg,
                                  TR::Register   *s2reg,
-                                 int64_t       m, TR::CodeGenerator *codeGen)
-      : PPCTrg1Src2Instruction(op, n, treg, s1reg, s2reg, codeGen),
+                                 int64_t       m, TR::CodeGenerator *cg)
+      : PPCTrg1Src2Instruction(op, n, treg, s1reg, s2reg, cg),
       _mask(m) {}
 
    PPCTrg1Src2ImmInstruction( TR::InstOpCode::Mnemonic op,
@@ -1033,8 +1033,8 @@ class PPCTrg1Src2ImmInstruction : public PPCTrg1Src2Instruction
                                  TR::Register   *s1reg,
                                  TR::Register   *s2reg,
                                  int64_t       m,
-                                 TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCTrg1Src2Instruction(op, n, treg, s1reg, s2reg, precedingInstruction, codeGen),
+                                 TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : PPCTrg1Src2Instruction(op, n, treg, s1reg, s2reg, precedingInstruction, cg),
       _mask(m) {}
 
    virtual Kind getKind() { return IsTrg1Src2Imm; }
@@ -1058,8 +1058,8 @@ class PPCTrg1Src3Instruction : public PPCTrg1Src2Instruction
                               TR::Register   *treg,
                               TR::Register   *s1reg,
                               TR::Register   *s2reg,
-                              TR::Register   *s3reg, TR::CodeGenerator *codeGen)
-      : PPCTrg1Src2Instruction(op, n, treg, s1reg, s2reg, codeGen), _source3Register(s3reg)
+                              TR::Register   *s3reg, TR::CodeGenerator *cg)
+      : PPCTrg1Src2Instruction(op, n, treg, s1reg, s2reg, cg), _source3Register(s3reg)
       {
       useRegister(s3reg);
       }
@@ -1070,8 +1070,8 @@ class PPCTrg1Src3Instruction : public PPCTrg1Src2Instruction
                               TR::Register   *s1reg,
                               TR::Register   *s2reg,
                               TR::Register   *s3reg,
-                              TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen)
-      : PPCTrg1Src2Instruction(op, n, treg, s1reg, s2reg, precedingInstruction, codeGen),
+                              TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : PPCTrg1Src2Instruction(op, n, treg, s1reg, s2reg, precedingInstruction, cg),
                              _source3Register(s3reg)
       {
       useRegister(s3reg);
@@ -1152,13 +1152,13 @@ class PPCMemSrc1Instruction : public PPCMemInstruction
    PPCMemSrc1Instruction(TR::InstOpCode::Mnemonic op,
                             TR::Node *n,
                             TR::MemoryReference *mf,
-                            TR::Register *sreg, TR::CodeGenerator *codeGen);
+                            TR::Register *sreg, TR::CodeGenerator *cg);
 
    PPCMemSrc1Instruction(TR::InstOpCode::Mnemonic op,
                             TR::Node *n,
                             TR::MemoryReference *mf,
                             TR::Register *sreg,
-                            TR::Instruction *precedingInstruction, TR::CodeGenerator *codeGen);
+                            TR::Instruction *precedingInstruction, TR::CodeGenerator *cg);
 
    virtual Kind getKind() { return IsMemSrc1; }
 
@@ -1229,13 +1229,13 @@ class PPCTrg1MemInstruction : public PPCTrg1Instruction
    PPCTrg1MemInstruction(TR::InstOpCode::Mnemonic          op,
                             TR::Node                *n,
                             TR::Register            *treg,
-                            TR::MemoryReference *mf, TR::CodeGenerator *codeGen, int32_t hint = PPCOpProp_NoHint);
+                            TR::MemoryReference *mf, TR::CodeGenerator *cg, int32_t hint = PPCOpProp_NoHint);
 
    PPCTrg1MemInstruction(TR::InstOpCode::Mnemonic          op,
                             TR::Node                *n,
                             TR::Register            *treg,
                             TR::MemoryReference *mf,
-                            TR::Instruction         *precedingInstruction, TR::CodeGenerator *codeGen, int32_t hint = PPCOpProp_NoHint);
+                            TR::Instruction         *precedingInstruction, TR::CodeGenerator *cg, int32_t hint = PPCOpProp_NoHint);
 
    virtual Kind getKind() { return IsTrg1Mem; }
 
@@ -1353,28 +1353,28 @@ class PPCControlFlowInstruction : public TR::Instruction
    public:
 
    PPCControlFlowInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n,
-      TR::CodeGenerator *codeGen,
+      TR::CodeGenerator *cg,
       TR::RegisterDependencyConditions *deps=NULL,
       bool useRegPairForResult=false,
       bool useRegPairForCond=false)
-      : TR::Instruction(op, n, codeGen), _numSources(0), _numTargets(0), _label(NULL),
+      : TR::Instruction(op, n, cg), _numSources(0), _numTargets(0), _label(NULL),
         _opCode2(TR::InstOpCode::bad), _conditions(deps), _useRegPairForResult(useRegPairForResult),
         _useRegPairForCond(useRegPairForCond)
       {
-      if (deps!=NULL) deps->bookKeepingRegisterUses(this, codeGen);
+      if (deps!=NULL) deps->bookKeepingRegisterUses(this, cg);
       }
    PPCControlFlowInstruction(TR::InstOpCode::Mnemonic  op, TR::Node * n,
       TR::Instruction *preceedingInstruction,
-      TR::CodeGenerator *codeGen,
+      TR::CodeGenerator *cg,
       TR::RegisterDependencyConditions *deps=NULL,
       bool useRegPairForResult=false,
       bool useRegPairForCond=false)
-      : TR::Instruction(op, n, preceedingInstruction, codeGen),
+      : TR::Instruction(op, n, preceedingInstruction, cg),
         _numSources(0), _numTargets(0), _label(NULL), _opCode2(TR::InstOpCode::bad),
         _conditions(deps), _useRegPairForResult(useRegPairForResult),
          _useRegPairForCond(useRegPairForCond)
       {
-      if (deps!=NULL) deps->bookKeepingRegisterUses(this, codeGen);
+      if (deps!=NULL) deps->bookKeepingRegisterUses(this, cg);
       }
 
    bool useRegPairForResult() { return _useRegPairForResult; }
@@ -1463,16 +1463,16 @@ class PPCVirtualGuardNOPInstruction : public PPCDepLabelInstruction
                                     TR_VirtualGuardSite     *site,
                                     TR::RegisterDependencyConditions *cond,
                                     TR::LabelSymbol                  *label,
-                                    TR::CodeGenerator               *codeGen)
-      : PPCDepLabelInstruction(TR::InstOpCode::vgdnop, node, label, cond, codeGen), _site(site) {}
+                                    TR::CodeGenerator               *cg)
+      : PPCDepLabelInstruction(TR::InstOpCode::vgdnop, node, label, cond, cg), _site(site) {}
 
    PPCVirtualGuardNOPInstruction(TR::Node                        *node,
                                     TR_VirtualGuardSite     *site,
                                     TR::RegisterDependencyConditions *cond,
                                     TR::LabelSymbol                  *label,
                                     TR::Instruction                 *precedingInstruction,
-                                    TR::CodeGenerator               *codeGen)
-      : PPCDepLabelInstruction(TR::InstOpCode::vgdnop, node, label, cond, precedingInstruction, codeGen), _site(site) {}
+                                    TR::CodeGenerator               *cg)
+      : PPCDepLabelInstruction(TR::InstOpCode::vgdnop, node, label, cond, precedingInstruction, cg), _site(site) {}
 
    virtual Kind getKind() { return IsVirtualGuardNOP; }
 

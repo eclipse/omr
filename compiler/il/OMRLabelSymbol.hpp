@@ -78,8 +78,8 @@ public:
 protected:
 
    LabelSymbol();
-   LabelSymbol(TR::CodeGenerator *codeGen);
-   LabelSymbol(TR::CodeGenerator *codeGen, TR::Block *labb);
+   LabelSymbol(TR::CodeGenerator *cg);
+   LabelSymbol(TR::CodeGenerator *cg, TR::Block *labb);
 
 public:
 

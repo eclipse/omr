@@ -454,27 +454,27 @@ OMR::CodeGenerator::addToAtlas(TR::Instruction * instr)
    }
 
 void
-TR_GCStackMap::addToAtlas(TR::Instruction * instruction, TR::CodeGenerator *codeGen)
+TR_GCStackMap::addToAtlas(TR::Instruction * instruction, TR::CodeGenerator *cg)
    {
    // Fill in the code range and add this map to the atlas.
    //
-   uint8_t * codeStart = codeGen->getCodeStart();
+   uint8_t * codeStart = cg->getCodeStart();
    setLowestCodeOffset(instruction->getBinaryEncoding() - codeStart);
-   codeGen->getStackAtlas()->addStackMap(this);
-   bool osrEnabled = codeGen->comp()->getOption(TR_EnableOSR);
+   cg->getStackAtlas()->addStackMap(this);
+   bool osrEnabled = cg->comp()->getOption(TR_EnableOSR);
    if (osrEnabled)
-      codeGen->addToOSRTable(instruction);
+      cg->addToOSRTable(instruction);
    }
 
 void
-TR_GCStackMap::addToAtlas(uint8_t * callSiteAddress, TR::CodeGenerator *codeGen)
+TR_GCStackMap::addToAtlas(uint8_t * callSiteAddress, TR::CodeGenerator *cg)
    {
    // Fill in the code range and add this map to the atlas.
    //
-   uint32_t callSiteOffset = callSiteAddress - codeGen->getCodeStart();
+   uint32_t callSiteOffset = callSiteAddress - cg->getCodeStart();
    setLowestCodeOffset(callSiteOffset - 1);
-   codeGen->getStackAtlas()->addStackMap(this);
-   bool osrEnabled = codeGen->comp()->getOption(TR_EnableOSR);
+   cg->getStackAtlas()->addStackMap(this);
+   bool osrEnabled = cg->comp()->getOption(TR_EnableOSR);
    if (osrEnabled)
-      codeGen->addToOSRTable(callSiteOffset, getByteCodeInfo());
+      cg->addToOSRTable(callSiteOffset, getByteCodeInfo());
    }
