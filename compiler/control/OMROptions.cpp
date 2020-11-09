@@ -718,6 +718,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"enableOSROnGuardFailure",            "O\tperform a decompile using on-stack replacement every time a virtual guard fails", SET_OPTION_BIT(TR_EnableOSROnGuardFailure), "F"},
    {"enableOSRSharedSlots",               "O\tenable support for shared slots in OSR", RESET_OPTION_BIT(TR_DisableOSRSharedSlots), "F"},
    {"enableOutlinedNew",                 "O\tdo object allocation logic with a fast jit helper",  SET_OPTION_BIT(TR_EnableOutlinedNew), "F"},
+   {"enableOWL",                         "O\tenable OWL", TR::Options::enableOptimization, OWL, 0, "P"},
    {"enableParanoidRefCountChecks",      "O\tenable extra reference count verification", SET_OPTION_BIT(TR_EnableParanoidRefCountChecks), "F"},
    {"enablePerfAsserts",                 "O\tenable asserts for serious performance problems found during compilation",   SET_OPTION_BIT(TR_EnablePerfAsserts), "F"},
    {"enableProfiledDevirtualization",     "O\tenable devirtualization based on interpreter profiling", SET_OPTION_BIT(TR_enableProfiledDevirtualization), "F"},

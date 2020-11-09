@@ -117,3 +117,4 @@
    OPTIMIZATION(loadExtensions)
    OPTIMIZATION(regDepCopyRemoval)
    OPTIMIZATION(asyncCheckInsertion)
+   OPTIMIZATION(OWL)

@@ -66,6 +66,7 @@
 #include "optimizer/LocalValuePropagation.hpp"
 #include "optimizer/Inliner.hpp"
 #include "optimizer/SwitchAnalyzer.hpp"
+#include "optimizer/OWL.hpp"
 
 
 static const OptimizationStrategy tacticalGlobalRegisterAllocatorOpts[] =
@@ -106,6 +107,7 @@ static const OptimizationStrategy JBcoldStrategyOpts[] =
 static const OptimizationStrategy JBwarmStrategyOpts[] =
    {
    { OMR::deadTreesElimination                                                     },
+   { OMR::OWL                                                                      },
    { OMR::inlining                                                                 },
    { OMR::treeSimplification                                                       },
    { OMR::localCSE                                                                 },
@@ -197,7 +199,8 @@ Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymb
       new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialInliner::create, OMR::inlining);
    _opts[OMR::switchAnalyzer] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR::SwitchAnalyzer::create, OMR::switchAnalyzer);
-
+   _opts[OMR::OWL] =
+           new (comp->allocator()) TR::OptimizationManager(self(), TR_OWL::create, OMR::OWL);
    // Initialize optimization groups
    _opts[OMR::cheapTacticalGlobalRegisterAllocatorGroup] =
       new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::cheapTacticalGlobalRegisterAllocatorGroup, cheapTacticalGlobalRegisterAllocatorOpts);
