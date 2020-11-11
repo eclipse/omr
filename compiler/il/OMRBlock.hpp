@@ -164,6 +164,7 @@ class OMR_EXTENSIBLE Block : public TR::CFGNode
 
    TR::Block * splitPostGRA(TR::TreeTop *startOfNewBlock, TR::CFG *cfg, bool copyExceptionSuccessors = true, TR::ResolvedMethodSymbol *methodSymbol = NULL);
 
+   TR::Block * splitPostGRAWithoutFixingCommoning(TR::TreeTop *startOfNewBlock, TR::CFG *cfg, bool copyExceptionSuccessors = true, TR::ResolvedMethodSymbol *methodSymbol = NULL);
 
    TR::Block * splitWithGivenMethodSymbol(TR::ResolvedMethodSymbol *methodSymbol, TR::TreeTop * startOfNewBlock,  TR::CFG * cfg, bool fixupCommoning = false, bool copyExceptionSuccessors = true);
 

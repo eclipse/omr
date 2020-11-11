@@ -1263,6 +1263,7 @@ static TR::SymbolReference * createSymRefForNode(TR::Compilation *comp, TR::Reso
  * 4. For the remaining of nodes to be uncommoned, it tries to find the available register using list of unavailable registers and if it can find one, then stores node
  *    into that register otherwise creates a auto/temp slot to uncommon them.
  * 5. Last step is to start walking treetops after split point and replace nodes to be uncommoned with corresponding replacement nodes.
+ * 6. If _liveLocals exists, copy _liveLocals from the current block to the new block.
  *
  * @param startOfNewBlock TreeTop from which new block will start
  * @param cfg TR::CFG object
@@ -1563,10 +1564,34 @@ OMR::Block::splitPostGRA(TR::TreeTop * startOfNewBlock, TR::CFG *cfg, bool copyE
       // Step - 5  : Now replace all the occurrences of nodes to be uncommoned with replacement nodes.
       replaceNodesInTrees(comp, newBlock->getEntry()->getNextTreeTop(), nodeInfo);
       }
+
+   // Step - 6  : Copy _liveLocals from the current block to the new block if _liveLocals exists.
+   if (self()->getLiveLocals())
+      newBlock->setLiveLocals(new (comp->trHeapMemory()) TR_BitVector(*self()->getLiveLocals()));
+
    return newBlock;
    }
 
+/**
+ * Splits the blocks from the split point and copy _liveLocals from the current block to the new block if _liveLocals exists.
+ *
+ * @param startOfNewBlock TreeTop from which new block will start
+ * @param cfg TR::CFG object
+ * @param copyExceptionSuccessors Boolean stating if we need to copy the exceptionSuccessors of the original blocks to new block
+ * @param methodSymbol TR::ResolvedMethodSymbol object
+ * @return TR::Block* Returns new Block
+ */
+TR::Block *
+OMR::Block::splitPostGRAWithoutFixingCommoning(TR::TreeTop * startOfNewBlock, TR::CFG *cfg, bool copyExceptionSuccessors, TR::ResolvedMethodSymbol *methodSymbol)
+   {
+   TR::Compilation *comp = cfg->comp();
+   TR::Block *newBlock = self()->split(startOfNewBlock, cfg, false, copyExceptionSuccessors, methodSymbol);
 
+   if (self()->getLiveLocals())
+      newBlock->setLiveLocals(new (comp->trHeapMemory()) TR_BitVector(*self()->getLiveLocals()));
+
+   return newBlock;
+   }
 
 TR::Block *
 OMR::Block::split(TR::TreeTop * startOfNewBlock, TR::CFG * cfg, bool fixupCommoning, bool copyExceptionSuccessors, TR::ResolvedMethodSymbol *methodSymbol)
