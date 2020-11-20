@@ -28,7 +28,6 @@
 #include "env/TRMemory.hpp"
 #include "env/defines.h"
 #include "infra/Assert.hpp"
-#include "infra/Serializer.hpp"
 
 class TR_BitVector;
 class TR_BitVectorCursor;
@@ -165,18 +164,22 @@ class TR_BitVector
    TR_BitVector(TR::Region &region) : _numChunks(0), _chunks(NULL), _firstChunkWithNonZero(0), _lastChunkWithNonZero(-1), _growable(growable), _region(&region) { }
 
    /**
-    * @brief Constructor to create a new BitVector by reading data from the serializer
-    * @param [in] serializer used for reading BitVector data
+    * @brief Constructor to create a new BitVector by reading serialized data from the memory buffer
+    * @param [in] buffer Memory buffer containing serialized BitVector
     */
-   TR_BitVector(TR_Serializer &serializer)
+   TR_BitVector(uint8_t * &buffer)
       {
-      _firstChunkWithNonZero = serializer.read<int32_t>();
-      _lastChunkWithNonZero = serializer.read<int32_t>();
-      _numChunks = serializer.read<int32_t>();
+      _firstChunkWithNonZero = *(int32_t *)buffer;
+      buffer += sizeof(_firstChunkWithNonZero);
+      _lastChunkWithNonZero = *(int32_t *)buffer;
+      buffer += sizeof(_lastChunkWithNonZero);
+      _numChunks = *(int32_t *)buffer;
+      _chunks = NULL;
       if (_numChunks > 0)
          {
          _chunks = (chunk_t*) TR_Memory::jitPersistentAlloc(_numChunks * sizeof(*_chunks), TR_Memory::BitVector);
-         serializer.readArray(_chunks, _numChunks);
+         memcpy(_chunks, buffer, _numChunks * sizeof(_chunks[0]));
+         buffer += (_numChunks * sizeof(_chunks[0]));
          }
       _region = NULL;
       }
@@ -858,17 +861,19 @@ class TR_BitVector
    #endif
 
    /**
-    * @brief Compute amount of bytes required for serializing this object
-    * @param [in] serializer used to compute the size required for serializing this object
-    * @return void
+    * @brief Computes number of bytes required for serializing this object
+    *
+    * @return Number of bytes required for serializing this object
     */
-   void getSerializedSize(TR_Serializer &serializer) const
+   uint32_t getSizeForSerialization() const
       {
-      serializer.addSize(_firstChunkWithNonZero, _lastChunkWithNonZero, _numChunks);
+      uint32_t size = 0;
+      size += sizeof(_firstChunkWithNonZero) + sizeof(_lastChunkWithNonZero) + sizeof(_numChunks);
       if (_numChunks > 0)
          {
-         serializer.addArraySize(_chunks, _numChunks);
+         size += (_numChunks * sizeof(_chunks[0]));
          }
+      return size;
       }
 
    /**
@@ -876,12 +881,18 @@ class TR_BitVector
     * @param [in] serializer used for serializing this object
     * @return void
     */
-   void serialize(TR_Serializer &serializer) const
+   void serialize(uint8_t * &buffer) const
       {
-      serializer.write(_firstChunkWithNonZero, _lastChunkWithNonZero, _numChunks);
+      *(int32_t *)buffer = _firstChunkWithNonZero;
+      buffer += sizeof(_firstChunkWithNonZero);
+      *(int32_t *)buffer = _lastChunkWithNonZero;
+      buffer += sizeof(_lastChunkWithNonZero);
+      *(int32_t *)buffer = _numChunks;
+      buffer += sizeof(_numChunks);
       if (_numChunks > 0)
          {
-         serializer.writeArray(_chunks, _numChunks);
+         memcpy(buffer, _chunks, _numChunks * sizeof(_chunks[0]));
+         buffer += (_numChunks * sizeof(_chunks[0]));
          }
       }
 
