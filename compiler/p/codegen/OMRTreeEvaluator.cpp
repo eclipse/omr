@@ -1397,8 +1397,7 @@ TR::Register *OMR::Power::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR::Cod
          }
       else
          {
-         TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node, 8);
-         TR::MemoryReference *highMR = TR::MemoryReference::createWithMemRef(cg, node, *tempMR, 0, 4);
+         TR::MemoryReference *highMR  = TR::MemoryReference::createWithRootLoadOrStore(cg, node, 4);
 
          if (reverseStore)
             {
@@ -1409,7 +1408,7 @@ TR::Register *OMR::Power::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR::Cod
             generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, highMR, valueReg->getHighOrder());
 
          // This ordering is important at this stage unless the base is guaranteed to be non-modifiable.
-         TR::MemoryReference *lowMR = TR::MemoryReference::createWithMemRef(cg, node, *tempMR, 4, 4);
+         TR::MemoryReference *lowMR = TR::MemoryReference::createWithMemRef(cg, node, *highMR, 4, 4);
          if (reverseStore)
             {
             lowMR->forceIndexedForm(node, cg);
@@ -1418,7 +1417,6 @@ TR::Register *OMR::Power::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR::Cod
          else
             generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, lowMR, valueReg->getLowOrder());
 
-         tempMR->decNodeReferenceCounts(cg);
          highMR->decNodeReferenceCounts(cg);
          lowMR->decNodeReferenceCounts(cg);
          }
