@@ -165,6 +165,15 @@ private:
 	
 	void setBackOutFlag(MM_EnvironmentBase *env, BackOutState value);
 	MMINLINE bool isBackOutFlagRaised() { return _extensions->isScavengerBackOutFlagRaised(); }
+
+	/**
+	 * Update forwarded object. It fixes up forwarded object and sets extra field for indexable object accordingly
+	 *
+	 * @param forwardedHeader Forwarded header of an object
+	 * @param destinationObjectPtr DestinationObjectPtr of the object described by the forwardedHeader
+	 * @param objectAge object's ages
+	 */
+	MMINLINE void fixupForwardedObject(MM_ForwardedHeader* forwardedHeader, omrobjectptr_t destinationObjectPtr, uintptr_t objectAge);
 	
 	/**
 	 * Check if concurrent phase of the cycle should yield to an external activity. If so, set the flag so that other GC threads react appropriately
