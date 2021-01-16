@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3808,11 +3808,12 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
    TR::TreeTop *newStoreTree = NULL;
 
    bool isInternalPointer = false;
-   if ((self()->hasPinningArrayPointer() &&
-        self()->computeIsInternalPointer()) ||
+   if (comp->cg()->supportsInternalPointers() &&
+       ((self()->hasPinningArrayPointer() &&
+         self()->computeIsInternalPointer()) ||
        (self()->getOpCode().isLoadVarDirect() &&
         self()->getSymbolReference()->getSymbol()->isAuto() &&
-        self()->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer()))
+        self()->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer())))
       isInternalPointer = true;
 
    bool storesNeedToBeCreated = true;
@@ -3887,7 +3888,8 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
       nodeRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Address, isInternalPointer);
       TR::Node* storeNode = TR::Node::createStore(nodeRef, self());
 
-      if (self()->hasPinningArrayPointer() &&
+      if (comp->cg()->supportsInternalPointers() &&
+          self()->hasPinningArrayPointer() &&
           self()->computeIsInternalPointer())
          self()->setIsInternalPointer(true);
 

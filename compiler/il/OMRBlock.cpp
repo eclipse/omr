@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1133,11 +1133,12 @@ static TR::SymbolReference * createSymRefForNode(TR::Compilation *comp, TR::Reso
    else
       {
       bool isInternalPointer = false;
-      if ((value->hasPinningArrayPointer() &&
+      if (comp->cg()->supportsInternalPointers() &&
+          ((value->hasPinningArrayPointer() &&
             value->computeIsInternalPointer()) ||
                (value->getOpCode().isLoadVarDirect() &&
                   value->getSymbolReference()->getSymbol()->isAuto() &&
-                  value->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer()))
+                  value->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer())))
          isInternalPointer = true;
       
       if (value->isNotCollected() && dataType == TR::Address)
