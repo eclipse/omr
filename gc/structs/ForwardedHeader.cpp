@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2020 IBM Corp. and others
+ * Copyright (c) 2015, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -318,3 +318,26 @@ MM_ForwardedHeader::copyOrWaitWinner(omrobjectptr_t destinationObjectPtr)
 	}
 #endif /* #if defined(OMR_GC_CONCURRENT_SCAVENGER) */
 }
+
+#if defined(OMR_GC_VLHGC)
+omrobjectptr_t
+MM_ForwardedHeader::setForwardedObjectGrowing(omrobjectptr_t destinationObjectPtr, bool isObjectGrowing)
+{
+	omrobjectptr_t growthTaggedDestinationPtr = destinationObjectPtr;
+
+	/* no tags must be set on the incoming pointer */
+	Assert_MM_true(0 == ((uintptr_t)destinationObjectPtr & _all_tags));
+	if (isObjectGrowing) {
+		growthTaggedDestinationPtr = (omrobjectptr_t)((uintptr_t)growthTaggedDestinationPtr | _grow_tag);
+	}
+	return (omrobjectptr_t)((uintptr_t)setForwardedObject(growthTaggedDestinationPtr) & ~_grow_tag);
+}
+
+bool
+MM_ForwardedHeader::didObjectGrowOnCopy()
+{
+	/* this only applies to forwarded objects */
+	Assert_MM_true(isForwardedPointer());
+	return (_grow_tag == (getPreservedClassAndTags() & _grow_tag));
+}
+#endif /* defined(OMR_GC_VLHGC) */

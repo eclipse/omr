@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2020 IBM Corp. and others
+ * Copyright (c) 2015, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,6 +95,12 @@ private:
 	static const uintptr_t _copySizeAlignement = (uintptr_t)SIZE_ALIGNMENT;
 	static const uintptr_t _minIncrement = (131072 & _remainingSizeMask); /**< min size of copy section; does not have to be a power of 2, but it has to be aligned with _copySizeAlignement */ 
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
+#if defined(OMR_GC_VLHGC)
+	/* the grow tag is used by VLHGC and can only be set if the FORWARDED_TAG is already set.  It signifies that the object grew a hash field when moving */
+	static const uintptr_t _grow_tag = (uintptr_t)0x2;
+	/* combine these flags into one mask which should be stripped from the pointer in order to remove all tags */
+	static const uintptr_t _all_tags =  _forwardedTag | _grow_tag;
+#endif /* defined(OMR_GC_VLHGC) */
 
 /*
  * Function members
@@ -246,6 +252,21 @@ private:
 	 */
 	void copyOrWaitOutline(omrobjectptr_t destinationObjectPtr);
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
+#if defined(OMR_GC_VLHGC)
+	/**
+	 * Return the forwarded version of the object
+	 */
+	MMINLINE omrobjectptr_t
+	getForwardedObjectVLHGCNoCheck()
+	{
+		uintptr_t forwardedObject = _preserved;
+#if defined(OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN)
+		forwardedObject = flipValue(forwardedObject);
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && !defined(OMR_ENV_LITTLE_ENDIAN) */
+		return (omrobjectptr_t)(forwardedObject & ~_all_tags);
+	}
+#endif /* defined(OMR_GC_VLHGC) */
 	
 public:
 	/**
@@ -277,6 +298,41 @@ public:
 #define ForwardedHeaderAssert(condition)
 #define ForwardedHeaderDump(destinationObjectPtr)
 #endif /* defined(FORWARDEDHEADER_DEBUG) */
+
+#if defined(OMR_GC_VLHGC)
+	/**
+	 * Similar to setForwardedObject but optionally sets the "_grow_tag" on the forwarding pointer so that we know the object
+	 * grew a hashcode slot when it moved.
+	 * @param destinationObjectPtr[in] The new location of the object
+	 * @param isObjectGrowing[in] True if the object grew during the move
+	 * @return The location of the new copy of the object (will be destinationObjectPtr if the calling thread succeeded in the copy)
+	 */
+	omrobjectptr_t setForwardedObjectGrowing(omrobjectptr_t destinationObjectPtr, bool isObjectGrowing);
+
+	/**
+	 * @return True if the underlying object (original location) resized when it was copied to its new location
+	 */
+	bool didObjectGrowOnCopy();
+
+	/**
+	 * If the object has been forwarded, return the forwarded version of the
+	 * object, otherwise return NULL.
+	 *
+	 * @note This function can safely be called for a free list entry. It will
+	 * return NULL in that case.
+	 *
+	 * @return the forwarded version of this object or NULL
+	 */
+	MMINLINE omrobjectptr_t
+	getForwardedObjectVLHGC()
+	{
+		if (isForwardedPointer()) {
+			return getForwardedObjectVLHGCNoCheck();
+		} else {
+			return NULL;
+		}
+	}
+#endif /* defined(OMR_GC_VLHGC) */
 
 	/**
 	 * Update this object to be forwarded to destinationObjectPtr using atomic operations.
