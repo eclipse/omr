@@ -676,7 +676,7 @@ getMemoryInRange(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier
 			currentAddress = (void *)alignmentInBytes;
 		}
 	}
-	
+
 #if defined(VM_FLAGS_SUPERPAGE_SIZE_2MB)
 	if (PPG_vmem_pageSize[2] == pageSize) {
 		/* Don't bother scanning the entire address space if the request can't be satisfied. */
@@ -687,7 +687,7 @@ getMemoryInRange(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier
 		omrvmem_free_memory(portLibrary, tmpPointer, byteAmount, identifier);
 	}
 #endif /* defined(VM_FLAGS_SUPERPAGE_SIZE_2MB) */
-	
+
 	/* Try all addresses within range */
 	while ((startAddress <= currentAddress) && (endAddress >= currentAddress)) {
 		memoryPointer = reserveMemory(portLibrary, currentAddress, byteAmount, identifier, mode, pageSize, pageFlags, category);
@@ -928,7 +928,7 @@ omrvmem_release_double_mapped_region(struct OMRPortLibrary *portLibrary, void *a
  *  @param uintptr_t                    pageSize            [in] Constant describing page size
  *  @param OMRMemCategory               *category           [in] Memory allocation category
  *  @param void                         *preferredAddress    [in] Prefered address of contiguous region to be double mapped
- * 
+ *
  * @return pointer to contiguous region to which regions were double mapped into, NULL is returned if unsuccessful
  */
 
@@ -1055,11 +1055,4 @@ omrvmem_create_double_mapped_region(struct OMRPortLibrary *portLibrary, void* re
 
 	Trc_PRT_double_map_regions_Create_Exit(contiguousMap);
 	return contiguousMap;
-}
-
-void *
-omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
-{
-	portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
-	return NULL;
 }

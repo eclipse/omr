@@ -623,7 +623,7 @@ extern J9_CFUNC intptr_t
 omrsysinfo_get_cwd(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufLen);
 extern J9_CFUNC intptr_t
 omrsysinfo_get_tmp(struct OMRPortLibrary *portLibrary, char *buf, uintptr_t bufLen, BOOLEAN ignoreEnvVariable);
-extern J9_CFUNC int32_t 
+extern J9_CFUNC int32_t
 omrsysinfo_get_open_file_count(struct OMRPortLibrary *portLibrary, uint64_t *count);
 extern J9_CFUNC intptr_t
 omrsysinfo_get_os_description(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc);
@@ -631,11 +631,11 @@ extern J9_CFUNC BOOLEAN
 omrsysinfo_os_has_feature(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc, uint32_t feature);
 extern J9_CFUNC BOOLEAN
 omrsysinfo_os_kernel_info(struct OMRPortLibrary *portLibrary, struct OMROSKernelInfo *kernelInfo);
-extern J9_CFUNC BOOLEAN 
+extern J9_CFUNC BOOLEAN
 omrsysinfo_cgroup_is_system_available(struct OMRPortLibrary *portLibrary);
 extern J9_CFUNC uint64_t
 omrsysinfo_cgroup_get_available_subsystems(struct OMRPortLibrary *portLibrary);
-extern J9_CFUNC uint64_t 
+extern J9_CFUNC uint64_t
 omrsysinfo_cgroup_are_subsystems_available(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlags);
 extern J9_CFUNC uint64_t
 omrsysinfo_cgroup_get_enabled_subsystems(struct OMRPortLibrary *portLibrary);
@@ -643,7 +643,7 @@ extern J9_CFUNC uint64_t
 omrsysinfo_cgroup_enable_subsystems(struct OMRPortLibrary *portLibrary, uint64_t requestedSubsystems);
 extern J9_CFUNC uint64_t
 omrsysinfo_cgroup_are_subsystems_enabled(struct OMRPortLibrary *portLibrary, uint64_t subsystemFlags);
-extern J9_CFUNC int32_t 
+extern J9_CFUNC int32_t
 omrsysinfo_cgroup_get_memlimit(struct OMRPortLibrary *portLibrary, uint64_t *limit);
 extern J9_CFUNC BOOLEAN
 omrsysinfo_cgroup_is_memlimit_set(struct OMRPortLibrary *portLibrary);
@@ -881,8 +881,6 @@ extern J9_CFUNC void *
 omrvmem_reserve_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr_t byteAmount, struct J9PortVmemIdentifier *identifier, uintptr_t mode, uintptr_t pageSize, uint32_t category);
 extern J9_CFUNC void *
 omrvmem_reserve_memory_ex(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier, struct J9PortVmemParams *params);
-extern J9_CFUNC void *
-omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category);
 extern J9_CFUNC void *
 omrvmem_create_double_mapped_region(struct OMRPortLibrary *portLibrary, void* regionAddresses[], uintptr_t regionsCount, uintptr_t regionSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category, void *preferredAddress);
 extern J9_CFUNC int32_t
