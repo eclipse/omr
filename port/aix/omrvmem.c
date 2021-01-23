@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -316,7 +316,7 @@ omrvmem_free_memory(struct OMRPortLibrary *portLibrary, void *userAddress, uintp
 	uintptr_t allocator = identifier->allocator;
 	uintptr_t size = identifier->size;
 	OMRMemCategory *category = identifier->category;
-	
+
 	update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
 
 	if (OMRPORT_VMEM_RESERVE_USED_J9MEM_ALLOCATE_MEMORY == allocator) {
@@ -1524,13 +1524,6 @@ omrvmem_get_process_memory_size(struct OMRPortLibrary *portLibrary, J9VMemMemory
 	}
 	Trc_PRT_vmem_get_process_memory_exit(result, *memorySize);
 	return result;
-}
-
-void *
-omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
-{
-	portLibrary->error_set_last_error(portLibrary, errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
-	return NULL;
 }
 
 int32_t
