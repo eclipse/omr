@@ -19,25 +19,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_SYMBOLREFERENCETABLE_INCL
-#define TR_SYMBOLREFERENCETABLE_INCL
+#ifndef OMR_SYMBOLREFERENCETABLE_INLINES_INCL
+#define OMR_SYMBOLREFERENCETABLE_INLINES_INCL
 
-#include "compile/OMRSymbolReferenceTable.hpp"
-#include "infra/Annotations.hpp"
+//#include "compile/OMRCompilation.hpp"
 
-namespace TR { class Compilation; }
 
-namespace TR
-   {
-   class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
-      {
-      public:
-
-      SymbolReferenceTable(size_t s, TR::Compilation *c) :
-         OMR::SymbolReferenceTableConnector(s, c)
-         {
-         }
-      };
-   }
 
 #endif

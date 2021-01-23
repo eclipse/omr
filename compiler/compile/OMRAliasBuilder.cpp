@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,7 +60,7 @@ OMR::AliasBuilder::AliasBuilder(TR::SymbolReferenceTable *symRefTab, size_t size
      _conservativeGenericIntShadowAliasingRequired(false),
      _mutableGenericIntShadowHasBeenCreated(false),
      _symRefTab(symRefTab),
-     _compilation(c),
+     _comp(c),
      _trMemory(c->trMemory())
    {
    }
@@ -84,22 +84,22 @@ OMR::AliasBuilder::updateSubSets(TR::SymbolReference *ref)
    TR::Symbol *sym = ref->getSymbol();
 
    if (sym && sym->isMethod())
-      methodSymRefs().set(refNum);
+      _methodSymRefs.set(refNum);
    }
 
 TR_BitVector *
 OMR::AliasBuilder::methodAliases(TR::SymbolReference *symRef)
    {
-   if (comp()->getOption(TR_TraceAliases))
-      traceMsg(comp(), "For method sym %d default aliases\n", symRef->getReferenceNumber());
+   if (_comp->getOption(TR_TraceAliases))
+      traceMsg(_comp, "For method sym %d default aliases\n", symRef->getReferenceNumber());
 
-   return &defaultMethodDefAliases();
+   return &_defaultMethodDefAliases;
    }
 
 void
 OMR::AliasBuilder::setVeryRefinedCallAliasSets(TR::ResolvedMethodSymbol * m, TR_BitVector * bc)
    {
-   _callAliases.add(new (trHeapMemory()) CallAliases(bc, m));
+   _callAliases.add(new (self()->trHeapMemory()) CallAliases(bc, m));
    }
 
 TR_BitVector *
@@ -115,64 +115,64 @@ OMR::AliasBuilder::getVeryRefinedCallAliasSets(TR::ResolvedMethodSymbol * method
 void
 OMR::AliasBuilder::createAliasInfo()
    {
-   TR::StackMemoryRegion stackMemoryRegion(*trMemory());
+   TR::StackMemoryRegion stackMemoryRegion(*_trMemory);
 
-   addressShadowSymRefs().pack();
-   genericIntShadowSymRefs().pack();
-   genericIntArrayShadowSymRefs().pack();
-   genericIntNonArrayShadowSymRefs().pack();
-   intShadowSymRefs().pack();
-   nonIntPrimitiveShadowSymRefs().pack();
-   addressStaticSymRefs().pack();
-   intStaticSymRefs().pack();
-   nonIntPrimitiveStaticSymRefs().pack();
-   methodSymRefs().pack();
-   unsafeSymRefNumbers().pack();
-   unsafeArrayElementSymRefs().pack();
-   gcSafePointSymRefNumbers().pack();
+   _addressShadowSymRefs.pack();
+   _genericIntShadowSymRefs.pack();
+   _genericIntArrayShadowSymRefs.pack();
+   _genericIntNonArrayShadowSymRefs.pack();
+   _intShadowSymRefs.pack();
+   _nonIntPrimitiveShadowSymRefs.pack();
+   _addressStaticSymRefs.pack();
+   _intStaticSymRefs.pack();
+   _nonIntPrimitiveStaticSymRefs.pack();
+   _methodSymRefs.pack();
+   _unsafeSymRefNumbers.pack();
+   _unsafeArrayElementSymRefs.pack();
+   _gcSafePointSymRefNumbers.pack();
 
-   setCatchLocalUseSymRefs();
+   self()->setCatchLocalUseSymRefs();
 
-   defaultMethodDefAliases().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
-   defaultMethodDefAliases() |= addressShadowSymRefs();
-   defaultMethodDefAliases() |= intShadowSymRefs();
-   defaultMethodDefAliases() |= nonIntPrimitiveShadowSymRefs();
-   defaultMethodDefAliases() |= arrayElementSymRefs();
-   defaultMethodDefAliases() |= arrayletElementSymRefs();
-   defaultMethodDefAliases() |= addressStaticSymRefs();
-   defaultMethodDefAliases() |= intStaticSymRefs();
-   defaultMethodDefAliases() |= nonIntPrimitiveStaticSymRefs();
-   defaultMethodDefAliases() |= unsafeSymRefNumbers();
-   defaultMethodDefAliases() |= gcSafePointSymRefNumbers();
+   _defaultMethodDefAliases.init(_symRefTab->getNumSymRefs(), _comp->trMemory(), heapAlloc, growable);
+   _defaultMethodDefAliases |= _addressShadowSymRefs;
+   _defaultMethodDefAliases |= _intShadowSymRefs;
+   _defaultMethodDefAliases |= _nonIntPrimitiveShadowSymRefs;
+   _defaultMethodDefAliases |= _arrayElementSymRefs;
+   _defaultMethodDefAliases |= _arrayletElementSymRefs;
+   _defaultMethodDefAliases |= _addressStaticSymRefs;
+   _defaultMethodDefAliases |= _intStaticSymRefs;
+   _defaultMethodDefAliases |= _nonIntPrimitiveStaticSymRefs;
+   _defaultMethodDefAliases |= _unsafeSymRefNumbers;
+   _defaultMethodDefAliases |= _gcSafePointSymRefNumbers;
 
-   defaultMethodDefAliasesWithoutImmutable().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
-   defaultMethodDefAliasesWithoutUserField().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
+   _defaultMethodDefAliasesWithoutImmutable.init(_symRefTab->getNumSymRefs(), _comp->trMemory(), heapAlloc, growable);
+   _defaultMethodDefAliasesWithoutUserField.init(_symRefTab->getNumSymRefs(), _comp->trMemory(), heapAlloc, growable);
 
-   defaultMethodDefAliasesWithoutUserField() |= defaultMethodDefAliases();
+   _defaultMethodDefAliasesWithoutUserField |= _defaultMethodDefAliases;
 
-   defaultMethodDefAliasesWithoutImmutable() |= defaultMethodDefAliases();
+   _defaultMethodDefAliasesWithoutImmutable |= _defaultMethodDefAliases;
 
-   defaultMethodUseAliases().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
-   defaultMethodUseAliases() |= defaultMethodDefAliases();
-   defaultMethodUseAliases() |= catchLocalUseSymRefs();
+   _defaultMethodUseAliases.init(_symRefTab->getNumSymRefs(), _comp->trMemory(), heapAlloc, growable);
+   _defaultMethodUseAliases |= _defaultMethodDefAliases;
+   _defaultMethodUseAliases |= _catchLocalUseSymRefs;
 
-   if (symRefTab()->element(TR::SymbolReferenceTable::contiguousArraySizeSymbol))
-      defaultMethodUseAliases().set(symRefTab()->element(TR::SymbolReferenceTable::contiguousArraySizeSymbol)->getReferenceNumber());
-   if (symRefTab()->element(TR::SymbolReferenceTable::discontiguousArraySizeSymbol))
-      defaultMethodUseAliases().set(symRefTab()->element(TR::SymbolReferenceTable::discontiguousArraySizeSymbol)->getReferenceNumber());
-   if (symRefTab()->element(TR::SymbolReferenceTable::vftSymbol))
-      defaultMethodUseAliases().set(symRefTab()->element(TR::SymbolReferenceTable::vftSymbol)->getReferenceNumber());
+   if (_symRefTab->element(TR::SymbolReferenceTable::contiguousArraySizeSymbol))
+      _defaultMethodUseAliases.set(_symRefTab->element(TR::SymbolReferenceTable::contiguousArraySizeSymbol)->getReferenceNumber());
+   if (_symRefTab->element(TR::SymbolReferenceTable::discontiguousArraySizeSymbol))
+      _defaultMethodUseAliases.set(_symRefTab->element(TR::SymbolReferenceTable::discontiguousArraySizeSymbol)->getReferenceNumber());
+   if (_symRefTab->element(TR::SymbolReferenceTable::vftSymbol))
+      _defaultMethodUseAliases.set(_symRefTab->element(TR::SymbolReferenceTable::vftSymbol)->getReferenceNumber());
 
-   methodsThatMayThrow().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
-   methodsThatMayThrow() |= methodSymRefs();
+   _methodsThatMayThrow.init(_symRefTab->getNumSymRefs(), _comp->trMemory(), heapAlloc, growable);
+   _methodsThatMayThrow |= _methodSymRefs;
 
    for (CallAliases * callAliases = _callAliases.getFirst(); callAliases; callAliases = callAliases->getNext())
       callAliases->_methodSymbol->setHasVeryRefinedAliasSets(false);
    _callAliases.setFirst(0);
 
-   if (comp()->getOption(TR_TraceAliases))
+   if (_comp->getOption(TR_TraceAliases))
       {
-      comp()->getDebug()->printAliasInfo(comp()->getOutFile(), symRefTab());
+      _comp->getDebug()->printAliasInfo(_comp->getOutFile(), _symRefTab);
       }
 
    }
@@ -180,12 +180,12 @@ OMR::AliasBuilder::createAliasInfo()
 void
 OMR::AliasBuilder::setCatchLocalUseSymRefs()
    {
-   catchLocalUseSymRefs().init(symRefTab()->getNumSymRefs(), trMemory());
-   notOsrCatchLocalUseSymRefs().init(symRefTab()->getNumSymRefs(), trMemory());
+   _catchLocalUseSymRefs.init(_symRefTab->getNumSymRefs(), _trMemory);
+   _notOsrCatchLocalUseSymRefs.init(_symRefTab->getNumSymRefs(), _trMemory);
 
-   vcount_t visitCount = comp()->incVisitCount();
+   vcount_t visitCount = _comp->incVisitCount();
 
-   for (TR::CFGNode * node = comp()->getFlowGraph()->getFirstNode(); node; node = node->getNext())
+   for (TR::CFGNode * node = _comp->getFlowGraph()->getFirstNode(); node; node = node->getNext())
       {
       if (!node->getExceptionPredecessors().empty())
          {
@@ -195,16 +195,16 @@ OMR::AliasBuilder::setCatchLocalUseSymRefs()
 
          if (!isOSRCatch)
             {
-            gatherLocalUseInfo(toBlock(node), isOSRCatch);
+            self()->gatherLocalUseInfo(toBlock(node), isOSRCatch);
             }
          }
       }
 
-   if (comp()->getOption(TR_EnableOSR))
+   if (_comp->getOption(TR_EnableOSR))
       {
-      visitCount = comp()->incVisitCount();
+      visitCount = _comp->incVisitCount();
 
-      for (TR::CFGNode *node = comp()->getFlowGraph()->getFirstNode(); node; node = node->getNext())
+      for (TR::CFGNode *node = _comp->getFlowGraph()->getFirstNode(); node; node = node->getNext())
          {
          if (!node->getExceptionPredecessors().empty())
             {
@@ -214,7 +214,7 @@ OMR::AliasBuilder::setCatchLocalUseSymRefs()
 
             if (isOSRCatch)
                {
-               gatherLocalUseInfo(toBlock(node), isOSRCatch);
+               self()->gatherLocalUseInfo(toBlock(node), isOSRCatch);
                }
             }
          }
@@ -225,7 +225,7 @@ void
 OMR::AliasBuilder::gatherLocalUseInfo(TR::Block * block, TR_BitVector & storeVector, TR_ScratchList<TR_Pair<TR::Block, TR_BitVector> > *seenBlockInfos, vcount_t visitCount, bool isOSRCatch)
    {
    for (TR::TreeTop * tt = block->getEntry(); tt != block->getExit(); tt = tt->getNextTreeTop())
-      gatherLocalUseInfo(tt->getNode(), storeVector, visitCount, isOSRCatch);
+      self()->gatherLocalUseInfo(tt->getNode(), storeVector, visitCount, isOSRCatch);
 
    TR_SuccessorIterator edges(block);
    for (TR::CFGEdge * edge = edges.getFirst(); edge; edge = edges.getNext())
@@ -234,11 +234,11 @@ OMR::AliasBuilder::gatherLocalUseInfo(TR::Block * block, TR_BitVector & storeVec
       if (((edge->getTo()->getPredecessors().size() == 1) && edge->getTo()->getExceptionPredecessors().empty()) /* ||
                                                                                                                      (edge->getTo()->getExceptionPredecessors().isSingleton() && edge->getTo()->getPredecessors().empty()) */)
          {
-         predBitVector = new (comp()->trStackMemory()) TR_BitVector(symRefTab()->getNumSymRefs(), comp()->trMemory(), stackAlloc);
+         predBitVector = new (_comp->trStackMemory()) TR_BitVector(_symRefTab->getNumSymRefs(), _comp->trMemory(), stackAlloc);
          *predBitVector = storeVector;
          }
 
-      TR_Pair<TR::Block, TR_BitVector> *pair = new (trStackMemory()) TR_Pair<TR::Block, TR_BitVector> (toBlock(edge->getTo()), predBitVector);
+      TR_Pair<TR::Block, TR_BitVector> *pair = new (self()->trStackMemory()) TR_Pair<TR::Block, TR_BitVector> (toBlock(edge->getTo()), predBitVector);
       seenBlockInfos->add(pair);
       }
    }
@@ -246,10 +246,10 @@ OMR::AliasBuilder::gatherLocalUseInfo(TR::Block * block, TR_BitVector & storeVec
 void
 OMR::AliasBuilder::gatherLocalUseInfo(TR::Block * catchBlock, bool isOSRCatch)
    {
-   vcount_t visitCount = comp()->getVisitCount();
-   TR_ScratchList<TR_Pair<TR::Block, TR_BitVector> > seenBlockInfos(trMemory());
+   vcount_t visitCount = _comp->getVisitCount();
+   TR_ScratchList<TR_Pair<TR::Block, TR_BitVector> > seenBlockInfos(_trMemory);
 
-   TR_Pair<TR::Block, TR_BitVector> *p = new (trStackMemory()) TR_Pair<TR::Block, TR_BitVector> (catchBlock, NULL);
+   TR_Pair<TR::Block, TR_BitVector> *p = new (self()->trStackMemory()) TR_Pair<TR::Block, TR_BitVector> (catchBlock, NULL);
    seenBlockInfos.add(p);
    while (!seenBlockInfos.isEmpty())
       {
@@ -264,11 +264,11 @@ OMR::AliasBuilder::gatherLocalUseInfo(TR::Block * catchBlock, bool isOSRCatch)
       TR_BitVector *predStoreVector = blockInfo->getValue();
 
       if (predStoreVector)
-         gatherLocalUseInfo(block, *predStoreVector, &seenBlockInfos, visitCount, isOSRCatch);
+         self()->gatherLocalUseInfo(block, *predStoreVector, &seenBlockInfos, visitCount, isOSRCatch);
       else
          {
-         TR_BitVector storeVector(symRefTab()->getNumSymRefs(), comp()->trMemory(), stackAlloc);
-         gatherLocalUseInfo(block, storeVector, &seenBlockInfos, visitCount, isOSRCatch);
+         TR_BitVector storeVector(_symRefTab->getNumSymRefs(), _comp->trMemory(), stackAlloc);
+         self()->gatherLocalUseInfo(block, storeVector, &seenBlockInfos, visitCount, isOSRCatch);
          }
       }
    }
@@ -281,7 +281,7 @@ OMR::AliasBuilder::gatherLocalUseInfo(TR::Node * node, TR_BitVector & storeVecto
    node->setVisitCount(visitCount);
 
    for (int32_t i = node->getNumChildren() - 1; i >= 0; --i)
-      gatherLocalUseInfo(node->getChild(i), storeVector, visitCount, isOSRCatch);
+      self()->gatherLocalUseInfo(node->getChild(i), storeVector, visitCount, isOSRCatch);
 
    TR::SymbolReference * symRef = node->getOpCode().hasSymbolReference() ? node->getSymbolReference() : 0;
 
@@ -292,9 +292,9 @@ OMR::AliasBuilder::gatherLocalUseInfo(TR::Node * node, TR_BitVector & storeVecto
          storeVector.set(refNumber);
       else if (!storeVector.get(refNumber))
          {
-         catchLocalUseSymRefs().set(refNumber);
+         _catchLocalUseSymRefs.set(refNumber);
          if (!isOSRCatch)
-            notOsrCatchLocalUseSymRefs().set(refNumber);
+            _notOsrCatchLocalUseSymRefs.set(refNumber);
          }
       }
    }
@@ -302,7 +302,7 @@ OMR::AliasBuilder::gatherLocalUseInfo(TR::Node * node, TR_BitVector & storeVecto
 bool
 OMR::AliasBuilder::hasUseonlyAliasesOnlyDueToOSRCatchBlocks(TR::SymbolReference *symRef)
    {
-   if (notOsrCatchLocalUseSymRefs().get(symRef->getReferenceNumber()))
+   if (_notOsrCatchLocalUseSymRefs.get(symRef->getReferenceNumber()))
       return false;
    return true;
    }
@@ -323,30 +323,30 @@ void
 OMR::AliasBuilder::addNonIntPrimitiveArrayShadows(TR_BitVector *aliases)
    {
    if(supportArrayRefinement)
-      *aliases |= refinedNonIntPrimitiveArrayShadows();
+      *aliases |= _refinedNonIntPrimitiveArrayShadows;
 
-   aliases->set(symRefTab()->getArrayShadowIndex(TR::Int8));
-   aliases->set(symRefTab()->getArrayShadowIndex(TR::Int16));
-   aliases->set(symRefTab()->getArrayShadowIndex(TR::Int32));
-   aliases->set(symRefTab()->getArrayShadowIndex(TR::Int64));
-   aliases->set(symRefTab()->getArrayShadowIndex(TR::Float));
-   aliases->set(symRefTab()->getArrayShadowIndex(TR::Double));
+   aliases->set(_symRefTab->getArrayShadowIndex(TR::Int8));
+   aliases->set(_symRefTab->getArrayShadowIndex(TR::Int16));
+   aliases->set(_symRefTab->getArrayShadowIndex(TR::Int32));
+   aliases->set(_symRefTab->getArrayShadowIndex(TR::Int64));
+   aliases->set(_symRefTab->getArrayShadowIndex(TR::Float));
+   aliases->set(_symRefTab->getArrayShadowIndex(TR::Double));
    }
 
 void
 OMR::AliasBuilder::addAddressArrayShadows(TR_BitVector *aliases)
    {
    if(supportArrayRefinement)
-      *aliases |= refinedAddressArrayShadows();
+      *aliases |= _refinedAddressArrayShadows;
 
-   aliases->set(symRefTab()->getArrayShadowIndex(TR::Address));
+   aliases->set(_symRefTab->getArrayShadowIndex(TR::Address));
    }
 
 void
 OMR::AliasBuilder::addIntArrayShadows(TR_BitVector *aliases)
    {
    if(supportArrayRefinement)
-      *aliases |= refinedIntArrayShadows();
+      *aliases |= _refinedIntArrayShadows;
 
-   aliases->set(symRefTab()->getArrayShadowIndex(TR::Int32));
+   aliases->set(_symRefTab->getArrayShadowIndex(TR::Int32));
    }
