@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,7 +82,6 @@ protected:
 
 	virtual void* reserveMemory(J9PortVmemParams* params);
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
-	virtual void *doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize);
 	virtual void *doubleMapRegions(MM_EnvironmentBase *env, void* regions[], UDATA regionsCount, UDATA regionSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize, void *preferredAddress);
 #endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 
@@ -112,11 +111,11 @@ protected:
 
 	/*
 	 * Set the NUMA affinity for the specified range within the receiver.
-	 * 
+	 *
 	 * @param numaNode - the node to associate the memory with
 	 * @param[in] address - the start of the range to modify, must be aligned to the physical page size
 	 * @param byteAmount - the size of the range to modify. Might NOT to be aligned to page size. Will be aligned inside.
-	 * 
+	 *
 	 * @return true on success, false on failure
 	 */
 	virtual bool setNumaAffinity(uintptr_t numaNode, void* address, uintptr_t byteAmount);
@@ -137,7 +136,7 @@ protected:
 		return _heapTop;
 	};
 
-	/** 
+	/**
 	 * Return the size of the pages used in the virtual memory object
 	 */
 	MMINLINE uintptr_t getPageSize()
@@ -145,7 +144,7 @@ protected:
 		return _pageSize;
 	}
 
-	/** 
+	/**
 	 * Return the flags describing the pages used in the virtual memory object
 	 */
 	MMINLINE uintptr_t getPageFlags()

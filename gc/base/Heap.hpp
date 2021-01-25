@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,7 +102,7 @@ public:
 	uintptr_t getApproximateActiveFreeSurvivorMemorySize(uintptr_t includeMemoryType);
 
 	/**
-	 * Return the page size used for the heap memory.  This should only be used for 
+	 * Return the page size used for the heap memory.  This should only be used for
 	 * reporting purposes only!  (e.g. In MM_HeapSplit, the low extent and high extent
 	 * may have different size pages, in this case the minimum value is returned)
 	 */
@@ -112,11 +112,10 @@ public:
 	 * Return the page flags describing the pages used for the heap memory.
 	 */
 	virtual uintptr_t getPageFlags() = 0;
-	
+
 	virtual void *getHeapBase() = 0;
 	virtual void *getHeapTop() = 0;
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
-	virtual void *doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize) = 0;
 	virtual void *doubleMapRegions(MM_EnvironmentBase *env, void* regions[], UDATA regionsCount, UDATA regionSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize, void *preferredAddress) = 0;
 #endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 
@@ -147,7 +146,7 @@ public:
 	 * Called after the heap geometry changes to allow any data structures dependent on this to be updated.
 	 * This call could be triggered by memory ranges being added to or removed from the heap or memory being
 	 * moved from one subspace to another.
-	 * @param env[in] The thread which performed the change in heap geometry 
+	 * @param env[in] The thread which performed the change in heap geometry
 	 */
 	virtual void heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress);
 
