@@ -343,6 +343,8 @@ timestamps {
                                     if (SPECS[params.BUILDSPEC].ccache) {
                                         echo 'Output CCACHE stats before running and clear them'
                                         sh 'ccache -s -z'
+                                        sh 'printenv'
+                                        echo "PATH:'${PATH}'"
                                     }
 
                                     for (build in SPECS[params.BUILDSPEC].builds) {
