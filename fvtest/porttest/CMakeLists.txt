@@ -137,9 +137,16 @@ if(OMR_HOST_OS STREQUAL "aix")
 endif()
 
 if (NOT OMR_HOST_OS STREQUAL "aix" AND NOT OMR_HOST_OS STREQUAL "zos")
+	# add verbose output to debug #5100
+	if(OMR_OS_WINDOWS)
+		set(extra_opts "-verbose")
+	else()
+		set(extra_opts)
+	endif()
+
 	add_test(
 		NAME porttest
-		COMMAND omrporttest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrporttest-results.xml
+		COMMAND omrporttest --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/omrporttest-results.xml ${extra_opts}
 	)
 endif()
 
