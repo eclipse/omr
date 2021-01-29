@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -854,7 +854,7 @@ void OMR::LocalCSE::doCommoningIfAvailable(TR::Node *node, TR::Node *parent, int
                      }
                   else
                      {
-                     TR_ASSERT(node->getFirstChild()->getReferenceCount() == 1, "Local CSE, treetop child of NULLCHK has other uses");
+                     TR_ASSERT(node->getFirstChild()->isSingleRef(), "Local CSE, treetop child of NULLCHK has other uses");
                      // Make sure the child doesn't get removed too
                      //
                      node->getFirstChild()->incReferenceCount();
@@ -1225,12 +1225,12 @@ bool OMR::LocalCSE::canBeAvailable(TR::Node *parent, TR::Node *node, TR_BitVecto
    int32_t numChildren = node->getNumChildren();
    while (i < numChildren)
       {
-      if (node->getChild(i)->getReferenceCount() == 1)
+      if (node->getChild(i)->isSingleRef())
          {
          if (node->getChild(i)->getOpCode().isArrayRef())
             {
-            if ((node->getChild(i)->getFirstChild()->getReferenceCount() == 1) ||
-                (node->getChild(i)->getSecondChild()->getReferenceCount() == 1))
+            if ((node->getChild(i)->getFirstChild()->isSingleRef()) ||
+                (node->getChild(i)->getSecondChild()->isSingleRef()))
                return false;
             }
          else

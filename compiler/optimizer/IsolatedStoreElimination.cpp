@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -627,7 +627,7 @@ int32_t TR_IsolatedStoreElimination::performWithUseDefInfo()
             collectDefParentInfo(useDefIndex,node,info);
             TR::Node *firstChild = node->getFirstChild();
             if (firstChild->getOpCode().isLoadVarDirect() &&
-                firstChild->getReferenceCount() == 1 &&
+                firstChild->isSingleRef() &&
                 (firstChild->getSymbolReference() == node->getSymbolReference()))
                   {
                _trivialDefs->set(i);
@@ -689,7 +689,7 @@ void TR_IsolatedStoreElimination::collectDefParentInfo(int32_t defIndex,TR::Node
       {
       TR::Node *child = node->getChild(childNum);
 
-      if ((child->getReferenceCount() == 1) &&
+      if ((child->isSingleRef()) &&
           child->getOpCode().isLoadVar())
         {
         int32_t index = child->getUseDefIndex();
@@ -1579,10 +1579,10 @@ void TR_IsolatedStoreElimination::analyzeSingleBlockLoop(TR_RegionStructure *reg
                TR::SymbolReference *symRef = node->getSymbolReference();
                TR::Node *rhsOfStoreDefNode = node->getFirstChild();
                if ((rhsOfStoreDefNode->getOpCode().getOpCodeValue() == TR::ixor) &&
-                   (rhsOfStoreDefNode->getReferenceCount() == 1) &&
+                   (rhsOfStoreDefNode->isSingleRef()) &&
                    rhsOfStoreDefNode->getSecondChild()->getOpCode().isLoadConst() &&
                    (rhsOfStoreDefNode->getSecondChild()->getInt() == 1) &&
-                   (rhsOfStoreDefNode->getFirstChild()->getReferenceCount() == 1) &&
+                   (rhsOfStoreDefNode->getFirstChild()->isSingleRef()) &&
                    (rhsOfStoreDefNode->getFirstChild()->getOpCode().hasSymbolReference() &&
                    ((rhsOfStoreDefNode->getFirstChild()->getSymbolReference()->getReferenceNumber() == symRef->getReferenceNumber()))))
                   {

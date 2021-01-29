@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -306,7 +306,7 @@ void TR_ExpressionsSimplification::setSummationReductionCandidates(TR::Node *nod
 
       if (firstNode->getOpCode().hasSymbolReference() &&
             node->getSymbolReference() == firstNode->getSymbolReference() &&
-            opNode->getReferenceCount() == 1 && firstNode->getReferenceCount() == 1)
+            opNode->isSingleRef() && firstNode->isSingleRef())
          {
          // The second node must be loop invariant
          //
@@ -334,7 +334,7 @@ void TR_ExpressionsSimplification::setSummationReductionCandidates(TR::Node *nod
          }
       else if (secondNode->getOpCode().hasSymbolReference() &&
             node->getSymbolReference() == secondNode->getSymbolReference() &&
-            opNode->getReferenceCount() == 1 && secondNode->getReferenceCount() == 1 &&
+            opNode->isSingleRef() && secondNode->isSingleRef() &&
             _currentRegion->isExprInvariant(firstNode))
          {
          _candidateTTs->add(tt);
@@ -345,12 +345,12 @@ void TR_ExpressionsSimplification::setSummationReductionCandidates(TR::Node *nod
       {
       if (opNode->getFirstChild()->getOpCode().hasSymbolReference() &&
             node->getSymbolReference() == opNode->getFirstChild()->getSymbolReference() &&
-            opNode->getReferenceCount() == 1 && opNode->getFirstChild()->getReferenceCount() == 1 &&
+            opNode->isSingleRef() && opNode->getFirstChild()->isSingleRef() &&
             (opNode->getOpCodeValue() == TR::ineg || _currentRegion->isExprInvariant(opNode->getSecondChild())))
          _candidateTTs->add(tt);
       else if (opNode->getOpCodeValue() == TR::ixor && opNode->getSecondChild()->getOpCode().hasSymbolReference() &&
             node->getSymbolReference() == opNode->getSecondChild()->getSymbolReference() &&
-            opNode->getReferenceCount() == 1 && opNode->getSecondChild()->getReferenceCount() == 1 &&
+            opNode->isSingleRef() && opNode->getSecondChild()->isSingleRef() &&
             _currentRegion->isExprInvariant(opNode->getFirstChild()))
          _candidateTTs->add(tt);
       }

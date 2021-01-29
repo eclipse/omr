@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1573,7 +1573,7 @@ TR::TreeTop *TR_OSRLiveRangeAnalysis::collectPendingPush(TR_ByteCodeInfo bci, TR
           && node->getFirstChild()->getOpCode().isLoad()
           && node->getFirstChild()->getOpCode().hasSymbolReference())
          {
-         if (node->getFirstChild()->getReferenceCount() == 1)
+         if (node->getFirstChild()->isSingleRef())
             {
             TR::AutomaticSymbol *local = node->getFirstChild()->getSymbolReference()->getSymbol()->getAutoSymbol();
             int32_t localIndex = local->getLiveLocalIndex();

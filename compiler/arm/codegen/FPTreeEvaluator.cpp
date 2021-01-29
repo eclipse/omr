@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -815,7 +815,7 @@ TR::Register *OMR::ARM::TreeEvaluator::ibits2fEvaluator(TR::Node *node, TR::Code
    TR::Node                *child  = node->getFirstChild();
    TR::Register            *target = NULL;
 
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
+   if (child->isSingleRefUnevaluated() &&
        child->getOpCode().isLoadVar())
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 4, cg);
@@ -871,7 +871,7 @@ TR::Register *OMR::ARM::TreeEvaluator::fbits2iEvaluator(TR::Node *node, TR::Code
    TR::Register            *target = cg->allocateRegister();
 
    TR_ASSERT(!node->normalizeNanValues(), "Check NAN\n");
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
+   if (child->isSingleRefUnevaluated() &&
        child->getOpCode().isLoadVar())
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 4, cg);
@@ -905,7 +905,7 @@ TR::Register *OMR::ARM::TreeEvaluator::lbits2dEvaluator(TR::Node *node, TR::Code
    TR::Register            *highReg = NULL;
    TR::Compilation *comp = cg->comp();
 
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
+   if (child->isSingleRefUnevaluated() &&
        child->getOpCode().isLoadVar())
       {
       TR::MemoryReference *highMem, *lowMem;
@@ -975,7 +975,7 @@ TR::Register *OMR::ARM::TreeEvaluator::dbits2lEvaluator(TR::Node *node, TR::Code
    TR::Compilation         *comp = cg->comp();
 
    TR_ASSERT(!node->normalizeNanValues(), "Check NAN\n");
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
+   if (child->isSingleRefUnevaluated() &&
        child->getOpCode().isLoadVar())
       {
       TR::MemoryReference *highMem, *lowMem;
@@ -1634,8 +1634,8 @@ TR::Register *OMR::ARM::TreeEvaluator::faddEvaluator(TR::Node *node, TR::CodeGen
    // TODO: Check conditions to use fmacs if possible
    TR::Compilation *comp = cg->comp();
    TR::Register *result = NULL;
-   if (((isFPStrictMul(node->getFirstChild(), comp) && (node->getSecondChild()->getReferenceCount() == 1)) ||
-        (isFPStrictMul(node->getSecondChild(), comp) && (node->getFirstChild()->getReferenceCount() == 1))) &&
+   if (((isFPStrictMul(node->getFirstChild(), comp) && (node->getSecondChild()->isSingleRef())) ||
+        (isFPStrictMul(node->getSecondChild(), comp) && (node->getFirstChild()->isSingleRef()))) &&
          performTransformation(comp, "O^O Changing [%p] to fmacs\n", node))
       {
       result = generateFusedMultiplyAdd(node, ARMOp_fmacs, cg);
@@ -1652,8 +1652,8 @@ TR::Register *OMR::ARM::TreeEvaluator::daddEvaluator(TR::Node *node, TR::CodeGen
    // TODO: Check conditions to use fmacd if possible
    TR::Register *result = NULL;
    TR::Compilation *comp = cg->comp();
-   if (((isFPStrictMul(node->getFirstChild(), comp) && (node->getSecondChild()->getReferenceCount() == 1)) ||
-        (isFPStrictMul(node->getSecondChild(), comp) && (node->getFirstChild()->getReferenceCount() == 1))) &&
+   if (((isFPStrictMul(node->getFirstChild(), comp) && (node->getSecondChild()->isSingleRef())) ||
+        (isFPStrictMul(node->getSecondChild(), comp) && (node->getFirstChild()->isSingleRef()))) &&
          performTransformation(comp, "O^O Changing [%p] to fmacd\n", node))
       {
       result = generateFusedMultiplyAdd(node, ARMOp_fmacd, cg);
@@ -1671,13 +1671,13 @@ TR::Register *OMR::ARM::TreeEvaluator::dsubEvaluator(TR::Node *node, TR::CodeGen
    TR::Compilation *comp = cg->comp();
    TR::Register *result = NULL;
    if (isFPStrictMul(node->getFirstChild(), comp) &&
-      (node->getSecondChild()->getReferenceCount() == 1) &&
+      (node->getSecondChild()->isSingleRef()) &&
        performTransformation(comp, "O^O Changing [%p] to fmscd\n",node))
       {
       result = generateFusedMultiplyAdd(node, ARMOp_fmscd, cg);
       }
    else if (isFPStrictMul(node->getSecondChild(), comp) &&
-      (node->getFirstChild()->getReferenceCount() == 1) &&
+      (node->getFirstChild()->isSingleRef()) &&
        performTransformation(comp, "O^O Changing [%p] to fnmacd\n",node))
       {
       result = generateFusedMultiplyAdd(node, ARMOp_fnmacd, cg);
@@ -1695,13 +1695,13 @@ TR::Register *OMR::ARM::TreeEvaluator::fsubEvaluator(TR::Node *node, TR::CodeGen
    TR::Compilation *comp = cg->comp();
    TR::Register *result = NULL;
    if (isFPStrictMul(node->getFirstChild(), comp) &&
-      (node->getSecondChild()->getReferenceCount() == 1) &&
+      (node->getSecondChild()->isSingleRef()) &&
        performTransformation(comp, "O^O Changing [%p] to fmscs\n",node))
       {
       result = generateFusedMultiplyAdd(node, ARMOp_fmscs, cg);
       }
    else if (isFPStrictMul(node->getSecondChild(), comp) &&
-      (node->getFirstChild()->getReferenceCount() == 1) &&
+      (node->getFirstChild()->isSingleRef()) &&
        performTransformation(comp, "O^O Changing [%p] to fnmacs\n",node))
       {
       result = generateFusedMultiplyAdd(node, ARMOp_fnmacs, cg);
@@ -1770,9 +1770,9 @@ TR::Register *OMR::ARM::TreeEvaluator::fnegEvaluator(TR::Node *node, TR::CodeGen
       {
       // fneg(node) -> fadd(firstChild) -> a multiply in one of the children
       if (((isFPStrictMul(firstChild->getFirstChild(), comp) &&
-         firstChild->getSecondChild()->getReferenceCount() == 1) ||
+         firstChild->getSecondChild()->isSingleRef()) ||
          (isFPStrictMul(firstChild->getSecondChild(), comp) &&
-         firstChild->getFirstChild()->getReferenceCount() == 1)) &&
+         firstChild->getFirstChild()->isSingleRef())) &&
          performTransformation(comp, "O^O Changing [%p] to fnmscs\n", node))
          {
          result = generateFusedMultiplyAdd(node, ARMOp_fnmscs, cg);
@@ -1826,9 +1826,9 @@ TR::Register *OMR::ARM::TreeEvaluator::dnegEvaluator(TR::Node *node, TR::CodeGen
       {
       // dneg(node) -> dadd(firstChild) -> a multiply in one of the children
       if (((isFPStrictMul(firstChild->getFirstChild(), comp) &&
-         firstChild->getSecondChild()->getReferenceCount() == 1) ||
+         firstChild->getSecondChild()->isSingleRef()) ||
          (isFPStrictMul(firstChild->getSecondChild(), comp) &&
-         firstChild->getFirstChild()->getReferenceCount() == 1)) &&
+         firstChild->getFirstChild()->isSingleRef())) &&
          performTransformation(comp, "O^O Changing [%p] to fnmscd\n", node))
          {
          result = generateFusedMultiplyAdd(node, ARMOp_fnmscd, cg);
@@ -1877,8 +1877,7 @@ TR::Register *OMR::ARM::TreeEvaluator::i2fEvaluator(TR::Node *node, TR::CodeGene
    TR::Register *trgReg = NULL;
    TR_ARMOpCodes opcode = (node->getOpCodeValue() == TR::iu2f) ? ARMOp_fuitos : ARMOp_fsitos;
 
-   if (firstChild->getReferenceCount() == 1 &&
-       firstChild->getRegister() == NULL &&
+   if (firstChild->isSingleRefUnevaluated() &&
       (firstChild->getOpCodeValue() == TR::iload || firstChild->getOpCodeValue() == TR::iloadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
@@ -1930,8 +1929,7 @@ TR::Register *OMR::ARM::TreeEvaluator::i2dEvaluator(TR::Node *node, TR::CodeGene
 
    TR_ARMOpCodes opcode = (node->getOpCodeValue() != TR::iu2d && node->getOpCodeValue() != TR::su2d) ? ARMOp_fsitod : ARMOp_fuitod;  // D[t], S[s]
 
-   if (firstChild->getReferenceCount() == 1 &&
-       firstChild->getRegister() == NULL &&
+   if (firstChild->isSingleRefUnevaluated() &&
       (firstChild->getOpCodeValue() == TR::iload || firstChild->getOpCodeValue() == TR::iloadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
@@ -2002,8 +2000,7 @@ TR::Register *OMR::ARM::TreeEvaluator::f2dEvaluator(TR::Node *node, TR::CodeGene
    TR::Register *trgReg = NULL; // NEW
    TR::Register *doubleTrgReg = cg->allocateRegister(TR_FPR);
 
-   if (firstChild->getReferenceCount() == 1 &&
-       firstChild->getRegister() == NULL &&
+   if (firstChild->isSingleRefUnevaluated() &&
       (firstChild->getOpCodeValue() == TR::fload || firstChild->getOpCodeValue() == TR::floadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
@@ -2057,8 +2054,7 @@ TR::Register *OMR::ARM::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
    TR_ARMOpCodes opcode = (node->getOpCodeValue() == TR::f2i) ? ARMOp_ftosizs : ARMOp_ftouizs;
    TR::Register *floatTrgReg = cg->allocateSinglePrecisionRegister();
 
-   if (firstChild->getReferenceCount() == 1 &&
-       firstChild->getRegister() == NULL &&
+   if (firstChild->isSingleRefUnevaluated() &&
       (firstChild->getOpCodeValue() == TR::fload || firstChild->getOpCodeValue() == TR::floadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
@@ -2097,8 +2093,7 @@ TR::Register *OMR::ARM::TreeEvaluator::d2iEvaluator(TR::Node *node, TR::CodeGene
    TR_ARMOpCodes opcode = (node->getOpCodeValue() == TR::d2i) ? ARMOp_ftosizd : ARMOp_ftouizd;
    TR::Register *floatTrgReg = cg->allocateSinglePrecisionRegister();
 
-   if (firstChild->getReferenceCount() == 1 &&
-       firstChild->getRegister() == NULL &&
+   if (firstChild->isSingleRefUnevaluated() &&
       (firstChild->getOpCodeValue() == TR::dload || firstChild->getOpCodeValue() == TR::dloadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
@@ -2170,8 +2165,7 @@ TR::Register *OMR::ARM::TreeEvaluator::d2fEvaluator(TR::Node *node, TR::CodeGene
    TR::Register *trgReg = NULL;
    TR::Register *floatTrgReg = cg->allocateSinglePrecisionRegister(); // NEW
 
-   if (firstChild->getReferenceCount() == 1 &&
-       firstChild->getRegister() == NULL &&
+   if (firstChild->isSingleRefUnevaluated() &&
       (firstChild->getOpCodeValue() == TR::dload || firstChild->getOpCodeValue() == TR::dloadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
@@ -2668,7 +2662,7 @@ TR::Register *OMR::ARM::TreeEvaluator::ibits2fEvaluator(TR::Node *node, TR::Code
    TR::Node                *child  = node->getFirstChild();
    TR::Register            *target = cg->allocateRegister();
 
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
+   if (child->isSingleRefUnevaluated() &&
        child->getOpCode().isLoadVar())
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 4, cg);
@@ -2690,7 +2684,7 @@ TR::Register *OMR::ARM::TreeEvaluator::fbits2iEvaluator(TR::Node *node, TR::Code
    TR::Register            *target = cg->allocateRegister();
 
    TR_ASSERT(!node->normalizeNanValues(), "Check NAN\n");
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
+   if (child->isSingleRefUnevaluated() &&
        child->getOpCode().isLoadVar())
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 4, cg);
@@ -2715,7 +2709,7 @@ TR::Register *OMR::ARM::TreeEvaluator::lbits2dEvaluator(TR::Node *node, TR::Code
    TR::Register            *highReg = NULL;
    TR::Compilation *comp = cg->comp();
 
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
+   if (child->isSingleRefUnevaluated() &&
        child->getOpCode().isLoadVar())
       {
       TR::MemoryReference *highMem, *lowMem;
@@ -2752,7 +2746,7 @@ TR::Register *OMR::ARM::TreeEvaluator::dbits2lEvaluator(TR::Node *node, TR::Code
    TR::Compilation *comp = cg->comp();
 
    TR_ASSERT(!node->normalizeNanValues(), "Check NAN\n");
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
+   if (child->isSingleRefUnevaluated() &&
        child->getOpCode().isLoadVar())
       {
       TR::MemoryReference *highMem, *lowMem;

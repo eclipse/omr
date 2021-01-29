@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -990,9 +990,7 @@ TR::Register *OMR::Power::TreeEvaluator::istoreEvaluator(TR::Node *node, TR::Cod
 
    // Handle special cases
    //
-   if (!reverseStore &&
-       valueChild->getRegister() == NULL &&
-       valueChild->getReferenceCount() == 1)
+   if (!reverseStore && valueChild->isSingleRefUnevaluated())
       {
       // Special case storing a float value into an int variable
       //
@@ -1178,9 +1176,7 @@ TR::Register *OMR::Power::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR::Cod
 
    // Handle special cases
    //
-   if (!reverseStore &&
-       valueChild->getRegister() == NULL &&
-       valueChild->getReferenceCount() == 1)
+   if (!reverseStore && valueChild->isSingleRefUnevaluated())
       {
       // Special case storing a double value into a long variable
       //
@@ -1443,7 +1439,7 @@ TR::Register *OMR::Power::TreeEvaluator::bstoreEvaluator(TR::Node *node, TR::Cod
       }
    if ((valueChild->getOpCodeValue()==TR::i2b   ||
         valueChild->getOpCodeValue()==TR::s2b) &&
-       valueChild->getReferenceCount()==1 && valueChild->getRegister()==NULL)
+        valueChild->isSingleRefUnevaluated())
        {
        valueChild = valueChild->getFirstChild();
        }
@@ -1490,8 +1486,7 @@ TR::Register *OMR::Power::TreeEvaluator::sstoreEvaluator(TR::Node *node, TR::Cod
       valueChild = valueChild->getFirstChild();
       }
 
-   if ((valueChild->getOpCodeValue()==TR::i2s) &&
-       valueChild->getReferenceCount()==1 && valueChild->getRegister()==NULL)
+   if ((valueChild->getOpCodeValue()==TR::i2s) && valueChild->isSingleRefUnevaluated())
        {
        valueChild = valueChild->getFirstChild();
        }
@@ -1532,8 +1527,7 @@ TR::Register *OMR::Power::TreeEvaluator::cstoreEvaluator(TR::Node *node, TR::Cod
       {
       valueChild = node->getFirstChild();
       }
-   if ((valueChild->getOpCodeValue()==TR::i2s) &&
-       valueChild->getReferenceCount()==1 && valueChild->getRegister()==NULL)
+   if ((valueChild->getOpCodeValue()==TR::i2s) && valueChild->isSingleRefUnevaluated())
        {
        valueChild = valueChild->getFirstChild();
        }
@@ -5279,7 +5273,7 @@ TR::Register *OMR::Power::TreeEvaluator::passThroughEvaluator(TR::Node *node, TR
    TR::Register *srcReg = cg->evaluate(child);
    TR::Compilation *comp = cg->comp();
    TR::Node * currentTop = cg->getCurrentEvaluationTreeTop()->getNode();
-   bool skipCopy = (node->getOpCodeValue()==TR::a2i && node->getReferenceCount()==1 &&
+   bool skipCopy = (node->getOpCodeValue()==TR::a2i && node->isSingleRef() &&
                     currentTop->getOpCode().isIf() &&
                     (currentTop->getFirstChild()==node || currentTop->getSecondChild()==node));
 
@@ -5755,7 +5749,7 @@ TR::Register *OMR::Power::TreeEvaluator::sbyteswapEvaluator(TR::Node *node, TR::
    //Move through descendants until a non conversion opcode is reached,
    //while making sure all nodes have a ref count of 1 and the types are between 2-8 bytes
    while (firstNonConversionOpCodeNode->getOpCode().isConversion() &&
-          firstNonConversionOpCodeNode->getReferenceCount() == 1 &&
+          firstNonConversionOpCodeNode->isSingleRef() &&
           (nodeType.isInt16() || nodeType.isInt32() || nodeType.isInt64()))
       {
       firstNonConversionOpCodeNode = firstNonConversionOpCodeNode->getFirstChild();
@@ -5764,7 +5758,7 @@ TR::Register *OMR::Power::TreeEvaluator::sbyteswapEvaluator(TR::Node *node, TR::
 
    if (reverseLoadEnabled && !firstNonConversionOpCodeNode->getRegister() &&
        firstNonConversionOpCodeNode->getOpCode().isMemoryReference() &&
-       firstNonConversionOpCodeNode->getReferenceCount() == 1 &&
+       firstNonConversionOpCodeNode->isSingleRef() &&
        (nodeType.isInt16() || nodeType.isInt32() || nodeType.isInt64()))
       {
       TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, firstNonConversionOpCodeNode, 2);
@@ -5827,9 +5821,8 @@ TR::Register * OMR::Power::TreeEvaluator::ibyteswapEvaluator(TR::Node *node, TR:
    // TODO(#5684): Re-enable once issues with delayed indexed-form are corrected
    static bool reverseLoadEnabled = feGetEnv("TR_EnableReverseLoadStore");
 
-   if (reverseLoadEnabled && !firstChild->getRegister() &&
-       firstChild->getOpCode().isMemoryReference() &&
-       firstChild->getReferenceCount() == 1)
+   if (reverseLoadEnabled && firstChild->isSingleRefUnevaluated() &&
+       firstChild->getOpCode().isMemoryReference())
       {
       TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, firstChild, 4);
       tempMR->forceIndexedForm(firstChild, cg);
@@ -5884,9 +5877,8 @@ TR::Register *OMR::Power::TreeEvaluator::lbyteswapEvaluator(TR::Node *node, TR::
       static bool reverseLoadEnabled = feGetEnv("TR_EnableReverseLoadStore");
 
       if (reverseLoadEnabled && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) &&
-          !firstChild->getRegister() &&
-          firstChild->getOpCode().isMemoryReference() &&
-          firstChild->getReferenceCount() == 1)
+          firstChild->isSingleRefUnevaluated() &&
+          firstChild->getOpCode().isMemoryReference())
          {
          TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, firstChild, 8);
          tempMR->forceIndexedForm(firstChild, cg);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,7 @@ void TR_Analyser::setInputs(TR::Node     *firstChild,
 
    if (  firstChild->getOpCode().isMemoryReference()
       && firstChild->getSymbolReference() != vftPointerSymRef
-      && firstChild->getReferenceCount() == 1
+      && firstChild->isSingleRef()
       && !lockedIntoRegister1)
       {
       setMem1();
@@ -67,7 +67,7 @@ void TR_Analyser::setInputs(TR::Node     *firstChild,
 
    if (  secondChild->getOpCode().isMemoryReference()
       && secondChild->getSymbolReference() != vftPointerSymRef
-      && secondChild->getReferenceCount() == 1
+      && secondChild->isSingleRef()
       && !lockedIntoRegister2)
       {
       setMem2();
@@ -84,12 +84,12 @@ void TR_Analyser::setInputs(TR::Node     *firstChild,
             setClob2();
             }
 
-         if (firstChild->getReferenceCount() == 1)
+         if (firstChild->isSingleRef())
             {
             setClob1();
             }
 
-         if (secondChild->getReferenceCount() == 1)
+         if (secondChild->isSingleRef())
             {
             setClob2();
             }

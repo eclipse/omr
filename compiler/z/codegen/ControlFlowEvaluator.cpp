@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -520,7 +520,7 @@ lcmpHelper64(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * secondChild = node->getSecondChild();
 
    TR::Register * src1Reg = NULL;
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       src1Reg = (TR::Register *) cg->evaluate(firstChild);
    else
       src1Reg = (TR::Register *) cg->gprClobberEvaluate(firstChild);
@@ -1366,7 +1366,7 @@ OMR::Z::TreeEvaluator::icmpltEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * secondChild = node->getSecondChild();
 
    if (!node->getOpCode().isUnsignedCompare() &&
-       firstChild->getReferenceCount() == 1 && firstChild->isNonNegative() && secondChild->isNonNegative() &&
+       firstChild->isSingleRef() && firstChild->isNonNegative() && secondChild->isNonNegative() &&
        performTransformation(cg->comp(), "O^O CODE GENERATION:  ===>   Use SR/SRL to perform icmplt  <==\n"))
       {
       // Even if 1st child refcount is 1, the register may be shared with other nodes and still be live.
@@ -1405,7 +1405,7 @@ OMR::Z::TreeEvaluator::icmpgtEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * secondChild = node->getSecondChild();
 
    if (!node->getOpCode().isUnsignedCompare() &&
-       secondChild->getReferenceCount()==1 && firstChild->isNonNegative() && secondChild->isNonNegative() &&
+       secondChild->isSingleRef() && firstChild->isNonNegative() && secondChild->isNonNegative() &&
        performTransformation(cg->comp(), "O^O CODE GENERATION:  ===>   Use SR/SRL to perform icmpgt  <==\n"))
       {
       TR::Register * firstReg = cg->evaluate(firstChild);

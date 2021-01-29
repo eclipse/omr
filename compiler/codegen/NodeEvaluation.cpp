@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -193,7 +193,7 @@ OMR::CodeGenerator::evaluate(TR::Node * node)
          {
          TR::Node * artificiallyInflatedNode = _stackOfArtificiallyInflatedNodes.pop();
 
-         if (artificiallyInflatedNode->getReferenceCount() == 1)
+         if (artificiallyInflatedNode->isSingleRef())
             {
             // When inflating reference counts, two cases exist:
             //
@@ -351,7 +351,7 @@ OMR::CodeGenerator::decReferenceCount(TR::Node * node)
    {
    TR::Register *reg = node->getRegister();
 
-   if ((node->getReferenceCount() == 1) &&
+   if ((node->isSingleRef()) &&
        reg && self()->getLiveRegisters(reg->getKind()))
        {
       TR_ASSERT(reg->isLive() ||
@@ -386,7 +386,7 @@ OMR::CodeGenerator::decReferenceCount(TR::Node * node)
       TR_StorageReference *storageReference = pseudoReg->getStorageReference();
       TR_ASSERT(storageReference,"the pseudoReg should have a non-null storage reference\n");
       storageReference->decrementTemporaryReferenceCount();
-      if (node->getReferenceCount() == 1)
+      if (node->isSingleRef())
          {
          storageReference->decOwningRegisterCount();
          if (self()->traceBCDCodeGen())

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -465,7 +465,7 @@ OMR::Optimization::replaceNodeWithChild(TR::Node *node, TR::Node *child, TR::Tre
          {
          dumpOptDetails(self()->comp(), "%sPrecision mismatch when replacing parent %s [" POINTER_PRINTF_FORMAT "] with child %s [" POINTER_PRINTF_FORMAT "] so change parent op to ",
                           self()->optDetailString(),node->getOpCode().getName(),node,child->getOpCode().getName(),child);
-         TR_ASSERT(node->getReferenceCount() == 1,"node %p refCount should be 1 and not %d\n",node,node->getReferenceCount());
+         TR_ASSERT(node->isSingleRef(),"node %p refCount should be 1 and not %d\n",node,node->getReferenceCount());
          child->incReferenceCount();
          // zd2pd    <- node - change to zdModifyPrecision (must use child type as modPrec is being applied to the child)
          //    zdX   <- child

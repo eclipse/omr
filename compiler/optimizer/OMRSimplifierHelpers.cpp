@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -369,7 +369,7 @@ TR::Node *foldRedundantAND(TR::Node * node, TR::ILOpCodes andOpCode, TR::ILOpCod
    else
       return 0;
 
-   if (((val & andVal) == andVal) && (andChild->getReferenceCount() == 1) &&
+   if (((val & andVal) == andVal) && (andChild->isSingleRef()) &&
     performTransformation(s->comp(), "%sFolding redundant AND node [%s] and its children [%s, %s]\n",
                            s->optDetailString(), node->getName(s->getDebug()), lhsChild->getName(s->getDebug()), constChild->getName(s->getDebug())))
       {
@@ -940,7 +940,7 @@ void removePaddingNode(TR::Node *node, TR::Simplifier *s)
 // the usual behaviour is to remove the padding node except in cases where the caller is already dealing with this
 void stopUsingSingleNode(TR::Node *node, bool removePadding, TR::Simplifier *s)
    {
-   TR_ASSERT(node->getReferenceCount() == 1, "stopUsingSingleNode only valid for nodes with a referenceCount of 1 and not %d\n",
+   TR_ASSERT(node->isSingleRef(), "stopUsingSingleNode only valid for nodes with a referenceCount of 1 and not %d\n",
          node->getReferenceCount());
    if (removePadding)
       removePaddingNode(node, s);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -586,7 +586,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
    {
    if (cg->comp()->useCompressedPointers())
       {
-      if (subTree->getOpCodeValue() == TR::l2a && subTree->getReferenceCount() == 1 && subTree->getRegister() == NULL)
+      if (subTree->getOpCodeValue() == TR::l2a && subTree->isSingleRefUnevaluated())
          {
          cg->decReferenceCount(subTree);
          subTree = subTree->getFirstChild();
@@ -594,7 +594,10 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
       }
 
    // Skip sign extension if the offset is known to be >= 0; this is only safe to do if the child is the result of a load, otherwise the upper 32 bits may be undefined
-   if (subTree->getOpCodeValue() == TR::i2l && subTree->isNonNegative() && subTree->getFirstChild()->getOpCode().isLoadVar() && subTree->getReferenceCount() == 1 && subTree->getRegister() == NULL)
+   if (subTree->getOpCodeValue() == TR::i2l && 
+       subTree->isNonNegative() && 
+       subTree->getFirstChild()->getOpCode().isLoadVar() && 
+       subTree->isSingleRefUnevaluated())
       {
       if (performTransformation(cg->comp(), "O^O PPC Evaluator: Skip unecessary sign extension on index [%p].\n", subTree))
          {

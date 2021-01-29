@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,7 +96,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
       {
       if (getEvalChild1())
          {
-         if (firstChild->getReferenceCount() == 1 &&
+         if (firstChild->isSingleRef() &&
             firstChild->getRegister() == NULL &&
             (firstChild->getOpCodeValue() == TR::lload || (firstChild->getOpCodeValue() == TR::iload && firstIU2L)))
             {
@@ -115,7 +115,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
          }
       if (getEvalChild2())
          {
-         if (secondChild->getReferenceCount() == 1 &&
+         if (secondChild->isSingleRef() &&
             secondChild->getRegister() == NULL &&
             (secondChild->getOpCodeValue() == TR::lload || (secondChild->getOpCodeValue() == TR::iload && secondIU2L)))
             {
@@ -137,7 +137,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
       {
       if (getEvalChild2())
          {
-         if (secondChild->getReferenceCount() == 1 &&
+         if (secondChild->isSingleRef() &&
             secondChild->getRegister() == NULL &&
             (secondChild->getOpCodeValue() == TR::lload || (secondChild->getOpCodeValue() == TR::iload && secondIU2L)))
             {
@@ -156,7 +156,7 @@ TR_S390CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node * root, TR:
          }
       if (getEvalChild1())
          {
-         if (firstChild->getReferenceCount() == 1 &&
+         if (firstChild->isSingleRef() &&
             firstChild->getRegister() == NULL &&
             (firstChild->getOpCodeValue() == TR::lload || (firstChild->getOpCodeValue() == TR::iload && firstIU2L)))
             {

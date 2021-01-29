@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -368,8 +368,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR:
    // Handle special cases
    //
    if (!isVolatile &&
-       valueChild->getRegister() == NULL &&
-       valueChild->getReferenceCount() == 1)
+       valueChild->isSingleRefUnevaluated())
       {
       // Special case storing a double value into a long variable
       //
@@ -664,7 +663,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairAddEvaluator(TR::Node *n
    if (!needsEflags &&
        secondChild->getOpCodeValue() == TR::lconst &&
        secondChild->getRegister() == NULL &&
-       (isMemOp || firstChild->getReferenceCount() == 1))
+       (isMemOp || firstChild->isSingleRef()))
       {
       if (!isMemOp)
          targetRegister = cg->evaluate(firstChild);
@@ -809,7 +808,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairSubEvaluator(TR::Node *n
    if (!needsEflags &&
        secondChild->getOpCodeValue() == TR::lconst &&
        secondChild->getRegister() == NULL &&
-       (isMemOp || firstChild->getReferenceCount() == 1))
+       (isMemOp || firstChild->isSingleRef()))
       {
       if (!isMemOp)
          targetRegister = cg->evaluate(firstChild);
@@ -919,7 +918,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairSubEvaluator(TR::Node *n
 TR::Register *OMR::X86::I386::TreeEvaluator::integerPairDualMulEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_ASSERT((node->getOpCodeValue() == TR::lumulh) || (node->getOpCodeValue() == TR::lmul), "Unexpected operator. Expected lumulh or lmul.");
-   if (node->isDualCyclic() && (node->getChild(2)->getReferenceCount() == 1))
+   if (node->isDualCyclic() && (node->getChild(2)->isSingleRef()))
       {
       // other part of this dual is not used, and is dead
       TR::Node *pair = node->getChild(2);
@@ -1006,9 +1005,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
          TR::Register *multiplierRegister;
          if (absValue == 3 || absValue == 5 || absValue == 9)
             {
-            if (firstIU2L                            &&
-                firstChild->getReferenceCount() == 1 &&
-                firstChild->getRegister() == 0)
+            if (firstIU2L && firstChild->isSingleRefUnevaluated())
                {
                firstChild         = firstChild->getFirstChild();
                multiplierRegister = cg->evaluate(firstChild);
@@ -1034,9 +1031,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
          else
             {
             absValue = highValue; // No negation necessary
-            if (firstIU2L                            &&
-                firstChild->getReferenceCount() == 1 &&
-                firstChild->getRegister() == 0)
+            if (firstIU2L && firstChild->isSingleRefUnevaluated())
                {
                firstChild         = firstChild->getFirstChild();
                multiplierRegister = cg->evaluate(firstChild);
@@ -1044,8 +1039,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
             else if (firstChild->getOpCodeValue() == TR::lushr     &&
                      firstChild->getSecondChild()->getOpCodeValue() == TR::iconst    &&
                      firstChild->getSecondChild()->getInt() == 32 &&
-                     firstChild->getReferenceCount() == 1         &&
-                     firstChild->getRegister() == 0)
+                     firstChild->isSingleRefUnevaluated())
                {
                firstChild         = firstChild->getFirstChild();
                multiplierRegister = cg->evaluate(firstChild)->getHighOrder();
@@ -1061,7 +1055,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
                                                    multiplierRegister,
                                                    node,
                                                    cg,
-                                                   firstChild->getReferenceCount() == 1 ? true : false);
+                                                   firstChild->isSingleRef() ? true : false);
             highRegister = mulDecomposer->decomposeIntegerMultiplier(dummy, 0);
 
             if (highRegister == 0) // cannot do the decomposition
@@ -1119,9 +1113,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
          TR::Register *multiplierRegister;
          TR::Register *sourceLow;
 
-         if ((firstIU2L || intMul)                &&
-             firstChild->getReferenceCount() == 1 &&
-             firstChild->getRegister() == 0)
+         if ((firstIU2L || intMul) && firstChild->isSingleRefUnevaluated())
             {
             firstChild = firstChild->getFirstChild();
             sourceLow  = cg->evaluate(firstChild);
@@ -1131,7 +1123,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
             multiplierRegister = cg->evaluate(firstChild);
             sourceLow          = multiplierRegister->getLowOrder();
             }
-         if (firstChild->getReferenceCount() == 1)
+         if (firstChild->isSingleRef())
             {
             highRegister = sourceLow;
             }
@@ -1176,7 +1168,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
                                                    multiplierRegister->getHighOrder(),
                                                    node,
                                                    cg,
-                                                   firstChild->getReferenceCount() == 1 ? true : false);
+                                                   firstChild->isSingleRef() ? true : false);
             TR::Register *tempRegister = mulDecomposer->decomposeIntegerMultiplier(tempRegArraySize, tempRegArray);
 
             if (tempRegister == 0) // decomposition failed
@@ -1189,7 +1181,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
                   {
                   opCode = IMUL4RegRegImm4;
                   }
-               if (firstChild->getReferenceCount() == 1)
+               if (firstChild->isSingleRef())
                   {
                   tempRegister = multiplierRegister->getHighOrder();
                   }
@@ -1232,9 +1224,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
          TR::Register *sourceLow;
          TR::Register *tempRegister=NULL;
 
-         if ((firstIU2L || intMul)                &&
-             firstChild->getReferenceCount() == 1 &&
-             firstChild->getRegister() == 0)
+         if ((firstIU2L || intMul) && firstChild->isSingleRefUnevaluated())
             {
             firstChild = firstChild->getFirstChild();
             sourceLow  = cg->evaluate(firstChild);
@@ -1244,7 +1234,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
             multiplierRegister = cg->evaluate(firstChild);
             sourceLow          = multiplierRegister->getLowOrder();
             }
-         if (firstChild->getReferenceCount() == 1)
+         if (firstChild->isSingleRef())
             {
             highRegister = sourceLow;
             }
@@ -1280,7 +1270,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
                                                    sourceLow,
                                                    node,
                                                    cg,
-                                                   (firstChild->getReferenceCount() == 1 && highRegister != sourceLow) ? true : false);
+                                                   (firstChild->isSingleRef() && highRegister != sourceLow) ? true : false);
             tempRegister = mulDecomposer->decomposeIntegerMultiplier(tempRegArraySize, tempRegArray);
             if (tempRegister == 0)
                {
@@ -1373,7 +1363,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
                                                    multiplierRegister->getHighOrder(),
                                                    node,
                                                    cg,
-                                                   firstChild->getReferenceCount() == 1 ? true : false);
+                                                   firstChild->isSingleRef() ? true : false);
 
             tempRegister = mulDecomposer->decomposeIntegerMultiplier(tempRegArraySize, tempRegArray);
             if (tempRegister == 0)
@@ -1386,7 +1376,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
                   {
                   opCode = IMUL4RegRegImm4;
                   }
-               if (firstChild->getReferenceCount() == 1)
+               if (firstChild->isSingleRef())
                   {
                   tempRegister = multiplierRegister->getHighOrder();
                   }
@@ -2046,7 +2036,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::landEvaluator(TR::Node *node, TR::C
          {
          TR::Register *valueReg = cg->evaluate(firstChild);
 
-         if (firstChild->getReferenceCount() == 1)
+         if (firstChild->isSingleRef())
             {
             targetRegister = valueReg;
             lowReg = targetRegister->getLowOrder();
@@ -2225,7 +2215,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lorEvaluator(TR::Node *node, TR::Co
          {
          TR::Register *valueReg = cg->evaluate(firstChild);
 
-         if (firstChild->getReferenceCount() == 1)
+         if (firstChild->isSingleRef())
             {
             targetRegister = valueReg;
             lowReg = targetRegister->getLowOrder();
@@ -2471,9 +2461,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::l2iEvaluator(TR::Node *node, TR::Co
    TR::Node     *child = node->getFirstChild();
    TR::Register *targetRegister;
 
-   if (child->getOpCode().isLoadVar() &&
-       child->getRegister() == NULL   &&
-       child->getReferenceCount() == 1)
+   if (child->getOpCode().isLoadVar() && child->isSingleRefUnevaluated())
       {
       targetRegister = cg->allocateRegister();
       TR::MemoryReference  *tempMR = generateX86MemoryReference(child, cg);
@@ -2483,7 +2471,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::l2iEvaluator(TR::Node *node, TR::Co
    else
       {
       TR::Register *temp = cg->evaluate(child);
-      if (child->getReferenceCount() == 1)
+      if (child->isSingleRef())
          {
          cg->stopUsingRegister(temp->getHighOrder());
          targetRegister = temp->getLowOrder();
@@ -2798,9 +2786,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::b2lEvaluator(TR::Node *node, TR::Co
    TR::Node     *child   = node->getFirstChild();
    TR::Register *longReg;
 
-   if (child->getOpCode().isLoadVar() &&
-       child->getRegister() == NULL   &&
-       child->getReferenceCount() == 1)
+   if (child->getOpCode().isLoadVar() && child->isSingleRefEvaluated())
       {
       TR::MemoryReference  *tempMR = generateX86MemoryReference(child, cg);
       longReg = cg->allocateRegisterPair(cg->allocateRegister(), cg->allocateRegister());
@@ -2826,9 +2812,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::bu2lEvaluator(TR::Node *node, TR::C
    TR::Node     *child   = node->getFirstChild();
    TR::Register *longReg;
 
-   if (child->getOpCode().isLoadVar() &&
-       child->getRegister() == NULL   &&
-       child->getReferenceCount() == 1)
+   if (child->getOpCode().isLoadVar() && child->isSingleRefUnevaluated())
       {
       TR::MemoryReference  *tempMR = generateX86MemoryReference(child, cg);
       longReg = cg->allocateRegisterPair(cg->allocateRegister(), cg->allocateRegister());
@@ -2853,9 +2837,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::s2lEvaluator(TR::Node *node, TR::Co
    TR::Node     *child   = node->getFirstChild();
    TR::Register *longReg;
 
-   if (child->getOpCode().isLoadVar() &&
-       child->getRegister() == NULL   &&
-       child->getReferenceCount() == 1)
+   if (child->getOpCode().isLoadVar() && child->isSingleRefUnevaluated())
       {
       TR::MemoryReference  *tempMR = generateX86MemoryReference(child, cg);
       longReg = cg->allocateRegisterPair(cg->allocateRegister(), cg->allocateRegister());
@@ -2884,9 +2866,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::su2lEvaluator(TR::Node *node, TR::C
    TR::Node     *child   = node->getFirstChild();
    TR::Register *longReg;
 
-   if (child->getOpCode().isLoadVar() &&
-       child->getRegister() == NULL   &&
-       child->getReferenceCount() == 1)
+   if (child->getOpCode().isLoadVar() && child->isSingleRefUnevaluated())
       {
       TR::MemoryReference  *tempMR = generateX86MemoryReference(child, cg);
       longReg = cg->allocateRegisterPair(cg->allocateRegister(), cg->allocateRegister());
@@ -2912,9 +2892,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::c2lEvaluator(TR::Node *node, TR::Co
    TR::Node     *child   = node->getFirstChild();
    TR::Register *longReg;
 
-   if (child->getOpCode().isLoadVar() &&
-       child->getRegister() == NULL   &&
-       child->getReferenceCount() == 1)
+   if (child->getOpCode().isLoadVar() && child->isSingleRefUnevaluated())
       {
       TR::MemoryReference  *tempMR = generateX86MemoryReference(child, cg);
       longReg = cg->allocateRegisterPair(cg->allocateRegister(), cg->allocateRegister());
@@ -2968,15 +2946,14 @@ TR::Register *OMR::X86::I386::TreeEvaluator::dstoreEvaluator(TR::Node *node, TR:
          instr = generateMemImmInstruction(S4MemImm4, node, generateX86MemoryReference(*storeLowMR, 4, cg), valueChild->getLongIntHigh(), cg);
          generateMemImmInstruction(S4MemImm4, node, storeLowMR, valueChild->getLongIntLow(), cg);
          TR::Register *valueChildReg = valueChild->getRegister();
-         if (valueChildReg && valueChildReg->getKind() == TR_X87 && valueChild->getReferenceCount() == 1)
+         if (valueChildReg && valueChildReg->getKind() == TR_X87 && valueChild->isSingleRef())
            instr = generateFPSTiST0RegRegInstruction(DSTRegReg, valueChild, valueChildReg, valueChildReg, cg);
          }
       else if (debug("useGPRsForFP") &&
                (cg->getLiveRegisters(TR_GPR)->getNumberOfLiveRegisters() <
                cg->getMaximumNumbersOfAssignableGPRs() - 1) &&
                valueChild->getOpCode().isLoadVar() &&
-               valueChild->getRegister() == NULL   &&
-               valueChild->getReferenceCount() == 1)
+               valueChild->isSingleRefUnevaluated())
          {
          TR::Register *tempRegister = cg->allocateRegister(TR_GPR);
          TR::MemoryReference  *loadLowMR = generateX86MemoryReference(valueChild, cg);
@@ -3016,7 +2993,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::l2fEvaluator(TR::Node *node, TR::Co
    {
    TR::Node     *child = node->getFirstChild();
    TR::Register *target = cg->allocateSinglePrecisionRegister(TR_X87);
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 && child->getOpCode().isLoadVar())
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       TR::MemoryReference  *tempMR = generateX86MemoryReference(child, cg);
       generateFPRegMemInstruction(FLLDRegMem, node, target, tempMR, cg);
@@ -3050,7 +3027,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::l2dEvaluator(TR::Node *node, TR::Co
    {
    TR::Node     *child = node->getFirstChild();
    TR::Register *target = cg->allocateRegister(TR_X87);
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 && child->getOpCode().isLoadVar())
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       TR::MemoryReference  *tempMR = generateX86MemoryReference(child, cg);
       generateFPRegMemInstruction(DLLDRegMem, node, target, tempMR, cg);
@@ -3208,7 +3185,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lbits2dEvaluator(TR::Node *node, TR
    TR::Node                *child = node->getFirstChild();
    TR::MemoryReference  *tempMR;
 
-   if (child->getRegister() == NULL && child->getOpCode().isLoadVar() && child->getReferenceCount() == 1)
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       // Load up the child as a double, then as a long if necessary
       //
@@ -3238,7 +3215,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::dbits2lEvaluator(TR::Node *node, TR
    TR::Register            *highReg = cg->allocateRegister();
    TR::MemoryReference  *tempMR;
 
-   if (child->getRegister() == NULL && child->getOpCode().isLoadVar() && (child->getReferenceCount() == 1))
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       // Load up the child as a long, then as a double if necessary.
       //
@@ -3326,16 +3303,13 @@ TR::Register *OMR::X86::I386::TreeEvaluator::iflcmpeqEvaluator(TR::Node *node, T
          bool         targetNeedsToBeExplicitlyStopped = false;
 
          if (firstChild->getOpCodeValue() == TR::land &&
-             firstChild->getReferenceCount() == 1    &&
-             firstChild->getRegister() == NULL       &&
+             firstChild->isSingleRefUnevaluated() &&
              (landConstChild = firstChild->getSecondChild())->getOpCodeValue() == TR::lconst &&
              landConstChild->getLongIntLow()  == 0   &&
              landConstChild->getLongIntHigh() == 0xffffffff)
             {
             TR::Node *landFirstChild = firstChild->getFirstChild();
-            if (landFirstChild->getReferenceCount() == 1 &&
-                landFirstChild->getRegister() == NULL    &&
-                landFirstChild->getOpCode().isLoadVar())
+            if (landFirstChild->isSingleRefUnevaluated() && landFirstChild->getOpCode().isLoadVar())
                {
                targetRegister = cg->allocateRegister();
                TR::MemoryReference  *tempMR = generateX86MemoryReference(landFirstChild, cg);
@@ -3463,16 +3437,13 @@ TR::Register *OMR::X86::I386::TreeEvaluator::iflcmpneEvaluator(TR::Node *node, T
          bool         targetNeedsToBeExplicitlyStopped = false;
 
          if (firstChild->getOpCodeValue() == TR::land &&
-             firstChild->getReferenceCount() == 1    &&
-             firstChild->getRegister() == NULL       &&
+             firstChild->isSingleRefUnevaluated() &&
              (landConstChild = firstChild->getSecondChild())->getOpCodeValue() == TR::lconst &&
              landConstChild->getLongIntLow()  == 0   &&
              landConstChild->getLongIntHigh() == 0xffffffff)
             {
             TR::Node *landFirstChild = firstChild->getFirstChild();
-            if (landFirstChild->getReferenceCount() == 1 &&
-                landFirstChild->getRegister() == NULL    &&
-                landFirstChild->getOpCode().isLoadVar())
+            if (landFirstChild->isSingleRefUnevaluated() && landFirstChild->getOpCode().isLoadVar())
                {
                targetRegister = cg->allocateRegister();
                TR::MemoryReference  *tempMR = generateX86MemoryReference(landFirstChild, cg);

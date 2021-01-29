@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -516,7 +516,7 @@ CompareCondition evaluateDualIntCompareToConditionRegister(
    TR::Register *condReg2 = cg->allocateRegister(TR_CCR);
    TR::Register *firstReg = cg->evaluate(firstChild);
 
-   if (secondChild->getOpCode().isLoadConst() && !secondChild->getRegister() && secondChild->getReferenceCount() == 1)
+   if (secondChild->getOpCode().isLoadConst() && secondChild->isSingleRefUnevaluated())
       {
       int32_t secondHi = secondChild->getLongIntHigh();
       int32_t secondLo = secondChild->getLongIntLow();
@@ -1042,7 +1042,7 @@ CompareCondition evaluateToConditionRegister(TR::Register *condReg, TR::Node *no
    {
    static bool disableCondRegEval = feGetEnv("TR_DisableCondRegEval") != NULL;
 
-   if (!disableCondRegEval && !condNode->getRegister() && condNode->getReferenceCount() == 1)
+   if (!disableCondRegEval && condNode->isSingleRefUnevaluated())
       {
       auto compareInfo = getCompareInfo(condNode->getOpCode());
 
@@ -1288,7 +1288,7 @@ static TR::Register *compareLongsForOrderWithAnalyser(TR::InstOpCode::Mnemonic b
       {
       firstHighZero = true;
       TR::ILOpCodes firstOp = firstChild->getOpCodeValue();
-      if (firstChild->getReferenceCount() == 1 && src1Reg == NULL)
+      if (firstChild->isSingleRefUnevaluated())
          {
 	 if (firstOp == TR::iu2l || firstOp == TR::su2l ||
 	     (firstOp == TR::lushr &&
@@ -1308,7 +1308,7 @@ static TR::Register *compareLongsForOrderWithAnalyser(TR::InstOpCode::Mnemonic b
       {
       secondHighZero = true;
       TR::ILOpCodes secondOp = secondChild->getOpCodeValue();
-      if (secondChild->getReferenceCount() == 1 && src2Reg == NULL)
+      if (secondChild->isSingleRefUnevaluated())
          {
 	 if (secondOp == TR::iu2l || secondOp == TR::su2l ||
 	     (secondOp == TR::lushr &&
@@ -2118,7 +2118,7 @@ TR::Register *OMR::Power::TreeEvaluator::compareLongsForEquality(TR::InstOpCode:
    //Useful for our implementation of BigDecimal.compareTo()
    if (!disableCompareToOpt && cg->comp()->target().is32Bit() &&
        firstChild->getOpCodeValue() == TR::lshr && secondChild->getOpCodeValue() == TR::lshr &&
-       firstChild->getReferenceCount() == 1 && secondChild->getReferenceCount() == 1)
+       firstChild->isSingleRef() && secondChild->isSingleRef())
       {
       TR::Register *firstShiftResultReg = firstChild->getRegister();
       TR::Register *secondShiftResultReg = secondChild->getRegister();
@@ -2789,7 +2789,7 @@ TR::Register *intOrderEvaluator(TR::Node *node, const CompareInfo& compareInfo, 
 
             isNonNegative = src2Value >= 0;
             addImmediate = diffSubOne ? -src2Value - 1 : -src2Value;
-            useAddImmediate = is16BitSignedImmediate(addImmediate) || (!secondChild->getRegister() && secondChild->getReferenceCount() == 1);
+            useAddImmediate = is16BitSignedImmediate(addImmediate) || (secondChild->isSingleRefUnevaluated());
             }
          else
             {

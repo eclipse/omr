@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1437,7 +1437,7 @@ void TR_LoopStrider::changeLoopCondition(TR_BlockStructure *loopInvariantBlock, 
     if (firstChildIsConversion && !usingAladd)
       {
       prevFirst = firstChildIsConversion->getFirstChild();
-      if (firstChildIsConversion->getReferenceCount() == 1)
+      if (firstChildIsConversion->isSingleRef())
          firstChildIsConversion->setAndIncChild(0, firstOperand);
       else
          {
@@ -1458,7 +1458,7 @@ void TR_LoopStrider::changeLoopCondition(TR_BlockStructure *loopInvariantBlock, 
       {
       prevSecond = secondChildIsConversion->getFirstChild();
 
-      if (secondChildIsConversion->getReferenceCount() == 1)
+      if (secondChildIsConversion->isSingleRef())
          secondChildIsConversion->setAndIncChild(0, secondOperand);
       else
          {

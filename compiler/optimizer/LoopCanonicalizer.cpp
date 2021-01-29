@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2914,7 +2914,7 @@ void TR_LoopCanonicalizer::rewritePostToPreIncrementTestInBlock(
    TR::Node * const left = test->getChild(i);
    TR::Node * const right = test->getChild(1 - i);
 
-   if (left->getReferenceCount() == 1)
+   if (left->isSingleRef())
       return;
 
    TR::Node * const updated = store->getChild(0);

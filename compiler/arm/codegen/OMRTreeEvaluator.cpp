@@ -1447,7 +1447,7 @@ TR::Register *OMR::ARM::TreeEvaluator::conversionAnalyser(TR::Node          *nod
    TR::Register *sourceRegister;
    TR::Register *targetRegister;
 
-   if (child->getReferenceCount() == 1 && child->getRegister() == NULL && child->getOpCode().isMemoryReference())
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isMemoryReference())
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, dstBits >> 3, cg);
       if (cg->comp()->target().cpu.isBigEndian() && node->getSize() < child->getSize())

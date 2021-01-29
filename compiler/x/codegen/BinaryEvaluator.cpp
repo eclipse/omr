@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,7 +127,7 @@ bool OMR::X86::TreeEvaluator::analyseSubForLEA(TR::Node *node, TR::CodeGenerator
    intptr_t displacement = -TR::TreeEvaluator::integerConstNodeValue(secondChild, cg);
    intptr_t dummyConstValue = 0;
 
-   if (firstChild->getRegister() == NULL && firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRefUnevaluated())
       {
       stride = TR::MemoryReference::getStrideForNode(firstChild, cg);
       if (stride)
@@ -164,8 +164,7 @@ bool OMR::X86::TreeEvaluator::analyseSubForLEA(TR::Node *node, TR::CodeGenerator
          //
          TR::Node *llChild = firstChild->getFirstChild();
          TR::Node *lrChild = firstChild->getSecondChild();
-         if (llChild->getRegister() == NULL    &&
-             llChild->getReferenceCount() == 1 &&
+         if (llChild->isSingleRefUnevaluated() &&
              (stride = TR::MemoryReference::getStrideForNode(llChild, cg)))
             {
             // sub
@@ -183,8 +182,7 @@ bool OMR::X86::TreeEvaluator::analyseSubForLEA(TR::Node *node, TR::CodeGenerator
             cg->decReferenceCount(llChild->getFirstChild());
             cg->decReferenceCount(llChild->getSecondChild());
             }
-         else if (lrChild->getRegister() == NULL    &&
-                  lrChild->getReferenceCount() == 1 &&
+         else if (lrChild->isSingleRefUnevaluated() &&
                   (stride = TR::MemoryReference::getStrideForNode(lrChild, cg)))
             {
             // sub
@@ -246,8 +244,7 @@ bool OMR::X86::TreeEvaluator::analyseAddForLEA(TR::Node *node, TR::CodeGenerator
 
    //TR_ASSERT(node->getSize() == firstChild->getSize(), "evaluateAndForceSize never needed for firstChild");
 
-   if ((secondOp.isAdd() || secondOp.isSub()) &&
-       secondChild->getReferenceCount() == 1 && secondChild->getRegister() == NULL)
+   if ((secondOp.isAdd() || secondOp.isSub()) && secondChild->isSingleRefUnevaluated())
       {
       TR::Node *addFirstChild   = secondChild->getFirstChild();
       TR::Node *addSecondChild  = secondChild->getSecondChild();
@@ -256,9 +253,7 @@ bool OMR::X86::TreeEvaluator::analyseAddForLEA(TR::Node *node, TR::CodeGenerator
 
       int32_t stride = TR::MemoryReference::getStrideForNode(addFirstChild, cg);
 
-      if (stride &&
-          addFirstChild->getReferenceCount() == 1 && addFirstChild->getRegister() == NULL &&
-          addSecondOp.isLoadConst())
+      if (stride && addFirstChild->isSingleRefUnevaluated() && addSecondOp.isLoadConst())
          {
          // add
          //    firstChild     (into baseRegister)
@@ -311,11 +306,11 @@ bool OMR::X86::TreeEvaluator::analyseAddForLEA(TR::Node *node, TR::CodeGenerator
       {
       constNode = secondChild;
       }
-   if (firstChild->getRegister() == NULL && firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRefUnevaluated())
       {
       stride1 = TR::MemoryReference::getStrideForNode(firstChild, cg);
       }
-   if (secondChild->getRegister() == NULL && secondChild->getReferenceCount() == 1)
+   if (secondChild->isSingleRefUnevaluated())
       {
       stride2 = TR::MemoryReference::getStrideForNode(secondChild, cg);
       }
@@ -360,8 +355,7 @@ bool OMR::X86::TreeEvaluator::analyseAddForLEA(TR::Node *node, TR::CodeGenerator
                                             constNode->getInt(), cg);
          tempNode = NULL;
          }
-      else if (baseNode->getRegister()       == NULL    &&
-               baseNode->getReferenceCount() == 1       &&
+      else if (baseNode->isSingleRefUnevaluated()&&
                baseNode->getOpCode().isAdd()            &&
                baseNode->getSecondChild()->getOpCode().isLoadConst() &&
                TR::TreeEvaluator::constNodeValueIs32BitSigned(baseNode->getSecondChild(), &dummyConstValue, cg))
@@ -413,9 +407,7 @@ bool OMR::X86::TreeEvaluator::analyseAddForLEA(TR::Node *node, TR::CodeGenerator
       //    firstChild
       //    const
       //
-      if (firstChild->getRegister()       == NULL &&
-          firstChild->getReferenceCount() == 1    &&
-          firstOp.isAdd())
+      if (firstChild->isSingleRefUnevaluated() && firstOp.isAdd())
          {
          // add
          //    add   (firstChild)
@@ -427,13 +419,11 @@ bool OMR::X86::TreeEvaluator::analyseAddForLEA(TR::Node *node, TR::CodeGenerator
          // associated registers. Otherwise, we risk extending the lifetimes of
          // firstChild's grandchildren's registers, and hence adding register pressure.
          //
-         if (firstChild->getFirstChild()->getReferenceCount() == 1 &&
-             firstChild->getFirstChild()->getRegister() == NULL)
+         if (firstChild->getFirstChild()->isSingleRefUnevaluated())
             {
             stride1 = TR::MemoryReference::getStrideForNode(firstChild->getFirstChild(), cg);
             }
-         if (firstChild->getSecondChild()->getReferenceCount() == 1 &&
-             firstChild->getSecondChild()->getRegister() == NULL)
+         if (firstChild->getSecondChild()->isSingleRefUnevaluated())
             {
             stride2 = TR::MemoryReference::getStrideForNode(firstChild->getSecondChild(), cg);
             }
@@ -520,7 +510,7 @@ bool OMR::X86::TreeEvaluator::analyseAddForLEA(TR::Node *node, TR::CodeGenerator
          }
       }
    else if(firstChild->getOpCode().getOpCodeValue() == TR::loadaddr &&
-          (firstChild->getRegister() == NULL && firstChild->getReferenceCount() == 1))
+          firstChild->isSingleRefUnevaluated())
       {
       // add
       //    loadaddr    (firstChild)
@@ -542,10 +532,9 @@ bool OMR::X86::TreeEvaluator::analyseAddForLEA(TR::Node *node, TR::CodeGenerator
       }
    else if((firstChild->getOpCode().isSub() || firstChild->getOpCode().isAdd()) &&
            (firstChild->getOpCode().getSize() == node->getOpCode().getSize()) &&
-           (firstChild->getRegister() == NULL) &&
+           (firstChild->isSingleRefUnevaluated()) &&
            (firstChild->getSecondChild()->getOpCode().isLoadConst()) &&
-           TR::TreeEvaluator::constNodeValueIs32BitSigned(firstChild->getSecondChild(), &dummyConstValue, cg) &&
-           (firstChild->getReferenceCount() == 1)
+           TR::TreeEvaluator::constNodeValueIs32BitSigned(firstChild->getSecondChild(), &dummyConstValue, cg)
            )
       {
       // add
@@ -596,7 +585,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerDualAddOrSubEvaluator(TR::Node *no
 
    TR::Node *pair = node->getChild(2);
    bool requiresCarryOnEntry = cg->requiresCarry();
-   if (pair->getReferenceCount() == 1)
+   if (pair->isSingleRef())
       {
       diagnostic("Found %p (%s) with only reference to %p (%s)\n",
                    node, node->getOpCode().getName(),
@@ -1857,7 +1846,7 @@ TR::Register *OMR::X86::TreeEvaluator::csubEvaluator(TR::Node *node, TR::CodeGen
 TR::Register *OMR::X86::TreeEvaluator::integerDualMulEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_ASSERT((node->getOpCodeValue() == TR::lumulh) || (node->getOpCodeValue() == TR::lmul), "Unexpected operator. Expected lumulh or lmul.");
-   if (node->isDualCyclic() && (node->getChild(2)->getReferenceCount() == 1))
+   if (node->isDualCyclic() && (node->getChild(2)->isSingleRef()))
       {
       // other part of this dual is not used, and is dead
       TR::Node *pair = node->getChild(2);
@@ -1985,7 +1974,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerMulEvaluator(TR::Node *node, TR::C
             }
          else
             {
-            canClobberSource = (firstChild->getReferenceCount() == 1);
+            canClobberSource = (firstChild->isSingleRef());
             }
 
          TR_X86IntegerMultiplyDecomposer *mulDecomposer =
@@ -2062,7 +2051,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerMulEvaluator(TR::Node *node, TR::C
       multDependencies->addPreCondition(targetRegister, TR::RealRegister::eax, cg);
       multDependencies->addPostCondition(targetRegister, TR::RealRegister::eax, cg);
 
-      if (firstChild->getReferenceCount() == 1 &&
+      if (firstChild->isSingleRef() &&
           firstChild->getOpCode().isMemoryReference())
          {
          TR::MemoryReference  *tempMR = generateX86MemoryReference(firstChild, cg);
@@ -2560,8 +2549,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerDivOrRemEvaluator(TR::Node *node, 
          //
          divisorRegister = cg->evaluate(secondChild);
          }
-      else if (secondChild->getReferenceCount() == 1 &&
-         !secondChild->getRegister()            &&
+      else if (secondChild->isSingleRefUnevaluated() &&
           secondChild->getOpCode().isMemoryReference())
          {
          TR_ASSERT(divisorRegister==NULL, "No source register because source is in memory");
@@ -2737,13 +2725,12 @@ TR::X86RegInstruction  *OMR::X86::TreeEvaluator::generateRegisterShift(TR::Node 
       TR::Register *shiftAmountReg = NULL;
       if (op == TR::su2i || op == TR::s2i || op == TR::b2i || op == TR::bu2i || op == TR::l2i)
          {
-         if (secondChild->getReferenceCount() == 1 && secondChild->getRegister() == 0)
+         if (secondChild->isSingleRefUnevaluated())
             {
             static char *reportShiftAmount = feGetEnv("TR_ReportShiftAmount");
             TR::Node     *grandChild        = secondChild->getFirstChild();
             if (secondChild->getOpCode().isLoadIndirect() &&
-                grandChild->getReferenceCount() == 1 &&
-                grandChild->getRegister() == 0)
+                grandChild->isSingleRefUnevaluated())
                {
                TR::Node::recreate(grandChild, TR::bloadi);
                secondChild->decReferenceCount();
@@ -2753,8 +2740,7 @@ TR::X86RegInstruction  *OMR::X86::TreeEvaluator::generateRegisterShift(TR::Node 
                               comp->signature());
                }
             else if (secondChild->getOpCode().isLoadVarDirect() &&
-                     grandChild->getReferenceCount() == 1 &&
-                     grandChild->getRegister() == 0)
+                     grandChild->isSingleRefUnevaluated())
                {
                TR::Node::recreate(grandChild, TR::bload);
                secondChild->decReferenceCount();
@@ -2849,14 +2835,13 @@ TR::X86MemInstruction  *OMR::X86::TreeEvaluator::generateMemoryShift(TR::Node *n
       TR::Register *shiftAmountReg = NULL;
       if (op == TR::su2i || op == TR::s2i || op == TR::b2i || op == TR::bu2i || op == TR::l2i)
          {
-         if (secondChild->getReferenceCount() == 1 && secondChild->getRegister() == 0)
+         if (secondChild->isSingleRefUnevaluated())
             {
             static char * reportShiftAmount = feGetEnv("TR_ReportShiftAount");
             TR::Node* grandChild = secondChild->getFirstChild();
 
             if (grandChild->getOpCode().isLoadIndirect() &&
-                grandChild->getReferenceCount() == 1 &&
-                grandChild->getRegister() == 0)
+                grandChild->isSingleRefUnevaluated())
                {
                TR::Node::recreate(grandChild, TR::bloadi);
                secondChild->decReferenceCount();
@@ -2865,8 +2850,7 @@ TR::X86MemInstruction  *OMR::X86::TreeEvaluator::generateMemoryShift(TR::Node *n
                   diagnostic("shift: removed sign or zero extend to shift amount in memory in method %s\n", comp->signature());
                }
             else if (grandChild->getOpCode().isLoadVarDirect() &&
-                     grandChild->getReferenceCount() == 1 &&
-                     grandChild->getRegister() == 0)
+                     grandChild->isSingleRefUnevaluated())
                {
                TR::Node::recreate(grandChild, TR::bload);
                secondChild->decReferenceCount();

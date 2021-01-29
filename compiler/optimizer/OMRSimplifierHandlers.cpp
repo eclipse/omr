@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,8 +91,8 @@
        (firstChild ->getSecondChild()->getOpCode().isLoadConst()) &&               \
        (secondChild->getOpCode().isSub() || secondChild->getOpCode().isAdd()) &&   \
        (secondChild->getSecondChild()->getOpCode().isLoadConst()) &&               \
-       (firstChild ->getReferenceCount()==1) &&                                    \
-       (secondChild ->getReferenceCount()==1))                                     \
+       (firstChild ->isSingleRef()) &&                                    \
+       (secondChild ->isSingleRef()))                                     \
       {                                                                            \
       Width konst;                                                                 \
       if (firstChild->getOpCode().isSub())                                         \
@@ -125,7 +125,7 @@
       else                                                                         \
          {                                                                         \
          TR::Node * grandChild = secondChild->getSecondChild();                      \
-         if (grandChild->getReferenceCount() == 1)                                 \
+         if (grandChild->isSingleRef())                                 \
             grandChild->set##Type(konst);                                          \
          else                                                                      \
             {                                                                      \
@@ -295,7 +295,7 @@ static void convertToTestUnderMask(TR::Node *node, TR::Block *block, TR::Simplif
        iushr->getChild(1)->getOpCode().isLoadConst() &&
        (constVal = iushr->getChild(1)->getConst<int32_t>()) == 24 &&
        !load->getSymbol()->isParm() && load->getOpCode().isLoadIndirect() &&  // Limit it to non-parm, indirect cases
-       load->getReferenceCount() == 1 &&
+       load->isSingleRef() &&
        performTransformation(cm, "%sTransforming iand/iushr to byte test under mask ["
              POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
       {
@@ -873,7 +873,7 @@ static TR::Node *addSimplifier(TR::Node * node, TR::Block * block, TR::Simplifie
       if (performTransformation(s->comp(), "%sNormalized xadd of xconst > 0 in node [%s] to xsub of -xconst\n", s->optDetailString(), node->getName(s->getDebug())))
          {
          TR::Node::recreate(node, TR::ILOpCode::getSubOpCode<T>());
-         if (secondChild->getReferenceCount() == 1)
+         if (secondChild->isSingleRef())
             {
             secondChild->setConst<T>(-secondChild->getConst<T>());
             }
@@ -964,9 +964,9 @@ static TR::Node *addSimplifier(TR::Node * node, TR::Block * block, TR::Simplifie
       }
       // reduce imul operations by factoring
    else if (firstChildOp.isMul() &&
-            firstChild->getReferenceCount() == 1 &&
+            firstChild->isSingleRef() &&
             secondChildOp.isMul()             &&
-            secondChild->getReferenceCount() == 1)
+            secondChild->isSingleRef())
       {
       TR::Node * llChild     = firstChild->getFirstChild();
       TR::Node * lrChild     = firstChild->getSecondChild();
@@ -1071,7 +1071,7 @@ static TR::Node *addSimplifier(TR::Node * node, TR::Block * block, TR::Simplifie
                   value = -value;
                   TR::Node::recreate(node, TR::ILOpCode::getSubOpCode<T>());
                   }
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   secondChild->setConst<T>(value);
                   }
@@ -1090,7 +1090,7 @@ static TR::Node *addSimplifier(TR::Node * node, TR::Block * block, TR::Simplifie
                }
             }
          else if (!s->reassociate() && // use new rules
-                  (firstChild->getReferenceCount() == 1) &&
+                  (firstChild->isSingleRef()) &&
                   performTransformation(s->comp(), "%sFound xadd of non-xconst with xadd or isub of x and const in node [%s]\n", s->optDetailString(), node->getName(s->getDebug())))
             {
             // move constants up the tree so they will tend to get merged together
@@ -1117,7 +1117,7 @@ static TR::Node *addSimplifier(TR::Node * node, TR::Block * block, TR::Simplifie
             {
             T value  = secondChild->getConst<T>();
             value += lrChild->getConst<T>();
-            if (secondChild->getReferenceCount() == 1)
+            if (secondChild->isSingleRef())
                {
                secondChild->setConst<T>(value);
                }
@@ -1239,7 +1239,7 @@ TR::Node *subSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       if (performTransformation(s->comp(), "%sNormalized isub of iconst > 0 in node [%s] to iadd of -iconst \n", s->optDetailString(), node->getName(s->getDebug())))
          {
          TR::Node::recreate(node, TR::ILOpCode::getAddOpCode<T>());
-         if (secondChild->getReferenceCount() == 1)
+         if (secondChild->isSingleRef())
             {
             secondChild->setConst<T>(-secondChild->getConst<T>());
             }
@@ -1334,9 +1334,9 @@ TR::Node *subSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
    // reduce imul operations by factoring
    else if (firstChildOp.isMul()              &&
-            firstChild->getReferenceCount() == 1 &&
+            firstChild->isSingleRef() &&
             secondChildOp.isMul()             &&
-            secondChild->getReferenceCount() == 1)
+            secondChild->isSingleRef())
       {
       TR::Node * llChild     = firstChild->getFirstChild();
       TR::Node * lrChild     = firstChild->getSecondChild();
@@ -1405,7 +1405,7 @@ TR::Node *subSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    //  reference. The problems that were fixed with 70791 will now be fixed
    //  with store propagation for 5.0...
    // Original 70791 comments:
-   //   70791 the firstChild->getReferenceCount()==1 test we all believe should
+   //   70791 the firstChild->isSingleRef() test we all believe should
    //   really be on an inner if (page down a couple times), but LoopAtom gets
    //   a lot slower for register usage problems.  when we have a solution for
    //   that problem, the test should be moved back down there.
@@ -1450,7 +1450,7 @@ TR::Node *subSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                   {
                   TR::Node::recreate(node, TR::ILOpCode::getAddOpCode<T>());
                   }
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   secondChild->setConst<T>(value);
                   }
@@ -1472,7 +1472,7 @@ TR::Node *subSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
               //   performance in LoopAtom.  we all still believe the test
               //   should really be here, but a heavier solution is needed
               //   to fix register pressure problems thta result
-            if ((firstChild->getReferenceCount() == 1) && (performTransformation(s->comp(), "%sFound xsub of non-xconst with xadd or xsub of x and const in node [%s]\n", s->optDetailString(), node->getName(s->getDebug()))))
+            if ((firstChild->isSingleRef()) && (performTransformation(s->comp(), "%sFound xsub of non-xconst with xadd or xsub of x and const in node [%s]\n", s->optDetailString(), node->getName(s->getDebug()))))
             {
             // move constants up the tree so they will tend to get merged together
             node->setChild(1, lrChild);
@@ -2049,7 +2049,7 @@ static bool canProcessSubTreeLeavesForISelectCompare(TR::NodeChecklist &visited,
 
    if (node->getOpCode().isSelect()
        && node->getDataType().isIntegral()
-       && node->getReferenceCount() == 1)
+       && node->isSingleRef())
       {
       TR::Node *left = node->getChild(1);
       TR::Node *right = node->getChild(2);
@@ -2103,7 +2103,7 @@ static bool processSubTreeLeavesForISelectCompare(TR::NodeChecklist &visited, TR
 
    if (node->getOpCode().isSelect()
        && node->getDataType().isIntegral()
-       && node->getReferenceCount() == 1)
+       && node->isSingleRef())
       {
       TR::Node *left = node->getChild(1);
       TR::Node *right = node->getChild(2);
@@ -2182,7 +2182,7 @@ static void simplifyISelectCompare(TR::Node *compare, TR::Simplifier *s)
        && compare->getSecondChild()->getOpCode().isInteger()
        && compare->getFirstChild()->getOpCode().isInteger()
        && compare->getFirstChild()->getOpCode().isSelect()
-       && compare->getFirstChild()->getReferenceCount() == 1)
+       && compare->getFirstChild()->isSingleRef())
       {
       TR::NodeChecklist safetyVisited(s->comp());
       TR_ComparisonTypes compareType = TR::ILOpCode::getCompareType(compare->getOpCodeValue());
@@ -2416,7 +2416,7 @@ static void addressCompareConversion(TR::Node * node, TR::Simplifier * s)
 
       if (firstOp == TR::a2i && firstChild->getFirstChild()->getType().isAddress() &&
           s->comp()->target().is32Bit() &&
-          firstChild->getReferenceCount()==1)
+          firstChild->isSingleRef())
          {
          if ((secondOp == TR::iconst && secondChild->getInt()==0) ||
             (secondOp == TR::a2i))
@@ -2451,7 +2451,7 @@ static void addressCompareConversion(TR::Node * node, TR::Simplifier * s)
          }
       else  if (firstOp == TR::a2l && firstChild->getFirstChild()->getType().isAddress() &&
                 s->comp()->target().is64Bit() &&
-                firstChild->getReferenceCount()==1)
+                firstChild->isSingleRef())
          {
         if ((secondOp == TR::lconst && secondChild->getLongInt()==0) ||
             (secondOp == TR::a2l))
@@ -2518,7 +2518,7 @@ static void longCompareNarrower(TR::Node * node, TR::Simplifier * s, TR::ILOpCod
                }
             else if (secondOp == TR::lconst)
                {
-               if (secondChild->getReferenceCount()==1)
+               if (secondChild->isSingleRef())
                   {
                   TR::Node::recreate(secondChild, TR::iconst);
                   secondChild->setInt((int32_t)secondChild->getLongInt());
@@ -2595,7 +2595,7 @@ static void longCompareNarrower(TR::Node * node, TR::Simplifier * s, TR::ILOpCod
                   }
                else if (secondOp == TR::lconst)
                   {
-                  if (secondChild->getReferenceCount()==1)
+                  if (secondChild->isSingleRef())
                      {
                      TR::Node::recreate(secondChild, TR::sconst);
                      secondChild->setConst<uint16_t>((uint16_t)secondChild->getLongInt());
@@ -2640,7 +2640,7 @@ static void longCompareNarrower(TR::Node * node, TR::Simplifier * s, TR::ILOpCod
                   }
                else if (secondOp == TR::lconst)
                   {
-                  if (secondChild->getReferenceCount()==1)
+                  if (secondChild->isSingleRef())
                      {
                      TR::Node::recreate(secondChild, TR::sconst);
                      secondChild->setShortInt((int16_t)secondChild->getLongInt());
@@ -2686,7 +2686,7 @@ static void longCompareNarrower(TR::Node * node, TR::Simplifier * s, TR::ILOpCod
                   }
                else if (secondOp == TR::lconst)
                   {
-                  if (secondChild->getReferenceCount()==1)
+                  if (secondChild->isSingleRef())
                      {
                      TR::Node::recreate(secondChild, TR::bconst);
                      secondChild->setByte((int8_t)secondChild->getLongInt());
@@ -4406,7 +4406,7 @@ static void intCompareNarrower(TR::Node * node, TR::Simplifier * s, TR::ILOpCode
       {
       TR::ILOpCodes firstOp  = firstChild->getOpCodeValue();
       TR::ILOpCodes secondOp = secondChild->getOpCodeValue();
-      if (firstOp == TR::su2i && firstChild->getReferenceCount()==1)
+      if (firstOp == TR::su2i && firstChild->isSingleRef())
          {
          if (secondOp == TR::su2i ||
              (secondOp == TR::iconst               &&
@@ -4449,7 +4449,7 @@ static void intCompareNarrower(TR::Node * node, TR::Simplifier * s, TR::ILOpCode
                }
             }
          }
-      else if (firstOp == TR::s2i && firstChild->getReferenceCount() == 1)
+      else if (firstOp == TR::s2i && firstChild->isSingleRef())
          {
          if (secondOp == TR::s2i ||
              (secondOp == TR::iconst             &&
@@ -4493,7 +4493,7 @@ static void intCompareNarrower(TR::Node * node, TR::Simplifier * s, TR::ILOpCode
                }
             }
          }
-      else if (firstOp == TR::b2i && firstChild->getReferenceCount() == 1)
+      else if (firstOp == TR::b2i && firstChild->isSingleRef())
          {
          if (secondOp == TR::b2i ||
              (secondOp == TR::iconst              &&
@@ -4549,7 +4549,7 @@ static void unsignedIntCompareNarrower(TR::Node * node, TR::Simplifier * s, TR::
       {
       TR::ILOpCodes firstOp  = firstChild->getOpCodeValue();
       TR::ILOpCodes secondOp = secondChild->getOpCodeValue();
-      if (firstOp == TR::su2i && firstChild->getReferenceCount()==1)
+      if (firstOp == TR::su2i && firstChild->isSingleRef())
          {
          if (secondOp == TR::su2i ||
              (secondOp == TR::iconst               &&
@@ -4591,7 +4591,7 @@ static void unsignedIntCompareNarrower(TR::Node * node, TR::Simplifier * s, TR::
                }
             }
          }
-      else if (firstOp == TR::s2i && firstChild->getReferenceCount() == 1)
+      else if (firstOp == TR::s2i && firstChild->isSingleRef())
          {
          if (secondOp == TR::s2i ||
              (secondOp == TR::iconst               &&
@@ -4633,7 +4633,7 @@ static void unsignedIntCompareNarrower(TR::Node * node, TR::Simplifier * s, TR::
                }
             }
          }
-      else if (firstOp == TR::b2i && firstChild->getReferenceCount() == 1)
+      else if (firstOp == TR::b2i && firstChild->isSingleRef())
          {
          if (secondOp == TR::b2i ||
              (secondOp == TR::iconst               &&
@@ -6012,7 +6012,7 @@ TR::Node *directStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifi
    TR::Node * child = node->getFirstChild();
    TR::SymbolReference * symRef = node->getSymbolReference();
    if (child->getOpCode().isLoadVar()  &&
-       child->getReferenceCount() == 1 &&
+       child->isSingleRef() &&
        symRef == child->getSymbolReference() &&
        performTransformation(s->comp(), "%sFolded direct store of load of same symbol on node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
       {
@@ -6272,7 +6272,7 @@ TR::Node *anchorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       if (performTransformation(s->comp(), "%sRemoving anchor node %p\n", s->optDetailString(), node))
          {
          if (firstChild->getOpCode().isStore() &&
-               firstChild->getReferenceCount() == 1)
+               firstChild->isSingleRef())
             {
             if (!firstChild->getOpCode().isWrtBar())
                {
@@ -6357,7 +6357,7 @@ TR::Node *iaddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       if (performTransformation(s->comp(), "%sNormalized iadd of iconst > 0 in node [%s] to isub of -iconst\n", s->optDetailString(), node->getName(s->getDebug())))
          {
-         TR::Node * newSecondChild = (secondChild->getReferenceCount() == 1) ? secondChild : TR::Node::create(secondChild, TR::iconst, 0);
+         TR::Node * newSecondChild = (secondChild->isSingleRef()) ? secondChild : TR::Node::create(secondChild, TR::iconst, 0);
          newSecondChild->setInt(-secondChild->getInt());
          TR::Node::recreateWithoutProperties(node, TR::isub, 2, firstChild, newSecondChild);
          firstChild->recursivelyDecReferenceCount();
@@ -6441,9 +6441,9 @@ TR::Node *iaddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
       // reduce imul operations by factoring
    else if (firstChildOp == TR::imul &&
-            firstChild->getReferenceCount() == 1 &&
+            firstChild->isSingleRef() &&
             secondChildOp == TR::imul             &&
-            secondChild->getReferenceCount() == 1)
+            secondChild->isSingleRef())
       {
       TR::Node * llChild     = firstChild->getFirstChild();
       TR::Node * lrChild     = firstChild->getSecondChild();
@@ -6548,7 +6548,7 @@ TR::Node *iaddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                   value = -value;
                   TR::Node::recreate(node, TR::isub);
                   }
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   secondChild->setInt(value);
                   }
@@ -6567,7 +6567,7 @@ TR::Node *iaddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                }
             }
          else if (!s->reassociate() && // use new rules
-                  (firstChild->getReferenceCount() == 1) &&
+                  (firstChild->isSingleRef()) &&
                   performTransformation(s->comp(), "%sFound iadd of non-iconst with iadd or isub of x and const in node [%s]\n", s->optDetailString(), node->getName(s->getDebug())))
             {
             // move constants up the tree so they will tend to get merged together
@@ -6602,7 +6602,7 @@ TR::Node *iaddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             int32_t value  = secondChild->getInt();
             value += lrChild->getInt();
-            if (secondChild->getReferenceCount() == 1)
+            if (secondChild->isSingleRef())
                {
                secondChild->setInt(value);
                }
@@ -6621,12 +6621,12 @@ TR::Node *iaddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          }
       }
    else if ((node->getOpCodeValue() == TR::iadd) &&
-            (node->getReferenceCount() == 1) && // iadd should be unique
+            (node->isSingleRef()) && // iadd should be unique
             (node->getFirstChild()->getOpCodeValue() == TR::a2i) && // node is iadd, so it has two children
-            (node->getFirstChild()->getReferenceCount() == 1) && // a2i should be unique
+            (node->getFirstChild()->isSingleRef()) && // a2i should be unique
             (node->getSecondChild()->getOpCode().isLoadConst()) && // iadd second child should be const to be pushed down
             (node->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::aiadd) && // iadd -> a2i -> aiadd
-            (node->getFirstChild()->getFirstChild()->getReferenceCount() == 1) // aiadd should be unique
+            (node->getFirstChild()->getFirstChild()->isSingleRef()) // aiadd should be unique
            )
       {
       // Push down the iadd into the aiadd's second child:
@@ -6664,8 +6664,8 @@ TR::Node *iaddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       TR::Node * node_aiadd = node_a2i->getFirstChild();
 
       if ((node_aiadd->getSecondChild()->getOpCodeValue() == TR::iconst) &&
-          (node->getSecondChild()->getReferenceCount() == 1) && // iadd iconst should be unique
-          (node_aiadd->getSecondChild()->getReferenceCount() == 1) && // aiadd iconst should be unique
+          (node->getSecondChild()->isSingleRef()) && // iadd iconst should be unique
+          (node_aiadd->getSecondChild()->isSingleRef()) && // aiadd iconst should be unique
           performTransformation(s->comp(), "%sPushing down iadd [%p] iconst [%p] into aiadd [%p] iconst [%p] below\n",
                 s->optDetailString(), node, node->getSecondChild(), node_aiadd, node_aiadd->getSecondChild()))
          {
@@ -6759,7 +6759,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       if (performTransformation(s->comp(), "%sNormalized ladd of lconst > 0 in node [" POINTER_PRINTF_FORMAT "] to lsub of -lconst\n", s->optDetailString(), node))
          {
          TR::Node::recreate(node, TR::lsub);
-         if (secondChild->getReferenceCount() == 1)
+         if (secondChild->isSingleRef())
             {
             secondChild->setLongInt(-secondChild->getLongInt());
             }
@@ -6826,9 +6826,9 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
    // reduce imul operations by factoring
    else if (firstChildOp == TR::lmul              &&
-            firstChild->getReferenceCount() == 1 &&
+            firstChild->isSingleRef() &&
             secondChildOp == TR::lmul             &&
-            secondChild->getReferenceCount() == 1)
+            secondChild->isSingleRef())
       {
       TR::Node * llChild     = firstChild->getFirstChild();
       TR::Node * lrChild     = firstChild->getSecondChild();
@@ -6907,7 +6907,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                   value = -value;
                   TR::Node::recreate(node, TR::lsub);
                   }
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   secondChild->setLongInt(value);
                   }
@@ -6926,7 +6926,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             }
          else  // move constants up the tree so they will tend to get merged together
             {
-            if ((firstChild->getReferenceCount() == 1) &&
+            if ((firstChild->isSingleRef()) &&
                  performTransformation(s->comp(), "%sFound ladd of non-lconst with ladd or lsub of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
                {
                node->setChild(1, lrChild);
@@ -6952,7 +6952,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             int64_t value  = secondChild->getLongInt();
             value += lrChild->getLongInt();
-            if (secondChild->getReferenceCount() == 1)
+            if (secondChild->isSingleRef())
                secondChild->setLongInt(value);
             else
                {
@@ -6967,7 +6967,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             s->_alteredBlock = true;
             }
          }
-     else if ((firstChild->getReferenceCount() == 1) &&
+     else if ((firstChild->isSingleRef()) &&
                performTransformation(s->comp(), "%sFound aladd of non-lconst with aladd x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
          {
          // move constants up the tree so they will tend to be merged together
@@ -7166,7 +7166,7 @@ TR::Node *isubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       if (performTransformation(s->comp(), "%sNormalized isub of iconst > 0 in node [%s] to iadd of -iconst \n", s->optDetailString(), node->getName(s->getDebug())))
          {
          TR::Node::recreate(node, TR::iadd);
-         if (secondChild->getReferenceCount() == 1)
+         if (secondChild->isSingleRef())
             {
             secondChild->setInt(-secondChild->getInt());
             }
@@ -7260,9 +7260,9 @@ TR::Node *isubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
    // reduce imul operations by factoring
    else if (firstChildOp == TR::imul              &&
-            firstChild->getReferenceCount() == 1 &&
+            firstChild->isSingleRef() &&
             secondChildOp == TR::imul             &&
-            secondChild->getReferenceCount() == 1)
+            secondChild->isSingleRef())
       {
       TR::Node * llChild     = firstChild->getFirstChild();
       TR::Node * lrChild     = firstChild->getSecondChild();
@@ -7331,7 +7331,7 @@ TR::Node *isubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    //  reference. The problems that were fixed with 70791 will now be fixed
    //  with store propagation for 5.0...
    // Original 70791 comments:
-   //   70791 the firstChild->getReferenceCount()==1 test we all believe should
+   //   70791 the firstChild->isSingleRef() test we all believe should
    //   really be on an inner if (page down a couple times), but LoopAtom gets
    //   a lot slower for register usage problems.  when we have a solution for
    //   that problem, the test should be moved back down there.
@@ -7376,7 +7376,7 @@ TR::Node *isubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                   {
                   TR::Node::recreate(node, TR::iadd);
                   }
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   secondChild->setInt(value);
                   }
@@ -7398,7 +7398,7 @@ TR::Node *isubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
               //   performance in LoopAtom.  we all still believe the test
               //   should really be here, but a heavier solution is needed
               //   to fix register pressure problems thta result
-            if ((firstChild->getReferenceCount() == 1) && (performTransformation(s->comp(), "%sFound isub of non-iconst with iadd or isub of x and const in node [%s]\n", s->optDetailString(), node->getName(s->getDebug()))))
+            if ((firstChild->isSingleRef()) && (performTransformation(s->comp(), "%sFound isub of non-iconst with iadd or isub of x and const in node [%s]\n", s->optDetailString(), node->getName(s->getDebug()))))
             {
             // move constants up the tree so they will tend to get merged together
             node->setChild(1, lrChild);
@@ -7580,7 +7580,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       if (performTransformation(s->comp(), "%sNormalized lsub of lconst > 0 in node [" POINTER_PRINTF_FORMAT "] to ladd of -lconst \n", s->optDetailString(), node))
          {
          TR::Node::recreate(node, TR::ladd);
-         if (secondChild->getReferenceCount() == 1)
+         if (secondChild->isSingleRef())
             {
             secondChild->setLongInt(-secondChild->getLongInt());
             }
@@ -7655,9 +7655,9 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
    // reduce imul operations by factoring
    else if (firstChildOp == TR::lmul              &&
-            firstChild->getReferenceCount() == 1 &&
+            firstChild->isSingleRef() &&
             secondChildOp == TR::lmul             &&
-            secondChild->getReferenceCount() == 1)
+            secondChild->isSingleRef())
       {
       if (performTransformation(s->comp(), "%sFactored lsub with distributed lmul in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
          {
@@ -7740,7 +7740,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                   {
                   TR::Node::recreate(node, TR::ladd);
                   }
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   secondChild->setLongInt(value);
                   }
@@ -7759,7 +7759,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             }
          else  // move constants up the tree so they will tend to get merged together
             {
-            if ((firstChild->getReferenceCount() == 1) &&
+            if ((firstChild->isSingleRef()) &&
                  performTransformation(s->comp(), "%sFound lsub of non-lconst with ladd or lsub of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
                {
                node->setChild(1, lrChild);
@@ -7877,7 +7877,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             firstChild->recursivelyDecReferenceCount();
 
             // Fixup lsub's const child
-            if (secondChild->getReferenceCount() == 1)
+            if (secondChild->isSingleRef())
                {
                secondChild->setLongInt(lSubValue);
                }
@@ -7964,7 +7964,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                         TR::Node::recreate(node, TR::ladd);
                         }
 
-                     if (secondChild->getReferenceCount() == 1)
+                     if (secondChild->isSingleRef())
                         {
                         secondChild->setLongInt(value);
                         }
@@ -8179,7 +8179,7 @@ TR::Node *imulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       TR::Node::recreate(node, TR::ineg);
       node->setNumChildren(1);
-      if (secondChild->getReferenceCount() == 1)
+      if (secondChild->isSingleRef())
          {
          secondChild->setInt(-secondChild->getInt());
          }
@@ -8198,7 +8198,7 @@ TR::Node *imulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       return s->simplify(node, block);
       }
 
-   if (firstChildOp == TR::imul && firstChild->getReferenceCount() == 1)
+   if (firstChildOp == TR::imul && firstChild->isSingleRef())
       {
       TR::Node * lrChild = firstChild->getSecondChild();
       if (lrChild->getOpCodeValue() == TR::iconst)
@@ -8208,7 +8208,7 @@ TR::Node *imulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             // (a*c1)*c2 => a*(c1*c2)        todo: overflow?
             if (performTransformation(s->comp(), "%sFound (a*c1)*c2 => a*(c1*c2) in imul [%s]\n", s->optDetailString(), node->getName(s->getDebug())))
                {
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   secondChild->setInt(secondChild->getInt() * lrChild->getInt());
                   }
@@ -8357,7 +8357,7 @@ TR::Node *imulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
        node->getFirstChild()->getOpCodeValue() == TR::imul &&
        !isExprInvariant(region, node->getFirstChild()->getFirstChild()) &&
        isExprInvariant(region, node->getFirstChild()->getSecondChild()) &&
-       node->getFirstChild()->getReferenceCount() == 1)
+       node->getFirstChild()->isSingleRef())
       {
       if (performTransformation(s->comp(), "%sApplied reassociation rule 10 to node 0x%p\n", s->optDetailString(), node))
          {
@@ -8379,7 +8379,7 @@ TR::Node *imulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
        node->getFirstChild()->getOpCodeValue() == TR::iadd &&
        !isExprInvariant(region, node->getFirstChild()->getFirstChild()) &&
        isExprInvariant(region, node->getFirstChild()->getSecondChild()) &&
-       node->getFirstChild()->getReferenceCount() == 1)
+       node->getFirstChild()->isSingleRef())
       {
       if (performTransformation(s->comp(), "%sApplied reassociation rule 11 to node 0x%p\n", s->optDetailString(), node))
          {
@@ -8509,7 +8509,7 @@ TR::Node *lmulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    // TODO - strength reduction
    TR::ILOpCodes firstChildOp  = firstChild->getOpCodeValue();
    TR::ILOpCodes secondChildOp = secondChild->getOpCodeValue();
-   if (firstChildOp == TR::lmul && firstChild->getReferenceCount() == 1)
+   if (firstChildOp == TR::lmul && firstChild->isSingleRef())
       {
       TR::Node * lrChild = firstChild->getSecondChild();
       if (lrChild->getOpCodeValue() == TR::lconst)
@@ -8518,7 +8518,7 @@ TR::Node *lmulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             if (performTransformation(s->comp(), "%sFound lmul of lconst with lmul of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
                {
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   secondChild->setLongInt(secondChild->getLongInt() * lrChild->getLongInt());
                   setIsHighWordZero(secondChild, s);
@@ -8899,7 +8899,7 @@ TR::Node *idivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             }
          // Design 1790
          else if ((!disableILDivPwr2Opt)&&((shftAmnt = TR::TreeEvaluator::checkPositiveOrNegativePowerOfTwo(divisor)) > 0) &&
-            (secondChild->getReferenceCount()==1) && performTransformation(s->comp(), "%sPwr of 2 idiv opt node %p\n", s->optDetailString(), node) )
+            (secondChild->isSingleRef()) && performTransformation(s->comp(), "%sPwr of 2 idiv opt node %p\n", s->optDetailString(), node) )
             {
             secondChild->decReferenceCount();
             TR::Node * newNode1;
@@ -9191,7 +9191,7 @@ TR::Node *ldivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                }   // end negative dividend
             // Design 1790
             else if ( (!disableILDivPwr2Opt) && ((shftAmnt = TR::TreeEvaluator::checkPositiveOrNegativePowerOfTwo(divisor)) > 0) &&
-               (secondChild->getReferenceCount()==1) && performTransformation(s->comp(), "%sPwr of 2 ldiv opt node %p\n", s->optDetailString(), node) )
+               (secondChild->isSingleRef()) && performTransformation(s->comp(), "%sPwr of 2 ldiv opt node %p\n", s->optDetailString(), node) )
                {
                secondChild->decReferenceCount();
                TR::Node * newNode1;
@@ -9524,7 +9524,7 @@ TR::Node *iremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             }
          else if ((!disableILRemPwr2Opt)&& (!isUnsigned || isNonNegativePowerOf2(divisor)) &&
             ((shftAmnt = TR::TreeEvaluator::checkPositiveOrNegativePowerOfTwo(divisor)) > 0) &&
-            (secondChild->getReferenceCount()==1) && performTransformation(s->comp(), "%sPwr of 2 irem opt node %p\n", s->optDetailString(), node) )
+            (secondChild->isSingleRef()) && performTransformation(s->comp(), "%sPwr of 2 irem opt node %p\n", s->optDetailString(), node) )
             {
             // Why is the following assymmetrical ?
             //      if (node->getOpCode().isUnsigned())
@@ -9658,7 +9658,7 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             }
          // Design 1792
          else if ((!disableILRemPwr2Opt) && ((shftAmnt = TR::TreeEvaluator::checkPositiveOrNegativePowerOfTwo(divisor)) > 0) &&
-            (secondChild->getReferenceCount()==1) && performTransformation(s->comp(), "%sPwr of 2 lrem opt node %p\n", s->optDetailString(), node) )
+            (secondChild->isSingleRef()) && performTransformation(s->comp(), "%sPwr of 2 lrem opt node %p\n", s->optDetailString(), node) )
             {
             secondChild->decReferenceCount();
             TR::Node * newNode1;
@@ -10032,7 +10032,7 @@ TR::Node *fnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          child2Change = secondOpChild;
          childNo=1;
          }
-      if (child2Change && child2Change->getReferenceCount() == 1 && performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] -(-A op B) -> A op B (op=*,/,%%)\n", s->optDetailString(), node))
+      if (child2Change && child2Change->isSingleRef() && performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] -(-A op B) -> A op B (op=*,/,%%)\n", s->optDetailString(), node))
          {
          // remove neg
          TR::Node * newChild= s->replaceNode(child2Change,child2Change->getFirstChild(), s->_curTree);
@@ -10443,7 +10443,7 @@ TR::Node *iushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
          TR::Node     * subTree            = firstChild->getFirstChild();
          TR::ILOpCodes opCode             = subTree->getOpCodeValue();
          bool         foundZeroExtension = false;
-         if (subTree->getReferenceCount() == 1)
+         if (subTree->isSingleRef())
             {
             if (opCode == TR::s2i && rightShiftValue == 16)
                {
@@ -10479,7 +10479,7 @@ TR::Node *iushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
             {
             TR::Node::recreate(node, TR::iand);
             uint32_t mask = (UINT_MAX >> rightShiftValue);
-            if (secondChild->getReferenceCount() == 1)
+            if (secondChild->isSingleRef())
                secondChild->setInt(mask);
             else
                {
@@ -10569,7 +10569,7 @@ TR::Node *lushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
          TR::Node     * subTree            = firstChild->getFirstChild();
          TR::ILOpCodes opCode             = subTree->getOpCodeValue();
          bool         foundZeroExtension = false;
-         if (subTree->getReferenceCount() == 1)
+         if (subTree->isSingleRef())
             {
             if (opCode == TR::i2l && rightShiftValue == 32)
                {
@@ -10613,7 +10613,7 @@ TR::Node *lushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
             {
             TR::Node::recreate(node, TR::land);
             uint64_t mask = (uint64_t) ((uint64_t) -1) >> rightShiftValue;
-            if (secondChild->getReferenceCount() == 1)
+            if (secondChild->isSingleRef())
                {
                TR::Node::recreate(secondChild, TR::lconst);
                secondChild->setLongInt(mask);
@@ -10748,10 +10748,10 @@ TR::Node *iandSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    TR::ILOpCodes secondChildOp = secondChild->getOpCodeValue();
 
    // look for demorgan's law.  if found can remove one bitwise complement operation
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       {
       if (isBitwiseIntComplement(firstChild)    &&
-          secondChild->getReferenceCount() == 1 &&
+          secondChild->isSingleRef() &&
           isBitwiseIntComplement(secondChild))
          {
          if (performTransformation(s->comp(), "%sReduced iand with two complemented children in node [%s] to complemented ior\n", s->optDetailString(), node->getName(s->getDebug())))
@@ -10778,7 +10778,7 @@ TR::Node *iandSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                {
                if (performTransformation(s->comp(), "%sFound iand of iconst with iand of x and iconst in node [%s]\n", s->optDetailString(), node->getName(s->getDebug())))
                   {
-                  if (secondChild->getReferenceCount() == 1)
+                  if (secondChild->isSingleRef())
                      {
                      secondChild->setInt(secondChild->getInt() & lrChild->getInt());
                      }
@@ -10896,10 +10896,10 @@ TR::Node *landSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    TR::ILOpCodes secondChildOp = secondChild->getOpCodeValue();
 
    // look for demorgan's law.  if found can remove one bitwise complement operation
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       {
       if (isBitwiseLongComplement(firstChild)   &&
-          secondChild->getReferenceCount() == 1 &&
+          secondChild->isSingleRef() &&
           isBitwiseLongComplement(secondChild))
          {
          if (performTransformation(s->comp(), "%sReduced land with two complemented children in node [" POINTER_PRINTF_FORMAT "] to complemented lor\n", s->optDetailString(), node))
@@ -10926,7 +10926,7 @@ TR::Node *landSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                {
                if (performTransformation(s->comp(), "%sFound land of lconst with land of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
                   {
-                  if (secondChild->getReferenceCount() == 1)
+                  if (secondChild->isSingleRef())
                      {
                      secondChild->setLongInt(secondChild->getLongInt() & lrChild->getLongInt());
                      }
@@ -11010,7 +11010,7 @@ TR::Node *landSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             TR::Node * constChild = NULL;
 
-            if (secondChild->getReferenceCount()==1)
+            if (secondChild->isSingleRef())
                {
                TR::Node::recreate(secondChild, TR::iconst);
                secondChild->setInt(secondChild->getLongIntLow());
@@ -11268,10 +11268,10 @@ TR::Node *iorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    TR::ILOpCodes secondChildOp = secondChild->getOpCodeValue();
 
    // look for demorgan's law.  if found can remove one bitwise complement operation
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       {
       if (isBitwiseIntComplement(firstChild)    &&
-          secondChild->getReferenceCount() == 1 &&
+          secondChild->isSingleRef() &&
           isBitwiseIntComplement(secondChild))
          {
          if (performTransformation(s->comp(), "%sReduced ior with two complemented children in node [" POINTER_PRINTF_FORMAT "] to complemented iand\n", s->optDetailString(), node))
@@ -11325,7 +11325,7 @@ TR::Node *iorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                {
                if (performTransformation(s->comp(), "%sFound ior of iconst with ior of x and iconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
                   {
-                  if (secondChild->getReferenceCount() == 1)
+                  if (secondChild->isSingleRef())
                      {
                      secondChild->setInt(secondChild->getInt() | lrChild->getInt());
                      }
@@ -11409,10 +11409,10 @@ TR::Node *lorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    TR::ILOpCodes secondChildOp = secondChild->getOpCodeValue();
 
    // look for demorgan's law.  if found can remove one bitwise complement operation
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       {
       if (isBitwiseLongComplement(firstChild)   &&
-          secondChild->getReferenceCount() == 1 &&
+          secondChild->isSingleRef() &&
           isBitwiseLongComplement(secondChild))
          {
          if (performTransformation(s->comp(), "%sReduced lor with two complemented children in node [" POINTER_PRINTF_FORMAT "] to complemented land\n", s->optDetailString(), node))
@@ -11441,7 +11441,7 @@ TR::Node *lorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                {
                if (performTransformation(s->comp(), "%sFound lor of lconst with lor of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
                   {
-                  if (secondChild->getReferenceCount() == 1)
+                  if (secondChild->isSingleRef())
                      {
                      secondChild->setLongInt(secondChild->getLongInt() | lrChild->getLongInt());
                      }
@@ -11489,7 +11489,7 @@ TR::Node *lorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             TR::Node * constChild = NULL;
 
-            if (secondChild->getReferenceCount()==1)
+            if (secondChild->isSingleRef())
                {
                TR::Node::recreate(secondChild, TR::iconst);
                secondChild->setInt(secondChild->getLongIntLow());
@@ -11581,7 +11581,7 @@ TR::Node *borSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    //  bconst -128
 
    if (firstChild->getOpCode().isAnd() &&
-         firstChild->getReferenceCount() == 1 &&
+         firstChild->isSingleRef() &&
          secondChild->getOpCode().isLoadConst() &&
          firstChild->getSecondChild()->getOpCode().isLoadConst() &&
          (((secondChild->getByte() | firstChild->getSecondChild()->getByte()) & 0xFF) == 0xFF) &&
@@ -11669,7 +11669,7 @@ TR::Node *ixorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
    // look for reassociation to fold constants
    if (firstChildOp == TR::ixor &&
-       firstChild->getReferenceCount() == 1)
+       firstChild->isSingleRef())
       {
       TR::Node * lrChild = firstChild->getSecondChild();
       if (lrChild->getOpCodeValue() == TR::iconst)
@@ -11678,7 +11678,7 @@ TR::Node *ixorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             if (performTransformation(s->comp(), "%sFound ixor of iconst with ixor of x and iconst in node [%s]\n", s->optDetailString(), node->getName(s->getDebug())))
                {
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   secondChild->setInt(secondChild->getInt() ^ lrChild->getInt());
                   }
@@ -11752,7 +11752,7 @@ TR::Node *lxorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
    // look for reassociation to fold constants
    if (firstChildOp == TR::lxor &&
-       firstChild->getReferenceCount() == 1)
+       firstChild->isSingleRef())
       {
       TR::Node * lrChild = firstChild->getSecondChild();
       if (lrChild->getOpCodeValue() == TR::lconst)
@@ -11761,7 +11761,7 @@ TR::Node *lxorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             if (performTransformation(s->comp(), "%sFound lxor of lconst with lxor of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
                {
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   secondChild->setLongInt(secondChild->getLongInt() ^ lrChild->getLongInt());
                   }
@@ -11808,7 +11808,7 @@ TR::Node *lxorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             TR::Node * constChild = NULL;
 
-            if (secondChild->getReferenceCount()==1)
+            if (secondChild->isSingleRef())
                {
                TR::Node::recreate(secondChild, TR::iconst);
                secondChild->setInt(secondChild->getLongIntLow());
@@ -11923,7 +11923,7 @@ TR::Node *i2lSimplifier(TR::Node * node, TR::Block *  block, TR::Simplifier * s)
       }
 
    TR::ILOpCodes childOp = firstChild->getOpCodeValue();
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       {
       bool foundFoldableConversion = false;
       if (childOp == TR::su2i)
@@ -12130,7 +12130,7 @@ TR::Node *i2aSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       node->setAndIncChild(0, firstChild->getFirstChild()->getFirstChild());
       node->setNumChildren(2);
       int32_t newVal = (firstChild->getOpCodeValue() == TR::isub) ? -firstChild->getSecondChild()->getInt() : firstChild->getSecondChild()->getInt();
-      if (firstChild->getReferenceCount() == 1 && firstChild->getSecondChild()->getReferenceCount() == 1)
+      if (firstChild->isSingleRef() && firstChild->getSecondChild()->isSingleRef())
          {
          firstChild->getSecondChild()->setInt(newVal);
          node->setAndIncChild(1, firstChild->getSecondChild());
@@ -12166,7 +12166,7 @@ TR::Node *iu2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
 
    TR::ILOpCodes childOp = firstChild->getOpCodeValue();
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       {
       bool foundFoldableConversion = false;
       if (childOp == TR::su2i)
@@ -12324,7 +12324,7 @@ TR::Node *l2aSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       TR::Node *constChild = firstChild->getSecondChild();
       bool is64Bit = s->comp()->target().is64Bit();
-      TR::ILOpCodes addressAddOp = ((constChild->getReferenceCount() == 1) && // is firstChild the only parent of constChild?
+      TR::ILOpCodes addressAddOp = ((constChild->isSingleRef()) && // is firstChild the only parent of constChild?
                                      (constChild->get64bitIntegralValue() <= (int64_t)CONSTANT64(0x000000000FFFFFFF) && // Does 64bit value fit in 32bit?
                                       constChild->get64bitIntegralValue() >= (int64_t)CONSTANT64(0xFFFFFFFFF0000000)) &&
                                       s->comp()->target().is32Bit()
@@ -12879,7 +12879,7 @@ TR::Node *s2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
 
    TR::ILOpCodes childOp = firstChild->getOpCodeValue();
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       {
       bool foundFoldableConversion = false;
       if (childOp == TR::bu2s)
@@ -12921,7 +12921,7 @@ TR::Node *s2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
 
    TR::ILOpCodes childOp = firstChild->getOpCodeValue();
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       {
       bool foundFoldableConversion = false;
       if (childOp == TR::bu2s)
@@ -13018,7 +13018,7 @@ TR::Node *su2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
 
    TR::ILOpCodes childOp = firstChild->getOpCodeValue();
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       {
       bool foundFoldableConversion = false;   // Haven't implemented any of these cases yet
                                               // but declaring the variable for completeness
@@ -13027,7 +13027,7 @@ TR::Node *su2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       if (childOp == TR::i2s)
          {
          firstGrandChild = firstChild->getFirstChild();
-         if (firstGrandChild->getReferenceCount() == 1 && firstGrandChild->getOpCodeValue() == node->getOpCodeValue())
+         if (firstGrandChild->isSingleRef() && firstGrandChild->getOpCodeValue() == node->getOpCodeValue())
             {
             if (performTransformation(s->comp(), "%sReduced su2i node [" POINTER_PRINTF_FORMAT "] and i2s child [" POINTER_PRINTF_FORMAT "] to no-op\n", s->optDetailString(), node,firstChild))
                {
@@ -14356,7 +14356,7 @@ TR::Node *ifCmpWithEqualitySimplifier(TR::Node * node, TR::Block * block, TR::Si
           secondChild->getByte() == 0                 &&
           firstChild->getOpCode().isBooleanCompare() == true &&
           firstChild->getOpCode().isBranch() == false &&
-          firstChild->getReferenceCount() == 1)
+          firstChild->isSingleRef())
          {
          TR::ILOpCodes op= firstChild->getOpCode().convertCmpToIfCmp();
          if (op != TR::BadILOp &&
@@ -14456,7 +14456,7 @@ TR::Node *ifCmpWithoutEqualitySimplifier(TR::Node * node, TR::Block * block, TR:
           secondChild->getByte() == 0                 &&
           firstChild->getOpCode().isBooleanCompare() == true &&
           firstChild->getOpCode().isBranch() == false &&
-          firstChild->getReferenceCount() == 1)
+          firstChild->isSingleRef())
          {
          TR::ILOpCodes op= firstChild->getOpCode().convertCmpToIfCmp();
          if (op != TR::BadILOp &&
@@ -15793,7 +15793,7 @@ TR::Node *selectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
              && node->getChild(2)->get64bitIntegralValue() == 1)
             {
             TR::Node *replacement = NULL;
-            if (node->getFirstChild()->getReferenceCount() == 1)
+            if (node->getFirstChild()->isSingleRef())
                {
                if (performTransformation(s->comp(), "%sReplacing select with children of constant values 0 and 1 at [" POINTER_PRINTF_FORMAT "] with its condition reversed\n", s->optDetailString(), node))
                   {
@@ -16814,7 +16814,7 @@ TR::Node *nullchkSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
        else if (node->getOpCodeValue() == TR::NULLCHK
                 && !node->getFirstChild()->getOpCode().isLikeDef()
                 && node->getFirstChild()->exceptionsRaised() == 0
-                && node->getFirstChild()->getReferenceCount() == 1
+                && node->getFirstChild()->isSingleRef()
                 && node->getFirstChild()->getNumChildren() == 1
                 && performTransformation(s->comp(), "%sNULLCHK passthrough simplification on n%dn\n", s->optDetailString(), node->getGlobalIndex()))
           {

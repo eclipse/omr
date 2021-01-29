@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -614,7 +614,7 @@ void TR::DeadTreesElimination::prePerformOnBlocks()
 
          if (node->getOpCode().isCheck() &&
              node->getFirstChild()->getOpCode().isCall() &&
-             node->getFirstChild()->getReferenceCount() == 1 &&
+             node->getFirstChild()->isSingleRef() &&
              node->getFirstChild()->getSymbolReference()->getSymbol()->isResolvedMethod() &&
              node->getFirstChild()->getSymbolReference()->getSymbol()->castToResolvedMethodSymbol()->isSideEffectFree() &&
              performTransformation(comp(), "%sRemove dead check of side-effect free call: %p\n", optDetailString(), node))
@@ -663,7 +663,7 @@ void TR::DeadTreesElimination::prePerformOnBlocks()
             for (int32_t i = glRegDeps->getNumChildren() - 1; i >= 0; --i)
                {
                TR::Node * dep = glRegDeps->getChild(i);
-               if (dep->getReferenceCount() == 1 &&
+               if (dep->isSingleRef() &&
                    (!dep->getOpCode().isFloatingPoint() ||
                     cg()->getSupportsJavaFloatSemantics()) &&
                    performTransformation(comp(), "%sRemove GlRegDep : %p\n", optDetailString(), glRegDeps->getChild(i)))
@@ -746,12 +746,12 @@ static bool treeCanPossiblyBeRemoved(TR::Node *node)
    // other uses exist
    if (node->getOpCodeValue() != TR::treetop)
       {
-      return (node->getOpCode().isAnchor() && node->getFirstChild()->getReferenceCount() == 1) ||
-             (node->getOpCode().isStoreReg() && node->getFirstChild()->getReferenceCount() == 1);
+      return (node->getOpCode().isAnchor() && node->getFirstChild()->isSingleRef()) ||
+             (node->getOpCode().isStoreReg() && node->getFirstChild()->isSingleRef());
       }
 
    // rdbar under a treetop can also be removed if there are no other uses
-   return (!isReadBarrierUnderTreetop(node) || node->getFirstChild()->getReferenceCount() == 1);
+   return (!isReadBarrierUnderTreetop(node) || node->getFirstChild()->isSingleRef());
    }
 
 int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *endTree)
@@ -878,7 +878,7 @@ int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *e
             // to disconnect the child node from the treetop
             //
             bool safeToReplaceNode = false;
-            if (child->getReferenceCount() == 1)
+            if (child->isSingleRef())
                {
                safeToReplaceNode = true;
                if (opCodeValue == TR::loadaddr)
@@ -986,7 +986,7 @@ int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *e
          TR::TreeTop *prevTree = iter.currentTree()->getPrevTreeTop();
          TR::TreeTop *nextTree = iter.currentTree()->getNextTreeTop();
 
-         if (!node->getOpCode().isStoreReg() || (node->getFirstChild()->getReferenceCount() == 1))
+         if (!node->getOpCode().isStoreReg() || (node->getFirstChild()->isSingleRef()))
             {
             // Actually going to remove the treetop now
             //
@@ -998,7 +998,7 @@ int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *e
                node->recursivelyDecReferenceCount();
                recursivelyDecFutureUseCount(child);
                iter.jumpTo(prevTree);
-               if (child->getReferenceCount() == 1)
+               if (child->isSingleRef())
                   requestOpt(OMR::treeSimplification, true, block);
 
                if (nextTree->getNode()->getOpCodeValue() == TR::Goto

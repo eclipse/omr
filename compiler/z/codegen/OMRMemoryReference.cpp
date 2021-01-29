@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -242,7 +242,7 @@ bool OMR::Z::MemoryReference::setForceFoldingIfAdvantageous(TR::CodeGenerator * 
          }
 
       allConvNodesAreUnneeded = allConvNodesAreUnneeded && eventualNonConversion->isUnneededConversion();
-      allConvNodesHaveRefCount1 = allConvNodesHaveRefCount1 && (eventualNonConversion->getReferenceCount() == 1);
+      allConvNodesHaveRefCount1 = allConvNodesHaveRefCount1 && (eventualNonConversion->isSingleRef());
 
       haveToEvalConvIntoRegister = haveToEvalConvIntoRegister ||
          ((eventualNonConversion->getReferenceCount() != 1) && (eventualNonConversion->getRegister() == NULL));
@@ -361,7 +361,7 @@ bool OMR::Z::MemoryReference::setForceFoldingIfAdvantageous(TR::CodeGenerator * 
       self()->setForceFolding();
       return true;
       }
-   else // if (eventualNonConversion->getReferenceCount() == 1)
+   else // if (eventualNonConversion->isSingleRef())
       {
       // aiadd
       //    iaload
@@ -696,7 +696,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node *addressChild, bool canUseInde
    bool done = false;
    if (addressChild->getRegister() == NULL)
       {
-      if (addressChild->getReferenceCount() == 1 &&
+      if (addressChild->isSingleRef() &&
           addressChild->getOpCode().isAdd() &&
           addressChild->getSecondChild()->getOpCode().isLoadConst())
          {
@@ -718,7 +718,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node *addressChild, bool canUseInde
             _baseRegister = cg->evaluate(first);
             }
          _offset = addressChild->getSecondChild()->getIntegerNodeValue<int32_t>();
-         if (addressChild->getReferenceCount() == 1)
+         if (addressChild->isSingleRef())
             {
             cg->decReferenceCount(addressChild->getFirstChild());
             cg->decReferenceCount(addressChild->getSecondChild());
@@ -1208,7 +1208,7 @@ void ArtificiallyInflateReferenceCountWhenNecessary(TR::MemoryReference * mr, co
    for (uint32_t i = 0; i < nodeArray.size(); i++)
       {
       // Stop registers escaping a partial evaluation with ref count 1.
-      if ((nodeArray[i]->getReferenceCount() == 1) && (nodeArray[i]->getRegister() != NULL))
+      if ((nodeArray[i]->isSingleRef()) && (nodeArray[i]->getRegister() != NULL))
          {
          if (comp->getOption(TR_TraceCG))
             {
@@ -1324,7 +1324,7 @@ OMR::Z::MemoryReference::populateAddTree(TR::Node * subTree, TR::CodeGenerator *
       memRefPopulated = true;
       }
    else if ( _baseRegister == NULL && _indexRegister == NULL &&
-            integerChild->getReferenceCount() == 1       &&
+            integerChild->isSingleRef()       &&
             (integerChild->getOpCodeValue() == TR::isub || integerChild->getOpCodeValue() == TR::lsub))
       {
       //
@@ -1684,7 +1684,7 @@ bool OMR::Z::MemoryReference::tryBaseIndexDispl(TR::CodeGenerator* cg, TR::Node*
    if (ireg == NULL)
       ireg = cg->evaluate(index);
 
-   if (topAdd->getReferenceCount() == 1)
+   if (topAdd->isSingleRef())
       {
       if (debug) traceMsg(comp, "&&& TBID recursive decrement\n");
       cg->recursivelyDecReferenceCount(topAdd);
@@ -1789,8 +1789,8 @@ OMR::Z::MemoryReference::populateMemoryReference(TR::Node * subTree, TR::CodeGen
 
    noteAllNodesWithRefCountNotOne(nodesBefore, subTree, comp);
 
-   if (((comp->useCompressedPointers() && subTree->getOpCodeValue() == TR::l2a))
-           && (subTree->getReferenceCount() == 1) && (subTree->getRegister() == NULL))
+   if ((comp->useCompressedPointers() && subTree->getOpCodeValue() == TR::l2a)
+           && (subTree->isSingleRefUnevaluated()))
       {
       noopNode = subTree;
       subTree = subTree->getFirstChild();

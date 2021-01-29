@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,35 +81,35 @@ void TR_X86FPBinaryArithmeticAnalyser::setInputs(TR::Node     *firstChild,
       }
 
    if (firstChild->getOpCode().isMemoryReference() &&
-       firstChild->getReferenceCount() == 1)
+       firstChild->isSingleRef())
       {
       setMem1();
       }
 
    if (secondChild->getOpCode().isMemoryReference() &&
-       secondChild->getReferenceCount() == 1)
+       secondChild->isSingleRef())
       {
       setMem2();
       }
 
-   if ((firstChild->getReferenceCount() == 1) &&
+   if ((firstChild->isSingleRef()) &&
        isIntToFPConversion(firstChild))
       {
       setConv1();
       }
 
-   if ((secondChild->getReferenceCount() == 1) &&
+   if ((secondChild->isSingleRef()) &&
        isIntToFPConversion(secondChild))
       {
       setConv2();
       }
 
-   if (firstChild->getReferenceCount() == 1)
+   if (firstChild->isSingleRef())
       {
       setClob1();
       }
 
-   if (secondChild->getReferenceCount() == 1)
+   if (secondChild->isSingleRef())
       {
       setClob2();
       }
@@ -151,7 +151,7 @@ TR_X86FPBinaryArithmeticAnalyser::isIntToFPConversion(TR::Node *child)
        child->getOpCodeValue() == TR::s2d)
       {
       TR::Node *convChild = child->getFirstChild();
-      if (convChild->getRegister() == NULL && convChild->getReferenceCount() == 1)
+      if (convChild->isSingleRefUnevaluated())
          {
          if (convChild->getOpCode().isLoadVar())
             {

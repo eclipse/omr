@@ -1381,7 +1381,7 @@ TR_InlinerBase::cloneChildren(TR::Node * to, TR::Node * from, uint32_t fromStart
       {
       TR::Node * fromChild = from->getChild(i);
       TR::Node * toChild;
-      if (fromChild->getReferenceCount() == 1)
+      if (fromChild->isSingleRef())
          {
          toChild = TR::Node::copy(fromChild);
          cloneChildren(toChild, fromChild, 0);
@@ -2307,7 +2307,7 @@ TR_ParameterToArgumentMapper::initialize(TR_CallStack *callStack)
             {
             if (parmMap->_addressTaken)
                {
-               if (arg->getOpCode().isLoadVarDirect() && arg->getReferenceCount() == 1 &&
+               if (arg->getOpCode().isLoadVarDirect() && arg->isSingleRef() &&
                      arg->getSymbol()->isAutoOrParm())
                   parmMap->_replacementSymRef = arg->getSymbolReference();
                }
@@ -2321,7 +2321,7 @@ TR_ParameterToArgumentMapper::initialize(TR_CallStack *callStack)
 
                if (disableParmTempOpt)
                   {
-                  if (arg->getOpCode().isLoadVarDirect() && arg->getReferenceCount() == 1 && arg->getSymbol()->isAutoOrParm())
+                  if (arg->getOpCode().isLoadVarDirect() && arg->isSingleRef() && arg->getSymbol()->isAutoOrParm())
                      parmMap->_replacementSymRef = arg->getSymbolReference();
                   else if (rematerializeConstant(arg, comp()))
                      parmMap->_isConst = true;
@@ -2329,7 +2329,7 @@ TR_ParameterToArgumentMapper::initialize(TR_CallStack *callStack)
                else
                   {
                   if ( (arg->getOpCode().isLoadVarDirect() && arg->getSymbol()->isAutoOrParm()) &&
-                       ( (arg->getReferenceCount() == 1)
+                       ( (arg->isSingleRef())
                          || (_callNode->getOpCode().isCallIndirect() &&
                                (argIndex == _callNode->getFirstArgumentIndex()) && (_callNode->getFirstChild()->getNumChildren() > 0) &&
                                (arg == _callNode->getFirstChild()->getFirstChild()) && arg->getSymbol()->isAuto() && (arg->getReferenceCount() == 2))

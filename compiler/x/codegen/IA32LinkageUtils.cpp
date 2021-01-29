@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,14 +84,14 @@ TR::Register *IA32LinkageUtils::pushIntegerWordArg(
          }
       else if (child->getOpCodeValue() == TR::fbits2i &&
                !child->normalizeNanValues() &&
-               child->getReferenceCount() == 1)
+               child->isSingleRef())
          {
          pushRegister = pushFloatArg(child->getFirstChild(), cg);
          cg->decReferenceCount(child);
          return pushRegister;
          }
       else if (child->getOpCode().isMemoryReference() &&
-               (child->getReferenceCount() == 1) &&
+               (child->isSingleRef()) &&
                (child->getSymbolReference() != cg->comp()->getSymRefTab()->findVftSymbolRef()))
          {
          TR::MemoryReference  *tempMR = generateX86MemoryReference(child, cg);
@@ -146,14 +146,14 @@ TR::Register *IA32LinkageUtils::pushLongArg(
          }
       else if (child->getOpCodeValue() == TR::dbits2l &&
                !child->normalizeNanValues() &&
-               child->getReferenceCount() == 1)
+               child->isSingleRef())
          {
          pushRegister = pushDoubleArg(child->getFirstChild(), cg);
          cg->decReferenceCount(child);
          return pushRegister;
          }
       else if (child->getOpCode().isMemoryReference() &&
-                child->getReferenceCount() == 1)
+                child->isSingleRef())
          {
          TR::MemoryReference  *lowMR = generateX86MemoryReference(child, cg);
          generateMemInstruction(PUSHMem, child, generateX86MemoryReference(*lowMR,4, cg), cg);
@@ -194,7 +194,7 @@ TR::Register *IA32LinkageUtils::pushFloatArg(
          cg->decReferenceCount(child);
          return NULL;
          }
-      else if (child->getReferenceCount() == 1)
+      else if (child->isSingleRef())
          {
          if (child->getOpCode().isLoad())
             {
@@ -262,7 +262,7 @@ TR::Register *IA32LinkageUtils::pushDoubleArg(
          cg->decReferenceCount(child);
          return NULL;
          }
-      else if (child->getReferenceCount() == 1)
+      else if (child->isSingleRef())
          {
          if (child->getOpCode().isLoad())
             {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@
 
 static bool addressIsTemporarilyInt(TR::Node *node)
    {
-   return (node->getOpCodeValue() == TR::a2i || node->getOpCodeValue() == TR::a2l) && (node->getReferenceCount() == 1);
+   return (node->getOpCodeValue() == TR::a2i || node->getOpCodeValue() == TR::a2l) && (node->isSingleRef());
    }
 
 
@@ -243,7 +243,7 @@ void TR_X86CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node       *
    if (firstChild->isHighWordZero())
       {
       firstHighZero = true;
-      if (firstChild->getReferenceCount() == 1 && firstRegister == 0)
+      if (firstChild->isSingleRefUnevaluated())
          {
          if (firstOp == TR::su2l || firstOp == TR::bu2l)
             {
@@ -284,7 +284,7 @@ void TR_X86CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node       *
    if (secondChild->isHighWordZero())
       {
       secondHighZero = true;
-      if (secondChild->getReferenceCount() == 1 && secondRegister == 0)
+      if (secondChild->isSingleRefUnevaluated())
          {
          if (secondOp == TR::su2l || secondOp == TR::bu2l)
             {
@@ -324,8 +324,7 @@ void TR_X86CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node       *
       {
       if (getEvalChild1())
          {
-         if (firstChild->getReferenceCount() == 1 &&
-             firstChild->getRegister() == NULL    &&
+         if (firstChild->isSingleRefUnevaluated() &&
              (firstChild->getOpCodeValue() == TR::lload ||
               (firstChild->getOpCodeValue() == TR::iload &&
                firstIU2L)))
@@ -349,8 +348,7 @@ void TR_X86CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node       *
          }
       if (getEvalChild2())
          {
-         if (secondChild->getReferenceCount() == 1 &&
-             secondChild->getRegister() == NULL    &&
+         if (secondChild->isSingleRefUnevaluated() &&
              (secondChild->getOpCodeValue() == TR::lload ||
               (secondChild->getOpCodeValue() == TR::iload &&
                secondIU2L)))
@@ -377,8 +375,7 @@ void TR_X86CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node       *
       {
       if (getEvalChild2())
          {
-         if (secondChild->getReferenceCount() == 1 &&
-             secondChild->getRegister() == NULL    &&
+         if (secondChild->isSingleRefUnevaluated() &&
              (secondChild->getOpCodeValue() == TR::lload ||
               (secondChild->getOpCodeValue() == TR::iload &&
                secondIU2L)))
@@ -398,8 +395,7 @@ void TR_X86CompareAnalyser::longOrderedCompareAndBranchAnalyser(TR::Node       *
          }
       if (getEvalChild1())
          {
-         if (firstChild->getReferenceCount() == 1 &&
-             firstChild->getRegister() == NULL    &&
+         if (firstChild->isSingleRefUnevaluated() &&
              (firstChild->getOpCodeValue() == TR::lload ||
               (firstChild->getOpCodeValue() == TR::iload &&
                firstIU2L)))

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -912,7 +912,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerStoreEvaluator(TR::Node *node, TR:
       //
       if (!usingCompressedPointers && cg->isMemoryUpdate(node))
          {
-         if (valueChild->getFirstChild()->getReferenceCount() == 1)
+         if (valueChild->getFirstChild()->isSingleRef())
             {
             // Memory update always a win if the result value is not needed again
             //
@@ -937,8 +937,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerStoreEvaluator(TR::Node *node, TR:
       TR::Register *translatedReg = valueReg;
       bool valueRegNeededInFuture = true;
       // try to avoid unnecessary sign-extension
-      if (valueChild->getRegister()       == 0 &&
-          valueChild->getReferenceCount() == 1 &&
+      if (valueChild->isSingleRefUnevaluated() &&
           (valueChild->getOpCodeValue() == TR::l2i ||
            valueChild->getOpCodeValue() == TR::l2s ||
            valueChild->getOpCodeValue() == TR::l2b))
@@ -1114,8 +1113,7 @@ TR::Register *OMR::X86::TreeEvaluator::istoreEvaluator(TR::Node *node, TR::CodeG
    // will not be taken for comp->useCompressedPointers
    // Handle special cases
    //
-   if (valueChild->getRegister() == NULL &&
-       valueChild->getReferenceCount() == 1)
+   if (valueChild->isSingleRefUnevaluated())
       {
       // Special case storing a float value into an int variable
       //
@@ -2918,7 +2916,7 @@ static TR::Register * inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerato
 
   if (opRegister->getKind() == TR_FPR)
     {
-      if (operand->getReferenceCount()==1)
+      if (operand->isSingleRef())
    targetRegister = opRegister;
       else
    targetRegister = cg->allocateSinglePrecisionRegister(TR_FPR);

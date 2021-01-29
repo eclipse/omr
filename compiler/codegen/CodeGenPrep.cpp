@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -242,7 +242,7 @@ OMR::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * 
             {
             if (value > 0)
                {
-               if (secondChild->getReferenceCount()==1)
+               if (secondChild->isSingleRef())
                   {
                   if (is32BitOp)
                      {
@@ -266,7 +266,7 @@ OMR::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node * parent, TR::TreeTop * 
                }
             else //negative value of the multiply constant
                {
-               if (secondChild->getReferenceCount() == 1)
+               if (secondChild->isSingleRef())
                   {
                   TR::Node * newChild = TR::Node::create(parent, is32BitOp ? TR::ishl : TR::lshl, 2);;
 
@@ -357,7 +357,7 @@ OMR::CodeGenerator::lowerTreeIfNeeded(
       //  load auto2 (colour x)
       if (node->getOpCode().isStoreDirect() &&
           node->getSymbolReference()->getSymbol()->isAuto() &&
-          node->getFirstChild()->getReferenceCount() == 1 &&
+          node->getFirstChild()->isSingleRef() &&
           node->getFirstChild()->getOpCode().isLoadVarDirect() &&
           node->getFirstChild()->getSymbolReference()->getSymbol()->isAuto())
          {
@@ -563,7 +563,7 @@ void OMR::CodeGenerator::identifyUnneededByteConvNodes(TR::Node * parent, TR::Tr
                   child->setUnneededConversion(true);
                }
 
-            if (child->getReferenceCount() == 1)
+            if (child->isSingleRef())
                self()->identifyUnneededByteConvNodes(child, treeTop, visitCount, storeType);
 
             }

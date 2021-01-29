@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -169,7 +169,7 @@ TR::Register* TR_X86SubtractAnalyser::integerSubtractAnalyserImpl(TR::Node     *
             }
          else
             {
-            if (secondChild->getReferenceCount() == 1 && secondRegister != 0 && !needsEflags && (borrow == 0))
+            if (secondChild->isSingleRef() && secondRegister != 0 && !needsEflags && (borrow == 0))
                {
                // use one fewer registers if we negate the clobberable secondRegister and add
                // Don't do this though if condition codes are needed.  The sequence
@@ -309,7 +309,7 @@ TR::Register* TR_X86SubtractAnalyser::longSubtractAnalyserImpl(TR::Node *root, T
       {
       secondHighZero = true;
       TR::ILOpCodes secondOp = secondChild->getOpCodeValue();
-      if (secondChild->getReferenceCount() == 1 && secondRegister == 0)
+      if (secondChild->isSingleRefUnevaluated())
          {
          if (secondOp == TR::iu2l || secondOp == TR::su2l ||
              secondOp == TR::bu2l ||

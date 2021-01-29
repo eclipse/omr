@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -146,7 +146,7 @@ static bool genNullTestForCompressedPointers(TR::Node *node,
             {
             if (n->getFirstChild()->getFirstChild()->isNonZero())
                isNonZero = true;
-            if (n->getFirstChild()->getReferenceCount() == 1 &&  n->getOpCodeValue() != TR::lsub)
+            if (n->getFirstChild()->isSingleRef() &&  n->getOpCodeValue() != TR::lsub)
                // need to investigate for TR::lsub as we might need to keep both
                // compressed and noncompressed regs alive for writebarriers etc
                keepSrc1 = false;
@@ -206,8 +206,7 @@ TR::Register *OMR::Power::TreeEvaluator::iaddEvaluator(TR::Node *node, TR::CodeG
 
    if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9)  &&
       firstChild->getOpCodeValue() == TR::imul &&
-      firstChild->getReferenceCount() == 1 &&
-      firstChild->getRegister() == NULL)
+      firstChild->isSingleRefUnevaluated())
      {
      trgReg = cg->allocateRegister();
      TR::Register *src2Reg = cg->evaluate(secondChild);
@@ -287,7 +286,7 @@ static void genericLongAnalyzer(
       {
       highZero = true;
       TR::ILOpCodes firstOp = child->getOpCodeValue();
-      if (child->getReferenceCount() == 1 && reg == NULL)
+      if (child->isSingleRefUnevaluated())
          {
          if (firstOp == TR::iu2l || firstOp == TR::su2l ||
              (firstOp == TR::lushr &&
@@ -512,8 +511,7 @@ TR::Register *OMR::Power::TreeEvaluator::laddEvaluator(TR::Node *node, TR::CodeG
           !setsOrReadsCC &&
           (node->getOpCodeValue() == TR::ladd || node->getOpCodeValue() == TR::aladd) &&
           firstChild->getOpCodeValue() == TR::lmul &&
-          firstChild->getReferenceCount() == 1 &&
-          firstChild->getRegister() == NULL)
+          firstChild->isSingleRefUnevaluated())
          {
          trgReg = cg->allocateRegister();
          src2Reg = cg->evaluate(secondChild);
@@ -1192,7 +1190,7 @@ OMR::Power::TreeEvaluator::dualMulEvaluator(TR::Node * node, TR::CodeGenerator *
    bool needsUnsignedHighMulOnly = (node->getOpCodeValue() == TR::lumulh) && !node->isDualCyclic();
    TR_ASSERT((node->getOpCodeValue() == TR::lumulh) || (node->getOpCodeValue() == TR::lmul), "Unexpected operator. Expected lumulh or lmul.");
    TR_ASSERT(node->isDualCyclic() || needsUnsignedHighMulOnly, "Should be either calculating cyclic dual or just the high part of the lmul.");
-   if (node->isDualCyclic() && (node->getChild(2)->getReferenceCount() == 1))
+   if (node->isDualCyclic() && (node->getChild(2)->isSingleRef()))
       {
       // other part of this dual is not used, and is dead
       TR::Node *pair = node->getChild(2);

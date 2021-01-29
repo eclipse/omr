@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -399,7 +399,7 @@ void TR_LocalLiveRangeReduction::populatePotentialDeps(TR_TreeRefInfo *treeRefIn
 
       //don't recurse over references (nodes which are not the first reference)
       //
-      if (child->getReferenceCount()==1 || treeRefInfo->getFirstRefNodesList()->find(child))
+      if (child->isSingleRef() || treeRefInfo->getFirstRefNodesList()->find(child))
          populatePotentialDeps(treeRefInfo,child );
       }
    return;
@@ -574,7 +574,7 @@ bool TR_LocalLiveRangeReduction::isAnySymInDefinedOrUsedBy(TR_TreeRefInfo *curre
          }
 
       //don't recurse over nodes each are not the first reference
-      if (child->getReferenceCount()==1 || currentTreeRefInfo->getFirstRefNodesList()->find(child))
+      if (child->isSingleRef() || currentTreeRefInfo->getFirstRefNodesList()->find(child))
          {
          if (isAnySymInDefinedOrUsedBy(currentTreeRefInfo, child, movingTreeRefInfo ))
             return true;
@@ -796,7 +796,7 @@ bool TR_LocalLiveRangeReduction::isNeedToBeInvestigated(TR_TreeRefInfo *treeRefI
 bool TR_LocalLiveRangeReduction::containsCallOrCheck(TR_TreeRefInfo *treeRefInfo, TR::Node *node)
    {
    if ((node->getOpCode().isCall() &&
-        (node->getReferenceCount()==1 || treeRefInfo->getFirstRefNodesList()->find(node))) ||
+        (node->isSingleRef() || treeRefInfo->getFirstRefNodesList()->find(node))) ||
        node->getOpCode().isCheck())
       {
       return true;
@@ -805,7 +805,7 @@ bool TR_LocalLiveRangeReduction::containsCallOrCheck(TR_TreeRefInfo *treeRefInfo
    for (int32_t i = 0; i < node->getNumChildren(); i++)
       {
       TR::Node *child = node->getChild(i);
-      if (child->getReferenceCount()==1 || treeRefInfo->getFirstRefNodesList()->find(child))
+      if (child->isSingleRef() || treeRefInfo->getFirstRefNodesList()->find(child))
          return containsCallOrCheck(treeRefInfo, child);
       }
    return false;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2312,7 +2312,7 @@ bool OMR::Optimizer::prepareForNodeRemoval(TR::Node *node , bool deferInvalidati
    for (int32_t i = node->getNumChildren()-1; i >= 0; i--)
       {
       TR::Node *child = node->getChild(i);
-      if (child != NULL && child->getReferenceCount() == 1)
+      if (child != NULL && child->isSingleRef())
          if (prepareForNodeRemoval(child))
             useDefInfoAreInvalid = true;
       }

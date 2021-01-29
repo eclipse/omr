@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -11269,7 +11269,7 @@ TR::Node *constrainNullChk(OMR::ValuePropagation *vp, TR::Node *node)
             }
          else
             {
-            TR_ASSERT(child->getReferenceCount() == 1, "Treetop child of NULLCHK has other uses");
+            TR_ASSERT(child->isSingleRef(), "Treetop child of NULLCHK has other uses");
 
             // Increment the reference count on the child so that we know it is
             // going to be kept.
@@ -11371,7 +11371,7 @@ TR::Node *constrainResolveChk(OMR::ValuePropagation *vp, TR::Node *node)
             }
          else
             {
-            TR_ASSERT(child->getReferenceCount() == 1, "Treetop child of ResolveCHK has other uses");
+            TR_ASSERT(child->isSingleRef(), "Treetop child of ResolveCHK has other uses");
 
             // Increment the reference count on the child so that we know it is
             // going to be kept.

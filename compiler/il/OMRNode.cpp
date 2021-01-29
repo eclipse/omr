@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3782,7 +3782,7 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
    {
    TR::Compilation * comp = TR::comp();
    TR::TreeTop *storeTree = NULL;
-   if ((self()->getReferenceCount() == 1) &&
+   if ((self()->isSingleRef()) &&
        self()->getOpCode().hasSymbolReference() &&
        self()->getSymbolReference()->getSymbol()->isAuto())
       {
@@ -3832,7 +3832,7 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
        self()->getOpCode().isArrayRef() &&
        (comp->getSymRefTab()->getNumInternalPointers() >= (comp->maxInternalPointers()/2) ||
         comp->cg()->supportsComplexAddressing()) &&
-       (self()->getReferenceCount() == 1))
+       (self()->isSingleRef()))
       {
       storesNeedToBeCreated = false;
       TR::Node *firstChild = self()->getFirstChild();

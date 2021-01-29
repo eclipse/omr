@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3002,9 +3002,9 @@ generateS390CompareAndBranchOpsHelper(TR::Node * node, TR::CodeGenerator * cg, T
    // FIXME: can't the binary commutative analyser handle this? that's where this should be done
    //            what about su2i? s2i? mixing of these? bytes? ints? longs?
    //
-   else if (firstChild->getOpCodeValue()==TR::su2i && firstChild->getRegister()==NULL && firstChild->getReferenceCount()==1 &&
+   else if (firstChild->getOpCodeValue()==TR::su2i && firstChild->isSingleRefUnevaluated() &&
             firstChild->getFirstChild()->getOpCodeValue()==TR::sloadi && firstChild->getFirstChild()->getRegister() &&
-            secondChild->getOpCodeValue()==TR::su2i && secondChild->getRegister()==NULL && secondChild->getReferenceCount()==1 &&
+            secondChild->getOpCodeValue()==TR::su2i && secondChild->isSingleRefUnevaluated() &&
             secondChild->getFirstChild()->getOpCodeValue()==TR::sloadi && secondChild->getFirstChild()->getRegister())
       {
       if (branchTarget != NULL)
@@ -3032,11 +3032,11 @@ generateS390CompareAndBranchOpsHelper(TR::Node * node, TR::CodeGenerator * cg, T
    // Try to use a CR.
    // FIXME: can't the binary commutative analyser handle this? that's where this should be done
    //
-   else if (firstChild->getOpCodeValue()==TR::bu2i && firstChild->getRegister()==NULL && firstChild->getReferenceCount()==1 &&
+   else if (firstChild->getOpCodeValue()==TR::bu2i && firstChild->isSingleRefUnevaluated() &&
             (firstChild->getFirstChild()->getOpCodeValue()==TR::bloadi   ||
              firstChild->getFirstChild()->getOpCodeValue()==TR::iRegLoad)
             && firstChild->getFirstChild()->getRegister() &&
-            secondChild->getOpCodeValue()==TR::bu2i && secondChild->getRegister()==NULL && secondChild->getReferenceCount()==1 &&
+            secondChild->getOpCodeValue()==TR::bu2i && secondChild->isSingleRefUnevaluated() &&
             (secondChild->getFirstChild()->getOpCodeValue()==TR::bloadi  ||
              secondChild->getFirstChild()->getOpCodeValue()==TR::iRegLoad)
             && secondChild->getFirstChild()->getRegister())
@@ -3555,7 +3555,7 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
       {
       depth++;
       if (nonConstNode->getFirstChild()->getOpCode().isMemoryReference() &&
-            nonConstNode->getFirstChild()->getReferenceCount() == 1)
+            nonConstNode->getFirstChild()->isSingleRef())
          {
          refCountZero = true;
          memRefNode = nonConstNode->getFirstChild();
@@ -3564,11 +3564,11 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
             nonConstNode->getFirstChild()->getOpCodeValue() == TR::s2i ||
             nonConstNode->getFirstChild()->getOpCodeValue() == TR::b2i ||
             nonConstNode->getFirstChild()->getOpCodeValue() == TR::i2l)
-            && nonConstNode->getFirstChild()->getReferenceCount() == 1)
+            && nonConstNode->getFirstChild()->isSingleRef())
          {
          depth++;
          if (nonConstNode->getFirstChild()->getFirstChild()->getOpCode().isMemoryReference() &&
-               nonConstNode->getFirstChild()->getFirstChild()->getReferenceCount() == 1)
+               nonConstNode->getFirstChild()->getFirstChild()->isSingleRef())
             {
             refCountZero = true;
             memRefNode = nonConstNode->getFirstChild()->getFirstChild();
@@ -3576,11 +3576,11 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
          else if ((nonConstNode->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::s2i ||
                nonConstNode->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::b2i ||
                nonConstNode->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::i2l)
-               && nonConstNode->getFirstChild()->getFirstChild()->getReferenceCount() == 1)
+               && nonConstNode->getFirstChild()->getFirstChild()->isSingleRef())
             {
             depth++;
             if (nonConstNode->getFirstChild()->getFirstChild()->getFirstChild()->getOpCode().isMemoryReference() &&
-                  nonConstNode->getFirstChild()->getFirstChild()->getFirstChild()->getReferenceCount() == 1)
+                  nonConstNode->getFirstChild()->getFirstChild()->getFirstChild()->isSingleRef())
                {
                refCountZero = true;
                memRefNode = nonConstNode->getFirstChild()->getFirstChild()->getFirstChild();
@@ -3639,9 +3639,8 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
             (node->getOpCodeValue() == TR::ificmpeq /*|| node->getOpCodeValue() == TR::ificmpne*/) &&
             getIntegralValue(constNode) == 0                                                 &&
             nonConstNode->getNumChildren() == 1                                              &&
-            nonConstNode->getReferenceCount() == 1 && nonConstNode->getRegister() == NULL    &&
-            nonConstNode->getFirstChild()->getReferenceCount() == 1                          &&
-            nonConstNode->getFirstChild()->getRegister() == NULL                             &&
+            nonConstNode->isSingleRefUnevaluated()    &&
+            nonConstNode->getFirstChild()->isSingleRefUnevaluated()                             &&
             memRefNode != NULL                                                               &&
             (nonConstNode->getFirstChild()->getOpCodeValue() == TR::bload  ||
              nonConstNode->getFirstChild()->getOpCodeValue() == TR::bloadi )                   )
@@ -3678,8 +3677,7 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
            TR::ILOpCode::isNotEqualCmp(node->getOpCode().getOpCodeValue())) &&
            constNode != NULL && nonConstNode != NULL &&
            nonConstNode->getOpCode().isAnd() &&
-           byteCheckForTM && nonConstNode->getReferenceCount() == 1 &&
-           nonConstNode->getRegister() == NULL                             &&
+           byteCheckForTM && nonConstNode->isSingleRefUnevaluated()                             &&
            nonConstNode->getSecondChild()->getOpCode().isLoadConst()       &&
            (getIntegralValue(constNode) == getIntegralValue(nonConstNode->getSecondChild()) ||
             getIntegralValue(constNode) ==0) && memRefNode && refCountZero &&
@@ -3778,7 +3776,7 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
           node->getOpCodeValue()==TR::iflcmpne) &&
          constNode->getLongInt() == 0 &&
          nonConstNode->getOpCodeValue()==TR::land &&
-         nonConstNode->getReferenceCount() == 1 && nonConstNode->getRegister()==NULL &&
+         nonConstNode->isSingleRefUnevaluated() &&
          nonConstNode->getSecondChild()->getOpCode().isLoadConst() &&
         ((nonConstNode->getSecondChild()->getLongInt() & 0xFFFFFFFFFFFF0000) == 0 ||
          (nonConstNode->getSecondChild()->getLongInt() & 0xFFFFFFFF0000FFFF) == 0 ||
@@ -3826,7 +3824,7 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
           node->getOpCodeValue()==TR::ificmpne) &&
          constNode->getInt() == 0 &&
          nonConstNode->getOpCodeValue()==TR::iand &&
-         nonConstNode->getReferenceCount() == 1 && nonConstNode->getRegister()==NULL &&
+         nonConstNode->isSingleRefUnevaluated() &&
          nonConstNode->getSecondChild()->getOpCode().isLoadConst() &&
          ((nonConstNode->getSecondChild()->getInt() & 0xFFFF0000) == 0 ||
           (nonConstNode->getSecondChild()->getInt() & 0x0000FFFF) == 0)
@@ -3866,8 +3864,7 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
                node->getOpCodeValue()==TR::ifbcmpne) &&
           constNode != NULL && nonConstNode != NULL                       &&
           nonConstNode->getOpCodeValue() == TR::band                      &&
-          nonConstNode->getReferenceCount() == 1                          &&
-          nonConstNode->getRegister() == NULL                             &&
+          nonConstNode->isSingleRefUnevaluated()                             &&
           nonConstNode->getSecondChild()->getOpCode().isLoadConst()       &&
          (constNode->getByte() == nonConstNode->getSecondChild()->getByte() ||
            getIntegralValue(constNode) ==0) &&
@@ -5117,7 +5114,7 @@ bool directToMemoryAddHelper(TR::CodeGenerator * cg, TR::Node * node, TR::Node *
          {
          value = -value;
          }
-      if (valueChild->getFirstChild()->getReferenceCount()==1)
+      if (valueChild->getFirstChild()->isSingleRef())
          {
          generateSIInstruction(cg, op, node, tempMR, value);
 
@@ -5613,8 +5610,7 @@ lstoreHelper64(TR::Node * node, TR::CodeGenerator * cg, bool isReversed)
       // lload is the child, then don't evaluate the child, generate MVC to move directly among memory
       else if(!node->getOpCode().isIndirect() &&
               valueChild->getOpCodeValue() == TR::lload &&
-              valueChild->getReferenceCount() == 1  &&
-              valueChild->getRegister() == NULL &&
+              valueChild->isSingleRefUnevaluated() &&
               TR::MemoryReference::create(cg, node)->getIndexRegister() == NULL &&
               !cg->getConditionalMovesEvaluationMode())
          {
@@ -5709,8 +5705,7 @@ astoreHelper(TR::Node * node, TR::CodeGenerator * cg)
       // aload is the child, then don't evaluate the child, generate MVC to move directly among memory
       else if(!node->getOpCode().isIndirect() && !node->getSymbolReference()->isUnresolved() &&
               valueChild->getOpCodeValue() == TR::aload &&
-              valueChild->getReferenceCount() == 1 &&
-              valueChild->getRegister() == NULL &&
+              valueChild->isSingleRefUnevaluated() &&
               TR::MemoryReference::create(cg, node)->getIndexRegister() == NULL &&
               !valueChild->getSymbolReference()->isLiteralPoolAddress() &&
         node->getSymbol()->getSize() == node->getSize() &&
@@ -6054,7 +6049,7 @@ OMR::Z::TreeEvaluator::bstoreEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    else if ( (valueChild->getOpCodeValue() == TR::l2b  ||
               valueChild->getOpCodeValue() == TR::i2b  ||
               valueChild->getOpCodeValue() == TR::s2b) &&
-             (valueChild->getReferenceCount() == 1))
+             (valueChild->isSingleRef()))
       {
       // if the x2b child was not evaluated, it would have decremented its 1st child when it
       // was actually evaluated.
@@ -6073,7 +6068,7 @@ OMR::Z::TreeEvaluator::bstoreEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       }
    // If the only consumer is the bstore, then don't bother extending
    //
-   else if (valueChild->getReferenceCount() == 1 && valueChild->getRegister() == NULL &&
+   else if (valueChild->isSingleRefUnevaluated() &&
                (valueChild->getOpCodeValue() == TR::bload ||
                 valueChild->getOpCodeValue() == TR::bloadi     ))
       {
@@ -9261,7 +9256,7 @@ OMR::Z::TreeEvaluator::treetopEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Compilation *comp = cg->comp();
 
-   if (node->getFirstChild()->getReferenceCount() == 1)
+   if (node->getFirstChild()->isSingleRef())
       {
       switch (node->getFirstChild()->getOpCodeValue())
          {
@@ -10750,7 +10745,7 @@ OMR::Z::TreeEvaluator::arraysetEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    // Use an MVI instead of an LHI and STC pair (LHI here, STC in MemInitConstLenMacroOp), but only if the constant isn't
    // already in a register and the value doesn't need to remain in a register after the array is initialized.
-   if (constType == TR::Int8 && mvcCopy && bv != 0 && constExpr->getRegister() == NULL && constExpr->getReferenceCount() == 1)
+   if (constType == TR::Int8 && mvcCopy && bv != 0 && constExpr->isSingleRefUnevaluated())
       useMVI = true;
 
    if (constExpr->getOpCode().isLoadConst() && !useMVI)

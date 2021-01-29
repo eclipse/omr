@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -655,9 +655,7 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
             //    0
             //
             {
-            if (firstChild->getOpCode().isAnd() &&
-                (firstChild->getRegister() == NULL) &&
-                (firstChild->getReferenceCount() == 1))
+            if (firstChild->getOpCode().isAnd() && firstChild->isSingleRefUnevaluated())
                {
                // compare  (node)
                //    and   (firstChild)
@@ -690,9 +688,7 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
                   //       const (andSecondChild)
                   //    0
                   //
-                  if (andFirstChild->getRegister()       == NULL &&
-                      andFirstChild->getReferenceCount() == 1    &&
-                      andFirstChild->getOpCode().isLoadVar())
+                  if (andFirstChild->isSingleRefUnevaluated() && andFirstChild->getOpCode().isLoadVar())
                      {
                      // memory case
                      TR::MemoryReference  *tempMR = generateX86MemoryReference(andFirstChild, cg);
@@ -794,8 +790,7 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
                   if (compareSize > 1 &&
                       (firstChild->getOpCodeValue() == TR::b2i || firstChild->getOpCodeValue() == TR::bu2i ||
                        firstChild->getOpCodeValue() == TR::b2s || firstChild->getOpCodeValue() == TR::bu2s) &&
-                      firstChild->getRegister() == NULL &&
-                      firstChild->getReferenceCount() == 1)
+                      firstChild->isSingleRefUnevaluated())
                      {
                      compareSize = 1;
                      cg->decReferenceCount(firstChild);
@@ -803,16 +798,13 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
                      }
                   if (compareSize > 2 &&
                       (firstChild->getOpCodeValue() == TR::su2i || firstChild->getOpCodeValue() == TR::s2i) &&
-                      firstChild->getRegister() == NULL &&
-                      firstChild->getReferenceCount() == 1)
+                      firstChild->isSingleRefUnevaluated())
                      {
                      compareSize = 2;
                      cg->decReferenceCount(firstChild);
                      firstChild = firstChild->getFirstChild();
                      }
-                  if (firstChild->getOpCode().isMemoryReference()  &&
-                        firstChild->getRegister() == NULL &&
-                        firstChild->getReferenceCount() == 1)
+                  if (firstChild->getOpCode().isMemoryReference() && firstChild->isSingleRefUnevaluated())
                      {
                      TR::MemoryReference  *tempMR = generateX86MemoryReference(firstChild, cg);
                      if (compareSize == 1)
@@ -856,8 +848,7 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
             if (compareSize > 1 &&
                 (firstChild->getOpCodeValue() == TR::b2i || firstChild->getOpCodeValue() == TR::bu2i ||
                  firstChild->getOpCodeValue() == TR::b2s || firstChild->getOpCodeValue() == TR::bu2s) &&
-                firstChild->getRegister() == NULL &&
-                firstChild->getReferenceCount() == 1)
+                firstChild->isSingleRefUnevaluated())
                {
                compareSize = 1;
                cg->decReferenceCount(firstChild);
@@ -865,16 +856,14 @@ void OMR::X86::TreeEvaluator::compareIntegersForEquality(TR::Node *node, TR::Cod
                }
             if (compareSize > 2 &&
                 (firstChild->getOpCodeValue() == TR::su2i || firstChild->getOpCodeValue() == TR::s2i) &&
-                firstChild->getRegister() == NULL &&
-                firstChild->getReferenceCount() == 1)
+                firstChild->isSingleRefUnevaluated())
                {
                compareSize = 2;
                cg->decReferenceCount(firstChild);
                firstChild = firstChild->getFirstChild();
                }
             if (firstChild->getOpCode().isMemoryReference()  &&
-                  firstChild->getRegister() == NULL &&
-                  firstChild->getReferenceCount() == 1)
+                  firstChild->isSingleRefUnevaluated())
                {
                TR::MemoryReference  *tempMR = generateX86MemoryReference(firstChild, cg);
                if (compareSize == 1)
@@ -1043,8 +1032,7 @@ void OMR::X86::TreeEvaluator::compareIntegersForOrder(
          //
          if (!node->getOpCode().isSpineCheck() &&
              firstChild->getOpCode().isMemoryReference()  &&
-             firstChild->getRegister() == NULL &&
-             firstChild->getReferenceCount() == 1)
+             firstChild->isSingleRefUnevaluated())
             {
             TR::MemoryReference  *tempMR = generateX86MemoryReference(firstChild, cg);
             TR::TreeEvaluator::compareGPMemoryToImmediate(node, tempMR, constValue, cg);
@@ -1091,9 +1079,7 @@ void OMR::X86::TreeEvaluator::compare2BytesForOrder(TR::Node *node, TR::CodeGene
       TR::Node       *firstChild = node->getFirstChild();
       bool isByteValue = (value >= -128 && value <= 127);
 
-      if ((firstChild->getReferenceCount() == 1) &&
-          (firstChild->getRegister() == NULL)    &&
-          firstChild->getOpCode().isMemoryReference())
+      if (firstChild->isSingleRefUnevaluated() && firstChild->getOpCode().isMemoryReference())
          {
          TR::MemoryReference  *tempMR = generateX86MemoryReference(firstChild, cg);
          //try to avoid Imm2 instructions
@@ -1129,9 +1115,7 @@ void OMR::X86::TreeEvaluator::compareBytesForOrder(TR::Node *node, TR::CodeGener
        secondChild->getRegister() == NULL)
       {
       TR::Node *firstChild = node->getFirstChild();
-      if ((firstChild->getReferenceCount() == 1) &&
-          (firstChild->getRegister() == NULL)    &&
-          firstChild->getOpCode().isMemoryReference())
+      if (firstChild->isSingleRefUnevaluated() && firstChild->getOpCode().isMemoryReference())
          {
          TR::MemoryReference  *tempMR = generateX86MemoryReference(firstChild, cg);
          generateMemImmInstruction(CMP1MemImm1, firstChild, tempMR, secondChild->getByte(), cg);
@@ -1472,8 +1456,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerIfCmpneEvaluator(TR::Node *node, T
          }
 
      if ( node->getFirstChild()->getOpCodeValue() == TR::ishr &&
-            node->getFirstChild()->getRegister() == NULL &&
-            node->getFirstChild()->getReferenceCount() == 1 &&
+            node->getFirstChild()->isSingleRefUnevaluated() &&
             (node->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::iloadi || node->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::iload) &&
             node->getFirstChild()->getSecondChild()->getOpCodeValue() == TR::iconst &&
             node->getSecondChild()->getOpCodeValue() == TR::iconst && node->getSecondChild()->getInt() == 0 &&
@@ -1698,9 +1681,7 @@ TR::Register *OMR::X86::TreeEvaluator::ifbcmpeqEvaluator(TR::Node *node, TR::Cod
       {
       int32_t      value            = (int32_t)secondChild->get64bitIntegralValue();
       TR::Node     *firstChild       = node->getFirstChild();
-      if ((firstChild->getReferenceCount() == 1) &&
-          (firstChild->getRegister() == NULL)    &&
-          firstChild->getOpCode().isMemoryReference())
+      if (firstChild->isSingleRefUnevaluated() && firstChild->getOpCode().isMemoryReference())
          {
          TR::MemoryReference  *tempMR = generateX86MemoryReference(firstChild, cg);
          generateMemImmInstruction(CMP1MemImm1, firstChild, tempMR, value, cg);
@@ -1709,8 +1690,7 @@ TR::Register *OMR::X86::TreeEvaluator::ifbcmpeqEvaluator(TR::Node *node, TR::Cod
          cg->decReferenceCount(secondChild);
          }
       else if (firstChild->getOpCode().isAnd() &&
-               firstChild->getReferenceCount() == 1 &&
-               firstChild->getRegister() == NULL &&     // TODO: we can still do better in this case
+               firstChild->isSingleRefUnevaluated() &&     // TODO: we can still do better in this case
                firstChild->getSecondChild()->getOpCode().isLoadConst() &&
                (value == 0 ||
                 (value == (int32_t)firstChild->getSecondChild()->get64bitIntegralValue() &&
@@ -1728,9 +1708,7 @@ TR::Register *OMR::X86::TreeEvaluator::ifbcmpeqEvaluator(TR::Node *node, TR::Cod
          if (value != 0) reverseBranch = true; // k1
          value = (int32_t)k2->get64bitIntegralValue(); // k2
 
-         if (expr->getReferenceCount() == 1 &&
-             expr->getRegister() == NULL &&
-             expr->getOpCode().isMemoryReference())
+         if (expr->isSingleRefUnevaluated() && expr->getOpCode().isMemoryReference())
             {
             TR::MemoryReference *tempMR = generateX86MemoryReference(expr, cg);
             generateMemImmInstruction(TEST1MemImm1, expr, tempMR, value, cg);
@@ -1847,9 +1825,7 @@ TR::Register *OMR::X86::TreeEvaluator::ifscmpeqEvaluator(TR::Node *node, TR::Cod
       int32_t      value            = secondChild->getShortInt();
       TR::Node     *firstChild       = node->getFirstChild();
 
-      if ((firstChild->getReferenceCount() == 1) &&
-          (firstChild->getRegister() == NULL)    &&
-          firstChild->getOpCode().isMemoryReference())
+      if (firstChild->isSingleRefUnevaluated() && firstChild->getOpCode().isMemoryReference())
          {
          TR::MemoryReference  *tempMR = generateX86MemoryReference(firstChild, cg);
 

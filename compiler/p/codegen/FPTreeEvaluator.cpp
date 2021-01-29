@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,8 +70,7 @@ TR::Register *OMR::Power::TreeEvaluator::ibits2fEvaluator(TR::Node *node, TR::Co
    TR::Node                *child = node->getFirstChild();
    TR::Register            *target = cg->allocateSinglePrecisionRegister();
 
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
-       child->getOpCode().isLoadVar())
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, child, 4);
       generateTrg1MemInstruction(cg, TR::InstOpCode::lfs, node, target, tempMR);
@@ -95,7 +94,7 @@ TR::Register *OMR::Power::TreeEvaluator::fbits2iEvaluator(TR::Node *node, TR::Co
    bool                   childEval = true;
 
 
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
+   if (child->isSingleRefUnevaluated() &&
        child->getOpCode().isLoadVar())
       {
       childEval = false;
@@ -151,8 +150,7 @@ TR::Register *OMR::Power::TreeEvaluator::lbits2dEvaluator(TR::Node *node, TR::Co
    TR::Node                *child  = node->getFirstChild();
    TR::Register            *target = cg->allocateRegister(TR_FPR);
 
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
-       child->getOpCode().isLoadVar())
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, child, 8);
       generateTrg1MemInstruction(cg, TR::InstOpCode::lfd, node, target, tempMR);
@@ -190,8 +188,7 @@ TR::Register *OMR::Power::TreeEvaluator::dbits2lEvaluator(TR::Node *node, TR::Co
    TR::Register            *doubleReg;
    bool                    childEval = true;
 
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 &&
-       child->getOpCode().isLoadVar())
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       childEval = false;
       TR::MemoryReference  *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, child, 8);
@@ -1322,7 +1319,7 @@ TR::Register *OMR::Power::TreeEvaluator::i2fEvaluator(TR::Node *node, TR::CodeGe
        (node->getOpCodeValue() == TR::iu2f && (child->getOpCodeValue() == TR::iload || child->getOpCodeValue() == TR::iloadi))) ||
        (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6) &&
        (node->getOpCodeValue() == TR::i2f && (child->getOpCodeValue() == TR::iload || child->getOpCodeValue() == TR::iloadi)))) &&
-       child->getReferenceCount() == 1 && child->getRegister() == NULL &&
+       child->isSingleRefUnevaluated() &&
        !(child->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP()))
       {
       TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, child, 4);
@@ -1370,8 +1367,7 @@ TR::Register *OMR::Power::TreeEvaluator::i2dEvaluator(TR::Node *node, TR::CodeGe
        (node->getOpCodeValue() == TR::iu2d && (child->getOpCodeValue() == TR::iload || child->getOpCodeValue() == TR::iloadi))) ||
        (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P6) &&
        node->getOpCodeValue() == TR::i2d && (child->getOpCodeValue() == TR::iload || child->getOpCodeValue() == TR::iloadi))) &&
-       child->getReferenceCount()==1 &&
-       child->getRegister() == NULL &&
+       child->isSingleRefUnevaluated() &&
        !(child->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP()))
       {
       // possible TODO: if refcount > 1, do both load and lfiwax?
@@ -1558,8 +1554,7 @@ TR::Register *OMR::Power::TreeEvaluator::l2fEvaluator(TR::Node *node, TR::CodeGe
    if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) &&
        node->getOpCodeValue() == TR::l2f &&
        (child->getOpCodeValue() == TR::lload || child->getOpCodeValue() == TR::lloadi) &&
-       child->getReferenceCount()==1 &&
-       child->getRegister() == NULL &&
+       child->isSingleRefUnevaluated() &&
        !(child->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP()))
       {
       TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, child, 4);
@@ -1586,8 +1581,7 @@ TR::Register *OMR::Power::TreeEvaluator::l2dEvaluator(TR::Node *node, TR::CodeGe
    if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) &&
        node->getOpCodeValue() == TR::l2d &&
        (child->getOpCodeValue() == TR::lload || child->getOpCodeValue() == TR::lloadi) &&
-       child->getReferenceCount()==1 &&
-       child->getRegister() == NULL &&
+       child->isSingleRefUnevaluated() &&
        !(child->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP()))
       {
          TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, child, 4);

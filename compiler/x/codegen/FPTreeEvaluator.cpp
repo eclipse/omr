@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -432,15 +432,14 @@ TR::Register *OMR::X86::TreeEvaluator::floatingPointStoreEvaluator(TR::Node *nod
          exceptionPoint = generateMemImmInstruction(S4MemImm4, node, tempMR, valueChild->getFloatBits(), cg);
          }
       TR::Register *firstChildReg = valueChild->getRegister();
-      if (firstChildReg && firstChildReg->getKind() == TR_X87 && valueChild->getReferenceCount() == 1)
+      if (firstChildReg && firstChildReg->getKind() == TR_X87 && valueChild->isSingleRef())
          generateFPSTiST0RegRegInstruction(FSTRegReg, valueChild, firstChildReg, firstChildReg, cg);
       }
    else if (debug("useGPRsForFP") &&
             (cg->getLiveRegisters(TR_GPR)->getNumberOfLiveRegisters() <
              cg->getMaximumNumbersOfAssignableGPRs() - 1) &&
             valueChild->getOpCode().isLoadVar() &&
-            valueChild->getRegister() == NULL   &&
-            valueChild->getReferenceCount() == 1)
+            valueChild->isSingleRefUnevaluated())
       {
       TR::Register *tempRegister = cg->allocateRegister(TR_GPR);
       TR::MemoryReference  *loadMR = generateX86MemoryReference(valueChild, cg);
@@ -643,7 +642,7 @@ TR::Register *OMR::X86::TreeEvaluator::fpUnaryMaskEvaluator(TR::Node *node, TR::
 
    auto child = node->getFirstChild();
    auto value = cg->evaluate(child);
-   auto result = child->getReferenceCount() == 1 ? value : cg->allocateRegister(value->getKind());
+   auto result = child->isSingleRef() ? value : cg->allocateRegister(value->getKind());
 
    if (result != value && value->isSinglePrecision())
       {
@@ -865,7 +864,7 @@ TR::Register *OMR::X86::TreeEvaluator::commonFPRemEvaluator(TR::Node          *n
    node->setRegister( dividendReg);
    cg->decReferenceCount( dividend);
 
-   if (divisorReg && divisorReg->getKind() == TR_X87 && divisor->getReferenceCount() == 1)
+   if (divisorReg && divisorReg->getKind() == TR_X87 && divisor->isSingleRef())
       generateFPSTiST0RegRegInstruction(FSTRegReg, node, divisorReg, divisorReg, cg);
 
    cg->decReferenceCount( divisor);
@@ -889,9 +888,7 @@ TR::Register *OMR::X86::TreeEvaluator::i2fEvaluator(TR::Node *node, TR::CodeGene
    TR::Register            *target;
    TR::MemoryReference  *tempMR;
 
-   if (child->getRegister() == NULL &&
-       child->getReferenceCount() == 1 &&
-       child->getOpCode().isLoadVar())
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       tempMR = generateX86MemoryReference(child, cg);
       if (cg->useSSEForSinglePrecision())
@@ -959,7 +956,7 @@ TR::Register *OMR::X86::TreeEvaluator::i2dEvaluator(TR::Node *node, TR::CodeGene
    TR::Register            *target;
    TR::MemoryReference  *tempMR;
 
-   if (child->getRegister() == NULL && child->getReferenceCount() == 1 && child->getOpCode().isLoadVar())
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       tempMR = generateX86MemoryReference(child, cg);
       if (cg->useSSEForDoublePrecision())
@@ -1084,9 +1081,7 @@ TR::Register *OMR::X86::TreeEvaluator::fpConvertToInt(TR::Node *node, TR::Symbol
       {
       if (optimizeF2IWithSSE)
          {
-         if (child->getReferenceCount() == 1 &&
-             child->getRegister() == 0       &&
-             child->getOpCode().isMemoryReference())
+         if (child->isSingleRefUnevaluated() && child->getOpCode().isMemoryReference())
             {
             tempMR = generateX86MemoryReference(child, cg);
             floatReg = cg->allocateRegister(TR_X87);
@@ -1108,9 +1103,7 @@ TR::Register *OMR::X86::TreeEvaluator::fpConvertToInt(TR::Node *node, TR::Symbol
          }
       else if (optimizeD2IWithSSE2)
          {
-         if (child->getReferenceCount() == 1 &&
-             child->getRegister() == 0       &&
-             child->getOpCode().isMemoryReference())
+         if (child->isSingleRefUnevaluated() && child->getOpCode().isMemoryReference())
             {
             tempMR = generateX86MemoryReference(child, cg);
             floatReg = cg->allocateRegister(TR_X87);
@@ -1407,7 +1400,7 @@ TR::Register *OMR::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
       TR::LabelSymbol *exceptionLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
       sourceRegister = cg->evaluate(child);
-      if (sourceRegister->getKind() == TR_X87 && child->getReferenceCount() == 1)
+      if (sourceRegister->getKind() == TR_X87 && child->isSingleRef())
          {
          TR_ASSERT(cg->comp()->target().is32Bit(), "assertion failure");
          TR::MemoryReference  *tempMR = cg->machine()->getDummyLocalMR(TR::Float);
@@ -1480,7 +1473,7 @@ TR::Register *OMR::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
 
       if (sourceRegister &&
           sourceRegister->getKind() == TR_X87 &&
-          child->getReferenceCount() == 1)
+          child->isSingleRef())
          {
          generateFPSTiST0RegRegInstruction(FSTRegReg, node, sourceRegister, sourceRegister, cg);
          }
@@ -1709,9 +1702,7 @@ TR::Register *OMR::X86::TreeEvaluator::fbits2iEvaluator(TR::Node *node, TR::Code
 
    // Ref count == 1 check might not be reqd for statics/autos (?)
    //
-   if (child->getRegister() == NULL &&
-       child->getOpCode().isLoadVar() &&
-       (child->getReferenceCount() == 1))
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       // Load up the child as an int.
       //

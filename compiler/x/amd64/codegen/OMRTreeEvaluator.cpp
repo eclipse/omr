@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,8 +82,7 @@ TR::Register *OMR::X86::AMD64::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR
 
    // Handle special cases
    //
-   if (valueChild->getRegister() == NULL &&
-       valueChild->getReferenceCount() == 1)
+   if (valueChild->isSingleRefUnevaluated())
       {
       // Special case storing a double value into long variable
       //
@@ -315,9 +314,7 @@ static TR::Register *l2fd(TR::Node *node, TR::RealRegister *target, TR_X86OpCode
 
    TR_ASSERT(cg->useSSEForSinglePrecision(), "assertion failure");
 
-   if (child->getRegister() == NULL &&
-       child->getReferenceCount() == 1 &&
-       child->getOpCode().isLoadVar())
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isLoadVar())
       {
       tempMR = generateX86MemoryReference(child, cg);
       generateRegMemInstruction(opRegMem8, node, target, tempMR, cg);

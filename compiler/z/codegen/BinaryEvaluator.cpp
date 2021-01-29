@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1067,7 +1067,7 @@ iDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
       // make a copy of the MR
       sourceMR = generateS390MemoryReference(*divchkDivisorMR, 0, cg);
       }
-   else if ( secondChild->getRegister()==NULL && secondChild->getReferenceCount()==1 &&
+   else if ( secondChild->isSingleRefUnevaluated() &&
              secondChild->getOpCode().isMemoryReference() &&
              !needCheck)
       {
@@ -1326,7 +1326,7 @@ genericIntShift(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::Mnemoni
    if (node->getOpCodeValue() == TR::bushr)
       {
       if (node->getFirstChild()->getOpCodeValue() == TR::bconst &&
-          node->getReferenceCount() == 1 &&
+          node->isSingleRef() &&
           node->getFirstChild()->getRegister() == NULL)
          {
          srcReg = node->getFirstChild()->setRegister(cg->allocateRegister());
@@ -1460,8 +1460,8 @@ genericRotateLeft(TR::Node * node, TR::CodeGenerator * cg)
          }
 
       if (lushr &&
-            lushr->getOpCodeValue() == TR::lushr && lushr->getReferenceCount() == 1 && lushr->getRegister() == NULL &&
-            lshl->getOpCodeValue()  == TR::lshl &&   lshl->getReferenceCount() == 1 &&  lshl->getRegister() == NULL)
+            lushr->getOpCodeValue() == TR::lushr && lushr->isSingleRefUnevaluated() &&
+            lshl->getOpCodeValue()  == TR::lshl &&   lshl->isSingleRefUnevaluated())
          {
          int32_t rShftAmnt = lushr->getSecondChild()->getInt();
          int32_t lShftAmnt = lshl->getSecondChild()->getInt();
@@ -1509,8 +1509,7 @@ genericRotateLeft(TR::Node * node, TR::CodeGenerator * cg)
       }
    if (node->getOpCodeValue() == TR::lor &&
          andChild &&
-         andChild->getRegister() == NULL &&
-         andChild->getReferenceCount() == 1)
+         andChild->isSingleRefUnevaluated())
       {
       TR::Node* data = NULL;
       uint64_t shiftBy = 0;
@@ -1519,8 +1518,7 @@ genericRotateLeft(TR::Node * node, TR::CodeGenerator * cg)
       uint64_t bitPos = 0;
 
       if (shiftChild->getOpCodeValue() == TR::lshl &&
-            shiftChild->getRegister() == NULL &&
-            shiftChild->getReferenceCount() == 1 &&
+            shiftChild->isSingleRefUnevaluated() &&
             shiftChild->getSecondChild()->getOpCode().isLoadConst())
          {
          data = shiftChild->getFirstChild();
@@ -2215,7 +2213,7 @@ OMR::Z::TreeEvaluator::dualMulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool needsUnsignedHighMulOnly = (node->getOpCodeValue() == TR::lumulh) && !node->isDualCyclic();
    TR_ASSERT( (node->getOpCodeValue() == TR::lumulh) || (node->getOpCodeValue() == TR::lmul),"Unexpected operator. Expected lumulh or lmul.");
    TR_ASSERT( node->isDualCyclic() || needsUnsignedHighMulOnly, "Should be either calculating cyclic dual or just the high part of the lmul.");
-   if (node->isDualCyclic() && node->getChild(2)->getReferenceCount() == 1)
+   if (node->isDualCyclic() && node->getChild(2)->isSingleRef())
       {
       // other part of this dual is not used, and is dead
       TR::Node *pair = node->getChild(2);
@@ -3065,7 +3063,7 @@ OMR::Z::TreeEvaluator::inegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * targetRegister = cg->allocateRegister();
 
    // ineg over iabs is an integer form of pdSetSign 0xd (negative); handle it in one operation
-   if (firstChild->getOpCodeValue() == TR::iabs && firstChild->getReferenceCount() == 1 && firstChild->getRegister() == NULL)
+   if (firstChild->getOpCodeValue() == TR::iabs && firstChild->isSingleRefUnevaluated())
       {
       sourceRegister = firstChild->getFirstChild()->getRegister();
       if (sourceRegister == NULL)
@@ -3081,8 +3079,7 @@ OMR::Z::TreeEvaluator::inegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    else if (firstChild->getOpCodeValue() == TR::imul &&
             firstChild->getSecondChild()->getOpCode().isLoadConst() &&
             firstChild->getSecondChild()->getInt() != 0x80000000 &&
-            firstChild->getReferenceCount() == 1 &&
-            firstChild->getRegister() == NULL &&
+            firstChild->isSingleRefUnevaluated() &&
             performTransformation(cg->comp(), "O^O Replace ineg/imul by const with imul by -const.\n"))
       {
       TR::Node* oldConst = firstChild->getSecondChild();
@@ -3121,7 +3118,7 @@ OMR::Z::TreeEvaluator::lnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * sourceRegister;
    targetRegister = cg->allocateRegister();
 
-      if (firstChild->getOpCodeValue() == TR::labs && firstChild->getReferenceCount() == 1 && firstChild->getRegister() == NULL)
+      if (firstChild->getOpCodeValue() == TR::labs && firstChild->isSingleRefUnevaluated())
       {
       // Load Negative
       sourceRegister = firstChild->getFirstChild()->getRegister();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -814,7 +814,7 @@ static TR::Register *ishiftEvaluator(TR::Node *node, TR_ARMOperand2Type shiftTyp
       {
       if ((secondChild->getInt() & 0x1f) == 0)
          {
-         if (firstChild->getReferenceCount() == 1)
+         if (firstChild->isSingleRef())
             {
             trgReg = src1Reg;
             }
@@ -1219,13 +1219,13 @@ static TR::Register *ishiftAnalyser(TR::Node *node, TR::CodeGenerator *cg,TR_ARM
    TR::Node *mulSecondChild;
 
    if((secondChild->getOpCode().isLeftShift() || secondChild->getOpCode().isRightShift() ||  secondChild->getOpCode().isShiftLogical()) &&
-             !firstChild->getOpCode().isLoadConst() && secondChild->getReferenceCount() == 1 && secondChild->getRegister() == NULL )
+             !firstChild->getOpCode().isLoadConst() && secondChild->isSingleRefUnevaluated() )
       {
       canCombine = true;
       shiftIsFirstChild = false;
       }
    else if(secondChild->getOpCode().isMul() &&  secondChild->getOpCode().isInt() &&
-            !firstChild->getOpCode().isLoadConst() && secondChild->getReferenceCount() == 1 && secondChild->getRegister() == NULL )
+            !firstChild->getOpCode().isLoadConst() && secondChild->isSingleRefUnevaluated() )
       {
       mulSecondChild = secondChild->getSecondChild();
       if(mulSecondChild->getOpCodeValue() == TR::iconst && mulSecondChild->getInt() > 0 && cg->convertMultiplyToShift(secondChild))
@@ -1235,7 +1235,7 @@ static TR::Register *ishiftAnalyser(TR::Node *node, TR::CodeGenerator *cg,TR_ARM
          }
       }
    else if((firstChild->getOpCode().isLeftShift() || firstChild->getOpCode().isRightShift() ||  firstChild->getOpCode().isShiftLogical()) &&
-           !secondChild->getOpCode().isLoadConst() && firstChild->getReferenceCount() == 1 && firstChild->getRegister() == NULL)
+           !secondChild->getOpCode().isLoadConst() && firstChild->isSingleRefUnevaluated())
       {
       canCombine = true;
       shiftIsFirstChild = true;
@@ -1243,7 +1243,7 @@ static TR::Register *ishiftAnalyser(TR::Node *node, TR::CodeGenerator *cg,TR_ARM
          regOp = ARMOp_rsb;
       }
     else if(firstChild->getOpCode().isMul() &&  firstChild->getOpCode().isInt() &&
-             !secondChild->getOpCode().isLoadConst() && firstChild->getReferenceCount() == 1 && firstChild->getRegister() == NULL )
+             !secondChild->getOpCode().isLoadConst() && firstChild->isSingleRefUnevaluated() )
       {
       mulSecondChild = firstChild->getSecondChild();
       if(mulSecondChild->getOpCodeValue() == TR::iconst && mulSecondChild->getInt() > 0 && cg->convertMultiplyToShift(firstChild))

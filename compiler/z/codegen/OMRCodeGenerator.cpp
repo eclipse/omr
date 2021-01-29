@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2440,7 +2440,7 @@ OMR::Z::CodeGenerator::processUnusedNodeDuringEvaluation(TR::Node *node)
          {
          self()->recursivelyDecReferenceCount(node);
          }
-      else if (node->getReferenceCount() == 1 &&
+      else if (node->isSingleRef() &&
                node->getOpCode().isLoadVar() &&
                (node->getNumChildren() == 0 || (node->getNumChildren() == 1 && node->getFirstChild()->safeToDoRecursiveDecrement())))
          {
@@ -4252,7 +4252,7 @@ OMR::Z::CodeGenerator::evaluateLengthMinusOneForMemoryOps(TR::Node *node, bool c
    {
    TR::Register *reg;
 
-   if ((node->getReferenceCount() == 1) && self()->supportsLengthMinusOneForMemoryOpts() &&
+   if ((node->isSingleRef()) && self()->supportsLengthMinusOneForMemoryOpts() &&
       ((node->getOpCodeValue()==TR::iadd &&
        node->getSecondChild()->getOpCodeValue()==TR::iconst &&
        node->getSecondChild()->getInt() == 1) ||
@@ -5572,12 +5572,12 @@ OMR::Z::CodeGenerator::checkIfcmpxx(TR::Node *node)
 
    bool firstChildOK = (firstChildNode->getOpCode().isLoadVar() || firstChildNode->getOpCode().isLoadConst()) &&
                        firstChildNode->getType().isIntegral() &&
-                       firstChildNode->getReferenceCount() == 1;
+                       firstChildNode->isSingleRef();
 
    bool secondChildOK = firstChildOK &&
                         (secondChildNode->getOpCode().isLoadVar() || secondChildNode->getOpCode().isLoadConst()) &&
                         secondChildNode->getType().isIntegral() &&
-                        secondChildNode->getReferenceCount() == 1;
+                        secondChildNode->isSingleRef();
 
    if (secondChildOK &&
        firstChildNode->getSize() == secondChildNode->getSize())
@@ -5602,7 +5602,7 @@ bool
 OMR::Z::CodeGenerator::checkBitWiseChild(TR::Node *node)
    {
    if (node->getOpCode().isLoadConst() ||
-            (node->getOpCode().isLoadVar() && node->getReferenceCount() == 1))
+            (node->getOpCode().isLoadVar() && node->isSingleRef()))
       {
       if (node->getType().isInt8() || node->getType().isInt16())
          return true;

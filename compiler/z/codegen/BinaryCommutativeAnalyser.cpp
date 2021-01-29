@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -188,8 +188,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
    if (root->getOpCode().isBooleanCompare() || nonClobberingDestination)
       {
       if (firstChild->getOpCodeValue() == TR::bu2i &&
-          firstChild->getReferenceCount() == 1    &&
-          firstChild->getRegister() == NULL       &&
+          firstChild->isSingleRefUnevaluated()  &&
              (firstChild->getFirstChild()->getOpCodeValue() == TR::bload ||	
               firstChild->getFirstChild()->getOpCodeValue() == TR::bloadi  ))
           {
@@ -200,8 +199,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
           }
 
       if (secondChild->getOpCodeValue() == TR::bu2i &&
-          secondChild->getReferenceCount() == 1    &&
-          secondChild->getRegister() == NULL       &&
+          secondChild->isSingleRefUnevaluated() &&
              (secondChild->getFirstChild()->getOpCodeValue() == TR::bload ||	
               secondChild->getFirstChild()->getOpCodeValue() == TR::bloadi  ))
           {
@@ -214,8 +212,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
 
    if (cg()->comp()->target().is64Bit())
       {
-      if (firstChild->getOpCodeValue() == TR::l2i && firstChild->getReferenceCount() == 1 &&
-          firstChild->getRegister() == NULL && nonClobberingDestination)
+      if (firstChild->getOpCodeValue() == TR::l2i && firstChild->isSingleRefUnevaluated() && nonClobberingDestination)
          {
          initFirstChild = firstChild;
          firstChild     = firstChild->getFirstChild();
@@ -224,8 +221,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
          adjustDiplacementOnFirstChild = true;
          }
 
-      if (secondChild->getOpCodeValue() == TR::l2i && secondChild->getReferenceCount() == 1 &&
-          secondChild->getRegister() == NULL && nonClobberingDestination)
+      if (secondChild->getOpCodeValue() == TR::l2i && secondChild->isSingleRefUnevaluated() && nonClobberingDestination)
          {
          initSecondChild = secondChild;
          secondChild     = secondChild->getFirstChild();
@@ -673,9 +669,8 @@ TR_S390BinaryCommutativeAnalyser::conversionIsRemoved(TR::Node * root, TR::Node 
         (root->getDataType() == TR::Int32 && child->getOpCodeValue() == TR::a2i &&
        cg()->comp()->target().is32Bit()))  &&
        child->getFirstChild()->getOpCodeValue() == TR::aloadi &&
-       child->getFirstChild()->getRegister() == NULL &&
-       child->getFirstChild()->getReferenceCount() == 1 &&
-       child->getReferenceCount() == 1 )
+       child->getFirstChild()->isSingleRefUnevaluated() &&
+       child->isSingleRef() )
       {
       cg()->decReferenceCount(child);
       child = child->getFirstChild();

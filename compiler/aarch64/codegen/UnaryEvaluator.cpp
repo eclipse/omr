@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -137,7 +137,7 @@ static TR::Register *commonUnaryHelper(TR::Node *node, TR::InstOpCode::Mnemonic 
    {
    TR::Node *child = node->getFirstChild();
    TR::Register *srcReg = cg->evaluate(child);
-   TR::Register *trgReg = (child->getReferenceCount() == 1) ? srcReg : cg->allocateRegister();
+   TR::Register *trgReg = (child->isSingleRef()) ? srcReg : cg->allocateRegister();
 
    generateTrg1Src1Instruction(cg, op, node, trgReg, srcReg);
    node->setRegister(trgReg);
@@ -228,7 +228,7 @@ static TR::Register *notzHelper(TR::Node *node, bool is64bit, TR::CodeGenerator 
    {
    TR::Node *child = node->getFirstChild();
    TR::Register *srcReg = cg->evaluate(child);
-   TR::Register *trgReg = (child->getReferenceCount() == 1) ? srcReg : cg->allocateRegister();
+   TR::Register *trgReg = (child->isSingleRef()) ? srcReg : cg->allocateRegister();
    TR::InstOpCode::Mnemonic op;
 
    op = is64bit ? TR::InstOpCode::rbitx : TR::InstOpCode::rbitw;
@@ -265,7 +265,7 @@ static TR::Register *extendToIntOrLongHelper(TR::Node *node, TR::InstOpCode::Mne
    {
    TR::Node *child = node->getFirstChild();
    TR::Register *srcReg = cg->evaluate(child);
-   TR::Register *trgReg = (child->getReferenceCount() == 1) ? srcReg : cg->allocateRegister();
+   TR::Register *trgReg = (child->isSingleRef()) ? srcReg : cg->allocateRegister();
 
    // signed extension: alias of SBFM
    // unsigned extension: alias of UBFM
@@ -330,9 +330,8 @@ TR::Register *OMR::ARM64::TreeEvaluator::bu2iEvaluator(TR::Node *node, TR::CodeG
    {
    TR::Node *child = node->getFirstChild();
 
-   if (child->getReferenceCount() == 1
-       && (child->getOpCodeValue() == TR::bload || child->getOpCodeValue() == TR::bloadi)
-       && child->getRegister() == NULL)
+   if (child->isSingleRefUnevaluated() && 
+       (child->getOpCodeValue() == TR::bload || child->getOpCodeValue() == TR::bloadi))
       {
       // Use unsigned load
       TR::Register *trgReg = commonLoadEvaluator(child, TR::InstOpCode::ldrbimm, cg);
@@ -350,9 +349,8 @@ TR::Register *OMR::ARM64::TreeEvaluator::su2iEvaluator(TR::Node *node, TR::CodeG
    {
    TR::Node *child = node->getFirstChild();
 
-   if (child->getReferenceCount() == 1
-       && (child->getOpCodeValue() == TR::sload || child->getOpCodeValue() == TR::sloadi)
-       && child->getRegister() == NULL)
+   if (child->isSingleRefUnevaluated() && 
+       (child->getOpCodeValue() == TR::sload || child->getOpCodeValue() == TR::sloadi))
       {
       // Use unsigned load
       TR::Register *trgReg = commonLoadEvaluator(child, TR::InstOpCode::ldrhimm, cg);

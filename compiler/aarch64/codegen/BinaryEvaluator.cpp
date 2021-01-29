@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,11 +51,11 @@ genericBinaryEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic regOp, TR::InstO
    TR::Register *trgReg = NULL;
    int64_t value = 0;
 
-   if(1 == firstChild->getReferenceCount())
+   if(firstChild->isSingleRef())
       {
       trgReg = src1Reg;
       }
-   else if(1 == secondChild->getReferenceCount() && secondChild->getRegister() != NULL)
+   else if(secondChild->isSingleRef() && secondChild->getRegister() != NULL)
       {
       trgReg = secondChild->getRegister();
       }
@@ -136,8 +136,7 @@ static TR::Register *
 generateMaddOrMsub(TR::Node *node, TR::Node *mulNode, TR::Node *anotherNode, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg)
    {
    if ((mulNode->getOpCodeValue() == TR::imul || mulNode->getOpCodeValue() == TR::lmul) &&
-       mulNode->getReferenceCount() == 1 &&
-       mulNode->getRegister() == NULL)
+       mulNode->isSingleRefUnevaluated())
       {
       TR::Register *trgReg = cg->allocateRegister();
       TR::Register *mulSrc1Reg = cg->evaluate(mulNode->getFirstChild());
@@ -301,11 +300,11 @@ OMR::ARM64::TreeEvaluator::imulEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          }
       }
 
-   if(1 == firstChild->getReferenceCount())
+   if(firstChild->isSingleRef())
       {
       trgReg = src1Reg;
       }
-   else if(1 == secondChild->getReferenceCount() && (src2Reg = secondChild->getRegister()) != NULL)
+   else if(secondChild->isSingleRef() && (src2Reg = secondChild->getRegister()) != NULL)
       {
       trgReg = src2Reg;
       }
@@ -394,11 +393,11 @@ OMR::ARM64::TreeEvaluator::lmulEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          }
       }
 
-   if(1 == firstChild->getReferenceCount())
+   if(firstChild->isSingleRef())
       {
       trgReg = src1Reg;
       }
-   else if(1 == secondChild->getReferenceCount() && (src2Reg = secondChild->getRegister()) != NULL)
+   else if(secondChild->isSingleRef() && (src2Reg = secondChild->getRegister()) != NULL)
       {
       trgReg = src2Reg;
       }
@@ -627,7 +626,7 @@ OMR::ARM64::TreeEvaluator::irolEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::Register *tempReg;
       bool useTempReg;
 
-      if (secondChild->getOpCode().isNeg() && secondChild->getRegister() == NULL && secondChild->getReferenceCount() == 1)
+      if (secondChild->getOpCode().isNeg() && secondChild->isSingleRefUnevaluated())
          {
          // If the second child is `ineg` and not commoned, cancel out double negation
          auto shiftAmountNode = secondChild->getFirstChild();
@@ -872,11 +871,11 @@ logicBinaryEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic regOp, TR::InstOpC
    TR::Register *trgReg = NULL;
    int64_t value = 0;
 
-   if (1 == firstChild->getReferenceCount())
+   if (firstChild->isSingleRef())
       {
       trgReg = src1Reg;
       }
-   else if (1 == secondChild->getReferenceCount() && secondChild->getRegister() != NULL)
+   else if (secondChild->isSingleRef() && secondChild->getRegister() != NULL)
       {
       trgReg = secondChild->getRegister();
       }

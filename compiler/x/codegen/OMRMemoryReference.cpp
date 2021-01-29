@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -512,8 +512,7 @@ OMR::X86::MemoryReference::populateMemoryReference(
 
    if (comp->useCompressedPointers())
        {
-       if ((subTree->getOpCodeValue() == TR::l2a) && (subTree->getReferenceCount() == 1) &&
-             (subTree->getRegister() == NULL))
+       if ((subTree->getOpCodeValue() == TR::l2a) && subTree->isSingleRefUnevaluated())
           {
           cg->decReferenceCount(subTree);
           subTree = subTree->getFirstChild();

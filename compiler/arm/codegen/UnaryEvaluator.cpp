@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -256,8 +256,7 @@ TR::Register *OMR::ARM::TreeEvaluator::l2iEvaluator(TR::Node *node, TR::CodeGene
    TR::Register *temp;
 
    temp = child->getRegister();
-   if (child->getReferenceCount() == 1 &&
-       child->getOpCode().isMemoryReference() && (temp == NULL))
+   if (child->isSingleRefUnevaluated() && child->getOpCode().isMemoryReference())
       {
       trgReg = cg->allocateRegister();
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 4, cg);
@@ -269,7 +268,7 @@ TR::Register *OMR::ARM::TreeEvaluator::l2iEvaluator(TR::Node *node, TR::CodeGene
    else
       {
       temp = cg->evaluate(child);
-      if (child->getReferenceCount() == 1 || !cg->useClobberEvaluate())
+      if (child->isSingleRef() || !cg->useClobberEvaluate())
          {
          trgReg = temp->getLowOrder();
          }
@@ -300,10 +299,8 @@ TR::Register *OMR::ARM::TreeEvaluator::su2lEvaluator(TR::Node *node, TR::CodeGen
    TR::Node *child  = node->getFirstChild();
    TR::Register *sourceRegister = NULL;
    TR::Register *trgReg = cg->allocateRegisterPair(cg->gprClobberEvaluate(child), cg->allocateRegister());
-   TR::Register *temp;
-   temp = child->getRegister();
-   if (child->getReferenceCount()==1 &&
-       child->getOpCode().isMemoryReference() && (temp == NULL))
+   if (child->isSingleRefUnevaluated() &&
+       child->getOpCode().isMemoryReference())
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(temp, 2, cg);
       generateTrg1MemInstruction(cg, ARMOp_ldrh, node, trgReg->getLowOrder(), tempMR);
@@ -327,11 +324,9 @@ TR::Register *OMR::ARM::TreeEvaluator::bu2iEvaluator(TR::Node *node, TR::CodeGen
    TR::Node *child  = node->getFirstChild();
    TR::Register *sourceRegister = NULL;
    TR::Register *trgReg = cg->allocateRegister();
-   TR::Register *temp;
 
-   temp = child->getRegister();
-   if (child->getReferenceCount()==1 &&
-       child->getOpCode().isMemoryReference() && (temp == NULL))
+   if (child->isSingleRefUnevaluated() &&
+       child->getOpCode().isMemoryReference())
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(child, 1, cg);
       generateTrg1MemInstruction(cg, ARMOp_ldrb, node, trgReg, tempMR);
@@ -351,10 +346,8 @@ TR::Register *OMR::ARM::TreeEvaluator::bu2lEvaluator(TR::Node *node, TR::CodeGen
    TR::Node *child  = node->getFirstChild();
    TR::Register *sourceRegister = NULL;
    TR::Register *trgReg = cg->allocateRegisterPair(cg->gprClobberEvaluate(child), cg->allocateRegister());
-   TR::Register *temp;
-   temp = child->getRegister();
-   if (child->getReferenceCount()==1 &&
-       child->getOpCode().isMemoryReference() && (temp == NULL))
+   if (child->isSingleRefUnevaluated() &&
+       child->getOpCode().isMemoryReference())
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(temp, 1, cg);
       generateTrg1MemInstruction(cg, ARMOp_ldrb, node, trgReg->getLowOrder(), tempMR);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -417,7 +417,7 @@ TR::Register *TR::IA32SystemLinkage::buildDirectDispatch(TR::Node *callNode, boo
    //
    if ((callNode->getDataType() == TR::Float ||
         callNode->getDataType() == TR::Double) &&
-       callNode->getReferenceCount() == 1)
+       callNode->isSingleRef())
       {
       generateFPSTiST0RegRegInstruction(FSTRegReg, callNode, returnReg, returnReg, cg());
       }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2941,7 +2941,7 @@ int32_t TR_SimplifyAnds::process(TR::TreeTop *startTree, TR::TreeTop *endTree)
 
             // (a&b && a&c) ==> ((a & b|c) == b|c)
             else if (lastSeenAnd && noSideEffectsInBetween &&
-                     andNode->getFirstChild()->getReferenceCount() == 1 &&
+                     andNode->getFirstChild()->isSingleRef() &&
                      (isAndOfTwoFlags(comp(), andNode, lastRealNode, TR::ificmpeq,  TR::iand) ||
                       isAndOfTwoFlags(comp(), andNode, lastRealNode, TR::iflcmpeq,  TR::land)))
                {
@@ -3011,7 +3011,7 @@ int32_t TR_SimplifyAnds::process(TR::TreeTop *startTree, TR::TreeTop *endTree)
                      if (firstNode->getOpCode().isStoreDirect() &&
                          ((firstNode->getFirstChild()->getOpCode().isAdd() ||
                           firstNode->getFirstChild()->getOpCode().isSub()) &&
-                          firstNode->getFirstChild()->getReferenceCount() == 1) &&
+                          firstNode->getFirstChild()->isSingleRef()) &&
                          ((firstNode->getType().isInt32() ||
                           firstNode->getType().isInt64())
                          ))
@@ -3019,7 +3019,7 @@ int32_t TR_SimplifyAnds::process(TR::TreeTop *startTree, TR::TreeTop *endTree)
                         bool areTreesInRequiredForm = false;
 
                         if (firstNode->getFirstChild()->getFirstChild()->getOpCode().isLoadVar() &&
-                            (firstNode->getFirstChild()->getFirstChild()->getReferenceCount() == 1) && // in actual fact the ref count can be > 1 as long as this is the first reference to this load (we could check that in future if reqd)
+                            (firstNode->getFirstChild()->getFirstChild()->isSingleRef()) && // in actual fact the ref count can be > 1 as long as this is the first reference to this load (we could check that in future if reqd)
                             (firstNode->getFirstChild()->getFirstChild()->getSymbolReference()->getReferenceNumber() == firstNode->getSymbolReference()->getReferenceNumber()))
                            areTreesInRequiredForm = true;
                         else if (treeBeforeLastRealNode->getOpCode().isStoreDirect() &&
@@ -4319,7 +4319,7 @@ void TR_Rematerialization::rematerializeAddresses(TR::Node *indirectNode, TR::Tr
                   (cg()->isMaterialized(node->getSecondChild()) ||
                         (cg()->getSupportsConstantOffsetInAddressing() &&
                         cg()->getSupportsConstantOffsetInAddressing(node->getSecondChild()->get64bitIntegralValue()))))) ||
-                (node->getReferenceCount() == 1 &&
+                (node->isSingleRef() &&
                  node->isInternalPointer() &&
                  node->getNumChildren() == 2 &&
                  node->getFirstChild()->getReferenceCount() > 1 &&
@@ -4329,7 +4329,7 @@ void TR_Rematerialization::rematerializeAddresses(TR::Node *indirectNode, TR::Tr
                    (node->getFirstChild()->getSecondChild()->getOpCode().isLoadConst() &&
                    cg()->getSupportsConstantOffsetInAddressing(node->getFirstChild()->getSecondChild()->get64bitIntegralValue())))))
                {
-               if (node->getReferenceCount() == 1)
+               if (node->isSingleRef())
                   {
                   parentOfInternalPointer = node;
                   node = node->getFirstChild();
@@ -4473,7 +4473,7 @@ void TR_Rematerialization::rematerializeAddresses(TR::Node *indirectNode, TR::Tr
                   child->recursivelyDecReferenceCount();
                   }
                }
-            else if ((child->getReferenceCount() == 1) &&
+            else if ((child->isSingleRef()) &&
                 (indirectNode->getOpCodeValue() == TR::PassThrough))
                {
                TR::Node *anchorNode = TR::Node::create(TR::treetop, 1, child);
@@ -4483,7 +4483,7 @@ void TR_Rematerialization::rematerializeAddresses(TR::Node *indirectNode, TR::Tr
                anchorTree->join(treeTop);
                }
             }
-         else if ((child->getReferenceCount() == 1) &&
+         else if ((child->isSingleRef()) &&
                   (indirectNode->getOpCodeValue() == TR::PassThrough))
             {
             TR::Node *anchorNode = TR::Node::create(TR::treetop, 1, child);
@@ -8318,7 +8318,7 @@ TR_TrivialDeadTreeRemoval::preProcessTreetop(TR::TreeTop *treeTop, List<TR::Tree
        ttNode->getFirstChild()->getReferenceCount() >= 1)
       {
       TR::Node *firstChild = ttNode->getFirstChild();
-      if (firstChild->getReferenceCount() == 1)
+      if (firstChild->isSingleRef())
          {
          if (!firstChild->getOpCode().hasSymbolReference() &&
              performTransformation(comp, "%sUnlink trivial %s (%p) of %s (%p) with refCount==1\n",
