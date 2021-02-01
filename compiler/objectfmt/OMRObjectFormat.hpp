@@ -123,8 +123,9 @@ public:
     * @param[in] file : the \c TR::FILE to print to
     * @param[in] data : a populated \c TR::FunctionCallData structure with valid parameters
     *          for an encoded function call.
+    * @param[in] bufferPos : starting position in buffer to begin printing
     */
-   virtual uint8_t* printEncodedFunctionCall(TR::FILE *file, TR::FunctionCallData &data) = 0;
+   virtual void printEncodedFunctionCall(TR::FILE *file, TR::FunctionCallData &data) = 0;
 
    };
 
