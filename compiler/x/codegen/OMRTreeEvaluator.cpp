@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,6 +67,8 @@
 #include "infra/Bit.hpp"
 #include "infra/List.hpp"
 #include "infra/CfgEdge.hpp"
+#include "objectfmt/FunctionCallData.hpp"
+#include "objectfmt/ObjectFormat.hpp"
 #include "ras/Debug.hpp"
 #include "ras/DebugCounter.hpp"
 #include "runtime/Runtime.hpp"
@@ -2353,7 +2355,17 @@ TR::Register *OMR::X86::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, T
       dependencies->addPostCondition(termCharReg, TR::RealRegister::edx, cg);
       }
    dependencies->stopAddingConditions();
-   generateHelperCallInstruction(node, helper, dependencies, cg);
+
+   if (cg->getObjectFormat())
+      {
+      TR::FunctionCallData data(cg, helper, node, dependencies);
+      cg->getObjectFormat()->emitFunctionCall(data);
+      }
+   else
+      {
+      generateHelperCallInstruction(node, helper, dependencies, cg);
+      }
+
    cg->stopUsingRegister(dummy1);
    cg->stopUsingRegister(dummy2);
    cg->stopUsingRegister(dummy3);
