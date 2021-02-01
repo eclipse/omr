@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,6 +43,8 @@
 #include "il/Node_inlines.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
+#include "objectfmt/JitCodeRWXObjectFormat.hpp"
+#include "objectfmt/JitCodeRXObjectFormat.hpp"
 #include "x/codegen/X86Ops.hpp"
 
 
@@ -215,4 +217,17 @@ bool
 OMR::X86::AMD64::CodeGenerator::opCodeIsNoOpOnThisPlatform(TR::ILOpCode &opCode)
    {
    return (opCode.getOpCodeValue() == TR::iu2l) ? true : false;
+   }
+
+void
+OMR::X86::AMD64::CodeGenerator::createObjectFormat()
+   {
+   if (self()->comp()->getGenerateReadOnlyCode())
+      {
+      self()->setObjectFormat(new (self()->trHeapMemory()) TR::JitCodeRXObjectFormat());
+      }
+   else
+      {
+      self()->setObjectFormat(new (self()->trHeapMemory()) TR::JitCodeRWXObjectFormat());
+      }
    }
