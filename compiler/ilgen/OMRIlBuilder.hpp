@@ -388,7 +388,7 @@ public:
     */
    TR::IlValue *ComputedCall(const char *name, int32_t numArgs, TR::IlValue **args);
 
-   TR::IlValue *genCall(TR::SymbolReference *methodSymRef, int32_t numArgs, TR::IlValue ** paramValues, bool isDirectCall = true);
+   TR::IlValue *genCall(const char *name, TR::SymbolReference *methodSymRef, int32_t numArgs, TR::IlValue ** paramValues, bool isDirectCall = true);
    void Goto(TR::IlBuilder **dest);
    void Goto(TR::IlBuilder *dest);
    void Return();
@@ -797,6 +797,7 @@ protected:
    virtual void setHandlerInfo(uint32_t catchType);
    TR::IlValue **processCallArgs(TR::Compilation *comp, int numArgs, va_list args);
    JBCase **createCaseArray(uint32_t numCases, va_list arg);
+   void traceSwitch(const char *name, TR::IlValue *selectorValue, TR::IlBuilder *defaultBuilder, uint32_t numCases, JBCase **cases);
    void generateSwitchCases(TR::Node *switchNode, TR::Node *defaultNode, TR::IlBuilder **defaultBuilder, uint32_t numCases, JBCase **cases);
    };
 

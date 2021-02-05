@@ -100,7 +100,7 @@ uint8_t *TR::X86DataSnippet::emitSnippetBody()
    // align to 16 bytes
    if (getDataSize() % 16 == 0)
       {
-      cursor = (uint8_t*)(((intptr_t)(cursor + 15)) & ((-1)<<4));
+      cursor = (uint8_t*)(((intptr_t)(cursor + 15)) & ((uintptr_t)(-1)<<4));
       }
 
    getSnippetLabel()->setCodeLocation(cursor);
