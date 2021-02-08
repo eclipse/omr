@@ -64,8 +64,6 @@ public:
 
    void createAliasInfo();
 
-   TR::AliasBuilder *self();
-
    TR::SymbolReferenceTable *symRefTab() { return _symRefTab; }
    TR::Compilation *comp() { return _compilation; }
    TR_Memory *trMemory() { return _trMemory; }
@@ -138,6 +136,8 @@ public:
 
 protected:
 
+   TR::AliasBuilder *self();
+   
    TR::Compilation *_compilation;
    TR_Memory *_trMemory;
 
