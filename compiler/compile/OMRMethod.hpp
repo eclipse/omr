@@ -118,8 +118,6 @@ class Method
 
    TR_ALLOC(TR_Memory::Method);
 
-   TR::Method *self();
-
    enum Type {J9, Test, JitBuilder};
 
 
@@ -172,6 +170,9 @@ class Method
 
    void setRecognizedMethod(TR::RecognizedMethod rm) { _recognizedMethod = rm; }
    void setMandatoryRecognizedMethod(TR::RecognizedMethod rm) { _mandatoryRecognizedMethod = rm; }
+
+   protected:
+   TR::Method *self();
 
    private:
 
