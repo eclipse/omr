@@ -72,8 +72,6 @@
 #define REACHING_DEFS_LIMIT                  (25000000)  // 25 Million
 
 
-const char* const TR_UseDefInfo::allocatorName = "UseDefInfo";
-
 /**
  * Constructs TR_UseDefInfo instance. Note that this should not be called directly.
  * Instead construction is handled by OMR::Optimizer::createUseDefInfo() method.
@@ -100,13 +98,13 @@ TR_UseDefInfo::TR_UseDefInfo(TR::Compilation *comp, TR::CFG *cfg, TR::Optimizer 
      _optimizer(optimizer),
      _atoms(0, std::make_pair<TR::Node *, TR::TreeTop *>(NULL, NULL), _region),
      _useDefForMemorySymbols(false),
-     _useDefInfo(0, TR_UseDefInfo::BitVector(comp->allocator(allocatorName)), _region),
+     _useDefInfo(0, TR_UseDefInfo::BitVector(comp->allocator()), _region),
      _isUseDefInfoValid(false),
      _infoCache(_region),
-     _EMPTY(comp->allocator(allocatorName)),
+     _EMPTY(comp->allocator()),
      _useDerefDefInfo(0, static_cast<const BitVector *>(NULL), _region),
-     _defUseInfo(0, TR_UseDefInfo::BitVector(comp->allocator(allocatorName)), _region),
-     _loadDefUseInfo(0, TR_UseDefInfo::BitVector(comp->allocator(allocatorName)), _region),
+     _defUseInfo(0, TR_UseDefInfo::BitVector(comp->allocator()), _region),
+     _loadDefUseInfo(0, TR_UseDefInfo::BitVector(comp->allocator()), _region),
      _tempsOnly(false),
      _trace(comp->getOption(TR_TraceUseDefs)),
      _hasLoadsAsDefs(loadsShouldBeDefs),
@@ -306,7 +304,7 @@ void TR_UseDefInfo::prepareUseDefInfo(bool requiresGlobals, bool prefersGlobals,
    _defsChecklist = new (_region) TR_BitVector(getTotalNodes(), _region);
 
    //  traceMsg(comp(), "Growing useDefInfo to %d\n",getNumUseNodes());
-   _useDefInfo.resize(getNumUseNodes(), TR_UseDefInfo::BitVector(comp()->allocator(allocatorName)));
+   _useDefInfo.resize(getNumUseNodes(), TR_UseDefInfo::BitVector(comp()->allocator()));
    //   for (i = getNumUseNodes()-1; i >= 0; --i)
    //      _useDefInfo[i].GrowTo(getNumDefNodes());
    _isUseDefInfoValid = true;
@@ -2926,7 +2924,7 @@ void TR_UseDefInfo::buildDefUseInfo(bool loadAsDef)
        ((_loadDefUseInfo.size() > 0) || !loadAsDef))
       return;
 
-   _defUseInfo.resize(getNumDefNodes(), TR_UseDefInfo::BitVector(comp()->allocator(allocatorName)));
+   _defUseInfo.resize(getNumDefNodes(), TR_UseDefInfo::BitVector(comp()->allocator()));
 
    if (loadAsDef)
       _loadDefUseInfo.resize(getNumDefNodes(), TR_UseDefInfo::BitVector(allocator()));

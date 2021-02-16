@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,7 +220,6 @@ OMR::Compilation::Compilation(
    _method(compilee),
    _arenaAllocator(TR::Allocator(self()->allocator("Arena"))),
    _aliasRegion(heapMemoryRegion),
-   _allocatorName(NULL),
    _ilGenerator(0),
    _ilValidator(NULL),
    _optimizer(0),

@@ -1975,7 +1975,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
 #endif
       LexicalTimer t(manager->name(), comp()->phaseTimer());
       TR::LexicalMemProfiler mp(manager->name(), comp()->phaseMemProfiler());
-      comp()->setAllocatorName(manager->name());
 
       int32_t origSymRefCount = comp()->getSymRefCount();
       int32_t origNodeCount = comp()->getNodeCount();
@@ -2079,7 +2078,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
       if (!isIlGenOpt())
          comp()->invalidateAliasRegion();
       breakForTesting(-optNum);
-      comp()->setAllocatorName(NULL);
 
       if (comp()->compilationShouldBeInterrupted((TR_CallingContext)optNum))
          {

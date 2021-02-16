@@ -43,13 +43,13 @@ namespace CS2 {
   // objects will share the same memory pool
   class malloc_allocator {
   public:
-    void *allocate(size_t size, const char *name=NULL) {
+    void *allocate(size_t size) {
       return malloc(size);
     }
-    void deallocate(void *pointer, size_t size, const char *name=NULL) {
+    void deallocate(void *pointer, size_t size) {
       free(pointer);
     }
-    void *reallocate(size_t newsize, void *pointer, size_t size, const char *name=NULL) {
+    void *reallocate(size_t newsize, void *pointer, size_t size) {
       return realloc(pointer, newsize);
     }
 
@@ -218,15 +218,15 @@ namespace CS2 {
       }
     }
 
-    Segment *new_segment(Segment *next, const char *name) {
-      void *ret = base_allocator::allocate(segmentsize, name);
+    Segment *new_segment(Segment *next) {
+      void *ret = base_allocator::allocate(segmentsize);
       return new (ret) Segment(next);
     }
 
-    void *allocate(size_t size, const char *name=NULL) {
+    void *allocate(size_t size) {
       uint32_t ix = Segment::segment_index(size);
       if (ix==0) {
-        return base_allocator::allocate(size, name);
+        return base_allocator::allocate(size);
       }
 
       for (Segment *s = segments[ix]; s; s=s->next_segment()) {
@@ -237,13 +237,13 @@ namespace CS2 {
           return ret;
         }
       }
-      segments[ix] = new_segment(segments[ix], name);
+      segments[ix] = new_segment(segments[ix]);
       return segments[ix]->allocate(ix);
     }
-    void deallocate(void *pointer, size_t size, const char *name = NULL) {
+    void deallocate(void *pointer, size_t size) {
       uint32_t ix = Segment::segment_index(size);
       if (ix==0) {
-        return base_allocator::deallocate(pointer, size, name);
+        return base_allocator::deallocate(pointer, size);
       }
 
       for (Segment *s = segments[ix]; s; s=s->next_segment()) {
@@ -251,7 +251,7 @@ namespace CS2 {
           s->deallocate(pointer);
           if (s->is_empty()) {
             segments[ix] = s->unlink(segments[ix]);
-            base_allocator::deallocate(s, segmentsize, name);
+            base_allocator::deallocate(s, segmentsize);
           } else if (s!=segments[ix])
             segments[ix]= s->move_to_head(segments[ix]);
           return;
@@ -259,20 +259,20 @@ namespace CS2 {
       }
       CS2Assert(false, ("Could not find pointer to delete: %p", pointer));
     }
-    void *reallocate(size_t newsize, void *pointer, size_t size, const char *name = NULL) {
+    void *reallocate(size_t newsize, void *pointer, size_t size) {
       uint32_t ix = Segment::segment_index(size);
       uint32_t nix = Segment::segment_index(newsize);
 
       if (ix==nix)  {
         if (ix==0) {
-          return base_allocator::reallocate(newsize, pointer, size, name);
+          return base_allocator::reallocate(newsize, pointer, size);
         }
         return pointer;
       }
 
-      void * npointer = allocate(newsize, name);
+      void * npointer = allocate(newsize);
       memcpy(npointer, pointer, newsize<size?newsize:size);
-      deallocate(pointer, size, name);
+      deallocate(pointer, size);
 
       return npointer;
     }
@@ -284,16 +284,16 @@ namespace CS2 {
   public:
     shared_allocator(base_allocator &b = base_allocator::instance()) : base(b) {}
 
-    void *allocate(size_t size, const char *name = NULL) {
-        return base.allocate(size, name);
+    void *allocate(size_t size) {
+        return base.allocate(size);
     }
 
-    void deallocate(void *pointer, size_t size, const char *name = NULL) {
-      return base.deallocate(pointer, size, name);
+    void deallocate(void *pointer, size_t size) {
+      return base.deallocate(pointer, size);
     }
 
-    void *reallocate(size_t newsize, void *pointer, size_t size, const char *name=NULL) {
-      return base.reallocate(newsize, pointer, size, name);
+    void *reallocate(size_t newsize, void *pointer, size_t size) {
+      return base.reallocate(newsize, pointer, size);
     }
 
     template <class ostr, class allocator> ostr& stats(ostr &o, allocator &a) { return base.stats(o, a);}
@@ -334,12 +334,12 @@ namespace CS2 {
 
     static size_t arena_size() { return segmentsize - sizeof(Segment);}
 
-    void *allocate(size_t size, const char *name=NULL) {
+    void *allocate(size_t size) {
       if (size % sizeof(size_t)) size = (size/sizeof(size_t)+1)*sizeof(size_t);
 
       void *ret;
       if (segment && size>=arena_size()) {
-        Segment *new_segment = (Segment *)base_allocator::allocate(sizeof(Segment)+size, name);
+        Segment *new_segment = (Segment *)base_allocator::allocate(sizeof(Segment)+size);
         new_segment->size = sizeof(Segment)+size;
         new_segment->next = segment->next;
         segment->next=new_segment;
@@ -347,7 +347,7 @@ namespace CS2 {
         ret = (void *)((char *)new_segment + sizeof(Segment));
       } else if (segment==NULL || allocated+size>arena_size()) {
 
-        Segment *new_segment = (Segment *)base_allocator::allocate(segmentsize, name);
+        Segment *new_segment = (Segment *)base_allocator::allocate(segmentsize);
         new_segment->size = segmentsize;
         new_segment->next = segment;
 
@@ -361,13 +361,13 @@ namespace CS2 {
       return ret;
     }
 
-    void deallocate(void *pointer, size_t size, const char *name=NULL) {
+    void deallocate(void *pointer, size_t size) {
       // no deallocation
     }
 
-    void *reallocate(size_t newsize, void *pointer, size_t size, const char *name=NULL) {
+    void *reallocate(size_t newsize, void *pointer, size_t size) {
       if (newsize<=size) return pointer;
-      void *ret = allocate(newsize, name);
+      void *ret = allocate(newsize);
       memcpy(ret, pointer, size);
       return ret;
     }
