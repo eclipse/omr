@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -174,5 +174,3 @@ template TR::LabelSymbol * OMR::LabelSymbol::create(PERSISTENT_NEW_DECLARE t);
 template TR::LabelSymbol * OMR::LabelSymbol::create(PERSISTENT_NEW_DECLARE t, TR::CodeGenerator* c);
 template TR::LabelSymbol * OMR::LabelSymbol::create(PERSISTENT_NEW_DECLARE t, TR::CodeGenerator* c, TR::Block* b);
 template TR::LabelSymbol * OMR::LabelSymbol::createRelativeLabel(PERSISTENT_NEW_DECLARE m, TR::CodeGenerator * cg, intptr_t offset);
-
-template TR::LabelSymbol * OMR::LabelSymbol::create(TR_ArenaAllocator* t, TR::CodeGenerator* c);
