@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 
 #define OPT_DETAILS_NODEPOOL "O^O NODEPOOL :"
 
-TR::NodePool::NodePool(TR::Compilation * comp, const TR::Allocator &allocator) :
+TR::NodePool::NodePool(TR::Compilation * comp) :
    _comp(comp),
    _disableGC(true),
    _globalIndex(0),
@@ -47,7 +47,7 @@ TR::NodePool::cleanUp()
 TR::Node *
 TR::NodePool::allocate()
    {
-   TR::Node *newNode = static_cast<TR::Node*>(_nodeRegion.allocate(sizeof(TR::Node)));//_pool.ElementAt(poolIndex);
+   TR::Node *newNode = static_cast<TR::Node*>(_nodeRegion.allocate(sizeof(TR::Node)));
    memset(newNode, 0, sizeof(TR::Node));
    newNode->_globalIndex = ++_globalIndex;
    TR_ASSERT(_globalIndex < MAX_NODE_COUNT, "Reached TR::Node allocation limit");

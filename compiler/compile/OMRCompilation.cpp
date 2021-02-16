@@ -322,7 +322,7 @@ OMR::Compilation::Compilation(
    _metadataAssumptionList = NULL;
 #endif
    _symRefTab = new (_trMemory->trHeapMemory()) TR::SymbolReferenceTable(_method->maxBytecodeIndex(), self());
-   _compilationNodes = new (_trMemory->trHeapMemory()) TR::NodePool(self(), self()->allocator());
+   _compilationNodes = new (_trMemory->trHeapMemory()) TR::NodePool(self());
 
 #ifdef J9_PROJECT_SPECIFIC
    // The following must stay before the first assumption gets created which could happen
