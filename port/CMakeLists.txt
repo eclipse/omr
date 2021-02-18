@@ -93,6 +93,7 @@ if(OMR_OS_ZOS)
 			omrvmem_support_above_bar.s
 			omrvmem_support_below_bar_64.s
 			omript_ttoken64.s
+			omrcel4ro31.c
 		)
 	else()
 		list(APPEND OBJECTS omrvmem_support_below_bar_31.s)

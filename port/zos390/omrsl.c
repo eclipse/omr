@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,10 @@
 #include "portnls.h"
 #include "ut_omrport.h"
 
+#if defined(J9ZOS39064)
+#include "omrcel4ro31.h"
+#endif /* defined(J9ZOS39064) */
+
 #define DMESSAGE(x)				/* printf x; */
 
 
@@ -45,12 +49,18 @@ static void getDLError(struct OMRPortLibrary *portLibrary, char *errBuf, uintptr
 uintptr_t
 omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintptr_t *descriptor, uintptr_t flags)
 {
-	void *handle;
+	void *handle = NULL;
 	char *openName = name;
-	char mangledName[EsMaxPath + 1];
-	char errBuf[512];
+	char mangledName[EsMaxPath + 1] = {0};
+	char errBuf[512] = {0};
+	BOOLEAN isErrBufPopulated = FALSE;
 	BOOLEAN decorate = OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_DECORATE);
 	BOOLEAN openExec = OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_OPEN_EXECUTABLE);
+
+#if defined(J9ZOS39064)
+	BOOLEAN attempt31BitDLLLoad = OMR_ARE_ALL_BITS_SET(flags, OMRPORT_SLOPEN_ATTEMPT_31BIT_OPEN);
+#endif /* defined(J9ZOS39064) */
+
 	uintptr_t pathLength = 0;
 	uintptr_t dirNameLength = 0;
 
@@ -91,9 +101,53 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 		handle = dllload(openName);
 	}
 
-	if (NULL == handle) {
+#if defined(J9ZOS39064)
+	/* Attempt to load target library as 31-bit. */
+	if (attempt31BitDLLLoad && (NULL == handle) && omr_cel4ro31_is_supported()) {
+		OMR_CEL4RO31_infoBlock *ro31InfoBlock = NULL;
+
+		/* Generate trace event for the error reason from preceding 64-bit dllload(). */
 		getDLError(portLibrary, errBuf, sizeof(errBuf));
 		Trc_PRT_sl_open_shared_library_Event2(errBuf);
+		isErrBufPopulated = TRUE;
+
+		DMESSAGE(("omrsl_open_shared_library: Attempt to load 31-bit DLL [%s]\n", openName))
+
+		ro31InfoBlock = omr_cel4ro31_init(OMR_CEL4RO31_FLAG_LOAD_DLL, openName, NULL, 0);
+		if (NULL != ro31InfoBlock) {
+			OMR_CEL4RO31_controlBlock *ro31ControlBlock = &(ro31InfoBlock->ro31ControlBlock);
+
+			omr_cel4ro31_call(ro31InfoBlock);
+
+			if (OMR_CEL4RO31_RETCODE_OK == ro31ControlBlock->retcode) {
+				/* Extract DLL handle from CEL4RO31 load result. */
+				handle = (void *)ro31ControlBlock->dllHandle;
+				/* High tag the handle to distingush 31-bit DLL. */
+				handle = (void *)(OMRPORT_SL_ZOS_31BIT_TARGET_HIGHTAG | (uintptr_t)handle);
+			} else {
+				/* Append the CEL4RO31 diagnostics to errBuf. */
+				char cel4ro_errBuf[128];
+				snprintf(
+					cel4ro_errBuf,
+					sizeof(cel4ro_errBuf),
+					" CEL4RO31 retcode: %d - %s",
+					ro31ControlBlock->retcode,
+					omr_cel4ro31_get_error_message(ro31ControlBlock->retcode));
+				Trc_PRT_sl_open_shared_library_Event2(cel4ro_errBuf);
+				strncat(errBuf, cel4ro_errBuf, sizeof(errBuf) - strlen(errBuf) - 1);
+			}
+			omr_cel4ro31_deinit(ro31InfoBlock);
+		}
+
+		DMESSAGE(("omrsl_open_shared_library: Attempted to load 31-bit DLL Return Code: [%d] DLL handle: [%p]\n", ro31InfoBlock->ro31ControlBlock.retcode, handle))
+	}
+#endif /* defined(J9ZOS39064) */
+
+	if (NULL == handle) {
+		if (!isErrBufPopulated) {
+			getDLError(portLibrary, errBuf, sizeof(errBuf));
+			Trc_PRT_sl_open_shared_library_Event2(errBuf);
+		}
 		if (portLibrary->file_attr(portLibrary, openName) == EsIsFile) {
 			Trc_PRT_sl_open_shared_library_Exit2(OMRPORT_SL_INVALID);
 			return portLibrary->error_set_last_error_with_message(portLibrary, OMRPORT_SL_INVALID, errBuf);
@@ -124,9 +178,23 @@ omrsl_close_shared_library(struct OMRPortLibrary *portLibrary, uintptr_t descrip
 
 	Trc_PRT_sl_close_shared_library_Entry(descriptor);
 
-	DMESSAGE(("\nClose library %x\n", *descriptor))
-	handle = (dllhandle *)descriptor;
-	error = dllfree(handle);
+#if defined(J9ZOS39064)
+	if (OMR_ARE_ALL_BITS_SET(descriptor, OMRPORT_SL_ZOS_31BIT_TARGET_HIGHTAG)) {
+		/* 31-bit target library */
+		handle = (dllhandle *)(OMRPORT_SL_ZOS_31BIT_TARGET_MASK & descriptor);
+		DMESSAGE(("\n Closing 31-bit library %x\n", descriptor))
+
+		/* @TODO: Currently, CEL4RO31 does not support a dllfree option.  Need to update
+		 * once support is provided.
+		 */
+		error = 0;
+	} else
+#endif /* defined(J9ZOS39064) */
+	{
+		DMESSAGE(("\nClose library %x\n", descriptor))
+		handle = (dllhandle *)descriptor;
+		error = dllfree(handle);
+	}
 
 	Trc_PRT_sl_close_shared_library_Exit(error);
 	return error;
@@ -167,13 +235,38 @@ omrsl_close_shared_library(struct OMRPortLibrary *portLibrary, uintptr_t descrip
 uintptr_t
 omrsl_lookup_name(struct OMRPortLibrary *portLibrary, uintptr_t descriptor, char *name, uintptr_t *func, const char *argSignature)
 {
-	void *address;
-	dllhandle *handle;
+	void *address = NULL;
+	dllhandle *handle = NULL;
 
 	Trc_PRT_sl_lookup_name_Entry(descriptor, name, argSignature);
 
-	handle = (dllhandle *)descriptor;
-	address = (void *)dllqueryfn(handle, name);
+#if defined(J9ZOS39064)
+	if (OMR_ARE_ALL_BITS_SET(descriptor, OMRPORT_SL_ZOS_31BIT_TARGET_HIGHTAG)) {
+		OMR_CEL4RO31_infoBlock *ro31InfoBlock = NULL;
+
+		/* 31-bit target library */
+		handle = (dllhandle *)(OMRPORT_SL_ZOS_31BIT_TARGET_MASK & descriptor);
+		DMESSAGE(("omrsl_lookup_name: Attempt to query 31-bit DLL function [%s] from DLL handle: %p\n", name, handle))
+		ro31InfoBlock = omr_cel4ro31_init(OMR_CEL4RO31_FLAG_QUERY_TARGET_FUNC, NULL, name, 0);
+		if (NULL != ro31InfoBlock) {
+			OMR_CEL4RO31_controlBlock *ro31ControlBlock = &(ro31InfoBlock->ro31ControlBlock);
+			ro31ControlBlock->dllHandle = (uint32_t)handle;
+			omr_cel4ro31_call(ro31InfoBlock);
+			if (OMR_CEL4RO31_RETCODE_OK == ro31ControlBlock->retcode) {
+				/* CEL4RO31 returns the function descriptor (FDCB) in the functionEntryPoint member */
+				address = (void *)ro31ControlBlock->functionEntryPoint;
+				address = (void *)(OMRPORT_SL_ZOS_31BIT_TARGET_HIGHTAG | (uintptr_t)address);
+			}
+			omr_cel4ro31_deinit(ro31InfoBlock);
+			DMESSAGE(("omrsl_lookup_name: Attempted to 31-bit DLL function [%s] from DLL handle: %p - return code: [%d] Function Pointer: [%p]\n", name, handle, ro31InfoBlock->ro31ControlBlock.retcode, address))
+		}
+	} else
+#endif /* defined(J9ZOS39064) */
+	{
+		handle = (dllhandle *)descriptor;
+		address = (void *)dllqueryfn(handle, name);
+	}
+
 	if (address == NULL) {
 		Trc_PRT_sl_lookup_name_Exit2(name, argSignature, handle, 1);
 		return 1;
@@ -236,5 +329,4 @@ getDLError(struct OMRPortLibrary *portLibrary, char *errBuf, uintptr_t bufLen)
 	strncpy(errBuf, error, bufLen);
 	errBuf[bufLen - 1] = '\0';
 }
-
 

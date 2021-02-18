@@ -55,6 +55,7 @@ ifeq (zos,$(OMR_HOST_OS))
 
   ifeq (1,$(OMR_ENV_DATA64))
     # 64-bit only
+    OBJECTS += omrcel4ro31
     OBJECTS += omrget_large_pages_supported
     OBJECTS += omrget_large_2gb_pages_supported
     OBJECTS += omrvmem_support_above_bar

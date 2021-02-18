@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -826,6 +826,12 @@ typedef struct J9ProcessorInfos {
 #endif /* defined(OMRZTPF) */
 #define OMRPORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND  4
 #define OMRPORT_SLOPEN_OPEN_EXECUTABLE 8     /* Can be ORed without affecting existing flags. */
+
+#if defined(J9ZOS39064)
+#define OMRPORT_SLOPEN_ATTEMPT_31BIT_OPEN 16 /* Attempt 31-bit DLL load from 64-bit. */
+#define OMRPORT_SL_ZOS_31BIT_TARGET_HIGHTAG 0x3100000000000000l /* High-tag to signify 31-bit target handles and addresses. */
+#define OMRPORT_SL_ZOS_31BIT_TARGET_MASK 0xFFFFFFFF /* Mask used to convert 31-bit tagged handles/addresses to proper values. */
+#endif /* defined(J9ZOS39064) */
 
 #define OMRPORT_ARCH_X86       "x86"
 #define OMRPORT_ARCH_PPC       "ppc" 				/* in line with IBM JDK 1.22 and above for AIX and Linux/PPC */
