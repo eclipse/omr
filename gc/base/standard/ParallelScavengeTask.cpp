@@ -43,6 +43,10 @@ MM_ParallelScavengeTask::mainSetup(MM_EnvironmentBase *env)
 {
 	uintptr_t calculatedAliasThreshold = (uintptr_t)(getThreadCount() * env->getExtensions()->aliasInhibitingThresholdPercentage);
 	_collector->setAliasThreshold(calculatedAliasThreshold);
+
+	_releaseSingleThreadSyncPoint = false;
+	_syncReleaseSingleCriticalStart = 0;
+	_releaseSingleCriticalTime = 0;
 }
 
 void
@@ -76,6 +80,7 @@ MM_ParallelScavengeTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, const
 	MM_ParallelTask::synchronizeGCThreads(env, id);
 	uint64_t endTime = omrtime_hires_clock();
 
+	env->_scavengerStats._adjustedSyncStallTime += (endTime - startTime);
 	env->_scavengerStats.addToSyncStallTime(startTime, endTime);
 }
 
@@ -102,9 +107,23 @@ MM_ParallelScavengeTask::synchronizeGCThreadsAndReleaseSingleThread(MM_Environme
 	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseSingleThread(env, id);
 	uint64_t endTime = omrtime_hires_clock();
 
+	if(result) {
+		_releaseSingleThreadSyncPoint = true;
+		_syncReleaseSingleCriticalStart = endTime;
+	} else {
+		Assert_MM_true((endTime - startTime) >= _releaseSingleCriticalTime);
+		env->_scavengerStats._adjustedSyncStallTime += ((endTime - startTime) - _releaseSingleCriticalTime);
+	}
+
 	env->_scavengerStats.addToSyncStallTime(startTime, endTime);
 
 	return result;
+}
+
+uintptr_t
+MM_ParallelScavengeTask::getRecommendedWorkingThreads()
+{
+	return _collector->getRecommendedWorkingThreads();
 }
 
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */

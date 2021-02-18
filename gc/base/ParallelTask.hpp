@@ -48,6 +48,10 @@ class MM_ParallelTask : public MM_Task
 	 */
 private:
 protected:
+	bool _releaseSingleThreadSyncPoint;
+	uint64_t _syncReleaseSingleCriticalStart;
+	uint64_t _releaseSingleCriticalTime;
+
 	bool _synchronized;
 	const char *_syncPointUniqueId;
 	uintptr_t _syncPointWorkUnitIndex; /**< The _workUnitIndex of the first thread to sync. All threads should have the same index once sync'ed. */
@@ -92,6 +96,9 @@ public:
 	 */
 	MM_ParallelTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher) :
 		MM_Task(env, dispatcher)
+		,_releaseSingleThreadSyncPoint(false)
+		,_syncReleaseSingleCriticalStart(0)
+		,_releaseSingleCriticalTime(0)
 		,_synchronized(false)
 		,_syncPointUniqueId(NULL)
 		,_syncPointWorkUnitIndex(0)

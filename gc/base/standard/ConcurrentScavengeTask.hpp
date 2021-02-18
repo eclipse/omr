@@ -64,6 +64,8 @@ public:
 	}
 	virtual void run(MM_EnvironmentBase *env);
 
+	virtual uintptr_t getRecommendedWorkingThreads() { return UDATA_MAX; }
+
 	MM_ConcurrentScavengeTask(MM_EnvironmentBase *env,
 			MM_ParallelDispatcher *dispatcher,
 			MM_Scavenger *scavenger,

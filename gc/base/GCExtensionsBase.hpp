@@ -517,6 +517,13 @@ public:
 	bool enableSplitHeap; /**< true if we are using gencon with -Xgc:splitheap (we will fail to boostrap if we can't allocate both ranges) */
 	double aliasInhibitingThresholdPercentage; /**< percentage of threads that can be blocked before copy cache aliasing is inhibited (set through aliasInhibitingThresholdPercentage=) */
 
+	/* Options relating to Adaptive Threading */
+	bool adaptiveGCThreading; /**< Flag to indicate whether the Scavenger Adaptive Threading Optimization is enabled*/
+	uintptr_t adaptiveThreadCount; /**< Number of threads available for Adaptive Threading (Upper Bound)  */
+	double adaptiveThreadingSensitivityFactor; /**<  Used by Adaptive Model to determine sensitivity/tolerance to stalling (set through adaptiveThreadingSensitivityFactor=) */
+	double adaptiveThreadingWeightActiveThreads; /**< Weight given to current active threads when averaging calculated threads and current active threads (set through adaptiveThreadingWeightActiveThreads=) */
+	double adaptiveThreadBooster; /**< Used to boost calculated thread count, gives opportunity for low thread count to grow. */
+
 	enum HeapInitializationSplitHeapSection {
 		HEAP_INITIALIZATION_SPLIT_HEAP_UNKNOWN = 0,
 		HEAP_INITIALIZATION_SPLIT_HEAP_TENURE,
@@ -1595,6 +1602,11 @@ public:
 		, dnssMinimumContraction(0.0)
 		, enableSplitHeap(false)
 		, aliasInhibitingThresholdPercentage(0.20)
+		, adaptiveGCThreading(false)
+		, adaptiveThreadCount(0)
+		, adaptiveThreadingSensitivityFactor(1)
+		, adaptiveThreadingWeightActiveThreads(0.50)
+		, adaptiveThreadBooster(0.85)
 		, splitHeapSection(HEAP_INITIALIZATION_SPLIT_HEAP_UNKNOWN)
 #endif /* OMR_GC_MODRON_SCAVENGER */
 		, globalMaximumContraction(0.05) /* by default, contract must be at most 5% of the committed heap */

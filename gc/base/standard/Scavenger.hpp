@@ -100,6 +100,7 @@ private:
 	bool _cachedSemiSpaceResizableFlag;
 	uintptr_t _minTenureFailureSize;
 	uintptr_t _minSemiSpaceFailureSize;
+	uintptr_t _recommendedThreads; /** Number of threads recommended to the task dispatcher */
 
 	MM_CycleState _cycleState;  /**< Embedded cycle state to be used as the main cycle state for GC activity */
 	MM_CollectionStatisticsStandard _collectionStatistics;  /** Common collect stats (memory, time etc.) */
@@ -327,7 +328,8 @@ public:
 		return (0 == ((uintptr_t)objectPtr & 0x78)); 
 	}
 	
-	
+	MMINLINE uintptr_t getRecommendedWorkingThreads() { return _recommendedThreads; };
+
 	void deepScanOutline(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, uintptr_t priorityFieldOffset1, uintptr_t priorityFieldOffset2);
 
 	MMINLINE bool scavengeRememberedObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
@@ -555,6 +557,7 @@ public:
 	bool canCalcGCStats(MM_EnvironmentStandard *env);
 	void calcGCStats(MM_EnvironmentStandard *env);
 
+	void calculateRecommendedWorkingThreads(MM_EnvironmentStandard *env);
 	void scavenge(MM_EnvironmentBase *env);
 	bool scavengeCompletedSuccessfully(MM_EnvironmentStandard *env);
 	virtual	void mainThreadGarbageCollect(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, bool initMarkMap = false, bool rebuildMarkBits = false);
@@ -901,6 +904,7 @@ public:
 		, _expandTenureOnFailedAllocate(true)
 		, _minTenureFailureSize(UDATA_MAX)
 		, _minSemiSpaceFailureSize(UDATA_MAX)
+		, _recommendedThreads(UDATA_MAX)
 		, _cycleState()
 		, _collectionStatistics()
 		, _cachedEntryCount(0)

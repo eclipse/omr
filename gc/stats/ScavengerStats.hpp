@@ -98,6 +98,13 @@ public:
 	uintptr_t _copyScanUpdates;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
+	/* Stats Used Specifically for Adaptive Threading */
+	uint64_t _workerScavengeStartTime; /**< Timestamp taken when worker starts the scavenge task */
+	uint64_t _workerScavengeEndTime; /**< Timestamp taken when worker completes the scavenge task */
+	uint64_t _notifyStallTime; /**< The time, in hi-res ticks, the thread spent stalled notifying other threads during scavenge */
+	uint64_t _adjustedSyncStallTime; /**< The time, in hi-res ticks, the thread spent stalled at a sync point ADJUSTED to account for critical section time */
+	uint64_t _releaseSynchronizedThreadsNotifyTime; /**< The time, in hi-res ticks, the thread spent stalled notifying synced threads  */
+
 	/* Average (weighted) number of bytes free after a collection and
 	 * average number of bytes promoted by a collection. Used by 
 	 * concurrent collector to trigger concurrent when scavenger enabled.

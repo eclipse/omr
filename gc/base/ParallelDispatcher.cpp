@@ -457,6 +457,17 @@ MM_ParallelDispatcher::recomputeActiveThreadCountForTask(MM_EnvironmentBase *env
 	 * available and ready to run).
 	 */
 	uintptr_t taskActiveThreadCount = OMR_MIN(_activeThreadCount, threadCount);
+
+	if (!_extensions->gcThreadCountForced && _extensions->adaptiveGCThreading && task->getRecommendedWorkingThreads() != UDATA_MAX) {
+		uintptr_t upperThreadBound = (_extensions->adaptiveThreadCount == 0) ? _threadCountMaximum : _extensions->adaptiveThreadCount;
+		taskActiveThreadCount = OMR_MIN(upperThreadBound, task->getRecommendedWorkingThreads());
+		taskActiveThreadCount = OMR_MAX(1, taskActiveThreadCount);
+
+		_activeThreadCount = taskActiveThreadCount;
+
+		Trc_MM_ParallelDispatcher_recomputeActiveThreadCountForTask_useCollectorRecommendedThreads(task->getRecommendedWorkingThreads(), taskActiveThreadCount);
+	}
+
 	task->setThreadCount(taskActiveThreadCount);
  	return taskActiveThreadCount;
 }

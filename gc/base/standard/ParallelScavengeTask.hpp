@@ -79,6 +79,8 @@ public:
 	virtual bool synchronizeGCThreadsAndReleaseSingleThread(MM_EnvironmentBase *env, const char *id);
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
+	virtual uintptr_t getRecommendedWorkingThreads();
+
 	/**
 	 * Create a ParallelScavengeTask object.
 	 */
