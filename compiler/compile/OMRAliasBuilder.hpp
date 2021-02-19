@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@ namespace OMR { typedef OMR::AliasBuilder AliasBuilderConnector; }
 #include "compile/Method.hpp"
 #include "env/TRMemory.hpp"
 #include "il/Node.hpp"
+#include "infra/Annotations.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Array.hpp"
 #include "infra/List.hpp"
@@ -67,7 +68,7 @@ public:
    TR::AliasBuilder *self();
 
    TR::SymbolReferenceTable *symRefTab() { return _symRefTab; }
-   TR::Compilation *comp() { return _compilation; }
+   TR::Compilation *comp() { return _comp; }
    TR_Memory *trMemory() { return _trMemory; }
    TR_StackMemory trStackMemory() { return _trMemory; }
    TR_HeapMemory trHeapMemory() { return _trMemory; }
@@ -138,7 +139,7 @@ public:
 
 protected:
 
-   TR::Compilation *_compilation;
+   TR::Compilation *_comp;
    TR_Memory *_trMemory;
 
    TR::SymbolReferenceTable *_symRefTab;

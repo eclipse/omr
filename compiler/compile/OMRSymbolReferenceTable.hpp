@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,7 @@ namespace OMR { typedef OMR::SymbolReferenceTable SymbolReferenceTableConnector;
 #include "il/RegisterMappedSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "infra/Annotations.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -56,7 +57,6 @@ namespace OMR { typedef OMR::SymbolReferenceTable SymbolReferenceTableConnector;
 #include "infra/Link.hpp"
 #include "infra/List.hpp"
 #include "runtime/Runtime.hpp"
-
 
 namespace OMR
 {
@@ -72,7 +72,7 @@ class SymbolReferenceTable
 
    TR::SymbolReferenceTable *self();
 
-   TR::Compilation *comp() { return _compilation; }
+   TR::Compilation *comp() { return _comp; }
    TR_FrontEnd *fe() { return _fe; }
    TR_Memory *trMemory() { return _trMemory; }
    TR_StackMemory trStackMemory() { return _trMemory; }
@@ -478,9 +478,9 @@ class SymbolReferenceTable
    template <class BitVector>
    void getAllSymRefs(BitVector &allSymRefs)
       {
-      for (int32_t symRefNumber = getIndexOfFirstSymRef(); symRefNumber < getNumSymRefs(); symRefNumber++)
+      for (int32_t symRefNumber = 0; symRefNumber < baseArray.size(); symRefNumber++)
          {
-         TR::SymbolReference *symRef = getSymRef(symRefNumber);
+         TR::SymbolReference *symRef = baseArray.element(symRefNumber);
          if (symRef)
             allSymRefs[symRefNumber] = true;
          }
@@ -602,7 +602,7 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateTransactionExitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateTransactionAbortSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreatePrefetchSymbol();
-   TR::SymbolReference * findPrefetchSymbol() { return element(prefetchSymbol); }
+   TR::SymbolReference * findPrefetchSymbol();
    TR::SymbolReference * findOrCreateStartPCSymbolRef();
    TR::SymbolReference * findOrCreateAThrowSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateCheckCastSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
@@ -639,7 +639,7 @@ class SymbolReferenceTable
    TR::SymbolReference * findClassAndDepthFlagsSymbolRef();
    TR::SymbolReference * findArrayComponentTypeSymbolRef();
    TR::SymbolReference * findClassIsArraySymbolRef();
-   TR::SymbolReference * findHeaderFlagsSymbolRef() { return element(headerFlagsSymbol); }
+   TR::SymbolReference * findHeaderFlagsSymbolRef();
    TR::SymbolReference * createKnownStaticReferenceSymbolRef(void *address, TR::KnownObjectTable::Index knownObjectIndex=TR::KnownObjectTable::UNKNOWN);
 
    TR::SymbolReference * findOrCreateArrayTranslateSymbol();
@@ -835,7 +835,7 @@ class SymbolReferenceTable
    OriginalUnimprovedMap               _originalUnimprovedSymRefs;
 
    TR_FrontEnd *_fe;
-   TR::Compilation *_compilation;
+   TR::Compilation *_comp;
    TR_Memory *_trMemory;
 
    // J9
