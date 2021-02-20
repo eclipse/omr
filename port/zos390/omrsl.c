@@ -113,6 +113,22 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 
 		DMESSAGE(("omrsl_open_shared_library: Attempt to load 31-bit DLL [%s]\n", openName))
 
+		/* Due to temporary LE limitation, we need to pass environment variables via _CEE_ENVFILE.
+		 * Since this could be the first path in establishing 31-bit secondary enclave,
+		 * and launcher may unset _CEE_ENVFILE in order for child processes to
+		 * pick up LIBPATH updates, we need to copy the _CEE3164_ENVFILE env var
+		 * to _CEE_ENVFILE for duration of this CEL4RO31 invocation.
+		 */
+		char *CEE_ENVFILE_envvar = getenv("_CEE_ENVFILE");
+		char *CEE3164_ENVFILE_envvar = getenv("_CEE3164_ENVFILE");
+		BOOLEAN initCEE_ENVFILE = ((NULL == CEE_ENVFILE_envvar) || ('\0' == CEE_ENVFILE_envvar[0])) && (NULL != CEE3164_ENVFILE_envvar);
+
+		if (initCEE_ENVFILE) {
+			char buf[1024];
+			snprintf(buf, sizeof(buf), "_CEE_ENVFILE=%s", CEE3164_ENVFILE_envvar);
+			putenv(buf);
+		}
+
 		ro31InfoBlock = omr_cel4ro31_init(OMR_CEL4RO31_FLAG_LOAD_DLL, openName, NULL, 0);
 		if (NULL != ro31InfoBlock) {
 			OMR_CEL4RO31_controlBlock *ro31ControlBlock = &(ro31InfoBlock->ro31ControlBlock);
@@ -137,6 +153,11 @@ omrsl_open_shared_library(struct OMRPortLibrary *portLibrary, char *name, uintpt
 				strncat(errBuf, cel4ro_errBuf, sizeof(errBuf) - strlen(errBuf) - 1);
 			}
 			omr_cel4ro31_deinit(ro31InfoBlock);
+		}
+
+		if (initCEE_ENVFILE) {
+			/* Clear _CEE_ENVFILE to avoid child processes issues with picking up the updated LIBPATH. */
+			putenv("_CEE_ENVFILE=");
 		}
 
 		DMESSAGE(("omrsl_open_shared_library: Attempted to load 31-bit DLL Return Code: [%d] DLL handle: [%p]\n", ro31InfoBlock->ro31ControlBlock.retcode, handle))
