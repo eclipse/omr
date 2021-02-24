@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,6 @@ compiler_library(optimizer
 	${CMAKE_CURRENT_LIST_DIR}/OSRDefAnalysis.cpp
 	${CMAKE_CURRENT_LIST_DIR}/PartialRedundancy.cpp
 	${CMAKE_CURRENT_LIST_DIR}/PreExistence.cpp
-	${CMAKE_CURRENT_LIST_DIR}/PrefetchInsertion.cpp
 	${CMAKE_CURRENT_LIST_DIR}/Reachability.cpp
 	${CMAKE_CURRENT_LIST_DIR}/ReachingDefinitions.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRRecognizedCallTransformer.cpp

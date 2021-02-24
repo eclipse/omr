@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,7 +104,6 @@
 #include "optimizer/SinkStores.hpp"
 #include "optimizer/PartialRedundancy.hpp"
 #include "optimizer/OSRDefAnalysis.hpp"
-#include "optimizer/PrefetchInsertion.hpp"
 #include "optimizer/StripMiner.hpp"
 #include "optimizer/FieldPrivatizer.hpp"
 #include "optimizer/ReorderIndexExpr.hpp"
@@ -444,13 +443,6 @@ const OptimizationStrategy stripMiningOpts[] =
    { endGroup                             }
    };
 
-const OptimizationStrategy prefetchInsertionOpts[] =
-   {
-   { inductionVariableAnalysis            },
-   { prefetchInsertion                    },
-   { endGroup                             }
-   };
-
 const OptimizationStrategy blockManipulationOpts[] =
    {
 //   { generalLoopUnroller,       IfLoops   }, //Unroll Loops
@@ -605,7 +597,6 @@ static const OptimizationStrategy omrHotStrategyOpts[] =
    { OMR::globalCopyPropagation,                             },
    { OMR::loopCanonicalizationGroup,                         }, // canonicalize loops (improve fall throughs)
    { OMR::expressionsSimplification,                         },
-   { OMR::prefetchInsertionGroup,                            }, // created IL should not be moved
    { OMR::partialRedundancyEliminationGroup                  },
    { OMR::globalDeadStoreElimination,                        },
    { OMR::inductionVariableAnalysis,                         },
@@ -849,8 +840,6 @@ OMR::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *metho
       new (comp->allocator()) TR::OptimizationManager(self(), TR_OSRExceptionEdgeRemoval::create, OMR::osrExceptionEdgeRemoval);
    _opts[OMR::regDepCopyRemoval] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR::RegDepCopyRemoval::create, OMR::regDepCopyRemoval);
-   _opts[OMR::prefetchInsertion] =
-      new (comp->allocator()) TR::OptimizationManager(self(), TR_PrefetchInsertion::create, OMR::prefetchInsertion);
    _opts[OMR::stripMining] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_StripMiner::create, OMR::stripMining);
    _opts[OMR::fieldPrivatization] =
@@ -904,8 +893,6 @@ OMR::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *metho
       new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::veryExpensiveGlobalValuePropagationGroup, veryExpensiveGlobalValuePropagationOpts);
    _opts[OMR::loopSpecializerGroup] =
       new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::loopSpecializerGroup, loopSpecializerOpts);
-   _opts[OMR::prefetchInsertionGroup] =
-      new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::prefetchInsertionGroup, prefetchInsertionOpts);
    _opts[OMR::lateLocalGroup] =
       new (comp->allocator()) TR::OptimizationManager(self(), NULL, OMR::lateLocalGroup, lateLocalOpts);
    _opts[OMR::eachLocalAnalysisPassGroup] =

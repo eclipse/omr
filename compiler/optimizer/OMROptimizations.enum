@@ -100,7 +100,6 @@
    OPTIMIZATION(profiledNodeVersioning)
    OPTIMIZATION(allocationSinking)
    OPTIMIZATION(stripMining)
-   OPTIMIZATION(prefetchInsertion)
    OPTIMIZATION(samplingJProfiling)
    OPTIMIZATION(trivialDeadTreeRemoval)
    OPTIMIZATION(osrDefAnalysis)
