@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -442,9 +442,8 @@ TR::RegDepCopyRemoval::makeFreshCopy(TR_GlobalRegisterNumber reg)
       TR_ASSERT_FATAL_WITH_NODE(dep.node,
                                  dep.node->getOpCode().isLoadReg()
                                  || (dep.node->getOpCodeValue() == TR::PassThrough
-                                    && dep.value->getOpCode().isLoadReg()
-                                    && dep.node->getGlobalRegisterNumber() == dep.value->getGlobalRegisterNumber()),
-                                 "Only PassThrough (with corresponding regStore appeared before or using same Global Register as child) or regLoad nodes are expected as children of GlRegDeps.");
+                                    && dep.value->getOpCode().isLoadReg()),
+                                 "Only PassThrough (with corresponding regStore appeared before or contains regLoad child) or regLoad nodes are expected as children of GlRegDeps.");
       choice.regStoreNode = TR::Node::create(dep.node, comp()->il.opCodeForRegisterStore(dep.value->getDataType()), 1, copyNode);
       _treetop->insertBefore(TR::TreeTop::create(comp(), choice.regStoreNode));
       choice.regStoreNode->setGlobalRegisterNumber(dep.node->getGlobalRegisterNumber());
