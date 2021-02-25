@@ -319,7 +319,7 @@ timestamps {
                 scmVars = null
                 ws(customWorkspace) {
                     try {
-                        timeout(time: 1, unit: 'HOURS') {
+                        timeout(time: 2, unit: 'HOURS') {
                             def tmpDesc = (currentBuild.description) ? currentBuild.description + "<br>" : ""
                             currentBuild.description = tmpDesc + "<a href=${JENKINS_URL}computer/${NODE_NAME}>${NODE_NAME}</a>"
 
