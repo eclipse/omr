@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -148,7 +148,7 @@ template <class T> class TR_HedgeNode
       }
 
 #if DEBUG
-   void printTree(TR_FrontEnd *fe, TR::FILE *outFile, int32_t indent, char *prefix, bool isLeftChild, bool isSibling)
+   void printTree(TR::FILE *outFile, int32_t indent, char *prefix, bool isLeftChild, bool isSibling)
       {
       int32_t prefixPos = isSibling ? indent : indent-3;
       if (prefixPos > 0)
@@ -161,9 +161,9 @@ template <class T> class TR_HedgeNode
       if (_right)
          {
          if (isRightSibling())
-            _right->printTree(fe, outFile, indent, prefix, false, true);
+            _right->printTree(outFile, indent, prefix, false, true);
          else
-            _right->printTree(fe, outFile, indent+5, prefix, false, false);
+            _right->printTree(outFile, indent+5, prefix, false, false);
          }
       else
          trfprintf(outFile, "%.*s\n", prefixPos+1, prefix);
@@ -181,9 +181,9 @@ template <class T> class TR_HedgeNode
       if (_left)
          {
          if (isLeftSibling())
-            _left->printTree(fe, outFile, indent, prefix, true, true);
+            _left->printTree(outFile, indent, prefix, true, true);
          else
-            _left->printTree(fe, outFile, indent+5, prefix, true, false);
+            _left->printTree(outFile, indent+5, prefix, true, false);
          }
       else
          trfprintf(outFile, "%.*s\n", prefixPos+1, prefix);
@@ -238,7 +238,7 @@ template <class T> class TR_HedgeTree
    }
 
 #if DEBUG
-   void print(TR_FrontEnd *fe, TR::FILE *outFile)
+   void print(TR::FILE *outFile)
       {
       if (outFile == NULL)
          return;
@@ -249,11 +249,11 @@ template <class T> class TR_HedgeTree
          }
       char prefix[80];
       memset(prefix, ' ', 80);
-      _root->printTree(fe, outFile, 3, prefix, false, false);
+      _root->printTree(outFile, 3, prefix, false, false);
       trfflush(outFile);
       }
 #else
-   void print(TR_FrontEnd *fe, TR::FILE *outFile) {}
+   void print(TR::FILE *outFile) {}
 #endif
 
    private:
@@ -340,7 +340,7 @@ template <class T> class TR_HedgeTreeHandler
       if (_treeChanged && debug("traceHedge"))
          {
          diagnostic("Tree after insertion of key %d:\n", key);
-         tree.print(comp()->fe(), comp()->getOutFile());
+         tree.print(comp()->getOutFile());
          tree.verify();
          }
       return result;
@@ -385,7 +385,7 @@ template <class T> class TR_HedgeTreeHandler
       if (_treeChanged && debug("traceHedge"))
          {
          diagnostic("Tree after removal of key %d:\n", key);
-         tree.print(comp()->fe(), comp()->getOutFile());
+         tree.print(comp()->getOutFile());
          tree.verify();
          }
       return result;
