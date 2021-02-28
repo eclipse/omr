@@ -53,7 +53,6 @@ namespace CS2 {
       return realloc(pointer, newsize);
     }
 
-    template <class ostr, class allocator> ostr& stats(ostr &o, allocator &a) { return o;}
   };
 
   template <size_t segmentsize = 65536, uint32_t segmentcount= 10, class base_allocator = ::CS2::malloc_allocator>
@@ -182,30 +181,6 @@ namespace CS2 {
         segments[i]=NULL;
     }
 
-    template <class ostr, class allocator> ostr& stats(ostr &o, allocator &a) {
-      o << "CS2 heap allocator\n"
-        << "Segment size= " << segmentsize << " bytes\n";
-
-      for (uint32_t i=1; i<segmentcount; i++) {
-        Segment *s = segments[i];
-        size_t numsegs=0, totalsize=0, allocsize=0, freesize=0;
-        while (s) {
-           numsegs++;
-           totalsize += segmentsize;
-           allocsize += s->get_alloc(i);
-           freesize += s->get_free(i);
-           s = s->next_segment();
-        }
-
-        if (totalsize)
-        o << " segment[" <<i << "](" << s->element_size(i) << ")"
-          << " count=" << numsegs
-          << " size(alloc,free)=(" << allocsize << "," << freesize  << ":" << (allocsize*100/totalsize) << "%) "
-          << " pad=(" << totalsize-allocsize-freesize << ":" << (totalsize-allocsize-freesize)*100/totalsize << "%)\n";
-      }
-      return base_allocator::stats(o, a);
-    }
-
     ~heap_allocator() {
       for (uint32_t i=0; i<segmentcount; i++) {
         Segment *s = segments[i];
@@ -296,8 +271,6 @@ namespace CS2 {
       return base.reallocate(newsize, pointer, size);
     }
 
-    template <class ostr, class allocator> ostr& stats(ostr &o, allocator &a) { return base.stats(o, a);}
-
     shared_allocator & operator = (const shared_allocator & a2 ) {
       // no need to copy the allocator being shared
       return *this;
@@ -375,16 +348,6 @@ namespace CS2 {
     arena_allocator & operator = (const arena_allocator & a2 ) {
       // no need to copy the allocator being shared
       return *this;
-    }
-
-    template <class ostr, class allocator> ostr& stats(ostr &o, allocator &a) {
-      uint32_t c = 0;
-      for (Segment *s = segment; s; s=s->next) c+=1;
-
-      o << "Arena: Segments allocated=" << c << "\n"
-        << "Arena: Top segment allocation: " << allocated << "/" << segmentsize << "\n";
-
-      return base_allocator::stats(o, a);
     }
 
   private:

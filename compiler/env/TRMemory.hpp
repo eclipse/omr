@@ -840,13 +840,6 @@ public:
       deallocate(ptr, size, name);
       return ret;
       }
-
-   template <class ostr, class allocator> ostr& stats(ostr &o, allocator &a)
-      {
-      o << "TRPersistentMemoryAllocator stats:\n";
-      o << "not implemented\n";
-      return o;
-      }
    };
 
 template <TR_AllocationKind kind, uint32_t minbits, uint32_t maxbits = sizeof(void *)*4>
@@ -854,8 +847,6 @@ class TRMemoryAllocator {
   TR_Memory *memory;
   bool  scavenge;
   void *(freelist[maxbits - minbits]);
-  size_t stats_largeAlloc;
-  size_t statsArray[maxbits - minbits];
 
   static uint32_t bucket(size_t size) {
     uint32_t i=minbits;
@@ -869,29 +860,24 @@ class TRMemoryAllocator {
   }
 
 public:
-  TRMemoryAllocator(const TRMemoryAllocator<kind,minbits,maxbits> &a) : memory(a.memory), stats_largeAlloc(0), scavenge(a.scavenge) {
+  TRMemoryAllocator(const TRMemoryAllocator<kind,minbits,maxbits> &a) : memory(a.memory), scavenge(a.scavenge) {
     memset(&freelist, 0, sizeof(freelist));
-    memset(&statsArray, 0, sizeof(freelist));
   }
 
   TRMemoryAllocator<kind,minbits,maxbits> &operator= (const TRMemoryAllocator &a) {
-    stats_largeAlloc = 0;
     scavenge = a.scavenge;
     memset(&freelist, 0, sizeof(freelist));
-    memset(&statsArray, 0, sizeof(freelist));
   }
 
-  TRMemoryAllocator(TR_Memory *m) : memory(m), stats_largeAlloc(0), scavenge(true) {
+  TRMemoryAllocator(TR_Memory *m) : memory(m), scavenge(true) {
     memset(&freelist, 0, sizeof(freelist));
-    memset(&statsArray, 0, sizeof(freelist));
 
   }
 
   template <uint32_t mi, uint32_t ma>
   TRMemoryAllocator(const TRMemoryAllocator<kind, mi, ma> &a) : memory(a.memory),
-            stats_largeAlloc(0), scavenge(true) {
+            scavenge(true) {
     memset(&freelist, 0, sizeof(freelist));
-    memset(&statsArray, 0, sizeof(freelist));
   }
 
   static TRMemoryAllocator &instance()
@@ -908,7 +894,6 @@ public:
     uint32_t b = bucket(size);
 
     if (b>=maxbits) {
-      stats_largeAlloc += size;
       return  memory->allocateMemory(size, kind, TR_Memory::CS2);
     }
 
@@ -952,7 +937,6 @@ public:
       }
     }
 
-    statsArray[b-minbits] += bucketsize(b);
     return memory->allocateMemory(bucketsize(b), kind, TR_Memory::CS2);
   }
 
@@ -977,23 +961,6 @@ public:
     return ret;
   }
 
-  template <class ostr, class allocator> ostr& stats(ostr &o, allocator &a) {
-    o << "TRMemoryAllocator stats:\n";
-    for (int i=minbits; i < maxbits; i++) {
-      if (statsArray[i-minbits]) {
-        int32_t sz=0;
-        void *p = freelist[i-minbits];
-        while (p) {
-          sz += bucketsize(i);
-          p = *(void **)p;
-        }
-        o <<  "bucket[" << i-minbits << "] (" << bucketsize(i) << ") : allocated = "
-          << statsArray[i-minbits] <<  " bytes, freelist size = " << sz << "\n" ;
-      }
-    }
-
-    return o;
-  }
 };
 
 typedef TRMemoryAllocator<heapAlloc, 12, 28> TRCS2MemoryAllocator;
