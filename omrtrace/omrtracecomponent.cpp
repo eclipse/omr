@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1057,14 +1057,43 @@ openFileFromDirectorySearchList(char *searchPath, char *fileName, int32_t flags,
 static float
 getDatFileVersion(char *formatFileContents)
 {
-	float version;
-	/* read the length of the first line */
-	if (formatFileContents == NULL) {
-		return 0.0F;
+	float version = 0.0F;
+
+	/*
+	 * We cannot simply use atof() here because the tracepoint data file uses
+	 * the en_US locale which may differ from the the locale in effect as the
+	 * file is read. In particular, the decimal separator of the active locale
+	 * may not be '.'.
+	 */
+	if (NULL != formatFileContents) {
+		int majorValue = 0;
+		int decimalSeen = 0;
+		int minorValue = 0;
+		int minorScale = 1;
+		const char *cursor = formatFileContents;
+
+		for (;; ++cursor) {
+			char ch = *cursor;
+
+			if (('0' <= ch) && (ch <= '9')) {
+				if (0 == decimalSeen) {
+					majorValue = (majorValue * 10) + (ch - '0');
+				} else {
+					minorValue = (minorValue * 10) + (ch - '0');
+					minorScale *= 10;
+				}
+			} else if (('.' == ch) && (0 == decimalSeen)) {
+				decimalSeen = 1;
+			} else {
+				break;
+			}
+		}
+
+		version = (float)majorValue + ((float)minorValue / (float)minorScale);
 	}
 
-	version = (float)atof(formatFileContents);
 	UT_DBGOUT(2, ("<UT> getDatFileVersion %f\n", version));
+
 	return version;
 }
 
