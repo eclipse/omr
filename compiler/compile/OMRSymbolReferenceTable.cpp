@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1320,7 +1320,7 @@ OMR::SymbolReferenceTable::findOrCreateClassSymbol(
       // the class on AOT load.
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
       void *loader = fej9->getClassLoader((TR_OpaqueClassBlock*)classObject);
-      void *bootstrapLoader = TR::Compiler->javaVM->systemClassLoader;
+      void *bootstrapLoader = fej9->getSystemClassLoader();
       TR_ASSERT_FATAL(
          loader == bootstrapLoader,
          "class symref cpIndex=-1 in AOT not loaded by bootstrap loader\n");
