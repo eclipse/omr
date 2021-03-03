@@ -1581,8 +1581,8 @@ MM_Scavenger::copy(MM_EnvironmentStandard *env, MM_ForwardedHeader* forwardedHea
 			/* Fixup most of the destination object (part that overlaps with forwarded header) */
 			forwardedHeader->commenceFixup(destinationObjectPtr);
 
-			/* Object model specific update, like age */
-			fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
+			/* Object model specific fixup, like age */
+			_extensions->objectModel.fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
 
 			/* Final fixup step - the object is available for usage by mutator threads */
 			forwardedHeader->commitFixup(destinationObjectPtr);
@@ -1594,7 +1594,7 @@ MM_Scavenger::copy(MM_EnvironmentStandard *env, MM_ForwardedHeader* forwardedHea
 			/* Copy the preserved fields from the forwarded header into the destination object */
 			forwardedHeader->fixupForwardedObject(destinationObjectPtr);
 
-			fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
+			_extensions->objectModel.fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
 		}
 
 #if defined(OMR_VALGRIND_MEMCHECK)
@@ -1675,22 +1675,6 @@ MM_Scavenger::copy(MM_EnvironmentStandard *env, MM_ForwardedHeader* forwardedHea
 	}
 	/* return value for updating the slot */
 	return destinationObjectPtr;
-}
-
-MMINLINE void
-MM_Scavenger::fixupForwardedObject(MM_ForwardedHeader* forwardedHeader, omrobjectptr_t destinationObjectPtr, uintptr_t objectAge) {
-	/* Object model specific fixup, like age */
-	_extensions->objectModel.fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
-
-	if(_extensions->objectModel.isIndexable(destinationObjectPtr)) {
-		/* Updates internal field of indexable objects. Every indexable object have an extra field
-		 * that can be used to store any extra information about the indexable object. One use case is
-		 * OpenJ9 where we use this field to point to array data. In this case it will always point to
-		 * the address right after the header, in case of contiguous data it will point to the data
-		 * itself, and in case of discontiguous arraylet it will point to the first arrayiod. How to
-		 * updated dataAddr is up to the target language that must override fixupDataAddr */
-		_extensions->indexableObjectModel.fixupDataAddr(destinationObjectPtr);
-	}
 }
 
 MMINLINE void
