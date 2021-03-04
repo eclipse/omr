@@ -119,10 +119,6 @@
 #define CACHE_LINE_SIZE 64
 #endif
 
-/* create macros to interpret the hot field descriptor */
-#define HOTFIELD_SHOULD_ALIGN(descriptor) (0x1 == (0x1 & (descriptor)))
-#define HOTFIELD_ALIGNMENT_BIAS(descriptor, heapObjectAlignment) (((descriptor) >> 1) * (heapObjectAlignment))
-
 extern "C" {
 	uintptr_t allocateMemoryForSublistFragment(void *vmThreadRawPtr, J9VMGC_SublistFragment *fragmentPrimitive);
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
@@ -281,8 +277,6 @@ MM_Scavenger::initialize(MM_EnvironmentBase *env)
 	if (!_scavengeCacheFreeList.resizeCacheEntries(env, totalActiveCacheCount, incrementCacheCount)) {
 		return false;
 	}
-
-	_cacheLineAlignment = CACHE_LINE_SIZE;
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	if (_extensions->concurrentScavenger) {
@@ -1409,10 +1403,6 @@ MM_Scavenger::copy(MM_EnvironmentStandard *env, MM_ForwardedHeader* forwardedHea
 {
 	omrobjectptr_t destinationObjectPtr;
 	uintptr_t objectCopySizeInBytes, objectReserveSizeInBytes;
-	uintptr_t hotFieldsDescriptor = 0;
-	uintptr_t hotFieldsAlignment = 0;
-	uintptr_t* hotFieldPadBase = NULL;
-	uintptr_t hotFieldPadSize = 0;
 	MM_CopyScanCacheStandard *copyCache;
 	void *newCacheAlloc;
 	bool const compressed = _extensions->compressObjectReferences();
@@ -1426,7 +1416,7 @@ MM_Scavenger::copy(MM_EnvironmentStandard *env, MM_ForwardedHeader* forwardedHea
 	uintptr_t oldObjectAge = objectAge;
 
 	/* Object is in the evacuate space but not forwarded. */
-	_extensions->objectModel.calculateObjectDetailsForCopy(env, forwardedHeader, &objectCopySizeInBytes, &objectReserveSizeInBytes, &hotFieldsDescriptor);
+	_extensions->objectModel.calculateObjectDetailsForCopy(env, forwardedHeader, &objectCopySizeInBytes, &objectReserveSizeInBytes);
 
 	Assert_MM_objectAligned(env, objectReserveSizeInBytes);
 
@@ -1456,19 +1446,6 @@ MM_Scavenger::copy(MM_EnvironmentStandard *env, MM_ForwardedHeader* forwardedHea
 		}
 	} else {
 		/* Move straight to tenuring on the object */
-		/* adjust the reserved object's size if we are aligning hot fields and this class has a known hot field */
-		if (_extensions->scavengerAlignHotFields && HOTFIELD_SHOULD_ALIGN(hotFieldsDescriptor)) {
-			/* this optimization is a source of fragmentation (alloc request size always assumes maximum padding,
-			 * but free entry created by sweep in tenure could be less than that (since some of unused padding can overlap with next copied object)).
-			 * we limit this optimization for arrays up to the size of 2 cache lines, beyond which the benefits of the optimization are believed to be non-existant */
-            if (!_extensions->objectModel.isIndexable(forwardedHeader) || (objectReserveSizeInBytes <= 2 * _cacheLineAlignment)) {
-				/* set the descriptor field if we should be aligning (since assuming that 0 means no is not safe) */
-				hotFieldsAlignment = hotFieldsDescriptor;
-				/* for simplicity, add the maximum padding we could need (and back off after allocation) */
-				objectReserveSizeInBytes += (_cacheLineAlignment - _objectAlignmentInBytes);
-				Assert_MM_objectAligned(env, objectReserveSizeInBytes);
-            }
-		}
 		copyCache = reserveMemoryForAllocateInTenureSpace(env, forwardedHeader->getObject(), objectReserveSizeInBytes);
 		if (NULL != copyCache) {
 			/* Clear age and set the old bit */
@@ -1508,24 +1485,6 @@ MM_Scavenger::copy(MM_EnvironmentStandard *env, MM_ForwardedHeader* forwardedHea
 
 	/* Memory has been reserved */
 	destinationObjectPtr = (omrobjectptr_t)copyCache->cacheAlloc;
-	/* now correct for the hot field alignment */
-	if (0 != hotFieldsAlignment) {
-		uintptr_t remainingInCacheLine = _cacheLineAlignment - ((uintptr_t)destinationObjectPtr % _cacheLineAlignment);
-		uintptr_t alignmentBias = HOTFIELD_ALIGNMENT_BIAS(hotFieldsAlignment, _objectAlignmentInBytes);
-		/* do alignment only if the object cannot fit in the remaining space in the cache line */
-		if ((remainingInCacheLine < objectCopySizeInBytes) && (alignmentBias < remainingInCacheLine)) {
-			hotFieldPadSize = ((remainingInCacheLine + _cacheLineAlignment) - (alignmentBias % _cacheLineAlignment)) % _cacheLineAlignment;
-			hotFieldPadBase = (uintptr_t *)destinationObjectPtr;
-			/* now fix the object pointer so that the hot field is aligned */
-			destinationObjectPtr = (omrobjectptr_t)((uintptr_t)destinationObjectPtr + hotFieldPadSize);
-		}
-		/* and update the reserved size so that we "un-reserve" the extra memory we said we might need.  This is done by
-		 * removing the excess reserve since we already accounted for the hotFieldPadSize by bumping the destination pointer
-		 * and now we need to revert to the amount needed for the object allocation and its array alignment so the rest of
-		 * the method continues to function without needing to know about this extra alignment calculation
-		 */
-		objectReserveSizeInBytes = objectReserveSizeInBytes - (_cacheLineAlignment - _objectAlignmentInBytes);
-	}
 
 	/* and correct for the double array alignment */
 	newCacheAlloc = (void *) (((uint8_t *)destinationObjectPtr) + objectReserveSizeInBytes);
@@ -1559,12 +1518,6 @@ MM_Scavenger::copy(MM_EnvironmentStandard *env, MM_ForwardedHeader* forwardedHea
 
 	if (originalDestinationObjectPtr == destinationObjectPtr) {
 		/* Succeeded in forwarding the object, or we allow duplicate (did not even tried to forward yet). */
-
-		if (NULL != hotFieldPadBase) {
-			bool const compressed = _extensions->compressObjectReferences();
-			/* lay down a hole (XXX:  This assumes that we are using AOL (address-ordered-list)) */
-			MM_HeapLinkedFreeHeader::fillWithHoles(hotFieldPadBase, hotFieldPadSize, compressed);
-		}
 
 #if defined(OMR_VALGRIND_MEMCHECK)
 		valgrindMempoolAlloc(_extensions, (uintptr_t) destinationObjectPtr, objectReserveSizeInBytes);

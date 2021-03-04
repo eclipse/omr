@@ -112,7 +112,6 @@ private:
 	omrthread_monitor_t _freeCacheMonitor; /**< monitor to synchronize threads on free list */
 	uintptr_t _waitingCountAliasThreshold; /**< Only alias a copy cache IF the number of threads waiting hasn't reached the threshold*/
 	volatile uintptr_t _waitingCount; /**< count of threads waiting  on scan cache queues (blocked via _scanCacheMonitor); threads never wait on _freeCacheMonitor */
-	uintptr_t _cacheLineAlignment; /**< The number of bytes per cache line which is used to determine which boundaries in memory represent the beginning of a cache line */
 	volatile bool _rescanThreadsForRememberedObjects; /**< Indicates that thread-referenced objects were tenured and threads must be rescanned */
 
 	volatile uintptr_t _backOutDoneIndex; /**< snapshot of _doneIndex, when backOut was detected */
@@ -909,7 +908,6 @@ public:
 		, _freeCacheMonitor(NULL)
 		, _waitingCountAliasThreshold(0)
 		, _waitingCount(0)
-		, _cacheLineAlignment(0)
 #if !defined(OMR_GC_CONCURRENT_SCAVENGER)
 		, _rescanThreadsForRememberedObjects(false)
 #endif

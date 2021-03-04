@@ -2505,27 +2505,6 @@ OMR::Block::getOwningMethod()
    return _catchBlockExtension->_owningMethod;
    }
 
-int32_t
-OMR::Block::getNormalizedFrequency(TR::CFG * cfg)
-   {
-   if (self()->getFrequency() < 0)
-      return (MAX_WARM_BLOCK_COUNT * 100) / (MAX_BLOCK_COUNT+MAX_COLD_BLOCK_COUNT);
-   return (self()->getFrequency() * 100) / (MAX_BLOCK_COUNT+MAX_COLD_BLOCK_COUNT);
-   }
-
-int32_t
-OMR::Block::getGlobalNormalizedFrequency(TR::CFG * cfg)
-   {
-   int32_t frequency = self()->getNormalizedFrequency(cfg);
-
-   TR_Hotness hotness = cfg->comp()->getMethodHotness();
-   if (hotness >= scorching)
-      return frequency * 100;
-   if (hotness >= hot)
-      return frequency * 10;
-   return frequency;
-   }
-
 /*
  * An OSR induce block is used in voluntary OSR to contain the OSR point's dead stores
  * and to induce the transition. It will always have a single edge to the exit and at least one
