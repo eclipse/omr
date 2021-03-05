@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -564,9 +564,21 @@ void OMR::ARM64::MemoryReference::consolidateRegisters(TR::Register *srcReg, TR:
          {
          if (self()->isBaseModifiable())
             tempTargetRegister = _baseRegister;
-         else if (_baseRegister->containsCollectedReference() ||
-                  _indexRegister->containsCollectedReference())
-            tempTargetRegister = cg->allocateCollectedReferenceRegister();
+         else if (_baseRegister->containsCollectedReference() || _baseRegister->containsInternalPointer() ||
+                  _indexRegister->containsCollectedReference() || _indexRegister->containsInternalPointer())
+            {
+            if (srcTree!=NULL && srcTree->isInternalPointer() &&
+                srcTree->getPinningArrayPointer())
+               {
+               tempTargetRegister = cg->allocateRegister();
+               tempTargetRegister->setContainsInternalPointer();
+               tempTargetRegister->setPinningArrayPointer(srcTree->getPinningArrayPointer());
+               }
+            else
+               {
+               tempTargetRegister = cg->allocateCollectedReferenceRegister();
+               }
+            }
          else
             tempTargetRegister = cg->allocateRegister();
 
@@ -593,9 +605,21 @@ void OMR::ARM64::MemoryReference::consolidateRegisters(TR::Register *srcReg, TR:
             tempTargetRegister = _baseRegister;
          else if (srcModifiable)
             tempTargetRegister = srcReg;
-         else if (srcReg->containsCollectedReference() ||
-                  _baseRegister->containsCollectedReference())
-            tempTargetRegister = cg->allocateCollectedReferenceRegister();
+         else if (srcReg->containsCollectedReference() || srcReg->containsInternalPointer() ||
+                  _baseRegister->containsCollectedReference() || _baseRegister->containsInternalPointer())
+            {
+            if (srcTree!=NULL && srcTree->isInternalPointer() &&
+               srcTree->getPinningArrayPointer())
+               {
+               tempTargetRegister = cg->allocateRegister();
+               tempTargetRegister->setContainsInternalPointer();
+               tempTargetRegister->setPinningArrayPointer(srcTree->getPinningArrayPointer());
+               }
+            else
+               {
+               tempTargetRegister = cg->allocateCollectedReferenceRegister();
+               }
+            }
          else
             tempTargetRegister = cg->allocateRegister();
 

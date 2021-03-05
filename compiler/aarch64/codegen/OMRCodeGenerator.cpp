@@ -474,15 +474,24 @@ TR::Instruction *OMR::ARM64::CodeGenerator::generateSwitchToInterpreterPreProlog
 // different from evaluate in that it returns a clobberable register
 TR::Register *OMR::ARM64::CodeGenerator::gprClobberEvaluate(TR::Node *node)
    {
+   TR::Register *resultReg = self()->evaluate(node);
+
    if (node->getReferenceCount() > 1)
       {
-      TR::Register *targetReg = self()->allocateRegister();
-      generateMovInstruction(self(), node, targetReg, self()->evaluate(node));
+      TR::Register *targetReg = resultReg->containsCollectedReference() ? self()->allocateCollectedReferenceRegister() : self()->allocateRegister(resultReg->getKind());
+
+      if (resultReg->containsInternalPointer())
+         {
+         targetReg->setContainsInternalPointer();
+         targetReg->setPinningArrayPointer(resultReg->getPinningArrayPointer());
+         }
+
+      generateMovInstruction(self(), node, targetReg, resultReg);
       return targetReg;
       }
    else
       {
-      return self()->evaluate(node);
+      return resultReg;
       }
    }
 
