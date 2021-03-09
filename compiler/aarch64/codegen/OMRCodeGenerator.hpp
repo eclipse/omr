@@ -559,6 +559,7 @@ public:
     */
    TR::Instruction *generateDebugCounterBump(TR::Instruction *cursor, TR::DebugCounterBase *counter, TR::Register *deltaReg, TR_ScratchRegisterManager &srm);
 
+   bool internalPointerSupportImplemented() {return true;}
 
    private:
 
