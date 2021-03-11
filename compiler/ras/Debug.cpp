@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2039,88 +2039,6 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
    return "unknown static";
    }
 
-// Note: This array needs to match up with what is in compile/SymbolReferenceTable.hpp
-static const char *commonNonhelperSymbolNames[] =
-   {
-   "<contiguousArraySize>",
-   "<discontiguousArraySize>",
-   "<arrayClassRomPtr>",
-   "<classRomPtr>",
-   "<javaLangClassFromClass>",
-   "<classFromJavaLangClass>",
-   "<addressOfClassOfMethod>",
-   "<ramStaticsFromClass>",
-   "<componentClass>",
-   "<componentClassAsPrimitive>",
-   "<isArray>",
-   "<isClassAndDepthFlags>",
-   "<initializeStatusFromClass>",
-   "<isClassFlags>",
-   "<vft>",
-   "<currentThread>",
-   "<recompilationCounter>",
-   "<excp>",
-   "<indexableSize>",
-   "<resolveCheck>",
-   "<arrayTranslate>",
-   "<arrayTranslateAndTest>",
-   "<long2String>",
-   "<bitOpMem>",
-   "<reverseLoad>",
-   "<reverseStore>",
-   "<currentTimeMaxPrecision>",
-   "<headerFlags>",
-   "<singlePrecisionSQRT>",
-   "<threadPrivateFlags>",
-   "<arrayletSpineFirstElement>",
-   "<dltBlock>",
-   "<countForRecompile>",
-   "<gcrPatchPoint>",
-   "<counterAddress>",
-   "<startPC>",
-   "<compiledMethod>",
-   "<thisRangeExtension>",
-   "<profilingBufferCursor>",
-   "<profilingBufferEnd>",
-   "<profilingBuffer>",
-   "<osrBuffer>",
-   "<osrScratchBuffer>",
-   "<osrFrameIndex>",
-   "<osrReturnAddress>",
-   "<potentialOSRPointHelper>",
-   "<osrFearPointHelper>",
-   "<eaEscapeHelper>",
-   "<lowTenureAddress>",
-   "<highTenureAddress>",
-   "<fragmentParent>",
-   "<globalFragment>",
-   "<instanceShape>",
-   "<instanceDescription>",
-   "<descriptionWordFromPtr>",
-   "<classFromJavaLangClassAsPrimitive>",
-   "<javaVM>",
-   "<heapBase>",
-   "<heapTop>",
-   "<j9methodExtraField>",
-   "<j9methodConstantPoolField>",
-   "<startPCLinkageInfo>",
-   "<instanceShapeFromROMClass>",
-   "<objectEqualityComparison>",
-   "<synchronizedFieldLoad>",
-   "<atomicAdd>",
-   "<atomicFetchAndAdd>",
-   "<atomicFetchAndAdd32Bit>",
-   "<atomicFetchAndAdd64Bit>",
-   "<atomicSwap>",
-   "<atomicSwap32Bit>",
-   "<atomicSwap64Bit>",
-   "<atomicCompareAndSwapReturnStatus>",
-   "<atomicCompareAndSwapReturnValue>",
-   "<jProfileValueSymbol>",
-   "<jProfileValueWithNullCHKSymbol>",
-   "<j9VMThreadTempSlotField>"
-   };
-
 const char *
 TR_Debug::getShadowName(TR::SymbolReference * symRef)
    {
@@ -2172,15 +2090,12 @@ TR_Debug::getShadowName(TR::SymbolReference * symRef)
          }
       }
 
-   const int32_t numCommonNonhelperSymbols = TR::SymbolReferenceTable::lastCommonNonhelperSymbol - TR::SymbolReferenceTable::firstCommonNonhelperNonArrayShadowSymbol - TR_numCCPreLoadedCode;
-   static_assert (sizeof(commonNonhelperSymbolNames)/sizeof(commonNonhelperSymbolNames[0]) == numCommonNonhelperSymbols,
-      "commonNonhelperSymbolNames array must match CommonNonhelperSymbol enumeration");
-
    for (int32_t i = TR::SymbolReferenceTable::firstCommonNonhelperNonArrayShadowSymbol; i < _comp->getSymRefTab()->getLastCommonNonhelperSymbol(); i++)
       {
-      TR::SymbolReference *other = _comp->getSymRefTab()->element((TR::SymbolReferenceTable::CommonNonhelperSymbol)i);
+      TR::SymbolReferenceTable::CommonNonhelperSymbol nhs = static_cast<TR::SymbolReferenceTable::CommonNonhelperSymbol>(i);
+      TR::SymbolReference *other = _comp->getSymRefTab()->element(nhs);
       if (other && other->getSymbol() == symRef->getSymbol())
-         return commonNonhelperSymbolNames[i - TR::SymbolReferenceTable::firstCommonNonhelperNonArrayShadowSymbol];
+         return TR::SymbolReferenceTable::getNonHelperSymbolName(nhs);
       }
 
    return "unknown field";
