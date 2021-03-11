@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,11 +38,15 @@ template <class T> class List;
 
 namespace TR {
 
+struct RVSystemLinkageProperties : public RVLinkageProperties {
+   RVSystemLinkageProperties();
+};
+
 class RVSystemLinkage : public TR::Linkage
    {
    protected:
 
-   TR::RVLinkageProperties _properties;
+   static const TR::RVSystemLinkageProperties _properties;
 
    public:
 

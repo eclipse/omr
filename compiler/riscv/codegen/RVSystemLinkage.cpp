@@ -34,34 +34,6 @@
 #include "il/ParameterSymbol.hpp"
 
 
-//getRegisterNumber
-
-#define FOR_EACH_REGISTER(machine, block)                                        \
-   for (int regNum = TR::RealRegister::x0; regNum <= TR::RealRegister::x31; regNum++) \
-      {                                                                          \
-      TR::RealRegister *reg                                                      \
-                   = machine->getRealRegister((TR::RealRegister::RegNum)regNum); \
-      { block; }                                                                 \
-      }                                                                          \
-   for (int regNum = TR::RealRegister::f0; regNum <= TR::RealRegister::f31; regNum++) \
-      {                                                                          \
-      TR::RealRegister *reg                                                      \
-                   = machine->getRealRegister((TR::RealRegister::RegNum)regNum); \
-      { block; }                                                                 \
-      }
-
-
-#define FOR_EACH_CALLEE_SAVED_REGISTER(machine, block)                           \
-   FOR_EACH_REGISTER(machine,                                                    \
-   if (_properties._registerFlags[(TR::RealRegister::RegNum)regNum] == Preserved)\
-      { block; }                                                                 \
-   )
-
-#define FOR_EACH_ASSIGNED_CALLEE_SAVED_REGISTER(machine, block)                  \
-   FOR_EACH_CALLEE_SAVED_REGISTER(machine,                                       \
-   if (reg->getHasBeenAssignedInMethod())                                        \
-      { block; }                                                                 \
-   )
 /**
  * @brief Adds dependency
  */
@@ -82,134 +54,105 @@ addDependency(
    dep->addPostCondition(vreg, rnum);
    }
 
+TR::RVSystemLinkageProperties::RVSystemLinkageProperties()
+   {
+   _properties = IntegersInRegisters|FloatsInRegisters|RightToLeft;
+
+   _registerFlags[TR::RealRegister::zero] = Preserved|Reserved; // zero
+   _registerFlags[TR::RealRegister::ra]   = Preserved|Reserved; // return address
+   _registerFlags[TR::RealRegister::sp]   = Preserved|Reserved; // sp
+   _registerFlags[TR::RealRegister::gp]   = Preserved|Reserved; // gp
+   _registerFlags[TR::RealRegister::tp]   = Preserved|Reserved; // tp
+
+   _registerFlags[TR::RealRegister::t0]   = Preserved|Reserved; // fp
+   _registerFlags[TR::RealRegister::t1]   = 0;
+   _registerFlags[TR::RealRegister::t2]   = 0;
+
+   _registerFlags[TR::RealRegister::s0]   = Preserved;
+   _registerFlags[TR::RealRegister::s1]   = Preserved;
+
+   _registerFlags[TR::RealRegister::a0]   = IntegerArgument | IntegerReturn;
+   _registerFlags[TR::RealRegister::a1]   = IntegerArgument | IntegerReturn;
+   _registerFlags[TR::RealRegister::a2]   = IntegerArgument;
+   _registerFlags[TR::RealRegister::a3]   = IntegerArgument;
+   _registerFlags[TR::RealRegister::a4]   = IntegerArgument;
+   _registerFlags[TR::RealRegister::a5]   = IntegerArgument;
+   _registerFlags[TR::RealRegister::a6]   = IntegerArgument;
+   _registerFlags[TR::RealRegister::a7]   = IntegerArgument;
+
+   _registerFlags[TR::RealRegister::s2]   = Preserved;
+   _registerFlags[TR::RealRegister::s3]   = Preserved;
+   _registerFlags[TR::RealRegister::s4]   = Preserved;
+   _registerFlags[TR::RealRegister::s5]   = Preserved;
+   _registerFlags[TR::RealRegister::s6]   = Preserved;
+   _registerFlags[TR::RealRegister::s7]   = Preserved;
+   _registerFlags[TR::RealRegister::s8]   = Preserved;
+   _registerFlags[TR::RealRegister::s9]   = Preserved;
+   _registerFlags[TR::RealRegister::s10]  = Preserved;
+   _registerFlags[TR::RealRegister::s11]  = Preserved;
+
+   _registerFlags[TR::RealRegister::t3]   = 0;
+   _registerFlags[TR::RealRegister::t4]   = 0;
+   _registerFlags[TR::RealRegister::t5]   = 0;
+   _registerFlags[TR::RealRegister::t6]   = 0;
+
+   _registerFlags[TR::RealRegister::ft0]  = 0;
+   _registerFlags[TR::RealRegister::ft1]  = 0;
+   _registerFlags[TR::RealRegister::ft2]  = 0;
+   _registerFlags[TR::RealRegister::ft3]  = 0;
+   _registerFlags[TR::RealRegister::ft4]  = 0;
+   _registerFlags[TR::RealRegister::ft5]  = 0;
+   _registerFlags[TR::RealRegister::ft6]  = 0;
+   _registerFlags[TR::RealRegister::ft7]  = 0;
+
+   _registerFlags[TR::RealRegister::fs0]  = Preserved;
+   _registerFlags[TR::RealRegister::fs1]  = Preserved;
+
+   _registerFlags[TR::RealRegister::fa0]  = FloatArgument | FloatReturn;
+   _registerFlags[TR::RealRegister::fa1]  = FloatArgument | FloatReturn;
+   _registerFlags[TR::RealRegister::fa2]  = FloatArgument;
+   _registerFlags[TR::RealRegister::fa3]  = FloatArgument;
+   _registerFlags[TR::RealRegister::fa4]  = FloatArgument;
+   _registerFlags[TR::RealRegister::fa5]  = FloatArgument;
+   _registerFlags[TR::RealRegister::fa6]  = FloatArgument;
+   _registerFlags[TR::RealRegister::fa7]  = FloatArgument;
+
+   _registerFlags[TR::RealRegister::fs2]  = Preserved;
+   _registerFlags[TR::RealRegister::fs3]  = Preserved;
+   _registerFlags[TR::RealRegister::fs4]  = Preserved;
+   _registerFlags[TR::RealRegister::fs5]  = Preserved;
+   _registerFlags[TR::RealRegister::fs6]  = Preserved;
+   _registerFlags[TR::RealRegister::fs7]  = Preserved;
+   _registerFlags[TR::RealRegister::fs8]  = Preserved;
+   _registerFlags[TR::RealRegister::fs9]  = Preserved;
+   _registerFlags[TR::RealRegister::fs10] = Preserved;
+   _registerFlags[TR::RealRegister::fs11] = Preserved;
+   _registerFlags[TR::RealRegister::ft8]  = 0;
+   _registerFlags[TR::RealRegister::ft9]  = 0;
+   _registerFlags[TR::RealRegister::ft10] = 0;
+   _registerFlags[TR::RealRegister::ft11] = 0;
+
+   _methodMetaDataRegister      = TR::RealRegister::NoReg;
+   _stackPointerRegister        = TR::RealRegister::sp;
+   _framePointerRegister        = TR::RealRegister::s0;
+
+   _computedCallTargetRegister  = TR::RealRegister::NoReg;
+   _vtableIndexArgumentRegister = TR::RealRegister::NoReg;
+   _j9methodArgumentRegister    = TR::RealRegister::NoReg;
+
+   _numberOfDependencyGPRegisters = 32; // To be determined
+   _offsetToFirstLocal            = 0; // To be determined
+
+   initialize();
+   }
+
+const TR::RVSystemLinkageProperties
+TR::RVSystemLinkage::_properties;
+
 TR::RVSystemLinkage::RVSystemLinkage(TR::CodeGenerator *cg)
    : TR::Linkage(cg)
    {
-   int i;
-
-   _properties._properties = IntegersInRegisters|FloatsInRegisters|RightToLeft;
-
-   _properties._registerFlags[TR::RealRegister::zero] = Preserved|RV_Reserved; // zero
-   _properties._registerFlags[TR::RealRegister::ra]   = Preserved|RV_Reserved; // return address
-   _properties._registerFlags[TR::RealRegister::sp]   = Preserved|RV_Reserved; // sp
-   _properties._registerFlags[TR::RealRegister::gp]   = Preserved|RV_Reserved; // gp
-   _properties._registerFlags[TR::RealRegister::tp]   = Preserved|RV_Reserved; // tp
-
-   _properties._registerFlags[TR::RealRegister::t0]   = Preserved|RV_Reserved; // fp
-   _properties._registerFlags[TR::RealRegister::t1]   = 0;
-   _properties._registerFlags[TR::RealRegister::t2]   = 0;
-
-   _properties._registerFlags[TR::RealRegister::s0]   = Preserved;
-   _properties._registerFlags[TR::RealRegister::s1]   = Preserved;
-
-   _properties._registerFlags[TR::RealRegister::a0]   = IntegerArgument | IntegerReturn;
-   _properties._registerFlags[TR::RealRegister::a1]   = IntegerArgument | IntegerReturn;
-   _properties._registerFlags[TR::RealRegister::a2]   = IntegerArgument;
-   _properties._registerFlags[TR::RealRegister::a3]   = IntegerArgument;
-   _properties._registerFlags[TR::RealRegister::a4]   = IntegerArgument;
-   _properties._registerFlags[TR::RealRegister::a5]   = IntegerArgument;
-   _properties._registerFlags[TR::RealRegister::a6]   = IntegerArgument;
-   _properties._registerFlags[TR::RealRegister::a7]   = IntegerArgument;
-
-   _properties._registerFlags[TR::RealRegister::s2]   = Preserved;
-   _properties._registerFlags[TR::RealRegister::s3]   = Preserved;
-   _properties._registerFlags[TR::RealRegister::s4]   = Preserved;
-   _properties._registerFlags[TR::RealRegister::s5]   = Preserved;
-   _properties._registerFlags[TR::RealRegister::s6]   = Preserved;
-   _properties._registerFlags[TR::RealRegister::s7]   = Preserved;
-   _properties._registerFlags[TR::RealRegister::s8]   = Preserved;
-   _properties._registerFlags[TR::RealRegister::s9]   = Preserved;
-   _properties._registerFlags[TR::RealRegister::s10]  = Preserved;
-   _properties._registerFlags[TR::RealRegister::s11]  = Preserved;
-
-   _properties._registerFlags[TR::RealRegister::t3]   = 0;
-   _properties._registerFlags[TR::RealRegister::t4]   = 0;
-   _properties._registerFlags[TR::RealRegister::t5]   = 0;
-   _properties._registerFlags[TR::RealRegister::t6]   = 0;
-
-   _properties._registerFlags[TR::RealRegister::ft0]  = 0;
-   _properties._registerFlags[TR::RealRegister::ft1]  = 0;
-   _properties._registerFlags[TR::RealRegister::ft2]  = 0;
-   _properties._registerFlags[TR::RealRegister::ft3]  = 0;
-   _properties._registerFlags[TR::RealRegister::ft4]  = 0;
-   _properties._registerFlags[TR::RealRegister::ft5]  = 0;
-   _properties._registerFlags[TR::RealRegister::ft6]  = 0;
-   _properties._registerFlags[TR::RealRegister::ft7]  = 0;
-
-   _properties._registerFlags[TR::RealRegister::fs0]  = Preserved;
-   _properties._registerFlags[TR::RealRegister::fs1]  = Preserved;
-
-   _properties._registerFlags[TR::RealRegister::fa0]  = FloatArgument | FloatReturn;
-   _properties._registerFlags[TR::RealRegister::fa1]  = FloatArgument | FloatReturn;
-   _properties._registerFlags[TR::RealRegister::fa2]  = FloatArgument;
-   _properties._registerFlags[TR::RealRegister::fa3]  = FloatArgument;
-   _properties._registerFlags[TR::RealRegister::fa4]  = FloatArgument;
-   _properties._registerFlags[TR::RealRegister::fa5]  = FloatArgument;
-   _properties._registerFlags[TR::RealRegister::fa6]  = FloatArgument;
-   _properties._registerFlags[TR::RealRegister::fa7]  = FloatArgument;
-
-   _properties._registerFlags[TR::RealRegister::fs2]  = Preserved;
-   _properties._registerFlags[TR::RealRegister::fs3]  = Preserved;
-   _properties._registerFlags[TR::RealRegister::fs4]  = Preserved;
-   _properties._registerFlags[TR::RealRegister::fs5]  = Preserved;
-   _properties._registerFlags[TR::RealRegister::fs6]  = Preserved;
-   _properties._registerFlags[TR::RealRegister::fs7]  = Preserved;
-   _properties._registerFlags[TR::RealRegister::fs8]  = Preserved;
-   _properties._registerFlags[TR::RealRegister::fs9]  = Preserved;
-   _properties._registerFlags[TR::RealRegister::fs10] = Preserved;
-   _properties._registerFlags[TR::RealRegister::fs11] = Preserved;
-   _properties._registerFlags[TR::RealRegister::ft8]  = 0;
-   _properties._registerFlags[TR::RealRegister::ft9]  = 0;
-   _properties._registerFlags[TR::RealRegister::ft10] = 0;
-   _properties._registerFlags[TR::RealRegister::ft11] = 0;
-
-
-   _properties._numIntegerArgumentRegisters  = 8;
-   _properties._firstIntegerArgumentRegister = 0;
-
-   _properties._argumentRegisters[0]  = TR::RealRegister::a0;
-   _properties._argumentRegisters[1]  = TR::RealRegister::a1;
-   _properties._argumentRegisters[2]  = TR::RealRegister::a2;
-   _properties._argumentRegisters[3]  = TR::RealRegister::a3;
-   _properties._argumentRegisters[4]  = TR::RealRegister::a4;
-   _properties._argumentRegisters[5]  = TR::RealRegister::a5;
-   _properties._argumentRegisters[6]  = TR::RealRegister::a6;
-   _properties._argumentRegisters[7]  = TR::RealRegister::a7;
-
-   _properties._firstIntegerReturnRegister = 0;
-   _properties._returnRegisters[0]  = TR::RealRegister::a0;
-   _properties._returnRegisters[1]  = TR::RealRegister::a1;
-
-   _properties._numFloatArgumentRegisters    = 8;
-   _properties._firstFloatArgumentRegister   = 8;
-
-   _properties._argumentRegisters[8+0]  = TR::RealRegister::fa0;
-   _properties._argumentRegisters[8+1]  = TR::RealRegister::fa1;
-   _properties._argumentRegisters[8+2]  = TR::RealRegister::fa2;
-   _properties._argumentRegisters[8+3]  = TR::RealRegister::fa3;
-   _properties._argumentRegisters[8+4]  = TR::RealRegister::fa4;
-   _properties._argumentRegisters[8+5]  = TR::RealRegister::fa5;
-   _properties._argumentRegisters[8+6]  = TR::RealRegister::fa6;
-   _properties._argumentRegisters[8+7]  = TR::RealRegister::fa7;
-
-   _properties._firstFloatReturnRegister   = 2;
-   _properties._returnRegisters[2+0]  = TR::RealRegister::fa0;
-   _properties._returnRegisters[2+1]  = TR::RealRegister::fa1;
-
-   _properties._numAllocatableIntegerRegisters = 7 + 11 + 6; // t0-t6 + s1-s11 + a2-a7
-   _properties._numAllocatableFloatRegisters   = 32;
-
-   _properties._methodMetaDataRegister      = TR::RealRegister::NoReg;
-   _properties._stackPointerRegister        = TR::RealRegister::sp;
-   _properties._framePointerRegister        = TR::RealRegister::s0;
-
-   _properties._computedCallTargetRegister  = TR::RealRegister::NoReg;
-   _properties._vtableIndexArgumentRegister = TR::RealRegister::NoReg;
-   _properties._j9methodArgumentRegister    = TR::RealRegister::NoReg;
-
-   _properties._numberOfDependencyGPRegisters = 32; // To be determined
    setOffsetToFirstParm(0); // To be determined
-   _properties._offsetToFirstLocal            = 0; // To be determined
    }
 
 
@@ -224,39 +167,17 @@ void
 TR::RVSystemLinkage::initRVRealRegisterLinkage()
    {
    TR::Machine *machine = cg()->machine();
-   TR::RealRegister *reg;
-   int icount;
 
-   reg = machine->getRealRegister(TR::RealRegister::RegNum::zero);
-   reg->setState(TR::RealRegister::Locked);
-   reg->setAssignedRegister(reg);
-
-   reg = machine->getRealRegister(TR::RealRegister::RegNum::ra);
-   reg->setState(TR::RealRegister::Locked);
-   reg->setAssignedRegister(reg);
-
-   reg = machine->getRealRegister(TR::RealRegister::RegNum::sp);
-   reg->setState(TR::RealRegister::Locked);
-   reg->setAssignedRegister(reg);
-
-   reg = machine->getRealRegister(TR::RealRegister::RegNum::gp);
-   reg->setState(TR::RealRegister::Locked);
-   reg->setAssignedRegister(reg);
-
-   reg = machine->getRealRegister(TR::RealRegister::RegNum::tp);
-   reg->setState(TR::RealRegister::Locked);
-   reg->setAssignedRegister(reg);
-
-   reg = machine->getRealRegister(TR::RealRegister::RegNum::s0); // FP
-   reg->setState(TR::RealRegister::Locked);
-   reg->setAssignedRegister(reg);
-
+   FOR_EACH_RESERVED_REGISTER(machine, _properties,
+         reg->setState(TR::RealRegister::Locked);
+         reg->setAssignedRegister(reg);
+   );
 
    FOR_EACH_REGISTER(machine, reg->setWeight(0xf000));
 
    // prefer preserved registers over the rest since they're saved / restored
    // in prologue/epilogue.
-   FOR_EACH_CALLEE_SAVED_REGISTER(machine, reg->setWeight(0x0001));
+   FOR_EACH_CALLEE_SAVED_REGISTER(machine, _properties, reg->setWeight(0x0001));
    }
 
 uint32_t
@@ -325,7 +246,7 @@ TR::RVSystemLinkage::mapStack(TR::ResolvedMethodSymbol *method)
       }
    method->setLocalMappingCursor(stackIndex);
 
-   FOR_EACH_ASSIGNED_CALLEE_SAVED_REGISTER(machine, stackIndex += 8);
+   FOR_EACH_ASSIGNED_CALLEE_SAVED_REGISTER(machine, _properties, stackIndex += 8);
 
    /*
     * Because the rest of the code generator currently expects **all** arguments
@@ -527,7 +448,7 @@ TR::RVSystemLinkage::createPrologue(TR::Instruction *cursor, List<TR::ParameterS
 
    // save callee-saved registers
    uint32_t offset = bodySymbol->getLocalMappingCursor();
-   FOR_EACH_ASSIGNED_CALLEE_SAVED_REGISTER(machine,
+   FOR_EACH_ASSIGNED_CALLEE_SAVED_REGISTER(machine, _properties,
       TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, offset, codeGen);
       cursor = generateSTORE(TR::InstOpCode::_sd, firstNode, stackSlot, reg, cg(), cursor);
       offset += 8;)
@@ -547,7 +468,7 @@ TR::RVSystemLinkage::createEpilogue(TR::Instruction *cursor)
 
    // restore callee-saved registers
    uint32_t offset = bodySymbol->getLocalMappingCursor();
-   FOR_EACH_ASSIGNED_CALLEE_SAVED_REGISTER(machine,
+   FOR_EACH_ASSIGNED_CALLEE_SAVED_REGISTER(machine, _properties,
       TR::MemoryReference *stackSlot = new (trHeapMemory()) TR::MemoryReference(sp, offset, codeGen);
       cursor = generateLOAD(TR::InstOpCode::_ld, lastNode, reg, stackSlot, cg(), cursor);
       offset += 8;)

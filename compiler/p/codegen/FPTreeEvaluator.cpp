@@ -1938,9 +1938,7 @@ TR::Register *OMR::Power::TreeEvaluator::dsqrtEvaluator(TR::Node *node, TR::Code
 
 TR::Register *OMR::Power::TreeEvaluator::getstackEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   const TR::PPCLinkageProperties &properties = cg->getProperties();
-
-   TR::Register *spReg = cg->machine()->getRealRegister(properties.getNormalStackPointerRegister());
+   TR::Register *spReg = cg->getStackPointerRegister();
    TR::Register *trgReg = cg->allocateRegister();
 
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, trgReg, spReg);
@@ -1953,10 +1951,9 @@ TR::Register *OMR::Power::TreeEvaluator::deallocaEvaluator(TR::Node *node, TR::C
    {
    TR::Node * firstChild = node->getFirstChild();
    TR::Register *srcReg = cg->evaluate(firstChild);
-   const TR::PPCLinkageProperties &properties = cg->getProperties();
 
    // TODO: restore stack chain
-   TR::Register *spReg = cg->machine()->getRealRegister(properties.getNormalStackPointerRegister());
+   TR::Register *spReg = cg->getStackPointerRegister();
 
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, spReg, srcReg);
 

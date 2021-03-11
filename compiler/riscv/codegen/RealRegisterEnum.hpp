@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@
       regname           = x31 + 1 + encoding,
 #include "codegen/riscv-regs.h"
 #undef DECLARE_FPR
+      FirstRealRegister = x0,
       FirstGPR          = x0,
       LastGPR           = x31,
       LastAssignableGPR = x31,
@@ -43,5 +44,6 @@
       FirstFPR          = f0,
       LastFPR           = f31,
       LastAssignableFPR = f31,
+      LastRealRegister  = f31,
       SpilledReg        = f31 + 1,
       NumRegisters      = SpilledReg + 1,

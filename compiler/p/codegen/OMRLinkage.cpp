@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,81 @@ class TR_OpaqueClassBlock;
 namespace TR { class AutomaticSymbol; }
 namespace TR { class Register; }
 
+void TR::PPCLinkageProperties::initialize()
+   {
+   OMR::LinkageProperties::initialize();
+
+    // ===========================================================================
+    // POWER Specific follows
+    // ===========================================================================
+    _numAllocatableVectorRegisters = TR::RealRegister::LastVSR - TR::RealRegister::FirstVSR + 1;
+    _numVectorArgumentRegisters = 0;
+    _firstVectorArgumentRegister = _firstFloatArgumentRegister + _numFloatArgumentRegisters;
+    int numVectorReturnRegisters = 0;
+    _firstVectorReturnRegister = _firstFloatReturnRegister + _numFloatReturnRegisters;
+
+    for (auto regNum = TR::RealRegister::FirstVSR; regNum <= TR::RealRegister::LastVSR; regNum++)
+         {
+         if (_registerFlags[regNum] & Reserved)
+            {
+            _numAllocatableVectorRegisters--;
+            }
+         if (_registerFlags[regNum] & VectorArgument)
+            {
+            _argumentRegisters[_firstVectorArgumentRegister + _numVectorArgumentRegisters++] = regNum;
+            }
+         if (_registerFlags[regNum] & VectorReturn)
+            {
+            _returnRegisters[_firstVectorReturnRegister + numVectorReturnRegisters++] = regNum;
+            }
+         }
+    
+    for (auto regNum = TR::RealRegister::FirstGPR; regNum <= TR::RealRegister::LastGPR; regNum++)
+       {
+       if (      (_registerFlags[regNum] & IntegerArgument)
+             //&& !(_registerFlags[regNum] & IntegerReturn)
+             &&  (_firstAllocatableIntegerArgumentRegister == TR::RealRegister::NoReg) )
+          {
+          _firstAllocatableIntegerArgumentRegister = regNum;
+          }
+       if (!_registerFlags[regNum] & (Preserved|Reserved))
+          {
+          _lastAllocatableIntegerVolatileRegister = regNum;
+          }
+       }
+
+    for (auto regNum = TR::RealRegister::FirstFPR; regNum <= TR::RealRegister::LastFPR; regNum++)
+           {
+           if (      (_registerFlags[regNum] & FloatArgument)
+                 //&& !(_registerFlags[regNum] & FloatReturn)
+                 &&  (_firstAllocatableFloatArgumentRegister == TR::RealRegister::NoReg) )
+              {
+              _firstAllocatableFloatArgumentRegister = regNum;
+              }
+           if (!_registerFlags[regNum] & (Preserved|Reserved))
+              {
+              _lastAllocatableFloatVolatileRegister = regNum;
+              }
+           }
+
+    for (auto regNum = TR::RealRegister::FirstVSR; regNum <= TR::RealRegister::LastVSR; regNum++)
+           {
+           if (      (_registerFlags[regNum] & VectorArgument)
+                 //&& !(_registerFlags[regNum] & VectorReturn)
+                 &&  (_firstAllocatableVectorArgumentRegister == TR::RealRegister::NoReg) )
+              {
+              _firstAllocatableVectorArgumentRegister = regNum;
+              }
+           if (!_registerFlags[regNum] & (Preserved|Reserved))
+              {
+              _lastAllocatableVectortVolatileRegister = regNum;
+              }
+           }
+
+    _numAllocatableCCRegisters = 8;
+
+   }
+
 void OMR::Power::Linkage::mapStack(TR::ResolvedMethodSymbol *method)
    {
    }
@@ -82,7 +157,7 @@ TR::MemoryReference *OMR::Power::Linkage::getOutgoingArgumentMemRef(int32_t argS
    TR::Machine *machine = self()->machine();
    const TR::PPCLinkageProperties& properties = self()->getProperties();
 
-   TR::MemoryReference *result = TR::MemoryReference::createWithDisplacement(self()->cg(), machine->getRealRegister(properties.getNormalStackPointerRegister()), argSize+self()->getOffsetToFirstParm(), length);
+   TR::MemoryReference *result = TR::MemoryReference::createWithDisplacement(self()->cg(), self()->cg()->getStackPointerRegister(), argSize+self()->getOffsetToFirstParm(), length);
    memArg.argRegister = argReg;
    memArg.argMemory = result;
    memArg.opCode = opCode;

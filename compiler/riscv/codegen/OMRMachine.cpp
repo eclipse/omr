@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -697,6 +697,7 @@ void OMR::RV::Machine::initializeRegisterFile()
                                                  0,                            \
                                                  TR::RealRegister::Free,       \
                                                  TR::RealRegister:: regname,   \
+                                                 TR::RealRegister::noRegMask,  \
                                                  self()->cg());
 #define DECLARE_GPR(regname, abiname, encoding) DECLARE_REG(regname, TR_GPR)
 #define DECLARE_FPR(regname, abiname, encoding) DECLARE_REG(regname, TR_FPR)

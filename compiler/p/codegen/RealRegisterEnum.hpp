@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@
       NoReg             = 0,
       gr0               = 1,
       FirstGPR          = gr0,
+      FirstRealRegister = gr0,
       gr1               = 2,
       dsa               = gr1,
       gr2               = 3,
@@ -216,5 +217,6 @@
       FirstSPR          = mq,
       lr                = 106,
       ctr               = 107,
+      LastRealRegister  = ctr,
       SpilledReg        = 108,
       NumRegisters      = SpilledReg + 1

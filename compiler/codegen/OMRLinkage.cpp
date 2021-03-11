@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,54 @@
 #include "il/ILOps.hpp"
 #include "il/Node.hpp"
 #include "il/ParameterSymbol.hpp"
+
+void OMR::LinkageProperties::initialize()
+   {
+   _numAllocatableIntegerRegisters = TR::RealRegister::LastGPR - TR::RealRegister::FirstGPR + 1;
+   _numAllocatableFloatRegisters = TR::RealRegister::LastGPR - TR::RealRegister::FirstGPR + 1;
+
+   _numIntegerArgumentRegisters = 0;
+   _firstIntegerArgumentRegister = 0;
+   _numIntegerReturnRegisters = 0;
+   _firstIntegerReturnRegister = 0;
+
+   for (auto regNum = TR::RealRegister::FirstGPR; regNum <= TR::RealRegister::LastGPR; regNum++)
+      {
+      if (_registerFlags[regNum] & Reserved)
+         {
+         _numAllocatableIntegerRegisters--;
+         }
+      if (_registerFlags[regNum] & IntegerArgument)
+         {
+         _argumentRegisters[_firstIntegerArgumentRegister + _numIntegerArgumentRegisters++] = regNum;
+         }
+      if (_registerFlags[regNum] & IntegerReturn)
+         {
+         _returnRegisters[_firstIntegerReturnRegister + _numIntegerReturnRegisters++] = regNum;
+         }
+      }
+
+   _numFloatArgumentRegisters = 0;
+   _firstFloatArgumentRegister = _firstIntegerArgumentRegister + _numIntegerArgumentRegisters;
+   _numFloatReturnRegisters = 0;
+   _firstFloatReturnRegister = _firstIntegerReturnRegister + _numIntegerReturnRegisters;
+
+   for (auto regNum = TR::RealRegister::FirstFPR; regNum <= TR::RealRegister::LastFPR; regNum++)
+         {
+         if (_registerFlags[regNum] & Reserved)
+            {
+            _numAllocatableFloatRegisters--;
+            }
+         if (_registerFlags[regNum] & FloatArgument)
+            {
+            _argumentRegisters[_firstFloatArgumentRegister + _numFloatArgumentRegisters++] = regNum;
+            }
+         if (_registerFlags[regNum] & FloatReturn)
+            {
+            _returnRegisters[_firstFloatReturnRegister + _numFloatReturnRegisters++] = regNum;
+            }
+         }
+   }
 
 
 bool

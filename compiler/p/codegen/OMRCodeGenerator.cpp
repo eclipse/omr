@@ -151,7 +151,7 @@ OMR::Power::CodeGenerator::initialize()
       cg->setTrackItems(NULL);
       }
 
-   cg->setStackPointerRegister(cg->machine()->getRealRegister(_linkageProperties->getNormalStackPointerRegister()));
+   cg->setStackPointerRegister(cg->machine()->getRealRegister(_linkageProperties->getStackPointerRegister()));
    cg->setMethodMetaDataRegister(cg->machine()->getRealRegister(_linkageProperties->getMethodMetaDataRegister()));
    cg->setTOCBaseRegister(cg->machine()->getRealRegister(_linkageProperties->getTOCBaseRegister()));
    cg->getLinkage()->initPPCRealRegisterLinkage();

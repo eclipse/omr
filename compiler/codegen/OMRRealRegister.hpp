@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -166,5 +166,22 @@ class OMR_EXTENSIBLE RealRegister : public TR::Register
    };
 
 }
+
+inline OMR::RealRegister::RegNum& operator++(OMR::RealRegister::RegNum& rn)
+   {
+   // TODO: Is this assert useful?
+   TR_ASSERT_FATAL(
+         (OMR::RealRegister::FirstRealRegister <= rn) && (rn <= OMR::RealRegister::LastRealRegister),
+         "Invalid value");
+   rn = static_cast<OMR::RealRegister::RegNum>(static_cast<int>(rn + 1));
+   return rn;
+   }
+
+inline OMR::RealRegister::RegNum operator++(OMR::RealRegister::RegNum& in, int)
+   {
+   OMR::RealRegister::RegNum out = in;
+   ++in;
+   return out;
+   }
 
 #endif

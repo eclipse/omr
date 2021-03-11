@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,8 +95,8 @@ TR::PPCSystemLinkage::PPCSystemLinkage(TR::CodeGenerator *cg)
 
    _properties._registerFlags[TR::RealRegister::NoReg] = 0;
    _properties._registerFlags[TR::RealRegister::gr0]   = 0;
-   _properties._registerFlags[TR::RealRegister::gr1]   = Preserved|PPC_Reserved; // system sp
-   _properties._registerFlags[TR::RealRegister::gr2]   = Preserved|PPC_Reserved; // TOC/system reserved
+   _properties._registerFlags[TR::RealRegister::gr1]   = Preserved|Reserved; // system sp
+   _properties._registerFlags[TR::RealRegister::gr2]   = Preserved|Reserved; // TOC/system reserved
    _properties._registerFlags[TR::RealRegister::gr3]   = IntegerReturn|IntegerArgument;
    _properties._registerFlags[TR::RealRegister::gr4]   = IntegerReturn|IntegerArgument;
 
@@ -109,7 +109,7 @@ TR::PPCSystemLinkage::PPCSystemLinkage(TR::CodeGenerator *cg)
    _properties._registerFlags[TR::RealRegister::gr11] = 0;
    _properties._registerFlags[TR::RealRegister::gr12] = 0;
    if (cg->comp()->target().is64Bit())
-      _properties._registerFlags[TR::RealRegister::gr13] = Preserved|PPC_Reserved; // system
+      _properties._registerFlags[TR::RealRegister::gr13] = Preserved|Reserved; // system
    else
       _properties._registerFlags[TR::RealRegister::gr13] = Preserved;
 
@@ -152,6 +152,7 @@ TR::PPCSystemLinkage::PPCSystemLinkage(TR::CodeGenerator *cg)
    for (i = TR::RealRegister::vsr52; i <= TR::RealRegister::LastVSR; i++)
       _properties._registerFlags[i]  = Preserved; // vsr52 - vsr63 Preserved
 
+   _properties._registerFlags[TR::RealRegister::vsr34]  = VectorArgument|VectorReturn;
 
    _properties._registerFlags[TR::RealRegister::cr0]  = 0;
    _properties._registerFlags[TR::RealRegister::cr1]  = 0;
@@ -162,83 +163,7 @@ TR::PPCSystemLinkage::PPCSystemLinkage(TR::CodeGenerator *cg)
    _properties._registerFlags[TR::RealRegister::cr6]  = 0;
    _properties._registerFlags[TR::RealRegister::cr7]  = 0;
 
-   _properties._numIntegerArgumentRegisters  = 8;
-   _properties._firstIntegerArgumentRegister = 0;
-   if (cg->comp()->target().is64Bit() || cg->comp()->target().isAIX())
-      _properties._numFloatArgumentRegisters    = 13;
-   else
-      _properties._numFloatArgumentRegisters    = 8;
-
-   _properties._firstFloatArgumentRegister   = 9;
-
-   _properties._numVectorArgumentRegisters    = 1;  // TODO: finish vector linkage
-   _properties._firstVectorArgumentRegister   = 22;
-
-   _properties._argumentRegisters[0]  = TR::RealRegister::gr3;
-   _properties._argumentRegisters[1]  = TR::RealRegister::gr4;
-   _properties._argumentRegisters[2]  = TR::RealRegister::gr5;
-   _properties._argumentRegisters[3]  = TR::RealRegister::gr6;
-   _properties._argumentRegisters[4]  = TR::RealRegister::gr7;
-   _properties._argumentRegisters[5]  = TR::RealRegister::gr8;
-   _properties._argumentRegisters[6]  = TR::RealRegister::gr9;
-   _properties._argumentRegisters[7]  = TR::RealRegister::gr10;
-   // We use a somewhat hacky convention to set the linkageRegisterIndex
-   // of the GPR containing the environment pointer....we set it
-   // to just past the number of integer argument registers.  That's
-   // why the following line is here....
-   _properties._argumentRegisters[8]  = TR::RealRegister::gr11;
-   _properties._argumentRegisters[9]  = TR::RealRegister::fp1;
-   _properties._argumentRegisters[10]  = TR::RealRegister::fp2;
-   _properties._argumentRegisters[11] = TR::RealRegister::fp3;
-   _properties._argumentRegisters[12] = TR::RealRegister::fp4;
-   _properties._argumentRegisters[13] = TR::RealRegister::fp5;
-   _properties._argumentRegisters[14] = TR::RealRegister::fp6;
-   _properties._argumentRegisters[15] = TR::RealRegister::fp7;
-   _properties._argumentRegisters[16] = TR::RealRegister::fp8;
-
-   if (cg->comp()->target().is64Bit() || cg->comp()->target().isAIX())
-       {
-       _properties._argumentRegisters[17] = TR::RealRegister::fp9;
-       _properties._argumentRegisters[18] = TR::RealRegister::fp10;
-       _properties._argumentRegisters[19] = TR::RealRegister::fp11;
-       _properties._argumentRegisters[20] = TR::RealRegister::fp12;
-       _properties._argumentRegisters[21] = TR::RealRegister::fp13;
-       }
-   _properties._argumentRegisters[22] = TR::RealRegister::vsr34;
-
-   _properties._firstIntegerReturnRegister = 0;
-   _properties._firstFloatReturnRegister = 2;
-   _properties._firstVectorReturnRegister = 6;
-
-   _properties._returnRegisters[0]  = TR::RealRegister::gr3;
-   _properties._returnRegisters[1]  = TR::RealRegister::gr4;
-   _properties._returnRegisters[2]  = TR::RealRegister::fp1;
-   _properties._returnRegisters[3]  = TR::RealRegister::fp2;
-   _properties._returnRegisters[4]  = TR::RealRegister::fp3;
-   _properties._returnRegisters[5]  = TR::RealRegister::fp4;
-   _properties._returnRegisters[6]  = TR::RealRegister::vsr34;
-
-   if (cg->comp()->target().is64Bit())
-      {
-      _properties._numAllocatableIntegerRegisters          = 29; // 64
-      _properties._firstAllocatableFloatArgumentRegister   = 42; // 64
-      _properties._lastAllocatableFloatVolatileRegister    = 42; // 64
-      }
-   else
-      {
-      _properties._numAllocatableIntegerRegisters          = 30; // 32
-      _properties._firstAllocatableFloatArgumentRegister   = 43; // 32
-      _properties._lastAllocatableFloatVolatileRegister    = 43; // 32
-      }
-
-   if (cg->comp()->target().is32Bit() && cg->comp()->target().isAIX())
-      _properties._firstAllocatableIntegerArgumentRegister = 9;  // aix 32 only
-   else
-      _properties._firstAllocatableIntegerArgumentRegister = 8;
-
-   _properties._lastAllocatableIntegerVolatileRegister  = 10;
-   _properties._numAllocatableFloatRegisters            = 32;
-   _properties._numAllocatableCCRegisters               = 8;
+   _properties.initialize();
 
    i = 0;
    _properties._allocationOrder[i++] = TR::RealRegister::gr12;
@@ -324,8 +249,8 @@ TR::PPCSystemLinkage::PPCSystemLinkage(TR::CodeGenerator *cg)
 
    _properties._preservedRegisterMapForGC     = 0x60007fff;
    _properties._methodMetaDataRegister        = TR::RealRegister::NoReg;
-   _properties._normalStackPointerRegister    = TR::RealRegister::gr1;
-   _properties._alternateStackPointerRegister = TR::RealRegister::gr31;
+   _properties._stackPointerRegister          = TR::RealRegister::gr1;
+   _properties._framePointerRegister          = TR::RealRegister::NoReg;
    _properties._TOCBaseRegister               = TR::RealRegister::gr2;
    _properties._vtableIndexArgumentRegister   = TR::RealRegister::NoReg;
    _properties._j9methodArgumentRegister      = TR::RealRegister::NoReg;
@@ -627,7 +552,7 @@ TR::PPCSystemLinkage::createPrologue(
    const TR::PPCLinkageProperties &properties = getProperties();
    TR::ResolvedMethodSymbol        *bodySymbol = comp()->getJittedMethodSymbol();
    // Stack Pointer Register may currently be set to "alternate"
-   cg()->setStackPointerRegister(machine->getRealRegister(properties.getNormalStackPointerRegister()));
+   cg()->setStackPointerRegister(machine->getRealRegister(properties.getStackPointerRegister()));
    TR::RealRegister        *sp = cg()->getStackPointerRegister();
    TR::RealRegister        *metaBase = cg()->getMethodMetaDataRegister();
    TR::RealRegister        *gr2 = machine->getRealRegister(TR::RealRegister::gr2);
@@ -1556,7 +1481,7 @@ void TR::PPCSystemLinkage::buildVirtualDispatch(TR::Node                        
    //Library TOC Register
    TR::Register        *grTOCReg=TR::TreeEvaluator::retrieveTOCRegister(callNode, cg(), dependencies);
    //Native Stack Pointer (C Stack)
-   TR::RealRegister *grSysStackReg=cg()->machine()->getRealRegister(properties.getNormalStackPointerRegister());
+   TR::RealRegister *grSysStackReg=cg()->getStackPointerRegister();
 
    TR_ASSERT((gr0 != NULL),            "TR::PPCSystemLinkage::buildVirtualDispatch no dependence set on scratch register gr0.");
    TR_ASSERT((grTOCReg != NULL),       "TR::PPCSystemLinkage::buildVirtualDispatch no dependence set on Library TOC register gr2.");
