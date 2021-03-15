@@ -101,12 +101,6 @@ typedef struct OMR_VMConfiguration {
 	uintptr_t _maximum_thread_count; /* 0 for unlimited */
 } OMR_VMConfiguration;
 
-typedef struct movedObjectHashCode {
-	uint32_t originalHashCode;
-	BOOLEAN hasBeenMoved;
-	BOOLEAN hasBeenHashed;
-} movedObjectHashCode;
-
 typedef struct OMR_ExclusiveVMAccessStats {
 	U_64 startTime;
 	U_64 endTime;
@@ -193,8 +187,6 @@ typedef struct OMR_VMThread {
 	uintptr_t heapSizeForBarrierRange0;
 
 	void *memorySpace;
-
-	struct movedObjectHashCode movedObjectHashCodeCache;
 
 	int32_t _attachCount;
 
