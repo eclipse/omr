@@ -262,6 +262,22 @@ OMR::ARM64::CodeGenerator::doRegisterAssignment(TR_RegisterKinds kindsToAssign)
       }
    }
 
+static void expandFarConditionalBranches(TR::CodeGenerator *cg)
+   {
+   for (TR::Instruction *instr = cg->getFirstInstruction(); instr; instr = instr->getNext())
+      {
+      TR::ARM64ConditionalBranchInstruction *branch = instr->getARM64ConditionalBranchInstruction();
+
+      if (branch && branch->getLabelSymbol())
+         {
+         intptr_t distance = branch->getLabelSymbol()->getEstimatedCodeLocation() - branch->getEstimatedBinaryLocation();
+
+         if (!constantIsSignedImm21(distance))
+            branch->expandIntoFarBranch();
+         }
+      }
+   }
+
 void
 OMR::ARM64::CodeGenerator::generateBinaryEncodingPrePrologue(TR_ARM64BinaryEncodingData &data)
    {
@@ -320,6 +336,9 @@ OMR::ARM64::CodeGenerator::doBinaryEncoding()
 
    data.estimate = self()->setEstimatedLocationsForSnippetLabels(data.estimate);
 
+   if (!constantIsSignedImm21(data.estimate))
+      expandFarConditionalBranches(self());
+
    self()->setEstimatedCodeLength(data.estimate);
 
    data.cursorInstruction = self()->getFirstInstruction();
@@ -364,13 +383,6 @@ OMR::ARM64::CodeGenerator::doBinaryEncoding()
 
          ++oiIterator;
          }
-      }
-
-   if (!constantIsSignedImm21((intptr_t)self()->getBinaryBufferCursor() - (intptr_t)self()->getBinaryBufferStart()))
-      {
-      // Workaround for huge code
-      // Range of conditional branch instruction is +/- 1MB
-      self()->comp()->failCompilation<TR::AssertionFailure>("Generated code is too large");
       }
 
    self()->getLinkage()->performPostBinaryEncoding();

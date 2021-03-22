@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,8 @@ namespace TR { class Instruction; }
 namespace TR { class Node; }
 namespace TR { class Register; }
 namespace TR { class RegisterDependencyConditions; }
+
+namespace TR { class ARM64ConditionalBranchInstruction; }
 
 namespace OMR
 {
@@ -250,6 +252,14 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
     * @param[in] v : flag status
     */
    void setWillBePatched(bool v = true) { v ? _index |= WillBePatched : _index &= ~WillBePatched; }
+
+   /**
+    * @brief Returns ARM64ConditionalBranchInstruction or NULL
+    */
+   virtual TR::ARM64ConditionalBranchInstruction *getARM64ConditionalBranchInstruction()
+      {
+      return NULL;
+      }
 
    private:
       int32_t _blockIndex;
