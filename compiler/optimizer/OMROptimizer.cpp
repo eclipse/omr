@@ -2815,13 +2815,6 @@ OMR::Optimizer::valueNumberInfoBuildType()
    return PrePartitionVN;
    }
 
-
-inline
-TR::Optimizer *OMR::Optimizer::self()
-   {
-   return (static_cast<TR::Optimizer *>(this));
-   }
-
 OMR_InlinerPolicy* OMR::Optimizer::getInlinerPolicy()
    {
    return new (comp()->allocator()) OMR_InlinerPolicy(comp());

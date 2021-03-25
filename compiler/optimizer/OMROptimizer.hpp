@@ -343,7 +343,7 @@ class Optimizer
    protected:
    TR::OptimizationManager *      _opts[OMR::numGroups];
 
-   TR::Optimizer *self();
+   inline TR::Optimizer *self();
 
    private:
 

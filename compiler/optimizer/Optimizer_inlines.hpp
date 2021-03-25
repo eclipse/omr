@@ -19,32 +19,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_OPTIMIZER_INCL
-#define TR_OPTIMIZER_INCL
+#ifndef OPTIMIZER_INLINES_INCL
+#define OPTIMIZER_INLINES_INCL
 
-#include "optimizer/OMROptimizer.hpp"
-
-#include <stddef.h>
-#include <stdint.h>
-
-namespace TR { class Compilation; }
-namespace TR { class ResolvedMethodSymbol; }
-struct OptimizationStrategy;
-
-namespace TR
-{
-
-class Optimizer : public OMR::OptimizerConnector
-   {
-   public:
-
-   Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
-         const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0) :
-      OMR::OptimizerConnector(comp, methodSymbol, isIlGen, strategy, VNType) {}
-   };
-
-}
-
-#include "optimizer/Optimizer_inlines.hpp"
+#include "optimizer/OMROptimizer_inlines.hpp"
 
 #endif
