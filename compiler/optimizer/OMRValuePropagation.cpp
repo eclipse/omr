@@ -1715,6 +1715,10 @@ TR_YesNoMaybe OMR::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *
          {
          isValueType = TR_yes;
          }
+      else if (TR::Compiler->cls.isClassArray(comp(), arrayComponentClass))
+         {
+         isValueType = TR_no;
+         }
       else if (!TR::Compiler->cls.isConcreteClass(comp(), arrayComponentClass))
          {
          isValueType = TR_maybe;
