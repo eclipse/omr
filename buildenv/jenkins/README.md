@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2019, 2019 IBM Corp. and others
+Copyright (c) 2019, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ From the [Pull Requests view](https://ci.eclipse.org/omr/view/Pull%20Requests/),
 	1. GitHub Pull Request Builder
 		1. Admin list: `<Committers' Github IDs>` (Should be auto filled from Global Config)
 		1. Use github hooks for build triggering: `true`
-		1. Trigger phrase: `.*genie-omr build.*(aix|all).*` (Replace aix with spec shorthand. Where aix is a shorthand for aix_ppc-64)
+		1. Trigger phrase: `.*Jenkins build.*(aix|all).*` (Replace aix with spec shorthand. Where aix is a shorthand for aix_ppc-64)
 		1. White list: `<List of Github IDs allowed to launch PR builds>`
 		1. Trigger Setup
 			1. Add -> Update commit status during build -> Commit Status Context: `continuous-integration/eclipse-omr/pr/<SPEC>`
@@ -115,7 +115,7 @@ hudson.plugins.git.GitException: Failed to fetch from https://github.com/eclipse
 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
 	at java.lang.Thread.run(Thread.java:748)
 Caused by: hudson.plugins.git.GitException: Command "git fetch --tags --progress https://github.com/eclipse/omr.git +refs/heads/*:refs/remotes/origin/*" returned status code 128:
-stdout: 
+stdout:
 stderr: fatal: Unable to find remote helper for 'https'
 ```
 
@@ -123,7 +123,7 @@ Thus we must use the `git://` prefix to specify the _Repository URL_ in the Jenk
 
 ```
 hudson.plugins.git.GitException: Command "git fetch --tags --progress origin +refs/heads/master:refs/remotes/origin/master --prune" returned status code 128:
-stdout: 
+stdout:
 stderr: fatal: unable to connect to github.com:
 github.com[0: 192.30.253.113]: errno=Connection timed out
 

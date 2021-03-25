@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -337,6 +337,18 @@ MM_CompactScheme::setFreeChunk(omrobjectptr_t from, omrobjectptr_t to)
 	size_t size = (size_t)to - (size_t)from;
 	setFreeChunkSize(from, size);
 	return size;
+}
+
+MMINLINE void
+MM_CompactScheme::preObjectMove(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
+{
+	env->preObjectMoveForCompact(objectPtr);
+}
+
+MMINLINE void
+MM_CompactScheme::postObjectMove(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
+{
+	env->postObjectMoveForCompact(objectPtr, NULL);
 }
 
 void
@@ -1231,9 +1243,7 @@ MM_CompactScheme::doCompact(MM_EnvironmentStandard *env, MM_MemorySubSpace *memo
 		nobjects++;
 		nbytes += objectSizeAfterMove;
 
-#if defined(OMR_GC_DEFERRED_HASHCODE_INSERTION)
-		_extensions->objectModel.preMove(env->getOmrVMThread(), objectPtr);
-#endif /* defined(OMR_GC_DEFERRED_HASHCODE_INSERTION) */
+		preObjectMove(env, objectPtr);
 
 		if (evacuate) {
 			deadObjectSize -= objectSizeAfterMove;
@@ -1243,9 +1253,7 @@ MM_CompactScheme::doCompact(MM_EnvironmentStandard *env, MM_MemorySubSpace *memo
 			memmove(deadObject, objectPtr, objectSize);
 		}
 
-#if defined(OMR_GC_DEFERRED_HASHCODE_INSERTION)
-		_extensions->objectModel.postMove(env->getOmrVMThread(), deadObject);
-#endif /* defined(OMR_GC_DEFERRED_HASHCODE_INSERTION) */
+		postObjectMove(env, deadObject);
 
 		deadObject = (omrobjectptr_t)((uintptr_t)deadObject+objectSizeAfterMove);
 	}

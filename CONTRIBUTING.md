@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2020 IBM Corp. and others
+Copyright (c) 2016, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ may have multiple labels, as many as needed to provide adequate categorization.
 
 A subset of the labels are documented below.
 
-* [**`beginner`**](https://github.com/eclipse/omr/labels/beginner) generally
+* [**`good first issue`**](https://github.com/eclipse/omr/labels/good%20first%20issue) generally
   refers to a task that would be suitable for someone new to the project with
   little experience with either the technology or even open-source projects and
   processes. They are intended for anyone who wants to gently get their feet

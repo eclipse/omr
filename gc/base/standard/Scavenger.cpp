@@ -448,7 +448,13 @@ MM_Scavenger::mainSetupForGC(MM_EnvironmentStandard *env)
 void
 MM_Scavenger::workerSetupForGC(MM_EnvironmentStandard *env)
 {
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
 	clearThreadGCStats(env, true);
+
+	/* This thread just started the scavenge task, record the timestamp.
+	 * This must be done after clearThreadGCStats or else the timestamp will be cleared. */
+	env->_scavengerStats._workerScavengeStartTime = omrtime_hires_clock();
 
 	/* Clear local language-specific stats */
 	_delegate.workerSetupForGC_clearEnvironmentLangStats(env);
@@ -479,6 +485,88 @@ MM_Scavenger::calculateMaxCacheCount(uintptr_t activeMemorySize)
 	return 5 * (activeMemorySize / (_extensions->scavengerScanCacheMaximumSize + _extensions->scavengerScanCacheMinimumSize));
 }
 
+void
+MM_Scavenger::calculateRecommendedWorkingThreads(MM_EnvironmentStandard *env)
+{
+	if (!_extensions->adaptiveThreadigEnabled() || _extensions->isConcurrentScavengerEnabled()) {
+		return;
+	}
+
+	Trc_MM_Scavenger_calculateRecommendedWorkingThreads_entry(env->getLanguageVMThread(), _extensions->scavengerStats._gcCount);
+
+	if (_isRememberedSetInOverflowAtTheBeginning || _extensions->scavengerStats._causedRememberedSetOverflow) {
+		/* Scavenge cycle ignored for recommending threads. Scavenger had overflows, this will skew the model,
+		 * as this is the not the normal case for stalling ("Irregular" stalling with SyncAndReleaseMaster,
+		 * this is not the norm hence we don't have to adjust for it) */
+		Trc_MM_Scavenger_calculateRecommendedWorkingThreads_exitOverflow(env->getLanguageVMThread());
+		return;
+	}
+
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
+	uintptr_t totalThreads = _dispatcher->activeThreadCount();
+
+	/* Calculate the average time it takes the worker threads to start collection and avgerage time workers are idle waiting for task cleanup
+	 * Calculated as (Sum_WorkerStartTime(t1 + t2 + ... + tn) - (n * collection_start)) / n  */
+	uint64_t avgTimeToStartCollection =  omrtime_hires_delta((_extensions->scavengerStats._startTime * totalThreads), _extensions->scavengerStats._workerScavengeStartTime, OMRPORT_TIME_DELTA_IN_MICROSECONDS) / totalThreads;
+	uint64_t avgTimeIdleAfterCollection =  omrtime_hires_delta(_extensions->scavengerStats._workerScavengeEndTime, (_extensions->scavengerStats._endTime * totalThreads), OMRPORT_TIME_DELTA_IN_MICROSECONDS) / totalThreads;
+
+	/* Calculate average stall times */
+	uint64_t avgScanStallTime =  omrtime_hires_delta(0, (_extensions->scavengerStats._workStallTime + _extensions->scavengerStats._completeStallTime), OMRPORT_TIME_DELTA_IN_MICROSECONDS) / totalThreads;
+	uint64_t avgSyncStallTime = omrtime_hires_delta(0, (_extensions->scavengerStats._adjustedSyncStallTime), OMRPORT_TIME_DELTA_IN_MICROSECONDS) / totalThreads;
+	uint64_t avgNotifyStallTime = omrtime_hires_delta(0, (_extensions->scavengerStats._notifyStallTime), OMRPORT_TIME_DELTA_IN_MICROSECONDS) / totalThreads;
+
+	Trc_MM_Scavenger_calculateRecommendedWorkingThreads_averageStallBreakDown(env->getLanguageVMThread(), totalThreads, avgTimeToStartCollection, avgTimeIdleAfterCollection, avgScanStallTime, avgSyncStallTime, avgNotifyStallTime);
+
+	uint64_t totalStallTime =  avgTimeToStartCollection + avgTimeIdleAfterCollection + avgScanStallTime + avgSyncStallTime + avgNotifyStallTime;
+	uint64_t scavengeTotalTime = omrtime_hires_delta(_extensions->scavengerStats._startTime, _extensions->scavengerStats._endTime, OMRPORT_TIME_DELTA_IN_MICROSECONDS);
+
+	/* This Adaptive Threading Model aims to determine the efficiency of a cycle and predict the optimal GC thread count based on current number of threads,
+	 * directly proportional to busy time and inversely proportional to idle times.
+	 *
+	 * The model can be expressed as a continues function, it's derived by finding a minimum of the folowing GC time function (used to project duration of GC for m threads,
+	 * with oberved buys/stall times while performing GC with n threads):
+	 *
+	 *          Time GC (m,n,b,s) = b * (n/m) + s * (m/n)^x
+	 * Where m = number of threads for which total GC time (duration) is projected
+	 *       n = number of utilized threads (number of worker threads started + main thread) for the GC cycle used to observe s and b
+	 *       s = stall time per thread = average observed collection stall time for n threads = SUM(Stall time of n threads) / n
+	 *       b = busy time per thread = average collection busy time for n threads
+	 *       X = Stall Overhead Sensitivity/Tolerance, a model constant used to help model non-linear dependency of stall times on GC thread count
+	 *
+	 *
+	 * Solving this function results in the model implementation expressed by expression 1 below. Expression 1 in combination with expression 2 gives up a complete implementation of the model
+	 *
+	 *  (1) Number of Optimal Threads = m(n,b,s) = n * (B/X*s)^(1/X+1)
+	 *  (2) floor(((m(n,b,s) + H) * (1 - W)) + (n * W))
+	 *
+	 * Where W and H are constants, W = Weighted average factor, H = Thread Booster
+	 *
+	 * Expression (1) can be simplified to be written in terms of % stall and working threads as follows:
+	 *
+	 *                    b/s = (1/%stall) - 1
+	 *
+	 *  ------------------------------------------------------------------
+	 *  | (1) m(n,b,s) = m(n,%stall) = n * ((1/x)*(1/%stall - 1)^(1/(x+1))|
+	 *  -------------------------------------------------------------------
+	 */
+	float percentStall = ((float) totalStallTime) / ((float) scavengeTotalTime);
+	float sensitivityFactor = _extensions->adaptiveThreadingSensitivityFactor;
+	float powerExponent = 1.0f / (sensitivityFactor + 1.0f);
+	float stallComponent = (1.0f / percentStall) - 1.0f;
+	float powerBase = (1.0f / sensitivityFactor) * stallComponent;
+
+	float idealThreads = totalThreads * powf(powerBase, powerExponent);
+	float adjustedAverage = MM_Math::weightedAverage((float)totalThreads, idealThreads, _extensions->adaptiveThreadingWeightActiveThreads);
+	_recommendedThreads = (uintptr_t)(adjustedAverage + _extensions->adaptiveThreadBooster);
+
+	if (_recommendedThreads < 2) {
+		_recommendedThreads = 2;
+	}
+
+	Trc_MM_Scavenger_calculateRecommendedWorkingThreads_setRecommendedThreads(env->getLanguageVMThread(), scavengeTotalTime, totalStallTime, (percentStall*100), totalThreads, idealThreads, adjustedAverage, (adjustedAverage +  _extensions->adaptiveThreadBooster), _recommendedThreads);
+}
+
 /**
  * Run a scavenge.
  */
@@ -486,7 +574,7 @@ void
 MM_Scavenger::scavenge(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(envBase);
-	MM_ParallelScavengeTask scavengeTask(env, _dispatcher, this, env->_cycleState);
+	MM_ParallelScavengeTask scavengeTask(env, _dispatcher, this, env->_cycleState, _recommendedThreads);
 	_dispatcher->run(env, &scavengeTask);
 
 	/* remove all scan caches temporary allocated in Heap */
@@ -741,6 +829,12 @@ MM_Scavenger::mergeGCStatsBase(MM_EnvironmentBase *env, MM_ScavengerStats *final
 	finalGCStats->_workStallCount += scavStats->_workStallCount;
 	finalGCStats->_completeStallCount += scavStats->_completeStallCount;
 	_extensions->scavengerStats._syncStallCount += scavStats->_syncStallCount;
+
+	/* Adaptive Threading Stats */
+	finalGCStats->_workerScavengeStartTime += scavStats->_workerScavengeStartTime;
+	finalGCStats->_workerScavengeEndTime += scavStats->_workerScavengeEndTime;
+	finalGCStats->_notifyStallTime += scavStats->_notifyStallTime;
+	finalGCStats->_adjustedSyncStallTime += scavStats->_adjustedSyncStallTime;
 }
 
 
@@ -754,10 +848,20 @@ MM_Scavenger::mergeThreadGCStats(MM_EnvironmentBase *env)
 
 	MM_ScavengerStats *scavStats = &env->_scavengerStats;
 
+	/* This thread is just about to complete the scavenge task, record the timestamp.
+	 * This must be done before mergeGCStatsBase or else the timestamp won't be mereged as needed by adaptive threading. */
+	env->_scavengerStats._workerScavengeEndTime = omrtime_hires_clock();
 	mergeGCStatsBase(env, &_extensions->incrementScavengerStats, scavStats);
 
 	/* Merge language specific statistics. No known interesting data per increment - they are merged directly to aggregate cycle stats */
 	_delegate.mergeGCStats_mergeLangStats(env);
+
+	uint64_t timeToStartCollection =  omrtime_hires_delta(_extensions->scavengerStats._startTime, scavStats->_workerScavengeStartTime, OMRPORT_TIME_DELTA_IN_MICROSECONDS);
+	uint64_t scanStall =  omrtime_hires_delta(0, (scavStats->_workStallTime + scavStats->_completeStallTime), OMRPORT_TIME_DELTA_IN_MICROSECONDS);
+	uint64_t syncStall = omrtime_hires_delta(0, (scavStats->_adjustedSyncStallTime), OMRPORT_TIME_DELTA_IN_MICROSECONDS);
+	uint64_t notifyStallTime = omrtime_hires_delta(0, (scavStats->_notifyStallTime), OMRPORT_TIME_DELTA_IN_MICROSECONDS);
+
+	Trc_MM_Scavenger_calculateRecommendedWorkingThreads_threadStallBreakDown(env->getLanguageVMThread(), env->getWorkerID(), timeToStartCollection, scanStall, syncStall, notifyStallTime);
 
 	omrthread_monitor_exit(_extensions->gcStatsMutex);
 
@@ -2119,11 +2223,15 @@ MM_Scavenger::getNextScanCache(MM_EnvironmentStandard *env)
 	bool doneFlag = false;
 	volatile uintptr_t doneIndex = _doneIndex;
 
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
 	if (checkAndSetShouldYieldFlag(env)) {
 		flushBuffersForGetNextScanCache(env);
 		omrthread_monitor_enter(_scanCacheMonitor);
 		if (0 != _waitingCount) {
+			uint64_t  notifyStartTime = omrtime_hires_clock();
 			omrthread_monitor_notify_all(_scanCacheMonitor);
+			env->_scavengerStats.addToNotifyStallTime(notifyStartTime, omrtime_hires_clock());
 		}
 		omrthread_monitor_exit(_scanCacheMonitor);
 		return NULL;
@@ -2163,10 +2271,6 @@ MM_Scavenger::getNextScanCache(MM_EnvironmentStandard *env)
 	env->_scavengerStats._acquireScanListCount += 1;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
-#if defined(OMR_SCAVENGER_TRACE) || defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
-#endif /* OMR_SCAVENGER_TRACE || J9MODRON_TGC_PARALLEL_STATISTICS */
-
  	while (!doneFlag && !shouldAbortScanLoop(env)) {
  		while (_cachedEntryCount > 0) {
  			cache = getNextScanCacheFromList(env);
@@ -2200,7 +2304,9 @@ MM_Scavenger::getNextScanCache(MM_EnvironmentStandard *env)
 				if (shouldDoFinalNotify(env)) {
 					_waitingCount = 0;
 					_doneIndex += 1;
+					uint64_t notifyStartTime = omrtime_hires_clock();
 					omrthread_monitor_notify_all(_scanCacheMonitor);
+					env->_scavengerStats.addToNotifyStallTime(notifyStartTime, omrtime_hires_clock());
 				}
 			} else {
 				while((0 == _cachedEntryCount) && (doneIndex == _doneIndex) && !shouldAbortScanLoop(env)) {
@@ -4094,6 +4200,9 @@ MM_Scavenger::mainThreadGarbageCollect(MM_EnvironmentBase *envBase, MM_AllocateD
 		_extensions->scavengerStats._endTime = omrtime_hires_clock();
 
 		if(scavengeCompletedSuccessfully(env)) {
+
+			calculateRecommendedWorkingThreads(env);
+
 			/* Merge sublists in the remembered set (if necessary) */
 			_extensions->rememberedSet.compact(env);
 

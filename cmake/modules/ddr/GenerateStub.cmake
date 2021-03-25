@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2018, 2020 IBM Corp. and others
+# Copyright (c) 2018, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,9 +21,7 @@
 
 if(NOT input_file)
 	message(FATAL_ERROR "No input file")
-endif()
-
-if(NOT EXISTS "${input_file}")
+elseif(NOT EXISTS "${input_file}")
 	message(FATAL_ERROR "Input file '${input_file}' does not exist")
 endif()
 
@@ -52,11 +50,11 @@ if(NOT rc EQUAL 0)
 	file(WRITE ${output_file} "")
 	set(rc 0)
 else()
-	file(REMOVE ${output_file})
-
 	execute_process(COMMAND awk -f ${AWK_SCRIPT} ${input_file} OUTPUT_VARIABLE awk_result RESULT_VARIABLE rc)
 
-	if(rc EQUAL 0)
+	if(NOT rc EQUAL 0)
+		message(FATAL_ERROR "GenerateStub: Invoking awk script failed (${rc})")
+	else()
 		file(WRITE "${output_file}" "/* generated file, DO NOT EDIT */\n")
 		if(pre_includes)
 			foreach(inc_file IN LISTS pre_includes)
@@ -67,8 +65,6 @@ else()
 		convert_path(native_input_file "${input_file}")
 		file(APPEND ${output_file} "#include \"${native_input_file}\"\n")
 		file(APPEND ${output_file} "${awk_result}")
-	else()
-		message(FATAL_ERROR "GenerateStub: Invoking awk script failed (${rc})")
 	endif()
 endif()
 

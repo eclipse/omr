@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,17 +98,17 @@ TR::ARM64ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
       }
    else
       {
-      if (std::find(comp->getSnippetsToBePatchedOnClassRedefinition()->begin(), comp->getSnippetsToBePatchedOnClassRedefinition()->end(), this) != comp->getSnippetsToBePatchedOnClassRedefinition()->end())
+      if (std::find(cg()->getSnippetsToBePatchedOnClassRedefinition()->begin(), cg()->getSnippetsToBePatchedOnClassRedefinition()->end(), this) != cg()->getSnippetsToBePatchedOnClassRedefinition()->end())
          {
          cg()->jitAddPicToPatchOnClassRedefinition(getData<void *>(), static_cast<void *>(cursor));
          }
 
-      if (std::find(comp->getSnippetsToBePatchedOnClassUnload()->begin(), comp->getSnippetsToBePatchedOnClassUnload()->end(), this) != comp->getSnippetsToBePatchedOnClassUnload()->end())
+      if (std::find(cg()->getSnippetsToBePatchedOnClassUnload()->begin(), cg()->getSnippetsToBePatchedOnClassUnload()->end(), this) != cg()->getSnippetsToBePatchedOnClassUnload()->end())
          {
          cg()->jitAddPicToPatchOnClassUnload(getData<void *>(), static_cast<void *>(cursor));
          }
 
-      if (std::find(comp->getMethodSnippetsToBePatchedOnClassUnload()->begin(), comp->getMethodSnippetsToBePatchedOnClassUnload()->end(), this) != comp->getMethodSnippetsToBePatchedOnClassUnload()->end())
+      if (std::find(cg()->getMethodSnippetsToBePatchedOnClassUnload()->begin(), cg()->getMethodSnippetsToBePatchedOnClassUnload()->end(), this) != cg()->getMethodSnippetsToBePatchedOnClassUnload()->end())
          {
          auto classPointer = cg()->fe()->createResolvedMethod(cg()->trMemory(), getData<TR_OpaqueMethodBlock *>(), comp->getCurrentMethod())->classOfMethod();
          cg()->jitAddPicToPatchOnClassUnload(static_cast<void *>(classPointer), static_cast<void *>(cursor));

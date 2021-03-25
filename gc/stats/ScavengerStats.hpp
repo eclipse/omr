@@ -75,6 +75,7 @@ public:
 	uintptr_t _failedFlipCount;
 	uintptr_t _failedFlipBytes;
 	uintptr_t _tenureAge;
+	/* The following start/end times are not used as thread local, but to record total cycle duration, done only by main thread. Ideally, these should be moved to the collector. */
 	uint64_t _startTime;
 	uint64_t _endTime;
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
@@ -97,6 +98,17 @@ public:
 	uintptr_t _depthDeepestStructure; /**< Length of longest deep structure that is special treated */
 	uintptr_t _copyScanUpdates;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
+
+	/* Stats Used Specifically for Adaptive Threading */
+	uint64_t _workerScavengeStartTime; /**< Timestamp taken when worker starts the scavenge task */
+	uint64_t _workerScavengeEndTime; /**< Timestamp taken when worker completes the scavenge task */
+
+	/* The time, in hi-res ticks, the thread spent stalled notifying other
+	 * threads during scavenge. Note: this is not all inclusive, it records notify
+	 * stall times only relevant to adaptive threading (e.g doesn't include backout cases)
+	 */
+	uint64_t _notifyStallTime;
+	uint64_t _adjustedSyncStallTime; /**< The time, in hi-res ticks, the thread spent stalled at a sync point ADJUSTED to account for critical section time */
 
 	/* Average (weighted) number of bytes free after a collection and
 	 * average number of bytes promoted by a collection. Used by 
@@ -182,12 +194,19 @@ public:
 	}
 
 	MMINLINE void 
-	addToSyncStallTime(uint64_t startTime, uint64_t endTime)
+	addToSyncStallTime(uint64_t startTime, uint64_t endTime, uint64_t criticalSectionDuration = 0)
 	{
 		_syncStallCount += 1;
 		_syncStallTime += (endTime - startTime);
+		_adjustedSyncStallTime += ((endTime - startTime) - criticalSectionDuration);
 	}
 	
+	MMINLINE void
+	addToNotifyStallTime(uint64_t startTime, uint64_t endTime)
+	{
+		_notifyStallTime += (endTime - startTime);
+	}
+
 	/**
 	 * Get the total stall time
 	 * @return the time in hi-res ticks

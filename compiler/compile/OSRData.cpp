@@ -461,12 +461,7 @@ void TR_OSRCompilationData::checkOSRLimits()
       TR_InlinedCallSite &callSite = comp->getInlinedCallSite(i);
       TR_ByteCodeInfo &bcInfo = callSite._byteCodeInfo;
 
-      TR_OpaqueMethodBlock *methodInfo
-            = comp->compileRelocatableCode()
-              ? reinterpret_cast<TR_AOTMethodInfo *>(callSite._methodInfo)->resolvedMethod->getPersistentIdentifier()
-              : callSite._methodInfo;
-
-      frameSizes[i] = TR::Compiler->vm.OSRFrameSizeInBytes(comp, methodInfo);
+      frameSizes[i] = TR::Compiler->vm.OSRFrameSizeInBytes(comp, callSite._methodInfo);
       frameSizes[i] += (bcInfo.getCallerIndex() == -1) ? rootFrameSize : frameSizes[bcInfo.getCallerIndex()];
       stackFrameSizes[i] = getOSRStackFrameSize(i + 1);
       stackFrameSizes[i] = (bcInfo.getCallerIndex() == -1) ? rootStackFrameSize : stackFrameSizes[bcInfo.getCallerIndex()];

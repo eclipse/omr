@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -278,6 +278,14 @@ TR::Instruction *generateTrg1MemInstruction(TR::CodeGenerator *cg, TR::InstOpCod
    if (preced)
       return new (cg->trHeapMemory()) TR::ARM64Trg1MemInstruction(op, node, treg, mr, preced, cg);
    return new (cg->trHeapMemory()) TR::ARM64Trg1MemInstruction(op, node, treg, mr, cg);
+   }
+
+TR::Instruction *generateMemImmInstruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node *node,
+   TR::MemoryReference *mr, uint32_t imm, TR::Instruction *preced)
+   {
+   if (preced)
+      return new (cg->trHeapMemory()) TR::ARM64MemImmInstruction(op, node, mr, imm, preced, cg);
+   return new (cg->trHeapMemory()) TR::ARM64MemImmInstruction(op, node, mr, imm, cg);
    }
 
 TR::Instruction *generateMemSrc1Instruction(TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, TR::Node *node,

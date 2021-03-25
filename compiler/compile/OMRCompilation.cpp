@@ -242,7 +242,6 @@ OMR::Compilation::Compilation(
    _staticMethodPICSites(getTypedAllocator<TR::Instruction*>(self()->allocator())),
    _snippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(self()->allocator())),
    _methodSnippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(self()->allocator())),
-   _snippetsToBePatchedOnClassRedefinition(getTypedAllocator<TR::Snippet*>(self()->allocator())),
    _genILSyms(getTypedAllocator<TR::ResolvedMethodSymbol*>(self()->allocator())),
    _noEarlyInline(true),
    _returnInfo(TR_VoidReturn),
@@ -1293,36 +1292,29 @@ bool OMR::Compilation::incInlineDepth(TR::ResolvedMethodSymbol * method, TR::Nod
    int32_t cpIndex = callSymRef->getCPIndex();
    TR_ByteCodeInfo &bcInfo = callNode->getByteCodeInfo();
 
+   TR_AOTMethodInfo *aotMethodInfo = NULL;
    if (self()->compileRelocatableCode())
       {
-      TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)self()->trMemory()->allocateHeapMemory(sizeof(TR_AOTMethodInfo));
+      aotMethodInfo = reinterpret_cast<TR_AOTMethodInfo *>(self()->trMemory()->allocateHeapMemory(sizeof(TR_AOTMethodInfo)));
       aotMethodInfo->resolvedMethod = method->getResolvedMethod();
       aotMethodInfo->cpIndex = cpIndex;
       aotMethodInfo->receiver = receiverClass;
       aotMethodInfo->callSymRef = callSymRef;
       aotMethodInfo->reloKind = self()->getReloTypeForMethodToBeInlined(guard, callNode, receiverClass);
-
-      return self()->incInlineDepth(reinterpret_cast<TR_OpaqueMethodBlock *>(aotMethodInfo), method, bcInfo, callSymRef, directCall, argInfo);
       }
-   else
-      {
-      return self()->incInlineDepth(method->getResolvedMethod()->getPersistentIdentifier(), method, bcInfo, callSymRef, directCall, argInfo);
-      }
+   return self()->incInlineDepth(method->getResolvedMethod()->getPersistentIdentifier(), method, bcInfo, callSymRef, directCall, argInfo, aotMethodInfo);
    }
 
 bool OMR::Compilation::incInlineDepth(TR::ResolvedMethodSymbol * method, TR_ByteCodeInfo & bcInfo, int32_t cpIndex, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo)
    {
+   TR_AOTMethodInfo *aotMethodInfo = NULL;
    if (self()->compileRelocatableCode())
       {
-      TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)self()->trMemory()->allocateHeapMemory(sizeof(TR_AOTMethodInfo));
+      aotMethodInfo = reinterpret_cast<TR_AOTMethodInfo *>(self()->trMemory()->allocateHeapMemory(sizeof(TR_AOTMethodInfo)));
       aotMethodInfo->resolvedMethod = method->getResolvedMethod();
       aotMethodInfo->cpIndex = cpIndex;
-      return self()->incInlineDepth((TR_OpaqueMethodBlock*)aotMethodInfo, method, bcInfo, callSymRef, directCall, argInfo);
       }
-   else
-      {
-      return self()->incInlineDepth(method->getResolvedMethod()->getPersistentIdentifier(), method, bcInfo, callSymRef, directCall, argInfo);
-      }
+   return self()->incInlineDepth(method->getResolvedMethod()->getPersistentIdentifier(), method, bcInfo, callSymRef, directCall, argInfo, aotMethodInfo);
    }
 
 ncount_t OMR::Compilation::generateAccurateNodeCount()
@@ -1357,7 +1349,7 @@ bool OMR::Compilation::foundOnTheStack(TR_ResolvedMethod *method, int32_t occurr
   return false;
   }
 
-bool OMR::Compilation::incInlineDepth(TR_OpaqueMethodBlock *methodInfo, TR::ResolvedMethodSymbol * method, TR_ByteCodeInfo & bcInfo, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo)
+bool OMR::Compilation::incInlineDepth(TR_OpaqueMethodBlock *methodInfo, TR::ResolvedMethodSymbol * method, TR_ByteCodeInfo & bcInfo, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo, TR_AOTMethodInfo *aotMethodInfo)
    {
    int32_t maxCallerIndex = TR_ByteCodeInfo::maxCallerIndex;
    //This restriction is due to a limited number of bits allocated to callerIndex in TR_ByteCodeInfo
@@ -1381,7 +1373,7 @@ bool OMR::Compilation::incInlineDepth(TR_OpaqueMethodBlock *methodInfo, TR::Reso
       }
 
 
-   uint32_t callSiteIndex = _inlinedCallSites.add( TR_InlinedCallSiteInfo(methodInfo, bcInfo, method, callSymRef, directCall) );
+   uint32_t callSiteIndex = _inlinedCallSites.add( TR_InlinedCallSiteInfo(methodInfo, bcInfo, method, callSymRef, directCall, aotMethodInfo) );
    _inlinedCallStack.push(callSiteIndex);
    _inlinedCallArgInfoStack.push(argInfo);
 
@@ -1798,7 +1790,7 @@ TR_OpaqueMethodBlock *OMR::Compilation::getMethodFromNode(TR::Node * node)
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
    TR_OpaqueMethodBlock *method = NULL;
    if (bcInfo.getCallerIndex() >= 0 && self()->getNumInlinedCallSites() > 0)
-      method = self()->compileRelocatableCode() ? ((TR_ResolvedMethod *)node->getAOTMethod())->getPersistentIdentifier() : self()->getInlinedCallSite(bcInfo.getCallerIndex())._methodInfo;
+      method = self()->getInlinedCallSite(bcInfo.getCallerIndex())._methodInfo;
    else
       method = self()->getCurrentMethod()->getPersistentIdentifier();
    return method;
@@ -2404,6 +2396,12 @@ OMR::Compilation::setCannotAttemptOSRDuring(uint32_t index, bool cannotOSR)
    _inlinedCallSites[index].setCannotAttemptOSRDuring(cannotOSR);
    }
 
+TR_AOTMethodInfo *
+OMR::Compilation::getInlinedAOTMethodInfo(uint32_t index)
+   {
+   return _inlinedCallSites[index].aotMethodInfo();
+   }
+
 TR_InlinedCallSite *
 OMR::Compilation::getCurrentInlinedCallSite()
    {
@@ -2797,4 +2795,10 @@ const TR::TypeLayout* OMR::Compilation::typeLayout(TR_OpaqueClassBlock * clazz)
       _typeLayoutMap.insert(std::make_pair(clazz, layout));
       return layout;
       }
+   }
+
+TR::list<TR::Snippet*> *
+OMR::Compilation::getSnippetsToBePatchedOnClassRedefinition()
+   {
+   return self()->cg()->getSnippetsToBePatchedOnClassRedefinition();
    }

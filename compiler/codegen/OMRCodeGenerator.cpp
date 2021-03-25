@@ -245,7 +245,10 @@ OMR::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
       _codeGenPhase(self()),
       _symbolDataTypeMap(comp->allocator()),
       _lmmdFailed(false),
-      _objectFormat(NULL)
+      _objectFormat(NULL),
+      _snippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(comp->allocator())),
+      _methodSnippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(comp->allocator())),
+      _snippetsToBePatchedOnClassRedefinition(getTypedAllocator<TR::Snippet*>(comp->allocator()))
    {
    }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,47 @@ class TR_VirtualGuardSite;
 namespace TR { class SymbolReference; }
 
 #define ARM64_INSTRUCTION_LENGTH 4
+
+/*
+ * Prefetch type used in PRFM instructions
+ */
+enum class ARM64PrefetchType
+   {
+   LOAD        = 0,
+   INSTRUCTION = 1,
+   STORE       = 2
+   };
+
+/*
+ * Prefetch target used in PRFM instructions
+ */
+enum class ARM64PrefetchTarget
+   {
+   L1 = 0,
+   L2 = 1,
+   L3 = 2
+   };
+
+/*
+ * Prefetch policy used in PRFM instructions
+ */
+enum class ARM64PrefetchPolicy
+   {
+   KEEP = 0,
+   STRM = 1
+   };
+
+/*
+ * @brief returns Prefetch operation from specified type, target, and policy.
+ * @param[in] type : prefetch type
+ * @param[in] target : prefetch target
+ * @param[in] policy : prefetch policy
+ * @return prefetch operation
+ */
+inline uint32_t toPrefetchOp(ARM64PrefetchType type, ARM64PrefetchTarget target, ARM64PrefetchPolicy policy)
+   {
+   return (static_cast<uint32_t>(type) << 3) | (static_cast<uint32_t>(target) << 1) | static_cast<uint32_t>(policy);
+   }
 
 /*
  * @brief Answers if the signed integer value can be placed in 7-bit field
@@ -3353,6 +3394,80 @@ class ARM64Trg1MemSrc1Instruction : public ARM64Trg1MemInstruction
     * @return estimated binary length
     */
    virtual int32_t estimateBinaryLength(int32_t currentEstimate);
+   };
+
+class ARM64MemImmInstruction : public ARM64MemInstruction
+   {
+   uint32_t _immediate; // Imm5
+
+   public:
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] mr : memory reference
+    * @param[in] immediate : 5bit immediate
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64MemImmInstruction(TR::InstOpCode::Mnemonic op,
+                        TR::Node *node,
+                        TR::MemoryReference *mr,
+                        uint32_t immediate,
+                        TR::CodeGenerator *cg)
+      : ARM64MemInstruction(op, node, mr, cg),  _immediate(immediate)
+      {
+      }
+
+   /*
+    * @brief Constructor
+    * @param[in] op : instruction opcode
+    * @param[in] node : node
+    * @param[in] mr : memory reference
+    * @param[in] precedingInstruction : preceding instruction
+    * @param[in] immediate : 5bit immediate
+    * @param[in] cg : CodeGenerator
+    */
+   ARM64MemImmInstruction(TR::InstOpCode::Mnemonic op,
+                        TR::Node *node,
+                        TR::MemoryReference *mr,
+                        uint32_t immediate,
+                        TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
+      : ARM64MemInstruction(op, node, mr, precedingInstruction, cg), _immediate(immediate)
+      {
+      }
+
+   /**
+    * @brief Gets instruction kind
+    * @return instruction kind
+    */
+   virtual Kind getKind() { return IsMemImm; }
+
+   /**
+    * @brief Gets immediate
+    * @return immediate
+    */
+   uint32_t getImmediate() {return _immediate;}
+   /**
+    * @brief Sets immediate
+    * @param[in] immediate : immediate value
+    * @return immediate
+    */
+   uint32_t setImmediate(uint32_t immediate) {return (_immediate = immediate);}
+
+   /**
+    * @brief Sets immediate field in binary encoding
+    * @param[in] instruction : instruction cursor
+    */
+   void insertImmediateField(uint32_t *instruction)
+      {
+      *instruction |= (_immediate & 0x1f); /* imm5 */
+      }
+
+   /**
+    * @brief Generates binary encoding of the instruction
+    * @return instruction cursor
+    */
+   virtual uint8_t *generateBinaryEncoding();
    };
 
 class ARM64Src1Instruction : public TR::Instruction

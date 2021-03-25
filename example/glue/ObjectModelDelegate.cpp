@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,3 +47,11 @@ GC_ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase *env, M
 	*hotFieldAlignmentDescriptor = 0;
 }
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
+
+void
+GC_ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader* forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, bool *doesObjectNeedHash)
+{
+	*objectCopySizeInBytes = 0;
+	*objectReserveSizeInBytes = 0;
+	*doesObjectNeedHash = false;
+}

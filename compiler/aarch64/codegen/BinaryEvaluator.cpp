@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,17 +51,37 @@ genericBinaryEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic regOp, TR::InstO
    TR::Register *trgReg = NULL;
    int64_t value = 0;
 
-   if(1 == firstChild->getReferenceCount())
+   if (node->getOpCodeValue() != TR::aladd)
       {
-      trgReg = src1Reg;
-      }
-   else if(1 == secondChild->getReferenceCount() && secondChild->getRegister() != NULL)
-      {
-      trgReg = secondChild->getRegister();
+      if(1 == firstChild->getReferenceCount())
+         {
+         trgReg = src1Reg;
+         }
+      else if(1 == secondChild->getReferenceCount() && secondChild->getRegister() != NULL)
+         {
+         trgReg = secondChild->getRegister();
+         }
+      else
+         {
+         trgReg = cg->allocateRegister();
+         }
       }
    else
       {
-      trgReg = cg->allocateRegister();
+      /*
+       * Because trgReg can contain an internal pointer, we cannot use the same virtual register
+       * for trgReg and sources for aladd except for the case
+       * where src1Reg also contains an internal pointer and has the same pinning array as the node.
+       */
+      if ((1 == firstChild->getReferenceCount()) && node->isInternalPointer() && src1Reg->containsInternalPointer() &&
+         (node->getPinningArrayPointer() == src1Reg->getPinningArrayPointer()))
+         {
+         trgReg = src1Reg;
+         }
+      else
+         {
+         trgReg = cg->allocateRegister();
+         }
       }
 
    if (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)

@@ -69,7 +69,7 @@ public:
 			MM_Scavenger *scavenger,
 			ConcurrentAction action,
 			MM_CycleState *cycleState) :
-		MM_ParallelScavengeTask(env, dispatcher, scavenger, cycleState)
+		MM_ParallelScavengeTask(env, dispatcher, scavenger, cycleState, UDATA_MAX)
 		, _bytesScanned(0)
 		, _action(action)
 	{

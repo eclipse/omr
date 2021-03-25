@@ -2297,7 +2297,9 @@ MM_ConcurrentGC::timeToKickoffConcurrent(MM_EnvironmentBase *env, MM_AllocateDes
 			_stats.setRemainingFree(remainingFree);
 			/* Set kickoff reason if it is not set yet */
 			_stats.setKickoffReason(KICKOFF_THRESHOLD_REACHED);
-			_languageKickoffReason = NO_LANGUAGE_KICKOFF_REASON;
+			if (LANGUAGE_DEFINED_REASON != _stats.getKickoffReason()) {
+				_languageKickoffReason = NO_LANGUAGE_KICKOFF_REASON;
+			}
 #if defined(OMR_GC_MODRON_SCAVENGER)
 			_extensions->setConcurrentGlobalGCInProgress(true);
 #endif
@@ -2528,8 +2530,22 @@ MM_ConcurrentGC::doConcurrentTrace(MM_EnvironmentBase *env,
 		_markingScheme->getWorkPackets()->reuseDeferredPackets(env);
 	}
 
-	/* Switch state if card cleaning stage 1 threshold reached */
-	if( (CONCURRENT_TRACE_ONLY == _stats.getExecutionMode()) && (remainingFree < _stats.getCardCleaningThreshold())) {
+	/* Switch state if card cleaning stage 1 threshold reached
+	 * Typically kickoff would be triggered by remainingFree < kickoffThreshold (low heap/tenure occupancy).
+	 * However, with some other kickoff criteria (for example, language specific, like class unloading) that could be
+	 * much sooner, so that remainingFree is significantly higher than pre-calculated kickoffThreshold.
+	 * Since CardCleaningThreshold was also pre-calculated, irrespective of actual remainingFree at the moment of kickoff
+	 * (during tuneToHeap that occurred at the end of last global GC), it needs to be adjusted by
+	 * the difference between actual remainingFree at the time of global kickoff and global kickoff threshold.
+	 */
+	uintptr_t relativeCardCleaningThreshold = _stats.getCardCleaningThreshold();
+	uintptr_t absoluteCardCleaningThreshold = relativeCardCleaningThreshold;
+
+	if (_stats.getRemainingFree() >= _stats.getKickoffThreshold()) {
+		absoluteCardCleaningThreshold += (_stats.getRemainingFree() - _stats.getKickoffThreshold());
+	}
+
+	if( (CONCURRENT_TRACE_ONLY == _stats.getExecutionMode()) && (remainingFree < absoluteCardCleaningThreshold)) {
 		kickoffCardCleaning(env, CARD_CLEANING_THRESHOLD_REACHED);
 	}
 

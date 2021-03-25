@@ -219,6 +219,37 @@ public:
 
 	MMINLINE MM_MemorySpace *getMemorySpace() { return (MM_MemorySpace*)(_omrVMThread->memorySpace); }
 
+	/**
+	 * This method is responsible for remembering object information before object is moved. Differently than
+	 * evacuation, we're sliding the object; therefore, we need to remember object's original information
+	 * before object moves
+	 *
+	 * @param[in] objectPtr points to the object that is about to be moved
+	 * @see postObjectMoveForCompact(omrobjectptr_t)
+	 */
+	MMINLINE void
+	preObjectMoveForCompact(omrobjectptr_t objectPtr)
+	{
+#if defined(OMR_GC_DEFERRED_HASHCODE_INSERTION)
+		_delegate.preObjectMoveForCompact(objectPtr);
+#endif /* defined(OMR_GC_DEFERRED_HASHCODE_INSERTION) */
+	}
+
+	/**
+	 * This method may be called during heap compaction, after the object has been moved to a new location.
+	 * The implementation may apply any information extracted and cached in the calling thread at this point.
+	 *
+	 * @param[in] objectPtr points to the object that has just been moved
+	 * @see preObjectMoveForCompact(omrobjectptr_t)
+	 */
+	MMINLINE void
+	postObjectMoveForCompact(omrobjectptr_t destinationObjectPtr, omrobjectptr_t objectPtr)
+	{
+#if defined(OMR_GC_DEFERRED_HASHCODE_INSERTION)
+		_delegate.postObjectMoveForCompact(destinationObjectPtr, objectPtr);
+#endif /* defined(OMR_GC_DEFERRED_HASHCODE_INSERTION) */
+	}
+
 	MM_MemorySubSpace *getDefaultMemorySubSpace();
 	MM_MemorySubSpace *getTenureMemorySubSpace();
 

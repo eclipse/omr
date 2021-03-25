@@ -100,6 +100,7 @@ private:
 	bool _cachedSemiSpaceResizableFlag;
 	uintptr_t _minTenureFailureSize;
 	uintptr_t _minSemiSpaceFailureSize;
+	uintptr_t _recommendedThreads; /** Number of threads recommended to the dispatcher for the Scavenge task */
 
 	MM_CycleState _cycleState;  /**< Embedded cycle state to be used as the main cycle state for GC activity */
 	MM_CollectionStatisticsStandard _collectionStatistics;  /** Common collect stats (memory, time etc.) */
@@ -326,8 +327,7 @@ public:
 		/* Check last few LSB of the object address for probability 1/16 */
 		return (0 == ((uintptr_t)objectPtr & 0x78)); 
 	}
-	
-	
+
 	void deepScanOutline(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, uintptr_t priorityFieldOffset1, uintptr_t priorityFieldOffset2);
 
 	MMINLINE bool scavengeRememberedObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
@@ -554,6 +554,15 @@ public:
 	void mergeGCStatsBase(MM_EnvironmentBase *env, MM_ScavengerStats *finalGCStats, MM_ScavengerStats *scavStats);
 	bool canCalcGCStats(MM_EnvironmentStandard *env);
 	void calcGCStats(MM_EnvironmentStandard *env);
+
+	/**
+	 * The implementation of Adaptive Threading. This routine is called at the
+	 * end of each successful scavenge to determine the optimal number of threads for
+	 * the subsequent cycle. This is based on the completed cycle's stall/busy stats (adaptive model).
+	 * This function set's _recommendedThreads, which in turn get's used when dispatching
+	 * the next cycle's scavege task.
+	 */
+	void calculateRecommendedWorkingThreads(MM_EnvironmentStandard *env);
 
 	void scavenge(MM_EnvironmentBase *env);
 	bool scavengeCompletedSuccessfully(MM_EnvironmentStandard *env);
@@ -901,6 +910,7 @@ public:
 		, _expandTenureOnFailedAllocate(true)
 		, _minTenureFailureSize(UDATA_MAX)
 		, _minSemiSpaceFailureSize(UDATA_MAX)
+		, _recommendedThreads(UDATA_MAX)
 		, _cycleState()
 		, _collectionStatistics()
 		, _cachedEntryCount(0)

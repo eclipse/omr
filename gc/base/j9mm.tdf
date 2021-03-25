@@ -928,3 +928,10 @@ TraceEvent=Trc_MM_Scavenger_percolate_delegate Overhead=1 Level=1 Group=percolat
 
 TraceEntry=Trc_MM_MemorySubSpaceUniSpace_getHeapFreeMaximumHeuristicMultiplier Overhead=1 Level=1 Group=resize Template="Trc_MM_MemorySubSpaceUniSpace_getHeapFreeMaximumHeuristicMultiplier Maximum free multiplier = %zu"
 TraceEntry=Trc_MM_MemorySubSpaceUniSpace_getHeapFreeMinimumHeuristicMultiplier Overhead=1 Level=1 Group=resize Template="Trc_MM_MemorySubSpaceUniSpace_getHeapFreeMinimumHeuristicMultiplier Minimum free multiplier = %zu"
+
+TraceEntry=Trc_MM_Scavenger_calculateRecommendedWorkingThreads_entry Overhead=1 Level=1 Group=adaptivethread Template="[%u] MM_Scavenger_calculateRecommendedWorkingThreads entry"
+TraceExit=Trc_MM_Scavenger_calculateRecommendedWorkingThreads_exitOverflow Overhead=1 Level=1 Group=adaptivethread Template="Scavenge ignored for recommending threads (Irregular stalling with SyncAndReleaseMaster)"
+TraceExit=Trc_MM_Scavenger_calculateRecommendedWorkingThreads_setRecommendedThreads Overhead=1 Level=1 Group=adaptivethread Template="ScavengeTime: %5llu  Avg.StallTime: %5llu (%.2f%%)  Threads [Current: %2u Ideal: %.2f Weighted: %.2f Boosted: %.2f Recommend: %2u]"
+TraceEvent=Trc_MM_Scavenger_calculateRecommendedWorkingThreads_averageStallBreakDown Overhead=1 Level=1 Group=adaptivethread Template="Average for: %u threads -> avgTimeToStartCollection: %5llu  avgTimeIdleAfterCollection: %5llu  avgScanStallTime: %5llu  avgSyncStallTime: %5llu  avgNotifyStallTime: %5llu"
+TraceEvent=Trc_MM_Scavenger_calculateRecommendedWorkingThreads_threadStallBreakDown Overhead=1 Level=1 Group=adaptivethread Template="Thread: %2u -> timeToStartCollection: %5llu  scanStall: %5llu  syncStall: %5llu  notifyStall: %5llu"
+TraceEvent=Trc_MM_ParallelDispatcher_recomputeActiveThreadCountForTask_useCollectorRecommendedThreads noEnv Overhead=1 Level=1 Group=adaptivethread Template="Attempting to use Task Recommended Threads: %u -> Adjusting to Bounds: %u"

@@ -3838,9 +3838,9 @@ OMR::Z::CodeGenerator::createLiteralPoolSnippet(TR::Node * node)
                targetSnippet = self()->Create4ByteConstant(node, value, true);
                }
             if (node->isMethodPointerConstant())
-               self()->comp()->getMethodSnippetsToBePatchedOnClassUnload()->push_front(targetSnippet);
+               self()->getMethodSnippetsToBePatchedOnClassUnload()->push_front(targetSnippet);
             else
-               self()->comp()->getSnippetsToBePatchedOnClassUnload()->push_front(targetSnippet);
+               self()->getSnippetsToBePatchedOnClassUnload()->push_front(targetSnippet);
             }
          else
             {
@@ -5794,4 +5794,3 @@ OMR::Z::CodeGenerator::directCallRequiresTrampoline(intptr_t targetAddress, intp
       !self()->comp()->target().cpu.isTargetWithinBranchRelativeRILRange(targetAddress, sourceAddress) ||
       self()->comp()->getOption(TR_StressTrampolines);
    }
-

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -284,6 +284,18 @@ public:
 	 */
 	void calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, uintptr_t *hotFieldAlignmentDescriptor);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
+
+	/**
+	 * Calculate the actual object size and the size adjusted to object alignment. The calculated object size
+	 * includes any expansion bytes allocated if the object will grow when moved.
+	 *
+	 * @param[in]  env points to the environment for the calling thread
+	 * @param[in]  forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @param[out] objectCopySizeInBytes actual object size
+	 * @param[out] objectReserveSizeInBytes size adjusted to object alignment
+	 * @param[out] doesObjectNeedHash flag that indicates if object needs hashing
+	 */
+	void calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader* forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, bool *doesObjectNeedHash);
 
 	/**
 	 * Constructor receives a copy of OMR's object flags mask, normalized to low order byte.

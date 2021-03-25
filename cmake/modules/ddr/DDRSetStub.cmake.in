@@ -92,7 +92,10 @@ function(process_source_files src_files)
 	set(annotated_files)
 
 	# build up the command line to the preprocessor
-	set(BASE_ARGS )
+	set(BASE_ARGS)
+	if("@CMAKE_C_COMPILER_ID@" STREQUAL "MSVC")
+		list(APPEND BASE_ARGS "-nologo")
+	endif()
 	foreach(incdir IN LISTS OPT_INCLUDE_DIRS)
 		list(APPEND BASE_ARGS "-I${incdir}")
 	endforeach()
@@ -151,7 +154,7 @@ function(process_source_files src_files)
 		add_custom_command(
 			OUTPUT "${annt_file}"
 			DEPENDS "${stub_file}"
-			COMMAND ${pp_command} | awk "/^\$/ { next } /^DDRFILE_BEGIN /,/^DDRFILE_END / { print \"@\" $0 }" > ${annt_file}
+			COMMAND ${pp_command} | awk "/^DDRFILE_BEGIN /,/^DDRFILE_END / { gsub(/[\\t\\r ]*$/, \"\"); if (NF != 0) { print \"@\" $0 } }" > ${annt_file}
 			VERBATIM
 		)
 	endforeach()
@@ -260,15 +263,15 @@ if(ZOS)
 		# Empty exclude regex, just include everything
 		file(GLOB_RECURSE target_files "${OBJECT_SEARCH_ROOT}/*.dbg")
 	else()
-		file(GLOB_RECURSE dbg_files  RELATIVE "${OBJECT_SEARCH_ROOT}" "${OBJECT_SEARCH_ROOT}/*.dbg")
+		file(GLOB_RECURSE dbg_files RELATIVE "${OBJECT_SEARCH_ROOT}" "${OBJECT_SEARCH_ROOT}/*.dbg")
 		foreach(item IN LISTS dbg_files)
 			if(NOT "${item}" MATCHES "${OBJECT_EXCLUDE_REGEX}")
 				list(APPEND target_files "${OBJECT_SEARCH_ROOT}/${item}")
 			endif()
 		endforeach()
 	endif()
-
 endif()
+
 # now we generate our own list of binaries, so that they can be parsed if we are a subset
 omr_join("\n" binaries_list
 	${target_files}

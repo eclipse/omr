@@ -307,6 +307,22 @@ public:
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
 	/**
+	 * Calculate the actual object size and the size adjusted to object alignment. The calculated object size
+	 * includes any expansion bytes allocated if the object will grow when moved.
+	 *
+	 * @param[in]  env points to the environment for the calling thread
+	 * @param[in]  forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @param[out] objectCopySizeInBytes actual object size
+	 * @param[out] objectReserveSizeInBytes size adjusted to object alignment
+	 * @param[out] doesObjectNeedHash flag that indicates if object needs hashing
+	 */
+	MMINLINE void
+	calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader* forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, bool *doesObjectNeedHash)
+	{
+		_delegate.calculateObjectDetailsForCopy(env, forwardedHeader, objectCopySizeInBytes, objectReserveSizeInBytes, doesObjectNeedHash);
+	}
+
+	/**
 	 * Set run-time object alignment and shift values in this object model and in the OMR VM struct. These
 	 * values are dependent on OMR_VM::_compressedPointersShift, which must be set before calling this
 	 * method. These values would be const except that they can sometimes be determined only after the

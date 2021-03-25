@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -617,6 +617,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::Instruction *instr)
          break;
       case OMR::Instruction::IsMem:
          print(pOutFile, (TR::ARM64MemInstruction *)instr);
+         break;
+      case OMR::Instruction::IsMemImm:
+         print(pOutFile, (TR::ARM64MemImmInstruction *)instr);
          break;
       case OMR::Instruction::IsMemSrc1:
          print(pOutFile, (TR::ARM64MemSrc1Instruction *)instr);
@@ -1430,6 +1433,41 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64MemInstruction *instr)
    {
    printPrefix(pOutFile, instr);
    trfprintf(pOutFile, "%s \t", getOpCodeName(&instr->getOpCode()));
+   print(pOutFile, instr->getMemoryReference());
+   printMemoryReferenceComment(pOutFile, instr->getMemoryReference());
+   printInstructionComment(pOutFile, 1, instr);
+   trfflush(_comp->getOutFile());
+   }
+
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::ARM64MemImmInstruction *instr)
+   {
+   TR::InstOpCode::Mnemonic op = instr->getOpCodeValue();
+   printPrefix(pOutFile, instr);
+   trfprintf(pOutFile, "%s \t", getOpCodeName(&instr->getOpCode()));
+   if ((op == TR::InstOpCode::prfmoff || op == TR::InstOpCode::prfmimm))
+      {
+      uint32_t immediate = instr->getImmediate();
+      uint32_t typeValue = (immediate >> 3) & 0x3;
+      uint32_t targetValue = (immediate >> 1) & 0x3;
+      if ((typeValue != 3) && (targetValue != 3))
+         {
+         ARM64PrefetchType type = static_cast<ARM64PrefetchType>(typeValue);
+         ARM64PrefetchTarget target = static_cast<ARM64PrefetchTarget>(targetValue);
+         ARM64PrefetchPolicy policy = static_cast<ARM64PrefetchPolicy>(immediate  & 0x1);
+         trfprintf(pOutFile, "%s%s%s, ", (type == ARM64PrefetchType::LOAD) ? "pld" : ((type == ARM64PrefetchType::INSTRUCTION) ? "pli" : "pst"),
+                                         (target == ARM64PrefetchTarget::L1) ? "l1" :  ((target == ARM64PrefetchTarget::L2) ? "l2" : "l3"),
+                                         (policy == ARM64PrefetchPolicy::KEEP) ? "keep" : "strm");
+         }
+      else
+         {
+         trfprintf(pOutFile, "#%d, ", instr->getImmediate());
+         }
+      }
+   else
+      {
+      trfprintf(pOutFile, "#%d, ", instr->getImmediate());
+      }
    print(pOutFile, instr->getMemoryReference());
    printMemoryReferenceComment(pOutFile, instr->getMemoryReference());
    printInstructionComment(pOutFile, 1, instr);

@@ -290,7 +290,7 @@ class OMR_EXTENSIBLE Compilation
    friend class ::TR_DebugExt;
 
 protected:
-   
+
    inline TR::Compilation *self();
 
 public:
@@ -314,7 +314,7 @@ public:
 
    ~Compilation() throw();
 
-   
+
 
    TR::Region &region() { return _heapMemoryRegion; }
 
@@ -566,9 +566,7 @@ public:
 
    bool isPICSite(TR::Instruction *instruction);
 
-   TR::list<TR::Snippet*> *getSnippetsToBePatchedOnClassUnload() { return &_snippetsToBePatchedOnClassUnload; }
-   TR::list<TR::Snippet*> *getMethodSnippetsToBePatchedOnClassUnload() { return &_methodSnippetsToBePatchedOnClassUnload; }
-   TR::list<TR::Snippet*> *getSnippetsToBePatchedOnClassRedefinition() { return &_snippetsToBePatchedOnClassRedefinition; }
+   TR::list<TR::Snippet*> *getSnippetsToBePatchedOnClassRedefinition();
 
    TR_RegisterCandidates *getGlobalRegisterCandidates() { return _globalRegisterCandidates; }
    void setGlobalRegisterCandidates(TR_RegisterCandidates *t) { _globalRegisterCandidates = t; }
@@ -621,7 +619,6 @@ public:
    uint16_t getMaxInlineDepth() {return _maxInlineDepth;}
    bool incInlineDepth(TR::ResolvedMethodSymbol *, TR::Node *callNode, bool directCall, TR_VirtualGuardSelection *guard, TR_OpaqueClassBlock *receiverClass, TR_PrexArgInfo *argInfo = 0);
    bool incInlineDepth(TR::ResolvedMethodSymbol *, TR_ByteCodeInfo &, int32_t cpIndex, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo = 0);
-   bool incInlineDepth(TR_OpaqueMethodBlock *, TR::ResolvedMethodSymbol *, TR_ByteCodeInfo &, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo = 0);
    void decInlineDepth(bool removeInlinedCallSitesEntries = false);
    int16_t  adjustInlineDepth(TR_ByteCodeInfo & bcInfo);
    void     resetInlineDepth();
@@ -631,6 +628,11 @@ public:
    int32_t getInlinedCalls() { return _inlinedCalls; }
    void incInlinedCalls() { _inlinedCalls++; }
 
+
+protected:
+   bool incInlineDepth(TR_OpaqueMethodBlock *, TR::ResolvedMethodSymbol *, TR_ByteCodeInfo &, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo, TR_AOTMethodInfo *aotMethodInfo);
+
+public:
    TR_ExternalRelocationTargetKind getReloTypeForMethodToBeInlined(TR_VirtualGuardSelection *guard, TR::Node *callNode, TR_OpaqueClassBlock *receiverClass) { return TR_NoRelocation; }
 
    class TR_InlinedCallSiteInfo
@@ -641,17 +643,24 @@ public:
       int32_t *_osrCallSiteRematTable;
       bool _directCall;
       bool _cannotAttemptOSRDuring;
+      TR_AOTMethodInfo *_aotMethodInfo;
 
       public:
 
-      TR_InlinedCallSiteInfo(TR_OpaqueMethodBlock *methodInfo,
+      TR_InlinedCallSiteInfo(TR_OpaqueMethodBlock *method,
                              TR_ByteCodeInfo &bcInfo,
                              TR::ResolvedMethodSymbol *resolvedMethod,
                              TR::SymbolReference *callSymRef,
-                             bool directCall):
-         _resolvedMethod(resolvedMethod), _callSymRef(callSymRef), _directCall(directCall), _osrCallSiteRematTable(0), _cannotAttemptOSRDuring(false)
+                             bool directCall,
+                             TR_AOTMethodInfo *aotMethodInfo = NULL):
+         _resolvedMethod(resolvedMethod),
+         _callSymRef(callSymRef),
+         _directCall(directCall),
+         _osrCallSiteRematTable(0),
+         _cannotAttemptOSRDuring(false),
+         _aotMethodInfo(aotMethodInfo)
          {
-         _site._methodInfo = methodInfo;
+         _site._methodInfo = method;
          _site._byteCodeInfo = bcInfo;
          }
 
@@ -664,6 +673,7 @@ public:
       bool directCall() { return _directCall; }
       bool cannotAttemptOSRDuring() { return _cannotAttemptOSRDuring; }
       void setCannotAttemptOSRDuring(bool cannotOSR) { _cannotAttemptOSRDuring = cannotOSR; }
+      TR_AOTMethodInfo *aotMethodInfo() { return _aotMethodInfo; }
       };
 
    uint32_t getNumInlinedCallSites();
@@ -678,6 +688,7 @@ public:
    bool isInlinedDirectCall(uint32_t index);
    bool cannotAttemptOSRDuring(uint32_t index);
    void setCannotAttemptOSRDuring(uint32_t index, bool cannot);
+   TR_AOTMethodInfo *getInlinedAOTMethodInfo(uint32_t index);
 
    TR_InlinedCallSite *getCurrentInlinedCallSite();
    int32_t getCurrentInlinedSiteIndex();
@@ -1218,7 +1229,6 @@ private:
    TR::list<TR::Instruction*>               _staticMethodPICSites;
    TR::list<TR::Snippet*>                   _snippetsToBePatchedOnClassUnload;
    TR::list<TR::Snippet*>                   _methodSnippetsToBePatchedOnClassUnload;
-   TR::list<TR::Snippet*>                   _snippetsToBePatchedOnClassRedefinition;
 
    TR::list<TR::ResolvedMethodSymbol*>      _genILSyms;
 

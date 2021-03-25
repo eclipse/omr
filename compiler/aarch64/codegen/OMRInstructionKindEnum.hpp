@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,6 +55,7 @@
    IsMem,
       IsMemSrc1,
          IsMemSrc2,
+      IsMemImm,
    IsSrc1,
       IsZeroSrc1Imm,
       IsSrc2,

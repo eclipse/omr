@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@
 #include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/TreeEvaluator.hpp"
+#include "compile/Compilation.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 
@@ -68,6 +69,18 @@ TR::Register *OMR::ARM64::TreeEvaluator::aconstEvaluator(TR::Node *node, TR::Cod
       TR_ASSERT(reloKind != TR_NoRelocation, "relocation kind shouldn't be TR_NoRelocation");
       loadAddressConstantInSnippet(cg, node, node->getAddress(), trgReg, reloKind);
 
+      return trgReg;
+      }
+   TR::Compilation *comp = cg->comp();
+   TR_ResolvedMethod *method = comp->getCurrentMethod();
+   bool isPicSite = (node->isClassPointerConstant() && cg->fe()->isUnloadAssumptionRequired(reinterpret_cast<TR_OpaqueClassBlock *>(node->getAddress()), method)) ||
+                     (node->isMethodPointerConstant() && cg->fe()->isUnloadAssumptionRequired(
+                        cg->fe()->createResolvedMethod(cg->trMemory(), reinterpret_cast<TR_OpaqueMethodBlock *>(node->getAddress()), method)->classOfMethod(), method));
+
+   if (isPicSite)
+      {
+      TR::Register *trgReg = node->setRegister(cg->allocateRegister());
+      loadAddressConstantInSnippet(cg, node, node->getAddress(), trgReg, TR_NoRelocation, true);
       return trgReg;
       }
 

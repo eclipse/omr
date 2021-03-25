@@ -73,10 +73,11 @@ extern TR::Instruction *loadAddressConstant(TR::CodeGenerator *cg, TR::Node *nod
  * @param[in] address : address
  * @param[in] trgReg : target register
  * @param[in] reloKind : relocation kind
+ * @param[in] isClassUnloadingConst : true if the node is class unloading const
  * @param[in] cursor : instruction cursor
  * @return generated instruction
  */
-extern TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg, TR::Node *node, intptr_t address, TR::Register *trgReg, TR_ExternalRelocationTargetKind reloKind, TR::Instruction *cursor=NULL);
+extern TR::Instruction *loadAddressConstantInSnippet(TR::CodeGenerator *cg, TR::Node *node, intptr_t address, TR::Register *trgReg, TR_ExternalRelocationTargetKind reloKind, bool isClassUnloadingConst=false, TR::Instruction *cursor=NULL);
 
 /**
  * @brief Generates instructions for adding 64-bit integer value to a register

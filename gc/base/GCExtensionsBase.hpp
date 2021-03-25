@@ -517,6 +517,13 @@ public:
 	bool enableSplitHeap; /**< true if we are using gencon with -Xgc:splitheap (we will fail to boostrap if we can't allocate both ranges) */
 	double aliasInhibitingThresholdPercentage; /**< percentage of threads that can be blocked before copy cache aliasing is inhibited (set through aliasInhibitingThresholdPercentage=) */
 
+	/* Start of variables relating to Adaptive Threading */
+	bool adaptiveGCThreading; /**< Flag to indicate whether the Scavenger Adaptive Threading Optimization is enabled*/
+	float adaptiveThreadingSensitivityFactor; /**<  Used by Adaptive Model to determine sensitivity/tolerance to stalling, higher number translates to less stall being tolerated (set through adaptiveThreadingSensitivityFactor=) */
+	float adaptiveThreadingWeightActiveThreads; /**< Weight given to current active threads when averaging projected threads with current active threads (set through adaptiveThreadingWeightActiveThreads=) */
+	float adaptiveThreadBooster; /**< Used to boost calculated thread count, gives opportunity for low thread count to grow. */
+	/* End of variables relating to Adaptive Threading */
+
 	enum HeapInitializationSplitHeapSection {
 		HEAP_INITIALIZATION_SPLIT_HEAP_UNKNOWN = 0,
 		HEAP_INITIALIZATION_SPLIT_HEAP_TENURE,
@@ -1093,6 +1100,16 @@ public:
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
 	/**
+	 * Determine whether Adaptive Threading is enabled. AdaptiveGCThreading flag
+	 * is not sufficient; Adaptive threading must be ignored if GC thread count is forced.
+	 * @return TRUE if adaptive threading routines can proceed, FALSE otherwise
+	 */
+	MMINLINE bool adaptiveThreadigEnabled()
+	{
+		return (adaptiveGCThreading && !gcThreadCountForced);
+	}
+
+	/**
 	 * Returns TRUE if an object is old, FALSE otherwise.
 	 * @param objectPtr Pointer to an object
 	 * @return TRUE if an object is in the old area, FALSE otherwise
@@ -1594,6 +1611,10 @@ public:
 		, dnssMinimumContraction(0.0)
 		, enableSplitHeap(false)
 		, aliasInhibitingThresholdPercentage(0.20)
+		, adaptiveGCThreading(true)
+		, adaptiveThreadingSensitivityFactor(1.0f)
+		, adaptiveThreadingWeightActiveThreads(0.50f)
+		, adaptiveThreadBooster(0.85f)
 		, splitHeapSection(HEAP_INITIALIZATION_SPLIT_HEAP_UNKNOWN)
 #endif /* OMR_GC_MODRON_SCAVENGER */
 		, globalMaximumContraction(0.05) /* by default, contract must be at most 5% of the committed heap */

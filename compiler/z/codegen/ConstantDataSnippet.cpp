@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -276,15 +276,15 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
 
    if (comp->getOption(TR_EnableHCR))
       {
-      if (std::find(comp->getSnippetsToBePatchedOnClassRedefinition()->begin(), comp->getSnippetsToBePatchedOnClassRedefinition()->end(), this) != comp->getSnippetsToBePatchedOnClassRedefinition()->end())
+      if (std::find(cg()->getSnippetsToBePatchedOnClassRedefinition()->begin(), cg()->getSnippetsToBePatchedOnClassRedefinition()->end(), this) != cg()->getSnippetsToBePatchedOnClassRedefinition()->end())
          {
          cg()->jitAddPicToPatchOnClassRedefinition(((void *) (*(uintptr_t *) cursor)), (void *) (uintptr_t *) cursor);
          }
 
-      if (std::find(comp->getSnippetsToBePatchedOnClassUnload()->begin(), comp->getSnippetsToBePatchedOnClassUnload()->end(), this) != comp->getSnippetsToBePatchedOnClassUnload()->end())
+      if (std::find(cg()->getSnippetsToBePatchedOnClassUnload()->begin(), cg()->getSnippetsToBePatchedOnClassUnload()->end(), this) != cg()->getSnippetsToBePatchedOnClassUnload()->end())
          cg()->jitAddPicToPatchOnClassUnload(((void *) (*(uintptr_t *) cursor)), (void *) (uintptr_t *) cursor);
 
-      if (std::find(comp->getMethodSnippetsToBePatchedOnClassUnload()->begin(), comp->getMethodSnippetsToBePatchedOnClassUnload()->end(), this) != comp->getMethodSnippetsToBePatchedOnClassUnload()->end())
+      if (std::find(cg()->getMethodSnippetsToBePatchedOnClassUnload()->begin(), cg()->getMethodSnippetsToBePatchedOnClassUnload()->end(), this) != cg()->getMethodSnippetsToBePatchedOnClassUnload()->end())
          {
          void *classPointer = (void *) cg()->fe()->createResolvedMethod(cg()->trMemory(), (TR_OpaqueMethodBlock *) (*(uintptr_t *) cursor), comp->getCurrentMethod())->classOfMethod();
          cg()->jitAddPicToPatchOnClassUnload(classPointer, (void *) (uintptr_t *) cursor);
@@ -292,12 +292,12 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
       }
    else
       {
-      if (std::find(comp->getSnippetsToBePatchedOnClassUnload()->begin(), comp->getSnippetsToBePatchedOnClassUnload()->end(), this) != comp->getSnippetsToBePatchedOnClassUnload()->end())
+      if (std::find(cg()->getSnippetsToBePatchedOnClassUnload()->begin(), cg()->getSnippetsToBePatchedOnClassUnload()->end(), this) != cg()->getSnippetsToBePatchedOnClassUnload()->end())
          {
          cg()->jitAddPicToPatchOnClassUnload(((void *) (*(uintptr_t *) cursor)), (void *) (uintptr_t *) cursor);
          }
 
-      if (std::find(comp->getMethodSnippetsToBePatchedOnClassUnload()->begin(), comp->getMethodSnippetsToBePatchedOnClassUnload()->end(), this) != comp->getMethodSnippetsToBePatchedOnClassUnload()->end())
+      if (std::find(cg()->getMethodSnippetsToBePatchedOnClassUnload()->begin(), cg()->getMethodSnippetsToBePatchedOnClassUnload()->end(), this) != cg()->getMethodSnippetsToBePatchedOnClassUnload()->end())
          {
          void *classPointer = (void *) cg()->fe()->createResolvedMethod(cg()->trMemory(), (TR_OpaqueMethodBlock *) (*(uintptr_t *) cursor), comp->getCurrentMethod())->classOfMethod();
          cg()->jitAddPicToPatchOnClassUnload(classPointer, (void *) (uintptr_t *) cursor);

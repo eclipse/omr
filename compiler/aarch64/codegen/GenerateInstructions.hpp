@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -620,6 +620,24 @@ TR::Instruction *generateTrg1MemInstruction(
                    TR::Node *node,
                    TR::Register *treg,
                    TR::MemoryReference *mr,
+                   TR::Instruction *preced = NULL);
+
+/*
+ * @brief Generates mem-imm instruction
+ * @param[in] cg : CodeGenerator
+ * @param[in] op : instruction opcode
+ * @param[in] node : node
+ * @param[in] mr : memory reference
+ * @param[in] imm : immediate
+ * @param[in] preced : preceding instruction
+ * @return generated instruction
+ */
+TR::Instruction *generateMemImmInstruction(
+                   TR::CodeGenerator *cg,
+                   TR::InstOpCode::Mnemonic op,
+                   TR::Node *node,
+                   TR::MemoryReference *mr,
+                   uint32_t imm,
                    TR::Instruction *preced = NULL);
 
 /*

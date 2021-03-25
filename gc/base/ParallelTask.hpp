@@ -48,6 +48,9 @@ class MM_ParallelTask : public MM_Task
 	 */
 private:
 protected:
+	uint64_t _syncCriticalSectionStartTime; /**< Timestamp taken when a critical section of the task starts execution. */
+	uint64_t _syncCriticalSectionDuration; /**< The time, in hi-res ticks, it took to execute the lastest critical section. */
+
 	bool _synchronized;
 	const char *_syncPointUniqueId;
 	uintptr_t _syncPointWorkUnitIndex; /**< The _workUnitIndex of the first thread to sync. All threads should have the same index once sync'ed. */
@@ -84,6 +87,7 @@ public:
 		_totalThreadCount = threadCount;
 	}
 	MMINLINE virtual uintptr_t getThreadCount() { return _totalThreadCount; }
+	MMINLINE virtual void addToNotifyStallTime(MM_EnvironmentBase *env, uint64_t startTime, uint64_t endTime) {}
 	
 	virtual bool isSynchronized();
 
@@ -92,6 +96,8 @@ public:
 	 */
 	MM_ParallelTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher) :
 		MM_Task(env, dispatcher)
+		,_syncCriticalSectionStartTime(0)
+		,_syncCriticalSectionDuration(0)
 		,_synchronized(false)
 		,_syncPointUniqueId(NULL)
 		,_syncPointWorkUnitIndex(0)

@@ -65,6 +65,8 @@ public:
 	virtual void run(MM_EnvironmentBase *env) = 0;
 	virtual void cleanup(MM_EnvironmentBase *env);
 
+	virtual uintptr_t getRecommendedWorkingThreads() { return UDATA_MAX; }
+
 	/**
 	 * Single call setup routine for tasks invoked by the main thread before the task is dispatched.
 	 */

@@ -50,6 +50,7 @@ class MM_ParallelScavengeTask : public MM_ParallelTask
 protected:
 	MM_Scavenger *_collector;
 	MM_CycleState *_cycleState;  /**< Collection cycle state active for the task */
+	uintptr_t _recommendedThreads;  /**< Collector recommended threads for the task */
 
 public:
 	virtual UDATA getVMStateID() { return OMRVMSTATE_GC_SCAVENGE; };
@@ -77,15 +78,20 @@ public:
 	 * @see MM_ParallelTask::synchronizeGCThreadsAndReleaseSingleThread
 	 */
 	virtual bool synchronizeGCThreadsAndReleaseSingleThread(MM_EnvironmentBase *env, const char *id);
+
+	virtual void addToNotifyStallTime(MM_EnvironmentBase *env, uint64_t startTime, uint64_t endTime);
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
+
+	virtual uintptr_t getRecommendedWorkingThreads() { return _recommendedThreads; };
 
 	/**
 	 * Create a ParallelScavengeTask object.
 	 */
-	MM_ParallelScavengeTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher, MM_Scavenger *collector,MM_CycleState *cycleState) :
+	MM_ParallelScavengeTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher, MM_Scavenger *collector,MM_CycleState *cycleState, uintptr_t recommendedThreads) :
 		MM_ParallelTask(env, dispatcher)
 		,_collector(collector)
 		,_cycleState(cycleState)
+		,_recommendedThreads(recommendedThreads)
 	{
 		_typeId = __FUNCTION__;
 	};

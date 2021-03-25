@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3391,21 +3391,10 @@ TR_OpaqueMethodBlock*
 OMR::Node::getOwningMethod(TR::Compilation *comp, TR_ByteCodeInfo &bcInfo)
    {
    TR_OpaqueMethodBlock *method = NULL; 
-  
-   if (comp->compileRelocatableCode()) 
-      { 
-      if (0 <= bcInfo.getCallerIndex()) 
-         method = (TR_OpaqueMethodBlock *)(((TR_AOTMethodInfo *)comp->getInlinedCallSite(bcInfo.getCallerIndex())._vmMethodInfo)->resolvedMethod->getPersistentIdentifier()); 
-      else 
-         method = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getPersistentIdentifier()); 
-      } 
-   else  
-      { 
-      if (0 <= bcInfo.getCallerIndex()) 
-         method = (TR_OpaqueMethodBlock *)(comp->getInlinedCallSite(bcInfo.getCallerIndex())._vmMethodInfo); 
-      else 
-         method = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getNonPersistentIdentifier()); 
-      } 
+   if (0 <= bcInfo.getCallerIndex()) 
+      method = comp->getInlinedCallSite(bcInfo.getCallerIndex())._methodInfo; 
+   else 
+      method = comp->getCurrentMethod()->getPersistentIdentifier(); 
   
    return method; 
    }
@@ -3423,8 +3412,7 @@ OMR::Node::getAOTMethod()
       }
    else
       {
-      TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)c->getInlinedCallSite(index)._methodInfo;
-      return (void*)aotMethodInfo->resolvedMethod;
+      return c->getInlinedResolvedMethod(index);
       }
    }
 

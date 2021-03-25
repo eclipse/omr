@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,7 +125,6 @@ typedef struct TR_ByteCodeInfo
 typedef struct TR_InlinedCallSite
    {
    TR_OpaqueMethodBlock   * _methodInfo;
-   #define _vmMethodInfo _methodInfo
    struct TR_ByteCodeInfo   _byteCodeInfo;
    } TR_InlinedCallSite;
 

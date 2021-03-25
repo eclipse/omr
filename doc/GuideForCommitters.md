@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,7 +88,7 @@ If the change affects multiple platforms, you must initiate a pull
 request build on all affected platforms prior to merging.  To launch a pull request
 build, add a comment to the pull request that follows the syntax:
    ```
-   @genie-omr build [ all | {platform-list} ]
+   Jenkins build [ all | {platform-list} ]
    ```
 Where `{platform-list}` is a comma-separated list of platforms chosen from the
 following tags:
@@ -109,11 +109,11 @@ following tags:
 
    For example, to launch a pull request build on all platforms:
    ```
-   @genie-omr build all
+   Jenkins build all
    ```
    To launch a pull request build on Z-specific platforms only:
    ```
-   @genie-omr build zos,zlinux
+   Jenkins build zos,zlinux
    ```
    If testing is only warranted on a subset of platforms (for example, only files
 built on x86 are modified) then pull request testing can be limited to only those

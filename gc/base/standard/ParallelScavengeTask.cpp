@@ -88,7 +88,15 @@ MM_ParallelScavengeTask::synchronizeGCThreadsAndReleaseMain(MM_EnvironmentBase *
 	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMain(env, id);
 	uint64_t endTime = omrtime_hires_clock();
 
-	env->_scavengerStats.addToSyncStallTime(startTime, endTime);
+	if (result) {
+		/* Released thread will exit and execute critical section, recored the start time */
+		_syncCriticalSectionStartTime = endTime;
+		_syncCriticalSectionDuration = 0;
+	}
+
+	/* _syncCriticalSectionDuration must be set now, this thread's stall time is at least the duration of critical section */
+	Assert_MM_true((endTime - startTime) >= _syncCriticalSectionDuration);
+	env->_scavengerStats.addToSyncStallTime(startTime, endTime, _syncCriticalSectionDuration);
 
 	return result;
 }
@@ -102,9 +110,23 @@ MM_ParallelScavengeTask::synchronizeGCThreadsAndReleaseSingleThread(MM_Environme
 	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseSingleThread(env, id);
 	uint64_t endTime = omrtime_hires_clock();
 
-	env->_scavengerStats.addToSyncStallTime(startTime, endTime);
+	if (result) {
+		/* Released thread will exit and execute critical section, recored the start time */
+		_syncCriticalSectionStartTime = endTime;
+		_syncCriticalSectionDuration = 0;
+	}
+
+	/* _syncCriticalSectionDuration must be set now, this thread's stall time is at least the duration of critical section */
+	Assert_MM_true((endTime - startTime) >= _syncCriticalSectionDuration);
+	env->_scavengerStats.addToSyncStallTime(startTime, endTime, _syncCriticalSectionDuration);
 
 	return result;
+}
+
+void
+MM_ParallelScavengeTask::addToNotifyStallTime(MM_EnvironmentBase *env, uint64_t startTime, uint64_t endTime)
+{
+	env->_scavengerStats.addToNotifyStallTime(startTime, endTime);
 }
 
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */

@@ -214,6 +214,14 @@ done:
 void
 MM_ParallelTask::releaseSynchronizedGCThreads(MM_EnvironmentBase *env)
 {
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
+	if (_syncCriticalSectionStartTime != 0) {
+		/* Critical section complete, synced threads are about to be released. Record the duration. */
+		_syncCriticalSectionDuration = (omrtime_hires_clock() - _syncCriticalSectionStartTime);
+		_syncCriticalSectionStartTime = 0;
+	}
+
 	if (1 == _totalThreadCount) {
 		_synchronized = false;
 		return;
@@ -225,7 +233,11 @@ MM_ParallelTask::releaseSynchronizedGCThreads(MM_EnvironmentBase *env)
 	omrthread_monitor_enter(_synchronizeMutex);
 	_synchronizeCount = 0;
 	_synchronizeIndex += 1;
+	uint64_t notifyStartTime = omrtime_hires_clock();
 	omrthread_monitor_notify_all(_synchronizeMutex);
+
+	addToNotifyStallTime(env, notifyStartTime, omrtime_hires_clock());
+
 	omrthread_monitor_exit(_synchronizeMutex);
 }
 

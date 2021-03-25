@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -266,7 +266,7 @@ TR_FrontEnd::getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *, int3
 TR_OpaqueMethodBlock *
 TR_FrontEnd::getInlinedCallSiteMethod(TR_InlinedCallSite *ics)
    {
-   return (TR_OpaqueMethodBlock *)(ics->_vmMethodInfo);
+   return ics->_methodInfo;
    }
 
 TR_OpaqueClassBlock *

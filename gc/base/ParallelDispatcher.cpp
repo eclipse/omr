@@ -457,6 +457,24 @@ MM_ParallelDispatcher::recomputeActiveThreadCountForTask(MM_EnvironmentBase *env
 	 * available and ready to run).
 	 */
 	uintptr_t taskActiveThreadCount = OMR_MIN(_activeThreadCount, threadCount);
+
+	/* Account for Adaptive Threading. RecommendedWorkingThreads will not be set (will return UDATA_MAX) if:
+	 *
+	 *  1) User forced a thread count (e.g Xgcthreads)
+	 *  2) Adaptive threading flag is not set (-XX:-AdaptiveGCThreading)
+	 *  3) or simply the task wasn't recommended a thread count (currently only recommended for STW Scavenge Tasks)
+	 */
+	if (task->getRecommendedWorkingThreads() != UDATA_MAX) {
+		/* Bound the recommended thread count. Determine the  upper bound for the thread count,
+		 * This will either be the user specified gcMaxThreadCount (-XgcmaxthreadsN) or else default max
+		 */
+		taskActiveThreadCount = OMR_MIN(_threadCount, task->getRecommendedWorkingThreads());
+
+		_activeThreadCount = taskActiveThreadCount;
+
+		Trc_MM_ParallelDispatcher_recomputeActiveThreadCountForTask_useCollectorRecommendedThreads(task->getRecommendedWorkingThreads(), taskActiveThreadCount);
+	}
+
 	task->setThreadCount(taskActiveThreadCount);
  	return taskActiveThreadCount;
 }

@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2019 IBM Corp. and others
+Copyright (c) 2016, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,10 +122,10 @@ Contributing
 ============
 
 If you would like to contribute to OMR, check out the [contributing guide][contrib] for more information.
-We also have curated a set of [beginner issues][beg] for newcommers to tackle.
+We also have curated a set of [good first issues][beg] for newcomers to tackle.
 
 [contrib]: CONTRIBUTING.md
-[beg]: https://github.com/eclipse/omr/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner
+[beg]: https://github.com/eclipse/omr/issues?q=is%3Aopen+is%3Aissue+label%3A%22good%20first%20issue%22
 
 How Do I Use it?
 ================
@@ -144,7 +144,7 @@ source tree. For more detailed instructions please read [BuildingWithCMake.md](d
     # Create a build directory and cd into it
     mkdir build
     cd build
-    
+
     # Generate the build system using cmake
     cmake ..
 
@@ -164,7 +164,7 @@ You can easily switch this to the version of Visual Studio you would like to use
     # Create a build directory and cd into it
     mkdir build
     cd build
-    
+
     #generate the build system using cmake
     cmake -G "Visual Studio 11 2012 Win64" ..
 

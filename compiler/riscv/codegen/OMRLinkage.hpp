@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,7 +77,7 @@ class RVMemoryArgument
 #define FloatReturn                 0x08
 #define FloatArgument               0x10
 #define CallerAllocatesBackingStore 0x20
-#define RV_Reserved              0x40
+#define RV_Reserved                 0x40
 
 struct RVLinkageProperties
    {
@@ -383,11 +383,23 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
     * @param[in] node : caller node
     */
    virtual TR::Register *buildDirectDispatch(TR::Node *callNode) = 0;
+
    /**
     * @brief Builds indirect dispatch to method
     * @param[in] node : caller node
     */
    virtual TR::Register *buildIndirectDispatch(TR::Node *callNode) = 0;
+
+   /**
+    * @brief Stores parameters passed in linkage registers to the stack where the
+    *        method body expects to find them.
+    *
+    * @param[in] cursor : the instruction cursor to begin inserting copy instructions
+    * @param[in] parmsHaveBeenStored : true if the parameters have been stored to the stack
+    *
+    * @return The instruction cursor after copies inserted.
+    */
+   TR::Instruction *copyParametersToHomeLocation(TR::Instruction *cursor, bool parmsHaveBeenStored = false);
 
    };
 } // RV

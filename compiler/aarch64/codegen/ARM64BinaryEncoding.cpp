@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -652,6 +652,19 @@ int32_t TR::ARM64MemInstruction::estimateBinaryLength(int32_t currentEstimate)
    {
    setEstimatedBinaryLength(getMemoryReference()->estimateBinaryLength(getOpCodeValue()));
    return(currentEstimate + getEstimatedBinaryLength());
+   }
+
+uint8_t *TR::ARM64MemImmInstruction::generateBinaryEncoding()
+   {
+   uint8_t *instructionStart = cg()->getBinaryBufferCursor();
+   uint8_t *cursor = instructionStart;
+   cursor = getOpCode().copyBinaryToBuffer(instructionStart);
+   insertImmediateField(toARM64Cursor(cursor));
+   cursor = getMemoryReference()->generateBinaryEncoding(this, cursor, cg());
+   setBinaryLength(cursor - instructionStart);
+   setBinaryEncoding(instructionStart);
+   cg()->addAccumulatedInstructionLengthError(getEstimatedBinaryLength() - getBinaryLength());
+   return cursor;
    }
 
 uint8_t *TR::ARM64MemSrc1Instruction::generateBinaryEncoding()

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@
 
 class MM_GCExtensionsBase;
 class MM_MemorySubSpace;
+class MM_ForwardedHeader;
 
 class GC_ArrayletObjectModel
 {
@@ -55,6 +56,22 @@ public:
 	expandArrayletSubSpaceRange(MM_MemorySubSpace * subSpace, void * rangeBase, void * rangeTop, uintptr_t largestDesirableArraySpineSize)
 	{
 		/* No-op */
+	}
+
+	MMINLINE void
+	fixupDataAddr(omrobjectptr_t arrayPtr)
+	{
+#if defined(OMR_ENV_DATA64)
+		Assert_MM_unreachable();
+#endif /* defined(OMR_ENV_DATA64) */
+	}
+
+	MMINLINE void
+	fixupDataAddr(MM_ForwardedHeader *forwardedHeader, omrobjectptr_t arrayPtr)
+	{
+#if defined(OMR_ENV_DATA64)
+		Assert_MM_unreachable();
+#endif /* defined(OMR_ENV_DATA64) */
 	}
 	
 	/**

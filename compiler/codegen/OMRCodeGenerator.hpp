@@ -1202,6 +1202,12 @@ public:
    bool hasDataSnippets() {return false;}
    int32_t setEstimatedLocationsForDataSnippetLabels(int32_t estimatedSnippetStart) {return 0;}
 
+   TR::list<TR::Snippet*> *getSnippetsToBePatchedOnClassUnload() { return &_snippetsToBePatchedOnClassUnload; }
+
+   TR::list<TR::Snippet*> *getMethodSnippetsToBePatchedOnClassUnload() { return &_methodSnippetsToBePatchedOnClassUnload; }
+
+   TR::list<TR::Snippet*> *getSnippetsToBePatchedOnClassRedefinition() { return &_snippetsToBePatchedOnClassRedefinition; }
+
    // --------------------------------------------------------------------------
    // Register pressure
    //
@@ -2045,6 +2051,10 @@ public:
     * The binary object format to generate code for in this compilation
     */
    TR::ObjectFormat *_objectFormat;
+
+   TR::list<TR::Snippet *> _snippetsToBePatchedOnClassUnload;
+   TR::list<TR::Snippet *> _methodSnippetsToBePatchedOnClassUnload;
+   TR::list<TR::Snippet *> _snippetsToBePatchedOnClassRedefinition;
 
    };
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -900,7 +900,7 @@ bool TR_RedundantAsyncCheckRemoval::originatesFromShortRunningMethod(TR_RegionSt
 	    }
 	 TR_InlinedCallSite &ics = comp()->getInlinedCallSite(callerIndex);
 	 if (!comp()->isShortRunningMethod(callerIndex) &&
-	     TR::Compiler->mtd.hasBackwardBranches((TR_OpaqueMethodBlock*)ics._vmMethodInfo))
+	     TR::Compiler->mtd.hasBackwardBranches(ics._methodInfo))
 	    break;
 	 //set callerIndex to its caller
 	 callerIndex = comp()->getInlinedCallSite(callerIndex)._byteCodeInfo.getCallerIndex();
