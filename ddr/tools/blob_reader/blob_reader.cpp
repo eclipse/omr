@@ -85,7 +85,7 @@ struct BlobHeaderV1 {
 
 struct BlobString {
 	uint16_t length;
-	char data[1]; /* flexible array member */
+	char data[];
 
 	void endian_swap()
 	{

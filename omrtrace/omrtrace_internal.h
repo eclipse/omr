@@ -157,7 +157,7 @@ typedef struct OMR_TraceGlobal OMR_TraceGlobal;
 typedef struct  UtTraceCfg {
 	UtDataHeader       header;
 	struct UtTraceCfg  *next;             /* Next trace config command        */
-	char               command[1];       /* Start of variable length section */
+	char               command[];         /* Start of variable length section */
 } UtTraceCfg;
 
 typedef struct UtDeferredConfigInfo {

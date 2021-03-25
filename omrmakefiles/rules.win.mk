@@ -81,9 +81,10 @@ endif
 
 # Enable more warnings
 ifeq ($(OMR_ENHANCED_WARNINGS),1)
-    GLOBAL_CFLAGS+=-W3
-    GLOBAL_CXXFLAGS+=-W3
-    GLOBAL_ASFLAGS+=-W3
+    # -wd4200: Disable warnings regarding flexible array members.
+    GLOBAL_CFLAGS+=-W3 -wd4200
+    GLOBAL_CXXFLAGS+=-W3 -wd4200
+    GLOBAL_ASFLAGS+=-W3 -wd4200
 endif
 
 # Enable Debugging Symbols
