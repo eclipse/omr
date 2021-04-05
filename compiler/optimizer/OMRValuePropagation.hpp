@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -427,6 +427,17 @@ class ValuePropagation : public TR::Optimization
    void invalidateParmConstraintsIfNeeded(TR::Node *node, TR::VPConstraint *constraint);
    void checkTypeRelationship(TR::VPConstraint *lhs, TR::VPConstraint *rhs, int32_t &value, bool isInstanceOf, bool isCheckCast);
    TR_YesNoMaybe isCastClassObject(TR::VPClassType *type);
+
+   /**
+    * Determine whether the component type of an array is, or might be, a value
+    * type.
+    * \param arrayConstraint The \ref TR::VPConstraint type constraint for the array reference
+    * \returns \c TR_yes if the array's component type is definitely a value type;\n
+    *          \c TR_no if it is definitely not a value type; or\n
+    *          \c TR_maybe otherwise.
+    */
+   TR_YesNoMaybe isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint);
+
    TR::VPConstraint *getStoreConstraint(TR::Node *node, TR::Node *relative = NULL);
    void createStoreConstraints(TR::Node *node);
    void setUnreachableStore(StoreRelationship *store);
