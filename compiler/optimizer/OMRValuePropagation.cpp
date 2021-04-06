@@ -1698,6 +1698,11 @@ TR_YesNoMaybe OMR::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *
       {
       isValueType = TR_no;
       }
+   // If there's no constraint for the array operand, or no information
+   // is available about the class of the array, or the operand is not
+   // even definitely known to be an array, VP has to assume that it might
+   // have a component type that is a value type
+   //
    else if (!(arrayConstraint && arrayConstraint->getClass()
               && arrayConstraint->getClassType()->isArray() == TR_yes))
       {
@@ -1707,6 +1712,29 @@ TR_YesNoMaybe OMR::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *
       {
       TR_OpaqueClassBlock *arrayComponentClass = fe()->getComponentClassFromArrayClass(arrayConstraint->getClass());
 
+      // Cases to consider:
+      //
+      //   - Is no information available about the component type of the array?
+      //     If not, assume it might be a value type.
+      //   - Is the component type definitely a value type?
+      //   - Is the component type an array class (i.e., is this an array of
+      //     arrays)?  If so, it's definitely not a value type.
+      //   - Is the component type either an abstract class or an interface
+      //     (i.e., not a concrete class)?  If so, it might be a value type.
+      //   - Is the array an array of java/lang/Object?  See below.
+      //
+      // Future refinements:
+      //   The JVM will have classes whose instances must be identity
+      //   objects implement the java/lang/IdentityObject interface, including
+      //   array classes.  Once that happens, the check for isClassArray can
+      //   be replaced with a test of whether the component class implements
+      //   IdentityObject, and the test of !isConcreteClass can be refined
+      //   to distinguish abstract classes that implement IdentityObject from
+      //   those that do not, as well as interfaces that extend IdentityObject.
+      //
+      //   Another potential improvement would be to look for fixed class
+      //   arrays of an interface type
+      //
       if (!arrayComponentClass)
          {
          isValueType = TR_maybe;
@@ -1728,14 +1756,17 @@ TR_YesNoMaybe OMR::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *
          int32_t len;
          const char *sig = arrayConstraint->getClassSignature(len);
 
-         if (!sig || !arrayConstraint->isFixedClass() && sig[0] == '[' && len == 19
-                     && !strncmp(sig, "[Ljava/lang/Object;", 19))
+         // If the array's class is a fixed array of java/lang/Object, the
+         // component type is not a value type (though it can still hold
+         // references to instances of value types).
+         if (sig && arrayConstraint->isFixedClass() && sig[0] == '[' && len == 19
+             && !strncmp(sig, "[Ljava/lang/Object;", 19))
             {
-            isValueType = TR_maybe;
+            isValueType = TR_no;
             }
          else
             {
-            isValueType = TR_no;
+            isValueType = TR_maybe;
             }
          }
       }
