@@ -436,7 +436,7 @@ class ValuePropagation : public TR::Optimization
     *          \c TR_no if it is definitely not a value type; or\n
     *          \c TR_maybe otherwise.
     */
-   TR_YesNoMaybe isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint);
+   virtual TR_YesNoMaybe isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint);
 
    TR::VPConstraint *getStoreConstraint(TR::Node *node, TR::Node *relative = NULL);
    void createStoreConstraints(TR::Node *node);
