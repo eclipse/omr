@@ -1483,7 +1483,7 @@ public:
    void       setOptLevel(int32_t);
 
    TR_Hotness getNextHotnessLevel(bool methodHasLoops, TR_Hotness current);
-   int32_t    getCountValue      (bool methodHasLoops, TR_Hotness hotness);
+   int32_t    getCountValue      (bool methodHasLoops, TR_Hotness hotness);  
 
    static bool canJITCompile()                 {return _canJITCompile;}
    static void setCanJITCompile(bool f);
