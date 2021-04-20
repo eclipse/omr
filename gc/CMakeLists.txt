@@ -551,3 +551,8 @@ endif()
 if(OMR_GC_API)
 	add_subdirectory(api)
 endif(OMR_GC_API)
+
+if(OMR_OS_ZOS)
+	# Work around an XLC crash that occurs when generating debug info with optimization enabled.
+	set_source_files_properties(base/standard/CompactScheme.cpp PROPERTIES COMPILE_FLAGS "-qnodebug")
+endif()
