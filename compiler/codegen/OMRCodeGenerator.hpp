@@ -1579,12 +1579,6 @@ public:
    bool getSupportsEncodeUtf16LittleWithSurrogateTest() { return false; }
    bool getSupportsEncodeUtf16BigWithSurrogateTest() { return false; }
 
-   bool supportsZonedDFPConversions() {return _enabledFlags.testAny(SupportsZonedDFPConversions);}
-   void setSupportsZonedDFPConversions() {_enabledFlags.set(SupportsZonedDFPConversions);}
-
-   bool supportsFastPackedDFPConversions() {return _enabledFlags.testAny(SupportsFastPackedDFPConversions);}
-   void setSupportsFastPackedDFPConversions() {_enabledFlags.set(SupportsFastPackedDFPConversions);}
-
    bool getSupportsArraySet() {return _flags1.testAny(SupportsArraySet);}
    void setSupportsArraySet() {_flags1.set(SupportsArraySet);}
 
@@ -1905,7 +1899,7 @@ public:
 
    enum // enabledFlags
       {
-      SupportsZonedDFPConversions      = 0x0001,
+      // AVAILABLE                     = 0x0001,
       // AVAILABLE                     = 0x0002,
       // AVAILABLE                     = 0x0004,
       EnableRefinedAliasSets           = 0x0008,
@@ -1918,7 +1912,6 @@ public:
       // AVAILABLE                     = 0x0400,
       // AVAILABLE                     = 0x0800,
       // AVAILABLE                     = 0x1000,
-      SupportsFastPackedDFPConversions = 0x2000,
       };
 
    TR::SymbolReferenceTable *_symRefTab;

@@ -1050,11 +1050,6 @@ TR_GlobalRegisterAllocator::transformNode(
                 (!value->getOpCode().isLoadReg() && !value->getOpCode().isLoadVar()) &&
                  (symbol->getDataType() == TR::Float
                   || symbol->getDataType() == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                  || symbol->getDataType() == TR::DecimalFloat
-                  || symbol->getDataType() == TR::DecimalDouble
-                  || symbol->getDataType() == TR::DecimalLongDouble
-#endif
                   ) &&
                 (!parent->getOpCode().isStore() &&
                  (parent->getOpCodeValue() != TR::fRegStore) &&
@@ -1289,11 +1284,6 @@ TR_GlobalRegisterAllocator::transformNode(
          bool fpStore = false;
          if (symRef->getSymbol()->getDataType() == TR::Float
              || symRef->getSymbol()->getDataType() == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-             || symRef->getSymbol()->getDataType() == TR::DecimalFloat
-             || symRef->getSymbol()->getDataType() == TR::DecimalDouble
-             || symRef->getSymbol()->getDataType() == TR::DecimalLongDouble
-#endif
              )
             fpStore = true;
 
@@ -3477,11 +3467,6 @@ void TR_GlobalRegisterAllocator::offerAllFPAutosAndParmsAsCandidates(TR::Block *
 
             if ((sym->getDataType() == TR::Float
                  || sym->getDataType() == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                 || sym->getDataType() == TR::DecimalFloat
-                 || sym->getDataType() == TR::DecimalDouble
-                 || sym->getDataType() == TR::DecimalLongDouble
-#endif
                  ) &&
                  isTypeAvailable(symRef) &&
                 ((sym->isAuto() && methodSymbol->getAutomaticList().find(sym->castToAutoSymbol())) ||
@@ -4502,17 +4487,9 @@ TR_LiveRangeSplitter::splitLiveRanges(TR_StructureSubGraphNode *structureNode)
                   TR::DataType dt = symRef->getSymbol()->getDataType();
                   bool isFloat = (dt == TR::Float
                                   || dt == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                                  || dt == TR::DecimalFloat
-                                  || dt == TR::DecimalDouble
-                                  || dt == TR::DecimalLongDouble
-#endif
                                   );
                   int32_t numRegsForCandidate = 1;
                   if ((symRef->getSymbol()->getType().isInt64() && comp()->target().is32Bit())
-#ifdef J9_PROJECT_SPECIFIC
-                      || symRef->getSymbol()->getType().isLongDouble()
-#endif
                       )
                      numRegsForCandidate = 2;
 
@@ -4612,11 +4589,6 @@ TR_LiveRangeSplitter::replaceAutosUsedIn(
             TR::DataType dt = symRef->getSymbol()->getDataType();
             bool isFloat = (dt == TR::Float
                             || dt == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                            || dt == TR::DecimalFloat
-                            || dt == TR::DecimalDouble
-                            || dt == TR::DecimalLongDouble
-#endif
                             );
             int32_t numRegsForCandidate = 1;
             if (node->requiresRegisterPair(comp()))

@@ -198,31 +198,15 @@ OMR::CodeGenerator::estimateRegisterPressure(TR::Node *node, int32_t &registerPr
             TR::DataType dtype = node->getDataType();
             if (dtype == TR::Float
                 || dtype == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                || dtype == TR::DecimalFloat
-                || dtype == TR::DecimalDouble
-                || dtype == TR::DecimalLongDouble
-#endif
                  )
                gprCandidate = false;
             if (node->getDataType() == TR::Float
                 || node->getDataType() == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                || node->getDataType() == TR::DecimalFloat
-                || node->getDataType() == TR::DecimalDouble
-#endif
                 )
                {
                if (!gprCandidate)
                   registerPressure++;
                }
-#ifdef J9_PROJECT_SPECIFIC
-            else if (node->getDataType() == TR::DecimalLongDouble)
-               {
-               if (!gprCandidate)
-                  registerPressure +=2;
-               }
-#endif
             else
                {
                if (gprCandidate)
@@ -1201,11 +1185,6 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
 
       const bool usesFPR = (dtype == TR::Float
                            || dtype == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                           || dtype == TR::DecimalFloat
-                           || dtype == TR::DecimalDouble
-                           || dtype == TR::DecimalLongDouble
-#endif
                            );
 
       const bool usesVRF = dtype.isVector();
@@ -1739,11 +1718,6 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
       uint8_t regsWithheld =
          (dtype == TR::Float
           || dtype == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-          || dtype == TR::DecimalFloat
-          || dtype == TR::DecimalDouble
-          || dtype == TR::DecimalLongDouble
-#endif
           ) ?
          fprsWithheldFromPickRegister : (self()->comp()->getMethodHotness() == warm)? gprsWithheldFromPickRegisterWhenWarm :
          gprsWithheldFromPickRegister;
@@ -1807,11 +1781,6 @@ OMR::CodeGenerator::pickRegister(TR_RegisterCandidate     *rc,
       dtype = rcSymbol->getDataType();
       if (dtype == TR::Float
           || dtype == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-          || dtype == TR::DecimalFloat
-          || dtype == TR::DecimalDouble
-          || dtype == TR::DecimalLongDouble
-#endif
           )
          preservedRegisters = self()->getGlobalFPRsPreservedAcrossCalls();
       else

@@ -1803,77 +1803,6 @@ generateS390PackedCompareAndBranchOps(TR::Node * node,
    return inst;
    }
 
-/**
- * Generate compare and branch code for long double and DFP
- * If branchTarget label is set, the code will generate a compare and branch instruction(s) and return that instruction.
- * retBranchOpCond (reference parameter) returns the appropriate fBranchOpCond or rBranchOpCond depending on direction of compare instruction that is generated
- */
-TR::Instruction *
-generateS390DFPLongDoubleCompareAndBranchOps(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::S390BranchCondition fBranchOpCond, TR::InstOpCode::S390BranchCondition rBranchOpCond, TR::InstOpCode::S390BranchCondition &retBranchOpCond, TR::LabelSymbol *branchTarget = NULL)
-   {
-   bool isForward = true;
-   TR::Node * secondChild = node->getSecondChild();
-   TR::Node * firstChild = node->getFirstChild();
-   bool isUnsignedCmp = node->getOpCode().isUnsignedCompare();
-   TR::InstOpCode::S390BranchCondition newBranchOpCond = TR::InstOpCode::COND_NOP;
-   TR::Instruction * returnInstruction = NULL;
-   TR::Compilation *comp = cg->comp();
-   bool isBranchGenerated = false;
-
-   TR::DataType dataType = node->getFirstChild()->getDataType();
-   TR::InstOpCode::Mnemonic cmpOp = TR::InstOpCode::BAD;
-   if (dataType == TR::DecimalDouble)
-      cmpOp = TR::InstOpCode::CDTR;
-   else if (dataType == TR::DecimalLongDouble)
-      cmpOp = TR::InstOpCode::CXTR;
-
-   if (cg->whichChildToEvaluate(node) == 0)
-      {
-      firstChild = node->getFirstChild();
-      secondChild = node->getSecondChild();
-      }
-   else
-      {
-      isForward = false;
-      firstChild = node->getSecondChild();
-      secondChild = node->getFirstChild();
-      }
-
-   TR::Register * firstRegister = firstChild->getRegister();
-   TR::Register * secondRegister = secondChild->getRegister();
-
-   if (firstRegister==NULL)
-      firstRegister = cg->evaluate(firstChild);
-   if (secondRegister==NULL)
-      secondRegister = cg->evaluate(secondChild);
-
-
-   generateRRInstruction(cg, cmpOp, node, firstRegister, secondRegister);
-
-   // There should be no register attached to the compare node, otherwise
-   // the register is kept live longer than it should.
-   node->unsetRegister();
-   cg->decReferenceCount(firstChild);
-   cg->decReferenceCount(secondChild);
-
-   TR::InstOpCode::S390BranchCondition returnCond;
-
-   if (newBranchOpCond!=TR::InstOpCode::COND_NOP)
-      returnCond = (newBranchOpCond);
-   else
-      returnCond = (isForward? fBranchOpCond : rBranchOpCond);
-
-   // Generate the branch if required.
-   if (branchTarget != NULL && !isBranchGenerated)
-      {
-      returnInstruction = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, returnCond, node, branchTarget);
-      }
-
-   // Set the return Branch Condition
-   retBranchOpCond = returnCond;
-
-   return returnInstruction;
-   }
 #endif
 
 static bool
@@ -2714,8 +2643,6 @@ generateS390CompareAndBranchOpsHelper(TR::Node * node, TR::CodeGenerator * cg, T
    if (TR::Float == dataType || TR::Double == dataType)
       return generateS390FloatCompareAndBranchOps(node, cg, fBranchOpCond, rBranchOpCond, retBranchOpCond, branchTarget);
 #ifdef J9_PROJECT_SPECIFIC
-   else if (dataType == TR::DecimalDouble || dataType == TR::DecimalLongDouble)
-      return generateS390DFPLongDoubleCompareAndBranchOps(node, cg, fBranchOpCond, rBranchOpCond, retBranchOpCond, branchTarget);
    else if (TR::PackedDecimal == dataType)
       return generateS390PackedCompareAndBranchOps(node, cg, fBranchOpCond, rBranchOpCond, retBranchOpCond, branchTarget);
 #endif
@@ -3304,11 +3231,6 @@ getOpCodeIfSuitableForCompareAndBranch(TR::CodeGenerator * cg, TR::Node * node, 
          break;
       case TR::Float:
       case TR::Double:
-#ifdef J9_PROJECT_SPECIFIC
-      case TR::DecimalFloat:
-      case TR::DecimalDouble:
-      case TR::DecimalLongDouble:
-#endif
       case TR::Aggregate:
          break;
      default:
@@ -9595,19 +9517,7 @@ OMR::Z::TreeEvaluator::BBStartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                TR::DataType dt = sym->getDataType();
                TR::DataType type = dt;
 
-               if (
-#ifdef J9_PROJECT_SPECIFIC
-                   !type.isLongDouble() &&
-#endif
-                   true)
-                  {
                   sym->setAssignedGlobalRegisterIndex(cg->getGlobalRegister(child->getChild(i)->getGlobalRegisterNumber()));
-                  }
-               else
-                  {
-                  sym->setAssignedHighGlobalRegisterIndex(cg->getGlobalRegister(child->getChild(i)->getHighGlobalRegisterNumber()));
-                  sym->setAssignedLowGlobalRegisterIndex(cg->getGlobalRegister(child->getChild(i)->getLowGlobalRegisterNumber()));
-                  }
                }
             }
          }

@@ -434,44 +434,6 @@ bool TR_RedundantAsyncCheckRemoval::callDoesAnImplicitAsyncCheck(TR::Node *callN
        (symbol->getRecognizedMethod()==TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z))
       )
       return false;
-
-
-   if ((symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPPerformHysteresis)  ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPUseDFP) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPHWAvailable) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPIntConstructor) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPLongConstructor) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPLongExpConstructor) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPAdd) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPSubtract) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPMultiply) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPDivide) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPScaledAdd) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPScaledSubtract) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPScaledMultiply) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPScaledDivide) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPRound) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPSetScale) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPCompareTo) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPSignificance) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPExponent) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPBCDDigits) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPUnscaledValue) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPConvertPackedToDFP) ||
-       (symbol->getRecognizedMethod()==TR::java_math_BigDecimal_DFPConvertDFPToPacked)
-       )
-      return false;
-   if ((symbol->getRecognizedMethod()==TR::com_ibm_dataaccess_DecimalData_JITIntrinsicsEnabled) ||
-       (symbol->getRecognizedMethod()==TR::com_ibm_dataaccess_DecimalData_DFPFacilityAvailable) ||
-       (symbol->getRecognizedMethod()==TR::com_ibm_dataaccess_DecimalData_DFPUseDFP) ||
-       (symbol->getRecognizedMethod()==TR::com_ibm_dataaccess_DecimalData_DFPConvertPackedToDFP) ||
-       (symbol->getRecognizedMethod()==TR::com_ibm_dataaccess_DecimalData_DFPConvertDFPToPacked) ||
-       (symbol->getRecognizedMethod()==TR::com_ibm_dataaccess_DecimalData_createZeroBigDecimal) ||
-       (symbol->getRecognizedMethod()==TR::com_ibm_dataaccess_DecimalData_getlaside) ||
-       (symbol->getRecognizedMethod()==TR::com_ibm_dataaccess_DecimalData_setlaside) ||
-       (symbol->getRecognizedMethod()==TR::com_ibm_dataaccess_DecimalData_getflags) ||
-       (symbol->getRecognizedMethod()==TR::com_ibm_dataaccess_DecimalData_setflags))
-      return false;
 #endif
    return true;
    }

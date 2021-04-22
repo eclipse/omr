@@ -699,11 +699,6 @@ OMR::Z::TreeEvaluator::returnEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    dependencies= new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg);
 
-#ifdef J9_PROJECT_SPECIFIC
-   if ( node->getOpCodeValue() == TR::dereturn )
-      dependencies= new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg);
-#endif
-
    int regDepChildNum = 1;
 
    switch (node->getOpCodeValue())
@@ -738,26 +733,13 @@ OMR::Z::TreeEvaluator::returnEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             }
          break;
       case TR::freturn:
-#ifdef J9_PROJECT_SPECIFIC
-      case TR::dfreturn:
-#endif
          comp->setReturnInfo(TR_FloatReturn);
          dependencies->addPostCondition(returnValRegister, linkage->getFloatReturnRegister());
          break;
       case TR::dreturn:
-#ifdef J9_PROJECT_SPECIFIC
-      case TR::ddreturn:
-#endif
          comp->setReturnInfo(TR_DoubleReturn);
          dependencies->addPostCondition(returnValRegister, linkage->getDoubleReturnRegister());
          break;
-#ifdef J9_PROJECT_SPECIFIC
-      case TR::dereturn:
-         comp->setReturnInfo(TR_DoubleReturn);
-         dependencies->addPostCondition(returnValRegister->getHighOrder(), linkage->getLongDoubleReturnRegister0());
-         dependencies->addPostCondition(returnValRegister->getLowOrder(), linkage->getLongDoubleReturnRegister2());
-         break;
-#endif
       case TR::Return:
          comp->setReturnInfo(TR_VoidReturn);
          break;

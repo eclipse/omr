@@ -452,15 +452,8 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
             {
             int32_t count = 0;
             if (type.getDataType() == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                || type.getDataType() == TR::DecimalDouble
-#endif
                 )
                 count = (self()->cg()->comp()->target().is64Bit()) ? 1 : 2;
-#ifdef J9_PROJECT_SPECIFIC
-            else if (type.isLongDouble())
-                count = (self()->cg()->comp()->target().is64Bit()) ? 2 : 4;
-#endif
             else
                 count = 1;
 
@@ -588,14 +581,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
             {
             regNum = self()->getFloatArgumentRegister(lri);
             lastFreeFloatArgIndex = lri + 1;
-#ifdef J9_PROJECT_SPECIFIC
-            if (dtype == TR::DecimalLongDouble)
-               {
-               TR_ASSERT(  ((lri%2) == 0) , "LongDouble must be passed in legal FP reg pair!");
-               TR_ASSERT(  (lri < (self()->getNumFloatArgumentRegisters() - 1)),"long double must be passed in FP reg pair in full");
-               lastFreeFloatArgIndex++;
-               }
-#endif
             }
          else if(self()->cg()->comp()->target().isLinux() && dtype == TR::Aggregate)
            {
@@ -637,11 +622,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                {
                freeScratchable.set(regNum + 1);
                }
-#ifdef J9_PROJECT_SPECIFIC
-            if (type.isLongDouble())
-               freeScratchable.set(regNum + 2);  // 2nd of even-even FP pair
-#endif
-
             continue;
             }
 
@@ -730,9 +710,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                      }
                   break;
                case TR::Float:
-#ifdef J9_PROJECT_SPECIFIC
-               case TR::DecimalFloat:
-#endif
                   if (genBinary)
                      {
                      cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STE, (uint8_t *) cursor, self()->getRealRegister(regNum),
@@ -749,9 +726,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                      }
                   break;
                case TR::Double:
-#ifdef J9_PROJECT_SPECIFIC
-               case TR::DecimalDouble:
-#endif
                   if (genBinary)
                      {
                      cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STD, (uint8_t *) cursor, self()->getRealRegister(regNum),
@@ -767,33 +741,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                         self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getRealRegister(regNum), offset);
                      }
                   break;
-#ifdef J9_PROJECT_SPECIFIC
-               case TR::DecimalLongDouble:
-                  if (genBinary)
-                     {
-                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STD, (uint8_t *) cursor, self()->getRealRegister(regNum),
-                                          offset, self()->cg());
-                     cursor =  (void *) TR::S390CallSnippet::storeArgumentItem(TR::InstOpCode::STD, (uint8_t *) cursor, self()->getRealRegister(REGNUM(regNum+2)),
-                                          offset+8, self()->cg());
-                     }
-                  else
-                     {
-                     TR::MemoryReference* mr = generateS390MemoryReference(stackPtr, offset, self()->cg(), param_name);
-                     TR::MemoryReference * hiMR = generateS390MemoryReference(*mr, 8, self()->cg());
-
-                     cursor = (void *) generateRXInstruction(self()->cg(), TR::InstOpCode::STD, firstNode, self()->getRealRegister(regNum),
-                                          mr, (TR::Instruction *) cursor);
-                     cursor = (void *) generateRXInstruction(self()->cg(), TR::InstOpCode::STD, firstNode, self()->getRealRegister(REGNUM(regNum+2)),
-                                          hiMR, (TR::Instruction *) cursor);
-
-                     ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
-                     if (!InPreProlog && !globalAllocatedRegisters.isSet(regNum))
-                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getRealRegister(regNum), offset);
-                     if (!InPreProlog && !globalAllocatedRegisters.isSet(REGNUM(regNum+2)))
-                        self()->removeOSCOnSavedArgument((TR::Instruction *)cursor, self()->getRealRegister(REGNUM(regNum+2)), offset+8);
-                     }
-                  break;
-#endif
                case TR::VectorInt8:
                case TR::VectorInt16:
                case TR::VectorInt32:
@@ -822,10 +769,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
             if (ai < 0 )
                {
                freeScratchable.set(regNum);
-#ifdef J9_PROJECT_SPECIFIC
-               if (dtype == TR::DecimalLongDouble)
-                  freeScratchable.set(regNum+2);
-#endif
                }
             }
 
@@ -845,10 +788,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   {
                   if (dtype == TR::Float
                       || dtype == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                      || dtype == TR::DecimalFloat
-                      || dtype == TR::DecimalDouble
-#endif
                       )
                      {
                      cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LDR, firstNode, self()->getRealRegister(REGNUM(ai)),
@@ -858,21 +797,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                      freeScratchable.reset(ai);
                      freeScratchable.set(regNum);
                      }
-#ifdef J9_PROJECT_SPECIFIC
-                  else if (dtype == TR::DecimalLongDouble)
-                     {
-                     int32_t ai_l = paramCursor->getAssignedLowGlobalRegisterIndex();  //  low reg of a pair
-                     TR_ASSERT( (ai_l == (ai+2)),"global RA incorrect for long double params");
-                     cursor = generateRRInstruction(self()->cg(),  TR::InstOpCode::LXR, firstNode, self()->cg()->allocateFPRegisterPair(self()->getRealRegister(REGNUM(ai_l)), self()->getRealRegister(REGNUM(ai))),
-                        self()->cg()->allocateFPRegisterPair(self()->getRealRegister(REGNUM(regNum+2)),self()->getRealRegister(REGNUM(regNum))), (TR::Instruction *) cursor);
-
-                     ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
-                     freeScratchable.reset(ai);
-                     freeScratchable.reset(ai_l);
-                     freeScratchable.set(regNum);
-                     freeScratchable.set(regNum+2);
-                     }
-#endif
                   else
                      {
                      if (dtype == TR::Int64 && self()->cg()->comp()->target().is32Bit())
@@ -957,10 +881,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                      busyMoves[1][busyIndex] = ai;
                      if (dtype == TR::Float
                          || dtype == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                         || dtype == TR::DecimalFloat
-                         || dtype == TR::DecimalDouble
-#endif
                          )
                         {
                         busyMoves[2][busyIndex] = 5;
@@ -988,14 +908,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
             //  - complex:  can pass real part in FP reg (or FP reg pair for complex long double) and imag part on stack
             //      - complex float / double
             //      - complex long double
-#ifdef J9_PROJECT_SPECIFIC
-            if (dtype == TR::DecimalLongDouble )  // if long int lower word pass in stack ...
-               {
-               TR_ASSERT(  ai_l == (ai+2), "global RA incorrect for long double param");
-               // should be handled by the high word part case already.
-               }
-            else
-#endif
                  if (!fullLong)  // if long int lower word pass in stack ...
                {
                if (freeScratchable.isSet(ai_l))
@@ -1023,7 +935,7 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
             // so add in some register moves to fix up
             //
 #ifdef J9_PROJECT_SPECIFIC
-            else if (dtype != TR::DecimalLongDouble && (regNum+1) != ai_l)
+            else if ((regNum+1) != ai_l)
                {
                //  Global register is available as scratch reg, so make the move
                //
@@ -1088,9 +1000,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   }
                break;
             case TR::Float:
-#ifdef J9_PROJECT_SPECIFIC
-            case TR::DecimalFloat:
-#endif
                if (freeScratchable.isSet(ai))
                   {
                   cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LE, firstNode, self()->getRealRegister(REGNUM(ai)),
@@ -1108,9 +1017,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   }
                break;
             case TR::Double:
-#ifdef J9_PROJECT_SPECIFIC
-            case TR::DecimalDouble:
-#endif
                if (freeScratchable.isSet(ai))
                   {
                   cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getRealRegister(REGNUM(ai)),
@@ -1127,30 +1033,6 @@ OMR::Z::Linkage::saveArguments(void * cursor, bool genBinary, bool InPreProlog, 
                   busyIndex++;
                   }
                break;
-#ifdef J9_PROJECT_SPECIFIC
-            case TR::DecimalLongDouble:
-               TR_ASSERT( (ai_l == (ai+2) ),"global RA incorrect for long double param");
-               if (freeScratchable.isSet(ai))
-                  {
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getRealRegister(REGNUM(ai)),
-                              generateS390MemoryReference(stackPtr, offset, self()->cg()), (TR::Instruction *) cursor);
-                  ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
-                  cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, self()->getRealRegister(REGNUM(ai_l)),
-                              generateS390MemoryReference(stackPtr, offset+8, self()->cg()), (TR::Instruction *) cursor);
-                  ((TR::Instruction*)cursor)->setBinLocalFreeRegs(binLocalRegs);
-
-                  freeScratchable.reset(ai);
-                  freeScratchable.reset(ai_l);
-                  }
-               else
-                  {
-                  busyMoves[0][busyIndex] = offset;
-                  busyMoves[1][busyIndex] = ai;
-                  busyMoves[2][busyIndex] = 9;  // long double mem to reg copy
-                  busyIndex++;
-                  }
-               break;
-#endif
              default:
                TR_ASSERT(0, "saveArguments: unhandled parameter type");
             } //switch(dtype)
@@ -1327,19 +1209,9 @@ OMR::Z::Linkage::getOpCodeForLinkage(TR::Node * child, bool isStore, bool isRegR
             else
               return (isStore)? TR::InstOpCode::STG : (isRegReg)? TR::InstOpCode::LGR : TR::InstOpCode::LG;
          case TR::Float:
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalFloat:
-#endif
               return (isStore)? TR::InstOpCode::STE : (isRegReg)? TR::InstOpCode::LER : TR::InstOpCode::LE;
          case TR::Double:
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalDouble:
-#endif
               return (isStore)? TR::InstOpCode::STD : (isRegReg)? TR::InstOpCode::LDR : TR::InstOpCode::LD;
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalLongDouble:
-              return (isStore)? TR::InstOpCode::STD : (isRegReg)? TR::InstOpCode::LXR : TR::InstOpCode::LD;
-#endif
          case TR::VectorInt8:
          case TR::VectorInt16:
          case TR::VectorInt32:
@@ -1564,17 +1436,10 @@ OMR::Z::Linkage::pushArg(TR::Node * callNode, TR::Node * child, int32_t numInteg
 
    if (argType.isInt64()
        || argDataType == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-       || argDataType == TR::DecimalDouble
-#endif
        )
       {
       argSize += self()->isTwoStackSlotsForLongAndDouble()? 2*regSize : 8;
       }
-#ifdef J9_PROJECT_SPECIFIC
-   else if (argType.isLongDouble())
-       argSize += 16;
-#endif
    else
        argSize += regSize;
 
@@ -1598,12 +1463,6 @@ OMR::Z::Linkage::pushArg(TR::Node * callNode, TR::Node * child, int32_t numInteg
          if (argType.isFloatingPoint())
             {
             argRegNum = self()->getFloatArgumentRegister(numFloatArgs);
-#ifdef J9_PROJECT_SPECIFIC
-            if (argType.isLongDouble())
-               {
-               argRegNum2 = self()->getFloatArgumentRegister(numFloatArgs+1);
-               }
-#endif
             }
          else
             argRegNum = self()->getIntegerArgumentRegister(numIntegerArgs);
@@ -1612,9 +1471,6 @@ OMR::Z::Linkage::pushArg(TR::Node * callNode, TR::Node * child, int32_t numInteg
       }
 
    if ( (argRegNum == TR::RealRegister::NoReg)
-#ifdef J9_PROJECT_SPECIFIC
-        || (argType.isLongDouble() && argRegNum2 == TR::RealRegister::NoReg)
-#endif
       )
       isStoreArg = true;
    else
@@ -1626,17 +1482,6 @@ OMR::Z::Linkage::pushArg(TR::Node * callNode, TR::Node * child, int32_t numInteg
          argRegister = self()->copyArgRegister(callNode, child, argRegister);
          }
 
-#ifdef J9_PROJECT_SPECIFIC
-      // Set up register dependencies for the parameter registers.
-      if (argType.isLongDouble())
-         {
-         TR::Register *argRegisterHigh = argRegister->getRegisterPair()->getHighOrder();
-         TR::Register *argRegisterLow = argRegister->getRegisterPair()->getLowOrder();
-         dependencies->addPreCondition(argRegisterHigh, argRegNum);
-         dependencies->addPreCondition(argRegisterLow, argRegNum2);
-         }
-      else
-#endif
          {
          dependencies->addPreCondition(argRegister, argRegNum);
          // See comment related to IntegerArgumentAddToPost in S390Linkage.hpp
@@ -1682,11 +1527,6 @@ OMR::Z::Linkage::pushArg(TR::Node * callNode, TR::Node * child, int32_t numInteg
       if (argRegister != NULL)
          {
          TR::Register *stackRegister = self()->getStackRegisterForOutgoingArguments(callNode, dependencies);  // delay (possibly) creating this till needed
-#ifdef J9_PROJECT_SPECIFIC
-         if (child->getDataType()== TR::DecimalLongDouble)
-            self()->storeLongDoubleArgumentOnStack(callNode, child->getDataType(), storeOp, argRegister, stackOffsetPtr, stackRegister);
-         else
-#endif
             self()->storeArgumentOnStack(callNode, storeOp, argRegister, stackOffsetPtr, stackRegister);
          }
 
@@ -1859,10 +1699,6 @@ OMR::Z::Linkage::loadIntArgumentsFromStack(TR::Node *callNode, TR::RegisterDepen
          dependencies->addPreCondition(argRegister, argRegNum);
          TR::MemoryReference * argMemRef = generateS390MemoryReference(stackRegister, stackOffset , self()->cg());
          TR::InstOpCode::Mnemonic loadOp = TR::InstOpCode::getLoadOpCode();
-#ifdef J9_PROJECT_SPECIFIC
-         if (argType == TR::DecimalFloat && self()->cg()->comp()->target().is64Bit()) // special case for DecFloat on 64bit
-            loadOp = TR::InstOpCode::LLGF;
-#endif
 
          generateRXInstruction(self()->cg(), loadOp, callNode, argRegister, argMemRef);
 
@@ -1980,17 +1816,10 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
 
       if (argType.isInt64()
           || argDataType == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-          || argDataType == TR::DecimalDouble
-#endif
           )
          {
          argSize += self()->isTwoStackSlotsForLongAndDouble()? 2*gprSize : 8;
          }
-#ifdef J9_PROJECT_SPECIFIC
-      else if (argType.isLongDouble())
-         argSize += 16;
-#endif
       else if (enableVectorLinkage && argDataType.isVector())
          argSize += 128;
       else
@@ -2041,9 +1870,6 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
                }
             break;
          case TR::Float:
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalFloat:
-#endif
                {
                argRegister = self()->pushArg(callNode, child, numIntegerArgs, numFloatArgs, &stackOffset, dependencies);
 
@@ -2056,9 +1882,6 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
                break;
                }
          case TR::Double:
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalDouble:
-#endif
             argRegister = self()->pushArg(callNode, child, numIntegerArgs, numFloatArgs, &stackOffset, dependencies);
 
             numFloatArgs++;
@@ -2069,26 +1892,6 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
                }
             break;
 #ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalLongDouble:
-            if (numFloatArgs%2 == 1)
-               { // need to skip fp arg 'hole' for long double arg
-               numFloatArgs++;
-               if (self()->isSkipGPRsForFloatParms() && numIntegerArgs < self()->getNumIntegerArgumentRegisters())
-                  numIntegerArgs++;
-               }
-
-            argRegister = self()->pushArg(callNode, child, numIntegerArgs, numFloatArgs, &stackOffset, dependencies);
-
-            numFloatArgs = numFloatArgs + 2;  // long double takes up 2 fp registers
-
-            if (self()->isSkipGPRsForFloatParms())
-               {
-               if (numIntegerArgs < self()->getNumIntegerArgumentRegisters())
-                  {
-                  numIntegerArgs += (self()->cg()->comp()->target().is64Bit()) ? 2 : 4;
-                  }
-               }
-            break;
          case TR::PackedDecimal:
          case TR::ZonedDecimal:
          case TR::ZonedDecimalSignLeadingEmbedded:
@@ -2144,29 +1947,11 @@ OMR::Z::Linkage::buildArgs(TR::Node * callNode, TR::RegisterDependencyConditions
             break;
          case TR::Float:
          case TR::Double:
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalFloat:
-         case TR::DecimalDouble:
-#endif
             resultReg = self()->cg()->allocateRegister(TR_FPR);
             self()->cg()->setRealRegisterAssociation(resultReg, self()->getFloatReturnRegister());
             dependencies->addPostCondition(resultReg, self()->getFloatReturnRegister(),DefinesDependentRegister);
             killMask &= (~(0x1L << REGINDEX(self()->getFloatReturnRegister())));
             break;
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalLongDouble:
-            {
-            TR::Register * lowReg = self()->cg()->allocateRegister(TR_FPR);
-            TR::Register * highReg = self()->cg()->allocateRegister(TR_FPR);
-            self()->cg()->setRealRegisterAssociation(highReg, self()->getLongDoubleReturnRegister0());
-            dependencies->addPostCondition(highReg, self()->getLongDoubleReturnRegister0(),DefinesDependentRegister);
-            self()->cg()->setRealRegisterAssociation(lowReg, self()->getLongDoubleReturnRegister2());
-            dependencies->addPostCondition(lowReg, self()->getLongDoubleReturnRegister2(),DefinesDependentRegister);
-            killMask &= (~(0x1L << REGINDEX(self()->getLongDoubleReturnRegister0())));
-            killMask &= (~(0x1L << REGINDEX(self()->getLongDoubleReturnRegister2())));
-            break;
-            }
-#endif
          case TR::Int64:
             if (self()->cg()->comp()->target().is32Bit())
                {
@@ -2643,10 +2428,6 @@ bool OMR::Z::Linkage::needsAlignment(TR::DataType dt, TR::CodeGenerator * cg)
       {
       case TR::Double:
       case TR::Int64:
-#ifdef J9_PROJECT_SPECIFIC
-      case TR::DecimalDouble:
-      case TR::DecimalLongDouble:
-#endif
       case TR::Aggregate:
          return true;
       case TR::Address:

@@ -468,29 +468,6 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
                      return &symRefTab->aliasBuilder.gcSafePointSymRefNumbers();
                   else
                      return 0;
-
-               // no aliasing on DFP dummy stubs
-               case TR::java_math_BigDecimal_DFPPerformHysteresis:
-               case TR::java_math_BigDecimal_DFPUseDFP:
-               case TR::java_math_BigDecimal_DFPHWAvailable:
-               case TR::java_math_BigDecimal_DFPCompareTo:
-               case TR::java_math_BigDecimal_DFPUnscaledValue:
-               case TR::com_ibm_dataaccess_DecimalData_DFPFacilityAvailable:
-               case TR::com_ibm_dataaccess_DecimalData_DFPUseDFP:
-               case TR::com_ibm_dataaccess_DecimalData_DFPConvertPackedToDFP:
-               case TR::com_ibm_dataaccess_DecimalData_DFPConvertDFPToPacked:
-               case TR::com_ibm_dataaccess_DecimalData_createZeroBigDecimal:
-               case TR::com_ibm_dataaccess_DecimalData_getlaside:
-               case TR::com_ibm_dataaccess_DecimalData_setlaside:
-               case TR::com_ibm_dataaccess_DecimalData_getflags:
-               case TR::com_ibm_dataaccess_DecimalData_setflags:
-                  if (!(
-#ifdef TR_TARGET_S390
-                     comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP) ||
-#endif
-                      comp->target().cpu.supportsDecimalFloatingPoint()) ||
-                      comp->getOption(TR_DisableDFP))
-                     return NULL;
 #endif //J9_PROJECT_SPECIFIC
                default:
                	break;

@@ -488,22 +488,8 @@ TR::S390zLinuxSystemLinkage::callNativeFunction(TR::Node * callNode,
       case TR::fcalli:
       case TR::dcall:
       case TR::dcalli:
-#if defined(SUPPORT_DFP) && defined(J9_PROJECT_SPECIFIC)
-      case TR::dfcall:
-      case TR::dfcalli:
-      case TR::ddcall:
-      case TR::ddcalli:
-#endif
          returnRegister = deps->searchPostConditionRegister(getFloatReturnRegister());
          break;
-#if defined(SUPPORT_DFP) && defined(J9_PROJECT_SPECIFIC)
-      case TR::decall:
-      case TR::decalli:
-         highReg = deps->searchPostConditionRegister(getLongDoubleReturnRegister0());
-         lowReg = deps->searchPostConditionRegister(getLongDoubleReturnRegister2());
-         returnRegister = cg()->allocateFPRegisterPair(lowReg, highReg);
-         break;
-#endif
       case TR::call:
       case TR::calli:
          returnRegister = NULL;
@@ -580,9 +566,6 @@ TR::S390zLinuxSystemLinkage::initParamOffset(TR::ResolvedMethodSymbol * method, 
             numIntegerArgs ++;
             break;
          case TR::Float:
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalFloat:
-#endif
             indexInArgRegistersArray = numFloatArgs;
             argRegNum = getFloatArgumentRegister(indexInArgRegistersArray);
             numFloatArgs ++;
@@ -595,9 +578,6 @@ TR::S390zLinuxSystemLinkage::initParamOffset(TR::ResolvedMethodSymbol * method, 
                   }
              break;
          case TR::Double:
-#ifdef J9_PROJECT_SPECIFIC
-         case TR::DecimalDouble:
-#endif
             indexInArgRegistersArray = numFloatArgs;
             argRegNum = getFloatArgumentRegister(indexInArgRegistersArray);
             numFloatArgs ++;

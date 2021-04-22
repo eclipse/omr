@@ -304,10 +304,6 @@ bool TR_ValueNumberInfo::congruentNodes(TR::Node * node, TR::Node * entryNode)
             node->getOpCode().getName(),node,node->castedToBCD(),entryNode->getOpCode().getName(),entryNode,entryNode->castedToBCD());
       return false;
       }
-   else if (node->getType().isDFP() && node->getOpCode().isModifyPrecision() && node->getDFPPrecision() != entryNode->getDFPPrecision())
-      {
-      return false;
-      }
 #endif
 
     // Check for loads of constants.  They're much like isLoadConst.
@@ -373,13 +369,6 @@ bool TR_ValueNumberInfo::congruentNodes(TR::Node * node, TR::Node * entryNode)
           case TR::Float: isSame = (node->getFloatBits() == entryNode->getFloatBits()); break;
           case TR::Int64:
           case TR::Double: isSame = (node->getLongInt() == entryNode->getLongInt()); break;
-#ifdef J9_PROJECT_SPECIFIC
-          case TR::DecimalFloat: isSame = (node->getInt() == entryNode->getInt()); break;
-          case TR::DecimalDouble: isSame = (node->getLongInt() == entryNode->getLongInt()); break;
-#ifdef SUPPORT_DFP
-          case TR::DecimalLongDouble: isSame = (node->getLongDouble() == entryNode->getLongDouble()); break;
-#endif
-#endif
           case TR::Address:isSame = (node->getAddress() == entryNode->getAddress()); break;
           default:
              {
@@ -499,14 +488,6 @@ void TR_ValueNumberInfo::initializeNode(TR::Node *node, int32_t &negativeValueNu
                node->getOpCode().getName(),node,node->castedToBCD(),entryNode->getOpCode().getName(),entryNode,entryNode->castedToBCD());
          continue;
          }
-      else if (node->getType().isDFP() && node->getOpCode().isModifyPrecision() && node->getDFPPrecision() != entryNode->getDFPPrecision())
-         {
-         if (trace())
-            traceMsg(comp(), "DFP node %s (%p) and entryNode %s (%p) have different precisions -- do not consider as matching\n",
-               node->getOpCode().getName(), node,
-               entryNode->getOpCode().getName(), entryNode);
-         continue;
-         }
 #endif
 
       // Check for loads of constants.  They're much like isLoadConst.
@@ -569,13 +550,6 @@ void TR_ValueNumberInfo::initializeNode(TR::Node *node, int32_t &negativeValueNu
             case TR::Float: isSame = (node->getFloatBits() == entryNode->getFloatBits()); break;
             case TR::Int64:
             case TR::Double: isSame = (node->getLongInt() == entryNode->getLongInt()); break;
-#ifdef J9_PROJECT_SPECIFIC
-            case TR::DecimalFloat: isSame = (node->getInt() == entryNode->getInt()); break;
-            case TR::DecimalDouble: isSame = (node->getLongInt() == entryNode->getLongInt()); break;
-#ifdef SUPPORT_DFP
-            case TR::DecimalLongDouble: isSame = (node->getLongDouble() == entryNode->getLongDouble()); break;
-#endif
-#endif
             case TR::Address:isSame = (node->getAddress() == entryNode->getAddress()); break;
             default:
                {

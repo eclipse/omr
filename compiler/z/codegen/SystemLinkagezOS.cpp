@@ -455,24 +455,9 @@ TR::S390zOSSystemLinkage::callNativeFunction(TR::Node * callNode, TR::RegisterDe
       case TR::dcalli:
       case TR::fcall:
       case TR::dcall:
-#if defined(SUPPORT_DFP) && defined(J9_PROJECT_SPECIFIC)
-      case TR::dfcalli:
-      case TR::ddcalli:
-      case TR::dfcall:
-      case TR::ddcall:
-#endif
          retReg = deps->searchPostConditionRegister(getFloatReturnRegister());
          returnRegister = retReg;
          break;
-#if defined(SUPPORT_DFP) && defined(J9_PROJECT_SPECIFIC)
-      case TR::decall:
-      case TR::decalli:
-         highReg = deps->searchPostConditionRegister(getLongDoubleReturnRegister0());
-         lowReg = deps->searchPostConditionRegister(getLongDoubleReturnRegister2());
-         retReg = codeGen->allocateFPRegisterPair(lowReg, highReg);
-         returnRegister = retReg;
-         break;
-#endif
       case TR::calli:
       case TR::call:
          retReg = NULL;
@@ -810,16 +795,8 @@ TR::S390zOSSystemLinkage::generateCallDescriptorValue(TR::Node* callNode)
             {
             case TR::Float:
             case TR::Double:
-#ifdef J9_PROJECT_SPECIFIC
-            case TR::DecimalFloat:
-            case TR::DecimalDouble:
-#endif
                numFPRsNeeded = 1;
                break;
-#ifdef J9_PROJECT_SPECIFIC
-            case TR::DecimalLongDouble:
-               break;
-#endif
             }
 
          if (numFPRsNeeded != 0)

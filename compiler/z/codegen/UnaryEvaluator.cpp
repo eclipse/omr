@@ -164,10 +164,6 @@ OMR::Z::TreeEvaluator::iabsEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       opCode = TR::InstOpCode::LPEBR;
    else if (node->getOpCodeValue() == TR::dabs)
       opCode = TR::InstOpCode::LPDBR;
-#ifdef J9_PROJECT_SPECIFIC
-   else if (node->getOpCodeValue() == TR::dfabs || node->getOpCodeValue() == TR::ddabs || node->getOpCodeValue() == TR::deabs)
-      opCode = TR::InstOpCode::LPDFR;
-#endif
    else if (node->getOpCodeValue() == TR::iabs)
       opCode = TR::InstOpCode::getLoadPositiveRegWidenOpCode();
    else if (cg->comp()->target().is64Bit())
@@ -175,22 +171,9 @@ OMR::Z::TreeEvaluator::iabsEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    else
       TR_ASSERT( 0,"labs for 32 bit not implemented yet");
 
-#ifdef J9_PROJECT_SPECIFIC
-   if (node->getOpCodeValue() == TR::deabs)
-      {
-      if (cg->canClobberNodesRegister(firstChild))
-         targetRegister = sourceRegister;
-      else
-         targetRegister = cg->allocateFPRegisterPair();
-      }
-   else
-#endif
+
         if (node->getOpCodeValue() == TR::fabs
-#ifdef J9_PROJECT_SPECIFIC
             || node->getOpCodeValue() == TR::dabs
-            || node->getOpCodeValue() == TR::dfabs
-            || node->getOpCodeValue() == TR::ddabs
-#endif
             )
       {
       if (cg->canClobberNodesRegister(firstChild))
@@ -206,18 +189,6 @@ OMR::Z::TreeEvaluator::iabsEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          targetRegister = cg->allocateRegister();
       }
 
-#ifdef J9_PROJECT_SPECIFIC
-   if (node->getOpCodeValue() == TR::deabs)
-      {
-      generateRRInstruction(cg, opCode, node, targetRegister->getHighOrder(), sourceRegister->getHighOrder());
-
-      // If we aren't clobbering, also need to move the low half; otherwise, a load positive here is setting
-      // the highest bit in the high-order register, so the low half can remain unchanged
-      if (!cg->canClobberNodesRegister(firstChild))
-         generateRRInstruction(cg, TR::InstOpCode::LDR, node, targetRegister->getLowOrder(), sourceRegister->getLowOrder());
-      }
-   else
-#endif
       {
       generateRRInstruction(cg, opCode, node, targetRegister, sourceRegister);
       }

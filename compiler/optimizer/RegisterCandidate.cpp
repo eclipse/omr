@@ -198,11 +198,6 @@ TR_RegisterCandidate::getRegisterKinds()
   TR::DataType dt = getDataType();
   if(dt == TR::Float
      || dt == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-     || dt == TR::DecimalFloat
-     || dt == TR::DecimalDouble
-     || dt == TR::DecimalLongDouble
-#endif
      )
     return TR_FPR;
   else if (dt.isVector())
@@ -702,9 +697,6 @@ bool TR_RegisterCandidate::rcNeeds2Regs(TR::Compilation *comp)
       }
    else
       return ((getType().isInt64() && comp->target().is32Bit() && !comp->cg()->use64BitRegsOn32Bit())
-#ifdef J9_PROJECT_SPECIFIC
-              || getType().isLongDouble()
-#endif
               );
    }
 
@@ -1839,11 +1831,6 @@ TR_RegisterCandidates::reprioritizeCandidates(
       bool isFPCandidate = false;
       if (rc->getDataType() == TR::Float
           || rc->getDataType() == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-          || rc->getDataType() == TR::DecimalFloat
-          || rc->getDataType() == TR::DecimalDouble
-          || rc->getDataType() == TR::DecimalLongDouble
-#endif
           )
         isFPCandidate = true;
 
@@ -2320,11 +2307,6 @@ TR_RegisterCandidates::assign(TR::Block ** cfgBlocks, int32_t numberOfBlocks, in
                        rc->getWeight());
       bool isFloat = (rc->getDataType() == TR::Float
                       || rc->getDataType() == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                      || rc->getDataType() == TR::DecimalFloat
-                      || rc->getDataType() == TR::DecimalDouble
-                      || rc->getDataType() == TR::DecimalLongDouble
-#endif
                       );
       bool isVector = rc->getDataType().isVector();
       bool needs2Regs = false;
@@ -2599,11 +2581,6 @@ TR_RegisterCandidates::assign(TR::Block ** cfgBlocks, int32_t numberOfBlocks, in
 
       bool isFloat = (dt == TR::Float
                       || dt == TR::Double
-#ifdef J9_PROJECT_SPECIFIC
-                      || dt == TR::DecimalFloat
-                      || dt == TR::DecimalDouble
-                      || dt == TR::DecimalLongDouble
-#endif
                       );
       bool isVector = dt.isVector();
       int32_t firstRegister, lastRegister;
@@ -2611,9 +2588,6 @@ TR_RegisterCandidates::assign(TR::Block ** cfgBlocks, int32_t numberOfBlocks, in
       if (isFloat)
          {
          if (cg->getDisableFloatingPointGRA()
-#ifdef J9_PROJECT_SPECIFIC
-             || (dt == TR::DecimalLongDouble)
-#endif
             )
             {
             continue;

@@ -2170,7 +2170,7 @@ protected:
       unneededConv                          = 0x00000400, ///< Flag used by TR::x2y
       ParentSupportsLazyClobber             = 0x00002000, ///< Tactical x86 codegen flag.  Only when refcount <= 1.  Indicates that parent will consult the register's node count before clobbering it (not just the node's refcount).
 
-      // Flag used by float to fixed conversion nodes e.g. f2i/f2pd/d2i/df2i/f2l/d2l/f2s/d2pd etc
+      // Flag used by float to fixed conversion nodes e.g. f2i/f2pd/d2i/f2l/d2l/f2s/d2pd etc
       callForFloatToFixedConversion         = 0x00400000,
 
       // Flags used by TR::fence

@@ -244,7 +244,7 @@ enum TR_CompilationOptions
    TR_ExperimentalClassLoadPhase          = 0x00000020 + 5,
    TR_DisableLookahead                    = 0x00000040 + 5,
    TR_TraceBFGeneration                   = 0x00000080 + 5,
-   TR_DisableDFP                          = 0x00000100 + 5,
+   // Available                           = 0x00000100 + 5,
    TR_SuspendEarly                        = 0x00000200 + 5,
    TR_EnableEarlyCompilationDuringIdleCpu = 0x00000400 + 5,
    TR_DisableCallGraphInlining            = 0x00000800 + 5, // interpreter profiling
@@ -362,7 +362,7 @@ enum TR_CompilationOptions
    // Option word 9
    //
    // Available                           = 0x00000020 + 9,
-   TR_DisableHysteresis                   = 0x00000040 + 9, // DFP
+   // Available                           = 0x00000040 + 9,
    TR_DisableTLHPrefetch                  = 0x00000080 + 9,
    TR_DisableJProfilerThread              = 0x00000100 + 9,
    TR_DisableIProfilerThread              = 0x00000200 + 9,
@@ -714,7 +714,7 @@ enum TR_CompilationOptions
    // Available                                       = 0x00001000 + 21,
    // Available                                       = 0x00002000 + 21,
    TR_DisableBCDOppTracing                            = 0x00004000 + 21,
-   TR_DisableZonedToDFPReduction                      = 0x00008000 + 21,
+   // Available                                       = 0x00008000 + 21,
    // Available                                       = 0x00010000 + 21,
    TR_OldDataCacheImplementation                      = 0x00020000 + 21,
    TR_EnableDataCacheStatistics                       = 0x00040000 + 21,
@@ -880,7 +880,7 @@ enum TR_CompilationOptions
    TR_DisableConservativeInlining                     = 0x00000800 + 27,
    TR_EnableExpensiveOptsAtWarm                       = 0x00001000 + 27,
    TR_DisableCheckcastAndProfiledGuardCoalescer       = 0x00002000 + 27,
-   TR_DisableArch11PackedToDFP                        = 0x00004000 + 27,
+   // Available                                       = 0x00004000 + 27,
    TR_DisableVectorRegGRA                             = 0x00008000 + 27,
    TR_DisableSIMD                                     = 0x00010000 + 27,
    // Available                                       = 0x00020000 + 27,

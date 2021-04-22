@@ -43,11 +43,6 @@ struct UnionedWithChildren
 
    union
       {
-#ifdef SUPPORT_DFP
-      // Used to hold long double constatants
-      uint32_t                _constData[4];
-#endif
-
       GlobalRegisterInfo                _globalRegisterInfo;
 
       // Offset to WCode literal pool for constants > 8 bytes

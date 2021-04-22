@@ -698,9 +698,7 @@ public:
    void printNodeFlags(TR::FILE *, TR::Node *);
 #ifdef J9_PROJECT_SPECIFIC
    void printBCDNodeInfo(TR::FILE *pOutFile, TR::Node * node);
-   void printDFPNodeInfo(TR::FILE *pOutFile, TR::Node * node);
    void printBCDNodeInfo(TR::Node * node, TR_PrettyPrinterString& output);
-   void printDFPNodeInfo(TR::Node * node, TR_PrettyPrinterString& output);
 #endif
 
    int32_t * printStackAtlas(uintptr_t startPC, uint8_t * mapBits, int32_t numberOfSlotsMapped, bool fourByteOffsets, int32_t * sizeOfStackAtlas, int32_t frameSize);

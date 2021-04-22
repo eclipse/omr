@@ -110,62 +110,6 @@ template <typename ListKind> class List;
 #define TR_UNICODE_TO_PACKED_RESULT_SIZE  16    ///< The result byte size in memory for a unicode to packed conversion (i.e. with PKU)
 #define TR_PACKED_TO_UNICODE_SOURCE_SIZE  16    ///< The source byte size in memory for a packed to unicode conversion (i.e. with UNPKU)
 
-#define TR_PACKED_TO_DECIMAL_FLOAT_SIZE         8  ///< The source byte size in memory for a pd2df conversion (i.e. with CDSTR -- pd2df and pd2dd use same instruction)
-#define TR_PACKED_TO_DECIMAL_FLOAT_PRECISION    15
-
-#define TR_PACKED_TO_DECIMAL_DOUBLE_SIZE        8  ///< The source byte size in memory for a pd2dd conversion (i.e. with CDSTR)
-#define TR_PACKED_TO_DECIMAL_DOUBLE_PRECISION   15
-
-#define TR_PACKED_TO_DECIMAL_LONG_DOUBLE_SIZE       16 ///< The source byte size in memory for a pd2de conversion (i.e. with CXSTR)
-#define TR_PACKED_TO_DECIMAL_LONG_DOUBLE_PRECISION  31
-
-#define TR_PACKED_TO_DECIMAL_FLOAT_SIZE_ARCH11         9  ///< The source byte size in memory for a pd2df conversion (i.e. with CDPT -- pd2df and pd2dd use same instruction)
-#define TR_PACKED_TO_DECIMAL_FLOAT_PRECISION_ARCH11    16 ///< NOTE: Although max size is 9 bytes only 16 and not 17 digits can be converted by CDPT to DFP -- df2pd and dd2pd use same instruction
-
-#define TR_PACKED_TO_DECIMAL_DOUBLE_SIZE_ARCH11        9  ///< The source byte size in memory for a pd2dd conversion (i.e. with CDPT)
-#define TR_PACKED_TO_DECIMAL_DOUBLE_PRECISION_ARCH11   16 ///< NOTE: Although max size is 9 bytes only 16 and not 17 digits can be converted by CDPT to DFP
-
-#define TR_PACKED_TO_DECIMAL_LONG_DOUBLE_SIZE_ARCH11        18 ///< The source byte size in memory for a pd2de conversion (i.e. with CXPT)
-#define TR_PACKED_TO_DECIMAL_LONG_DOUBLE_PRECISION_ARCH11   34 ///< NOTE: Although max size is 18 bytes only 34 and not 35 digits can be converted by CDPT to DFP
-
-#define TR_DECIMAL_FLOAT_TO_PACKED_SIZE         8  ///< The destination byte size in memory for a df2pd conversion (i.e. with CSDTR -- df2pd and dd2pd use same instruction)
-#define TR_DECIMAL_FLOAT_TO_PACKED_PRECISION    15
-
-#define TR_DECIMAL_DOUBLE_TO_PACKED_SIZE        8  ///< The destination byte size in memory for a dd2pd conversion (i.e. with CSDTR)
-#define TR_DECIMAL_DOUBLE_TO_PACKED_PRECISION   15
-
-#define TR_DECIMAL_LONG_DOUBLE_TO_PACKED_SIZE      16 ///< The destination byte size in memory for a de2pd conversion (i.e. with CSXTR)
-#define TR_DECIMAL_LONG_DOUBLE_TO_PACKED_PRECISION 31
-
-#define TR_DECIMAL_FLOAT_TO_PACKED_SIZE_ARCH11        9  ///< The destination byte size in memory for a df2pd conversion (i.e. with CPDT -- df2pd and dd2pd use same instruction)
-#define TR_DECIMAL_FLOAT_TO_PACKED_PRECISION_ARCH11   16  ///< NOTE: Although max size is 9 bytes only 16 and not 17 digits can be converted by CPDT -- df2pd and dd2pd use same instruction
-
-#define TR_DECIMAL_DOUBLE_TO_PACKED_SIZE_ARCH11       9  ///< The destination byte size in memory for a dd2pd conversion (i.e. with CPDT)
-#define TR_DECIMAL_DOUBLE_TO_PACKED_PRECISION_ARCH11  16  ///< NOTE: Although max size is 9 bytes only 16 and not 17 digits can be converted by CPDT
-
-#define TR_DECIMAL_LONG_DOUBLE_TO_PACKED_SIZE_ARCH11        18 ///< The destination byte size in memory for a de2pd conversion (i.e. with CPXT)
-#define TR_DECIMAL_LONG_DOUBLE_TO_PACKED_PRECISION_ARCH11   34 ///< NOTE: Although max size is 18 bytes only 34 and not 35 digits can be converted by CPXT
-
-#define TR_ZONED_TO_DECIMAL_FLOAT_MAX_PRECISION       16    ///< CDZT - same as DecimalDouble
-#define TR_ZONED_TO_DECIMAL_DOUBLE_MAX_PRECISION      16    ///< CDZT
-#define TR_ZONED_TO_DECIMAL_LONG_DOUBLE_MAX_PRECISION 34    ///< CXZT
-
-#define TR_DECIMAL_FLOAT_TO_ZONED_MAX_PRECISION        16   ///< CZDT - same as DecimalDouble
-#define TR_DECIMAL_DOUBLE_TO_ZONED_MAX_PRECISION       16   ///< CZDT
-#define TR_DECIMAL_LONG_DOUBLE_TO_ZONED_MAX_PRECISION  34   ///< CZXT
-
-#define TR_ZONED_TO_DECIMAL_FLOAT_MAX_SIZE       16    ///< CDZT - same as DecimalDouble
-#define TR_ZONED_TO_DECIMAL_DOUBLE_MAX_SIZE      16    ///< CDZT
-#define TR_ZONED_TO_DECIMAL_LONG_DOUBLE_MAX_SIZE 34    ///< CXZT
-
-#define TR_DECIMAL_FLOAT_TO_ZONED_MAX_SIZE        16   ///< CZDT - same as DecimalDouble
-#define TR_DECIMAL_DOUBLE_TO_ZONED_MAX_SIZE       16   ///< CZDT
-#define TR_DECIMAL_LONG_DOUBLE_TO_ZONED_SIZE      34   ///< CZXT
-
-#define TR_DECIMAL_FLOAT_BIAS       101
-#define TR_DECIMAL_DOUBLE_BIAS      398
-#define TR_DECIMAL_LONG_DOUBLE_BIAS 6176
-
 ////////////////////////////////////////////////////////////////////////////////
 // OMR::Z::Machine Definition
 ////////////////////////////////////////////////////////////////////////////////

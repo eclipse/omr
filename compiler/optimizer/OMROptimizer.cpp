@@ -2506,10 +2506,6 @@ bool OMR::Optimizer::areNodesEquivalent(TR::Node *node1, TR::Node *node2,  TR::C
             return false;
          }
 #ifdef J9_PROJECT_SPECIFIC
-      else if (node1->getType().isDFP() && node1->getOpCode().isModifyPrecision() && node1->getDFPPrecision() != node2->getDFPPrecision())
-         {
-         return false;
-         }
       else if (node1->getType().isBCD())
          {
          if (node1->isDecimalSizeAndShapeEquivalent(node2))
