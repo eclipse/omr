@@ -440,12 +440,18 @@ class OpCodesTest : public TestDriver
 
    static const double DOUBLE_MINIMUM;
    static const double DOUBLE_MAXIMUM;
+   static const double DOUBLE_NaN;
+   static const double DOUBLE_POS_LARGE;
+   static const double DOUBLE_NEG_LARGE;
    static const double DOUBLE_POS;
    static const double DOUBLE_NEG;
    static const double DOUBLE_ZERO;
 
    static const float FLOAT_MINIMUM;
    static const float FLOAT_MAXIMUM;
+   static const float FLOAT_NaN;
+   static const float FLOAT_POS_LARGE;
+   static const float FLOAT_NEG_LARGE;
    static const float FLOAT_POS;
    static const float FLOAT_NEG;
    static const float FLOAT_ZERO;
@@ -937,7 +943,9 @@ class OpCodesTest : public TestDriver
          }
       return a;
       }
-   template <typename T1, typename T2> static T2 convert(T1 a, T2 b) { return (T2) a;}
+   inline                              static int32_t convert(float  a, int32_t b) { return (a != a) ? 0 : (a > (float )INT_MAX) ? INT_MAX : (int32_t)a; }
+   inline                              static int32_t convert(double a, int32_t b) { return (a != a) ? 0 : (a > (double)INT_MAX) ? INT_MAX : (int32_t)a; }
+   template <typename T1, typename T2> static T2      convert(T1     a, T2      b) { return (T2) a;}
    template <typename T> static int32_t compareEQ(T a, T b) { return a == b;}
    template <typename T> static int32_t compareNE(T a, T b) { return a != b;}
    template <typename T> static int32_t compareLT(T a, T b) { return a < b;}

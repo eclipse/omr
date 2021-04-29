@@ -74,12 +74,18 @@ const int8_t OpCodesTest::BYTE_ZERO = 0;
 
 const double OpCodesTest::DOUBLE_MINIMUM = - DBL_MAX;
 const double OpCodesTest::DOUBLE_MAXIMUM = DBL_MAX;
+const double OpCodesTest::DOUBLE_NaN = NAN;
+const double OpCodesTest::DOUBLE_POS_LARGE = 9.34e15;
+const double OpCodesTest::DOUBLE_NEG_LARGE = -9.34e15;
 const double OpCodesTest::DOUBLE_POS = 9.34;
 const double OpCodesTest::DOUBLE_NEG = -9.34;
 const double OpCodesTest::DOUBLE_ZERO = 0;
 
 const float OpCodesTest::FLOAT_MINIMUM = - FLT_MAX;
 const float OpCodesTest::FLOAT_MAXIMUM = FLT_MAX;
+const float OpCodesTest::FLOAT_NaN = NAN;
+const float OpCodesTest::FLOAT_POS_LARGE = 9.31e15;
+const float OpCodesTest::FLOAT_NEG_LARGE = -9.31e15;
 const float OpCodesTest::FLOAT_POS = 9.31;
 const float OpCodesTest::FLOAT_NEG = -9.31;
 const float OpCodesTest::FLOAT_ZERO = 0;
@@ -971,8 +977,8 @@ OpCodesTest::invokeUnaryTests()
    {
    int64_t longDataArray[] = {LONG_NEG, LONG_POS, LONG_MAXIMUM, LONG_MINIMUM, LONG_ZERO};
    int32_t intDataArray[] = {INT_NEG, INT_POS, INT_MAXIMUM, INT_MINIMUM, INT_ZERO};
-   float floatDataArray[] = {FLOAT_NEG, FLOAT_POS, FLOAT_ZERO, FLOAT_MAXIMUM, FLOAT_MINIMUM};
-   double doubleDataArray[] = {DOUBLE_NEG, DOUBLE_POS, DOUBLE_ZERO, DOUBLE_MAXIMUM, DOUBLE_MINIMUM};
+   float floatDataArray[] = {FLOAT_NEG, FLOAT_POS, FLOAT_ZERO, FLOAT_MAXIMUM, FLOAT_MINIMUM, FLOAT_NaN, FLOAT_NEG_LARGE, FLOAT_POS_LARGE };
+   double doubleDataArray[] = {DOUBLE_NEG, DOUBLE_POS, DOUBLE_ZERO, DOUBLE_MAXIMUM, DOUBLE_MINIMUM, DOUBLE_NaN, DOUBLE_NEG_LARGE, DOUBLE_POS_LARGE };
    uint64_t ulongDataArray[] = {ULONG_POS, ULONG_MAXIMUM, ULONG_MINIMUM};
    uint32_t uintDataArray[] = {UINT_POS, UINT_MAXIMUM, UINT_MINIMUM};
 
@@ -1112,13 +1118,8 @@ compileOpCodeMethod(      l2iConst, _numberOfUnaryArgs, TR::l2i,
       }
 
    //f2i
-   //Temporarily postpone converting FLOAT_MAXIMUM and FLOAT_MINIMUM to int and long.
-   //the behavior is undefined since the truncated value of the min and max numbers
-   //cannot be represented in the destination types. This operation is lack of helper,
-   //which will lead to Segmentation fault, use i < 3 temporarily.
-   //When the helper for f2i MAXIMUM and MINIMUM is done, this part should be moved
-   //back to the loop above.
-   for (uint32_t i = 0; i < 3; ++i)
+   testCaseNum = sizeof(floatDataArray) / sizeof(floatDataArray[0]);
+   for (uint32_t i = 0; i < testCaseNum; ++i)
       {
       OMR_CT_EXPECT_EQ(_f2i, convert(floatDataArray[i], INT_POS), _f2i(floatDataArray[i]));
 
@@ -1129,13 +1130,8 @@ compileOpCodeMethod(      l2iConst, _numberOfUnaryArgs, TR::l2i,
       }
 
    //d2i
-   //Temporarily postpone converting DOUBLE_MAXIMUM and DOUBLE_MINIMUM to int and long.
-   //the behavior is undefined since the truncated value of the min and max numbers
-   //cannot be represented in the destination types. This operation is lack of helper,
-   //which will lead to Segmentation fault, use i < 3 temporarily
-   //When the helper for d2i MAXIMUM and MINIMUM is done, this part should be moved
-   //back to the loop above.
-   for (uint32_t i = 0; i < 3; ++i)
+   testCaseNum = sizeof(doubleDataArray) / sizeof(doubleDataArray[0]);
+   for (uint32_t i = 0; i < testCaseNum; ++i)
       {
       OMR_CT_EXPECT_EQ(_d2i, convert(doubleDataArray[i], INT_POS), _d2i(doubleDataArray[i]));
 
