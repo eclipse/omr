@@ -758,3 +758,9 @@ OMR::ARM64::CodeGenerator::supportsNonHelper(TR::SymbolReferenceTable::CommonNon
 
    return result;
    }
+
+bool
+OMR::ARM64::CodeGenerator::supportsInliningOfIsInstance()
+   {
+   return !self()->comp()->getOption(TR_DisableInlineIsInstance);
+   }

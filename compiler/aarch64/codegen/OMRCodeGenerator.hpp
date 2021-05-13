@@ -515,6 +515,11 @@ public:
    bool supportsSinglePrecisionSQRT() { return true; }
 
    /**
+    * @brief Answers whether isInstance inline fast helper is supported
+    * @return true if isInstance inline fast helper is supported
+    */
+   bool supportsInliningOfIsInstance();
+   /**
     * @brief Generates instructions for incrementing debug counter
     * @param[in] cursor:   instruction cursor
     * @param[in] counter:  debug counter
