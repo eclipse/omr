@@ -55,6 +55,12 @@ elseif(OMR_ARCH_S390)
 	)
 endif()
 
+if(OMR_AOT)
+    list(APPEND COMPILERTEST_FILES
+        env/TestAOTStorageInterface.cpp
+    )
+endif()
+
 create_omr_compiler_library(
 	NAME testcompiler
 	OBJECTS ${COMPILERTEST_FILES}
@@ -96,6 +102,13 @@ omr_add_executable(compilertest NOWARNINGS
 	tests/injectors/SelectOpIlInjector.cpp
 	tests/injectors/UnaryOpIlInjector.cpp
 )
+
+if(OMR_AOT)
+        target_sources(compilertest
+		PRIVATE
+			tests/AOTinfraTest.cpp
+	)
+endif()
 
 if(OMR_ARCH_X86)
 	target_sources(compilertest
