@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -333,14 +333,14 @@ OMR::Power::Peephole::tryToRemoveRedundantLoadAfterStore()
       // and replace lwz with rlwinm, rX, rX, 0, 0xffffffff
       if (loadInstruction->getOpCodeValue() == TR::InstOpCode::lwz)
          {
-         if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Replace lwz " POINTER_PRINTF_FORMAT " with rlwinm after store " POINTER_PRINTF_FORMAT ".\n", loadInstruction, storeInstruction))
+         if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Replace lwz " TR_FMTSPC_PTR " with rlwinm after store " TR_FMTSPC_PTR ".\n", PTR_TO_FMTSPC_PTR(loadInstruction), PTR_TO_FMTSPC_PTR(storeInstruction)))
             {
             generateTrg1Src1Imm2Instruction(self()->cg(), TR::InstOpCode::rlwinm, loadInstruction->getNode(), trgReg, srcReg, 0, 0xffffffff, storeInstruction);
             loadInstruction->remove();
             return true;
             }
          }
-      else if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove redundant load " POINTER_PRINTF_FORMAT " after store " POINTER_PRINTF_FORMAT ".\n", loadInstruction, storeInstruction))
+      else if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove redundant load " TR_FMTSPC_PTR " after store " TR_FMTSPC_PTR ".\n", PTR_TO_FMTSPC_PTR(loadInstruction), PTR_TO_FMTSPC_PTR(storeInstruction)))
          {
          loadInstruction->remove();
          return true;
@@ -361,14 +361,14 @@ OMR::Power::Peephole::tryToRemoveRedundantLoadAfterStore()
    // and then the mr peephole should run on the resulting mr
    if (loadInstruction->getOpCodeValue() == TR::InstOpCode::lwz)
       {
-      if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Replace redundant load " POINTER_PRINTF_FORMAT " after store " POINTER_PRINTF_FORMAT " with rlwinm.\n", loadInstruction, storeInstruction))
+      if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Replace redundant load " TR_FMTSPC_PTR " after store " TR_FMTSPC_PTR " with rlwinm.\n", PTR_TO_FMTSPC_PTR(loadInstruction), PTR_TO_FMTSPC_PTR(storeInstruction)))
          {
          generateTrg1Src1Imm2Instruction(self()->cg(), TR::InstOpCode::rlwinm, loadInstruction->getNode(), trgReg, srcReg, 0, 0xffffffff, storeInstruction);
          loadInstruction->remove();
          return true;
          }
       }
-   else if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Replace redundant load " POINTER_PRINTF_FORMAT " after store " POINTER_PRINTF_FORMAT " with mr.\n", loadInstruction, storeInstruction))
+   else if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Replace redundant load " TR_FMTSPC_PTR " after store " TR_FMTSPC_PTR " with mr.\n", loadInstruction, storeInstruction))
       {
       generateTrg1Src1Instruction(self()->cg(), TR::InstOpCode::mr, loadInstruction->getNode(), trgReg, srcReg, storeInstruction);
       loadInstruction->remove();

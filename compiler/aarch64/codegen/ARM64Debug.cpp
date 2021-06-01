@@ -933,8 +933,8 @@ void
 TR_Debug::print(TR::FILE *pOutFile, TR::ARM64RelocatableImmInstruction *instr)
    {
    printPrefix(pOutFile, instr);
-   trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT "\t; %s",
-             getOpCodeName(&instr->getOpCode()), instr->getSourceImmediate(),
+   trfprintf(pOutFile, "%s \t" TR_FMTSPC_PTR "\t; %s",
+             getOpCodeName(&instr->getOpCode()), INT_TO_FMTSPC_PTR(instr->getSourceImmediate()),
              TR::ExternalRelocation::getName(instr->getReloKind()));
    TR::SymbolReference *sr = instr->getSymbolReference();
    if (sr)
@@ -950,9 +950,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64ImmSymInstruction *instr)
    TR::Symbol *target = instr->getSymbolReference()->getSymbol();
    const char *name = target ? getName(instr->getSymbolReference()) : 0;
    if (name)
-      trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT "\t\t; Direct Call \"%s\"", getOpCodeName(&instr->getOpCode()), instr->getAddrImmediate(), name);
+      trfprintf(pOutFile, "%s \t" TR_FMTSPC_PTR "\t\t; Direct Call \"%s\"", getOpCodeName(&instr->getOpCode()), INT_TO_FMTSPC_PTR(instr->getAddrImmediate()), name);
    else
-      trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT, getOpCodeName(&instr->getOpCode()), instr->getAddrImmediate());
+      trfprintf(pOutFile, "%s \t" TR_FMTSPC_PTR, getOpCodeName(&instr->getOpCode()), PTR_TO_FMTSPC_PTR(instr->getAddrImmediate()));
 
    printInstructionComment(pOutFile, 1, instr);
 
@@ -997,7 +997,7 @@ void
 TR_Debug::print(TR::FILE *pOutFile, TR::ARM64VirtualGuardNOPInstruction * instr)
    {
    printPrefix(pOutFile, instr);
-   trfprintf(pOutFile, "%s Site:" POINTER_PRINTF_FORMAT ", ", getOpCodeName(&instr->getOpCode()), instr->getSite());
+   trfprintf(pOutFile, "%s Site:" TR_FMTSPC_PTR ", ", getOpCodeName(&instr->getOpCode()), PTR_TO_FMTSPC_PTR(instr->getSite()));
    print(pOutFile, instr->getLabelSymbol());
    printInstructionComment(pOutFile, 1, instr);
    if (instr->getDependencyConditions())
@@ -1173,7 +1173,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64Trg1ImmInstruction *instr)
          {
          offset *= 4096;
          }
-      trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, (instr->getBinaryEncoding() + offset));
+      trfprintf(pOutFile, ", " TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR((instr->getBinaryEncoding() + offset)i));
       }
    else if ((op == TR::InstOpCode::fmovimms) || (op == TR::InstOpCode::fmovimmd))
       {
@@ -1225,7 +1225,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64Trg1ImmSymInstruction *instr)
          {
          offset *= 4096;
          }
-      trfprintf(pOutFile, POINTER_PRINTF_FORMAT, (instr->getBinaryEncoding() + offset));
+      trfprintf(pOutFile, TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR((instr->getBinaryEncoding() + offset)));
       }
 
    trfflush(_comp->getOutFile());
@@ -1345,7 +1345,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64Trg1Src1ImmInstruction *instr)
             done = true;
             trfprintf(pOutFile, "sxt%cw \t", (imms == 7) ? 'b' : 'h');
             print(pOutFile, instr->getTargetRegister(), TR_WordReg); trfprintf(pOutFile, ", ");
-            print(pOutFile, instr->getSource1Register(), TR_WordReg); 
+            print(pOutFile, instr->getSource1Register(), TR_WordReg);
             }
          }
       if (!done)

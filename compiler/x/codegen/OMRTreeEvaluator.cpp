@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -567,10 +567,10 @@ void OMR::X86::TreeEvaluator::removeLiveDiscardableStatics(TR::CodeGenerator *cg
 
          if (debug("dumpRemat"))
             {
-            diagnostic("\n---> Deleting static discardable candidate %s at %s instruction " POINTER_PRINTF_FORMAT,
+            diagnostic("\n---> Deleting static discardable candidate %s at %s instruction " TR_FMTSPC_PTR,
                   regCursor->getRegisterName(comp),
                   cg->getAppendInstruction()->getOpCode().getOpCodeName(cg),
-                  cg->getAppendInstruction());
+                  PTR_TO_FMTSPC_PTR(cg->getAppendInstruction()));
             }
          }
       else
@@ -3524,7 +3524,7 @@ TR::Register *OMR::X86::TreeEvaluator::BBEndEvaluator(TR::Node *node, TR::CodeGe
           !cg->getLiveDiscardableRegisters().empty())
          {
          if (debug("dumpRemat"))
-            diagnostic("\n---> Deleting surviving discardable registers at BBEnd [" POINTER_PRINTF_FORMAT "]", node);
+            diagnostic("\n---> Deleting surviving discardable registers at BBEnd [" TR_FMTSPC_PTR "]", PTR_TO_FMTSPC_PTR(node));
 
          TR::ClobberingInstruction  *clob = NULL;
          if (debug("dumpRemat"))

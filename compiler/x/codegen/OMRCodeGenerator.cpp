@@ -1243,7 +1243,7 @@ OMR::X86::CodeGenerator::findBetterSpillPlacement(
    if (info && (info->_freeRealRegs & TR::RealRegister::getRealRegisterMask(virtReg->getKind(), (TR::RealRegister::RegNum)realRegNum)))
       {
       placement = info->_branchInstruction;
-      self()->traceRegisterAssignment("Successful better spill placement for %R at [" POINTER_PRINTF_FORMAT "].", virtReg, placement);
+      self()->traceRegisterAssignment("Successful better spill placement for %R at [" TR_FMTSPC_PTR "].", virtReg, PTR_TO_FMTSPC_PTR(placement));
       }
    else
       {
@@ -2014,8 +2014,8 @@ TR::Register *OMR::X86::CodeGenerator::gprClobberEvaluate(TR::Node * node, TR::I
          if (debug("traceClobberedConstantRegisters") && node->getRegister())
             {
             trfprintf(self()->comp()->getOutFile(),
-               "CLOBBERING CONSTANT in %s on " POINTER_PRINTF_FORMAT " in %s\n",
-               self()->getDebug()->getName(node->getRegister()), node, self()->comp()->signature());
+               "CLOBBERING CONSTANT in %s on " TR_FMTSPC_PTR " in %s\n",
+               self()->getDebug()->getName(node->getRegister()), PTR_TO_FMTSPC_PTR(node), self()->comp()->signature());
             trfflush(self()->comp()->getOutFile());
             }
          }
@@ -2038,9 +2038,9 @@ TR::Register *OMR::X86::CodeGenerator::gprClobberEvaluate(TR::Node * node, TR::I
          if (self()->comp()->getOption(TR_TraceCG))
             traceMsg(
                self()->comp(),
-               "Setting containsInternalPointer on register %s and setting pinningArrayPointer to " POINTER_PRINTF_FORMAT "\n",
+               "Setting containsInternalPointer on register %s and setting pinningArrayPointer to " TR_FMTSPC_PTR "\n",
                self()->getDebug()->getName(targetRegister),
-               pinningArrayPointer);
+               PTR_TO_FMTSPC_PTR(pinningArrayPointer));
          targetRegister->setContainsInternalPointer();
          targetRegister->setPinningArrayPointer(pinningArrayPointer);
          }

@@ -1772,11 +1772,11 @@ void rematerializeAddressAdds(
          if (debug("traceInstructionSelection"))
             {
             if (cg->comp()->target().is64Bit())
-               diagnostic("\nRematerializing aladd [" POINTER_PRINTF_FORMAT "] with [" POINTER_PRINTF_FORMAT "] at [" POINTER_PRINTF_FORMAT "]",
-                        tempNode, subTree, rootLoadOrStore);
+               diagnostic("\nRematerializing aladd [" TR_FMTSPC_PTR "] with [" TR_FMTSPC_PTR "] at [" TR_FMTSPC_PTR "]",
+                        PTR_TO_FMTSPC_PTR(tempNode), PTR_TO_FMTSPC_PTR(subTree), PTR_TO_FMTSPC_PTR(rootLoadOrStore));
             else
-               diagnostic("\nRematerializing aiadd [" POINTER_PRINTF_FORMAT "] with [" POINTER_PRINTF_FORMAT "] at [" POINTER_PRINTF_FORMAT "]",
-                        tempNode, subTree, rootLoadOrStore);
+               diagnostic("\nRematerializing aiadd [" TR_FMTSPC_PTR "] with [" TR_FMTSPC_PTR "] at [" TR_FMTSPC_PTR "]",
+                        PTR_TO_FMTSPC_PTR(tempNode), PTR_TO_FMTSPC_PTR(subTree), PTR_TO_FMTSPC_PTR(rootLoadOrStore));
             }
          }
       }

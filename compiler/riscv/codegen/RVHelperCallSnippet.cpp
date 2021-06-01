@@ -87,8 +87,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::RVHelperCallSnippet * snippet)
       }
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "jal \tra, " POINTER_PRINTF_FORMAT "\t\t; %s%s",
-      target, getName(snippet->getDestination()), info);
+   trfprintf(pOutFile, "jal \tra, " TR_FMTSPC_PTR "\t\t; %s%s",
+      target, getName(snippet->getDestination()), PTR_TO_FMTSPC_PTR(info));
 
    if (restartLabel != NULL)
       {
@@ -97,7 +97,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::RVHelperCallSnippet * snippet)
       if (VALID_UJTYPE_IMM((intptr_t)restartLocation - (intptr_t)bufferPos))
          {
          printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "jal \tzero, " POINTER_PRINTF_FORMAT "\t\t; Back to ", restartLocation);
+         trfprintf(pOutFile, "jal \tzero, " TR_FMTSPC_PTR "\t\t; Back to ", PTR_TO_FMTSPC_PTR(restartLocation));
          print(pOutFile, restartLabel);
          }
       else

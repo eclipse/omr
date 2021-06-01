@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -195,12 +195,12 @@ OMR::Optimization::anchorAllChildren(TR::Node * node, TR::TreeTop *anchorTree)
    {
    TR_ASSERT(anchorTree != NULL, "Can't anchor children to a NULL TR::TreeTop\n");
    if (self()->trace())
-      traceMsg(self()->comp(), "%sanchoring children of node [" POINTER_PRINTF_FORMAT "]\n", self()->optDetailString(), node);
+      traceMsg(self()->comp(), "%sanchoring children of node [" TR_FMTSPC_PTR "]\n", self()->optDetailString(), PTR_TO_FMTSPC_PTR(node));
    for (int i = 0; i <node->getNumChildren(); i++)
       {
       TR::TreeTop *tt = TR::TreeTop::create(self()->comp(), TR::Node::create(TR::treetop, 1, node->getChild(i)));
       if (self()->trace())
-         traceMsg(self()->comp(), "TreeTop [" POINTER_PRINTF_FORMAT "] is created to anchor child [" POINTER_PRINTF_FORMAT "]\n", tt, node->getChild(i));
+         traceMsg(self()->comp(), "TreeTop [" TR_FMTSPC_PTR "] is created to anchor child [" TR_FMTSPC_PTR "]\n", PTR_TO_FMTSPC_PTR(tt), PTR_TO_FMTSPC_PTR(node->getChild(i)));
       anchorTree->insertBefore(tt);
       }
    }
@@ -235,8 +235,8 @@ OMR::Optimization::anchorChildren(TR::Node *node, TR::TreeTop* anchorTree, uint3
          {
          if (self()->nodeIsOrderDependent(child, depth, hasCommonedAncestor))
             {
-            dumpOptDetails(self()->comp(), "%sanchor child %s [" POINTER_PRINTF_FORMAT "] at depth %d before %s [" POINTER_PRINTF_FORMAT "]\n",
-               self()->optDetailString(),child->getOpCode().getName(),child,depth,anchorTree->getNode()->getOpCode().getName(),anchorTree->getNode());
+            dumpOptDetails(self()->comp(), "%sanchor child %s [" TR_FMTSPC_PTR "] at depth %d before %s [" TR_FMTSPC_PTR "]\n",
+               self()->optDetailString(), child->getOpCode().getName(), PTR_TO_FMTSPC_PTR(child), depth, anchorTree->getNode()->getOpCode().getName(), PTR_TO_FMTSPC_PTR(anchorTree->getNode()));
 
             self()->generateAnchor(child, anchorTree);
             }
@@ -297,7 +297,7 @@ OMR::Optimization::removeOrconvertIfToGoto(TR::Node* &node, TR::Block* block, in
       {
       // Change the if into a goto
       //
-      if (!performTransformation(self()->comp(), "%sChanging node [" POINTER_PRINTF_FORMAT "] %s into goto \n", opt_details, node, node->getOpCode().getName()))
+      if (!performTransformation(self()->comp(), "%sChanging node [" TR_FMTSPC_PTR "] %s into goto \n", opt_details, PTR_TO_FMTSPC_PTR(node), node->getOpCode().getName()))
          return false;
       self()->anchorChildren(node, curTree);
       self()->prepareToReplaceNode(node);
@@ -309,7 +309,7 @@ OMR::Optimization::removeOrconvertIfToGoto(TR::Node* &node, TR::Block* block, in
       {
       // Remove this node
       //
-      if (!performTransformation(self()->comp(), "%sRemoving fall-through compare node [" POINTER_PRINTF_FORMAT "] %s\n", opt_details, node, node->getOpCode().getName()))
+      if (!performTransformation(self()->comp(), "%sRemoving fall-through compare node [" TR_FMTSPC_PTR "] %s\n", opt_details, PTR_TO_FMTSPC_PTR(node), node->getOpCode().getName()))
          return false;
       self()->anchorChildren(node, curTree);
       reachableTarget = block->getExit()->getNextTreeTop();
@@ -457,14 +457,14 @@ OMR::Optimization::replaceNodeWithChild(TR::Node *node, TR::Node *child, TR::Tre
          {
          TR::Node *newNode = TR::Node::create(TR::ILOpCode::modifyPrecisionOpCode(child->getDataType()), 1, child);
          newNode->setDecimalPrecision(node->getDecimalPrecision());
-         dumpOptDetails(self()->comp(), "%sPrecision mismatch when replacing parent %s [" POINTER_PRINTF_FORMAT "] with child %s [" POINTER_PRINTF_FORMAT "] so create new parent %s [" POINTER_PRINTF_FORMAT "]\n",
-                          self()->optDetailString(),node->getOpCode().getName(),node,child->getOpCode().getName(),child,newNode->getOpCode().getName(),newNode);
+         dumpOptDetails(self()->comp(), "%sPrecision mismatch when replacing parent %s [" TR_FMTSPC_PTR "] with child %s [" TR_FMTSPC_PTR "] so create new parent %s [" TR_FMTSPC_PTR "]\n",
+                          self()->optDetailString(), node->getOpCode().getName(), PTR_TO_FMTSPC_PTR(node), child->getOpCode().getName(), PTR_TO_FMTSPC_PTR(child), newNode->getOpCode().getName(), PTR_TO_FMTSPC_PTR(newNode));
          return self()->replaceNode(node, newNode, anchorTree, false); // needAnchor=false
          }
       else
          {
-         dumpOptDetails(self()->comp(), "%sPrecision mismatch when replacing parent %s [" POINTER_PRINTF_FORMAT "] with child %s [" POINTER_PRINTF_FORMAT "] so change parent op to ",
-                          self()->optDetailString(),node->getOpCode().getName(),node,child->getOpCode().getName(),child);
+         dumpOptDetails(self()->comp(), "%sPrecision mismatch when replacing parent %s [" TR_FMTSPC_PTR "] with child %s [" TR_FMTSPC_PTR "] so change parent op to ",
+                          self()->optDetailString(), node->getOpCode().getName(), PTR_TO_FMTSPC_PTR(node), child->getOpCode().getName(), PTR_TO_FMTSPC_PTR(child));
          TR_ASSERT(node->getReferenceCount() == 1,"node %p refCount should be 1 and not %d\n",node,node->getReferenceCount());
          child->incReferenceCount();
          // zd2pd    <- node - change to zdModifyPrecision (must use child type as modPrec is being applied to the child)
@@ -512,7 +512,7 @@ OMR::Optimization::replaceNodeWithChild(TR::Node *node, TR::Node *child, TR::Tre
 TR::Node *
 OMR::Optimization::replaceNode(TR::Node * node, TR::Node *other, TR::TreeTop *anchorTree, bool anchorChildren)
    {
-   if (!performTransformation(self()->comp(), "%sReplace node [" POINTER_PRINTF_FORMAT "] %s by [" POINTER_PRINTF_FORMAT "] %s\n", self()->optDetailString(), node, node->getOpCode().getName(), other, other->getOpCode().getName()))
+   if (!performTransformation(self()->comp(), "%sReplace node [" TR_FMTSPC_PTR "] %s by [" TR_FMTSPC_PTR "] %s\n", self()->optDetailString(), PTR_TO_FMTSPC_PTR(node), node->getOpCode().getName(), PTR_TO_FMTSPC_PTR(other), other->getOpCode().getName()))
      {
      if(other->getReferenceCount() == 0)
        {
@@ -562,7 +562,7 @@ OMR::Optimization::removeNode(TR::Node * node, TR::TreeTop *anchorTree)
    {
    // Reduce the reference counts of all children.
    //
-   if (performTransformation(self()->comp(), "%sRemoving redundant node [" POINTER_PRINTF_FORMAT "] %s\n", self()->optDetailString(), node, node->getOpCode().getName()))
+   if (performTransformation(self()->comp(), "%sRemoving redundant node [" TR_FMTSPC_PTR "] %s\n", self()->optDetailString(), PTR_TO_FMTSPC_PTR(node), node->getOpCode().getName()))
       {
       self()->prepareToStopUsingNode(node, anchorTree);
       node->removeAllChildren();

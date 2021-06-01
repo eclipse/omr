@@ -1017,7 +1017,7 @@ TR::RealRegister *OMR::Power::Machine::reverseSpillState(TR::Instruction      *c
          spilledRegister->setBackingStorage(NULL);
          }
       }
-      
+
    TR::Register *tempIndexRegister = NULL;
    switch (rk)
       {
@@ -1989,7 +1989,7 @@ OMR::Power::Machine::decFutureUseCountAndUnlatch(TR::Register *virtualRegister)
       TR_ASSERT(cg->isFreeSpillListLocked(), "Expecting the free spill list to be locked on this path");
       int32_t size = spillSizeForRegister(virtualRegister);
       if (trace)
-         traceMsg(comp, "\nFreeing backing storage " POINTER_PRINTF_FORMAT " of size %u from dead virtual %s\n", location, size, cg->getDebug()->getName(virtualRegister));
+         traceMsg(comp, "\nFreeing backing storage " TR_FMTSPC_PTR " of size %u from dead virtual %s\n", PTR_TO_FMTSPC_PTR(location), size, cg->getDebug()->getName(virtualRegister));
       cg->unlockFreeSpillList();
       cg->freeSpill(location, size, 0);
       virtualRegister->setBackingStorage(NULL);
@@ -2036,7 +2036,7 @@ OMR::Power::Machine::disassociateUnspilledBackingStorage()
             {
             int32_t size = spillSizeForRegister(virtReg);
             if (trace)
-               traceMsg(comp, "\nDisassociating backing storage " POINTER_PRINTF_FORMAT " of size %u from assigned virtual %s\n", location, size, cg->getDebug()->getName(virtReg));
+               traceMsg(comp, "\nDisassociating backing storage " TR_FMTSPC_PTR " of size %u from assigned virtual %s\n", PTR_TO_FMTSPC_PTR(location), size, cg->getDebug()->getName(virtReg));
             cg->freeSpill(location, size, 0);
             virtReg->setBackingStorage(NULL);
             location->setMaxSpillDepth(0);

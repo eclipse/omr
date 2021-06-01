@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3055,7 +3055,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairAddEvaluator(TR::Node *n
          generateMemImmInstruction(opCode, node, highMR, highValue, cg);
 
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] inc by const", node);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] inc by const", PTR_TO_FMTSPC_PTR(node));
          }
       else
          {
@@ -3069,7 +3069,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairAddEvaluator(TR::Node *n
       generateMemRegInstruction(ADC4MemReg, node, highMR, tempReg->getHighOrder(), cg);
 
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] inc by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] inc by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {
@@ -3200,7 +3200,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairSubEvaluator(TR::Node *n
          generateMemImmInstruction(opCode, node, highMR, highValue, cg);
 
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] dec by const", node);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] dec by const", PTR_TO_FMTSPC_PTR(node));
          }
       else
          {
@@ -3214,7 +3214,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairSubEvaluator(TR::Node *n
       generateMemRegInstruction(SBB4MemReg, node, highMR, tempReg->getHighOrder(), cg);
 
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] dec by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] dec by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {
@@ -3757,7 +3757,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::integerPairMulEvaluator(TR::Node *n
       temp.longMultiplyAnalyser(node);
 
       if (debug("traceInlineLongMultiply"))
-         diagnostic("\ninlined long multiply at node [" POINTER_PRINTF_FORMAT "] in method %s", node, comp->signature());
+         diagnostic("\ninlined long multiply at node [" TR_FMTSPC_PTR "] in method %s", PTR_TO_FMTSPC_PTR(node), comp->signature());
 
       targetRegister = node->getRegister();
       }
@@ -4454,7 +4454,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::landEvaluator(TR::Node *node, TR::C
             cg->stopUsingRegister(tempReg);
 
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] and by const", node);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] and by const", PTR_TO_FMTSPC_PTR(node));
          }
       }
    else if (isMemOp)
@@ -4465,7 +4465,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::landEvaluator(TR::Node *node, TR::C
       highInstr = generateMemRegInstruction(AND4MemReg, node, highMR, tempReg->getHighOrder(), cg);
 
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] and by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] and by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {
@@ -4601,7 +4601,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lorEvaluator(TR::Node *node, TR::Co
          }
 
       if (debug("traceMemOp") && isMemOp)
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] or by const", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] or by const", PTR_TO_FMTSPC_PTR(node));
       }
    else if (isMemOp)
       {
@@ -4611,7 +4611,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lorEvaluator(TR::Node *node, TR::Co
       highInstr = generateMemRegInstruction(OR4MemReg, node, highMR, tempReg->getHighOrder(), cg);
 
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] or by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] or by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {
@@ -4746,7 +4746,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lxorEvaluator(TR::Node *node, TR::C
          }
 
       if (debug("traceMemOp") && isMemOp)
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] xor by const", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] xor by const", PTR_TO_FMTSPC_PTR(node));
       }
    else if (isMemOp)
       {
@@ -4756,7 +4756,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lxorEvaluator(TR::Node *node, TR::C
       highInstr = generateMemRegInstruction(XOR4MemReg, node, highMR, tempReg->getHighOrder(), cg);
 
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] xor by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] xor by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {

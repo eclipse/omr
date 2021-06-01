@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1637,7 +1637,7 @@ void TR_X86BinaryCommutativeAnalyser::longMultiplyAnalyser(TR::Node *root)
    static char * reportHighWordZero = feGetEnv("TR_ReportHighWordZero");
    if (reportHighWordZero)
       {
-      diagnostic("long multiply analyser: firstChild  [" POINTER_PRINTF_FORMAT "] has a zero high word: %d\n", firstChild, firstHighZero);
+      diagnostic("long multiply analyser: firstChild  [" TR_FMTSPC_PTR "] has a zero high word: %d\n", PTR_TO_FMTSPC_PTR(firstChild), firstHighZero);
       }
 
    if (secondChild->isHighWordZero())
@@ -1665,7 +1665,7 @@ void TR_X86BinaryCommutativeAnalyser::longMultiplyAnalyser(TR::Node *root)
 
    if (reportHighWordZero)
       {
-      diagnostic("long multiply analyser: secondChild [" POINTER_PRINTF_FORMAT "] has a zero high word: %d\n", secondChild, secondHighZero);
+      diagnostic("long multiply analyser: secondChild [" TR_FMTSPC_PTR "] has a zero high word: %d\n", PTR_TO_FMTSPC_PTR(secondChild), secondHighZero);
       }
 
    setInputs(firstChild, firstRegister, secondChild, secondRegister);

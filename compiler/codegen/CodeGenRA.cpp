@@ -2687,7 +2687,7 @@ OMR::CodeGenerator::simulateNodeEvaluation(TR::Node *node, TR_RegisterPressureSt
    //
    // See also simulateTreeEvaluation.
 
-   TR_ASSERT(!self()->simulatedNodeState(node, state).hasRegister(), "simulateNodeEvaluation called on live node " POINTER_PRINTF_FORMAT, node);
+   TR_ASSERT(!self()->simulatedNodeState(node, state).hasRegister(), "simulateNodeEvaluation called on live node " TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(node));
 
    // If the first child is likely to have low register pressure, we should
    // evaluate the second child first to avoid the situation where we end up

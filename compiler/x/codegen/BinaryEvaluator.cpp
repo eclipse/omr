@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -881,14 +881,14 @@ TR::Register *OMR::X86::TreeEvaluator::integerAddEvaluator(TR::Node *node, TR::C
                   instr = generateRegImmInstruction(AddRegImm4(nodeIs64Bit, isWithCarry), node, targetRegister, static_cast<int32_t>(constValue), cg);
                }
             if (debug("traceMemOp"))
-               diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] inc by const %d", node, constValue);
+               diagnostic("\n*** Node [" TR_FMTSPC_PTR "] inc by const %d", PTR_TO_FMTSPC_PTR(node), constValue);
             }
          }
       else if (isMemOp)
          {
          instr = generateMemRegInstruction(AddMemReg(nodeIs64Bit, isWithCarry), node, tempMR, cg->evaluate(secondChild), cg);
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] inc by var", node);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] inc by var", PTR_TO_FMTSPC_PTR(node));
          }
 
       if (isMemOp)
@@ -1043,14 +1043,14 @@ TR::Register *OMR::X86::TreeEvaluator::baddEvaluator(TR::Node *node, TR::CodeGen
                instr = generateRegImmInstruction(ADD1RegImm1, node, targetRegister, value, cg);
             }
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] inc by const %d", node, value);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] inc by const %d", PTR_TO_FMTSPC_PTR(node), value);
          }
       }
    else if (isMemOp)
       {
       instr = generateMemRegInstruction(ADD1MemReg, node, tempMR, cg->evaluate(secondChild), cg);
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] inc by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] inc by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {
@@ -1186,14 +1186,14 @@ TR::Register *OMR::X86::TreeEvaluator::saddEvaluator(TR::Node *node, TR::CodeGen
                instr = generateRegImmInstruction(ADD2RegImm2, node, targetRegister, value, cg);
             }
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] inc by const %d", node, value);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] inc by const %d", PTR_TO_FMTSPC_PTR(node), value);
          }
       }
    else if (isMemOp)
       {
       instr = generateMemRegInstruction(ADD2MemReg, node, tempMR, cg->evaluate(secondChild), cg);
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] inc by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] inc by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {
@@ -1349,14 +1349,14 @@ TR::Register *OMR::X86::TreeEvaluator::integerSubEvaluator(TR::Node *node, TR::C
             }
 
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] dec by const %d", node, constValue);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] dec by const %d", PTR_TO_FMTSPC_PTR(node), constValue);
          }
       }
    else if (isMemOp)
       {
       instr = generateMemRegInstruction(SubMemReg(nodeIs64Bit, isWithBorrow), node, tempMR, cg->evaluate(secondChild), cg);
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] dec by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] dec by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {
@@ -1467,14 +1467,14 @@ TR::Register *OMR::X86::TreeEvaluator::bsubEvaluator(TR::Node *node, TR::CodeGen
                instr = generateRegImmInstruction(SUB1RegImm1, node, targetRegister, value, cg);
             }
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] dec by const %d", node, value);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] dec by const %d", PTR_TO_FMTSPC_PTR(node), value);
          }
       }
    else if (isMemOp)
       {
       instr = generateMemRegInstruction(SUB1MemReg, node, tempMR, cg->evaluate(secondChild), cg);
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] dec by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] dec by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {
@@ -1600,14 +1600,14 @@ TR::Register *OMR::X86::TreeEvaluator::ssubEvaluator(TR::Node *node, TR::CodeGen
                instr = generateRegImmInstruction(SUB2RegImm2, node, targetRegister, value, cg);
             }
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] dec by const %d", node, value);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] dec by const %d", PTR_TO_FMTSPC_PTR(node), value);
          }
       }
    else if (isMemOp)
       {
       instr = generateMemRegInstruction(SUB2MemReg, node, tempMR, cg->evaluate(secondChild), cg);
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] dec by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] dec by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {
@@ -2615,7 +2615,7 @@ TR::X86MemInstruction  *OMR::X86::TreeEvaluator::generateMemoryShift(TR::Node *n
       if (shiftAmount != 0)
          {
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] shift by const %d", node, shiftAmount);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] shift by const %d", PTR_TO_FMTSPC_PTR(node), shiftAmount);
          instr = generateMemImmInstruction(immShiftOpCode, node, memRef, static_cast<int32_t>(shiftAmount), cg);
          }
       }
@@ -2675,7 +2675,7 @@ TR::X86MemInstruction  *OMR::X86::TreeEvaluator::generateMemoryShift(TR::Node *n
       shiftDependencies->addPostCondition(shiftAmountReg, TR::RealRegister::ecx, cg);
       instr = generateMemRegInstruction(regShiftOpCode, node, memRef, shiftAmountReg, shiftDependencies, cg);
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] shift by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] shift by var", PTR_TO_FMTSPC_PTR(node));
       }
 
    if (oursIsTheOnlyMemRef)
@@ -2854,7 +2854,7 @@ TR::Register *OMR::X86::TreeEvaluator::bshlEvaluator(TR::Node *node, TR::CodeGen
             {
             instr = generateMemImmInstruction(SHL1MemImm1, node, tempMR, value, cg);
             if (debug("traceMemOp"))
-               diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] shl by const %d", node, value);
+               diagnostic("\n*** Node [" TR_FMTSPC_PTR "] shl by const %d", PTR_TO_FMTSPC_PTR(node), value);
             }
          }
       else
@@ -2891,7 +2891,7 @@ TR::Register *OMR::X86::TreeEvaluator::bshlEvaluator(TR::Node *node, TR::CodeGen
          {
          instr = generateMemRegInstruction(SHL1MemCL, node, tempMR, shiftAmountReg, shiftDependencies, cg);
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT"] shl by var", node);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] shl by var", PTR_TO_FMTSPC_PTR(node));
          }
       else
          {
@@ -2964,7 +2964,7 @@ TR::Register *OMR::X86::TreeEvaluator::sshlEvaluator(TR::Node *node, TR::CodeGen
             {
             instr = generateMemImmInstruction(SHL2MemImm1, node, tempMR, value, cg);
             if (debug("traceMemOp"))
-               diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] shl by const %d", node, value);
+               diagnostic("\n*** Node [" TR_FMTSPC_PTR "] shl by const %d", PTR_TO_FMTSPC_PTR(node), value);
             }
          }
       else
@@ -3001,7 +3001,7 @@ TR::Register *OMR::X86::TreeEvaluator::sshlEvaluator(TR::Node *node, TR::CodeGen
          {
          instr = generateMemRegInstruction(SHL2MemCL, node, tempMR, shiftAmountReg, shiftDependencies, cg);
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] shl by var", node);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] shl by var", PTR_TO_FMTSPC_PTR(node));
          }
       else
          {
@@ -3072,7 +3072,7 @@ TR::Register *OMR::X86::TreeEvaluator::bshrEvaluator(TR::Node *node, TR::CodeGen
             {
             instr = generateMemImmInstruction(SAR1MemImm1, node, tempMR, value, cg);
             if (debug("traceMemOp"))
-               diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT"] shr by const %d", node, value);
+               diagnostic("\n*** Node [" TR_FMTSPC_PTR "] shr by const %d", PTR_TO_FMTSPC_PTR(node), value);
             }
          else
             instr = generateRegImmInstruction(SAR1RegImm1, node, targetRegister, value, cg);
@@ -3090,7 +3090,7 @@ TR::Register *OMR::X86::TreeEvaluator::bshrEvaluator(TR::Node *node, TR::CodeGen
          {
          instr = generateMemRegInstruction(SAR1MemCL, node, tempMR, shiftAmountReg, shiftDependencies, cg);
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] shr by var", node);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] shr by var", PTR_TO_FMTSPC_PTR(node));
          }
       else
          instr = generateRegRegInstruction(SAR1RegCL, node, targetRegister, shiftAmountReg, shiftDependencies, cg);
@@ -3164,7 +3164,7 @@ TR::Register *OMR::X86::TreeEvaluator::sshrEvaluator(TR::Node *node, TR::CodeGen
             {
             instr = generateMemImmInstruction(SAR2MemImm1, node, tempMR, value, cg);
             if (debug("traceMemOp"))
-               diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] shr by const %d", node, value);
+               diagnostic("\n*** Node [" TR_FMTSPC_PTR "] shr by const %d", PTR_TO_FMTSPC_PTR(node), value);
             }
          else
             instr = generateRegImmInstruction(SAR2RegImm1, node, targetRegister, value, cg);
@@ -3182,7 +3182,7 @@ TR::Register *OMR::X86::TreeEvaluator::sshrEvaluator(TR::Node *node, TR::CodeGen
          {
          instr = generateMemRegInstruction(SAR2MemCL, node, tempMR, shiftAmountReg, shiftDependencies, cg);
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] shr by var", node);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] shr by var", PTR_TO_FMTSPC_PTR(node));
          }
       else
          instr = generateRegRegInstruction(SAR2RegCL, node, targetRegister, shiftAmountReg, shiftDependencies, cg);
@@ -3258,7 +3258,7 @@ TR::Register *OMR::X86::TreeEvaluator::bushrEvaluator(TR::Node *node, TR::CodeGe
          {
          instr = generateMemImmInstruction(SHR1MemImm1, node, tempMR, value, cg);
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] ushr by const %d", node, value);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] ushr by const %d", PTR_TO_FMTSPC_PTR(node), value);
          }
       else
          instr = generateRegImmInstruction(SHR1RegImm1, node, targetRegister, value, cg);
@@ -3275,7 +3275,7 @@ TR::Register *OMR::X86::TreeEvaluator::bushrEvaluator(TR::Node *node, TR::CodeGe
          {
          instr = generateMemRegInstruction(SHR1MemCL, node, tempMR, shiftAmountReg, shiftDependencies, cg);
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] ushr by var", node);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] ushr by var", PTR_TO_FMTSPC_PTR(node));
          }
       else
          instr = generateRegRegInstruction(SHR1RegCL, node, targetRegister, shiftAmountReg, shiftDependencies, cg);
@@ -3347,7 +3347,7 @@ TR::Register *OMR::X86::TreeEvaluator::sushrEvaluator(TR::Node *node, TR::CodeGe
          {
          instr = generateMemImmInstruction(SHR2MemImm1, node, tempMR, value, cg);
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] ushr by const %d", node, value);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] ushr by const %d", PTR_TO_FMTSPC_PTR(node), value);
          }
       else
          instr = generateRegImmInstruction(SHR2RegImm1, node, targetRegister, value, cg);
@@ -3364,7 +3364,7 @@ TR::Register *OMR::X86::TreeEvaluator::sushrEvaluator(TR::Node *node, TR::CodeGe
          {
          instr = generateMemRegInstruction(SHR2MemCL, node, tempMR, shiftAmountReg, shiftDependencies, cg);
          if (debug("traceMemOp"))
-            diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] ushr by var", node);
+            diagnostic("\n*** Node [" TR_FMTSPC_PTR "] ushr by var", PTR_TO_FMTSPC_PTR(node));
          }
       else
          instr = generateRegRegInstruction(SHR2RegCL, node, targetRegister, shiftAmountReg, shiftDependencies, cg);
@@ -3461,7 +3461,7 @@ TR::Register *OMR::X86::TreeEvaluator::logicalEvaluator(TR::Node          *node,
             constValue = secondChild->getByte();
             break;
          default:
-            TR_ASSERT(0, "Unexpected data type for logical node [" POINTER_PRINTF_FORMAT "]\n", secondChild);
+            TR_ASSERT(0, "Unexpected data type for logical node [" TR_FMTSPC_PTR "]\n", PTR_TO_FMTSPC_PTR(secondChild));
          }
       }
 
@@ -3524,7 +3524,7 @@ TR::Register *OMR::X86::TreeEvaluator::logicalEvaluator(TR::Node          *node,
             {
             instr = generateMemInstruction(package[TR::TreeEvaluator::logicalNotOp], node, tempMR, cg);
             if (debug("traceMemOp"))
-               diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] logical not", node);
+               diagnostic("\n*** Node [" TR_FMTSPC_PTR "] logical not", PTR_TO_FMTSPC_PTR(node));
             }
          else
             {
@@ -3550,13 +3550,13 @@ TR::Register *OMR::X86::TreeEvaluator::logicalEvaluator(TR::Node          *node,
             }
          }
       if (debug("traceMemOp") && isMemOp)
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] logical op by const %d", node, constValue);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] logical op by const %d", PTR_TO_FMTSPC_PTR(node), constValue);
       }
    else if (isMemOp)
       {
       instr = generateMemRegInstruction(package[TR::TreeEvaluator::logicalMemRegOp], node, tempMR, cg->evaluate(secondChild), cg);
       if (debug("traceMemOp"))
-         diagnostic("\n*** Node [" POINTER_PRINTF_FORMAT "] logical op by var", node);
+         diagnostic("\n*** Node [" TR_FMTSPC_PTR "] logical op by var", PTR_TO_FMTSPC_PTR(node));
       }
    else
       {

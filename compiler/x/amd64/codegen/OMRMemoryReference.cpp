@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -558,12 +558,12 @@ OMR::X86::AMD64::MemoryReference::generateBinaryEncoding(
 
    if (comp->getOption(TR_TraceCG))
       {
-      diagnostic("OMR::X86::AMD64::MemoryReference " POINTER_PRINTF_FORMAT " with address register %s in instruction " POINTER_PRINTF_FORMAT "\n",
-         this,
+      diagnostic("OMR::X86::AMD64::MemoryReference " TR_FMTSPC_PTR " with address register %s in instruction " TR_FMTSPC_PTR "\n",
+         PTR_TO_FMTSPC_PTR(this),
          _addressRegister
             ? cg->getDebug()->getName(_addressRegister, TR_DoubleWordReg)
             : "(none)",
-         containingInstruction
+         PTR_TO_FMTSPC_PTR(containingInstruction)
          );
       }
 

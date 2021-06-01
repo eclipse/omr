@@ -935,7 +935,7 @@ TR_Debug::printBlockOrders(TR::FILE *pOutFile, const char * title, TR::ResolvedM
       if (node && node->getOpCodeValue() == TR::BBStart)
          {
          TR::Block *block = node->getBlock();
-         trfprintf(pOutFile, "block_%-4d\t[ " POINTER_PRINTF_FORMAT "]\tfrequency %4d", block->getNumber(), block, block->getFrequency());
+         trfprintf(pOutFile, "block_%-4d\t[ " TR_FMTSPC_PTR "]\tfrequency %4d", block->getNumber(), PTR_TO_FMTSPC_PTR(block), block->getFrequency());
          if (block->isSuperCold())
             {
             numberOfColdBlocks++;
@@ -1551,7 +1551,7 @@ TR_Debug::printNodeInfo(TR::Node * node, TR_PrettyPrinterString& output, bool pr
          if (!_comp->getOption(TR_MaskAddresses))
             {
             for (auto i = 0U; i < node->getNumRelocations(); ++i)
-               output.append(" " POINTER_PRINTF_FORMAT, node->getRelocationDestination(i));
+               output.append(" " TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(node->getRelocationDestination(i)));
             }
          output.append(" ]");
          }

@@ -2057,8 +2057,8 @@ OMR::Z::CodeGenerator::doBinaryEncoding()
       self()->setBinaryBufferCursor(data.cursorInstruction->generateBinaryEncoding());
 
       TR_ASSERT(data.cursorInstruction->getEstimatedBinaryLength() >= self()->getBinaryBufferCursor() - instructionStart,
-              "\nInstruction length estimate must be conservatively large \n(instr=" POINTER_PRINTF_FORMAT ", opcode=%s, estimate=%d, actual=%d",
-              data.cursorInstruction,
+              "\nInstruction length estimate must be conservatively large \n(instr=" TR_FMTSPC_PTR ", opcode=%s, estimate=%d, actual=%d",
+              PTR_TO_FMTSPC_PTR(data.cursorInstruction),
               data.cursorInstruction->getOpCode().getMnemonicName(),
               data.cursorInstruction->getEstimatedBinaryLength(),
               self()->getBinaryBufferCursor() - instructionStart);

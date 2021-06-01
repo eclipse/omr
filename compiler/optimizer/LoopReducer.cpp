@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1212,8 +1212,8 @@ TR_LoopReducer::generateArrayset(TR_InductionVariable * indVar, TR::Block * loop
       return false;
       }
 
-   if (!performTransformation(comp(), "%sReducing arrayset %d from storeNode [" POINTER_PRINTF_FORMAT "] and copyValueNode [" POINTER_PRINTF_FORMAT "]\n",
-         OPT_DETAILS, loopHeader->getNumber(),storeNode,storeNode->getSecondChild()))
+   if (!performTransformation(comp(), "%sReducing arrayset %d from storeNode [" TR_FMTSPC_PTR "] and copyValueNode [" TR_FMTSPC_PTR "]\n",
+         OPT_DETAILS, loopHeader->getNumber(), PTR_TO_FMTSPC_PTR(storeNode), PTR_TO_FMTSPC_PTR(storeNode->getSecondChild())))
       {
       return false;
       }

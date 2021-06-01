@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -355,7 +355,7 @@ void
 TR_Debug::print(TR::FILE *pOutFile, TR::ARMVirtualGuardNOPInstruction * instr)
    {
    printPrefix(pOutFile, instr);
-   trfprintf(pOutFile, "%s Site:" POINTER_PRINTF_FORMAT ", ", getOpCodeName(&instr->getOpCode()), instr->getSite());
+   trfprintf(pOutFile, "%s Site:" TR_FMTSPC_PTR ", ", getOpCodeName(&instr->getOpCode()), PTR_TO_FMTSPC_PTR(instr->getSite()));
    print(pOutFile, instr->getLabelSymbol());
    printInstructionComment(pOutFile, 1, instr);
    dumpDependencies(pOutFile, instr);
@@ -385,7 +385,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMAdminInstruction * instr)
          trfprintf(pOutFile, " Relative [");
       for (uint32_t i = 0; i < fenceNode->getNumRelocations(); i++)
          {
-         trfprintf(pOutFile, " " POINTER_PRINTF_FORMAT, fenceNode->getRelocationDestination(i));
+         trfprintf(pOutFile, " " TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(fenceNode->getRelocationDestination(i)));
          }
       trfprintf(pOutFile, " ]");
       }
@@ -439,7 +439,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMImmSymInstruction * instr)
          trfprintf(pOutFile, "ldr\tgr15, [gr15, #-4]");
          printPrefix(pOutFile, NULL, bufferPos+8, 4);
          if (name)
-            trfprintf(pOutFile, "DCD\t0x%x\t; %s (" POINTER_PRINTF_FORMAT ")", imm, name);
+            trfprintf(pOutFile, "DCD\t0x%x\t; %s (" TR_FMTSPC_PTR ")", imm, name, PTR_TO_FMTSPC_PTR(symRef));
          else
             trfprintf(pOutFile, "DCD\t0x%x", imm);
          return;
@@ -461,11 +461,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMImmSymInstruction * instr)
          if (snippet)
             trfprintf(pOutFile, "(%s)", getName(snippet));
          else
-            trfprintf(pOutFile, "(" POINTER_PRINTF_FORMAT ")", imm);
+            trfprintf(pOutFile, "(" TR_FMTSPC_PTR ")", INT_TO_FMTSPC_PTR(imm));
          }
       else
          {
-         trfprintf(pOutFile, "%s\t" POINTER_PRINTF_FORMAT, fullOpCodeName(instr), imm);
+         trfprintf(pOutFile, "%s\t" TR_FMTSPC_PTR, fullOpCodeName(instr), INT_TO_FMTSPC_PTR(imm));
          }
       }
    dumpDependencies(pOutFile, instr);
@@ -852,9 +852,9 @@ TR_Debug::printARMHelperBranch(TR::SymbolReference *symRef, uint8_t *bufferPos, 
    const char *name = getName(symRef);
    printPrefix(pOutFile, NULL, bufferPos, 4);
    if (name)
-      trfprintf(pOutFile, "%s\t%s\t;%s (" POINTER_PRINTF_FORMAT ")", opcodeName, name, info, target);
+      trfprintf(pOutFile, "%s\t%s\t;%s (" TR_FMTSPC_PTR ")", opcodeName, name, info, INT_TO_FMTSPC_PTR(target));
    else
-      trfprintf(pOutFile, "%s\t" POINTER_PRINTF_FORMAT "\t\t;%s", opcodeName, target, info);
+      trfprintf(pOutFile, "%s\t" TR_FMTSPC_PTR "\t\t;%s", opcodeName, INT_TO_FMTSPC_PTR(target), info);
    }
 
 void
@@ -1211,18 +1211,18 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMCallSnippet * snippet)
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "dd\t" POINTER_PRINTF_FORMAT "\t\t; return address", snippet->getCallRA());
+   trfprintf(pOutFile, "dd\t" TR_FMTSPC_PTR "\t\t; return address", PTR_TO_FMTSPC_PTR(snippet->getCallRA()));
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
    if (methodSymRef->isUnresolved())
       trfprintf(pOutFile, "dd\t0x00000000\t\t; method address (unresolved)");
    else
-      trfprintf(pOutFile, "dd\t" POINTER_PRINTF_FORMAT "\t\t; method address (interpreted)");
+      trfprintf(pOutFile, "dd\t" TR_FMTSPC_PTR "\t\t; method address (interpreted)", INT_TO_FMTSPC_PTR(*(reinterpret_cast<uint32_t *>(bufferPos))));
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "dd\t" POINTER_PRINTF_FORMAT "\t\t; lock word for compilation");
+   trfprintf(pOutFile, "dd\t" TR_FMTSPC_PTR "\t\t; lock word for compilation", INT_TO_FMTSPC_PTR(*(reinterpret_cast<uint32_t *>(bufferPos))));
 #endif
    }
 
@@ -1265,7 +1265,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMUnresolvedCallSnippet * snippet)
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "dd\t" POINTER_PRINTF_FORMAT "\t\t; cpAddress", getOwningMethod(methodSymRef)->constantPool());
+   trfprintf(pOutFile, "dd\t" TR_FMTSPC_PTR "\t\t; cpAddress", PTR_TO_FMTSPC_PTR(getOwningMethod(methodSymRef)->constantPool()));
 #endif
    }
 
@@ -1283,11 +1283,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMVirtualUnresolvedSnippet * snippet)
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "dd\t" POINTER_PRINTF_FORMAT "\t\t; return address", snippet->getReturnLabel()->getCodeLocation());
+   trfprintf(pOutFile, "dd\t" TR_FMTSPC_PTR "\t\t; return address", PTR_TO_FMTSPC_PTR(snippet->getReturnLabel()->getCodeLocation()));
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "dd\t" POINTER_PRINTF_FORMAT "\t\t; cpAddress", getOwningMethod(callSymRef)->constantPool());
+   trfprintf(pOutFile, "dd\t" TR_FMTSPC_PTR "\t\t; cpAddress", PTR_TO_FMTSPC_PTR(getOwningMethod(callSymRef)->constantPool()));
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
@@ -1386,7 +1386,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARMHelperCallSnippet * snippet)
       printPrefix(pOutFile, NULL, bufferPos, 4);
       //int32_t distance = *((int32_t *) bufferPos) & 0x00ffffff;
       //distance = (distance << 8) >> 8;   // sign extend
-      trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptr_t)(restartLabel->getCodeLocation()), getName(restartLabel));
+      trfprintf(pOutFile, "b \t" TR_FMTSPC_PTR "\t\t; Return to %s", PTR_TO_FMTSPC_PTR(restartLabel->getCodeLocation()), getName(restartLabel));
       }
 #endif
    }
@@ -1478,7 +1478,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "dd\t" POINTER_PRINTF_FORMAT "\t\t; return address", snippet->getAddressOfDataReference());
+   trfprintf(pOutFile, "dd\t" TR_FMTSPC_PTR "\t\t; return address", PTR_TO_FMTSPC_PTR(snippet->getAddressOfDataReference()));
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
@@ -1486,7 +1486,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "dd\t" POINTER_PRINTF_FORMAT "\t\t; cpAddress", getOwningMethod(symRef)->constantPool());
+   trfprintf(pOutFile, "dd\t" TR_FMTSPC_PTR "\t\t; cpAddress", PTR_TO_FMTSPC_PTR(getOwningMethod(symRef)->constantPool()));
    bufferPos += 4;
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
