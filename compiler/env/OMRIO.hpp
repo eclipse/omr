@@ -67,6 +67,8 @@ namespace OMR { typedef OMR::IO IOConnector; }
    #endif
 #endif
 
+#define TR_FMTSPC_PTR "%#" OMR_PRIxPTR
+
 extern TR::FILE *(*trfopen)(char *fileName, const char *attrs, bool encrypt);
 extern void (*trfclose)(TR::FILE *fileId);
 extern void (*trfflush)(TR::FILE *fileId);
