@@ -2767,7 +2767,7 @@ void OMR::ValuePropagation::replaceByConstant(TR::Node *node, TR::VPConstraint *
    if (!isGlobal && !lastTimeThrough())
       return;
 
-   if (!performTransformation(comp(), "%sConstant folding %s [" POINTER_PRINTF_FORMAT "]", OPT_DETAILS, node->getOpCode().getName(), node))
+   if (!performTransformation(comp(), "%sConstant folding %s [" TR_FMTSPC_PTR "]", OPT_DETAILS, node->getOpCode().getName(), PTR_TO_FMTSPC_PTR(node)))
       return;
 
    // If the node has any children, they must be handled before replacing this

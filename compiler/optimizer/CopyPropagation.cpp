@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -221,7 +221,7 @@ class TR_ExpressionPropagation
          {
          _parentOfTargetNode = getNodeParent(_targetNode, _targetTreeTop->getNode(), comp()->incOrResetVisitCount(), _targetChildIndex);
 
-         TR_ASSERT(_parentOfTargetNode != 0, "could not find _targetNode " POINTER_PRINTF_FORMAT " parent, _targetTreeTop root node " POINTER_PRINTF_FORMAT "!", _targetNode, _targetTreeTop->getNode());
+         TR_ASSERT(_parentOfTargetNode != 0, "could not find _targetNode " TR_FMTSPC_PTR " parent, _targetTreeTop root node " TR_FMTSPC_PTR "!", PTR_TO_FMTSPC_PTR(_targetNode), PTR_TO_FMTSPC_PTR(_targetTreeTop->getNode()));
          TR_ASSERT(_parentOfTargetNode->getChild(_targetChildIndex) == _targetNode, "_targetChildIndex or _parentOfTargetNode is not correct?");
 
          _parentOfTargetNode->setAndIncChild(_targetChildIndex, _sourceTree);
@@ -242,8 +242,8 @@ class TR_ExpressionPropagation
 
             if (trace())
                {
-               comp()->getDebug()->trace("%s   Propagating new RHS " POINTER_PRINTF_FORMAT " in place of old instance location " POINTER_PRINTF_FORMAT " child index %d\n",
-                                         OPT_DETAILS, sourceTree, parentNode, childIndex);
+               comp()->getDebug()->trace("%s   Propagating new RHS " TR_FMTSPC_PTR " in place of old instance location " TR_FMTSPC_PTR " child index %d\n",
+                                         OPT_DETAILS, PTR_TO_FMTSPC_PTR(sourceTree), PTR_TO_FMTSPC_PTR(parentNode), childIndex);
                }
 
             TR::Node * commonedNode = parentNode->getChild(static_cast<int32_t>(childIndex));
@@ -397,8 +397,8 @@ class TR_ExpressionPropagation
                   // Replaced all occurrences later in the block, bail out.
                   if (trace())
                      {
-                     comp()->getDebug()->trace("%s   Propagating new RHS " POINTER_PRINTF_FORMAT " stops because oldNode ref count = 0\n",
-                                               OPT_DETAILS, newNode);
+                     comp()->getDebug()->trace("%s   Propagating new RHS " TR_FMTSPC_PTR " stops because oldNode ref count = 0\n",
+                                               OPT_DETAILS, PTR_TO_FMTSPC_PTR(newNode));
                      }
 
                   break;

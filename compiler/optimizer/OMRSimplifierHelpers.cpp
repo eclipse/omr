@@ -168,7 +168,7 @@ TR::Node *_gotoSimplifier(TR::Node * node, TR::Block * block, TR::TreeTop* curTr
 
       // Branch to the immediately following block. The goto can be removed
       //
-      if (performTransformation(s->comp(), "%sRemoving goto [" POINTER_PRINTF_FORMAT "] to following block\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sRemoving goto [" TR_FMTSPC_PTR "] to following block\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          s->removeNode(node, curTree);
          return NULL;
@@ -699,7 +699,7 @@ TR::Node *removeIfToFollowingBlock(TR::Node * node, TR::Block * block, TR::Simpl
       {
       // Branch to the immediately following block. The branch can be removed
       //
-      if (performTransformation(s->comp(), "%sRemoving %s [" POINTER_PRINTF_FORMAT "] to following block\n", s->optDetailString(), node->getOpCode().getName(), node))
+      if (performTransformation(s->comp(), "%sRemoving %s [" TR_FMTSPC_PTR "] to following block\n", s->optDetailString(), node->getOpCode().getName(), PTR_TO_FMTSPC_PTR(node)))
          {
          s->prepareToStopUsingNode(node, s->_curTree);
          node->recursivelyDecReferenceCount();

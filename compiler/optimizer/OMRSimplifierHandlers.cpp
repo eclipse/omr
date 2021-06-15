@@ -132,8 +132,8 @@
             secondChild->setAndIncChild(1, TR::Node::create(grandChild, grandChild->getOpCodeValue(), 0, (int32_t)konst)); \
             }                                                                      \
          }                                                                         \
-      dumpOptDetails(s->comp(), "%ssimplified arithmetic in branch [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(),        \
-                  node);                                                           \
+      dumpOptDetails(s->comp(), "%ssimplified arithmetic in branch [" TR_FMTSPC_PTR "]\n", s->optDetailString(),        \
+                  PTR_TO_FMTSPC_PTR(node));                                                           \
       }
 
 /**
@@ -153,7 +153,7 @@
          return s->replaceNodeWithChild(node, firstChild, s->_curTree, block);\
       if(value == ZeroValue)\
          {\
-         if(performTransformation(s->comp(), "%sFound op with iconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(),node))\
+         if(performTransformation(s->comp(), "%sFound op with iconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR((node))))\
             {\
             s->anchorChildren(node, s->_curTree);\
             s->prepareToReplaceNode(node, secondChild->getOpCodeValue());\
@@ -296,7 +296,7 @@ static void convertToTestUnderMask(TR::Node *node, TR::Block *block, TR::Simplif
        !load->getSymbol()->isParm() && load->getOpCode().isLoadIndirect() &&  // Limit it to non-parm, indirect cases
        load->getReferenceCount() == 1 &&
        performTransformation(cm, "%sTransforming iand/iushr to byte test under mask ["
-             POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+             TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       {
       // anchor iand subtree
       auto anchor = TR::TreeTop::create(s->comp(), TR::Node::create(TR::treetop, 1, iand));
@@ -1645,7 +1645,7 @@ static bool reduceLongOp(TR::Node * node, TR::Block * block, TR::Simplifier * s,
                }
             else
                {
-               if (!performTransformation(s->comp(), "%sReducing long operation in node [" POINTER_PRINTF_FORMAT "] to an int operation\n", s->optDetailString(), node))
+               if (!performTransformation(s->comp(), "%sReducing long operation in node [" TR_FMTSPC_PTR "] to an int operation\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   return false;
                // shift by > 31 bits gets constant 0
                if (newConversionOp == TR::BadILOp)
@@ -1675,7 +1675,7 @@ static bool reduceLongOp(TR::Node * node, TR::Block * block, TR::Simplifier * s,
       break;
       case TR::lneg:
          {
-         if (!performTransformation(s->comp(), "%sReducing long operation in node [" POINTER_PRINTF_FORMAT "] to an int operation\n", s->optDetailString(), node))
+         if (!performTransformation(s->comp(), "%sReducing long operation in node [" TR_FMTSPC_PTR "] to an int operation\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             return false;
          if (newConversionOp == TR::BadILOp)
             {
@@ -1701,7 +1701,7 @@ static bool reduceLongOp(TR::Node * node, TR::Block * block, TR::Simplifier * s,
    if (newOp == TR::BadILOp)
       return false;
 
-   if (!performTransformation(s->comp(), "%sReducing long operation in node [" POINTER_PRINTF_FORMAT "] to an int operation\n", s->optDetailString(), node))
+   if (!performTransformation(s->comp(), "%sReducing long operation in node [" TR_FMTSPC_PTR "] to an int operation\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       return false;
 
    // If the original node was l2i the reduced long operation replaces it.
@@ -2108,7 +2108,7 @@ static bool processSubTreeLeavesForISelectCompare(TR::NodeChecklist &visited, TR
       TR::Node *right = node->getChild(2);
       if (left->getOpCode().isLoadConst())
          {
-         if (performTransformation(s->comp(), "%sReplacing constant child of iselect node [" POINTER_PRINTF_FORMAT "] with 0 or 1\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReplacing constant child of iselect node [" TR_FMTSPC_PTR "] with 0 or 1\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             node->setAndIncChild(1, evaluateIntComparison(compareType, isUnsignedCompare, left->get64bitIntegralValue(), constant) ? TR::Node::createConstOne(left, left->getDataType()) : TR::Node::createConstZeroValue(left, left->getDataType()));
             left->decReferenceCount();
@@ -2120,7 +2120,7 @@ static bool processSubTreeLeavesForISelectCompare(TR::NodeChecklist &visited, TR
          }
       if (right->getOpCode().isLoadConst())
          {
-         if (performTransformation(s->comp(), "%sReplacing constant child of iselect node [" POINTER_PRINTF_FORMAT "] with 0 or 1\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReplacing constant child of iselect node [" TR_FMTSPC_PTR "] with 0 or 1\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             node->setAndIncChild(2, evaluateIntComparison(compareType, isUnsignedCompare, right->get64bitIntegralValue(), constant) ? TR::Node::createConstOne(right, right->getDataType()) : TR::Node::createConstZeroValue(right, right->getDataType()));
             right->decReferenceCount();
@@ -2191,7 +2191,7 @@ static void simplifyISelectCompare(TR::Node *compare, TR::Simplifier *s)
          TR::NodeChecklist visited(s->comp());
          processSubTreeLeavesForISelectCompare(visited, compare->getFirstChild(), compareType, isUnsignedCompare, compare->getSecondChild()->get64bitIntegralValue(), s);
          TR::Node *constVal = compare->getSecondChild();
-         if (performTransformation(s->comp(), "%sReplacing constant child of compare node [" POINTER_PRINTF_FORMAT "] with 0 after comparison of constants has been folded across children\n", s->optDetailString(), compare))
+         if (performTransformation(s->comp(), "%sReplacing constant child of compare node [" TR_FMTSPC_PTR "] with 0 after comparison of constants has been folded across children\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(compare)))
             {
             compare->setAndIncChild(1, TR::Node::createConstZeroValue(compare->getSecondChild(), compare->getSecondChild()->getDataType()));
             constVal->decReferenceCount();
@@ -3233,8 +3233,8 @@ static void decomposeMultiply(TR::Node *node, TR::Simplifier *s, bool isLong)
    bool iMulDecomposeReport = comp->getOptions()->trace(OMR::treeSimplification);
    if (iMulDecomposeReport)
       {
-      dumpOptDetails(comp, "\nvalue = " POINTER_PRINTF_FORMAT ", count = %d\n",
-            isLong ? secondChild->getLongInt():secondChild->getInt(), count);
+      dumpOptDetails(comp, "\nvalue = " TR_FMTSPC_PTR ", count = %d\n",
+            isLong ? INT_TO_FMTSPC_PTR(secondChild->getLongInt()) : INT_TO_FMTSPC_PTR(secondChild->getInt()), count);
 
       char line[256] = "";
       for (i=0; i<count; i++)
@@ -3721,7 +3721,7 @@ static bool isLegalToMerge(TR::Node * node, TR::Block * block, TR::Block * nextB
       }
    else
       {
-      if (!performTransformation(s->comp(), "%sMerge blocks [" POINTER_PRINTF_FORMAT "] and [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), block, nextBlock))
+      if (!performTransformation(s->comp(), "%sMerge blocks [" TR_FMTSPC_PTR "] and [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(block), PTR_TO_FMTSPC_PTR(nextBlock)))
          return false;
       }
 
@@ -4891,7 +4891,7 @@ static bool checkAndReplaceRotation(TR::Node *node,TR::Block *block, TR::Simplif
    if (expectedMulConst != mulConst)
       return false;
 
-   if (!performTransformation(s->comp(), "%sReduced or/xor/add in node [" POINTER_PRINTF_FORMAT "] to rol\n", s->optDetailString(), node))
+   if (!performTransformation(s->comp(), "%sReduced or/xor/add in node [" TR_FMTSPC_PTR "] to rol\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       return false;
 
    TR::Node *newConstNode = TR::Node::iconst(mulConstNode, static_cast<int32_t>(correctLeftShiftAmount));
@@ -5085,7 +5085,7 @@ static void bitTestingOp(TR::Node * node, TR::Simplifier *s)
   if  ((cmpAmount>>shiftAmount)<<shiftAmount!=cmpAmount)
      return;
 
-  if (!performTransformation(s->comp(), "%sRemoving shift node [" POINTER_PRINTF_FORMAT "] \n", s->optDetailString(), firstChild->getFirstChild()))
+  if (!performTransformation(s->comp(), "%sRemoving shift node [" TR_FMTSPC_PTR "] \n", s->optDetailString(), PTR_TO_FMTSPC_PTR(firstChild->getFirstChild())))
         return;
 
   TR::Node *shift=firstChild->getFirstChild();
@@ -5414,7 +5414,7 @@ static void bitwiseToLogical(TR::Node * node, TR::Block * block, TR::Simplifier 
    if (nextBlock->isExtensionOfPreviousBlock())
       return;
 
-   if (!performTransformation(s->comp(), "%sConvert comparison with bitwise ops [" POINTER_PRINTF_FORMAT "] to logical control flow\n", s->optDetailString(), node))
+   if (!performTransformation(s->comp(), "%sConvert comparison with bitwise ops [" TR_FMTSPC_PTR "] to logical control flow\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       return;
 
    TR::CFG      * cfg  = s->comp()->getFlowGraph();
@@ -5749,8 +5749,8 @@ TR::Node *indirectLoadSimplifier(TR::Node * node, TR::Block * block, TR::Simplif
           (firstChild->getSymbolReference()->getSymbol()->isAutoOrParm() || localStatic) &&
           node->getSymbolReference()->getOffset() == 0 &&
           (node->getSymbol()->isVolatile() == firstChild->getSymbol()->isVolatile()) &&
-          performTransformation(s->comp(), "%sReplace indirect load %s [" POINTER_PRINTF_FORMAT "] with ",
-          s->optDetailString(), node->getOpCode().getName(),node))
+          performTransformation(s->comp(), "%sReplace indirect load %s [" TR_FMTSPC_PTR "] with ",
+          s->optDetailString(), node->getOpCode().getName(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::SymbolReference *childRef = firstChild->getSymbolReference();
          TR_ASSERT(childRef, "Unexpected null symbol reference on child node\n");
@@ -5770,8 +5770,8 @@ TR::Node *indirectLoadSimplifier(TR::Node * node, TR::Block * block, TR::Simplif
 
          TR::Node::recreateWithoutProperties(loadNode, s->comp()->il.opCodeForDirectLoad(addrDataType), 0, childRef);
 
-         dumpOptDetails(s->comp(),"%s [" POINTER_PRINTF_FORMAT "] (load %s [" POINTER_PRINTF_FORMAT "])\n",
-             node->getOpCode().getName(), node, loadNode->getOpCode().getName(), loadNode);
+         dumpOptDetails(s->comp(),"%s [" TR_FMTSPC_PTR "] (load %s [" TR_FMTSPC_PTR "])\n",
+             node->getOpCode().getName(), PTR_TO_FMTSPC_PTR(node), loadNode->getOpCode().getName(), PTR_TO_FMTSPC_PTR(loadNode));
 
          firstChild->recursivelyDecReferenceCount();
 
@@ -5793,7 +5793,7 @@ TR::Node *indirectLoadSimplifier(TR::Node * node, TR::Block * block, TR::Simplif
           ((addressNode->getOpCode().isArrayRef() && addressNode->getSecondChild()->getOpCode().isLoadConst() &&
            addressNode->getFirstChild()->getOpCode().hasSymbolReference() && addressNode->getFirstChild()->getSymbol()->getType().isVector()) ||
           (addressNode->getOpCode().hasSymbolReference() && addressNode->getSymbol()->getType().isVector())) &&
-          performTransformation(s->comp(), "%sReplace indirect load [" POINTER_PRINTF_FORMAT "] with getvelem", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sReplace indirect load [" TR_FMTSPC_PTR "] with getvelem", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          int32_t offset = 0;
          TR::SymbolReference *oldSymRef = node->getSymbolReference();
@@ -5815,7 +5815,7 @@ TR::Node *indirectLoadSimplifier(TR::Node * node, TR::Block * block, TR::Simplif
 
          TR::Node *getvelemNode = TR::Node::create(TR::getvelem, 2, vloadiNode, indexNode);
 
-         dumpOptDetails(s->comp(),"[" POINTER_PRINTF_FORMAT "]\n", getvelemNode);
+         dumpOptDetails(s->comp(),"[" TR_FMTSPC_PTR "]\n", PTR_TO_FMTSPC_PTR(getvelemNode));
 
          s->replaceNode(node, getvelemNode, s->_curTree);
          return s->simplify(getvelemNode, block);
@@ -5837,7 +5837,7 @@ TR::Node *indirectStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simpli
 
    // Check if we are storing an address of a deleted label
    if (isDeletedLabelLoadaddr(secondChild) &&
-       performTransformation(s->comp(), "%sRemoving indirect store [" POINTER_PRINTF_FORMAT "] to deleted label [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node, secondChild->getSymbol()))
+       performTransformation(s->comp(), "%sRemoving indirect store [" TR_FMTSPC_PTR "] to deleted label [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(secondChild->getSymbol())))
       {
       s->removeNode(node, s->_curTree);
       return NULL;
@@ -5870,8 +5870,8 @@ TR::Node *indirectStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simpli
            (firstChild->getSymbolReference()->getSymbol()->isAutoOrParm()  || localStatic) &&
            node->getSymbolReference()->getOffset() == 0 &&
            (node->getSymbol()->isVolatile() == firstChild->getSymbol()->isVolatile()) &&
-           performTransformation(s->comp(), "%sReplace indirect store %s [" POINTER_PRINTF_FORMAT "] with ",
-            s->optDetailString(), node->getOpCode().getName(),node))
+           performTransformation(s->comp(), "%sReplace indirect store %s [" TR_FMTSPC_PTR "] with ",
+            s->optDetailString(), node->getOpCode().getName(), PTR_TO_FMTSPC_PTR(node)))
          {
 
          if (storeDataType != addrDataType)
@@ -5890,7 +5890,7 @@ TR::Node *indirectStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simpli
          firstChild->recursivelyDecReferenceCount();
          node->setNumChildren(1);
 
-         dumpOptDetails(s->comp(),"%s [" POINTER_PRINTF_FORMAT "]\n",node->getOpCode().getName(),node);
+         dumpOptDetails(s->comp(),"%s [" TR_FMTSPC_PTR "]\n", node->getOpCode().getName(), PTR_TO_FMTSPC_PTR(node));
 
          if (addrDataType == TR::Aggregate)
             {
@@ -5940,7 +5940,7 @@ TR::Node *indirectStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simpli
             }
 
          if (removeWrtBar && !s->comp()->getOptions()->realTimeGC() &&
-             performTransformation(s->comp(), "%sFolded indirect write barrier to iastore because GC could not have occurred enough times to require iwrtbar [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+             performTransformation(s->comp(), "%sFolded indirect write barrier to iastore because GC could not have occurred enough times to require iwrtbar [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::astorei);
             node->getChild(2)->recursivelyDecReferenceCount();
@@ -5960,7 +5960,7 @@ TR::Node *indirectStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simpli
           ((addressNode->getOpCode().isArrayRef() && addressNode->getSecondChild()->getOpCode().isLoadConst() &&
            addressNode->getFirstChild()->getOpCode().hasSymbolReference() && addressNode->getFirstChild()->getSymbol()->getType().isVector()) ||
           (addressNode->getOpCode().hasSymbolReference() && addressNode->getSymbol()->getType().isVector())) &&
-          performTransformation(s->comp(), "%sReplace indirect store [" POINTER_PRINTF_FORMAT "] with vsetelem", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sReplace indirect store [" TR_FMTSPC_PTR "] with vsetelem", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          int32_t offset = 0;
          TR::SymbolReference *oldSymRef = node->getSymbolReference();
@@ -5980,7 +5980,7 @@ TR::Node *indirectStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simpli
          TR::Node *indexNode = TR::Node::iconst(offset/(node->getSize()));   // idx = byte offset / element size
          TR::Node *vsetelemNode = TR::Node::create(TR::vsetelem, 3, vloadiNode, indexNode, valueNode);
          auto newVStorei = TR::Node::createWithSymRef(TR::vstorei, 2, 2, addressNode, vsetelemNode, newSymRef);
-         dumpOptDetails(s->comp(),"[" POINTER_PRINTF_FORMAT "]\n", newVStorei);
+         dumpOptDetails(s->comp(),"[" TR_FMTSPC_PTR "]\n", PTR_TO_FMTSPC_PTR(newVStorei));
          s->replaceNode(node, newVStorei, s->_curTree);
          newVStorei->setReferenceCount(0);
          return s->simplify(newVStorei, block);
@@ -5996,7 +5996,7 @@ TR::Node *astoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
 
    // Check if we are storing an address of a deleted label
    if (isDeletedLabelLoadaddr(node->getFirstChild()) &&
-       performTransformation(s->comp(), "%sRemoving astore [" POINTER_PRINTF_FORMAT "] to deleted label [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node, node->getFirstChild()->getSymbol()))
+       performTransformation(s->comp(), "%sRemoving astore [" TR_FMTSPC_PTR "] to deleted label [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(node->getFirstChild()->getSymbol())))
       {
       s->removeNode(node, s->_curTree);
       return NULL;
@@ -6012,7 +6012,7 @@ TR::Node *directStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifi
    if (child->getOpCode().isLoadVar()  &&
        child->getReferenceCount() == 1 &&
        symRef == child->getSymbolReference() &&
-       performTransformation(s->comp(), "%sFolded direct store of load of same symbol on node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+       performTransformation(s->comp(), "%sFolded direct store of load of same symbol on node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       {
       node->recursivelyDecReferenceCount();
       s->_invalidateUseDefInfo = true;
@@ -6055,7 +6055,7 @@ TR::Node *directStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifi
                return node;
             }
 
-         //dumpOptDetails(s->comp(), "found update form treetop [" POINTER_PRINTF_FORMAT "] node [" POINTER_PRINTF_FORMAT "] for symbol #%d[" POINTER_PRINTF_FORMAT "]\n", updateTree->getNode(), node, symRef->getReferenceNumber());
+         //dumpOptDetails(s->comp(), "found update form treetop [" TR_FMTSPC_PTR "] node [" TR_FMTSPC_PTR "] for symbol #%d[" TR_FMTSPC_PTR "]\n", updateTree->getNode(), PTR_TO_FMTSPC_PTR(node), symRef->getReferenceNumber());
 
 
          // only proceed if previous tree is a treetop holding an iload of <sym> (more specific pattern match)
@@ -6065,7 +6065,7 @@ TR::Node *directStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifi
             TR::Node * loadNode = loadTree->getNode()->getFirstChild();
             if (loadNode->getOpCode().isLoadVarDirect() && loadNode->getSymbolReference() == symRef)
                {
-               //dumpOptDetails(s->comp(), "found load [" POINTER_PRINTF_FORMAT "] of symbol in previous tree\n", loadNode);
+               //dumpOptDetails(s->comp(), "found load [" TR_FMTSPC_PTR "] of symbol in previous tree\n", PTR_TO_FMTSPC_PTR(loadNode));
 
                // now, walk trees forward to end of block or a tree that accesses <sym>
                // when we find a tree containing a use of <sym>, update insertion point with tree following the use tree
@@ -6084,7 +6084,7 @@ TR::Node *directStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifi
                   }
 
                // if we found a better insertion point, snip tree out of its original place and insert it after insertionTree
-               if (insertionTree != NULL && performTransformation(s->comp(), "%smove update tree [" POINTER_PRINTF_FORMAT "] to after [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node, insertionTree->getNode()))
+               if (insertionTree != NULL && performTransformation(s->comp(), "%smove update tree [" TR_FMTSPC_PTR "] to after [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(insertionTree->getNode())))
                   {
                   // make sure we still simplify trees following the original update tree's position
                   s->_curTree = updateTree->getNextRealTreeTop();
@@ -6717,7 +6717,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       return node;
 
    if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst() &&
-       performTransformation(s->comp(), "%sSimplified ladd in node [" POINTER_PRINTF_FORMAT "] to lconst\n", s->optDetailString(), node))
+       performTransformation(s->comp(), "%sSimplified ladd in node [" TR_FMTSPC_PTR "] to lconst\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       {
       if (node->nodeRequiresConditionCodes())
          {
@@ -6754,7 +6754,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
        secondChildOp == TR::lconst        &&
        secondChild->getLongInt() > 0)
       {
-      if (performTransformation(s->comp(), "%sNormalized ladd of lconst > 0 in node [" POINTER_PRINTF_FORMAT "] to lsub of -lconst\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sNormalized ladd of lconst > 0 in node [" TR_FMTSPC_PTR "] to lsub of -lconst\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node::recreate(node, TR::lsub);
          if (secondChild->getReferenceCount() == 1)
@@ -6781,7 +6781,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       if (secondChildOp == TR::lconst &&
           secondChild->getLongInt() == -1) // -1LL works for IBM but not for MS
          {
-         if (performTransformation(s->comp(), "%sReduced ladd of -1 and an lneg in node [" POINTER_PRINTF_FORMAT "] to bitwise complement\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced ladd of -1 and an lneg in node [" TR_FMTSPC_PTR "] to bitwise complement\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             s->anchorChildren(node, s->_curTree);
             TR::Node::recreate(node, TR::lxor);
@@ -6794,7 +6794,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       // Turn add with first child negated into a subtract
       else
          {
-         if (performTransformation(s->comp(), "%sReduced ladd with negated first child in node [" POINTER_PRINTF_FORMAT "] to lsub\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced ladd with negated first child in node [" TR_FMTSPC_PTR "] to lsub\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             s->anchorChildren(node, s->_curTree);
             TR::Node::recreate(node, TR::lsub);
@@ -6810,7 +6810,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    // turn add with other child negated in to a subtract
    else if (node->getOpCodeValue() == TR::ladd && secondChildOp == TR::lneg)
       {
-      if (performTransformation(s->comp(), "%sReduced ladd with negated second child in node [" POINTER_PRINTF_FORMAT "] to lsub\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sReduced ladd with negated second child in node [" TR_FMTSPC_PTR "] to lsub\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          s->anchorChildren(node, s->_curTree);
          TR::Node * newSecondChild = secondChild->getFirstChild();
@@ -6833,7 +6833,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       TR::Node * rlChild     = secondChild->getFirstChild();
       TR::Node * rrChild     = secondChild->getSecondChild();
       TR::Node * factorChild = NULL;
-      if (performTransformation(s->comp(), "%sFactored ladd with distributed lmul in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sFactored ladd with distributed lmul in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          if (llChild == rlChild)
             {
@@ -6877,7 +6877,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          TR::Node * lrChild = firstChild->getSecondChild();
          if (lrChild->getOpCodeValue() == TR::lconst)
             {
-            if (performTransformation(s->comp(), "%sFound ladd of lconst with ladd or lsub of x and const in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+            if (performTransformation(s->comp(), "%sFound ladd of lconst with ladd or lsub of x and const in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                if (firstChild->getReferenceCount()>1)
                   {
@@ -6925,7 +6925,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          else  // move constants up the tree so they will tend to get merged together
             {
             if ((firstChild->getReferenceCount() == 1) &&
-                 performTransformation(s->comp(), "%sFound ladd of non-lconst with ladd or lsub of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+                 performTransformation(s->comp(), "%sFound ladd of non-lconst with ladd or lsub of x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                node->setChild(1, lrChild);
                firstChild->setChild(1, secondChild);
@@ -6946,7 +6946,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
           ((firstChild->getFutureUseCount() == 0) ||
            (lrChild->getLongInt() == -1*secondChild->getLongInt())))
          {
-         if (performTransformation(s->comp(), "%sFound aladd of lconst with aladd x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sFound aladd of lconst with aladd x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             int64_t value  = secondChild->getLongInt();
             value += lrChild->getLongInt();
@@ -6966,7 +6966,7 @@ TR::Node *laddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             }
          }
      else if ((firstChild->getReferenceCount() == 1) &&
-               performTransformation(s->comp(), "%sFound aladd of non-lconst with aladd x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+               performTransformation(s->comp(), "%sFound aladd of non-lconst with aladd x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          // move constants up the tree so they will tend to be merged together
          node->setChild(1, lrChild);
@@ -7471,8 +7471,8 @@ TR::Node *isubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
           }
 
        if (LBase && RBase && LBase == RBase &&
-           performTransformation(s->comp(), "%sRemove loadaddr in address computation in [" POINTER_PRINTF_FORMAT "]\n",
-                 s->optDetailString(), node))
+           performTransformation(s->comp(), "%sRemove loadaddr in address computation in [" TR_FMTSPC_PTR "]\n",
+                 s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
           {
           if (!exprA)
              exprA = TR::Node::createConstZeroValue(NULL, TR::Int32);
@@ -7552,7 +7552,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
           (rlChild == firstChild) &&
           node->cannotOverflow() && secondChild->cannotOverflow())
          {
-         if (performTransformation(s->comp(), "%sFolded lsub with children related through lconst in node [" POINTER_PRINTF_FORMAT "] to lconst \n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sFolded lsub with children related through lconst in node [" TR_FMTSPC_PTR "] to lconst \n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             node->setChild(0, 0);
             node->setChild(1, 0);
@@ -7575,7 +7575,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    else if (secondChildOp == TR::lconst &&
             secondChild->getLongInt() > 0)
       {
-      if (performTransformation(s->comp(), "%sNormalized lsub of lconst > 0 in node [" POINTER_PRINTF_FORMAT "] to ladd of -lconst \n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sNormalized lsub of lconst > 0 in node [" TR_FMTSPC_PTR "] to ladd of -lconst \n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node::recreate(node, TR::ladd);
          if (secondChild->getReferenceCount() == 1)
@@ -7598,7 +7598,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    // turn lsub with second child lneg into an ladd
    else if (secondChildOp == TR::lneg)
       {
-      if (performTransformation(s->comp(), "%sReduced lsub with negated second child in node [" POINTER_PRINTF_FORMAT "] to ladd\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sReduced lsub with negated second child in node [" TR_FMTSPC_PTR "] to ladd\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node * newSecondChild = secondChild->getFirstChild();
          TR::Node::recreate(node, TR::ladd);
@@ -7615,7 +7615,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    // turn lsub with first child lneg into an lneg with ladd child.  isn't quicker, but normalizes expressions and drives lnegs up the tree
    else if (firstChildOp == TR::lneg)
       {
-      if (performTransformation(s->comp(), "%sReduced lsub with negated first child in node [" POINTER_PRINTF_FORMAT "] to lneg of ladd\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sReduced lsub with negated first child in node [" TR_FMTSPC_PTR "] to lneg of ladd\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node * newFirstChild = firstChild->getFirstChild();
          TR::Node::recreate(node, TR::lneg);
@@ -7639,7 +7639,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             secondChildOp == TR::lconst          &&
             secondChild->getLongInt() == -1) // -1LL works for IBM but not MS
       {
-      if (performTransformation(s->comp(), "%sReduced lsub of bitwise complement and lconst -1 in node [" POINTER_PRINTF_FORMAT "] to 2s complement negation\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sReduced lsub of bitwise complement and lconst -1 in node [" TR_FMTSPC_PTR "] to 2s complement negation\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node * firstGrandChild = firstChild->getFirstChild();
          TR::Node::recreate(node, TR::lneg);
@@ -7657,7 +7657,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             secondChildOp == TR::lmul             &&
             secondChild->getReferenceCount() == 1)
       {
-      if (performTransformation(s->comp(), "%sFactored lsub with distributed lmul in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sFactored lsub with distributed lmul in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node * llChild     = firstChild->getFirstChild();
          TR::Node * lrChild     = firstChild->getSecondChild();
@@ -7707,7 +7707,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          TR::Node * lrChild = firstChild->getSecondChild();
          if (lrChild->getOpCodeValue() == TR::lconst)
             {
-            if (performTransformation(s->comp(), "%sFound lsub of lconst with ladd or lsub of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+            if (performTransformation(s->comp(), "%sFound lsub of lconst with ladd or lsub of x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                if (firstChild->getReferenceCount()>1)
                   {
@@ -7758,7 +7758,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          else  // move constants up the tree so they will tend to get merged together
             {
             if ((firstChild->getReferenceCount() == 1) &&
-                 performTransformation(s->comp(), "%sFound lsub of non-lconst with ladd or lsub of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+                 performTransformation(s->comp(), "%sFound lsub of non-lconst with ladd or lsub of x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                node->setChild(1, lrChild);
                firstChild->setChild(1, secondChild);
@@ -7823,7 +7823,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
          // Make sure we don't overflow
          if ((iValue<<shftAmnt) == (int32_t)(lValue<<shftAmnt) &&
-             performTransformation(s->comp(), "%sFound lsub/lmul of +ve powOf2 lconst with i2l of iadd or isub of x and iconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+             performTransformation(s->comp(), "%sFound lsub/lmul of +ve powOf2 lconst with i2l of iadd or isub of x and iconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             // Reset the flags on i2lNode to reflect the new child - llChild
             TR::Node * llChild = firstChild->getFirstChild();
@@ -7912,7 +7912,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                   // we can loosen this up in the future if we have more information on children nodes but not the parents
                   int64_t value = (int64_t) lrChild->getInt();
                   value = - secondChild->getLongInt();
-                  if (performTransformation(s->comp(), "%sFound lsub of lconst with i2l of iadd or isub of x and iconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+                  if (performTransformation(s->comp(), "%sFound lsub of lconst with i2l of iadd or isub of x and iconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                      {
                      // Reset the flags on i2lNode to reflect the new child - llChild
                      i2lNode->setIsNonZero(llChild->isNonZero());
@@ -8024,8 +8024,8 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          }
 
       if (LBase && RBase && LBase == RBase &&
-          performTransformation(s->comp(), "%sRemove loadaddr in address computation in [" POINTER_PRINTF_FORMAT "]\n",
-                s->optDetailString(), node))
+          performTransformation(s->comp(), "%sRemove loadaddr in address computation in [" TR_FMTSPC_PTR "]\n",
+                s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          if (!exprA)
             exprA = TR::Node::createConstZeroValue(NULL, TR::Int64);
@@ -8047,7 +8047,7 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       uint64_t mask = secondChild->getSecondChild()->getLongInt();
       if (((mask + 1) & mask) == 0 && // mask + 1 power of two?
-          performTransformation(s->comp(), "%sNext lower pwr of 2 using land [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sNext lower pwr of 2 using land [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          node->recreate(node, TR::land);
          TR::Node* maskNode = TR::Node::create(node, TR::lconst, 0);
@@ -8514,7 +8514,7 @@ TR::Node *lmulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          {
          if (secondChildOp == TR::lconst)
             {
-            if (performTransformation(s->comp(), "%sFound lmul of lconst with lmul of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+            if (performTransformation(s->comp(), "%sFound lmul of lconst with lmul of x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                if (secondChild->getReferenceCount() == 1)
                   {
@@ -8537,7 +8537,7 @@ TR::Node *lmulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             }
          else // move constants up the tree so they will tend to get merged together
             {
-            if (performTransformation(s->comp(), "%sFound lmul of non-lconst with lmul of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+            if (performTransformation(s->comp(), "%sFound lmul of non-lconst with lmul of x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                node->setChild(1, lrChild);
                firstChild->setChild(1, secondChild);
@@ -8553,7 +8553,7 @@ TR::Node *lmulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       firstChildOp = firstChild->getOpCodeValue();
       TR::Node *lrChild = firstChild->getSecondChild();
       if (lrChild->getOpCodeValue() == TR::lconst &&
-          performTransformation(s->comp(), "%sDistributed lmul with lconst over lsub or ladd with lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sDistributed lmul with lconst over lsub or ladd with lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          int64_t product = lrChild->getLongInt() * secondChild->getLongInt();
          if (firstChildOp == TR::lsub)
@@ -8613,7 +8613,7 @@ TR::Node *lmulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          firstChildOp = firstChild->getOpCodeValue();
          TR::Node *lrChild = firstChild->getSecondChild();
          if (lrChild->getOpCodeValue() == TR::iconst &&
-               performTransformation(s->comp(), "%sDistributed lmul with lconst over isub or iadd of with iconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+               performTransformation(s->comp(), "%sDistributed lmul with lconst over isub or iadd of with iconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             int64_t product = (int64_t)lrChild->getInt() * secondChild->getLongInt();
             if (firstChildOp == TR::isub)
@@ -8731,7 +8731,7 @@ TR::Node *fmulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
    if (bothChildrenNegated)
       {
-      if (performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] (-A)*(-B) -> A*B\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sTransforming [" TR_FMTSPC_PTR "] (-A)*(-B) -> A*B\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
         { // remove negates
         TR::Node * newFirstChild= s->replaceNode(firstChild,firstChild->getFirstChild(), s->_curTree);
         TR::Node * newSecondChild= s->replaceNode(secondChild,secondChild->getFirstChild(), s->_curTree);
@@ -9401,7 +9401,7 @@ TR::Node *fdivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
    if (bothChildrenNegated)
       {
-      if (performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] (-A)/(-B) -> A/B\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sTransforming [" TR_FMTSPC_PTR "] (-A)/(-B) -> A/B\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          { // remove negates
          TR::Node * newFirstChild= s->replaceNode(firstChild,firstChild->getFirstChild(), s->_curTree);
          TR::Node * newSecondChild= s->replaceNode(secondChild,secondChild->getFirstChild(), s->_curTree);
@@ -9831,7 +9831,7 @@ TR::Node *fremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
    if (secondChildNegated) // has no effect on sign--just remove it
       {
-      if (performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] A%%(-B) -> A%%B\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sTransforming [" TR_FMTSPC_PTR "] A%%(-B) -> A%%B\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
         { // remove negate
         TR::Node * newSecondChild= s->replaceNode(secondChild,secondChild->getFirstChild(), s->_curTree);
         node->setChild(1,newSecondChild);
@@ -9908,7 +9908,7 @@ TR::Node *inegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    TR::ILOpCodes opCode = firstChild->getOpCodeValue();
    if (opCode == TR::ineg)
       {
-      if (performTransformation(s->comp(), "%sCancelled out ineg with ineg child in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sCancelled out ineg with ineg child in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node * grandChild = firstChild->getFirstChild();
          node = s->replaceNode(node, grandChild, s->_curTree);
@@ -9917,7 +9917,7 @@ TR::Node *inegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
    else if (opCode == TR::isub)
       {
-      if (performTransformation(s->comp(), "%sReduced ineg with isub child in node [" POINTER_PRINTF_FORMAT "] to isub\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sReduced ineg with isub child in node [" TR_FMTSPC_PTR "] to isub\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node::recreate(node, TR::isub);
          node->setNumChildren(2);
@@ -9934,7 +9934,7 @@ TR::Node *inegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       TR::Node* firstFirst = firstChild->getFirstChild();
       uint32_t shiftBy = firstFirst->getSecondChild()->getInt();
       if (shiftBy == 63 &&
-          performTransformation(s->comp(), "%sReplaced ineg of lushr by 63 with lshr node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sReplaced ineg of lushr by 63 with lshr node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node* shift = TR::Node::create(node, TR::lshr, 2);
          shift->setAndIncChild(0, firstFirst->getFirstChild());
@@ -9963,7 +9963,7 @@ TR::Node *lnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    TR::ILOpCodes opCode = firstChild->getOpCodeValue();
    if (opCode == TR::lneg)
       {
-      if (performTransformation(s->comp(), "%sCancelled lneg with lneg child in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sCancelled lneg with lneg child in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node * grandChild = firstChild->getFirstChild();
          node = s->replaceNode(node, grandChild, s->_curTree);
@@ -9972,7 +9972,7 @@ TR::Node *lnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       }
    else if (opCode == TR::lsub)
       {
-      if (performTransformation(s->comp(), "%sReduced lneg with lsub child in node [" POINTER_PRINTF_FORMAT "]\n to lsub", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sReduced lneg with lsub child in node [" TR_FMTSPC_PTR "]\n to lsub", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node::recreate(node, TR::lsub);
          node->setNumChildren(2);
@@ -10002,7 +10002,7 @@ TR::Node *fnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    //
    if (firstChild->getOpCodeValue() == TR::fneg)
       {
-      if (performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] --A -> A\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sTransforming [" TR_FMTSPC_PTR "] --A -> A\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          node= s->replaceNode(node,firstChild->getFirstChild(), s->_curTree); // remove neg
          }
@@ -10030,7 +10030,7 @@ TR::Node *fnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          child2Change = secondOpChild;
          childNo=1;
          }
-      if (child2Change && child2Change->getReferenceCount() == 1 && performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] -(-A op B) -> A op B (op=*,/,%%)\n", s->optDetailString(), node))
+      if (child2Change && child2Change->getReferenceCount() == 1 && performTransformation(s->comp(), "%sTransforming [" TR_FMTSPC_PTR "] -(-A op B) -> A op B (op=*,/,%%)\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          // remove neg
          TR::Node * newChild= s->replaceNode(child2Change,child2Change->getFirstChild(), s->_curTree);
@@ -10044,7 +10044,7 @@ TR::Node *fnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       // unless we've already got an inserted multiply, transformit
       if ((firstChild->getOpCode().isAdd() || firstChild->getOpCode().isSub()) &&
           !(firstChild->getFirstChild()->isFPStrictCompliant() || firstChild->getSecondChild()->isFPStrictCompliant()) &&
-          performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] -(-A +/- B) -> -((A*1)+/-B)\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sTransforming [" TR_FMTSPC_PTR "] -(-A +/- B) -> -((A*1)+/-B)\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node * newConst = TR::Node::create(firstChild, TR::fconst, 0);
          newConst->setFloat(1);
@@ -10056,7 +10056,7 @@ TR::Node *fnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          newMul->setIsFPStrictCompliant(true);
          }
       else if (firstChild->getOpCode().isMul() &&
-          performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] -(A*B) -> -((A*B)-0)\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sTransforming [" TR_FMTSPC_PTR "] -(A*B) -> -((A*B)-0)\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node * newConst = TR::Node::create(firstChild, TR::fconst, 0);
          newConst->setFloat(0);
@@ -10087,7 +10087,7 @@ TR::Node *dnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    // Make this work for -(0-0)
    if (firstChild->getOpCodeValue() == TR::dneg)
       {
-      if (performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] --A -> A\n", s->optDetailString(), node))
+      if (performTransformation(s->comp(), "%sTransforming [" TR_FMTSPC_PTR "] --A -> A\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          node= s->replaceNode(node,firstChild->getFirstChild(), s->_curTree); // remove neg
          }
@@ -10096,7 +10096,7 @@ TR::Node *dnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       if ((firstChild->getOpCode().isAdd() || firstChild->getOpCode().isSub()) &&
           !(firstChild->getFirstChild()->isFPStrictCompliant() || firstChild->getSecondChild()->isFPStrictCompliant()) &&
-          performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] -(-A +/- B) -> -((A*1)+/-B)\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sTransforming [" TR_FMTSPC_PTR "] -(-A +/- B) -> -((A*1)+/-B)\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node * newConst = TR::Node::create(firstChild->getFirstChild(), TR::dconst, 0);
          TR::Node * newMul = TR::Node::create(firstChild, TR::dmul, 2);
@@ -10109,7 +10109,7 @@ TR::Node *dnegSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          newMul->setIsFPStrictCompliant(true);
          }
       else if (firstChild->getOpCode().isMul() &&
-               performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] -(A*B) -> -((A*B)-0)\n", s->optDetailString(), node))
+               performTransformation(s->comp(), "%sTransforming [" TR_FMTSPC_PTR "] -(A*B) -> -((A*B)-0)\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node * newConst = TR::Node::create(firstChild, TR::dconst, 0);
          TR::Node * newAdd = TR::Node::create(firstChild, TR::dsub, 2);
@@ -10197,19 +10197,19 @@ TR::Node *ilfdabsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
    auto child = node->getChild(0);
    if (child->isNonNegative() &&
        performFlagBasedTransformation &&
-       performTransformation(s->comp(), "%sSimplify abs of non-negative child at [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+       performTransformation(s->comp(), "%sSimplify abs of non-negative child at [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       {
       return s->replaceNodeWithChild(node, child, s->_curTree, block);
       }
    else if (child->isNegative() &&
             performFlagBasedTransformation &&
-            performTransformation(s->comp(), "%sSimplify abs of non-positive child at [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+            performTransformation(s->comp(), "%sSimplify abs of non-positive child at [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       {
       TR::Node::recreate(node, neg);
       return s->simplify(node, block);
       }
    else if ((child->getOpCodeValue() == abs || child->getOpCodeValue() == neg) &&
-            performTransformation(s->comp(), "%sSimplify abs of abs/neg child at [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+            performTransformation(s->comp(), "%sSimplify abs of abs/neg child at [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       {
       node->setAndIncChild(0, child->getFirstChild());
       child->recursivelyDecReferenceCount();
@@ -10279,7 +10279,7 @@ TR::Node *lshlSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       // Canonicalize shift by a constant into multiply by a constant
       //
-      performTransformation(s->comp(), "%sCanonicalize long left shift by constant in node [" POINTER_PRINTF_FORMAT "] to long multiply by power of 2\n", s->optDetailString(), node);
+      performTransformation(s->comp(), "%sCanonicalize long left shift by constant in node [" TR_FMTSPC_PTR "] to long multiply by power of 2\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node));
       TR::Node::recreate(node, TR::lmul);
       int64_t multiplier = (int64_t)CONSTANT64(1) << (secondChild->getInt() & LONG_SHIFT_MASK);
       if (secondChild->getReferenceCount() > 1)
@@ -10445,7 +10445,7 @@ TR::Node *iushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
             {
             if (opCode == TR::s2i && rightShiftValue == 16)
                {
-               if (performTransformation(s->comp(), "%sReduced left shift followed by iushr equivalent to zero extend short in node [" POINTER_PRINTF_FORMAT "] to su2i\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sReduced left shift followed by iushr equivalent to zero extend short in node [" TR_FMTSPC_PTR "] to su2i\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   TR::Node::recreate(node, TR::su2i);
                   foundZeroExtension = true;
@@ -10453,7 +10453,7 @@ TR::Node *iushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
                }
             else if (opCode == TR::b2i && rightShiftValue == 24)
                {
-               if (performTransformation(s->comp(), "%sReduced left shift followed by iushr equivalent to zero extend byte in node [" POINTER_PRINTF_FORMAT "] to bu2i\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sReduced left shift followed by iushr equivalent to zero extend byte in node [" TR_FMTSPC_PTR "] to bu2i\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   TR::Node::recreate(node, TR::bu2i);
                   foundZeroExtension = true;
@@ -10473,7 +10473,7 @@ TR::Node *iushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
          // replace the two shifts with a TR::iand to mask off the high bits
          //
-         if (performTransformation(s->comp(), "%sReduced left shift followed by iushr in node [" POINTER_PRINTF_FORMAT "] to iand with mask\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced left shift followed by iushr in node [" TR_FMTSPC_PTR "] to iand with mask\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::iand);
             uint32_t mask = (UINT_MAX >> rightShiftValue);
@@ -10571,7 +10571,7 @@ TR::Node *lushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
             {
             if (opCode == TR::i2l && rightShiftValue == 32)
                {
-               if (performTransformation(s->comp(), "%sReduced left shift followed by lushr equivalent to zero extend int in node [" POINTER_PRINTF_FORMAT "] to iu2l\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sReduced left shift followed by lushr equivalent to zero extend int in node [" TR_FMTSPC_PTR "] to iu2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   foundZeroExtension = true;
                   TR::Node::recreate(node, TR::iu2l);
@@ -10579,7 +10579,7 @@ TR::Node *lushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
                }
             else if (opCode == TR::s2l && rightShiftValue == 48)
                {
-               if (performTransformation(s->comp(), "%sReduced left shift followed by lushr equivalent to zero extend byte in node [" POINTER_PRINTF_FORMAT "] to bu2l\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sReduced left shift followed by lushr equivalent to zero extend byte in node [" TR_FMTSPC_PTR "] to bu2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   foundZeroExtension = true;
                   TR::Node::recreate(node, TR::su2l);
@@ -10587,7 +10587,7 @@ TR::Node *lushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
                }
             else if (opCode == TR::b2l && rightShiftValue == 56)
                {
-               if (performTransformation(s->comp(), "%sReduced left shift followed by lushr equivalent to zero extend byte in node [" POINTER_PRINTF_FORMAT "] to bu2l\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sReduced left shift followed by lushr equivalent to zero extend byte in node [" TR_FMTSPC_PTR "] to bu2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   foundZeroExtension = true;
                   TR::Node::recreate(node, TR::bu2l);
@@ -10607,7 +10607,7 @@ TR::Node *lushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
          // replace the two shifts with a TR::land to mask off the high bits
          //
-         if (performTransformation(s->comp(), "%sReduced left shift followed by lushr in node [" POINTER_PRINTF_FORMAT "] to land with mask\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced left shift followed by lushr in node [" TR_FMTSPC_PTR "] to land with mask\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::land);
             uint64_t mask = (uint64_t) ((uint64_t) -1) >> rightShiftValue;
@@ -10900,7 +10900,7 @@ TR::Node *landSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
           secondChild->getReferenceCount() == 1 &&
           isBitwiseLongComplement(secondChild))
          {
-         if (performTransformation(s->comp(), "%sReduced land with two complemented children in node [" POINTER_PRINTF_FORMAT "] to complemented lor\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced land with two complemented children in node [" TR_FMTSPC_PTR "] to complemented lor\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node *orNode    = TR::Node::create(TR::lor, 2, firstChild->getFirstChild(), secondChild->getFirstChild());
             TR::Node * constNode = firstChild->getSecondChild();
@@ -10922,7 +10922,7 @@ TR::Node *landSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             if (secondChildOp == TR::lconst)
                {
-               if (performTransformation(s->comp(), "%sFound land of lconst with land of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sFound land of lconst with land of x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   if (secondChild->getReferenceCount() == 1)
                      {
@@ -10943,7 +10943,7 @@ TR::Node *landSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                }
             else // move constants up the tree so they will tend to get merged together
                {
-               if (performTransformation(s->comp(), "%sFound land of non-lconst with land of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sFound land of non-lconst with land of x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   node->setChild(1, lrChild);
                   firstChild->setChild(1, secondChild);
@@ -10961,7 +10961,7 @@ TR::Node *landSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          bool         foundZeroExtension = false;
          if (maskValue == 255 && firstChildOp == TR::b2i)
             {
-            if (performTransformation(s->comp(), "%sReduced land with lconst 255 in node [" POINTER_PRINTF_FORMAT "] to bu2l\n", s->optDetailString(), node))
+            if (performTransformation(s->comp(), "%sReduced land with lconst 255 in node [" TR_FMTSPC_PTR "] to bu2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                TR::Node::recreate(node, TR::bu2l);
                foundZeroExtension = true;
@@ -10969,7 +10969,7 @@ TR::Node *landSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             }
          else if (maskValue == 65535 && firstChildOp == TR::s2l)
             {
-            if (performTransformation(s->comp(), "%sReduced land with lconst 65536 in node [" POINTER_PRINTF_FORMAT "] to su2l\n", s->optDetailString(), node))
+            if (performTransformation(s->comp(), "%sReduced land with lconst 65536 in node [" TR_FMTSPC_PTR "] to su2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                TR::Node::recreate(node, TR::su2l);
                foundZeroExtension = true;
@@ -10977,7 +10977,7 @@ TR::Node *landSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             }
          else if (maskValue == 0xffffffff && firstChildOp == TR::i2l)
             {
-            if (performTransformation(s->comp(), "%sReduced land with lconst 0xffffffff in node [" POINTER_PRINTF_FORMAT "] to iu2l\n", s->optDetailString(), node))
+            if (performTransformation(s->comp(), "%sReduced land with lconst 0xffffffff in node [" TR_FMTSPC_PTR "] to iu2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                TR::Node::recreate(node, TR::iu2l);
                foundZeroExtension = true;
@@ -11004,7 +11004,7 @@ TR::Node *landSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          TR::ILOpCodes firstChildOp = firstChild->getOpCodeValue();
 
          if (firstChildOp == TR::iu2l &&
-            performTransformation(s->comp(), "%sReduced land with lconst and iu2l child in node [" POINTER_PRINTF_FORMAT "] to iand\n", s->optDetailString(), node))
+            performTransformation(s->comp(), "%sReduced land with lconst and iu2l child in node [" TR_FMTSPC_PTR "] to iand\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node * constChild = NULL;
 
@@ -11157,9 +11157,9 @@ TR::Node *removeRedundantIntegralOrPattern1(TR::Node * node, TR::Block * block, 
    if (!isChildOrConstRedundant(parentOrConstNode, childOrConstNode, s))
       return firstChild;
 
-   if (!performTransformation(s->comp(), "%sRemove redundant %s 0x%llx [" POINTER_PRINTF_FORMAT "] under %s 0x%llx [" POINTER_PRINTF_FORMAT "]\n",s->optDetailString(),
-         childOr->getOpCode().getName(),childOrConstNode->get64bitIntegralValueAsUnsigned(),childOr,
-         parentOr->getOpCode().getName(),parentOrConstNode->get64bitIntegralValueAsUnsigned(),parentOr))
+   if (!performTransformation(s->comp(), "%sRemove redundant %s 0x%llx [" TR_FMTSPC_PTR "] under %s 0x%llx [" TR_FMTSPC_PTR "]\n",s->optDetailString(),
+         childOr->getOpCode().getName(), childOrConstNode->get64bitIntegralValueAsUnsigned(), PTR_TO_FMTSPC_PTR(childOr),
+         parentOr->getOpCode().getName(), parentOrConstNode->get64bitIntegralValueAsUnsigned(), PTR_TO_FMTSPC_PTR(parentOr)))
       {
       return firstChild;
       }
@@ -11207,17 +11207,17 @@ TR::Node *removeRedundantIntegralOrPattern2(TR::Node * node, TR::Block * block, 
    if (!isChildOrConstRedundant(parentOrConstNode, childOrConstNode, s))
       return firstChild;
 
-   if (!performTransformation(s->comp(), "%sRemove redundant %s 0x%llx [" POINTER_PRINTF_FORMAT "] under %s 0x%llx [" POINTER_PRINTF_FORMAT "]\n",s->optDetailString(),
-         childOr->getOpCode().getName(),childOrConstNode->get64bitIntegralValueAsUnsigned(),childOr,
-         parentOr->getOpCode().getName(),parentOrConstNode->get64bitIntegralValueAsUnsigned(),parentOr))
+   if (!performTransformation(s->comp(), "%sRemove redundant %s 0x%llx [" TR_FMTSPC_PTR "] under %s 0x%llx [" TR_FMTSPC_PTR "]\n",s->optDetailString(),
+         childOr->getOpCode().getName(), childOrConstNode->get64bitIntegralValueAsUnsigned(), PTR_TO_FMTSPC_PTR(childOr),
+         parentOr->getOpCode().getName(), parentOrConstNode->get64bitIntegralValueAsUnsigned(), PTR_TO_FMTSPC_PTR(parentOr)))
       {
       return firstChild;
       }
 
    // create a newFirstChild so we're not limited to cases where zeroExtConv has a refCount=1
    TR::Node *newFirstChild = TR::Node::create(zeroExtConv->getOpCodeValue(), 1, childOr->getFirstChild());
-   dumpOptDetails(s->comp(),"%sCreate new zero extension conversion %s [" POINTER_PRINTF_FORMAT "] of childOr child %s [" POINTER_PRINTF_FORMAT "]\n",
-      s->optDetailString(),newFirstChild->getOpCode().getName(),newFirstChild,childOr->getFirstChild()->getOpCode().getName(),childOr->getFirstChild());
+   dumpOptDetails(s->comp(),"%sCreate new zero extension conversion %s [" TR_FMTSPC_PTR "] of childOr child %s [" TR_FMTSPC_PTR "]\n",
+      s->optDetailString(),newFirstChild->getOpCode().getName(), PTR_TO_FMTSPC_PTR(newFirstChild), childOr->getFirstChild()->getOpCode().getName(), PTR_TO_FMTSPC_PTR(childOr->getFirstChild()));
    return s->replaceNode(zeroExtConv, newFirstChild, s->_curTree);
    }
 
@@ -11272,7 +11272,7 @@ TR::Node *iorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
           secondChild->getReferenceCount() == 1 &&
           isBitwiseIntComplement(secondChild))
          {
-         if (performTransformation(s->comp(), "%sReduced ior with two complemented children in node [" POINTER_PRINTF_FORMAT "] to complemented iand\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced ior with two complemented children in node [" TR_FMTSPC_PTR "] to complemented iand\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node * andNode   = TR::Node::create(TR::iand, 2, firstChild->getFirstChild(), secondChild->getFirstChild());
             TR::Node * constNode = firstChild->getSecondChild();
@@ -11301,7 +11301,7 @@ TR::Node *iorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                uint32_t or_const  = lrChild->getInt();
 
                if ((((~and_const) | or_const) == or_const) &&
-                  performTransformation(s->comp(), "%sFound ior of iconst with iand of x and iconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+                  performTransformation(s->comp(), "%sFound ior of iconst with iand of x and iconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   node->setAndIncChild(0, firstChild->getFirstChild());
                   firstChild->recursivelyDecReferenceCount();
@@ -11321,7 +11321,7 @@ TR::Node *iorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             if (secondChildOp == TR::iconst)
                {
-               if (performTransformation(s->comp(), "%sFound ior of iconst with ior of x and iconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sFound ior of iconst with ior of x and iconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   if (secondChild->getReferenceCount() == 1)
                      {
@@ -11344,7 +11344,7 @@ TR::Node *iorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                }
             else // move constants up the tree so they will tend to get merged together
                {
-               if (performTransformation(s->comp(), "%sFound ior of non-iconst with ior x and iconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sFound ior of non-iconst with ior x and iconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   node->setChild(1, lrChild);
                   firstChild->setChild(1, secondChild);
@@ -11413,7 +11413,7 @@ TR::Node *lorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
           secondChild->getReferenceCount() == 1 &&
           isBitwiseLongComplement(secondChild))
          {
-         if (performTransformation(s->comp(), "%sReduced lor with two complemented children in node [" POINTER_PRINTF_FORMAT "] to complemented land\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced lor with two complemented children in node [" TR_FMTSPC_PTR "] to complemented land\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node * andNode   = TR::Node::create(TR::land, 2, firstChild->getFirstChild(), secondChild->getFirstChild());
             TR::Node * constNode = firstChild->getSecondChild();
@@ -11437,7 +11437,7 @@ TR::Node *lorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             {
             if (secondChildOp == TR::lconst)
                {
-               if (performTransformation(s->comp(), "%sFound lor of lconst with lor of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sFound lor of lconst with lor of x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   if (secondChild->getReferenceCount() == 1)
                      {
@@ -11460,7 +11460,7 @@ TR::Node *lorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
                }
             else // move constants up the tree so they will tend to get merged together
                {
-               if (performTransformation(s->comp(), "%sFound lor of non-lconst with lor of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sFound lor of non-lconst with lor of x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   node->setChild(1, lrChild);
                   firstChild->setChild(1, secondChild);
@@ -11483,7 +11483,7 @@ TR::Node *lorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          TR::ILOpCodes firstChildOp = firstChild->getOpCodeValue();
 
          if (firstChildOp == TR::iu2l &&
-            performTransformation(s->comp(), "%sReduced lor with lconst and iu2l child in node [" POINTER_PRINTF_FORMAT "] to ior\n", s->optDetailString(), node))
+            performTransformation(s->comp(), "%sReduced lor with lconst and iu2l child in node [" TR_FMTSPC_PTR "] to ior\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node * constChild = NULL;
 
@@ -11583,8 +11583,8 @@ TR::Node *borSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          secondChild->getOpCode().isLoadConst() &&
          firstChild->getSecondChild()->getOpCode().isLoadConst() &&
          (((secondChild->getByte() | firstChild->getSecondChild()->getByte()) & 0xFF) == 0xFF) &&
-         performTransformation(s->comp(), "%sReplacing bor [" POINTER_PRINTF_FORMAT "] child with band child [" POINTER_PRINTF_FORMAT "] \n",
-                                  s->optDetailString(),node,firstChild->getFirstChild()))
+         performTransformation(s->comp(), "%sReplacing bor [" TR_FMTSPC_PTR "] child with band child [" TR_FMTSPC_PTR "] \n",
+                                  s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(firstChild->getFirstChild())))
       {
 
       node->setAndIncChild(0, firstChild->getFirstChild());
@@ -11757,7 +11757,7 @@ TR::Node *lxorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          {
          if (secondChildOp == TR::lconst)
             {
-            if (performTransformation(s->comp(), "%sFound lxor of lconst with lxor of x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+            if (performTransformation(s->comp(), "%sFound lxor of lconst with lxor of x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                if (secondChild->getReferenceCount() == 1)
                   {
@@ -11780,7 +11780,7 @@ TR::Node *lxorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             }
          else // move constants up the tree so they will tend to get merged together
             {
-            if (performTransformation(s->comp(), "%sFound lxor of non-lconst with lxor x and lconst in node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+            if (performTransformation(s->comp(), "%sFound lxor of non-lconst with lxor x and lconst in node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                node->setChild(1, lrChild);
                firstChild->setChild(1, secondChild);
@@ -11802,7 +11802,7 @@ TR::Node *lxorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          TR::ILOpCodes firstChildOp = firstChild->getOpCodeValue();
 
          if (firstChildOp == TR::iu2l &&
-            performTransformation(s->comp(), "%sReduced lxor with lconst and iu2l child in node [" POINTER_PRINTF_FORMAT "] to ixor\n", s->optDetailString(), node))
+            performTransformation(s->comp(), "%sReduced lxor with lconst and iu2l child in node [" TR_FMTSPC_PTR "] to ixor\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node * constChild = NULL;
 
@@ -11887,7 +11887,7 @@ inline TR::Node* sqrtSimplifier(TR::Node * node, TR::Block * block, TR::Simplifi
    simplifyChildren(node, block, s);
    TR::Node* child = node->getChild(0);
    if (child->getOpCode().isLoadConst() &&
-       performTransformation(s->comp(), "%sSimplify sqrt of const child at [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+       performTransformation(s->comp(), "%sSimplify sqrt of const child at [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       {
       foldConstant<T>(node, TR::Compiler->arith.fpSquareRoot(child->getConst<T>()), s, false /* !anchorChilren */);
       }
@@ -11926,7 +11926,7 @@ TR::Node *i2lSimplifier(TR::Node * node, TR::Block *  block, TR::Simplifier * s)
       bool foundFoldableConversion = false;
       if (childOp == TR::su2i)
          {
-         if (performTransformation(s->comp(), "%sReduced i2l with su2i child in node [" POINTER_PRINTF_FORMAT "] to su2l\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced i2l with su2i child in node [" TR_FMTSPC_PTR "] to su2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::su2l);
             foundFoldableConversion = true;
@@ -11934,7 +11934,7 @@ TR::Node *i2lSimplifier(TR::Node * node, TR::Block *  block, TR::Simplifier * s)
          }
       else if (childOp == TR::bu2i)
          {
-         if (performTransformation(s->comp(), "%sReduced i2l with su2i child in node [" POINTER_PRINTF_FORMAT "] to su2l\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced i2l with su2i child in node [" TR_FMTSPC_PTR "] to su2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::bu2l);
             foundFoldableConversion = true;
@@ -11942,7 +11942,7 @@ TR::Node *i2lSimplifier(TR::Node * node, TR::Block *  block, TR::Simplifier * s)
          }
       else if (childOp == TR::s2i)
          {
-         if (performTransformation(s->comp(), "%sReduced i2l with s2i child in node [" POINTER_PRINTF_FORMAT "] to s2l\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced i2l with s2i child in node [" TR_FMTSPC_PTR "] to s2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::s2l);
             foundFoldableConversion = true;
@@ -11950,7 +11950,7 @@ TR::Node *i2lSimplifier(TR::Node * node, TR::Block *  block, TR::Simplifier * s)
          }
       else if (childOp == TR::b2i)
          {
-         if (performTransformation(s->comp(), "%sReduced i2l with b2i child in node [" POINTER_PRINTF_FORMAT "] to b2l\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced i2l with b2i child in node [" TR_FMTSPC_PTR "] to b2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::b2l);
             foundFoldableConversion = true;
@@ -11973,7 +11973,7 @@ TR::Node *i2lSimplifier(TR::Node * node, TR::Block *  block, TR::Simplifier * s)
       TR::Node* firstFirst = firstChild->getFirstChild();
       uint32_t shiftBy = firstFirst->getSecondChild()->getInt();
       if (shiftBy >= 57 &&
-          performTransformation(s->comp(), "%sRemove i2l/l2i from lshr node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sRemove i2l/l2i from lshr node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node::recreate(node, TR::lshr);
          node->setNumChildren(2);
@@ -12169,7 +12169,7 @@ TR::Node *iu2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       bool foundFoldableConversion = false;
       if (childOp == TR::su2i)
          {
-         if (performTransformation(s->comp(), "%sReduced iu2l with su2i child in node [" POINTER_PRINTF_FORMAT "] to su2l\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced iu2l with su2i child in node [" TR_FMTSPC_PTR "] to su2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::su2l);
             foundFoldableConversion = true;
@@ -12177,7 +12177,7 @@ TR::Node *iu2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          }
       else if (childOp == TR::bu2i)
          {
-         if (performTransformation(s->comp(), "%sReduced iu2l with bu2i child in node [" POINTER_PRINTF_FORMAT "] to bu2l\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced iu2l with bu2i child in node [" TR_FMTSPC_PTR "] to bu2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::bu2l);
             foundFoldableConversion = true;
@@ -12669,8 +12669,8 @@ TR::Node *bu2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       uint64_t val = firstChild->getFirstChild()->getSecondChild()->get64bitIntegralValueAsUnsigned();
       if (((val & 0xFFUL) == 0UL) &&
-          performTransformation(s->comp(), "%sReplacing bu2i [" POINTER_PRINTF_FORMAT "] with i2b child [" POINTER_PRINTF_FORMAT "] of iand [" POINTER_PRINTF_FORMAT "] with mask 0, with iconst 0\n",
-                                  s->optDetailString(),node,firstChild,firstChild->getFirstChild(),val,TR::getMaxUnsigned<TR::Int8>()))
+          performTransformation(s->comp(), "%sReplacing bu2i [" TR_FMTSPC_PTR "] with i2b child [" TR_FMTSPC_PTR "] of iand [" TR_FMTSPC_PTR "] with mask 0, with iconst 0\n",
+                                  s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(firstChild), PTR_TO_FMTSPC_PTR(firstChild->getFirstChild()), val, TR::getMaxUnsigned<TR::Int8>()))
          {
          // if we're going to zero extend a zero, then we can just replace this entire expression with a 0
          s->anchorNode(firstChild->getFirstChild()->getFirstChild(), s->_curTree); //only really need to anchor this child, everything else is guaranteed to not be a load
@@ -12679,8 +12679,8 @@ TR::Node *bu2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          return node;
          }
       else if (val <= (uint64_t)TR::getMaxUnsigned<TR::Int8>() &&
-          performTransformation(s->comp(), "%sRemove bu2i [" POINTER_PRINTF_FORMAT "] with i2b child [" POINTER_PRINTF_FORMAT "] of iand [" POINTER_PRINTF_FORMAT "] with mask %d <= %d\n",
-                                  s->optDetailString(),node,firstChild,firstChild->getFirstChild(),val,TR::getMaxUnsigned<TR::Int8>()))
+          performTransformation(s->comp(), "%sRemove bu2i [" TR_FMTSPC_PTR "] with i2b child [" TR_FMTSPC_PTR "] of iand [" TR_FMTSPC_PTR "] with mask %d <= %d\n",
+                                  s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(firstChild), PTR_TO_FMTSPC_PTR(firstChild->getFirstChild()), val, TR::getMaxUnsigned<TR::Int8>()))
          {
          // the bu2i zero extension is not needed when the grandchild iand will zero out the top 3 bytes.
          // simplify:
@@ -12709,8 +12709,8 @@ TR::Node *bu2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
              firstChild->getFirstChild()->getOpCodeValue() == TR::lcmpeq ||
              firstChild->getFirstChild()->getOpCodeValue() == TR::icmpne ||
              firstChild->getFirstChild()->getOpCodeValue() == TR::lcmpne) &&
-            performTransformation(s->comp(), "%sRemove bu2i [" POINTER_PRINTF_FORMAT "] with i2b child [" POINTER_PRINTF_FORMAT "] with %s grandchild [" POINTER_PRINTF_FORMAT "]\n",
-                                  s->optDetailString(), node, firstChild, firstChild->getFirstChild()->getOpCode().getName(), firstChild->getFirstChild()))
+            performTransformation(s->comp(), "%sRemove bu2i [" TR_FMTSPC_PTR "] with i2b child [" TR_FMTSPC_PTR "] with %s grandchild [" TR_FMTSPC_PTR "]\n",
+                                  s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(firstChild), firstChild->getFirstChild()->getOpCode().getName(), PTR_TO_FMTSPC_PTR(firstChild->getFirstChild())))
       {
       TR::Node * grandChild = firstChild->getFirstChild();
       grandChild->incReferenceCount();
@@ -12727,7 +12727,7 @@ TR::Node *bu2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       uint32_t shiftBy = firstChild->getFirstChild()->getSecondChild()->getInt();
       if (shiftBy >= 56 &&
-          performTransformation(s->comp(), "%sReplace bu2i/l2b of lushr with l2i node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sReplace bu2i/l2b of lushr with l2i node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          node->recreate(node, TR::l2i);
          node->setAndIncChild(0, firstChild->getFirstChild());
@@ -12756,8 +12756,8 @@ TR::Node *bu2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       uint64_t val = firstChild->getFirstChild()->getSecondChild()->get64bitIntegralValueAsUnsigned();
       if (((val & 0xFFUL) == 0UL) &&
-          performTransformation(s->comp(), "%sReplacing bu2l [" POINTER_PRINTF_FORMAT "] with i2b child [" POINTER_PRINTF_FORMAT "] of iand [" POINTER_PRINTF_FORMAT "] with mask 0, with iconst 0\n",
-                                  s->optDetailString(),node,firstChild,firstChild->getFirstChild(),val,TR::getMaxUnsigned<TR::Int8>()))
+          performTransformation(s->comp(), "%sReplacing bu2l [" TR_FMTSPC_PTR "] with i2b child [" TR_FMTSPC_PTR "] of iand [" TR_FMTSPC_PTR "] with mask 0, with iconst 0\n",
+                                  s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(firstChild), PTR_TO_FMTSPC_PTR(firstChild->getFirstChild()), val, TR::getMaxUnsigned<TR::Int8>()))
          {
          // if we're going to zero extend a zero, then we can just replace this entire expression with a 0
          s->anchorNode(firstChild->getFirstChild()->getFirstChild(), s->_curTree); //only really need to anchor this child, everything else is guaranteed to not be a load
@@ -12766,8 +12766,8 @@ TR::Node *bu2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          return node;
          }
       else if (val <= (uint64_t)TR::getMaxUnsigned<TR::Int8>() &&
-          performTransformation(s->comp(), "%sReplace bu2l [" POINTER_PRINTF_FORMAT "] with i2b child [" POINTER_PRINTF_FORMAT "] of iand [" POINTER_PRINTF_FORMAT "] with mask %d <= %d with i2l\n",
-                                  s->optDetailString(),node,firstChild,firstChild->getFirstChild(),val,TR::getMaxUnsigned<TR::Int8>()))
+          performTransformation(s->comp(), "%sReplace bu2l [" TR_FMTSPC_PTR "] with i2b child [" TR_FMTSPC_PTR "] of iand [" TR_FMTSPC_PTR "] with mask %d <= %d with i2l\n",
+                                  s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(firstChild), PTR_TO_FMTSPC_PTR(firstChild->getFirstChild()), val, TR::getMaxUnsigned<TR::Int8>()))
          {
          // the bu2l zero extension is not needed when the grandchild iand will zero out the top 3 bytes.
          // simplify:
@@ -12793,7 +12793,7 @@ TR::Node *bu2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
              firstChild->getFirstChild()->getOpCodeValue() == TR::icmpne ||
              firstChild->getFirstChild()->getOpCodeValue() == TR::lcmpeq ||
              firstChild->getFirstChild()->getOpCodeValue() == TR::lcmpne) &&
-            performTransformation(s->comp(), "%sRemove bu2l [" POINTER_PRINTF_FORMAT "] with i2b child [" POINTER_PRINTF_FORMAT "] of compare [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node, firstChild, firstChild->getFirstChild()))
+            performTransformation(s->comp(), "%sRemove bu2l [" TR_FMTSPC_PTR "] with i2b child [" TR_FMTSPC_PTR "] of compare [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(firstChild), PTR_TO_FMTSPC_PTR(firstChild->getFirstChild())))
       {
       TR::Node * grandChild = firstChild->getFirstChild();
       node->recreate(node, TR::i2l);
@@ -12807,7 +12807,7 @@ TR::Node *bu2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       uint32_t shiftBy = firstChild->getFirstChild()->getSecondChild()->getInt();
       if (shiftBy >= 56 &&
-          performTransformation(s->comp(), "%sReplace bu2l/l2b of lushr with lushr node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%sReplace bu2l/l2b of lushr with lushr node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          node->recreate(node, TR::lushr);
          node->setNumChildren(2);
@@ -12880,7 +12880,7 @@ TR::Node *s2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       bool foundFoldableConversion = false;
       if (childOp == TR::bu2s)
          {
-         if (performTransformation(s->comp(), "%sReduced s2i with bu2s child in node [" POINTER_PRINTF_FORMAT "] to bu2i\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced s2i with bu2s child in node [" TR_FMTSPC_PTR "] to bu2i\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::bu2i);
             foundFoldableConversion = true;
@@ -12888,7 +12888,7 @@ TR::Node *s2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          }
       else if (childOp == TR::b2s)
          {
-         if (performTransformation(s->comp(), "%sReduced s2i with b2s child in node [" POINTER_PRINTF_FORMAT "] to b2i\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced s2i with b2s child in node [" TR_FMTSPC_PTR "] to b2i\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::b2i);
             foundFoldableConversion = true;
@@ -12922,7 +12922,7 @@ TR::Node *s2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       bool foundFoldableConversion = false;
       if (childOp == TR::bu2s)
          {
-         if (performTransformation(s->comp(), "%sReduced s2l with bu2s child in node [" POINTER_PRINTF_FORMAT "] to bu2l\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced s2l with bu2s child in node [" TR_FMTSPC_PTR "] to bu2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::bu2l);
             foundFoldableConversion = true;
@@ -12930,7 +12930,7 @@ TR::Node *s2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          }
       else if (childOp == TR::b2s)
          {
-         if (performTransformation(s->comp(), "%sReduced s2l with b2s child in node [" POINTER_PRINTF_FORMAT "] to b2l\n", s->optDetailString(), node))
+         if (performTransformation(s->comp(), "%sReduced s2l with b2s child in node [" TR_FMTSPC_PTR "] to b2l\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, TR::b2l);
             foundFoldableConversion = true;
@@ -13025,7 +13025,7 @@ TR::Node *su2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          firstGrandChild = firstChild->getFirstChild();
          if (firstGrandChild->getReferenceCount() == 1 && firstGrandChild->getOpCodeValue() == node->getOpCodeValue())
             {
-            if (performTransformation(s->comp(), "%sReduced su2i node [" POINTER_PRINTF_FORMAT "] and i2s child [" POINTER_PRINTF_FORMAT "] to no-op\n", s->optDetailString(), node,firstChild))
+            if (performTransformation(s->comp(), "%sReduced su2i node [" TR_FMTSPC_PTR "] and i2s child [" TR_FMTSPC_PTR "] to no-op\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(firstChild)))
                {
                foundDoubleFoldableConversion = true;
                }
@@ -14356,7 +14356,7 @@ TR::Node *ifCmpWithEqualitySimplifier(TR::Node * node, TR::Block * block, TR::Si
          {
          TR::ILOpCodes op= firstChild->getOpCode().convertCmpToIfCmp();
          if (op != TR::BadILOp &&
-             performTransformation(s->comp(), "%sFolding ifbcmpeq of bconst 0 to boolean compare at node [" POINTER_PRINTF_FORMAT "] to equivalent if?cmp??\n", s->optDetailString(), node))
+             performTransformation(s->comp(), "%sFolding ifbcmpeq of bconst 0 to boolean compare at node [" TR_FMTSPC_PTR "] to equivalent if?cmp??\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, op);
             TR::Node::recreate(node, node->getOpCode().getOpCodeForReverseBranch());
@@ -14456,7 +14456,7 @@ TR::Node *ifCmpWithoutEqualitySimplifier(TR::Node * node, TR::Block * block, TR:
          {
          TR::ILOpCodes op= firstChild->getOpCode().convertCmpToIfCmp();
          if (op != TR::BadILOp &&
-             performTransformation(s->comp(), "%sFolding ifbcmpeq of bconst 0 to boolean compare at node [" POINTER_PRINTF_FORMAT "] to equivalent if?cmp??\n", s->optDetailString(), node))
+             performTransformation(s->comp(), "%sFolding ifbcmpeq of bconst 0 to boolean compare at node [" TR_FMTSPC_PTR "] to equivalent if?cmp??\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             TR::Node::recreate(node, op);
             secondChild->recursivelyDecReferenceCount();
@@ -14605,7 +14605,7 @@ TR::Node *icmpeqSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       uint32_t val = secondChild->getInt();
       uint32_t mask = firstChild->getSecondChild()->getInt();
       if ((val & (val - 1)) == 0 && val == mask &&
-          performTransformation(s->comp(), "%s Changing icmpeq (x&2**c) to 2**c node [" POINTER_PRINTF_FORMAT "] to iand\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%s Changing icmpeq (x&2**c) to 2**c node [" TR_FMTSPC_PTR "] to iand\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          uint32_t shiftBy = trailingZeroes(mask);
          TR::Node* byNode = TR::Node::create(node, TR::iconst, 0);
@@ -14791,7 +14791,7 @@ TR::Node *lcmpeqSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       uint64_t val = secondChild->getLongInt();
       uint64_t mask = firstChild->getSecondChild()->getLongInt();
       if ((val & (val - 1)) == 0 && val == mask &&
-          performTransformation(s->comp(), "%s Changing lcmpeq (x&2**c) to 2**c node [" POINTER_PRINTF_FORMAT "] to land\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%s Changing lcmpeq (x&2**c) to 2**c node [" TR_FMTSPC_PTR "] to land\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          uint32_t shiftBy = trailingZeroes(mask);
          TR::Node* byNode = TR::Node::create(node, TR::iconst, 0);
@@ -14863,7 +14863,7 @@ TR::Node *lcmpneSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       if (firstSecond->getOpCodeValue() == TR::lshl &&
           firstSecond->getFirstChild()->getOpCode().isLoadConst() &&
           firstSecond->getFirstChild()->getLongInt() == 1 &&
-          performTransformation(s->comp(), "%slcmpne of x & (1 << y) to 0 opt node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+          performTransformation(s->comp(), "%slcmpne of x & (1 << y) to 0 opt node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          TR::Node::recreate(node, TR::iand);
          TR::Node* one = TR::Node::create(node, TR::iconst, 0);
@@ -14885,7 +14885,7 @@ TR::Node *lcmpneSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
          {
          uint64_t val = firstSecond->getLongInt();
          if ((val & (val - 1)) == 0 && // power of two?
-             performTransformation(s->comp(), "%slcmpne of (x & 2**c) to 0 node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+             performTransformation(s->comp(), "%slcmpne of (x & 2**c) to 0 node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
             {
             uint32_t byVal = trailingZeroes(val);
             TR::Node* shiftBy = TR::Node::create(node, TR::iconst, 0);
@@ -14932,7 +14932,7 @@ TR::Node *lcmpltSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
 
    if (secondChild->getOpCode().isLoadConst() &&
        secondChild->getLongInt() == 0ll &&
-       performTransformation(s->comp(), "%sReplace lcmplt to 0 with lushr node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+       performTransformation(s->comp(), "%sReplace lcmplt to 0 with lushr node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
       {
       TR::Node* shiftBy = TR::Node::create(node, TR::iconst, 0);
       shiftBy->setInt(63);
@@ -15782,7 +15782,7 @@ TR::Node *selectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
          if (node->getChild(1)->get64bitIntegralValue() == 1
              && node->getChild(2)->get64bitIntegralValue() == 0)
             {
-            if (performTransformation(s->comp(), "%sReplacing select with children of constant values 1 and 0 at [" POINTER_PRINTF_FORMAT "] its condition at [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node, node->getFirstChild()))
+            if (performTransformation(s->comp(), "%sReplacing select with children of constant values 1 and 0 at [" TR_FMTSPC_PTR "] its condition at [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(node->getFirstChild())))
                return s->replaceNode(node, node->getFirstChild(), s->_curTree);
             }
          else if (node->getChild(1)->get64bitIntegralValue() == 0
@@ -15791,7 +15791,7 @@ TR::Node *selectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
             TR::Node *replacement = NULL;
             if (node->getFirstChild()->getReferenceCount() == 1)
                {
-               if (performTransformation(s->comp(), "%sReplacing select with children of constant values 0 and 1 at [" POINTER_PRINTF_FORMAT "] with its condition reversed\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sReplacing select with children of constant values 0 and 1 at [" TR_FMTSPC_PTR "] with its condition reversed\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   TR::Node *replacement = node->getFirstChild();
                   TR::Node::recreate(replacement, replacement->getOpCode().getOpCodeForReverseBranch());
@@ -15800,7 +15800,7 @@ TR::Node *selectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
                }
             else
                {
-               if (performTransformation(s->comp(), "%sReplacing select with children of constant values 0 and 1 at [" POINTER_PRINTF_FORMAT "] with its condition reversed\n", s->optDetailString(), node))
+               if (performTransformation(s->comp(), "%sReplacing select with children of constant values 0 and 1 at [" TR_FMTSPC_PTR "] with its condition reversed\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                   {
                   s->anchorChildren(node->getFirstChild(), s->_curTree);
                   TR::Node *replacement = TR::Node::create(node->getFirstChild(), node->getFirstChild()->getOpCode().getOpCodeForReverseBranch(), 2,
@@ -15861,7 +15861,7 @@ TR::Node *selectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
                replacement = TR::Node::create(node, TR::ior, 2, cond1, cond2);
                }
             }
-         if (performTransformation(s->comp(), "%sReplacing select tree of constant leaves at [" POINTER_PRINTF_FORMAT "] with equivalent boolean compare tree at [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node, replacement))
+         if (performTransformation(s->comp(), "%sReplacing select tree of constant leaves at [" TR_FMTSPC_PTR "] with equivalent boolean compare tree at [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(replacement)))
             {
             if (node->getReferenceCount() > 1)
                s->anchorNode(node, s->_curTree);
@@ -16076,7 +16076,7 @@ TR::Node *switchSimplifier(TR::Node * node, TR::Block * block, bool isTableSwitc
             else
                canTransform = false;
 
-            if (!canTransform || !performTransformation(s->comp(), "%sRemoving shift node [" POINTER_PRINTF_FORMAT "] from lookup node [" POINTER_PRINTF_FORMAT "], applying shift to case constants\n", s->optDetailString(), shiftNode, node))
+            if (!canTransform || !performTransformation(s->comp(), "%sRemoving shift node [" TR_FMTSPC_PTR "] from lookup node [" TR_FMTSPC_PTR "], applying shift to case constants\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(shiftNode), PTR_TO_FMTSPC_PTR(node)))
                return node;
 
             // Restructure the tree to remove the calculation
@@ -16098,7 +16098,7 @@ TR::Node *switchSimplifier(TR::Node * node, TR::Block * block, bool isTableSwitc
       {
       // Change the switch into a goto
       //
-      if (!performTransformation(s->comp(), "%sChanging node [" POINTER_PRINTF_FORMAT "] %s into goto\n", s->optDetailString(), node, node->getOpCode().getName()))
+      if (!performTransformation(s->comp(), "%sChanging node [" TR_FMTSPC_PTR "] %s into goto\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node), node->getOpCode().getName()))
          return node;
 
       s->anchorChildren(node, s->_curTree);
@@ -16122,7 +16122,7 @@ TR::Node *switchSimplifier(TR::Node * node, TR::Block * block, bool isTableSwitc
             {
             TR::TreeTop * newDest = destInst->getBranchDestination();
             TR::Block * newDestBlock = newDest->getNode()->getBlock();
-            if (!performTransformation(s->comp(), "%sRedirecting switch [" POINTER_PRINTF_FORMAT "] child %d from block_%d to block_%d\n", s->optDetailString(), node, childIndex, destBlock->getNumber(), newDestBlock->getNumber()))
+            if (!performTransformation(s->comp(), "%sRedirecting switch [" TR_FMTSPC_PTR "] child %d from block_%d to block_%d\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node), childIndex, destBlock->getNumber(), newDestBlock->getNumber()))
                return node;
 
             // Removing a block containing a goto shouldn't be logged for deleted line processing
@@ -16334,7 +16334,7 @@ TR::Node *checkcastSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier
                 ((secondChild->getInt() == 0 && equalityTest) || (secondChild->getInt() == 1 && !equalityTest)) &&
                 firstChild->getFirstChild() == node->getFirstChild() &&
                 firstChild->getSecondChild() == node->getSecondChild() &&
-                performTransformation(s->comp(), "%sRemoving checkcast node [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node))
+                performTransformation(s->comp(), "%sRemoving checkcast node [" TR_FMTSPC_PTR "]\n", s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                // printf("Removing checkcast in method %s\n", s->comp()->signature());
                node->getFirstChild()->decReferenceCount();
@@ -17504,8 +17504,8 @@ TR::Node * arraysetSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier
       {
       uint64_t fillVal = fill->getConst<uint64_t>();
       if ((fillVal & 0x0FFFFFFFFL) == ((fillVal >> 32) & 0x0FFFFFFFFL) &&
-          performTransformation(s->comp(), "%sTransform large fill arrayset to 4byte fill arrayset [" POINTER_PRINTF_FORMAT "]\n",
-                s->optDetailString(), node))
+          performTransformation(s->comp(), "%sTransform large fill arrayset to 4byte fill arrayset [" TR_FMTSPC_PTR "]\n",
+                s->optDetailString(), PTR_TO_FMTSPC_PTR(node)))
          {
          node->setAndIncChild(1, TR::Node::iconst((int32_t)(fillVal & 0x0FFFFFFFFL)));
          fill->recursivelyDecReferenceCount();

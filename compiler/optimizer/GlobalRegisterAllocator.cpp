@@ -1841,7 +1841,7 @@ TR_GlobalRegisterAllocator::addGlRegDepToExit(
       exitNode->setAndIncChild(exitNode->getNumChildren(), glRegDep);
       exitNode->setNumChildren(exitNode->getNumChildren() + 1);
 
-      dumpOptDetails(comp(), "%s create TR::GlRegDeps [" POINTER_PRINTF_FORMAT "] on exit node [" POINTER_PRINTF_FORMAT "]\n", OPT_DETAILS, glRegDep, exitNode);
+      dumpOptDetails(comp(), "%s create TR::GlRegDeps [" TR_FMTSPC_PTR "] on exit node [" TR_FMTSPC_PTR "]\n", OPT_DETAILS, PTR_TO_FMTSPC_PTR(glRegDep), PTR_TO_FMTSPC_PTR(exitNode));
       }
    }
 

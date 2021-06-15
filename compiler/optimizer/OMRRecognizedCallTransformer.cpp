@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017, 2020 IBM Corp. and others
+* Copyright (c) 2017, 2021 IBM Corp. and others
 *
 * This program and the accompanying materials are made available under
 * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@ int32_t OMR::RecognizedCallTransformer::perform()
          if (node && node->getOpCode().isCall() && !visited.contains(node))
             {
             if (isInlineable(treetop) &&
-                performTransformation(comp(), "%s Transforming recognized call node [" POINTER_PRINTF_FORMAT "]\n", optDetailString(), node))
+                performTransformation(comp(), "%s Transforming recognized call node [" TR_FMTSPC_PTR "]\n", optDetailString(), PTR_TO_FMTSPC_PTR(node)))
                {
                visited.add(node);
                transform(treetop);

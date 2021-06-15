@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -674,8 +674,8 @@ OMR::CodeCacheManager::allocateCodeMemoryWithRetries(size_t warmCodeSize,
          TR::CodeCacheConfig & config = self()->codeCacheConfig();
          if (config.verboseCodeCache())
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "Switching TR::CodeCache to %p @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
-                           codeCache, codeCache->getCodeBase(), codeCache->getCodeTop());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "Switching TR::CodeCache to " TR_FMTSPC_PTR " @ " TR_FMTSPC_PTR "-" TR_FMTSPC_PTR,
+                           PTR_TO_FMTSPC_PTR(codeCache), PTR_TO_FMTSPC_PTR(codeCache->getCodeBase()), PTR_TO_FMTSPC_PTR(codeCache->getCodeTop()));
             }
 
          if (needsToBeContiguous) // We should abort the compilation if we change the cache during a compilation that needs contiguous allocations
@@ -1067,8 +1067,8 @@ OMR::CodeCacheManager::carveCodeCacheSpaceFromRepository(size_t segmentSize,
    if (config.verboseCodeCache())
       {
       if (start)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "carved size=%u range: " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
-                  codeCacheSizeToAllocate, start, end);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "carved size=%u range: " TR_FMTSPC_PTR "-" TR_FMTSPC_PTR,
+                  codeCacheSizeToAllocate, PTR_TO_FMTSPC_PTR(start), PTR_TO_FMTSPC_PTR(end));
       else
          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "failed to carve size=%lu. Free space = %u",
                   codeCacheSizeToAllocate, freeSpace);
@@ -1203,7 +1203,7 @@ OMR::CodeCacheManager::allocateCodeCacheFromNewSegment(
 
          if (verboseCodeCache)
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "CodeCache allocated %p @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT " HelperBase:" POINTER_PRINTF_FORMAT, codeCache, codeCache->getCodeBase(), codeCache->getCodeTop(), codeCache->_helperBase);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "CodeCache allocated " TR_FMTSPC_PTR " @ " TR_FMTSPC_PTR "-" TR_FMTSPC_PTR " HelperBase:" TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(codeCache), PTR_TO_FMTSPC_PTR(codeCache->getCodeBase()), PTR_TO_FMTSPC_PTR(codeCache->getCodeTop()), PTR_TO_FMTSPC_PTR(codeCache->_helperBase));
             }
 
          return codeCache;

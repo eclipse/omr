@@ -376,7 +376,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCSrc1Instruction * instr)
    trfprintf(pOutFile, "%s \t", getOpCodeName(&instr->getOpCode()));
    print(pOutFile, instr->getSource1Register(), TR_WordReg);
    if (!(instr->getOpCodeValue() == TR::InstOpCode::mtlr || instr->getOpCodeValue() == TR::InstOpCode::mtctr))
-      trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, (intptr_t)(int32_t)instr->getSourceImmediate());
+      trfprintf(pOutFile, ", " TR_FMTSPC_PTR, INT_TO_FMTSPC_PTR((intptr_t)(int32_t)instr->getSourceImmediate()));
 
    trfflush(_comp->getOutFile());
    }
@@ -439,9 +439,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCDepImmSymInstruction * instr)
 
    const char *name = target ? getName(instr->getSymbolReference()) : 0;
    if (name)
-      trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT "\t\t; Direct Call \"%s\"", getOpCodeName(&instr->getOpCode()), (intptr_t)cursor + distance, name);
+      trfprintf(pOutFile, "%s \t" TR_FMTSPC_PTR "\t\t; Direct Call \"%s\"", getOpCodeName(&instr->getOpCode()), INT_TO_FMTSPC_PTR((intptr_t)cursor + distance), name);
    else
-      trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT, getOpCodeName(&instr->getOpCode()), (intptr_t)cursor + distance);
+      trfprintf(pOutFile, "%s \t" TR_FMTSPC_PTR, getOpCodeName(&instr->getOpCode()), INT_TO_FMTSPC_PTR((intptr_t)cursor + distance));
 
    if (instr->getDependencyConditions())
       print(pOutFile, instr->getDependencyConditions());
@@ -484,7 +484,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCTrg1ImmInstruction * instr)
    trfprintf(pOutFile, "%s \t", getOpCodeName(&instr->getOpCode()));
 
    print(pOutFile, instr->getTargetRegister(), TR_WordReg);
-   trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, (intptr_t)(int32_t)instr->getSourceImmediate());
+   trfprintf(pOutFile, ", " TR_FMTSPC_PTR, INT_TO_FMTSPC_PTR((intptr_t)(int32_t)instr->getSourceImmediate()));
 
    trfflush(_comp->getOutFile());
    }
@@ -517,9 +517,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCTrg1Src1Imm2Instruction * instr)
 
    lmask = instr->getLongMask();
    if (instr->cg()->comp()->target().is64Bit())
-      trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT ", " POINTER_PRINTF_FORMAT, instr->getSourceImmediate(), lmask);
+      trfprintf(pOutFile, ", " TR_FMTSPC_PTR ", " TR_FMTSPC_PTR, INT_TO_FMTSPC_PTR(instr->getSourceImmediate()), INT_TO_FMTSPC_PTR(lmask));
    else
-      trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT ", 0x%x", instr->getSourceImmediate(), (uint32_t)lmask);
+      trfprintf(pOutFile, ", " TR_FMTSPC_PTR ", 0x%x", INT_TO_FMTSPC_PTR(instr->getSourceImmediate()), (uint32_t)lmask);
 
    trfflush(_comp->getOutFile());
    }
@@ -577,7 +577,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCTrg1Src2ImmInstruction * instr)
    print(pOutFile, instr->getSource2Register(), TR_WordReg);
    lmask = instr->getLongMask();
    if (instr->cg()->comp()->target().is64Bit())
-      trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, lmask);
+      trfprintf(pOutFile, ", " TR_FMTSPC_PTR, INT_TO_FMTSPC_PTR(lmask));
    else
       trfprintf(pOutFile, ", 0x%x", (uint32_t)lmask);
    trfflush(_comp->getOutFile());
@@ -699,7 +699,7 @@ void
 TR_Debug::print(TR::FILE *pOutFile, TR::PPCVirtualGuardNOPInstruction * instr)
    {
    printPrefix(pOutFile, instr);
-   trfprintf(pOutFile, "%s Site:" POINTER_PRINTF_FORMAT ", ", getOpCodeName(&instr->getOpCode()), instr->getSite());
+   trfprintf(pOutFile, "%s Site:" TR_FMTSPC_PTR ", ", getOpCodeName(&instr->getOpCode()), PTR_TO_FMTSPC_PTR(instr->getSite()));
    print(pOutFile, instr->getLabelSymbol());
    if (instr->getDependencyConditions())
       print(pOutFile, instr->getDependencyConditions());

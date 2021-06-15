@@ -315,9 +315,9 @@ TR::Register *OMR::RV::CodeGenerator::gprClobberEvaluate(TR::Node *node)
          if (self()->comp()->getOption(TR_TraceCG))
             traceMsg(
                self()->comp(),
-               "Setting containsInternalPointer on register %s and setting pinningArrayPointer to " POINTER_PRINTF_FORMAT "\n",
+               "Setting containsInternalPointer on register %s and setting pinningArrayPointer to " TR_FMTSPC_PTR "\n",
                self()->getDebug()->getName(targetReg),
-               pinningArrayPointer);
+               PTR_TO_FMTSPC_PTR(pinningArrayPointer));
          targetReg->setContainsInternalPointer();
          targetReg->setPinningArrayPointer(pinningArrayPointer);
          }

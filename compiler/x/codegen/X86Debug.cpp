@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "omrformatconsts.h"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCRegisterMap.hpp"
 #include "codegen/Instruction.hpp"
@@ -609,7 +610,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86FenceInstruction  * instr)
       if (!_comp->getOption(TR_MaskAddresses))
          {
          for (auto i = 0U; i < instr->getFenceNode()->getNumRelocations(); ++i)
-            trfprintf(pOutFile," " POINTER_PRINTF_FORMAT, instr->getFenceNode()->getRelocationDestination(i));
+            trfprintf(pOutFile," " TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(instr->getFenceNode()->getRelocationDestination(i)));
          }
       trfprintf(pOutFile, " ]");
       }
@@ -631,7 +632,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86VirtualGuardNOPInstruction  * instr)
       return;
 
    printPrefix(pOutFile, instr);
-   trfprintf(pOutFile, "%s Site:" POINTER_PRINTF_FORMAT ", ", getMnemonicName(&instr->getOpCode()), instr->getSite());
+   trfprintf(pOutFile, "%s Site: " TR_FMTSPC_PTR ", ", getMnemonicName(&instr->getOpCode()), PTR_TO_FMTSPC_PTR(instr->getSite()));
    print(pOutFile, instr->getLabelSymbol());
    printInstructionComment(pOutFile, 1, instr);
    dumpDependencies(pOutFile, instr);
@@ -658,7 +659,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86ImmInstruction  * instr)
       if (symRef->isUnresolved())
          trfprintf(pOutFile, " (unresolved method)");
       else
-         trfprintf(pOutFile, " (" POINTER_PRINTF_FORMAT ")",  instr->getSourceImmediate()); // TODO:AMD64: Target address gets truncated
+         trfprintf(pOutFile, " (" TR_FMTSPC_PTR ")",  INT_TO_FMTSPC_PTR(instr->getSourceImmediate())); // TODO:AMD64: Target address gets truncated
       }
    else
       {
@@ -689,7 +690,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::AMD64Imm64Instruction * instr)
       if (symRef->isUnresolved())
          trfprintf(pOutFile, " (unresolved method)");
       else
-         trfprintf(pOutFile, " (" POINTER_PRINTF_FORMAT ")",  instr->getSourceImmediate());
+         trfprintf(pOutFile, " (" TR_FMTSPC_PTR ")",  INT_TO_FMTSPC_PTR(instr->getSourceImmediate()));
       }
    else
       {
@@ -714,11 +715,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::AMD64Imm64SymInstruction * instr)
    trfprintf(pOutFile, "%s\t", getMnemonicName(&instr->getOpCode()));
    if (sym->getMethodSymbol() && name)
       {
-      trfprintf(pOutFile, "%-24s%s %s (" POINTER_PRINTF_FORMAT ")",
+      trfprintf(pOutFile, "%-24s%s %s (" TR_FMTSPC_PTR ")",
                     name,
                     commentString(),
                     getOpCodeName(&instr->getOpCode()),
-                    instr->getSourceImmediate());
+                    INT_TO_FMTSPC_PTR(instr->getSourceImmediate()));
       }
    else if (sym->getLabelSymbol() && name)
       {
@@ -729,11 +730,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::AMD64Imm64SymInstruction * instr)
                        getOpCodeName(&instr->getOpCode()),
                        getName(sym->getLabelSymbol()->getSnippet()));
       else
-         trfprintf(pOutFile, "%-24s%s %s (" POINTER_PRINTF_FORMAT ")",
+         trfprintf(pOutFile, "%-24s%s %s (" TR_FMTSPC_PTR ")",
                        name,
                        commentString(),
                        getOpCodeName(&instr->getOpCode()),
-                       instr->getSourceImmediate());
+                       INT_TO_FMTSPC_PTR(instr->getSourceImmediate()));
       }
    else
       {
@@ -883,15 +884,15 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86ImmSymInstruction  * instr)
       }
    else
       {
-      trfprintf(pOutFile, POINTER_PRINTF_FORMAT, targetAddress);
+      trfprintf(pOutFile, TR_FMTSPC_PTR, INT_TO_FMTSPC_PTR(targetAddress));
       }
 
    if (sym->getMethodSymbol() && name)
       {
-      trfprintf(pOutFile, "%s %s (" POINTER_PRINTF_FORMAT ")",
+      trfprintf(pOutFile, "%s %s (" TR_FMTSPC_PTR ")",
                     commentString(),
                     getOpCodeName(&instr->getOpCode()),
-                    targetAddress);
+                    INT_TO_FMTSPC_PTR(targetAddress));
       }
    else if (sym->getLabelSymbol() && name)
      {
@@ -901,10 +902,10 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86ImmSymInstruction  * instr)
                       getOpCodeName(&instr->getOpCode()),
                       getName(sym->getLabelSymbol()->getSnippet()));
      else
-        trfprintf(pOutFile, "%s %s (" POINTER_PRINTF_FORMAT ")",
+        trfprintf(pOutFile, "%s %s (" TR_FMTSPC_PTR ")",
                       commentString(),
                       getOpCodeName(&instr->getOpCode()),
-                      targetAddress);
+                      INT_TO_FMTSPC_PTR(targetAddress));
      }
    else
      {
@@ -2088,10 +2089,7 @@ TR_Debug::printRegImmInstruction(TR::FILE *pOutFile, const char *opCode, TR::Rea
    {
    trfprintf(pOutFile, "%s\t", opCode);
    print(pOutFile, reg);
-   if (imm <= 1024)
-      trfprintf(pOutFile, ", %d", imm);
-   else
-      trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, imm);
+   trfprintf(pOutFile, ", %#" OMR_PRIx32, imm);
    }
 
 void
@@ -2115,10 +2113,7 @@ TR_Debug::printMemImmInstruction(TR::FILE *pOutFile, const char *opCode, TR::Rea
    trfprintf(pOutFile, "[");
    print(pOutFile, base);
    trfprintf(pOutFile, " +%d]", offset);
-   if (imm <= 1024)
-      trfprintf(pOutFile, ", %d", imm);
-   else
-      trfprintf(pOutFile, ", " POINTER_PRINTF_FORMAT, imm);
+   trfprintf(pOutFile, ", %#" OMR_PRIx32, imm);
    }
 
 void

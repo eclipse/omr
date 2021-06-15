@@ -241,11 +241,11 @@ TR_Debug::TR_Debug( TR::Compilation * c)
       _usesSingleAllocMetaData = 0;
       }
 
-   // Figure out how many bytes are consumed by POINTER_PRINTF_FORMAT
+   // Figure out how many bytes are consumed by TR_FMTSPC_PTR
    if (1) // force block scope
       {
       char buffer[30];
-      addressWidth = sprintf(buffer, POINTER_PRINTF_FORMAT, this);
+      addressWidth = sprintf(buffer, TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(this));
       }
 
    _registerAssignmentTraceFlags = 0;
@@ -742,9 +742,9 @@ TR_Debug::printPrefix(TR::FILE *pOutFile, TR::Instruction *instr, uint8_t *curso
       else
          {
          if (instr)
-            sprintf(prefix, POINTER_PRINTF_FORMAT " %08x [%s]", cursor, offset, getName(instr));
+            sprintf(prefix, TR_FMTSPC_PTR " %08x [%s]", PTR_TO_FMTSPC_PTR(cursor), offset, getName(instr));
          else
-            sprintf(prefix, POINTER_PRINTF_FORMAT " %08x %*s", cursor, offset, addressFieldWidth + 2, " ");
+            sprintf(prefix, TR_FMTSPC_PTR " %08x %*s", PTR_TO_FMTSPC_PTR(cursor), offset, addressFieldWidth + 2, " ");
          }
 
       char *p0 = prefix;
@@ -832,7 +832,7 @@ TR_Debug::printSnippetLabel(TR::FILE *pOutFile, TR::LabelSymbol *label, uint8_t 
       }
    else
       {
-      trfprintf(pOutFile, "\n\n" POINTER_PRINTF_FORMAT " %08x %*s", cursor, offset, addressFieldWidth + codeByteColumnWidth + 2, " ");
+      trfprintf(pOutFile, "\n\n" TR_FMTSPC_PTR " %08x %*s", PTR_TO_FMTSPC_PTR(cursor), offset, addressFieldWidth + codeByteColumnWidth + 2, " ");
       }
    print(pOutFile, label);
    trfprintf(pOutFile, ":");
@@ -1368,7 +1368,7 @@ TR_Debug::getName(void * address, const char * prefix, uint32_t nextNumber, bool
    else
       {
       if (address)
-         sprintf(buf, POINTER_PRINTF_FORMAT, address);
+         sprintf(buf, TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(address));
       else
          sprintf(buf, "%0*d", TR::Compiler->debug.hexAddressWidthInChars(), 0);
       return buf;
@@ -1456,7 +1456,7 @@ TR_Debug::getName(TR::CFGNode * node)
       }
    else
       {
-      sprintf(buf, POINTER_PRINTF_FORMAT, node);
+      sprintf(buf, TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(node));
       }
 
    return buf;
@@ -1508,12 +1508,12 @@ TR_Debug::getName(TR::LabelSymbol *labelSymbol)
          if (_comp->getOption(TR_MaskAddresses))
             sprintf(buf, "Snippet Label [*Masked*]");
          else
-            sprintf(buf, "Snippet Label [" POINTER_PRINTF_FORMAT "]", labelSymbol);
+            sprintf(buf, "Snippet Label [" TR_FMTSPC_PTR "]", PTR_TO_FMTSPC_PTR(labelSymbol));
       else
          if (_comp->getOption(TR_MaskAddresses))
             sprintf(buf, "Label [*Masked*]");
          else
-            sprintf(buf, "Label [" POINTER_PRINTF_FORMAT "]", labelSymbol);
+            sprintf(buf, "Label [" TR_FMTSPC_PTR "]", PTR_TO_FMTSPC_PTR(labelSymbol));
 
       _comp->getToStringMap().Add((void *)labelSymbol, buf);
       return buf;
@@ -1691,7 +1691,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::SymbolReferenceTable * symRefTab)
       trfprintf(pOutFile, "Symbol Reference Map for this method:\n");
       for (auto i = 0U; i<symRefTab->baseArray.size(); i++)
          if (symRefTab->getSymRef(static_cast<int32_t>(i)))
-            trfprintf(pOutFile,"  %d[" POINTER_PRINTF_FORMAT "]\n", i, symRefTab->getSymRef(i));
+            trfprintf(pOutFile,"  %d[" TR_FMTSPC_PTR "]\n", i, PTR_TO_FMTSPC_PTR(symRefTab->getSymRef(i)));
       }
    }
 
@@ -1773,7 +1773,7 @@ TR_Debug::getAutoName(TR::SymbolReference * symRef)
       if (_comp->getOption(TR_MaskAddresses))
          sprintf(name, "<%s *Masked*>", symName);
       else
-         sprintf(name, "<%s " POINTER_PRINTF_FORMAT ">", symName, symRef->getSymbol());
+         sprintf(name, "<%s " TR_FMTSPC_PTR ">", symName, PTR_TO_FMTSPC_PTR(symRef->getSymbol()));
       }
    else if (symRef->isTempVariableSizeSymRef())
       {
@@ -2005,14 +2005,14 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
    if (sym->isCallSiteTableEntry())
       {
       char * s = (char *)_comp->trMemory()->allocateHeapMemory(60);
-      sprintf(s, "<callSite entry @%d " POINTER_PRINTF_FORMAT ">", sym->castToCallSiteTableEntrySymbol()->getCallSiteIndex(), staticAddress);
+      sprintf(s, "<callSite entry @%d " TR_FMTSPC_PTR ">", sym->castToCallSiteTableEntrySymbol()->getCallSiteIndex(), PTR_TO_FMTSPC_PTR(staticAddress));
       return s;
       }
 
    if (sym->isMethodTypeTableEntry())
       {
       char * s = (char *)_comp->trMemory()->allocateHeapMemory(62);
-      sprintf(s, "<methodType entry @%d " POINTER_PRINTF_FORMAT ">", sym->castToMethodTypeTableEntrySymbol()->getMethodTypeIndex(), staticAddress);
+      sprintf(s, "<methodType entry @%d " TR_FMTSPC_PTR ">", sym->castToMethodTypeTableEntrySymbol()->getMethodTypeIndex(), PTR_TO_FMTSPC_PTR(staticAddress));
       return s;
       }
 #endif
@@ -2028,7 +2028,7 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
       if (_comp->getOption(TR_MaskAddresses))
          sprintf(name, "*Masked*");
       else
-         sprintf(name, POINTER_PRINTF_FORMAT, staticAddress);
+         sprintf(name, TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(staticAddress));
       return name;
       }
 
@@ -2344,12 +2344,12 @@ TR_Debug::dumpLiveRegisters(TR::FILE *pOutFile, TR_RegisterKinds rk)
 
       ++n;
       if (regPair)
-         trfprintf(pOutFile, "\t[" POINTER_PRINTF_FORMAT "] %d:  " POINTER_PRINTF_FORMAT " pair (" POINTER_PRINTF_FORMAT ", " POINTER_PRINTF_FORMAT ")  ",
-                 p, n, regPair, regPair->getLowOrder(), regPair->getHighOrder());
+         trfprintf(pOutFile, "\t[" TR_FMTSPC_PTR "] %d:  " TR_FMTSPC_PTR " pair (" TR_FMTSPC_PTR ", " TR_FMTSPC_PTR ")  ",
+                 PTR_TO_FMTSPC_PTR(p), n, PTR_TO_FMTSPC_PTR(regPair), PTR_TO_FMTSPC_PTR(regPair->getLowOrder()), PTR_TO_FMTSPC_PTR(regPair->getHighOrder()));
       else
          {
          TR::Register *reg = p->getRegister();
-         trfprintf(pOutFile, "\t[" POINTER_PRINTF_FORMAT "] %d:  " POINTER_PRINTF_FORMAT "  ", p, n, reg);
+         trfprintf(pOutFile, "\t[" TR_FMTSPC_PTR "] %d:  " TR_FMTSPC_PTR "  ", PTR_TO_FMTSPC_PTR(p), n, PTR_TO_FMTSPC_PTR(reg));
          }
 
       trfprintf(pOutFile, "\n");
@@ -2997,7 +2997,7 @@ TR_Debug::getName(TR::Register *reg, TR_RegisterSizes size)
       if (_comp->getOption(TR_MaskAddresses))
          sprintf(buf, "%s%s_*Masked*", prefix, getRegisterKindName(reg->getKind()));
       else
-         sprintf(buf, "%s%s_" POINTER_PRINTF_FORMAT, prefix, getRegisterKindName(reg->getKind()), reg);
+         sprintf(buf, "%s%s_" TR_FMTSPC_PTR, prefix, getRegisterKindName(reg->getKind()), PTR_TO_FMTSPC_PTR(reg));
       _comp->getToStringMap().Add((void *)reg, buf);
       return buf;
       }
@@ -3544,22 +3544,22 @@ TR_Debug::dump(TR::FILE *pOutFile, TR_CHTable * chTable)
             trfprintf(pOutFile, "[%4d] %-49s %s%s\n",
                   i, guardKindName ,(*info)->isInlineGuard()?"inlined ":"", guardKindName);
          else
-            trfprintf(pOutFile, "[%4d] %-49s %scalleeSymbol=" POINTER_PRINTF_FORMAT "\n",
-                  i, guardKindName ,(*info)->isInlineGuard()?"inlined ":"", (*info)->getSymbolReference()->getSymbol());
+            trfprintf(pOutFile, "[%4d] %-49s %scalleeSymbol=" TR_FMTSPC_PTR "\n",
+                  i, guardKindName, (*info)->isInlineGuard()?"inlined ":"", PTR_TO_FMTSPC_PTR((*info)->getSymbolReference()->getSymbol()));
          ListIterator<TR_VirtualGuardSite> siteIt(&(*info)->getNOPSites());
          for (TR_VirtualGuardSite *site = siteIt.getFirst(); site; site = siteIt.getNext())
             {
             uint8_t * loc  = site->getLocation();
             uint8_t *&dest = site->getDestination();
 
-            trfprintf(pOutFile, "\tSite: location=" POINTER_PRINTF_FORMAT " (e+%5x) branch-dest=" POINTER_PRINTF_FORMAT " (e+%5x)\n",
-                loc, loc - startPC, dest, dest - startPC);
+            trfprintf(pOutFile, "\tSite: location=" TR_FMTSPC_PTR " (e+%5x) branch-dest=" TR_FMTSPC_PTR " (e+%5x)\n",
+                PTR_TO_FMTSPC_PTR(loc), loc - startPC, PTR_TO_FMTSPC_PTR(dest), dest - startPC);
             }
          ListIterator<TR_InnerAssumption> innerIt(&(*info)->getInnerAssumptions());
          for (TR_InnerAssumption *inner = innerIt.getFirst(); inner; inner = innerIt.getNext())
             {
-            trfprintf(pOutFile, "\tInner Assumption: calleeSymbol=" POINTER_PRINTF_FORMAT " for parm ordinal=%d\n",
-                inner->_guard->getSymbolReference()->getSymbol(), inner->_ordinal);
+            trfprintf(pOutFile, "\tInner Assumption: calleeSymbol=" TR_FMTSPC_PTR " for parm ordinal=%d\n",
+                PTR_TO_FMTSPC_PTR(inner->_guard->getSymbolReference()->getSymbol()), inner->_ordinal);
             }
          }
       }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,8 +87,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64HelperCallSnippet * snippet)
       }
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t; %s%s",
-      target, getName(snippet->getDestination()), info);
+   trfprintf(pOutFile, "bl \t" TR_FMTSPC_PTR "\t\t; %s%s",
+      PTR_TO_FMTSPC_PTR(target), getName(snippet->getDestination()), info);
 
    if (restartLabel != NULL)
       {
@@ -97,7 +97,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64HelperCallSnippet * snippet)
       if (comp()->target().cpu.isTargetWithinUnconditionalBranchImmediateRange((intptr_t)restartLocation, (intptr_t)bufferPos))
          {
          printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Back to ", restartLocation);
+         trfprintf(pOutFile, "b \t" TR_FMTSPC_PTR "\t\t; Back to ", PTR_TO_FMTSPC_PTR(restartLocation));
          print(pOutFile, restartLabel);
          }
       else

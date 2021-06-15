@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -280,8 +280,8 @@ int32_t TR_IsolatedStoreElimination::perform()
                TR::Node *node = useDefInfo->getNode(index);
                TR::TreeTop *treeTop = useDefInfo->getTreeTop(index);
                TR_ASSERT(node, "node should not be NULL at this point");
-               dumpOptDetails(comp(), "%sRemoving %s n%dn [" POINTER_PRINTF_FORMAT "] %s\n",
-                  optDetailString(), node->getOpCode().getName(), node->getGlobalIndex(), node, node->getSymbolReference()->getSymbol()->isShadow() ? "(shadow)" : "");
+               dumpOptDetails(comp(), "%sRemoving %s n%dn [" TR_FMTSPC_PTR "] %s\n",
+                  optDetailString(), node->getOpCode().getName(), node->getGlobalIndex(), PTR_TO_FMTSPC_PTR(node), node->getSymbolReference()->getSymbol()->isShadow() ? "(shadow)" : "");
 
 #ifdef J9_PROJECT_SPECIFIC
                if (node->getOpCode().isBCDStore())

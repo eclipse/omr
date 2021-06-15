@@ -165,7 +165,7 @@ OMR::Node::mayUse()
       TR_UseOnlyAliasSetInterface aliasSetInterface(self()->getSymbolReference());
       return aliasSetInterface;
       }
-   else 
+   else
       {
       //if there is no symbolreference, then return an empty aliseset
        TR_UseOnlyAliasSetInterface aliasSetInterface(NULL);
@@ -203,7 +203,7 @@ OMR::Node::getChild(int32_t c)
    {
    if(!self()->hasNodeExtension())
       {
-      TR_ASSERT(c < NUM_DEFAULT_CHILDREN, "getChild(%d) called on node " POINTER_PRINTF_FORMAT " with %d children.", c, self(), self()->getNumChildren());
+      TR_ASSERT(c < NUM_DEFAULT_CHILDREN, "getChild(%d) called on node " TR_FMTSPC_PTR " with %d children.", c, PTR_TO_FMTSPC_PTR(self()), self()->getNumChildren());
       return _unionBase._children[c];
       }
    else
@@ -215,28 +215,28 @@ OMR::Node::getChild(int32_t c)
 inline TR::Node *
 OMR::Node::getFirstChild()
    {
-   TR_ASSERT(self()->getNumChildren() >= 1, "getFirstChild() called on node " POINTER_PRINTF_FORMAT " with no children", self());
+   TR_ASSERT(self()->getNumChildren() >= 1, "getFirstChild() called on node " TR_FMTSPC_PTR " with no children", PTR_TO_FMTSPC_PTR(self()));
    return self()->getChild(0);
    }
 
 inline TR::Node *
 OMR::Node::getLastChild()
    {
-   TR_ASSERT(self()->getNumChildren() >= 1, "getLastChild() called on node " POINTER_PRINTF_FORMAT " with no children", self());
+   TR_ASSERT(self()->getNumChildren() >= 1, "getLastChild() called on node " TR_FMTSPC_PTR " with no children", PTR_TO_FMTSPC_PTR(self()));
    return self()->getChild(_numChildren - 1);
    }
 
 inline TR::Node *
 OMR::Node::getSecondChild()
    {
-   TR_ASSERT(self()->getNumChildren() >= 2, "getSecondChild() called on node " POINTER_PRINTF_FORMAT " with less than 2 children", self());
+   TR_ASSERT(self()->getNumChildren() >= 2, "getSecondChild() called on node " TR_FMTSPC_PTR " with less than 2 children", PTR_TO_FMTSPC_PTR(self()));
    return self()->getChild(1);
    }
 
 inline TR::Node *
 OMR::Node::getThirdChild()
    {
-   TR_ASSERT(self()->getNumChildren() >= 3, "getThirdChild() called on node " POINTER_PRINTF_FORMAT " with less than 3 children", self());
+   TR_ASSERT(self()->getNumChildren() >= 3, "getThirdChild() called on node " TR_FMTSPC_PTR " with less than 3 children", PTR_TO_FMTSPC_PTR(self()));
    return self()->getChild(2);
    }
 

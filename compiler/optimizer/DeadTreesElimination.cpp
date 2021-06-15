@@ -986,7 +986,7 @@ int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *e
             {
             // Actually going to remove the treetop now
             //
-            if (performTransformation(comp(), "%sRemove tree : [" POINTER_PRINTF_FORMAT "] ([" POINTER_PRINTF_FORMAT "] = %s)\n", optDetailString(), node, node->getFirstChild(), node->getFirstChild()->getOpCode().getName()))
+            if (performTransformation(comp(), "%sRemove tree : [" TR_FMTSPC_PTR "] ([" TR_FMTSPC_PTR "] = %s)\n", optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(node->getFirstChild()), node->getFirstChild()->getOpCode().getName()))
                {
                prevTree->join(nextTree);
                optimizer()->prepareForNodeRemoval(node);
@@ -1010,7 +1010,7 @@ int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *e
             }
          else
             {
-            if (performTransformation(comp(), "%sMove tree : [" POINTER_PRINTF_FORMAT "]([" POINTER_PRINTF_FORMAT "] = %s) to end of block\n", optDetailString(), node, node->getFirstChild(), node->getFirstChild()->getOpCode().getName()))
+            if (performTransformation(comp(), "%sMove tree : [" TR_FMTSPC_PTR "]([" TR_FMTSPC_PTR "] = %s) to end of block\n", optDetailString(), PTR_TO_FMTSPC_PTR(node), PTR_TO_FMTSPC_PTR(node->getFirstChild()), node->getFirstChild()->getOpCode().getName()))
                {
                prevTree->join(nextTree);
                node->setVisitCount(visitCount);

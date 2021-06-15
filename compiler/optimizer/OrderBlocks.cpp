@@ -2258,7 +2258,7 @@ void TR_BlockOrderingOptimization::dumpBlockOrdering(TR::TreeTop *tt, char *titl
       if (node && node->getOpCodeValue() == TR::BBStart)
          {
          TR::Block *block = node->getBlock();
-         traceMsg(comp(), "block_%-4d\t[ " POINTER_PRINTF_FORMAT "]\tfrequency %4d", block->getNumber(), block, block->getFrequency());
+         traceMsg(comp(), "block_%-4d\t[ " TR_FMTSPC_PTR "]\tfrequency %4d", block->getNumber(), PTR_TO_FMTSPC_PTR(block), block->getFrequency());
          if (block->isSuperCold())
             {
             numberOfColdBlocks++;

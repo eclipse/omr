@@ -37,6 +37,24 @@
 #define MAX_UINTPTRJ (~(uintptr_t)0)
 #define MAX_UINTPTR (~(uintptr_t)0)
 
+/**
+ * Convenience macro to cast to \c uintptr_t to improve code readability.
+ */
+#define PTR_TO_UINTPTR(x) (reinterpret_cast<uintptr_t>(x))
+#define INT_TO_UINTPTR(x) (static_cast<uintptr_t>(x))
+
+/**
+ * Used to cast a C++ pointer into whatever the format specifier
+ * pointer representation is.
+ */
+#define PTR_TO_FMTSPC_PTR(x) PTR_TO_UINTPTR(x)
+
+/**
+ * Used to cast a C++ integral type into whatever the format specifier
+ * pointer representation is.
+ */
+#define INT_TO_FMTSPC_PTR(x) INT_TO_UINTPTR(x)
+
 #ifdef __cplusplus
 namespace TR { class Compilation; }
 

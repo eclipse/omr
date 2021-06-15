@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -762,12 +762,12 @@ void OMR::LocalCSE::doCommoningAgainIfPreviouslyCommoned(TR::Node *node, TR::Nod
    }
 /**
  * We can allow auto or parms which are not global during the volatile only phase
- * as we do not expect those field to be changing. This enables up to common volatiles that are based on an 
- * indirection chain of such non volatile autos or parms that are not global by definition. 
+ * as we do not expect those field to be changing. This enables up to common volatiles that are based on an
+ * indirection chain of such non volatile autos or parms that are not global by definition.
  * Following query returns true if the node can be commoned in volatile only pass
  */
 bool OMR::LocalCSE::canCommonNodeInVolatilePass(TR::Node *node)
-   {   
+   {
    return node->getOpCode().hasSymbolReference() && (node->getSymbol()->isVolatile() || node->getSymbol()->isAutoOrParm());
    }
 
@@ -1100,11 +1100,11 @@ TR::Node *OMR::LocalCSE::replaceCopySymbolReferenceByOriginalIn(TR::SymbolRefere
                   rhsOfStoreDefNode->setChild(0, origRhsOfStoreDefNode);  // already inc'ed above
                   rhsOfStoreDefNode->setDecimalPrecision(origRhsOfStoreDefNode->getDecimalPrecision());
                   rhsOfStoreDefNode->setReferenceCount(1);
-                  dumpOptDetails(comp(), "%sPreserve pdclean side-effect of %s [" POINTER_PRINTF_FORMAT "] when propagating %s [" POINTER_PRINTF_FORMAT "] to %s [" POINTER_PRINTF_FORMAT "] so create new %s [" POINTER_PRINTF_FORMAT "]\n",
-                     optDetailString(),defNode->getOpCode().getName(),defNode,
-                     origRhsOfStoreDefNode->getOpCode().getName(),origRhsOfStoreDefNode,
-                     parent->getOpCode().getName(),parent,
-                     rhsOfStoreDefNode->getOpCode().getName(),rhsOfStoreDefNode);
+                  dumpOptDetails(comp(), "%sPreserve pdclean side-effect of %s [" TR_FMTSPC_PTR "] when propagating %s [" TR_FMTSPC_PTR "] to %s [" TR_FMTSPC_PTR "] so create new %s [" TR_FMTSPC_PTR "]\n",
+                     optDetailString(), defNode->getOpCode().getName(), PTR_TO_FMTSPC_PTR(defNode),
+                     origRhsOfStoreDefNode->getOpCode().getName(), PTR_TO_FMTSPC_PTR(origRhsOfStoreDefNode),
+                     parent->getOpCode().getName(), PTR_TO_FMTSPC_PTR(parent),
+                     rhsOfStoreDefNode->getOpCode().getName(), PTR_TO_FMTSPC_PTR(rhsOfStoreDefNode));
                   }
 
                int32_t nodePrecision = 0;
@@ -1131,9 +1131,9 @@ TR::Node *OMR::LocalCSE::replaceCopySymbolReferenceByOriginalIn(TR::SymbolRefere
                   rhsOfStoreDefNode->setChild(0, origRhsOfStoreDefNode);  // already inc'ed above
                   rhsOfStoreDefNode->setDecimalPrecision(nodePrecision);
                   rhsOfStoreDefNode->setReferenceCount(1);
-                  dumpOptDetails(comp(), "%sPrecision mismatch when propagating %s [" POINTER_PRINTF_FORMAT "] to %s [" POINTER_PRINTF_FORMAT "] so create new %s [" POINTER_PRINTF_FORMAT "]\n",
-                     optDetailString(),origRhsOfStoreDefNode->getOpCode().getName(),origRhsOfStoreDefNode,
-                     parent->getOpCode().getName(),parent,rhsOfStoreDefNode->getOpCode().getName(),rhsOfStoreDefNode);
+                  dumpOptDetails(comp(), "%sPrecision mismatch when propagating %s [" TR_FMTSPC_PTR "] to %s [" TR_FMTSPC_PTR "] so create new %s [" TR_FMTSPC_PTR "]\n",
+                     optDetailString(), origRhsOfStoreDefNode->getOpCode().getName(), PTR_TO_FMTSPC_PTR(origRhsOfStoreDefNode),
+                     parent->getOpCode().getName(), PTR_TO_FMTSPC_PTR(parent), rhsOfStoreDefNode->getOpCode().getName(), PTR_TO_FMTSPC_PTR(rhsOfStoreDefNode));
                   }
                }
 #endif

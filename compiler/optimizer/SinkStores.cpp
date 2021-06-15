@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -353,7 +353,7 @@ void TR_SinkStores::recordPlacementForDefAlongEdge(TR_EdgeStorePlacement *edgePl
    bool copyStore=storeInfo->_copy;
 
    if (trace())
-      traceMsg(comp(), "            RECORD placement along edge (%d->%d), for tt [" POINTER_PRINTF_FORMAT "] (copy=%d)\n", succEdge->getFrom()->getNumber(), succEdge->getTo()->getNumber(), tt, copyStore);
+      traceMsg(comp(), "            RECORD placement along edge (%d->%d), for tt [" TR_FMTSPC_PTR "] (copy=%d)\n", succEdge->getFrom()->getNumber(), succEdge->getTo()->getNumber(), PTR_TO_FMTSPC_PTR(tt), copyStore);
 
    // for now, just put one edge in each placement...but collect all stores that go with that edge
    // but, if we find an edge already in the list, just add this store to the list of stores for that edge
@@ -423,7 +423,7 @@ void TR_SinkStores::recordPlacementForDefInBlock(TR_BlockStorePlacement *blockPl
    bool copyStore=storeInfo->_copy;
 
    if (trace())
-      traceMsg(comp(), "            RECORD placement at beginning of block_%d for tt [" POINTER_PRINTF_FORMAT "] (copy=%d)\n", block->getNumber(), tt, (int32_t)copyStore);
+      traceMsg(comp(), "            RECORD placement at beginning of block_%d for tt [" TR_FMTSPC_PTR "] (copy=%d)\n", block->getNumber(), PTR_TO_FMTSPC_PTR(tt), (int32_t)copyStore);
 
    ListElement<TR_BlockStorePlacement> *ptr=NULL;
    if (_placementsForBlock[blockNumber] != NULL)
@@ -767,7 +767,7 @@ void TR_SinkStores::lookForSinkableStores()
                }
 
             if (trace())
-               traceMsg(comp(), "    Examining node [" POINTER_PRINTF_FORMAT "] in block_%d\n", node,blockNumber);
+               traceMsg(comp(), "    Examining node [" TR_FMTSPC_PTR "] in block_%d\n", PTR_TO_FMTSPC_PTR(node), blockNumber);
 
             if (node->exceptionsRaised() && block->hasExceptionSuccessors())
                {
@@ -880,7 +880,7 @@ void TR_SinkStores::lookForSinkableStores()
                      TR_MovableStore *store = storeElement->getData();
                      if (trace())
                         {
-                        traceMsg(comp(), "            examining store [" POINTER_PRINTF_FORMAT "]\n",store->_useOrKillInfo->_tt->getNode());
+                        traceMsg(comp(), "            examining store [" TR_FMTSPC_PTR "]\n", PTR_TO_FMTSPC_PTR(store->_useOrKillInfo->_tt->getNode()));
                         if (store->_movable &&
                             store->_commonedLoadsUnderTree &&
                             store->_commonedLoadsUnderTree->get(killedSymIdx))
@@ -905,9 +905,9 @@ void TR_SinkStores::lookForSinkableStores()
                         if (trace())
                            {
                            if (!store->_movable)
-                              traceMsg(comp(), "         marking store [" POINTER_PRINTF_FORMAT "] as unmovable because its tree depth is %d\n", store->_useOrKillInfo->_tt->getNode(), store->_depth);
+                              traceMsg(comp(), "         marking store [" TR_FMTSPC_PTR "] as unmovable because its tree depth is %d\n", PTR_TO_FMTSPC_PTR(store->_useOrKillInfo->_tt->getNode()), store->_depth);
                            else if (store->_needTempForCommonedLoads)
-                              traceMsg(comp(), "         marking store [" POINTER_PRINTF_FORMAT "] as movable with temp because it has commoned reference used sym %d\n", store->_useOrKillInfo->_tt->getNode(), killedSymIdx);
+                              traceMsg(comp(), "         marking store [" TR_FMTSPC_PTR "] as movable with temp because it has commoned reference used sym %d\n", PTR_TO_FMTSPC_PTR(store->_useOrKillInfo->_tt->getNode()), killedSymIdx);
                            }
                         }
                         storeElement = storeElement->getNextElement();
@@ -945,7 +945,7 @@ void TR_SinkStores::lookForSinkableStores()
                         (*commonedLoadsUsedAboveStore) &= (*firstRefsToKilledSymbols);
                         if (trace())
                            {
-                           traceMsg(comp(),"            found store [" POINTER_PRINTF_FORMAT "] below that may require a temp\n",store->_useOrKillInfo->_tt->getNode());
+                           traceMsg(comp(),"            found store [" TR_FMTSPC_PTR "] below that may require a temp\n", PTR_TO_FMTSPC_PTR(store->_useOrKillInfo->_tt->getNode()));
                            traceMsg(comp(),"               killed live commoned loads used above store:");
                            commonedLoadsUsedAboveStore->print(comp());
                            traceMsg(comp(),"\n");
@@ -1041,8 +1041,8 @@ void TR_SinkStores::lookForSinkableStores()
                 (!movedStorePinsCommonedSymbols() && !treeCommonedLoads->isEmpty()))
                {
                if (trace())
-                  traceMsg(comp(), "      creating use or kill info on %s node [" POINTER_PRINTF_FORMAT "] to track kills and uses\n",
-                                  canMoveStore? "movable":"non-movable", tt->getNode());
+                  traceMsg(comp(), "      creating use or kill info on %s node [" TR_FMTSPC_PTR "] to track kills and uses\n",
+                                  canMoveStore? "movable":"non-movable", PTR_TO_FMTSPC_PTR(tt->getNode()));
 
                useOrKill = new (trStackMemory()) TR_UseOrKillInfo(tt,
                                                                   block,
@@ -1112,7 +1112,7 @@ void TR_SinkStores::lookForSinkableStores()
             for (int32_t tempCount = prevNumTemps; tempCount < _numTemps; tempCount++)
                {
                if (trace())
-                  traceMsg(comp(),"    skipping created temp store [" POINTER_PRINTF_FORMAT "] in backward treetop walk\n",tt->getNode());
+                  traceMsg(comp(),"    skipping created temp store [" TR_FMTSPC_PTR "] in backward treetop walk\n", PTR_TO_FMTSPC_PTR(tt->getNode()));
                tt = tt->getPrevTreeTop();
                }
             }
@@ -1151,7 +1151,7 @@ void TR_SinkStores::lookForSinkableStores()
 
             if (trace())
                {
-               traceMsg(comp(), "    Candidate treetop [" POINTER_PRINTF_FORMAT "]", tt->getNode());
+               traceMsg(comp(), "    Candidate treetop [" TR_FMTSPC_PTR "]", PTR_TO_FMTSPC_PTR(tt->getNode()));
 
                if (isMovableStore && tt->getNode()->getOpCode().hasSymbolReference())
                   {
@@ -1192,7 +1192,7 @@ void TR_SinkStores::lookForSinkableStores()
                if (trace())
                   traceMsg(comp(), "(Transformation #%d start - sink store)\n", _numTransformations);
                   TR::RegisterMappedSymbol *sym = tt->getNode()->getSymbolReference()->getSymbol()->getMethodMetaDataSymbol();
-               if (performTransformation(comp(), "%s Finding placements for store [" POINTER_PRINTF_FORMAT "] %s with tree depth %d\n", OPT_DETAILS, tt->getNode(),
+               if (performTransformation(comp(), "%s Finding placements for store [" TR_FMTSPC_PTR "] %s with tree depth %d\n", OPT_DETAILS, PTR_TO_FMTSPC_PTR(tt->getNode()),
                      sym ? sym->castToMethodMetaDataSymbol()->getName() : "", store->_depth)
                    && performThisTransformation())
                   {
@@ -1365,7 +1365,7 @@ void TR_SinkStores::coalesceSimilarEdgePlacements()
          ListElement<TR_StoreInformation> *firstStorePtr = firstEdgePlacement->_stores.getListHead();
          while (firstStorePtr != NULL)
             {
-            traceMsg(comp(), " [" POINTER_PRINTF_FORMAT "](copy=%d)", firstStorePtr->getData()->_store->getNode(), firstStorePtr->getData()->_copy);
+            traceMsg(comp(), " [" TR_FMTSPC_PTR "](copy=%d)", PTR_TO_FMTSPC_PTR(firstStorePtr->getData()->_store->getNode()), firstStorePtr->getData()->_copy);
             firstStorePtr = firstStorePtr->getNextElement();
             }
          traceMsg(comp(), "\n");
@@ -1386,7 +1386,7 @@ void TR_SinkStores::coalesceSimilarEdgePlacements()
             ListElement<TR_StoreInformation> *secondStorePtr = secondEdgePlacement->_stores.getListHead();
             while (secondStorePtr != NULL)
                {
-               traceMsg(comp(), " [" POINTER_PRINTF_FORMAT "](copy=%d)", secondStorePtr->getData()->_store->getNode(), secondStorePtr->getData()->_copy);
+               traceMsg(comp(), " [" TR_FMTSPC_PTR "](copy=%d)", PTR_TO_FMTSPC_PTR(secondStorePtr->getData()->_store->getNode()), secondStorePtr->getData()->_copy);
                secondStorePtr = secondStorePtr->getNextElement();
                }
             traceMsg(comp(), "\n");
@@ -1477,7 +1477,7 @@ void TR_SinkStores::placeStoresInBlock(List<TR_StoreInformation> & stores, TR::B
          }
 
       if (0 && trace())
-         traceMsg(comp(), "        PLACE new store [" POINTER_PRINTF_FORMAT "] (original store [" POINTER_PRINTF_FORMAT "]) at beginning of block_%d\n", newStore->getNode(), store->getNode(), placementBlock->getNumber());
+         traceMsg(comp(), "        PLACE new store [" TR_FMTSPC_PTR "] (original store [" TR_FMTSPC_PTR "]) at beginning of block_%d\n", PTR_TO_FMTSPC_PTR(newStore->getNode()), PTR_TO_FMTSPC_PTR(store->getNode()), placementBlock->getNumber());
       TR::TreeTop::insertTreeTops(comp(), treeBeforeNextPlacement, newStore, newStore);
       treeBeforeNextPlacement = newStore;
       _numPlacements++;
@@ -1546,7 +1546,7 @@ void TR_SinkStores::placeStoresAlongEdges(List<TR_StoreInformation> & stores, Li
 
       if (trace())
          {
-         traceMsg(comp(), "      created new ATHROW [" POINTER_PRINTF_FORMAT "]\n", newAthrow);
+         traceMsg(comp(), "      created new ATHROW [" TR_FMTSPC_PTR "]\n", PTR_TO_FMTSPC_PTR(newAthrow));
          traceMsg(comp(), "      splitting exception edge (%d,%d)", from->getNumber(), to->getNumber());
          traceMsg(comp(), " into (%d,%d)", from->getNumber(), placementBlock->getNumber());
          traceMsg(comp(), " and (%d,%d)\n", placementBlock->getNumber(), to->getNumber());
@@ -1673,7 +1673,7 @@ void TR_SinkStores::doSinking()
             else
                {
 //               if (trace())
-  //                traceMsg(comp(), "    adding store [" POINTER_PRINTF_FORMAT "] to movedStores (edge placement)\n", store);
+  //                traceMsg(comp(), "    adding store [" TR_FMTSPC_PTR "] to movedStores (edge placement)\n", PTR_TO_FMTSPC_PTR(store));
                TR_ASSERT(!movedStores.find(store), "shouldn't find a moved store more than once");
                movedStores.add(store);
                }
@@ -1700,7 +1700,7 @@ void TR_SinkStores::doSinking()
             else
                {
                if (trace())
-                  traceMsg(comp(), "    adding store [" POINTER_PRINTF_FORMAT "] to movedStores (block placement)\n", store);
+                  traceMsg(comp(), "    adding store [" TR_FMTSPC_PTR "] to movedStores (block placement)\n", PTR_TO_FMTSPC_PTR(store));
                TR_ASSERT(!movedStores.find(store), "shouldn't find a moved store more than once");
                movedStores.add(store);
                }
@@ -1713,7 +1713,7 @@ void TR_SinkStores::doSinking()
       {
       TR::TreeTop *originalStore = storesToRemove.popHead();
       if (trace())
-         traceMsg(comp(), "Removing original store [" POINTER_PRINTF_FORMAT "]\n", originalStore->getNode());
+         traceMsg(comp(), "Removing original store [" TR_FMTSPC_PTR "]\n", PTR_TO_FMTSPC_PTR(originalStore->getNode()));
 
       if (movedStores.find(originalStore))
          {
@@ -2134,7 +2134,7 @@ TR_SinkStores::isCorrectCommonedLoad(TR::Node *commonedLoad, TR::Node *searchNod
    if (commonedLoad == searchNode)
       {
       if (trace())
-         traceMsg(comp(),"           found commonedLoad = " POINTER_PRINTF_FORMAT "\n", commonedLoad);
+         traceMsg(comp(),"           found commonedLoad = " TR_FMTSPC_PTR "\n", PTR_TO_FMTSPC_PTR(commonedLoad));
       return true;
       }
    for (int32_t i = searchNode->getNumChildren()-1; i >= 0; i--)
@@ -2182,7 +2182,7 @@ TR_SinkStores::genStoreToTempSyms(TR::TreeTop *storeLocation,
          if (trace())
             traceMsg(comp(), "(Transformation #%d start - create temp store)\n", _numTransformations);
          if (performTransformation(comp(),
-               "%s Create new temp store node for commoned loads sym %d and place above store [" POINTER_PRINTF_FORMAT "]\n",OPT_DETAILS, symIdx, storeLocation->getNode())
+               "%s Create new temp store node for commoned loads sym %d and place above store [" TR_FMTSPC_PTR "]\n",OPT_DETAILS, symIdx, PTR_TO_FMTSPC_PTR(storeLocation->getNode()))
              && performThisTransformation())
             {
             // found first ref so reset killed commoned loads for this sym
@@ -2210,7 +2210,7 @@ TR_SinkStores::genStoreToTempSyms(TR::TreeTop *storeLocation,
                   {
                   store->_movable = false;
                   if (trace())
-                     traceMsg(comp(),"\tmarking store candidate [" POINTER_PRINTF_FORMAT "] as unmovable because dependent temp store transformation #%d was skipped\n", store->_useOrKillInfo->_tt->getNode(), _numTransformations);
+                     traceMsg(comp(),"\tmarking store candidate [" TR_FMTSPC_PTR "] as unmovable because dependent temp store transformation #%d was skipped\n", PTR_TO_FMTSPC_PTR(store->_useOrKillInfo->_tt->getNode()), _numTransformations);
                   }
                storeElement = storeElement->getNextElement();
                }
@@ -2246,7 +2246,7 @@ TR_SinkStores::replaceLoadsWithTempSym(TR::Node *newNode, TR::Node *origNode, TR
          if (symRef0)
             {
             if (trace())
-               traceMsg(comp(),"         replacing symRef on duplicate node " POINTER_PRINTF_FORMAT " (of original node " POINTER_PRINTF_FORMAT ") with temp symRef " POINTER_PRINTF_FORMAT "\n", newNode, origNode, symRef0);
+               traceMsg(comp(),"         replacing symRef on duplicate node " TR_FMTSPC_PTR " (of original node " TR_FMTSPC_PTR ") with temp symRef " TR_FMTSPC_PTR "\n", PTR_TO_FMTSPC_PTR(newNode), PTR_TO_FMTSPC_PTR(origNode), PTR_TO_FMTSPC_PTR(symRef0));
             newNode->setSymbolReference(symRef0);
             }
          }
@@ -2337,24 +2337,24 @@ bool TR_GeneralSinkStores::sinkStorePlacement(TR_MovableStore *movableStore,
    if (movableStore->_isLoadStatic && blockContainsCall(sourceBlock->asBlock(), comp()))
       {
       if (trace())
-         traceMsg(comp(), "            TT[" POINTER_PRINTF_FORMAT "] Can't push sym %d to end of source block_%d (static load)\n", tt->getNode(), symIdx, sourceBlock->getNumber());
+         traceMsg(comp(), "            TT[" TR_FMTSPC_PTR "] Can't push sym %d to end of source block_%d (static load)\n", PTR_TO_FMTSPC_PTR(tt->getNode()), symIdx, sourceBlock->getNumber());
       return false;
       }
    if (!storeCanMoveThroughBlock(_symbolsKilledInBlock[sourceBlockNumber], _symbolsUsedInBlock[sourceBlockNumber], symIdx, allBlockUsedSymbols, allBlockKilledSymbols))
       {
       if (trace())
-         traceMsg(comp(), "            TT[" POINTER_PRINTF_FORMAT "] Can't push sym %d to end of source block_%d\n", tt->getNode(), symIdx, sourceBlock->getNumber());
+         traceMsg(comp(), "            TT[" TR_FMTSPC_PTR "] Can't push sym %d to end of source block_%d\n", PTR_TO_FMTSPC_PTR(tt->getNode()), symIdx, sourceBlock->getNumber());
       return false;
       }
    else if (!(_liveOnNotAllPaths->_outSetInfo[sourceBlockNumber]->get(symIdx)))
       {
       if (trace())
-         traceMsg(comp(), "            TT[" POINTER_PRINTF_FORMAT "] LONAP is false for sym %d at the end of source block_%d\n", tt->getNode(), symIdx, sourceBlock->getNumber());
+         traceMsg(comp(), "            TT[" TR_FMTSPC_PTR "] LONAP is false for sym %d at the end of source block_%d\n", PTR_TO_FMTSPC_PTR(tt->getNode()), symIdx, sourceBlock->getNumber());
       return false;
       }
 
    if (trace())
-      traceMsg(comp(), "            TT[" POINTER_PRINTF_FORMAT "] Pushed sym %d to end of source block_%d\n", tt->getNode(), symIdx, sourceBlock->getNumber());
+      traceMsg(comp(), "            TT[" TR_FMTSPC_PTR "] Pushed sym %d to end of source block_%d\n", PTR_TO_FMTSPC_PTR(tt->getNode()), symIdx, sourceBlock->getNumber());
 
    // this flag will be used to see if sinking is useful
    bool sunkPastNonLivePath = false;
@@ -2468,7 +2468,7 @@ bool TR_GeneralSinkStores::sinkStorePlacement(TR_MovableStore *movableStore,
 
       int32_t blockNumber = block->getNumber();
       if (trace())
-         traceMsg(comp(), "            TT[" POINTER_PRINTF_FORMAT "] trying to sink into block_%d\n", tt->getNode(), blockNumber);
+         traceMsg(comp(), "            TT[" TR_FMTSPC_PTR "] trying to sink into block_%d\n", PTR_TO_FMTSPC_PTR(tt->getNode()), blockNumber);
 
       TR::Block *placementBlock = block;
       block->setVisitCount(visitCount);

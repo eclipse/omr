@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,8 +81,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCHelperCallSnippet * snippet)
    printPrefix(pOutFile, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT "\t\t; %s %s",
-      restartLabel ? "bl" : "b", (intptr_t)cursor + distance, getName(snippet->getDestination()), info);
+   trfprintf(pOutFile, "%s \t" TR_FMTSPC_PTR "\t\t; %s %s",
+      restartLabel ? "bl" : "b", INT_TO_FMTSPC_PTR((intptr_t)cursor + distance), getName(snippet->getDestination()), info);
 
    if (restartLabel)
       {
@@ -90,7 +90,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCHelperCallSnippet * snippet)
       printPrefix(pOutFile, NULL, cursor, 4);
       distance = *((int32_t *) cursor) & 0x03fffffc;
       distance = (distance << 6) >> 6;   // sign extend
-      trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Restart", (intptr_t)cursor + distance);
+      trfprintf(pOutFile, "b \t" TR_FMTSPC_PTR "\t\t; Restart", INT_TO_FMTSPC_PTR((intptr_t)cursor + distance));
       }
    }
 

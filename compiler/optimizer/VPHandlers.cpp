@@ -6474,7 +6474,7 @@ TR::Node *constrainLdiv(OMR::ValuePropagation *vp, TR::Node *node)
           lhsConstraint && (lhsConstraint->getLow() >= ((int64_t) TR::getMinSigned<TR::Int32>())) && (lhsConstraint->getHigh() <= ((int64_t) TR::getMaxSigned<TR::Int32>())) &&
           rhsConstraint && (rhsConstraint->getLow() >= ((int64_t) TR::getMinSigned<TR::Int32>())) && (rhsConstraint->getHigh() <= ((int64_t) TR::getMaxSigned<TR::Int32>())) &&
           ((lhsConstraint->getLow() > TR::getMinSigned<TR::Int32>()) || (rhsConstraint->getLow() > -1) || (rhsConstraint->getHigh() < -1)) &&
-          performTransformation(vp->comp(), "%sChange node [" POINTER_PRINTF_FORMAT "] ldiv->i2l of idiv\n",OPT_DETAILS, node))
+          performTransformation(vp->comp(), "%sChange node [" TR_FMTSPC_PTR "] ldiv->i2l of idiv\n", OPT_DETAILS, PTR_TO_FMTSPC_PTR(node)))
          {
          // Change node into i2l to be used by any commoned references
          TR::Node::recreate(node, TR::i2l);
@@ -7295,8 +7295,8 @@ TR::Node *constrainIshr(OMR::ValuePropagation *vp, TR::Node *node)
    checkForNonNegativeAndOverflowProperties(vp, node);
 
    TR::Node * firstChild = node->getFirstChild();
-   if(firstChild->isNonNegative() /*&& firstChild->getType().isSignedInt()*/ && vp->lastTimeThrough() &&
-      performTransformation(vp->comp(), "%sChange node [" POINTER_PRINTF_FORMAT "] ishr->iushr\n",OPT_DETAILS, node))
+   if (firstChild->isNonNegative() /*&& firstChild->getType().isSignedInt()*/ && vp->lastTimeThrough() &&
+      performTransformation(vp->comp(), "%sChange node [" TR_FMTSPC_PTR "] ishr->iushr\n",OPT_DETAILS, PTR_TO_FMTSPC_PTR(node)))
       {
       TR::Node::recreate(node, TR::iushr);
       //TR::Node *lhs = node->getFirstChild();
@@ -7884,8 +7884,8 @@ TR::Node *constrainIand(OMR::ValuePropagation *vp, TR::Node *node)
          }
 
       if((bitsShifted < (int32_t)signBitsMaskedOff) && vp->lastTimeThrough() &&
-         performTransformation(vp->comp(), "%s Node [" POINTER_PRINTF_FORMAT "]: ishr -> iushr (parent ignores sign bits)\n",
-                                OPT_DETAILS, firstChild))
+         performTransformation(vp->comp(), "%s Node [" TR_FMTSPC_PTR "]: ishr -> iushr (parent ignores sign bits)\n",
+                                OPT_DETAILS, PTR_TO_FMTSPC_PTR(firstChild)))
          {
          TR::Node::recreate(firstChild, TR::iushr);
          //TR::Node *lhs = firstChild->getFirstChild();
@@ -8237,7 +8237,7 @@ void replaceWithSmallerType(OMR::ValuePropagation *vp, TR::Node *node)
       return;
 
 
-   if (performTransformation(comp, "%sReplace [" POINTER_PRINTF_FORMAT "] and [" POINTER_PRINTF_FORMAT "] with store and load of a smaller type\n", OPT_DETAILS, defNode, node))
+   if (performTransformation(comp, "%sReplace [" TR_FMTSPC_PTR "] and [" TR_FMTSPC_PTR "] with store and load of a smaller type\n", OPT_DETAILS, PTR_TO_FMTSPC_PTR(defNode), PTR_TO_FMTSPC_PTR(node)))
       {
       // Transform
       TR::Node *conv = TR::Node::create(convOpcode, 1, value);
@@ -10598,7 +10598,7 @@ static TR::Node *constrainCmpeqne(OMR::ValuePropagation *vp, TR::Node *node, boo
          if (((constValue == 1) && ((node->getOpCodeValue() == TR::icmpeq) || (node->getOpCodeValue() == TR::lcmpeq))) ||
              ((constValue == 0) && ((node->getOpCodeValue() == TR::icmpne) || (node->getOpCodeValue() == TR::lcmpne))))
             {
-            if (performTransformation(vp->comp(), "%sReduced identity operation on bool in node [" POINTER_PRINTF_FORMAT "] \n", OPT_DETAILS, node))
+            if (performTransformation(vp->comp(), "%sReduced identity operation on bool in node [" TR_FMTSPC_PTR "] \n", OPT_DETAILS, PTR_TO_FMTSPC_PTR(node)))
                {
                TR::Node *parent = vp->getCurrentParent();
                vp->invalidateValueNumberInfo();
@@ -10647,7 +10647,7 @@ static TR::Node *constrainCmpeqne(OMR::ValuePropagation *vp, TR::Node *node, boo
 
                  if (constValue == firstGrandConstValue)
                     {
-                    if (performTransformation(vp->comp(), "%sReduced 2 NOTs of bool in node [" POINTER_PRINTF_FORMAT "] \n", OPT_DETAILS, node))
+                    if (performTransformation(vp->comp(), "%sReduced 2 NOTs of bool in node [" TR_FMTSPC_PTR "] \n", OPT_DETAILS, PTR_TO_FMTSPC_PTR(node)))
                        {
                        TR::Node *parent = vp->getCurrentParent();
                        vp->invalidateValueNumberInfo();

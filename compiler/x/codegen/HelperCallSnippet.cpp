@@ -382,7 +382,7 @@ TR_Debug::printBody(TR::FILE *pOutFile, TR::X86HelperCallSnippet  * snippet, uin
             TR::StaticSymbol *sym = child->getSymbol()->getStaticSymbol();
             TR_ASSERT( sym, "Bad argument to helper call");
             printPrefix(pOutFile, NULL, bufferPos, 5);
-            trfprintf(pOutFile, "push\t" POINTER_PRINTF_FORMAT, sym->getStaticAddress());
+            trfprintf(pOutFile, "push\t" TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(sym->getStaticAddress()));
             bufferPos += 5;
             }
          else if (child->getOpCode().isLoadConst())
@@ -390,7 +390,7 @@ TR_Debug::printBody(TR::FILE *pOutFile, TR::X86HelperCallSnippet  * snippet, uin
             int32_t argValue = child->getInt();
             int32_t size = (argValue >= -128 && argValue <= 127) ? 2 : 5;
             printPrefix(pOutFile, NULL, bufferPos, size);
-            trfprintf(pOutFile, "push\t" POINTER_PRINTF_FORMAT, argValue);
+            trfprintf(pOutFile, "push\t" TR_FMTSPC_PTR, INT_TO_FMTSPC_PTR(argValue));
             bufferPos += size;
             }
          else
@@ -407,10 +407,10 @@ TR_Debug::printBody(TR::FILE *pOutFile, TR::X86HelperCallSnippet  * snippet, uin
       }
 
    printPrefix(pOutFile, NULL, bufferPos, 5);
-   trfprintf(pOutFile, "call\t%s \t%s Helper Address = " POINTER_PRINTF_FORMAT,
+   trfprintf(pOutFile, "call\t%s \t%s Helper Address = " TR_FMTSPC_PTR,
                  getName(snippet->getDestination()),
                  commentString(),
-                 sym->getMethodAddress());
+                 PTR_TO_FMTSPC_PTR(sym->getMethodAddress()));
    bufferPos += 5;
 
    if (snippet->getStackPointerAdjustment() != 0)

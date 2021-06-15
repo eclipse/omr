@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -381,11 +381,11 @@ compileMethodFromDetails(
             {
             const char *signature = compilee.signature(&trMemory);
             TR_VerboseLog::vlogAcquire();
-            TR_VerboseLog::write(TR_Vlog_COMP, "(%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
+            TR_VerboseLog::write(TR_Vlog_COMP, "(%s) %s @ " TR_FMTSPC_PTR "-" TR_FMTSPC_PTR,
                                            compiler.getHotnessName(compiler.getMethodHotness()),
                                            signature,
-                                           startPC,
-                                           compiler.cg()->getCodeEnd());
+                                           PTR_TO_FMTSPC_PTR(startPC),
+                                           PTR_TO_FMTSPC_PTR(compiler.cg()->getCodeEnd()));
 
             if (TR::Options::getVerboseOption(TR_VerbosePerformance))
                {

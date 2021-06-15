@@ -2344,7 +2344,7 @@ OMR::Node::isNotCollected()
 bool
 OMR::Node::computeIsInternalPointer()
    {
-   TR_ASSERT(self()->getOpCode().hasPinningArrayPointer(), "Opcode %s is not supported, node is " POINTER_PRINTF_FORMAT, self()->getOpCode().getName(), self());
+   TR_ASSERT(self()->getOpCode().hasPinningArrayPointer(), "Opcode %s is not supported, node is " TR_FMTSPC_PTR, self()->getOpCode().getName(), PTR_TO_FMTSPC_PTR(self()));
    return self()->computeIsCollectedReference();
    }
 
@@ -2455,7 +2455,7 @@ OMR::Node::computeIsCollectedReferenceImpl(TR::NodeChecklist &processedNodesColl
       // be able to tell its collectedness from its symref.
       if (op.isLoadVar() || op.isLoadAddr() || op.isLoadReg())
          {
-         TR_ASSERT(curNode->hasSymbolReference() || curNode->hasRegLoadStoreSymbolReference(), "node " POINTER_PRINTF_FORMAT "(%s) should have symbol reference", curNode, op.getName());
+         TR_ASSERT(curNode->hasSymbolReference() || curNode->hasRegLoadStoreSymbolReference(), "node " TR_FMTSPC_PTR "(%s) should have symbol reference", PTR_TO_FMTSPC_PTR(curNode), op.getName());
          TR::Symbol *symbol = curNode->getSymbolReference()->getSymbol();
          // isCollectedReference() responds false to generic int shadows because their type
          // is int. However, address type generic int shadows refer to collected slots.
@@ -2501,7 +2501,7 @@ OMR::Node::computeIsCollectedReferenceImpl(TR::NodeChecklist &processedNodesColl
                   return recordProcessedNodeResult(receiverNode, TR_maybe, processedNodesCollected, processedNodesNotCollected);
                }
          default:
-            TR_ASSERT(false, "Unsupported opcode %s on node " POINTER_PRINTF_FORMAT, op.getName(), curNode);
+            TR_ASSERT(false, "Unsupported opcode %s on node " TR_FMTSPC_PTR, op.getName(), PTR_TO_FMTSPC_PTR(curNode));
             return TR_no;
          }
       }
@@ -2512,7 +2512,7 @@ bool
 OMR::Node::addressPointsAtObject()
    {
    TR::Compilation * comp = TR::comp();
-   TR_ASSERT(self()->getDataType() == TR::Address, "addressPointsAtObject should only be called for nodes whose data type is TR::Address; node is " POINTER_PRINTF_FORMAT, self());
+   TR_ASSERT(self()->getDataType() == TR::Address, "addressPointsAtObject should only be called for nodes whose data type is TR::Address; node is " TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(self()));
 
    if (self()->getOpCodeValue() == TR::aconst)
       return false;
@@ -3102,7 +3102,7 @@ OMR::Node::setMonitorClassInNode(TR_OpaqueClassBlock * classz)
 TR::Node *
 OMR::Node::getNullCheckReference()
    {
-   TR_ASSERT((self()->getOpCode().isNullCheck() || (self()->getOpCodeValue() == TR::checkcastAndNULLCHK) || (self()->getOpCodeValue() == TR::ZEROCHK)), "Node::getNullCheckReference, expected NULLCHK node instead of " POINTER_PRINTF_FORMAT, self());
+   TR_ASSERT((self()->getOpCode().isNullCheck() || (self()->getOpCodeValue() == TR::checkcastAndNULLCHK) || (self()->getOpCodeValue() == TR::ZEROCHK)), "Node::getNullCheckReference, expected NULLCHK node instead of " TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(self()));
    TR::Node *firstChild = self()->getFirstChild();
 
    if ((self()->getOpCodeValue() == TR::checkcastAndNULLCHK) || (self()->getOpCodeValue() == TR::ZEROCHK))
@@ -3132,7 +3132,7 @@ OMR::Node::getNullCheckReference()
 void
 OMR::Node::setNullCheckReference(TR::Node *refNode)
    {
-   TR_ASSERT((self()->getOpCode().isNullCheck() || (self()->getOpCodeValue() == TR::checkcastAndNULLCHK)), "Node::getNullCheckReference, expected NULLCHK node instead of " POINTER_PRINTF_FORMAT, self());
+   TR_ASSERT((self()->getOpCode().isNullCheck() || (self()->getOpCodeValue() == TR::checkcastAndNULLCHK)), "Node::getNullCheckReference, expected NULLCHK node instead of " TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(self()));
    TR::Node *firstChild = self()->getFirstChild();
 
    if (self()->getOpCodeValue() == TR::checkcastAndNULLCHK)
@@ -3143,7 +3143,7 @@ OMR::Node::setNullCheckReference(TR::Node *refNode)
 
    if (firstChild->getNumChildren() == 0)
       {
-      TR_ASSERT(0, "Null check node " POINTER_PRINTF_FORMAT " does not have null check reference", self());
+      TR_ASSERT(0, "Null check node " TR_FMTSPC_PTR " does not have null check reference", PTR_TO_FMTSPC_PTR(self()));
       }
 
    // Find the reference to be checked.
@@ -3176,7 +3176,7 @@ OMR::Node::setNullCheckReference(TR::Node *refNode)
 int32_t
 OMR::Node::getFirstArgumentIndex()
    {
-   TR_ASSERT(self()->getOpCode().isCall(), "getFirstArgumentIndex called for non-call node " POINTER_PRINTF_FORMAT, self());
+   TR_ASSERT(self()->getOpCode().isCall(), "getFirstArgumentIndex called for non-call node " TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(self()));
 
    if (self()->getOpCode().isIndirect())
       return 1;
@@ -3536,7 +3536,7 @@ OMR::Node::extractTheNullCheck(TR::TreeTop * prevTreeTop)
    {
    TR::Compilation * comp = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::NULLCHK || self()->getOpCodeValue() == TR::ResolveAndNULLCHK,
-          "extractTheNullCheck can only be called for a null check node; node is " POINTER_PRINTF_FORMAT, self());
+          "extractTheNullCheck can only be called for a null check node; node is " TR_FMTSPC_PTR, PTR_TO_FMTSPC_PTR(self()));
 
    TR::Node * passThru = TR::Node::create(TR::PassThrough, 1, self()->getNullCheckReference());
    TR::Node * newNullCheckNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, passThru, self()->getSymbolReference());
@@ -4338,7 +4338,7 @@ OMR::Node::recursivelyDecReferenceCount()
       count = self()->decReferenceCount();
    else
       {
-      TR_ASSERT(self()->getOpCode().isTreeTop(), "OMR::Node::recursivelyDecReferenceCount() invoked for nontreetop node %s " POINTER_PRINTF_FORMAT " with count == 0", self()->getOpCode().getName(), self());
+      TR_ASSERT(self()->getOpCode().isTreeTop(), "OMR::Node::recursivelyDecReferenceCount() invoked for nontreetop node %s " TR_FMTSPC_PTR " with count == 0", self()->getOpCode().getName(), PTR_TO_FMTSPC_PTR(self()));
       count = 0;
       }
 
@@ -4346,7 +4346,7 @@ OMR::Node::recursivelyDecReferenceCount()
       {
       for (int32_t childCount = self()->getNumChildren()-1; childCount >= 0; childCount--)
          {
-         TR_ASSERT(self()->getChild(childCount) != NULL, "parent %s " POINTER_PRINTF_FORMAT " trying to decrement reference of NULL child\n", self()->getOpCode().getName(), self());
+         TR_ASSERT(self()->getChild(childCount) != NULL, "parent %s " TR_FMTSPC_PTR " trying to decrement reference of NULL child\n", self()->getOpCode().getName(), PTR_TO_FMTSPC_PTR(self()));
          self()->getChild(childCount)->recursivelyDecReferenceCount();
          }
       }
