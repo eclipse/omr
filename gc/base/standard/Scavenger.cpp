@@ -973,14 +973,7 @@ MM_Scavenger::calcGCStats(MM_EnvironmentStandard *env)
 			scavengerGCStats->_avgTenureBytes = (uintptr_t)(scavengerGCStats->_flipBytes / 2);
 		}
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-			if (_extensions->debugConcurrentMark) {
-				OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
-            	omrtty_printf("Tenured bytes: %zu\navgTenureBytes: %zu\ntenureBytesDeviation: %f\navgTenureBytesDeviation: %zu\n",
-				tenureAggregateBytes,
-				scavengerGCStats->_avgTenureBytes,
-				tenureBytesDeviation,
-				scavengerGCStats->_avgTenureBytesDeviation);
-			}
+	Trc_MM_Scavenger_calcGCStats(env->getLanguageVMThread(), tenureAggregateBytes, scavengerGCStats->_avgTenureBytes, tenureBytesDeviation,	scavengerGCStats->_avgTenureBytesDeviation);
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
 	}
 }

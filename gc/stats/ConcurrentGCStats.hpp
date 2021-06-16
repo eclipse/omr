@@ -27,9 +27,11 @@
 #include "omrport.h"
 #include "modronbase.h"
 #include "omr.h"
+#include "ut_j9mm.h"
 
 #include "AtomicOperations.hpp"
 #include "Base.hpp"
+#include "EnvironmentBase.hpp"
 
 class MM_EnvironmentBase;
 
@@ -140,19 +142,17 @@ public:
 		}
 	}	
 	
-	MMINLINE void  printAllocationTaxReport(OMR_VM *omrVM)
+	MMINLINE void  printAllocationTaxReport(MM_EnvironmentBase *env)
 	{
-		OMRPORT_ACCESS_FROM_OMRVM(omrVM);
-		
-		omrtty_printf("Concurrent mark analysis: Total Allocations: %zu Tax Paid 0%%: %zu 25%%: %zu 50%%: %zu  75%%: %zu 100%%+: %zu\n", 
+		Trc_MM_ConcurrentGCStats_printAllocationTaxReport(env->getLanguageVMThread(), 
 						_allocationsTaxed,
 						_allocationsTaxedAt0,
 						_allocationsTaxedAt25,
 						_allocationsTaxedAt50,
 						_allocationsTaxedAt75,
 						_allocationsTaxedAt100
-					);	
-		
+					);
+
 	}
 	
 	MMINLINE uintptr_t getTraceSizeCount() { return (uintptr_t) _traceSizeCount; };
