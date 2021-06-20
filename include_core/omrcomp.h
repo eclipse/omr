@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -333,6 +333,10 @@ typedef struct {
 #define VMINLINE_ALWAYS inline
 #endif
 
+#else /* __cplusplus */
+#if defined(__C99_INLINE)
+#define VM_INLINE_ALWAYS inline
+#endif
 #endif /* __cplusplus */
 
 #else
