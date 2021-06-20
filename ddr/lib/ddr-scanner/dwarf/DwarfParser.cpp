@@ -20,6 +20,7 @@
  *******************************************************************************/
 
 #include "ddr/scanner/dwarf/DwarfFunctions.hpp"
+#include "ddr/scanner/dwarf/DwarfScanner.hpp"
 
 /* Statics to create: */
 static bool findTool(char **buffer, const char *command);
@@ -29,15 +30,52 @@ static int parseDwarfInfo(char *line, Dwarf_Die *lastCreatedDie, Dwarf_Die *curr
 	size_t *lastIndent, unordered_map<Dwarf_Die *, Dwarf_Off> *refToPopulate, Dwarf_Error *error);
 static int parseCompileUnit(char *line, size_t *lastIndent, Dwarf_Error *error);
 static int createDwarfDie(Dwarf_Half tag, Dwarf_Die *lastCreatedDie,
-	Dwarf_Die *currentDie, size_t *lastIndent, size_t spaces, Dwarf_Error *error);
+	Dwarf_Die *currentDie, size_t *lastIndent, size_t indent, Dwarf_Error *error);
 static int parseDwarfDie(char *line, Dwarf_Die *lastCreatedDie,
-	Dwarf_Die *currentDie, size_t *lastIndent, size_t spaces, Dwarf_Error *error);
-static void parseTagString(char *string, size_t length, Dwarf_Half *tag);
+	Dwarf_Die *currentDie, size_t *lastIndent, size_t indent, Dwarf_Error *error);
+static void parseTagString(const char *string, size_t length, Dwarf_Half *tag);
 static int parseAttribute(char *line, Dwarf_Die *lastCreatedDie,
 	unordered_map<Dwarf_Die *, Dwarf_Off> *refToPopulate, Dwarf_Error *error);
-static void parseAttrType(char *string, size_t length, Dwarf_Half *type, Dwarf_Half *form);
+static void parseAttrType(const char *string, size_t length, Dwarf_Half *type, Dwarf_Half *form);
+
 Dwarf_CU_Context * Dwarf_CU_Context::_firstCU;
 Dwarf_CU_Context * Dwarf_CU_Context::_currentCU;
+
+/*
+ * Equivalent to strlen(string_literal) when given a literal string.
+ * E.g.: LITERAL_STRLEN("lib") == 3
+ */
+#define LITERAL_STRLEN(string_literal) (sizeof(string_literal) - 1)
+
+static void
+logParseError(const char * message, const char * line)
+{
+	fprintf(stderr, "%s:\n%s\n\n", message, line);
+}
+
+/*
+ * Return a pointer to the character following the first occurrence of 'substr'
+ * in 'buffer' or NULL if not found.
+ *
+ * For example, scanPast("apple pie", "apple") returns a pointer to " pie".
+ */
+static char *
+scanPast(char *buffer, const char *substr)
+{
+	char *value = strstr(buffer, substr);
+
+	if (NULL != value) {
+		value += strlen(substr);
+	}
+
+	return value;
+}
+
+static bool
+strStartsWith(const char *str, const char *prefix)
+{
+	return 0 == strncmp(str, prefix, strlen(prefix));
+}
 
 int
 dwarf_finish(Dwarf_Debug dbg, Dwarf_Error *error)
@@ -70,41 +108,29 @@ dwarf_init(int fd,
 	Dwarf_CU_Context::_currentCU = NULL;
 	Dwarf_CU_Context::_firstCU = NULL;
 
-	/* Get the original file path of the opened file. */
-	char filepath[PATH_MAX] = {0};
-	if (0 > fcntl(fd, F_GETPATH, filepath)) {
-		ret = DW_DLV_ERROR;
-		setError(error, DW_DLE_FNO);
-	}
-
 	/* Call the dwarfdump command on the file's dSYM bundle and read its output.
 	 * The bundle must first be created by using dsymutil on an object or executable.
 	 */
 	FILE *fp = NULL;
-	if (DW_DLV_OK == ret) {
+	/*
+	 * dwarfdump-classic doesn't support all the DWARF concepts used by
+	 * newer compiler versions, so we prefer the more modern dwarfdump.
+	 */
+	char *toolpath = NULL;
+	if (findTool(&toolpath, "xcrun -f dwarfdump 2>/dev/null")
+	||  findTool(&toolpath, "xcrun -f dwarfdump-classic 2>/dev/null")
+	) {
+		stringstream command;
+		command << toolpath << " " << DwarfScanner::getScanFileName() << " 2>&1";
+		fp = popen(command.str().c_str(), "r");
+	}
+	if (NULL != toolpath) {
+		free(toolpath);
+	}
 
-		/* On some Mac machines, calling "dwarfdump" in shell calls a version named
-		 * "llvm-dwarfdump" instead of the version of dwarfdump DDR uses, which is
-		 * instead named "dwarfdump-classic" on those systems. Thus, we first try to
-		 * find "dwarfdump-classic" directly in case "dwarfdump" is linked to
-		 * "llvm-dwarfdump". If we don't find "dwarfdump-classic", then the machine
-		 * we are on uses the correct version of dwarfdump.
-		 */
-		char *toolpath = NULL;
-		if (findTool(&toolpath, "xcrun -f dwarfdump-classic 2>/dev/null")
-		||  findTool(&toolpath, "xcrun -f dwarfdump 2>/dev/null")) {
-			stringstream command;
-			command << toolpath << " " << filepath << " 2>&1";
-			fp = popen(command.str().c_str(), "r");
-		}
-		if (NULL != toolpath) {
-			free(toolpath);
-		}
-
-		if (NULL == fp) {
-			ret = DW_DLV_ERROR;
-			setError(error, DW_DLE_IOF);
-		}
+	if (NULL == fp) {
+		ret = DW_DLV_ERROR;
+		setError(error, DW_DLE_IOF);
 	}
 
 	/* Parse the output from dwarfdump to create the Die tree. */
@@ -116,7 +142,7 @@ dwarf_init(int fd,
 		Dwarf_Die currentDie = NULL;
 		size_t lastIndent = 0;
 		while ((-1 != getline(&buffer, &len, fp)) && (DW_DLV_OK == ret)) {
-			if (0 == strncmp(buffer, "error", 5)) {
+			if (strStartsWith(buffer, "error")) {
 				ret = DW_DLV_ERROR;
 				setError(error, DW_DLE_NOB);
 			} else {
@@ -172,8 +198,8 @@ cleanUnknownDies(Dwarf_Die die)
 		if (DW_TAG_unknown == die->_tag) {
 			Dwarf_Die toDelete = die;
 			Dwarf_Die nextDie = NULL;
-			if (NULL != die->_child) {
-				Dwarf_Die child = die->_child;
+			Dwarf_Die child = die->_child;
+			if (NULL != child) {
 				for (; NULL != child->_sibling; child = child->_sibling) {
 					child->_parent = toDelete->_parent;
 				}
@@ -183,10 +209,10 @@ cleanUnknownDies(Dwarf_Die die)
 			} else {
 				nextDie = toDelete->_sibling;
 			}
-			if (NULL == previousSibling) {
-				toDelete->_parent->_child = nextDie;
-			} else {
+			if (NULL != previousSibling) {
 				previousSibling->_sibling = nextDie;
+			} else if (NULL != toDelete->_parent) {
+				toDelete->_parent->_child = nextDie;
 			}
 			die = nextDie;
 			toDelete->_child = NULL;
@@ -221,50 +247,61 @@ parseDwarfInfo(char *line, Dwarf_Die *lastCreatedDie, Dwarf_Die *currentDie,
 	 * The amount of whitespace varies to indicate parent-child relationships
 	 * between Die's.
 	 */
-	if (0 == strncmp("0x", line, 2)) {
-		/* Find the end of the address and number of spaces. Amount of indentation
+	if (strStartsWith(line, "0x")) {
+		/* Find the end of the address and the amount of indentation which
 		 * represents parent-child relationship between Dwarf_Die's.
 		 */
 		char *endOfAddress = NULL;
 		Dwarf_Off address = strtoul(line, &endOfAddress, 16);
-		size_t spaces = 0;
+		size_t indent = 0;
 		if (NULL != endOfAddress) {
-			endOfAddress += 1;
-			spaces = strspn(endOfAddress, " ");
+			endOfAddress += 1; /* skip ':' */
+			indent = endOfAddress + strspn(endOfAddress, " ") - line;
 		}
-		/* The string "TAG_[tag]" or "Compile Unit:" or "NULL" should be next. */
-		if (0 == strncmp(endOfAddress + spaces, "Compile Unit: ", 14)) {
+		/* The string "Compile Unit:" or "DW_TAG_[tag]" or "TAG_[tag]" or "NULL" should be next. */
+		if (strStartsWith(line + indent, "Compile Unit: ")) {
 			cleanUnknownDiesInCU(Dwarf_CU_Context::_currentCU);
-			ret = parseCompileUnit(endOfAddress + spaces + 14, lastIndent, error);
+			ret = parseCompileUnit(line + indent + LITERAL_STRLEN("Compile Unit: "), lastIndent, error);
 			lastCreatedDie = NULL;
-		} else if (0 == strncmp(endOfAddress + spaces, "TAG_", 4)) {
-			ret = parseDwarfDie(endOfAddress + spaces + 4, lastCreatedDie, currentDie, lastIndent, spaces, error);
-			if (DW_DLV_OK == ret && DW_TAG_unknown != (*lastCreatedDie)->_tag) {
+		} else if (strStartsWith(line + indent, "DW_TAG_")) {
+			ret = parseDwarfDie(line + indent + LITERAL_STRLEN("DW_TAG_"), lastCreatedDie, currentDie, lastIndent, indent, error);
+			if ((DW_DLV_OK == ret) && (DW_TAG_unknown != (*lastCreatedDie)->_tag)) {
 				Dwarf_Die_s::refMap[address] = *lastCreatedDie;
 			}
-		} else if (0 == strncmp(endOfAddress + spaces, "Unknown DW_TAG constant", 23)) {
-			/* Create a placeholder DIE for a tag that dwarfdump-classic doesn't understand. */
-			ret = createDwarfDie(DW_TAG_unknown, lastCreatedDie, currentDie, lastIndent, spaces, error);
-		} else if (0 == strncmp(endOfAddress + spaces, "NULL", 4)) {
+		} else if (strStartsWith(line + indent, "TAG_")) {
+			ret = parseDwarfDie(line + indent + LITERAL_STRLEN("TAG_"), lastCreatedDie, currentDie, lastIndent, indent, error);
+			if ((DW_DLV_OK == ret) && (DW_TAG_unknown != (*lastCreatedDie)->_tag)) {
+				Dwarf_Die_s::refMap[address] = *lastCreatedDie;
+			}
+		} else if (strStartsWith(line + indent, "Unknown DW_TAG constant")) {
+			/* Create a place-holder DIE for a tag that dwarfdump-classic doesn't understand. */
+			ret = createDwarfDie(DW_TAG_unknown, lastCreatedDie, currentDie, lastIndent, indent, error);
+		} else if (strStartsWith(line + indent, "NULL")) {
 			/* A "NULL" line indicates going up one level in the Die tree.
 			 * Process it only if the current level contained a Die that was
 			 * processed.
 			 */
-			if (spaces <= *lastIndent) {
+			// FIXME handle closing multiple tags?
+			if ((indent <= *lastIndent) && (NULL != *lastCreatedDie)) {
 				*lastCreatedDie = (*lastCreatedDie)->_parent;
 			}
 		} else {
+			logParseError("parseDwarfInfo", line);
 			ret = DW_DLV_ERROR;
 			setError(error, DW_DLE_VMM);
 		}
-	} else if ((0 == strncmp("  ", line, 2)) && (NULL != *currentDie)) {
-		/* Die attribute lines begin with "[whitespace...] AT_". To belong
-		 * to the last Die to be created, it must contain 12 spaces more
-		 * than the last indentation (For the size of the Die offset text).
+	} else if ((strStartsWith(line, "  ")) && (NULL != *currentDie)) {
+		/* A Die attribute line begins with "[whitespace...] DW_AT_" or "[whitespace...] AT_".
+		 * To belong to the last Die to be created, it must indented more than the line
+		 * with the DIE tag.
 		 */
-		size_t spaces = strspn(line, " ");
-		if ((spaces == *lastIndent + 12) && (0 == strncmp(line + spaces, "AT_", 3))) {
-			ret = parseAttribute(line + spaces + 3, lastCreatedDie, refToPopulate, error);
+		size_t indent = strspn(line, " ");
+		if (indent > *lastIndent) {
+			if (strStartsWith(line + indent, "DW_AT_")) {
+				ret = parseAttribute(line + indent + LITERAL_STRLEN("DW_AT_"), lastCreatedDie, refToPopulate, error);
+			} else if (strStartsWith(line + indent, "AT_")) {
+				ret = parseAttribute(line + indent + LITERAL_STRLEN("AT_"), lastCreatedDie, refToPopulate, error);
+			}
 		}
 	}
 	return ret;
@@ -283,51 +320,59 @@ parseCompileUnit(char *line, size_t *lastIndent, Dwarf_Error *error)
 	Dwarf_Half addressSize = 0;
 	Dwarf_Unsigned nextCUheaderOffset = 0;
 
-	char *valueString = strstr(line, "length = ");
+	char *valueString = scanPast(line, "length = ");
 	if (NULL == valueString) {
+		logParseError("expect: 'length = '", line);
 		ret = DW_DLV_ERROR;
 		setError(error, DW_DLE_VMM);
 	} else {
-		CUheaderLength = (Dwarf_Unsigned)strtoul(valueString + 9, &valueString, 16);
+		CUheaderLength = (Dwarf_Unsigned)strtoul(valueString, &valueString, 16);
 	}
 
 	if (DW_DLV_OK == ret) {
-		valueString = strstr(valueString, "version = ");
+		valueString = scanPast(valueString, "version = ");
 		if (NULL == valueString) {
+			logParseError("expect: 'version = '", line);
 			ret = DW_DLV_ERROR;
 			setError(error, DW_DLE_VMM);
 		} else {
-			versionStamp = (Dwarf_Half)strtoul(valueString + 10, &valueString, 16);
+			versionStamp = (Dwarf_Half)strtoul(valueString, &valueString, 16);
 		}
 	}
 
 	if (DW_DLV_OK == ret) {
-		valueString = strstr(valueString, "abbr_offset = ");
+		valueString = scanPast(valueString, "abbr_offset = ");
 		if (NULL == valueString) {
+			logParseError("expect: 'abbr_offset = '", line);
 			ret = DW_DLV_ERROR;
 			setError(error, DW_DLE_VMM);
 		} else {
-			abbrevOffset = (Dwarf_Off)strtoul(valueString + 14, &valueString, 16);
+			abbrevOffset = (Dwarf_Off)strtoul(valueString, &valueString, 16);
 		}
 	}
 
 	if (DW_DLV_OK == ret) {
-		valueString = strstr(valueString, "addr_size = ");
+		valueString = scanPast(valueString, "addr_size = ");
 		if (NULL == valueString) {
+			logParseError("expect: 'addr_size = '", line);
 			ret = DW_DLV_ERROR;
 			setError(error, DW_DLE_VMM);
 		} else {
-			addressSize = (Dwarf_Half)strtoul(valueString + 12, &valueString, 16);
+			addressSize = (Dwarf_Half)strtoul(valueString, &valueString, 16);
 		}
 	}
 
 	if (DW_DLV_OK == ret) {
-		valueString = strstr(valueString, "(next CU at ");
-		if (NULL == valueString) {
+		char *nextUnit = scanPast(valueString, "(next unit at ");
+		if (NULL == nextUnit) {
+			nextUnit = scanPast(valueString, "(next CU at ");
+		}
+		if (NULL == nextUnit) {
+			logParseError("expect: '(next unit at ' or '(next CU at '", line);
 			ret = DW_DLV_ERROR;
 			setError(error, DW_DLE_VMM);
 		} else {
-			nextCUheaderOffset = (Dwarf_Unsigned)strtoul(valueString + 12, &valueString, 16);
+			nextCUheaderOffset = (Dwarf_Unsigned)strtoul(nextUnit, &nextUnit, 16);
 		}
 	}
 
@@ -359,7 +404,7 @@ parseCompileUnit(char *line, size_t *lastIndent, Dwarf_Error *error)
 
 static int
 createDwarfDie(Dwarf_Half tag, Dwarf_Die *lastCreatedDie,
-	Dwarf_Die *currentDie, size_t *lastIndent, size_t spaces, Dwarf_Error *error)
+	Dwarf_Die *currentDie, size_t *lastIndent, size_t indent, Dwarf_Error *error)
 {
 	int ret = DW_DLV_OK;
 	Dwarf_Die newDie = new Dwarf_Die_s;
@@ -381,11 +426,11 @@ createDwarfDie(Dwarf_Half tag, Dwarf_Die *lastCreatedDie,
 		if (0 == *lastIndent) {
 			/* No last indent indicates that this Die is at the start of a CU. */
 			Dwarf_CU_Context::_currentCU->_die = newDie;
-		} else if (spaces > *lastIndent) {
+		} else if (indent > *lastIndent) {
 			/* If the Die is indented farther than the last Die, it is a first child. */
 			newDie->_parent = *lastCreatedDie;
 			(*lastCreatedDie)->_child = newDie;
-		} else if (spaces <= *lastIndent) {
+		} else {
 			/* If the Die is indented equally to the last Die, it is a
 			* sibling Die. If the indentation has decreased, the last
 			* Die would have been updated to one level up the tree when
@@ -396,20 +441,20 @@ createDwarfDie(Dwarf_Half tag, Dwarf_Die *lastCreatedDie,
 		}
 		*lastCreatedDie = newDie;
 		*currentDie = newDie;
-		*lastIndent = spaces;
+		*lastIndent = indent;
 	}
 	return ret;
 }
 
 static int
 parseDwarfDie(char *line, Dwarf_Die *lastCreatedDie,
-	Dwarf_Die *currentDie, size_t *lastIndent, size_t spaces, Dwarf_Error *error)
+	Dwarf_Die *currentDie, size_t *lastIndent, size_t indent, Dwarf_Error *error)
 {
 	Dwarf_Half tag = DW_TAG_unknown;
-	size_t span = strcspn(line, " ");
+	size_t span = strcspn(line, "\t \n");
 	parseTagString(line, span, &tag);
 
-	return createDwarfDie(tag, lastCreatedDie, currentDie, lastIndent, spaces, error);
+	return createDwarfDie(tag, lastCreatedDie, currentDie, lastIndent, indent, error);
 }
 
 static const pair<const char *, Dwarf_Half> tagStrings[] = {
@@ -437,7 +482,7 @@ static const pair<const char *, Dwarf_Half> tagStrings[] = {
 };
 
 static void
-parseTagString(char *string, size_t length, Dwarf_Half *tag)
+parseTagString(const char *string, size_t length, Dwarf_Half *tag)
 {
 	size_t options = sizeof(tagStrings) / sizeof(tagStrings[0]);
 	for (size_t i = 0; i < options; ++i) {
@@ -457,7 +502,7 @@ parseAttribute(char *line, Dwarf_Die *lastCreatedDie,
 	/* Get the type and form of the attribute. */
 	Dwarf_Half type = DW_TAG_unknown;
 	Dwarf_Half form = DW_FORM_unknown;
-	size_t span = strcspn(line, "(");
+	size_t span = strcspn(line, "\t (");
 	parseAttrType(line, span, &type, &form);
 
 	if ((DW_AT_unknown != type) && (DW_FORM_unknown != form)) {
@@ -472,50 +517,44 @@ parseAttribute(char *line, Dwarf_Die *lastCreatedDie,
 			newAttr->_form = form;
 			newAttr->_ref = NULL;
 
+			const char *valueStart = line + span + strspn(line + span, "\t (");
+
 			/* Parse the value of the attribute based on its form. */
-			if (DW_AT_decl_file == type) {
-				char *valueStart = line + span + 3;
-				size_t valueLength = strchr(valueStart, '"') - valueStart;
-				newAttr->_stringdata = strndup(valueStart, valueLength);
+			if ((DW_FORM_string == form) || (DW_AT_decl_file == type)) {
+				const char *firstQuote = strchr(valueStart, '"');
+				const char *secondQuote = (NULL != firstQuote) ? strchr(firstQuote + 1, '"') : NULL;
+				if (NULL != secondQuote) {
+					newAttr->_stringdata = strndup(firstQuote + 1, secondQuote - firstQuote - 1);
+				}
 				if (NULL == newAttr->_stringdata) {
 					ret = DW_DLV_ERROR;
 					setError(error, DW_DLE_MAF);
 					newAttr->_udata = 0;
-				} else if (DW_TAG_unknown != (*lastCreatedDie)->_tag) {
+				} else if ((DW_AT_decl_file == type) && (DW_TAG_unknown != (*lastCreatedDie)->_tag)) {
 					string fileName = string(newAttr->_stringdata);
 					unordered_map<string, size_t>::const_iterator insertIt = Dwarf_CU_Context::_fileId.insert(make_pair(fileName, Dwarf_CU_Context::_fileId.size())).first;
 					/* whether the insert succeeded or not due to duplicates, the pair at the iterator will have the right index value */
 					newAttr->_udata = insertIt->second + 1; /* since this attribute is indexed at 1 */
-
-
-				}
-			} else if (DW_FORM_string == form) {
-				char *valueStart = line + span + 3;
-				size_t valueLength = strchr(valueStart, '"') - valueStart;
-				newAttr->_stringdata = strndup(valueStart, valueLength);
-				if (NULL == newAttr->_stringdata) {
-					ret = DW_DLV_ERROR;
-					setError(error, DW_DLE_MAF);
 				}
 			} else if (DW_FORM_ref1 == form) {
-				newAttr->_refdata = strtoul(line + span + 3, NULL, 16);
+				newAttr->_refdata = strtoul(valueStart, NULL, 16);
 				if (DW_TAG_unknown != (*lastCreatedDie)->_tag) {
 					refToPopulate->emplace(&newAttr->_ref, newAttr->_refdata);
 				}
 			} else if (DW_FORM_udata == form) {
-				newAttr->_udata = strtoul(line + span + 1, NULL, 0);
+				newAttr->_udata = strtoul(valueStart, NULL, 0);
 			} else if (DW_FORM_sdata == form) {
-				newAttr->_sdata = strtol(line + span + 1, NULL, 0);
+				newAttr->_sdata = strtol(valueStart, NULL, 0);
 			} else if (DW_FORM_flag == form) {
-				size_t whitespace = strspn(line + span + 1, " \t") + span + 1;
-				if (0 == strncmp(line + whitespace, "true", 4)) {
+				if (strStartsWith(valueStart, "true")) {
 					newAttr->_flag = 1;
-				} else if (0 == strncmp(line + whitespace, "false", 5)) {
+				} else if (strStartsWith(valueStart, "false")) {
 					newAttr->_flag = 0;
 				} else {
-					newAttr->_flag = 0 != strtol(line + whitespace, NULL, 0);
+					newAttr->_flag = 0 != strtol(valueStart, NULL, 0);
 				}
 			} else {
+				logParseError("parseAttribute", line);
 				ret = DW_DLV_ERROR;
 				setError(error, DW_DLE_VMM);
 			}
@@ -556,7 +595,7 @@ static const tuple<const char *, Dwarf_Half, Dwarf_Half> attrStrings[] = {
 };
 
 static void
-parseAttrType(char *string, size_t length, Dwarf_Half *type, Dwarf_Half *form)
+parseAttrType(const char *string, size_t length, Dwarf_Half *type, Dwarf_Half *form)
 {
 	size_t options = sizeof(attrStrings) / sizeof(attrStrings[0]);
 	for (size_t i = 0; i < options; ++i) {
