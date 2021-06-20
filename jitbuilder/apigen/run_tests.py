@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 ###############################################################################
-# Copyright (c) 2018, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@ import unittest
 from test.apidescriptiontests import *
 from test.genutilstests import *
 from test.cppgentests import *
+from test.cgentests import *
 
 if __name__ == '__main__':
     unittest.main()
