@@ -468,9 +468,9 @@ findAvailableMemoryBlockNoMalloc(struct OMRPortLibrary *portLibrary, ADDRESS sta
 						addressRange_Init(&currentMmapRange, (ADDRESS)(uintptr_t)(-1), (ADDRESS)(uintptr_t)(-1));
 					} else {
 						char *next = NULL;
-						uintptr_t start = 0;
-						uintptr_t end = 0;
-						start = (uintptr_t)strtoull(lineBuf, &next, 16);
+						unsigned long long start = 0;
+						unsigned long long  end = 0;
+						start = strtoull(lineBuf, &next, 16);
 						if ((ULLONG_MAX == start) && (ERANGE == errno)) {
 							dataCorrupt = TRUE;
 							Trc_PRT_vmem_omrvmem_findAvailableMemoryBlockNoMalloc_parseFirstAddressFailed(lineBuf);
@@ -483,15 +483,15 @@ findAvailableMemoryBlockNoMalloc(struct OMRPortLibrary *portLibrary, ADDRESS sta
 							Trc_PRT_vmem_omrvmem_findAvailableMemoryBlockNoMalloc_parseDashFailed(lineBuf);
 							break;
 						}
-						end = (uintptr_t)strtoull(next, &next, 16);
+						end = strtoull(next, &next, 16);
 						if ((ULLONG_MAX == end) && (ERANGE == errno)) {
 							dataCorrupt = TRUE;
 							Trc_PRT_vmem_omrvmem_findAvailableMemoryBlockNoMalloc_parseSecondAddressFailed(lineBuf);
 							break;
 						}
 
-						currentMmapRange.start = (ADDRESS)start;
-						currentMmapRange.end = (ADDRESS)end;
+						currentMmapRange.start = (ADDRESS)(uintptr_t)start;
+						currentMmapRange.end = (ADDRESS)(uintptr_t)end;
 						lineCursor = 0;
 
 						if ((currentMmapRange.start >= currentMmapRange.end) ||
