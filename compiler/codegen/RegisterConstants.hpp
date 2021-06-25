@@ -66,7 +66,9 @@ enum TR_RegisterSizes
    TR_QuadWordReg    = 4,
    TR_FloatReg       = 5,
    TR_DoubleReg      = 6,
-   TR_VectorReg      = 7
+   TR_VectorReg      = 7,
+   TR_VectorReg256   = 8,
+   TR_VectorReg512   = 9
    };
 
 enum TR_RematerializableTypes
