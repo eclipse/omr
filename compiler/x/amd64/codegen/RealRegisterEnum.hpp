@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,6 +96,46 @@
    xmm15                   = 49,
    LastSpillReg            = xmm15,
    LastXMMR                = xmm15,
+
+   YMMRMaskOffset          = LastGPR,
+   ymm0                    = xmm0,
+   FirstYMMR               = ymm0,
+   ymm1                    = xmm1,
+   ymm2                    = xmm2,
+   ymm3                    = xmm3,
+   ymm4                    = xmm4,
+   ymm5                    = xmm5,
+   ymm6                    = xmm6,
+   ymm7                    = xmm7,
+   ymm8                    = xmm8,
+   ymm9                    = xmm9,
+   ymm10                   = xmm10,
+   ymm11                   = xmm11,
+   ymm12                   = xmm12,
+   ymm13                   = xmm13,
+   ymm14                   = xmm14,
+   ymm15                   = xmm15,
+   LastYMMR                = ymm15,
+
+   ZMMRMaskOffset          = LastGPR,
+   zmm0                    = xmm0,
+   FirstZMMR               = zmm0,
+   zmm1                    = xmm1,
+   zmm2                    = xmm2,
+   zmm3                    = xmm3,
+   zmm4                    = xmm4,
+   zmm5                    = xmm5,
+   zmm6                    = xmm6,
+   zmm7                    = xmm7,
+   zmm8                    = xmm8,
+   zmm9                    = xmm9,
+   zmm10                   = xmm10,
+   zmm11                   = xmm11,
+   zmm12                   = xmm12,
+   zmm13                   = xmm13,
+   zmm14                   = xmm14,
+   zmm15                   = xmm15,
+   LastZMMR                = zmm15,
 
    AllFPRegisters          = 50,
    ByteReg                 = 51,
