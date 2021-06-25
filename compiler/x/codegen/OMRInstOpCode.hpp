@@ -104,6 +104,10 @@ namespace TR { class Register; }
 #define IA32OpProp1_FusableCompare            0x00100000
 #define IA32OpProp1_NeedsXacquirePrefix       0x00400000
 #define IA32OpProp1_NeedsXreleasePrefix       0x00800000
+#define IA32OpProp1_YMMSource                 0x01000000
+#define IA32OpProp1_YMMTarget                 0x02000000
+#define IA32OpProp1_ZMMSource                 0x04000000
+#define IA32OpProp1_ZMMTarget                 0x08000000
 ////////////////////
 //
 // AMD64 flags
@@ -348,6 +352,10 @@ class InstOpCode: public OMR::InstOpCode
    inline uint32_t hasDoubleWordTarget()           const {return _properties1[_mnemonic] & IA32OpProp1_DoubleWordTarget;}
    inline uint32_t hasXMMSource()                  const {return _properties1[_mnemonic] & IA32OpProp1_XMMSource;}
    inline uint32_t hasXMMTarget()                  const {return _properties1[_mnemonic] & IA32OpProp1_XMMTarget;}
+   inline uint32_t hasYMMSource()                  const {return _properties1[_mnemonic] & IA32OpProp1_YMMSource;}
+   inline uint32_t hasYMMTarget()                  const {return _properties1[_mnemonic] & IA32OpProp1_YMMTarget;}
+   inline uint32_t hasZMMSource()                  const {return _properties1[_mnemonic] & IA32OpProp1_ZMMSource;}
+   inline uint32_t hasZMMTarget()                  const {return _properties1[_mnemonic] & IA32OpProp1_ZMMTarget;}
    inline uint32_t isPseudoOp()                    const {return _properties1[_mnemonic] & IA32OpProp1_PseudoOp;}
    inline uint32_t needsRepPrefix()                const {return _properties1[_mnemonic] & IA32OpProp1_NeedsRepPrefix;}
    inline uint32_t needsLockPrefix()               const {return _properties1[_mnemonic] & IA32OpProp1_NeedsLockPrefix;}
