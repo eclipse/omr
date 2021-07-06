@@ -90,14 +90,24 @@ template <typename TBuffer> typename TBuffer::cursor_t OMR::X86::InstOpCode::OpC
    TR::Compilation *comp = TR::comp();
    TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->target().cpu.supportsAVX() == TR::CodeGenerator::getX86ProcessorInfo().supportsAVX(), "supportsAVX() failed\n");
 
-   if (supportsAVX() && comp->target().cpu.supportsAVX())
+   if (supportsAVX() && comp->target().cpu.supportsAVX() && vex_l >> 2)
+      {
+      TR::Instruction::EVEX<4> vex(rex, modrm_opcode);
+      vex.m = escape;
+      vex.L = vex_l & 0x3;
+      vex.p = prefixes;
+      vex.opcode = opcode;
+      buffer.append(vex);
+      }
+   else if (supportsAVX() && comp->target().cpu.supportsAVX())
       {
       TR::Instruction::VEX<3> vex(rex, modrm_opcode);
       vex.m = escape;
       vex.L = vex_l;
       vex.p = prefixes;
       vex.opcode = opcode;
-      if(vex.CanBeShortened())
+
+      if (vex.CanBeShortened())
          {
          buffer.append(TR::Instruction::VEX<2>(vex));
          }
