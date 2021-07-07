@@ -126,7 +126,6 @@ target_link_libraries(compilertest
 	testcompiler
 	omrGtest
 	${CMAKE_DL_LIBS}
-	${OMR_PORT_LIB}
 )
 
 set_property(TARGET compilertest PROPERTY FOLDER fvtest)

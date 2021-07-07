@@ -295,6 +295,7 @@ function(create_omr_compiler_library)
 	target_link_libraries(${COMPILER_NAME}
 		PUBLIC
 			omr_base
+			${OMR_PORT_LIB}
 	)
 
 	# Grab the list of core compiler objects from the global property.

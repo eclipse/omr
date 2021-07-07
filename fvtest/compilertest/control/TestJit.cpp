@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,6 +135,10 @@ initializeCodeCache(TR::CodeCacheManager & codeCacheManager)
 // helperIDs is an array of helper id corresponding to the addresses passed in "helpers"
 // helpers is an array of pointers to helpers that compiled code for tests needs to reference
 // options is any JIT option string passed in to globally influence compilation
+
+static OMRPortLibrary portLibrary;
+static omrthread_t currentThread;
+
 extern "C"
 bool
 initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t numHelpers, char *options)
@@ -150,11 +154,29 @@ initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t n
    //
    TR::RawAllocator rawAllocator;
 
+   // initialize and attach current thread to thread library, required for port library
+   if (0 != omrthread_init_library()) {
+		fprintf(stderr, "Failed to initialize OMR thread library.\n");
+		return false;
+	}
+
+   if (0 != omrthread_attach_ex(&currentThread, J9THREAD_ATTR_DEFAULT)) {
+		fprintf(stderr, "Failed to attach native thread.\n");
+		return false;
+	}
+
+   // initialize port library
+   OMRPORT_ACCESS_FROM_OMRPORT(&portLibrary);
+   if (0 != omrport_init_library(&portLibrary, sizeof(OMRPortLibrary))) {
+		fprintf(stderr, "Failed to initialize OMR port library.\n");
+		return false;
+	}
+
    try
       {
       // Allocate the host environment structure
       //
-      TR::Compiler = new (rawAllocator) TR::CompilerEnv(rawAllocator, TR::PersistentAllocatorKit(rawAllocator));
+      TR::Compiler = new (rawAllocator) TR::CompilerEnv(rawAllocator, TR::PersistentAllocatorKit(rawAllocator), &portLibrary);
       }
    catch (const std::bad_alloc&)
       {
@@ -201,6 +223,9 @@ shutdownJit()
    codeCacheManager.destroy();
 
    TR::CompilationController::shutdown();
+
+   portLibrary.port_shutdown_library(&portLibrary);
+   omrthread_shutdown_library();
    }
 
 extern "C"
