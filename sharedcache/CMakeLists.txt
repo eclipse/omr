@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2020, 2020 IBM Corp. and others
+# Copyright (c) 2020, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,7 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
+include(OmrCompilerSupport)
 
 omr_add_tracegen(include/omrshr.tdf)
 
@@ -36,7 +37,7 @@ add_library(sharedcache STATIC
 	OSMemoryMappedCacheUtils.cpp
 	OSSharedMemoryCacheIterator.cpp
 	OSSharedMemoryCachePolicies.cpp
-	OSSharedMemoryCache.cpp  
+	OSSharedMemoryCache.cpp
 	OSSharedMemoryCacheConfig.cpp
 	OSSharedMemoryCacheHeader.cpp
 	OSSharedMemoryCacheStats.cpp
@@ -57,7 +58,10 @@ target_include_directories(sharedcache
 		${PROJECT_SOURCE_DIR}/port/unix
 		${PROJECT_SOURCE_DIR}/sharedcache
 	PUBLIC
+		${PROJECT_SOURCE_DIR}/compiler/${TR_TARGET_ARCH}/${TR_TARGET_SUBARCH}
+		${PROJECT_SOURCE_DIR}/compiler/${TR_TARGET_ARCH}
 		${PROJECT_SOURCE_DIR}/compiler
+		${PROJECT_SOURCE_DIR}
 		${CMAKE_CURRENT_BINARY_DIR}
 		include
 		.
