@@ -91,7 +91,7 @@ TEST_P(Int32ShiftAndRotate, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120, "(method return=Int32 (block (ireturn (%s (iconst %d) (iconst %d)))))", param.opcode.c_str(), param.lhs, param.rhs);
+    Tril::format(inputTrees, 120, "(method return=Int32 (block (ireturn (%s (iconst %d) (iconst %d)))))", param.opcode.c_str(), param.lhs, param.rhs);
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees);
@@ -108,7 +108,7 @@ TEST_P(Int32ShiftAndRotate, UsingRhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -133,7 +133,7 @@ TEST_P(Int32ShiftAndRotate, UsingLhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -158,7 +158,7 @@ TEST_P(Int32ShiftAndRotate, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -191,7 +191,7 @@ TEST_P(Int64ShiftAndRotate, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -217,7 +217,7 @@ TEST_P(Int64ShiftAndRotate, UsingRhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int64]"
         "  (block"
         "    (lreturn"
@@ -242,7 +242,7 @@ TEST_P(Int64ShiftAndRotate, UsingLhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int32]"
         "  (block"
         "    (lreturn"
@@ -267,7 +267,7 @@ TEST_P(Int64ShiftAndRotate, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int64, Int32]"
         "  (block"
         "    (lreturn"
@@ -302,7 +302,7 @@ TEST_P(Int8ShiftAndRotate, UsingConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support bshl/bshr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8"
         "  (block"
         "    (ireturn"
@@ -331,7 +331,7 @@ TEST_P(Int8ShiftAndRotate, UsingRhsConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support bshl/bshr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int8]"
         "  (block"
         "    (ireturn"
@@ -359,7 +359,7 @@ TEST_P(Int8ShiftAndRotate, UsingLhsConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support bshl/bshr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -387,7 +387,7 @@ TEST_P(Int8ShiftAndRotate, UsingLoadParam) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support bshl/bshr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int8, Int32]"
         "  (block"
         "    (ireturn"
@@ -422,7 +422,7 @@ TEST_P(Int16ShiftAndRotate, UsingConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sshl/sshr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16"
         "  (block"
         "    (ireturn"
@@ -451,7 +451,7 @@ TEST_P(Int16ShiftAndRotate, UsingRhsConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sshl/sshr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int16]"
         "  (block"
         "    (ireturn"
@@ -479,7 +479,7 @@ TEST_P(Int16ShiftAndRotate, UsingLhsConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sshl/sshr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -507,7 +507,7 @@ TEST_P(Int16ShiftAndRotate, UsingLoadParam) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sshl/sshr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int16, Int32]"
         "  (block"
         "    (ireturn"
@@ -540,7 +540,7 @@ TEST_P(UInt32ShiftAndRotate, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32"
         "  (block"
         "    (ireturn"
@@ -566,7 +566,7 @@ TEST_P(UInt32ShiftAndRotate, UsingRhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -591,7 +591,7 @@ TEST_P(UInt32ShiftAndRotate, UsingLhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -616,7 +616,7 @@ TEST_P(UInt32ShiftAndRotate, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -647,7 +647,7 @@ TEST_P(UInt64ShiftAndRotate, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -673,7 +673,7 @@ TEST_P(UInt64ShiftAndRotate, UsingRhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int64]"
         "  (block"
         "    (lreturn"
@@ -698,7 +698,7 @@ TEST_P(UInt64ShiftAndRotate, UsingLhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int32]"
         "  (block"
         "    (lreturn"
@@ -723,7 +723,7 @@ TEST_P(UInt64ShiftAndRotate, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int64, Int32]"
         "  (block"
         "    (lreturn"
@@ -756,7 +756,7 @@ TEST_P(UInt8ShiftAndRotate, UsingConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support bushr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8"
         "  (block"
         "    (ireturn"
@@ -785,7 +785,7 @@ TEST_P(UInt8ShiftAndRotate, UsingRhsConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support bushr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int8]"
         "  (block"
         "    (ireturn"
@@ -813,7 +813,7 @@ TEST_P(UInt8ShiftAndRotate, UsingLhsConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support bushr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -841,7 +841,7 @@ TEST_P(UInt8ShiftAndRotate, UsingLoadParam) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support bushr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int8, Int32]"
         "  (block"
         "    (ireturn"
@@ -875,7 +875,7 @@ TEST_P(UInt16ShiftAndRotate, UsingConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sushr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16"
         "  (block"
         "    (ireturn"
@@ -904,7 +904,7 @@ TEST_P(UInt16ShiftAndRotate, UsingRhsConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sushr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int16]"
         "  (block"
         "    (ireturn"
@@ -932,7 +932,7 @@ TEST_P(UInt16ShiftAndRotate, UsingLhsConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sushr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -960,7 +960,7 @@ TEST_P(UInt16ShiftAndRotate, UsingLoadParam) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sushr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int16, Int32]"
         "  (block"
         "    (ireturn"
@@ -1163,7 +1163,7 @@ TEST_P(UInt64MaskThenShift, UsingLoadParam) {
     auto param = to_mask_then_shift_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int64]"
         "  (block"
         "    (lreturn"
@@ -1198,7 +1198,7 @@ TEST_P(Int64MaskThenShift, UsingLoadParam) {
     auto param = to_mask_then_shift_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int64]"
         "  (block"
         "    (lreturn"
@@ -1235,7 +1235,7 @@ TEST_P(UInt32MaskThenShift, UsingLoadParam) {
     auto param = to_mask_then_shift_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -1270,7 +1270,7 @@ TEST_P(Int32MaskThenShift, UsingLoadParam) {
     auto param = to_mask_then_shift_struct(GetParam());
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -1307,7 +1307,7 @@ TEST_P(UInt16MaskThenShift, UsingLoadParam) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sushr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int16]"
         "  (block"
         "    (ireturn"
@@ -1345,7 +1345,7 @@ TEST_P(Int16MaskThenShift, UsingLoadParam) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sshr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int16]"
         "  (block"
         "    (ireturn"
@@ -1383,7 +1383,7 @@ TEST_P(UInt8MaskThenShift, UsingLoadParam) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support bushr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int8]"
         "  (block"
         "    (ireturn"
@@ -1421,7 +1421,7 @@ TEST_P(Int8MaskThenShift, UsingLoadParam) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support bshr (see issue #5892)";
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int8]"
         "  (block"
         "    (ireturn"

@@ -87,7 +87,7 @@ TEST_P(Int32Arithmetic, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32"
       "  (block"
       "    (ireturn"
@@ -116,7 +116,7 @@ TEST_P(Int32Arithmetic, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int32, Int32]"
       "  (block"
       "    (ireturn"
@@ -141,7 +141,7 @@ TEST_P(Int32Arithmetic, UsingLoadParamAndLoadConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int32]"
       "  (block"
       "    (ireturn"
@@ -173,7 +173,7 @@ TEST_P(UInt32Arithmetic, UsingConst) {
         << "The AArch64 codegen does not yet support iudiv/iurem (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32"
       "  (block"
       "    (ireturn"
@@ -208,7 +208,7 @@ TEST_P(UInt32Arithmetic, UsingLoadParam) {
         << "The AArch64 codegen does not yet support iudiv/iurem (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int32, Int32]"
       "  (block"
       "    (ireturn"
@@ -239,7 +239,7 @@ TEST_P(UInt32Arithmetic, UsingLoadParamAndLoadConst) {
         << "The AArch64 codegen does not yet support iudiv/iurem (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int32]"
       "  (block"
       "    (ireturn"
@@ -265,7 +265,7 @@ TEST_P(Int64Arithmetic, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64"
       "  (block"
       "    (lreturn"
@@ -294,7 +294,7 @@ TEST_P(Int64Arithmetic, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Int64, Int64]"
       "  (block"
       "    (lreturn"
@@ -319,7 +319,7 @@ TEST_P(Int64Arithmetic, UsingLoadParamAndLoadConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Int64]"
       "  (block"
       "    (lreturn"
@@ -351,7 +351,7 @@ TEST_P(UInt64Arithmetic, UsingConst) {
         << "The AArch64 codegen does not yet support ludiv (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64"
       "  (block"
       "    (lreturn"
@@ -386,7 +386,7 @@ TEST_P(UInt64Arithmetic, UsingLoadParam) {
         << "The AArch64 codegen does not yet support ludiv (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Int64, Int64]"
       "  (block"
       "    (lreturn"
@@ -417,7 +417,7 @@ TEST_P(UInt64Arithmetic, UsingLoadParamAndLoadConst) {
         << "The AArch64 codegen does not yet support ludiv (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Int64]"
       "  (block"
       "    (lreturn"
@@ -445,7 +445,7 @@ TEST_P(Int16Arithmetic, UsingConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sadd/ssub/smul (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int16"
       "  (block"
       "    (ireturn"
@@ -476,7 +476,7 @@ TEST_P(Int16Arithmetic, UsingLoadParam) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sadd/ssub/smul (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int16 args=[Int16, Int16]"
       "  (block"
       "    (ireturn"
@@ -503,7 +503,7 @@ TEST_P(Int16Arithmetic, UsingLoadParamAndLoadConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support sadd/ssub/smul (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int16 args=[Int16]"
       "  (block"
       "    (ireturn"
@@ -531,7 +531,7 @@ TEST_P(Int8Arithmetic, UsingConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support badd/bsub/bmul (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int8"
       "  (block"
       "    (ireturn"
@@ -562,7 +562,7 @@ TEST_P(Int8Arithmetic, UsingLoadParam) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support badd/bsub/bmul (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int8 args=[Int8, Int8]"
       "  (block"
       "    (ireturn"
@@ -589,7 +589,7 @@ TEST_P(Int8Arithmetic, UsingLoadParamAndLoadConst) {
     SKIP_ON_AARCH64(MissingImplementation) << "The AArch64 codegen does not yet support badd/bsub/bmul (see issue #5891)";
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int8 args=[Int8]"
       "  (block"
       "    (ireturn"
@@ -724,7 +724,7 @@ TEST_P(FloatArithmetic, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Float"
       "  (block"
       "    (freturn"
@@ -753,7 +753,7 @@ TEST_P(FloatArithmetic, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Float args=[Float, Float]"
       "  (block"
       "    (freturn"
@@ -785,7 +785,7 @@ TEST_P(FloatArithmetic, UsingLoadParamAndLoadConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Float args=[Float]"
       "  (block"
       "    (freturn"
@@ -829,7 +829,7 @@ class AddressInt64Arithmetic : public TRTest::OpCodeTest<uint64_t, uint64_t, int
 TEST_P(AddressInt64Arithmetic, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Address"
       "  (block"
       "    (areturn"
@@ -857,7 +857,7 @@ TEST_P(AddressInt64Arithmetic, UsingConst) {
 TEST_P(AddressInt64Arithmetic, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Address args=[Address, Int64]"
       "  (block"
       "    (areturn"
@@ -881,7 +881,7 @@ TEST_P(AddressInt64Arithmetic, UsingLoadParam) {
 TEST_P(AddressInt64Arithmetic, UsingLoadParamAndLoadConst) {
     auto param = TRTest::to_struct(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Address args=[Address]"
       "  (block"
       "    (areturn"
@@ -906,7 +906,7 @@ TEST_P(AddressInt64Arithmetic, UsingLoadParamAndLoadConst) {
 TEST_P(AddressInt64Arithmetic, UsingLoadConstAndLoadParam) {
     auto param = TRTest::to_struct(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Address args=[Int64]"
       "  (block"
       "    (areturn"
@@ -944,7 +944,7 @@ class AddressInt32Arithmetic : public TRTest::OpCodeTest<uint32_t, uint32_t, int
 TEST_P(AddressInt32Arithmetic, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Address"
       "  (block"
       "    (areturn"
@@ -972,7 +972,7 @@ TEST_P(AddressInt32Arithmetic, UsingConst) {
 TEST_P(AddressInt32Arithmetic, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Address args=[Address, Int32]"
       "  (block"
       "    (areturn"
@@ -996,7 +996,7 @@ TEST_P(AddressInt32Arithmetic, UsingLoadParam) {
 TEST_P(AddressInt32Arithmetic, UsingLoadParamAndLoadConst) {
     auto param = TRTest::to_struct(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Address args=[Address]"
       "  (block"
       "    (areturn"
@@ -1021,7 +1021,7 @@ TEST_P(AddressInt32Arithmetic, UsingLoadParamAndLoadConst) {
 TEST_P(AddressInt32Arithmetic, UsingLoadConstAndLoadParam) {
     auto param = TRTest::to_struct(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Address args=[Int32]"
       "  (block"
       "    (areturn"
@@ -1060,7 +1060,7 @@ TEST_P(DoubleArithmetic, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Double"
       "  (block"
       "    (dreturn"
@@ -1089,7 +1089,7 @@ TEST_P(DoubleArithmetic, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Double args=[Double, Double]"
       "  (block"
       "    (dreturn"
@@ -1121,7 +1121,7 @@ TEST_P(DoubleArithmetic, UsingLoadParamAndLoadConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Double args=[Double]"
       "  (block"
       "    (dreturn"
@@ -1177,7 +1177,7 @@ TEST_P(FloatUnaryArithmetic, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Float"
       "  (block"
       "    (freturn"
@@ -1204,7 +1204,7 @@ TEST_P(FloatUnaryArithmetic, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Float args=[Float]"
       "  (block"
       "    (freturn"
@@ -1249,7 +1249,7 @@ TEST_P(DoubleUnaryArithmetic, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Double"
       "  (block"
       "    (dreturn"
@@ -1276,7 +1276,7 @@ TEST_P(DoubleUnaryArithmetic, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Double args=[Double]"
       "  (block"
       "    (dreturn"
