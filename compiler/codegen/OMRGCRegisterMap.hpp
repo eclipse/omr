@@ -45,7 +45,7 @@ class GCRegisterMap
 
    TR_ALLOC(TR_Memory::GCRegisterMap)
 
-   GCRegisterMap() : _map(0), _registerSaveDescription(0) {}
+   GCRegisterMap() : _map(0) {}
 
    TR::GCRegisterMap * self();
 
@@ -57,13 +57,9 @@ class GCRegisterMap
    void maskRegistersWithInfoBits(uint32_t mask, uint32_t info) {_map = (mask & (_map | info));}
    void setInfoBits(uint32_t info) {_map |= info;}
 
-   uint32_t getRegisterSaveDescription() {return _registerSaveDescription;}
-   void setRegisterSaveDescription(uint32_t bits) {_registerSaveDescription = bits;}
-
    private:
 
    uint32_t _map;
-   uint32_t _registerSaveDescription;
    };
 
 }
