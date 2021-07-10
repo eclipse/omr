@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -157,7 +157,7 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 			 */
 			/* NON_SCALING_LOW_MEMORY_HEAP_CEILING is set to 4G for 64-bit platforms only, 0 for 32-bit platforms */
 			Assert_MM_true(NON_SCALING_LOW_MEMORY_HEAP_CEILING > 0);
-		
+
 			/*
 			 * Usually the suballocator memory should be allocated first (before heap) however
 			 * in case when preferred address is specified we will try to allocate heap first
@@ -205,7 +205,7 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryH
 					}
 					/*
 					 * There is no way that Nursery will be pushed above ceiling for valid memory options however we have
-					 * no idea about start address. So to guarantee an allocation up to the ceiling we need to request extended chunk of memory. 
+					 * no idea about start address. So to guarantee an allocation up to the ceiling we need to request extended chunk of memory.
 					 * Set ceiling to NULL to disable ceiling control. This required bottom-up direction for allocation.
 					 */
 					ceilingToRequest = NULL;
@@ -568,14 +568,6 @@ MM_MemoryManager::destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle*
 }
 
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
-void*
-MM_MemoryManager::doubleMapArraylet(MM_MemoryHandle* handle, MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
-{
-	Assert_MM_true(NULL != handle);
-	MM_VirtualMemory* memory = handle->getVirtualMemory();
-	Assert_MM_true(NULL != memory);
-	return memory->doubleMapArraylet(env, arrayletLeaves, arrayletLeafCount, arrayletLeafSize, byteAmount, newIdentifier, pageSize);
-}
 
 void*
 MM_MemoryManager::doubleMapRegions(MM_MemoryHandle* handle, MM_EnvironmentBase *env, void* regions[], UDATA regionsCount, UDATA regionSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize, void *preferredAddress)

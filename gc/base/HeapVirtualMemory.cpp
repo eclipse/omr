@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,7 @@
  * @param heapAlignment size in bytes the heap should be aligned to
  * @param size the <i>desired</i> heap size
  * @param regionManager the regionManager for the heap
- * 
+ *
  * @note The actual heap size might be smaller than the requested size, in order to satisfy
  * alignment requirements. Use getMaximumSize() to get the actual allocation size.
  */
@@ -175,12 +175,6 @@ MM_HeapVirtualMemory::getHeapTop()
 }
 
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
-void*
-MM_HeapVirtualMemory::doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
-{
-	MM_MemoryManager* memoryManager = MM_GCExtensionsBase::getExtensions(_omrVM)->memoryManager;
-	return memoryManager->doubleMapArraylet(&_vmemHandle, env, arrayletLeaves, arrayletLeafCount, arrayletLeafSize, byteAmount, newIdentifier, pageSize);
-}
 
 void*
 MM_HeapVirtualMemory::doubleMapRegions(MM_EnvironmentBase *env, void* regions[], UDATA regionsCount, UDATA regionSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize, void *preferredAddress)
@@ -246,7 +240,7 @@ MM_HeapVirtualMemory::detachArena(MM_EnvironmentBase* env, MM_PhysicalArena* are
  * Attach a physical arena of the specified size to the receiver.
  * This reserves the address space within the receiver for the arena, and connects the arena to the list
  * of those associated to the receiver (in address order).
- * 
+ *
  * @return true if the arena was attached successfully, false otherwise.
  * @note The memory reseved is not commited.
  */
@@ -325,7 +319,7 @@ MM_HeapVirtualMemory::commitMemory(void* address, uintptr_t size)
 	if (resultCommitMemory && extensions->pretouchHeapOnExpand) {
 		memset(address, 0, size);
 	}
-	
+
 	return resultCommitMemory;
 }
 
@@ -369,7 +363,7 @@ MM_HeapVirtualMemory::heapAddRange(MM_EnvironmentBase* env, MM_MemorySubSpace* s
 	if (NULL != globalCollector) {
 		result = globalCollector->heapAddRange(env, subspace, size, lowAddress, highAddress);
 	}
-	
+
 	env->getExtensions()->identityHashDataAddRange(env, subspace, size, lowAddress, highAddress);
 
 #if defined(OMR_VALGRIND_MEMCHECK)
@@ -384,7 +378,7 @@ MM_HeapVirtualMemory::heapAddRange(MM_EnvironmentBase* env, MM_MemorySubSpace* s
  * @note The low address is inclusive, the high address exclusive.
  * @param lowValidAddress The first valid address previous to the lowest in the heap range being removed
  * @param highValidAddress The first valid address following the highest in the heap range being removed
- * 
+ *
  */
 bool
 MM_HeapVirtualMemory::heapRemoveRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, uintptr_t size, void* lowAddress, void* highAddress, void* lowValidAddress, void* highValidAddress)

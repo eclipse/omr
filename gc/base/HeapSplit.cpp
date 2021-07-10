@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,7 @@ class MM_MemorySubSpace;
  * @param lowExtentSize the <i>desired</i> size of the low extent of the heap
  * @param highExtentSize the <i>desired</i> size of the high extent of the heap
  * @param regionManager the global region manager
- * 
+ *
  * @note The actual heap size might be smaller than the requested size, in order to satisfy
  * alignment requirements. Use getMaximumSize() to get the actual allocation size.
  */
@@ -51,7 +51,7 @@ MM_HeapSplit *
 MM_HeapSplit::newInstance(MM_EnvironmentBase *env, uintptr_t heapAlignment, uintptr_t lowExtentSize, uintptr_t highExtentSize, MM_HeapRegionManager *regionManager)
 {
 	MM_HeapSplit *heap = (MM_HeapSplit *)env->getForge()->allocate(sizeof(MM_HeapSplit), OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
-	
+
 	if (NULL != heap) {
 		new(heap) MM_HeapSplit(env, lowExtentSize, highExtentSize, regionManager);
 		if (!heap->initialize(env, heapAlignment, lowExtentSize, highExtentSize, regionManager)) {
@@ -67,7 +67,7 @@ bool
 MM_HeapSplit::initialize(MM_EnvironmentBase *env, uintptr_t heapAlignment, uintptr_t lowExtentSize, uintptr_t highExtentSize, MM_HeapRegionManager *regionManager)
 {
 	bool success = MM_Heap::initialize(env);
-	
+
 	if (success) {
 		MM_GCExtensionsBase *extensions = env->getExtensions();
 
@@ -184,12 +184,6 @@ MM_HeapSplit::getPageFlags()
 }
 
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
-void*
-MM_HeapSplit::doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
-{
-	/* Unreachable */
-	return NULL;
-}
 
 void*
 MM_HeapSplit::doubleMapRegions(MM_EnvironmentBase *env, void* regions[], UDATA regionsCount, UDATA regionSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize, void *preferredAddress)
@@ -228,7 +222,7 @@ MM_HeapSplit::detachArena(MM_EnvironmentBase *env, MM_PhysicalArena *arena)
  * Attach a physical arena of the specified size to the receiver.
  * This reserves the address space within the receiver for the arena, and connects the arena to the list
  * of those associated to the receiver (in address order).
- * 
+ *
  * @return true if the arena was attached successfully, false otherwise.
  * @note The memory reseved is not commited.
  */
@@ -255,7 +249,7 @@ bool
 MM_HeapSplit::commitMemory(void *address, uintptr_t size)
 {
 	bool success = false;
-	
+
 	/* these need to be a perfect fit so assert that the committed size is equal to the total size of the region at that address (in both cases) */
 	if (_lowExtent->getHeapBase() == address) {
 		Assert_MM_true(_lowExtent->getMaximumPhysicalRange() == size);
@@ -280,7 +274,7 @@ bool
 MM_HeapSplit::decommitMemory(void *address, uintptr_t size, void *lowValidAddress, void *highValidAddress)
 {
 	bool success = false;
-	
+
 	if (_lowExtent->getHeapBase() == address) {
 		Assert_MM_true(_lowExtent->getMaximumPhysicalRange() == size);
 		success = _lowExtent->decommitMemory(address, size, lowValidAddress, highValidAddress);

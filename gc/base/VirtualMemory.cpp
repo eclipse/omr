@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -162,15 +162,6 @@ MM_VirtualMemory::reserveMemory(J9PortVmemParams* params)
 }
 
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
-void*
-MM_VirtualMemory::doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize)
-{
-	OMRPORT_ACCESS_FROM_OMRVM(_extensions->getOmrVM());
-	struct J9PortVmemIdentifier *oldIdentifier = &_identifier;
-	uintptr_t mode = OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE | OMRPORT_VMEM_MEMORY_MODE_COMMIT;
-
-	return omrvmem_get_contiguous_region_memory(arrayletLeaves, arrayletLeafCount, arrayletLeafSize, byteAmount, oldIdentifier, newIdentifier, mode, pageSize, omrmem_get_category(OMRMEM_CATEGORY_MM));
-}
 
 void*
 MM_VirtualMemory::doubleMapRegions(MM_EnvironmentBase *env, void* regions[], UDATA regionsCount, UDATA regionSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize, void *preferredAddress)
@@ -312,7 +303,7 @@ MM_VirtualMemory::setNumaAffinity(uintptr_t numaNode, void* address, uintptr_t b
 		OMRPORT_ACCESS_FROM_OMRVM(_extensions->getOmrVM());
 
 		uintptr_t byteAmountPageAligned = MM_Math::roundToCeiling(_pageSize, byteAmount);
-		/* aligned high address might be higher then heapTop but 
+		/* aligned high address might be higher then heapTop but
 		 * must be in the heap reserved memory range
 		 */
 		Assert_MM_true(((uintptr_t)address + byteAmountPageAligned) <= ((uintptr_t)_heapBase + _reserveSize));

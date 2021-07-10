@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -167,7 +167,7 @@ public:
 	 * @param[in/out] handle pointer to memory handle
 	 */
 	void destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle* handle);
-	
+
 	/**
 	 * Destroy virtual memory instance, plus everything that is heap specific (for example, shadow heap)
 	 *
@@ -175,24 +175,8 @@ public:
 	 * @param[in/out] handle pointer to memory handle
 	 */
 	void destroyVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryHandle* handle);
-	
-#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
-	/**
- 	 * Double maps arraylets, arrays that does not fit into one region are split into leaves, 
- 	 * which are then double mapped by this function 
- 	 *
- 	 * @param pointer to memory handle
- 	 * @param env environment
- 	 * @param arrayletLeaveAddrs, list of arraylet leaves addresses
- 	 * @param arrayletLeafCount, number of arraylet leaves
- 	 * @param arrayletLeafSize, size of each arraylet leaf
- 	 * @param byteAmount, total byte amount to be allocate contiguous block of meory to double map 
- 	 * @param newIdentifier, hold information of newly created contiguous block of memory
- 	 * @param pageSize
- 	 * @param category
-  	 */
-	void *doubleMapArraylet(MM_MemoryHandle* handle, MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize);
 
+#if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
 	/**
 	 * Double maps regions. Discontiguous regions are double mapped to one contiguous region.
 	 *
@@ -246,7 +230,7 @@ public:
 	 * @return true on success, false on failure
 	 */
 	bool setNumaAffinity(const MM_MemoryHandle *handle, uintptr_t numaNode, void *address, uintptr_t byteAmount);
-#endif /* defined(OMR_GC_VLHGC) || defined(OMR_GC_MODRON_SCAVENGER) */	
+#endif /* defined(OMR_GC_VLHGC) || defined(OMR_GC_MODRON_SCAVENGER) */
 
 	/**
 	 * Call roundDownTop for virtual memory instance provided in memory handle

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,7 @@ protected:
 private:
 	MM_HeapVirtualMemory *_lowExtent; /**< the sub-heap which represents the committed low range of the heap (old space) */
 	MM_HeapVirtualMemory *_highExtent; /**< the sub-heap which represents the committed high range of the heap (new space) */
-	
+
 	/* Member Functions */
 public:
 	static MM_HeapSplit *newInstance(MM_EnvironmentBase *env, uintptr_t heapAlignment, uintptr_t lowExtentSize, uintptr_t highExtentSize, MM_HeapRegionManager *regionManager);
@@ -56,13 +56,12 @@ public:
 	{
 		_typeId = __FUNCTION__;
 	};
-	
+
 	virtual uintptr_t getPageSize();
 	virtual uintptr_t getPageFlags();
 	virtual void *getHeapBase();
 	virtual void *getHeapTop();
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
-	virtual void *doubleMapArraylet(MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize);
 	virtual void *doubleMapRegions(MM_EnvironmentBase *env, void* regions[], UDATA regionsCount, UDATA regionSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize, void *preferredAddress);
 #endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 
@@ -73,9 +72,9 @@ public:
 
 	virtual bool commitMemory(void *address, uintptr_t size);
 	virtual bool decommitMemory(void *address, uintptr_t size, void *lowValidAddress, void *highValidAddress);
-	
+
 	virtual uintptr_t calculateOffsetFromHeapBase(void *address);
-	
+
 	virtual bool initializeHeapRegionManager(MM_EnvironmentBase *env, MM_HeapRegionManager *manager);
 	virtual bool objectIsInGap(void *object);
 protected:
@@ -87,4 +86,3 @@ private:
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
 #endif /* HEAPSPLIT_HPP_ */
-
