@@ -1740,7 +1740,7 @@ MM_Scavenger::copyForVariant(MM_EnvironmentStandard *env, MM_ForwardedHeader* fo
 #endif /* defined(OMR_VALGRIND_MEMCHECK) */
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-		if (!allowDuplicateOrConcurrentDisabled) {
+		if ((CS == variant) && !allowDuplicateOrConcurrentDisabled) {
 			/* Copy a non-aligned section */
 			forwardedHeader->copySection(destinationObjectPtr, remainingSizeToCopy, initialSizeToCopy);
 
@@ -1783,7 +1783,7 @@ MM_Scavenger::copyForVariant(MM_EnvironmentStandard *env, MM_ForwardedHeader* fo
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 		/* Concurrent Scavenger can update forwarding pointer only after the object has been copied
 		 * (since mutator may access the object as soon as forwarding pointer is installed) */
-		if (allowDuplicate) {
+		if ((CS == variant) && allowDuplicate) {
 			/* On weak memory model, ensure that this candidate copy is visible
 			 * before (potentially) winning forwarding */
 			MM_AtomicOperations::storeSync();
@@ -1791,7 +1791,7 @@ MM_Scavenger::copyForVariant(MM_EnvironmentStandard *env, MM_ForwardedHeader* fo
 		}
 
 		/* nested if-forwarding-succeeded check */
-		if (originalDestinationObjectPtr == destinationObjectPtr) {
+		if ((STW == variant) || (originalDestinationObjectPtr == destinationObjectPtr)) {
 			/* Succeeded in forwarding the object */
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 			forwardingSucceeded(env, copyCache, newCacheAlloc, oldObjectAge, objectCopySizeInBytes, objectReserveSizeInBytes);
