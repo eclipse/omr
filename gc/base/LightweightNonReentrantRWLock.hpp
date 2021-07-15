@@ -47,7 +47,7 @@
  * The lock is not re-entrant, can be extended to support re-entrant in future
  * it would not provide realtime locking.
  */
-class MM_LightweightNonReentrantReaderWriterLock : public MM_BaseNonVirtual {
+class MM_LightweightNonReentrantRWLock : public MM_BaseNonVirtual {
 private:
 	uintptr_t _spinCount;
 
@@ -58,7 +58,7 @@ private:
 #endif /* defined(J9MODRON_USE_CUSTOM_READERWRITERLOCK) */
 protected:
 public:
-	MM_LightweightNonReentrantReaderWriterLock() :
+	MM_LightweightNonReentrantRWLock() :
 		MM_BaseNonVirtual()
 		,_spinCount(1)
 #if defined(J9MODRON_USE_CUSTOM_READERWRITERLOCK)

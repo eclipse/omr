@@ -217,7 +217,7 @@ omrthread_get_cpu_time_ex(omrthread_t thread, int64_t *cpuTime)
 		unsigned char *output_buffer = (unsigned char *) &threadData;
 		uint32_t output_size = sizeof(struct j9pg_thread_data);
 		uint32_t input_size = sizeof(struct pgtha);
-		int32_t ret_val = 0;
+		uint32_t ret_val = 0;
 		uint32_t ret_code = 0;
 		uint32_t reason_code = 0;
 		uint32_t data_offset = 0;

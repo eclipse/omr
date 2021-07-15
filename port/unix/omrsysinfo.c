@@ -176,7 +176,9 @@
 #if defined(J9ZOS390)
 #include <sys/ps.h>
 #include <sys/types.h>
+#if !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 
 #if !defined(PATH_MAX)
 /* This is a somewhat arbitrarily selected fixed buffer size. */

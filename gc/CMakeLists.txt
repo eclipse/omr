@@ -92,7 +92,7 @@ set(omrgc_sources
 	base/HeapRegionManagerTarok.cpp
 	base/HeapVirtualMemory.cpp
 	base/LightweightNonReentrantLock.cpp
-	base/LightweightNonReentrantReaderWriterLock.cpp
+	base/LightweightNonReentrantRWLock.cpp
 	base/MarkedObjectPopulator.cpp
 	base/MarkingScheme.cpp
 	base/MarkMap.cpp

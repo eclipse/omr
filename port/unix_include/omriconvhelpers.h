@@ -35,7 +35,9 @@
 
 #if defined(J9ZOS390)
 #define J9VM_CACHE_ICONV_DESC
+#if !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 #endif
 #include <iconv.h>
 #define J9VM_INVALID_ICONV_DESCRIPTOR ((iconv_t)(-1))

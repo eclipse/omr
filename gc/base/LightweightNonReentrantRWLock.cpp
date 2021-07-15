@@ -23,10 +23,10 @@
 #include <assert.h>
 
 #include "AtomicOperations.hpp"
-#include "LightweightNonReentrantReaderWriterLock.hpp"
+#include "LightweightNonReentrantRWLock.hpp"
 
 intptr_t
-MM_LightweightNonReentrantReaderWriterLock::initialize(uintptr_t spinCount)
+MM_LightweightNonReentrantRWLock::initialize(uintptr_t spinCount)
 {
 	intptr_t ret = LWRW_OK;
 	_spinCount = spinCount;
@@ -35,7 +35,7 @@ MM_LightweightNonReentrantReaderWriterLock::initialize(uintptr_t spinCount)
 	_status = LWRW_READER_MODE;
 	MM_AtomicOperations::writeBarrier();
 #else /* defined(J9MODRON_USE_CUSTOM_READERWRITERLOCK) */
-	if (J9THREAD_RWMUTEX_OK != omrthread_rwmutex_init( &_rwmutex, 0, "MM_LightweightNonReentrantReaderWriterLock::_rwmutex" )) {
+	if (J9THREAD_RWMUTEX_OK != omrthread_rwmutex_init( &_rwmutex, 0, "MM_LightweightNonReentrantRWLock::_rwmutex" )) {
 		ret = LWRW_FAILED_INIT;
 	}
 #endif /* defined(J9MODRON_USE_CUSTOM_READERWRITERLOCK) */
@@ -43,7 +43,7 @@ MM_LightweightNonReentrantReaderWriterLock::initialize(uintptr_t spinCount)
 }
 
 intptr_t
-MM_LightweightNonReentrantReaderWriterLock::tearDown()
+MM_LightweightNonReentrantRWLock::tearDown()
 {
 	intptr_t ret = LWRW_OK;
 #if !defined(J9MODRON_USE_CUSTOM_READERWRITERLOCK)
@@ -53,7 +53,7 @@ MM_LightweightNonReentrantReaderWriterLock::tearDown()
 }
 
 intptr_t
-MM_LightweightNonReentrantReaderWriterLock::enterRead()
+MM_LightweightNonReentrantRWLock::enterRead()
 {
 	intptr_t ret = LWRW_OK;
 #if defined(J9MODRON_USE_CUSTOM_READERWRITERLOCK)
@@ -96,7 +96,7 @@ MM_LightweightNonReentrantReaderWriterLock::enterRead()
 }
 
 intptr_t
-MM_LightweightNonReentrantReaderWriterLock::exitRead()
+MM_LightweightNonReentrantRWLock::exitRead()
 {
 	intptr_t ret = LWRW_OK;
 #if defined(J9MODRON_USE_CUSTOM_READERWRITERLOCK)
@@ -119,7 +119,7 @@ MM_LightweightNonReentrantReaderWriterLock::exitRead()
 }
 
 intptr_t
-MM_LightweightNonReentrantReaderWriterLock::enterWrite()
+MM_LightweightNonReentrantRWLock::enterWrite()
 {
 	intptr_t ret = LWRW_OK;
 #if defined(J9MODRON_USE_CUSTOM_READERWRITERLOCK)
@@ -171,7 +171,7 @@ MM_LightweightNonReentrantReaderWriterLock::enterWrite()
 }
 
 intptr_t
-MM_LightweightNonReentrantReaderWriterLock::exitWrite()
+MM_LightweightNonReentrantRWLock::exitWrite()
 {
 	intptr_t ret = LWRW_OK;
 #if defined(J9MODRON_USE_CUSTOM_READERWRITERLOCK)

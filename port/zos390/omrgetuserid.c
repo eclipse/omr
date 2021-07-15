@@ -27,7 +27,9 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 #include "omrgetuserid.h"
 
 #define J9_MAX_USERID 16

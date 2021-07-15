@@ -38,7 +38,9 @@
 #include <pwd.h>
 #include <ctest.h>
 #include "omrport.h"
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 #include "portnls.h"
 
 static void convertToUpper(struct OMRPortLibrary *portLibrary, char *toConvert, uintptr_t len);

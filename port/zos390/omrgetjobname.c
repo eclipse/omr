@@ -29,7 +29,9 @@
 #include <string.h>
 #include "omrport.h"
 #include "omrgetjobname.h"
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 
 #define J9_MAX_JOBNAME 16
 

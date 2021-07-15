@@ -53,4 +53,3 @@ _USERID CELQPRLG BASEREG=8
          IKJTCB
 *
          END
-

@@ -80,7 +80,7 @@ getTimebase(void)
 #elif defined(LINUX) && defined(S390)
 	asm("stck %0" : "=m" (tsc));
 #elif defined(J9ZOS390)
-	__stck(&tsc);
+	__stck((unsigned long long*)&tsc);
 #elif defined(LINUX) && (defined(OMR_ARCH_ARM) || defined(OMR_ARCH_RISCV) || defined(RISCV64))
 	/* For now, use the system nano clock */
 #define J9TIME_NANOSECONDS_PER_SECOND	J9CONST_U64(1000000000)

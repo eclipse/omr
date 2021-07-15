@@ -21,8 +21,6 @@
 
 include(OmrCompilerSupport)
 
-set(OMR_WARNINGS_AS_ERRORS OFF)
-
 set(COMPILERTEST_FILES
 	compile/ResolvedMethod.cpp
 	control/TestJit.cpp
@@ -55,7 +53,7 @@ elseif(OMR_ARCH_S390)
 	)
 endif()
 
-if(OMR_ARCH_X86)
+if(OMR_ARCH_X86 OR OMR_ARCH_S390)
 	set(OMR_WARNINGS_AS_ERRORS ON)
 	set(OMR_ENHANCED_WARNINGS OFF)
 else()

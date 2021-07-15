@@ -53,4 +53,3 @@ _JOBNAME CELQPRLG BASEREG=8
          IKJTCB
 *
          END
-

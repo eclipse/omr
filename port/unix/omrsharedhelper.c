@@ -36,7 +36,9 @@
 #include <fcntl.h>
 
 #if defined(J9ZOS390)
+#if !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 #include "spawn.h"
 #include "sys/wait.h"
 #endif

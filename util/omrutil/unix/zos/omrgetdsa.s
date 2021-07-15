@@ -68,4 +68,4 @@ GETDSA   CELQPRLG DSASIZE=0,BASEREG=NONE
          LGR   R3,R4 move DSA into return code
          CELQEPLG
 .JMP2    ANOP
-
+         END

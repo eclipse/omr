@@ -888,8 +888,14 @@ class ImplicitlyConvertible {
   // possible loss of data, so we need to temporarily disable the
   // warning.
   GTEST_DISABLE_MSC_WARNINGS_PUSH_(4244)
+#if defined(J9ZOS390) || defined(AIXPPC)
+#pragma report(disable, "CCN8924")
+#endif
   static const bool value =
       sizeof(Helper(ImplicitlyConvertible::MakeFrom())) == 1;
+#if defined(J9ZOS390) || defined(AIXPPC)
+#pragma report(enable, "CCN8924")
+#endif
   GTEST_DISABLE_MSC_WARNINGS_POP_()
 #endif  // __BORLANDC__
 };

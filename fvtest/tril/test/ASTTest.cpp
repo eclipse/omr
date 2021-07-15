@@ -23,10 +23,6 @@
 #include <gtest/gtest.h>
 #include "ast.hpp"
 
-#if defined(AIXPPC) || defined(J9ZOS390)
-#pragma report(disable, "CCN8924")
-#endif
-
 TEST(ASTValueTest, CreateInt64ASTValue) {
    auto baseValue = 3UL;
 
@@ -620,7 +616,3 @@ TEST(ASTNodeTest, GetSecondNamedArgumentTest) {
    argList = argList->next->next;
    ASSERT_EQ(*argList, *arg);
 }
-
-#if defined(AIXPPC) || defined(J9ZOS390)
-#pragma report(enable, "CCN8924")
-#endif

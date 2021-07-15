@@ -287,7 +287,9 @@ def SPECS = [
         'label' : 'compile:zos',
         'reference' : '',
         'environment' : [
-            "LIBPATH+EXTRA=/openzdk/jenkins/workspace/${workspaceName}/build"
+            "LIBPATH+EXTRA=/openzdk/jenkins/workspace/${workspaceName}/build",
+            "_C89_ACCEPTABLE_RC=0",
+            "_CXX_ACCEPTABLE_RC=0"
         ],
         'ccache' : false,
         'buildSystem' : 'cmake',

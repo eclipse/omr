@@ -43,7 +43,9 @@
 
 #if defined(J9ZOS390)
 /* Needed for a translation table from ascii -> ebcdic */
+#if !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 
 /*
  * a2e overrides many functions to use ASCII strings.

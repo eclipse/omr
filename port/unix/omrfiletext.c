@@ -51,7 +51,9 @@
 
 /* a2e overrides nl_langinfo to return ASCII strings. We need the native EBCDIC string */
 #if defined(J9ZOS390)
+#if !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 #if defined (nl_langinfo)
 #undef nl_langinfo
 #endif

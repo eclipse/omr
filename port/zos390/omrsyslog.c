@@ -26,7 +26,9 @@
  * @brief System logging support
  */
 #include "omrportpriv.h"
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 #include <string.h>
 #include <sys/__messag.h>
 
@@ -103,7 +105,7 @@ writeToZOSLog(const char *message)
 		return FALSE;
 	}
 #else
-   ebcdicbuf = message;
+	ebcdicbuf = (char *)message;
 #endif /* !defined(OMR_EBCDIC) */
 
 	/* Re-implemented using _console2() instead of WTO, to provided proper multi-line messages. See

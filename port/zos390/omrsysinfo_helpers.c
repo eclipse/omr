@@ -29,7 +29,9 @@
 #include <errno.h>
 #include <sys/__wlm.h>
 
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 #include "omrport.h"
 #include "omrsimap.h"
 #include "omrzfs.h"

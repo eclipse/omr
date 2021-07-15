@@ -30,7 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
+#endif
 #include "omrport.h"
 #include "omrzfs.h"
 #include "omrsysinfo_helpers.h"
