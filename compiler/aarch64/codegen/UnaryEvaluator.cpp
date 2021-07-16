@@ -275,6 +275,38 @@ TR::Register *OMR::ARM64::TreeEvaluator::lhbitEvaluator(TR::Node *node, TR::Code
    }
 
 /*
+ * lowest one bit
+ */
+static TR::Register *lbitHelper(TR::Node *node, bool is64bit, TR::CodeGenerator *cg)
+   {
+   TR::Node *child = node->getFirstChild();
+   TR::Register *srcReg = cg->evaluate(child);
+   TR::Register *trgReg = (child->getReferenceCount() == 1) ? srcReg : cg->allocateRegister();
+   TR::Register *tmpReg = cg->allocateRegister();
+   TR::InstOpCode::Mnemonic op = is64bit ? TR::InstOpCode::andx : TR::InstOpCode::andw;
+
+   // x & -x
+   generateNegInstruction(cg, node, tmpReg, srcReg, is64bit);
+   generateTrg1Src2Instruction(cg, op, node, trgReg, srcReg, tmpReg);
+
+   cg->stopUsingRegister(tmpReg);
+
+   node->setRegister(trgReg);
+   cg->decReferenceCount(child);
+   return trgReg;
+   }
+
+TR::Register *OMR::ARM64::TreeEvaluator::ilbitEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return lbitHelper(node, false, cg);
+   }
+
+TR::Register *OMR::ARM64::TreeEvaluator::llbitEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return lbitHelper(node, true, cg);
+   }
+
+/*
  * number of leading zeros
  */
 TR::Register *OMR::ARM64::TreeEvaluator::inolzEvaluator(TR::Node *node, TR::CodeGenerator *cg)
