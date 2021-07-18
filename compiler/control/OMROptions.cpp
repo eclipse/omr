@@ -1113,6 +1113,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"traceBasicBlockPeepHole",          "L\ttrace basic blocks peepHole",                  TR::Options::traceOptimization, basicBlockPeepHole, 0, "P"},
    {"traceBBVA",                        "L\ttrace backward bit vector analysis",           SET_OPTION_BIT(TR_TraceBBVA), "P" },
    {"traceBC",                          "L\tdump bytecodes",                               SET_OPTION_BIT(TR_TraceBC), "P" },
+   {"traceBenefitInlinerIDTGen",        "L\ttrace benefit inliner IDT generation",         SET_OPTION_BIT(TR_TraceBIIDTGen), "P" },
    {"traceBlockFrequencyGeneration",    "L\ttrace block frequency generation",             SET_OPTION_BIT(TR_TraceBFGeneration), "P"},
    {"traceBlockShuffling",              "L\ttrace random rearrangement of blocks",         TR::Options::traceOptimization, blockShuffling, 0, "P"},
    {"traceBlockSplitter",               "L\ttrace block splitter",                         TR::Options::traceOptimization, blockSplitter, 0, "P"},
