@@ -43,7 +43,8 @@ class MM_ConcurrentGCSATB : public MM_ConcurrentGC
 	 * Data members
 	 */
 private:
-
+	uintptr_t _bytesToTrace;
+	uintptr_t _traceTarget;
 public:
 	
 	/*
@@ -52,8 +53,21 @@ public:
 
 protected:
 	void tearDown(MM_EnvironmentBase *env);
-	void virtual reportConcurrentHalted(MM_EnvironmentBase *env);
-	uintptr_t virtual localMark(MM_EnvironmentBase *env, uintptr_t sizeToTrace);
+
+	virtual uintptr_t doConcurrentTrace(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, uintptr_t sizeToTrace, MM_MemorySubSpace *subspace, bool tlhAllocation);
+	virtual uintptr_t localMark(MM_EnvironmentBase *env, uintptr_t sizeToTrace);
+
+	virtual void reportConcurrentCollectionStart(MM_EnvironmentBase *env);
+	virtual void reportConcurrentHalted(MM_EnvironmentBase *env);
+	virtual void setupForConcurrent(MM_EnvironmentBase *env);
+	virtual void finalConcurrentPrecollect(MM_EnvironmentBase *env) {};
+	virtual void tuneToHeap(MM_EnvironmentBase *env);
+	virtual void completeConcurrentTracing(MM_EnvironmentBase *env, uintptr_t executionModeAtGC);
+	virtual void adjustTraceTarget();
+	virtual uintptr_t getTraceTarget() { return _traceTarget; };
+#if defined(OMR_GC_MODRON_SCAVENGER)
+	virtual void oldToOldReferenceCreated(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
+#endif /* OMR_GC_MODRON_SCAVENGER */
 
 public:
 	virtual uintptr_t getVMStateID() { return OMRVMSTATE_GC_COLLECTOR_CONCURRENTGC; };
@@ -62,6 +76,8 @@ public:
 
 	MM_ConcurrentGCSATB(MM_EnvironmentBase *env)
 		: MM_ConcurrentGC(env)
+		,_bytesToTrace(0)
+		,_traceTarget(0)
 		{
 			_typeId = __FUNCTION__;
 		}

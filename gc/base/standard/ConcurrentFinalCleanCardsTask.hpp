@@ -34,7 +34,7 @@
 #include "CycleState.hpp"
 #include "ParallelTask.hpp"
 
-class MM_ConcurrentGC;
+class MM_ConcurrentGCIncrementalUpdate;
 class MM_EnvironmentBase;
 class MM_ParallelDispatcher;
 
@@ -45,7 +45,7 @@ class MM_ParallelDispatcher;
 class MM_ConcurrentFinalCleanCardsTask : public MM_ParallelTask
 {
 private:
-	MM_ConcurrentGC *_collector;
+	MM_ConcurrentGCIncrementalUpdate *_collector;
 	MM_CycleState *_cycleState;  /**< Collection cycle state active for the task */
 
 public:
@@ -58,7 +58,7 @@ public:
 	/**
 	 * Create a ConcurrentFinalCleanCardsTask object
 	 */
-	MM_ConcurrentFinalCleanCardsTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher, MM_ConcurrentGC *collector, MM_CycleState *cycleState) :
+	MM_ConcurrentFinalCleanCardsTask(MM_EnvironmentBase *env, MM_ParallelDispatcher *dispatcher, MM_ConcurrentGCIncrementalUpdate *collector, MM_CycleState *cycleState) :
 		MM_ParallelTask(env, dispatcher)
 		,_collector(collector)
 		,_cycleState(cycleState)

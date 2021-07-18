@@ -24,7 +24,7 @@
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
 
-#include "ConcurrentGC.hpp"
+#include "ConcurrentGCIncrementalUpdate.hpp"
 
 #include "ConcurrentFinalCleanCardsTask.hpp"
 

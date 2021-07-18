@@ -28,7 +28,7 @@
 
 #include "CardCleanerForMarking.hpp"
 #include "ConcurrentCardTable.hpp"
-#include "ConcurrentGC.hpp"
+#include "ConcurrentGCIncrementalUpdate.hpp"
 #include "Debug.hpp"
 #include "EnvironmentStandard.hpp"
 #include "GCExtensionsBase.hpp"
@@ -107,7 +107,7 @@ MM_ConcurrentOverflow::tearDown(MM_EnvironmentBase *env)
 void
 MM_ConcurrentOverflow::emptyToOverflow(MM_EnvironmentBase *env, MM_Packet *packet, MM_OverflowType type)
 {
-	MM_ConcurrentGC *collector = (MM_ConcurrentGC *)_extensions->getGlobalCollector();
+	MM_ConcurrentGCIncrementalUpdate *collector = (MM_ConcurrentGCIncrementalUpdate *)_extensions->getGlobalCollector();
 	void *objectPtr;
 
 	_overflow = true;
@@ -144,7 +144,7 @@ MM_ConcurrentOverflow::emptyToOverflow(MM_EnvironmentBase *env, MM_Packet *packe
 void
 MM_ConcurrentOverflow::overflowItem(MM_EnvironmentBase *env, void *item, MM_OverflowType type)
 {
-	MM_ConcurrentGC *collector = (MM_ConcurrentGC *)_extensions->getGlobalCollector();
+	MM_ConcurrentGCIncrementalUpdate *collector = (MM_ConcurrentGCIncrementalUpdate *)_extensions->getGlobalCollector();
 	
 	_overflow = true;
 
@@ -201,7 +201,7 @@ MM_ConcurrentOverflow::isEmpty()
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 void
-MM_ConcurrentOverflow::clearCardsForNewSpace(MM_EnvironmentStandard *env, MM_ConcurrentGC *collector)
+MM_ConcurrentOverflow::clearCardsForNewSpace(MM_EnvironmentStandard *env, MM_ConcurrentGCIncrementalUpdate *collector)
 {
 	/* If scavenger is enabled, we are within a global collect, and we have not already done so,
 	 * then we need to clear cards for new space so we can resolve overflow by dirtying cards
@@ -238,7 +238,7 @@ MM_ConcurrentOverflow::handleOverflow(MM_EnvironmentBase *env)
 	MM_HeapRegionManager *regionManager = heap->getHeapRegionManager();
 	GC_HeapRegionIterator regionIterator(regionManager);
 	MM_HeapRegionDescriptor *region = NULL;
-	MM_ConcurrentGC *collector = (MM_ConcurrentGC *)_extensions->getGlobalCollector();
+	MM_ConcurrentGCIncrementalUpdate *collector = (MM_ConcurrentGCIncrementalUpdate *)_extensions->getGlobalCollector();
 	MM_CardCleanerForMarking cardCleanerForMarking(collector->getMarkingScheme());
 	MM_ConcurrentCardTable *cardTable = collector->getCardTable();
 

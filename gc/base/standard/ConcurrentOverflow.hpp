@@ -35,7 +35,7 @@
 #include "WorkPacketOverflow.hpp"
 
 class MM_ConcurrentCardTable;
-class MM_ConcurrentGC;
+class MM_ConcurrentGCIncrementalUpdate;
 class MM_EnvironmentStandard;
 class MM_Packet;
 class MM_WorkPackets;
@@ -126,7 +126,7 @@ private:
 	 * @param env Thread Environment
 	 * @param collector reference to global Concurrent collector
 	 */
-	void clearCardsForNewSpace(MM_EnvironmentStandard *env, MM_ConcurrentGC *collector);
+	void clearCardsForNewSpace(MM_EnvironmentStandard *env, MM_ConcurrentGCIncrementalUpdate *collector);
 #endif /*  OMR_GC_MODRON_SCAVENGER */
 
 };
