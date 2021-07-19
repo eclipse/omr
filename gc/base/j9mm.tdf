@@ -941,3 +941,9 @@ TraceExit=Trc_MM_CopyForwardScheme_convertFreeMemoryCandidateToSurvivorRegion_Ex
 
 TraceEntry=Trc_MM_AllocationContextBalanced_acquireMPAOLRegionFromNode_Entry Overhead=1 Level=1 Group=tarok Template="MM_AllocationContextBalanced::acquireMPAOLRegionFromNode thisContext=%p requestingContext=%p"
 TraceExit=Trc_MM_AllocationContextBalanced_acquireMPAOLRegionFromNode_Exit Overhead=1 Level=1 Group=tarok Template="MM_AllocationContextBalanced::acquireMPAOLRegionFromNode result=%p"
+
+TraceEvent=Trc_MM_ConcurrentGC_initialize Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_initialize Card Cleaning Factors Pass1="%.3f" Pass2="%.3f" (Maximum: Pass1="%.3f" Pass2="%.3f" Card Cleaning Threshold Factor="%.3f") Allocate to trace Rate Factors Minimum="%f" Maximum="%f""
+TraceEvent=Trc_MM_ConcurrentGC_tuneToHeap Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_tuneToHeap Trace target Pass 1=%zu (Trace=%zu Clean=%zu) Trace target Pass 2=%zu (Trace=%zu Clean=%zu) KO threshold=%zu KO threshold buffer=%zu Card Cleaning Threshold=%zu Init Work Required=%zu"
+TraceEvent=Trc_MM_ConcurrentGC_updateTuningStatistics Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGC_updateTuningStatistics Total Traced=%zu (Pass 2 KO=%zu)  Total Cleaned=%zu (Pass 2 KO=%zu) Tenure Live object Factor=%.3f Tenure non-leaf object factor=%.3f Card Cleaning Factors: Pass1=%s Pass2=%s Bytes traced in Pass 1 Factor=%.3f"
+TraceEvent=Trc_MM_ConcurrentGCStats_printAllocationTaxReport Overhead=1 Level=1 Group=concurrent Template="MM_ConcurrentGCStats_printAllocationTaxReport Concurrent mark analysis: Total Allocations: %zu Tax Paid 0%%: %zu 25%%: %zu 50%%: %zu  75%%: %zu 100%%+: %zu"
+TraceEvent=Trc_MM_Scavenger_calcGCStats Overhead=1 Level=1 Group=concurrent Template="MM_Scavenger_calcGCStats Tenured bytes: %zu avgTenureBytes: %zu tenureBytesDeviation: %f avgTenureBytesDeviation: %zu"

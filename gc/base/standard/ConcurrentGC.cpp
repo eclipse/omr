@@ -683,16 +683,6 @@ MM_ConcurrentGC::initialize(MM_EnvironmentBase *env)
 													MAX_ALLOC_2_TRACE_RATE_10,
 													_allocToTraceRateNormal);
 
-	if (_extensions->debugConcurrentMark) {
-		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-		omrtty_printf("Initial tuning statistics: Card Cleaning Factors Pass1=\"%.3f\" Pass2=\"%.3f\" (Maximum: Pass1=\"%.3f\" Pass2=\"%.3f\")\n",
-							_cardCleaningFactorPass1, _cardCleaningFactorPass2, _maxCardCleaningFactorPass1, _maxCardCleaningFactorPass2);
-		omrtty_printf("                           Card Cleaning Threshold Factor=\"%.3f\"\n",
-							_cardCleaningThresholdFactor);
-		omrtty_printf("                           Allocate to trace Rate Factors Minimum=\"%f\" Maximum=\"%f\"\n",
-							_allocToTraceRateMinFactor, _allocToTraceRateMaxFactor);
-	}
-
 #if defined(OMR_GC_LARGE_OBJECT_AREA)
 	/* Has user elected to run with an LOA ? */
 	if (_extensions->largeObjectArea) {
@@ -1486,19 +1476,7 @@ MM_ConcurrentGC::tuneToHeap(MM_EnvironmentBase *env)
 	_stats.setCardCleaningThreshold((uintptr_t)((float)cardCleaningThreshold + boost + ((float)_extensions->concurrentSlack * cardCleaningProportion)));
 	_kickoffThresholdBuffer = MM_Math::saturatingSubtract(kickoffThresholdPlusBuffer, kickoffThreshold);
 
-	if (_extensions->debugConcurrentMark) {
-		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-		omrtty_printf("Tune to heap : Trace target Pass 1=\"%zu\" (Trace=\"%zu\" Clean=\"%zu\")\n",
-							_traceTargetPass1, _bytesToTracePass1, _bytesToCleanPass1);
-		omrtty_printf("               Trace target Pass 2=\"%zu\" (Trace=\"%zu\" Clean=\"%zu\")\n",
-							_traceTargetPass2, _bytesToTracePass2, _bytesToCleanPass2);
-		omrtty_printf("               KO threshold=\"%zu\" KO threshold buffer=\"%zu\"\n",
-							 _stats.getKickoffThreshold(), _kickoffThresholdBuffer);
-		omrtty_printf("               Card Cleaning Threshold=\"%zu\" \n",
-							_stats.getCardCleaningThreshold());
-		omrtty_printf("               Init Work Required=\"%zu\" \n",
-							_stats.getInitWorkRequired());
-	}
+	Trc_MM_ConcurrentGC_tuneToHeap(env->getLanguageVMThread(), _traceTargetPass1, _bytesToTracePass1, _bytesToCleanPass1, _traceTargetPass2, _bytesToTracePass2, _bytesToCleanPass2, _stats.getKickoffThreshold(), _kickoffThresholdBuffer, _stats.getCardCleaningThreshold(), _stats.getInitWorkRequired());
 
 	_initSetupDone = false;
 
@@ -1599,6 +1577,7 @@ MM_ConcurrentGC::updateTuningStatistics(MM_EnvironmentBase *env)
 		newNonLeafObjectFactor = (float)bytesTraced / (float)totalLiveObjects;
 		_tenureNonLeafObjectFactor = MM_Math::weightedAverage(_tenureNonLeafObjectFactor, newNonLeafObjectFactor, NON_LEAF_HISTORY_WEIGHT);
 
+		Trc_MM_ConcurrentGC_initialize(env->getLanguageVMThread(), _cardCleaningFactorPass1, _cardCleaningFactorPass2, _maxCardCleaningFactorPass1, _maxCardCleaningFactorPass2, _cardCleaningThresholdFactor, _allocToTraceRateMinFactor, _allocToTraceRateMaxFactor);
 		/* Recalculate _cardCleaningFactor depending on status */
 		uintptr_t executionModeAtGC = _stats.getExecutionModeAtGC();
 		switch (executionModeAtGC) {
@@ -1658,33 +1637,22 @@ MM_ConcurrentGC::updateTuningStatistics(MM_EnvironmentBase *env)
 			break;
 		}
 
-		if (_extensions->debugConcurrentMark) {
-			OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+		char pass1Factor[10];
+		char pass2Factor[10];
 
-			char pass1Factor[10];
-			char pass2Factor[10];
-
-			if (_extensions->cardCleaningPasses > 0) {
-				sprintf(pass1Factor, "%.3f", _cardCleaningFactorPass1);
-			} else {
-				sprintf(pass1Factor, "%s", "N/A");
-			}
-
-			if (_extensions->cardCleaningPasses > 1) {
-				sprintf(pass2Factor, "%.3f", _cardCleaningFactorPass2);
-			} else {
-				sprintf(pass2Factor, "%s", "N/A");
-			}
-
-			omrtty_printf("Update tuning statistics: Total Traced=\"%zu\" (Pass 2 KO=\"%zu\")  Total Cleaned=\"%zu\" (Pass 2 KO=\"%zu\")\n",
-							totalTraced, _totalTracedAtPass2KO, totalCleaned, _totalCleanedAtPass2KO);
-			omrtty_printf("                          Tenure Live object Factor=\"%.3f\" Tenure non-leaf object factor=\"%.3f\" \n",
-							_tenureLiveObjectFactor, _tenureNonLeafObjectFactor);
-			omrtty_printf("                          Card Cleaning Factors: Pass1=\"%s\" Pass2=\"%s\"\n",
-							pass1Factor, pass2Factor);
-			omrtty_printf("                          Bytes traced in Pass 1 Factor=\"%.3f\"\n",
-							_bytesTracedInPass1Factor);
+		if (_extensions->cardCleaningPasses > 1) {
+			sprintf(pass1Factor, "%.3f", _cardCleaningFactorPass1);
+		} else {
+			sprintf(pass1Factor, "%s", "N/A");
 		}
+
+		if (_extensions->cardCleaningPasses > 1) {
+			sprintf(pass2Factor, "%.3f", _cardCleaningFactorPass2);
+		} else {
+			sprintf(pass2Factor, "%s", "N/A");
+		}
+
+		Trc_MM_ConcurrentGC_updateTuningStatistics(env->getLanguageVMThread(), totalTraced, _totalTracedAtPass2KO, totalCleaned, _totalCleanedAtPass2KO, _tenureLiveObjectFactor, _tenureNonLeafObjectFactor, pass1Factor, pass2Factor, _bytesTracedInPass1Factor);
 	}
 }
 
@@ -3005,7 +2973,7 @@ MM_ConcurrentGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *
 	}
 
 	if (executionModeAtGC > CONCURRENT_OFF && _extensions->debugConcurrentMark) {
-		_stats.printAllocationTaxReport(env->getOmrVM());
+		_stats.printAllocationTaxReport(env);
 	}
 
 #if defined(OMR_GC_LARGE_OBJECT_AREA)
@@ -3695,6 +3663,17 @@ MM_ConcurrentGC::flushLocalBuffers(MM_EnvironmentBase *env)
 	env->_workStack.reset(env, _markingScheme->getWorkPackets());
 }
 
+void
+MM_ConcurrentGC::notifyAcquireExclusiveVMAccess(MM_EnvironmentBase *env)
+{
+	MM_ParallelGlobalGC::notifyAcquireExclusiveVMAccess(env);
+	/* Record concurrent end time, concurrent may be halted and complete in STW */
+	if (_stats.concurrentMarkInProgress() && (CONCURRENT_FINAL_COLLECTION > _stats.getExecutionMode())) {
+		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+		_concurrentPhaseStats._endTime = omrtime_hires_clock();
+	}
+}
+
 #if defined(OMR_GC_LARGE_OBJECT_AREA)
 /**
  * Update concurrent metering history before a GC
@@ -3810,16 +3789,6 @@ MM_ConcurrentGC::updateMeteringHistoryAfterGC(MM_EnvironmentBase *env)
 
 		/* Decide which history to replace on next collection */
 		_currentMeteringHistory = ((_currentMeteringHistory + 1) == _meteringHistorySize) ? 0 : _currentMeteringHistory + 1;
-	}
-}
-void
-MM_ConcurrentGC::notifyAcquireExclusiveVMAccess(MM_EnvironmentBase *env)
-{
-	MM_ParallelGlobalGC::notifyAcquireExclusiveVMAccess(env);
-	/* Record concurrent end time, concurrent may be halted and complete in STW */
-	if (_stats.concurrentMarkInProgress() && (CONCURRENT_FINAL_COLLECTION > _stats.getExecutionMode())) {
-		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
-		_concurrentPhaseStats._endTime = omrtime_hires_clock();
 	}
 }
 #endif /* OMR_GC_LARGE_OBJECT_AREA */
