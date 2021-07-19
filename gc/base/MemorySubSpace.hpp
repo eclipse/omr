@@ -365,6 +365,7 @@ public:
 	bool setResizable(bool resizable);
 
 	bool canExpand(MM_EnvironmentBase *env, uintptr_t expandSize);
+	virtual uintptr_t adjustExpansionWithinSoftMax(MM_EnvironmentBase *env, uintptr_t expandSize, uintptr_t minimumBytesRequired, uintptr_t memoryType = MEMORY_TYPE_OLD);
 	virtual uintptr_t adjustExpansionWithinUserIncrement(MM_EnvironmentBase *env, uintptr_t expandSize);
 	uintptr_t maxExpansion(MM_EnvironmentBase *env);
 	virtual uintptr_t maxExpansionInSpace(MM_EnvironmentBase *env);

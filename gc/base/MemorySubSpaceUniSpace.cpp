@@ -515,12 +515,12 @@ MM_MemorySubSpaceUniSpace::calculateExpandSize(MM_EnvironmentBase *env, uintptr_
 	/* Adjust within -XsoftMx limit */
 	if (expandToSatisfy){
 		/* we need at least bytesRequired or we will get an OOM */
-		expandSize = adjustExpansionWithinSoftMax(env, expandSize, bytesRequired);
+		expandSize = adjustExpansionWithinSoftMax(env, expandSize, bytesRequired, MEMORY_TYPE_OLD);
 	} else {
 		/* we are adjusting based on other command line options, so fully respect softmx,
 		 * the minimum expand it can allow in this case is 0
 		 */
-		expandSize = adjustExpansionWithinSoftMax(env, expandSize, 0);
+		expandSize = adjustExpansionWithinSoftMax(env, expandSize, 0, MEMORY_TYPE_OLD);
 	}
 
 	Trc_MM_MemorySubSpaceUniSpace_calculateExpandSize_Exit1(env->getLanguageVMThread(), desiredFree, currentFree, expandSize);
@@ -692,38 +692,6 @@ MM_MemorySubSpaceUniSpace::adjustExpansionWithinFreeLimits(MM_EnvironmentBase *e
 		}	
 	}
 	return result;
-}
-
-/**
- * Compare the specified expand amount with -XsoftMX value
- * @return Updated expand size
- */		
-MMINLINE uintptr_t		
-MM_MemorySubSpaceUniSpace::adjustExpansionWithinSoftMax(MM_EnvironmentBase *env, uintptr_t expandSize, uintptr_t minimumBytesRequired)
-{
-	MM_Heap * heap = env->getExtensions()->getHeap();
-
-	uintptr_t actualSoftMx = heap->getActualSoftMxSize(env);
-	uintptr_t activeMemorySize = getActiveMemorySize();
-	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
-	
-	if (0 != actualSoftMx) {
-		if ((minimumBytesRequired != 0) && ((activeMemorySize + minimumBytesRequired) > actualSoftMx)) {
-			if (J9_EVENT_IS_HOOKED(env->getExtensions()->omrHookInterface, J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX)) {
-				ALWAYS_TRIGGER_J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX(env->getExtensions()->omrHookInterface, env->getOmrVMThread(), omrtime_hires_clock(),
-						heap->getMaximumMemorySize(), heap->getActiveMemorySize(), env->getExtensions()->softMx, minimumBytesRequired);
-				actualSoftMx = heap->getActualSoftMxSize(env);
-			}
-		}
-		if (actualSoftMx < activeMemorySize) {
-			/* if our softmx is smaller than our currentsize, we should be contracting not expanding */
-			expandSize = 0;
-		} else if((activeMemorySize + expandSize) > actualSoftMx) {
-			/* we would go past our -XsoftMx so just expand up to it instead */
-			expandSize = actualSoftMx - activeMemorySize;
-		}
-	}
-	return expandSize;
 }
 
 uintptr_t

@@ -1144,6 +1144,38 @@ MM_MemorySubSpace::canExpand(MM_EnvironmentBase* env, uintptr_t expandSize)
 }
 
 /**
+ * Compare the specified expand amount with -XsoftMX value
+ * @return Updated expand size
+ */
+uintptr_t
+MM_MemorySubSpace::adjustExpansionWithinSoftMax(MM_EnvironmentBase *env, uintptr_t expandSize, uintptr_t minimumBytesRequired, uintptr_t memoryType)
+{
+	MM_Heap *heap = env->getExtensions()->getHeap();
+
+	uintptr_t actualSoftMx = heap->getActualSoftMxSize(env, memoryType);
+	uintptr_t activeMemorySize = getActiveMemorySize();
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
+	if (0 != actualSoftMx) {
+		if ((0 != minimumBytesRequired) && ((activeMemorySize + minimumBytesRequired) > actualSoftMx)) {
+			if (J9_EVENT_IS_HOOKED(env->getExtensions()->omrHookInterface, J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX)) {
+				ALWAYS_TRIGGER_J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX(env->getExtensions()->omrHookInterface, env->getOmrVMThread(), omrtime_hires_clock(),
+						heap->getMaximumMemorySize(), heap->getActiveMemorySize(), env->getExtensions()->softMx, minimumBytesRequired);
+				actualSoftMx = heap->getActualSoftMxSize(env);
+			}
+		}
+		if (actualSoftMx < activeMemorySize) {
+			/* if our softmx is smaller than our currentsize, we should be contracting not expanding */
+			expandSize = 0;
+		} else if ((activeMemorySize + expandSize) > actualSoftMx) {
+			/* we would go past our -XsoftMx so just expand up to it instead */
+			expandSize = actualSoftMx - activeMemorySize;
+		}
+	}
+	return expandSize;
+}
+
+/**
  * Adjust the specified expansion amount by the specified user increment amount (i.e. -Xmoi)
  * @return the updated expand size
  */

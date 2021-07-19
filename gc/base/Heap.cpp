@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -531,7 +531,7 @@ MM_Heap::initializeCommonGCData(MM_EnvironmentBase* env, struct MM_CommonGCData*
  * @return Size of the adjustable heap memory
  */
 uintptr_t
-MM_Heap::getActualSoftMxSize(MM_EnvironmentBase* env)
+MM_Heap::getActualSoftMxSize(MM_EnvironmentBase* env, uintptr_t memoryType)
 {
 	uintptr_t actualSoftMX = 0;
 	MM_GCExtensionsBase* extensions = env->getExtensions();
@@ -544,8 +544,10 @@ MM_Heap::getActualSoftMxSize(MM_EnvironmentBase* env)
 
 		uintptr_t nurserySize = totalHeapSize - tenureSize;
 
-		if (nurserySize <= extensions->softMx) {
+		if (MEMORY_TYPE_OLD == memoryType && nurserySize <= extensions->softMx) {
 			actualSoftMX = extensions->softMx - nurserySize;
+		} else if (MEMORY_TYPE_NEW == memoryType) {
+			actualSoftMX = extensions->softMx / 4;
 		} else {
 			actualSoftMX = 0;
 		}

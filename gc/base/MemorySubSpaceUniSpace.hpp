@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,6 @@ class MM_MemorySubSpaceUniSpace : public MM_MemorySubSpace
 {
 protected:
 	uintptr_t adjustExpansionWithinFreeLimits(MM_EnvironmentBase *env, uintptr_t expandSize);
-	uintptr_t adjustExpansionWithinSoftMax(MM_EnvironmentBase *env, uintptr_t expandSize, uintptr_t minimumBytesRequired);
 	uintptr_t checkForRatioExpand(MM_EnvironmentBase *env, uintptr_t bytesRequired);	
 	bool checkForRatioContract(MM_EnvironmentBase *env);
 	uintptr_t calculateExpandSize(MM_EnvironmentBase *env, uintptr_t bytesRequired, bool expandToSatisfy);

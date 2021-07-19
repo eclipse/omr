@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,7 +165,7 @@ public:
 	void initializeCommonGCStartData(MM_EnvironmentBase *env, struct MM_CommonGCStartData *data);
 	void initializeCommonGCEndData(MM_EnvironmentBase *env, struct MM_CommonGCEndData *data);
 
-	uintptr_t getActualSoftMxSize(MM_EnvironmentBase *env);
+	uintptr_t getActualSoftMxSize(MM_EnvironmentBase *env, uintptr_t memoryType = MEMORY_TYPE_OLD);
 
 	/**
 	 * Create a Heap object.
