@@ -1715,6 +1715,10 @@ TR_Debug::getTargetSizeFromInstruction(TR::Instruction  *instr)
 
    if (instr->getOpCode().hasXMMTarget() != 0)
       targetSize = TR_QuadWordReg;
+   else if (instr->getOpCode().hasYMMTarget())
+      targetSize = TR_VectorReg256;
+   else if (instr->getOpCode().hasZMMTarget())
+      targetSize = TR_VectorReg512;
    else if (instr->getOpCode().hasIntTarget() != 0)
       targetSize = TR_WordReg;
    else if (instr->getOpCode().hasShortTarget() != 0)
@@ -1736,6 +1740,10 @@ TR_Debug::getSourceSizeFromInstruction(TR::Instruction  *instr)
 
    if (instr->getOpCode().hasXMMSource() != 0)
       sourceSize = TR_QuadWordReg;
+   else if (instr->getOpCode().hasYMMSource())
+      sourceSize = TR_VectorReg256;
+   else if (instr->getOpCode().hasZMMSource())
+      sourceSize = TR_VectorReg512;
    else if (instr->getOpCode().hasIntSource()!= 0)
       sourceSize = TR_WordReg;
    else if (instr->getOpCode().hasShortSource() != 0)
@@ -1820,6 +1828,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::RealRegister * reg, TR_RegisterSizes siz
       case TR_DoubleReg:
          trfprintf(pOutFile, "%s", getName(reg));
          break;
+      case TR_VectorReg256:
+      case TR_VectorReg512:
       case TR_QuadWordReg:
       case TR_DoubleWordReg:
       case TR_HalfWordReg:
@@ -1956,38 +1966,38 @@ TR_Debug::getName(uint32_t realRegisterIndex, TR_RegisterSizes size)
       case TR::RealRegister::mm7:
          switch (size) { case 3: case -1: return "mm7";   default: return unknownRegisterName('m'); }
       case TR::RealRegister::xmm0:
-         switch (size) { case 4: case -1: return "xmm0";  default: return "?mm0"; }
+         switch (size) { case 4: case -1: return "xmm0";  case TR_VectorReg256: return "ymm0"; case TR_VectorReg512: return "zmm0"; default: return "?mm0"; }
       case TR::RealRegister::xmm1:
-         switch (size) { case 4: case -1: return "xmm1";  default: return "?mm1"; }
+         switch (size) { case 4: case -1: return "xmm1";  case TR_VectorReg256: return "ymm1"; case TR_VectorReg512: return "zmm1"; default: return "?mm1"; }
       case TR::RealRegister::xmm2:
-         switch (size) { case 4: case -1: return "xmm2";  default: return "?mm2"; }
+         switch (size) { case 4: case -1: return "xmm2";  case TR_VectorReg256: return "ymm2"; case TR_VectorReg512: return "zmm2"; default: return "?mm2"; }
       case TR::RealRegister::xmm3:
-         switch (size) { case 4: case -1: return "xmm3";  default: return "?mm3"; }
+         switch (size) { case 4: case -1: return "xmm3";  case TR_VectorReg256: return "ymm3"; case TR_VectorReg512: return "zmm3"; default: return "?mm3"; }
       case TR::RealRegister::xmm4:
-         switch (size) { case 4: case -1: return "xmm4";  default: return "?mm4"; }
+         switch (size) { case 4: case -1: return "xmm4";  case TR_VectorReg256: return "ymm4"; case TR_VectorReg512: return "zmm4"; default: return "?mm4"; }
       case TR::RealRegister::xmm5:
-         switch (size) { case 4: case -1: return "xmm5";  default: return "?mm5"; }
+         switch (size) { case 4: case -1: return "xmm5";  case TR_VectorReg256: return "ymm5"; case TR_VectorReg512: return "zmm5"; default: return "?mm5"; }
       case TR::RealRegister::xmm6:
-         switch (size) { case 4: case -1: return "xmm6";  default: return "?mm6"; }
+         switch (size) { case 4: case -1: return "xmm6";  case TR_VectorReg256: return "ymm6"; case TR_VectorReg512: return "zmm6"; default: return "?mm6"; }
       case TR::RealRegister::xmm7:
-         switch (size) { case 4: case -1: return "xmm7";  default: return "?mm7"; }
+         switch (size) { case 4: case -1: return "xmm7";  case TR_VectorReg256: return "ymm7"; case TR_VectorReg512: return "zmm7"; default: return "?mm7"; }
 #ifdef TR_TARGET_64BIT
       case TR::RealRegister::xmm8:
-         switch (size) { case 4: case -1: return "xmm8";  default: return "?mm8"; }
+         switch (size) { case 4: case -1: return "xmm8";  case TR_VectorReg256: return "ymm8"; case TR_VectorReg512: return "zmm8"; default: return "?mm8"; }
       case TR::RealRegister::xmm9:
-         switch (size) { case 4: case -1: return "xmm9";  default: return "?mm9"; }
+         switch (size) { case 4: case -1: return "xmm9";  case TR_VectorReg256: return "ymm9"; case TR_VectorReg512: return "zmm9"; default: return "?mm9"; }
       case TR::RealRegister::xmm10:
-         switch (size) { case 4: case -1: return "xmm10"; default: return "?mm10"; }
+         switch (size) { case 4: case -1: return "xmm10"; case TR_VectorReg256: return "ymm10"; case TR_VectorReg512: return "zmm10"; default: return "?mm10"; }
       case TR::RealRegister::xmm11:
-         switch (size) { case 4: case -1: return "xmm11"; default: return "?mm11"; }
+         switch (size) { case 4: case -1: return "xmm11"; case TR_VectorReg256: return "ymm11"; case TR_VectorReg512: return "zmm11"; default: return "?mm11"; }
       case TR::RealRegister::xmm12:
-         switch (size) { case 4: case -1: return "xmm12"; default: return "?mm12"; }
+         switch (size) { case 4: case -1: return "xmm12"; case TR_VectorReg256: return "ymm12"; case TR_VectorReg512: return "zmm12"; default: return "?mm12"; }
       case TR::RealRegister::xmm13:
-         switch (size) { case 4: case -1: return "xmm13"; default: return "?mm13"; }
+         switch (size) { case 4: case -1: return "xmm13"; case TR_VectorReg256: return "ymm13"; case TR_VectorReg512: return "zmm13"; default: return "?mm13"; }
       case TR::RealRegister::xmm14:
-         switch (size) { case 4: case -1: return "xmm14"; default: return "?mm14"; }
+         switch (size) { case 4: case -1: return "xmm14"; case TR_VectorReg256: return "ymm14"; case TR_VectorReg512: return "zmm14"; default: return "?mm14"; }
       case TR::RealRegister::xmm15:
-         switch (size) { case 4: case -1: return "xmm15"; default: return "?mm15"; }
+         switch (size) { case 4: case -1: return "xmm15"; case TR_VectorReg256: return "ymm15"; case TR_VectorReg512: return "zmm15"; default: return "?mm15"; }
 #endif
       default: TR_ASSERT( 0, "unexpected register number"); return unknownRegisterName();
       }
@@ -2025,7 +2035,7 @@ TR_Debug::getName(TR::RealRegister * reg, TR_RegisterSizes size)
          }
       }
 
-   if (reg->getKind() == TR_FPR || reg->getKind() == TR_VRF)
+   if ((reg->getKind() == TR_FPR && size != TR_VectorReg256 && size != TR_VectorReg512) || reg->getKind() == TR_VRF)
       size = TR_QuadWordReg;
 
    return getName(reg->getRegisterNumber(), size);

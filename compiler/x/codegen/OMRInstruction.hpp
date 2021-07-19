@@ -284,7 +284,74 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
       {
       VEX() {TR_ASSERT(false, "INVALID VEX PREFIX");}
       };
+   template<size_t EVEX_SIZE>
+   struct EVEX
+      {
+         EVEX() {TR_ASSERT(false, "INVALID EVEX PREFIX");}
+      };
    };
+
+   template<>
+   struct Instruction::EVEX<4>
+      {
+      // Byte 0: 0x62
+      uint8_t escape;
+      // Byte 1
+      uint8_t m : 2;
+      uint8_t zero : 2; // 0b00
+      uint8_t r : 1;
+      uint8_t B : 1;
+      uint8_t X : 1;
+      uint8_t R : 1;
+      // Byte 2
+      uint8_t p : 2;
+      uint8_t one : 1; // 0b1
+      uint8_t v : 4;
+      uint8_t W : 1;
+
+      // Byte 3
+      uint8_t a : 3; // write mask register specifier {k1-k7}
+      uint8_t V : 1;
+      uint8_t b : 1;
+      uint8_t L : 2;
+      uint8_t Z : 1;
+      // Byte 4: opcode
+      uint8_t opcode;
+      // Byte 5: ModRM
+      ModRM   modrm;
+
+      inline EVEX() {}
+
+      // 0x62 P0 P1 P2
+      // P0 = R  X  B  R' 0  0  m  m
+      // P1 = W  v  v  v  v  1  p  p
+      // P2 = z  L' L  b  v' a  a  a
+      inline EVEX(const REX& rex, uint8_t ModRMOpCode) : modrm(ModRMOpCode)
+         {
+         escape = '\x62';
+         // reserved bits
+         one = 1;
+         zero = 0;
+         Z = 0;
+         b = 0;
+         R = ~rex.R;
+         r = ~rex.R;
+         X = ~rex.X;
+         B = ~rex.B;
+         W = rex.W;
+         v = 0xf; //0b1111
+         V = v >> 3;
+         a = 0;
+         }
+      inline uint8_t Reg() const
+         {
+         return modrm.Reg(~R);
+         }
+      inline uint8_t RM() const
+         {
+         return modrm.RM(~B);
+         }
+      };
 
    template<>
    struct Instruction::VEX<3>
