@@ -277,7 +277,8 @@ public:
       CoarseningInterProceduralAnalyzer,
 
       AheadOfTimeCompile,
-
+      AOTAdapter,
+      AOTMethodHeader,
       HWProfile,
       TR_HWProfileCallSiteElem,
       TR_HWProfileCallSiteList,

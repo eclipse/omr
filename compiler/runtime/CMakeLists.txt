@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,4 +27,8 @@ compiler_library(runtime
 	${CMAKE_CURRENT_LIST_DIR}/OMRCodeCacheManager.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRCodeCacheMemorySegment.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRCodeCacheConfig.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRRelocationRuntime.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRRelocationRecord.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRRelocationTarget.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRAOTRelocationRuntime.cpp
 )

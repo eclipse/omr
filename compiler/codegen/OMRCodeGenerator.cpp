@@ -111,6 +111,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/Runtime.hpp"
 #include "stdarg.h"
+#include "codegen/AheadOfTimeCompile.hpp"
 #include "OMR/Bytes.hpp"
 
 namespace TR { class Optimizer; }
@@ -255,6 +256,12 @@ OMR::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
       _methodSnippetsToBePatchedOnClassUnload(getTypedAllocator<TR::Snippet*>(comp->allocator())),
       _snippetsToBePatchedOnClassRedefinition(getTypedAllocator<TR::Snippet*>(comp->allocator()))
    {
+#ifdef OMR_RELOCATION_RUNTIME
+   if (self()->comp()->compileRelocatableCode())
+      {
+      _aheadOfTimeCompile=new (self()->trHeapMemory()) TR::AheadOfTimeCompile(NULL,self()->comp());
+      }
+#endif
    }
 
 
@@ -2026,6 +2033,19 @@ OMR::CodeGenerator::processRelocations()
       ++iterator;
       }
    //TR_ASSERTC(missedSite == -1, comp(), "Site %d is missing relocation\n", missedSite);
+#ifdef OMR_RELOCATION_RUNTIME
+   if (self()->comp()->compileRelocatableCode())
+      {
+      //This is to process aot relocations
+      // Call the platform specific processing of relocations
+      auto theAOT = self()->getAheadOfTimeCompile();
+      theAOT->processRelocations();
+      for (auto aotIterator = self()->getExternalRelocationList().begin(); aotIterator != self()->getExternalRelocationList().end(); ++aotIterator)
+         {
+         (*aotIterator)->apply(self());
+         }
+      }
+#endif
    }
 
 #if defined(TR_HOST_ARM)

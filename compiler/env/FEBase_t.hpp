@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,6 @@ FEBase<Derived>::allocateRelocationData(TR::Compilation* comp, uint32_t size)
    /* FIXME: using an mmap without much thought into whether that is the best
       way to allocate this */
    if (size == 0) return 0;
-   TR_ASSERT(size >= 2048, "allocateRelocationData should be used for whole-sale memory allocation only");
 
 #if defined(OMR_OS_WINDOWS)
    return reinterpret_cast<uint8_t *>(

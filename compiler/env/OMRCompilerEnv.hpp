@@ -43,6 +43,7 @@ namespace OMR { typedef OMR::CompilerEnv CompilerEnvConnector; }
 #include "env/VMEnv.hpp"
 #include "env/VMMethodEnv.hpp"
 #include "env/TRMemory.hpp"
+#include "env/AOTAdapter.hpp"
 
 namespace TR { class CompilerEnv; }
 
@@ -99,6 +100,10 @@ public:
    //
    TR::DebugEnv debug;
 
+   // Reference to the Ahead of Time compiler infrastructure in OMR
+   //
+   TR::AOTAdapter* aotAdapter;
+   
    bool isInitialized() { return _initialized; }
 
    // --------------------------------------------------------------------------

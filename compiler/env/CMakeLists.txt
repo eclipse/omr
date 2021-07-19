@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,8 +39,9 @@ compiler_library(env
 	${CMAKE_CURRENT_LIST_DIR}/TRMemory.cpp
 	${CMAKE_CURRENT_LIST_DIR}/TRPersistentMemory.cpp
 	${CMAKE_CURRENT_LIST_DIR}/VerboseLog.cpp
-
-
+	${CMAKE_CURRENT_LIST_DIR}/OMRAOTMethodHeader.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRAOTAdapter.cpp	
+	${CMAKE_CURRENT_LIST_DIR}/OMRAOTStorageInterface.cpp
 	# The following are listed under JIT_PRODUCT_SOURCE_FILES
 	# (for compiler test, but not jitbuilder).
 	# TODO: figure out why and move if required

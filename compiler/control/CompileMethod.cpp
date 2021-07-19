@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,6 +59,7 @@
 #include "env/DebugSegmentProvider.hpp"
 #include "omrformatconsts.h"
 #include "runtime/CodeCacheManager.hpp"
+#include "codegen/AheadOfTimeCompile.hpp"
 
 #if defined (_MSC_VER) && _MSC_VER < 1900
 #define snprintf _snprintf
@@ -333,7 +334,11 @@ compileMethodFromDetails(
    TR_ASSERT(TR::comp() == NULL, "there seems to be a current TLS TR::Compilation object %p for this thread. At this point there should be no current TR::Compilation object", TR::comp());
    TR::Compilation compiler(0, omrVMThread, &fe, &compilee, request, options, dispatchRegion, &trMemory, plan);
    TR_ASSERT(TR::comp() == &compiler, "the TLS TR::Compilation object %p for this thread does not match the one %p just created.", TR::comp(), &compiler);
-
+   if (compiler.compileRelocatableCode())
+      {
+      compiler.setReloRuntime(TR::Compiler->aotAdapter->getRelocationRuntime());
+      compiler.cg()->getAheadOfTimeCompile()->setReloRuntime(compiler.aotReloRuntime());
+      }
    try
       {
       //fprintf(stderr,"loading JIT debug\n");
@@ -428,6 +433,16 @@ compileMethodFromDetails(
                                   startPC,
                                   translationTime/1000,
                                   translationTime%1000);
+         if (compiler.compileRelocatableCode())
+            { 
+            const char* methodName = compilee.externalName(&trMemory);
+            TR::Compiler->aotAdapter->createAndRegisterAOTMethodHeader(
+                        methodName,
+                        startPC,
+                        compiler.cg()->getCodeLength(),
+                        compiler.cg()->getAheadOfTimeCompile()->getRelocationData(),
+                        compiler.cg()->getAheadOfTimeCompile()->getSizeOfAOTRelocations());
+            }
          }
       else /* of rc == COMPILATION_SUCCEEDED */
          {
