@@ -600,7 +600,7 @@ MM_MemorySubSpaceUniSpace::checkForRatioExpand(MM_EnvironmentBase *env, uintptr_
 	}
 
 	/* Is too much time is being spent in GC? */
-	if (gcPercentage < _extensions->heapExpansionGCTimeThreshold) {
+	if (gcPercentage < _extensions->heapExpansionGCRatioThreshold._valueSpecified) {
 		Trc_MM_MemorySubSpaceUniSpace_checkForRatioExpand_Exit2(env->getLanguageVMThread(), gcPercentage);
 		return 0;
 	} else {
@@ -659,10 +659,10 @@ MM_MemorySubSpaceUniSpace::checkForRatioContract(MM_EnvironmentBase *env)
 		gcPercentage = _extensions->getGlobalCollector()->getGCTimePercentage(env);
 	}
 	
-	/* If we are spending less than extensions->heapContractionGCTimeThreshold of
+	/* If we are spending less than extensions->heapContractionGCRatioThreshold of
 	 * our time in gc then we should attempt to shrink the heap
 	 */ 	
-	if (gcPercentage > 0 && gcPercentage < _extensions->heapContractionGCTimeThreshold) {
+	if (gcPercentage > 0 && gcPercentage < _extensions->heapContractionGCRatioThreshold._valueSpecified) {
 		Trc_MM_MemorySubSpaceUniSpace_checkForRatioContract_Exit1(env->getLanguageVMThread(), gcPercentage);
 		return true;
 	} else {
@@ -737,7 +737,7 @@ MM_MemorySubSpaceUniSpace::getHeapFreeMaximumHeuristicMultiplier(MM_EnvironmentB
 		gcPercentage = _extensions->getGlobalCollector()->getGCTimePercentage(env);
 	}
 
-	uintptr_t expectedGcPercentage = (_extensions->heapContractionGCTimeThreshold + _extensions->heapExpansionGCTimeThreshold) / 2;
+	uintptr_t expectedGcPercentage = (_extensions->heapContractionGCRatioThreshold._valueSpecified + _extensions->heapExpansionGCRatioThreshold._valueSpecified) / 2;
 	uintptr_t gcRatio = gcPercentage / expectedGcPercentage;
 	uintptr_t freeMaxMultiplier = OMR_MIN(_extensions->heapFreeMaximumRatioMultiplier + 6 * gcRatio * gcRatio, _extensions->heapFreeMaximumRatioDivisor);
 	
@@ -757,7 +757,7 @@ MM_MemorySubSpaceUniSpace::getHeapFreeMinimumHeuristicMultiplier(MM_EnvironmentB
 		gcPercentage = _extensions->getGlobalCollector()->getGCTimePercentage(env);
 	}
 
-	uintptr_t expectedGcPercentage = (_extensions->heapContractionGCTimeThreshold + _extensions->heapExpansionGCTimeThreshold) / 2;
+	uintptr_t expectedGcPercentage = (_extensions->heapContractionGCRatioThreshold._valueSpecified + _extensions->heapExpansionGCRatioThreshold._valueSpecified) / 2;
 	uintptr_t gcRatio = gcPercentage / expectedGcPercentage;
 	uintptr_t freeMinMultiplier = OMR_MIN(_extensions->heapFreeMinimumRatioMultiplier + 1 * gcRatio * gcRatio, _extensions->heapFreeMinimumRatioDivisor - 5);
 	

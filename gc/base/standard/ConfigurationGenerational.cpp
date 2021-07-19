@@ -76,6 +76,22 @@ MM_ConfigurationGenerational::tearDown(MM_EnvironmentBase* env)
 	MM_ConfigurationStandard::tearDown(env);
 }
 
+bool
+MM_ConfigurationGenerational::initialize(MM_EnvironmentBase* env)
+{
+	MM_GCExtensionsBase* extensions = env->getExtensions();
+
+	if (!extensions->dnssExpectedRatioMaximum._wasSpecified) {
+		extensions->dnssExpectedRatioMaximum._valueSpecified = extensions->dnssExpectedTimeRatioMaximum;
+	}
+
+	if (!extensions->dnssExpectedRatioMinimum._wasSpecified) {
+		extensions->dnssExpectedRatioMinimum._valueSpecified = extensions->dnssExpectedTimeRatioMinimum;
+	}
+
+	return MM_ConfigurationStandard::initialize(env);
+}
+
 MM_MemorySubSpaceSemiSpace *
 MM_ConfigurationGenerational::createSemiSpace(MM_EnvironmentBase *envBase, MM_Heap *heap, MM_Scavenger *scavenger, MM_InitializationParameters *parameters, UDATA numaNode)
 {

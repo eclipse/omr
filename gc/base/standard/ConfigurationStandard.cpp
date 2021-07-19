@@ -85,6 +85,14 @@ MM_ConfigurationStandard::initialize(MM_EnvironmentBase* env)
 		extensions->setStandardGC(true);
 	}
 
+	if (!extensions->heapExpansionGCRatioThreshold._wasSpecified) {
+		extensions->heapExpansionGCRatioThreshold._valueSpecified = extensions->heapExpansionGCTimeThreshold;
+	}
+
+	if (!extensions->heapContractionGCRatioThreshold._wasSpecified) {
+		extensions->heapContractionGCRatioThreshold._valueSpecified = extensions->heapContractionGCTimeThreshold;
+	}
+
 	return result;
 }
 

@@ -941,3 +941,26 @@ TraceExit=Trc_MM_CopyForwardScheme_convertFreeMemoryCandidateToSurvivorRegion_Ex
 
 TraceEntry=Trc_MM_AllocationContextBalanced_acquireMPAOLRegionFromNode_Entry Overhead=1 Level=1 Group=tarok Template="MM_AllocationContextBalanced::acquireMPAOLRegionFromNode thisContext=%p requestingContext=%p"
 TraceExit=Trc_MM_AllocationContextBalanced_acquireMPAOLRegionFromNode_Exit Overhead=1 Level=1 Group=tarok Template="MM_AllocationContextBalanced::acquireMPAOLRegionFromNode result=%p"
+TraceEntry=Trc_MM_MemorySubSpaceTarok_calculateTargetContractSize_Entry2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateTargetContractSize Entry Allocation size = %zu"
+TraceExit=Trc_MM_MemorySubSpaceTarok_calculateExpandSize_Exit2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateExpandSize Exit1 returning expand size of %zu bytes"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_calculateHybridHeapOverhead Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_calculateHybridHeapOverhead GC Componant = %f Memory Componant = %f"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_getHeapSizeWithinBounds_1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_getHeapSizeWithinBounds Better heap size = %zu hybrid overhead %f"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_getHeapSizeWithinBounds_2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_getHeapSizeWithinBounds Changing heap by %f percent"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_checkResize_1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_checkResize ready to resize ? %s"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_checkResize_2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_checkResize heapSizeChange %zd bytes edenChangeRegionsBytes %zd"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_mapMemoryPercentageToGcOverhead_1 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_mapMemoryPercentageToGcOverhead Tenure: %zu bytes, Free Tenure %zu bytes"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_mapMemoryPercentageToGcOverhead_2 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_mapMemoryPercentageToGcOverhead heapSizeChange %zd bytes, free tenure ratio %f"
+TraceEvent=Trc_MM_MemorySubSpaceTarok_mapMemoryPercentageToGcOverhead_3 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpaceTarok_mapMemoryPercentageToGcOverhead free memory mapped to gc overhead: %f"
+
+
+TraceEvent=Trc_MM_SchedulingDelegate_calculateGlobalMarkOverhead Overhead=1 Level=1 Group=resize Template="MM_SchedulingDelegate_calculateGlobalMarkOverhead GMP Overhead = %f Increments total time = %zu Concurrent cost = %zu Interval time = %zu"
+TraceEvent=Trc_MM_SchedulingDelegate_calculatePartialGarbageCollectOverhead Overhead=1 Level=1 Group=resize Template="MM_SchedulingDelegate_calculatePartialGarbageCollectOverhead PGC Overhead = %f Average PGC interval = %zu Average PGC time = %zu"
+TraceEvent=Trc_MM_SchedulingDelegate_adjustIdealEdenRegionCount Overhead=1 Level=3 Group=resize Template="SchedulingDelegate_adjustIdealEdenRegionCount Allowed eden region range: %zu - %zu idealEdenRegionCount %zu  Eden region change %d"
+TraceEvent=Trc_MM_SchedulingDelegate_calculateEdenChangeHeapNotFullyExpanded Overhead=1 Level=3 Group=resize Template="SchedulingDelegate_calculateEdenChangeHeapNotFullyExpanded Hybrid eden overhead %f recent PGC pause time %zu Pause-to-Overhead mapping %f"
+TraceEvent=Trc_MM_SchedulingDelegate_calculateRecommendedEdenChangeForExpandedHeap Overhead=1 Level=3 Group=resize Template="SchedulingDelegate_calculateRecommendedEdenChangeForExpandedHeap Hybrid eden overhead %f avg pause time %zu Pause-to-Overhead mapping %f"
+TraceEvent=Trc_MM_SchedulingDelegate_calculateRecommendedEdenChangeForExpandedHeap_Exit Overhead=1 Level=1 Group=resize Template="SchedulingDelegate_calculateRecommendedEdenChangeForExpandedHeap_Exit Estimated free tenure = %zu GMP worktime = %zu PGC worktime = %zu PGG avg interval = %zu Eden survival rate %f Recommended eden size = %zu Recommended eden estimated overhead = %f"
+TraceEvent=Trc_MM_SchedulingDelegate_checkEdenSizeAfterPgc Overhead=1 Level=3 Group=resize Template="SchedulingDelegate_checkEdenSizeAfterPgc Not fully expanded recomendation %zd Fully expanded recommendation %zd percentage expanded %f"
+
+TraceEvent=Trc_MM_IncrementalGenerationalGC_calculateConcurrentMarkWorkTime Overhead=1 Level=2 Group=resize Template="IncrementalGenerationalGC_calculateConcurrentMarkWorkTime Concurrent GMP ratio %f previous increment concurrent worktime %llu Total concurrent worktime %llu"
+
+TraceEvent=Trc_MM_SweepEndBalancedGC Overhead=1 Level=1 Group=gclogger Template="Sweep end. Duration %llu us"

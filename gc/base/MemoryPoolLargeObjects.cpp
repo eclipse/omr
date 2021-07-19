@@ -303,7 +303,7 @@ MM_MemoryPoolLargeObjects::resizeLOA(MM_EnvironmentBase* env)
 				Trc_MM_LOAResize_resizeLOA4(env->getLanguageVMThread(), oldLOARatio, _currentLOARatio);
 
 				_extensions->heap->getResizeStats()->setLastLoaResizeReason(LOA_CONTRACT_MIN_SOA);
-				_memorySubSpace->reportHeapResizeAttempt(env, spaceDelta , HEAP_LOA_CONTRACT);
+				_memorySubSpace->reportHeapResizeAttempt(env, spaceDelta , HEAP_LOA_CONTRACT, _memorySubSpace->getTypeFlags());
 
 				/* Verify all pools in valid state after we are done */
 				assume0(_memoryPoolSmallObjects->isMemoryPoolValid(env, true));
@@ -461,7 +461,7 @@ MM_MemoryPoolLargeObjects::resetLOASize(MM_EnvironmentBase* env, double newLOARa
 
 		Trc_MM_LOAResize_resetLOASize(env->getLanguageVMThread(), _currentLOABase);
 
-		_memorySubSpace->reportHeapResizeAttempt(env, resizeSize , resizeType);
+		_memorySubSpace->reportHeapResizeAttempt(env, resizeSize , resizeType, _memorySubSpace->getTypeFlags());
 	}
 }
 

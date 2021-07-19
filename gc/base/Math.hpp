@@ -35,6 +35,8 @@ public:
 	
 	static float weightedAverage(float currentAverage, float newValue, float weight);
 
+	static double weightedAverage(double currentAverage, double newValue, double weight);
+
 	/* Round value up */
 	static MMINLINE uintptr_t roundToCeiling(uintptr_t granularity, uintptr_t number) {
 		return number + ((number % granularity) ? (granularity - (number % granularity)) : 0);

@@ -127,7 +127,7 @@ public:
 	
 	void reportSystemGCStart(MM_EnvironmentBase *env, uint32_t gcCode);
 	void reportSystemGCEnd(MM_EnvironmentBase *env);
-	void reportHeapResizeAttempt(MM_EnvironmentBase *env, uintptr_t amount, uintptr_t type);
+	void reportHeapResizeAttempt(MM_EnvironmentBase *env, uintptr_t amount, uintptr_t resizeType, uintptr_t memoryType);
 	void reportPercolateCollect(MM_EnvironmentBase *env);
 
 	bool initialize(MM_EnvironmentBase *env);
@@ -330,7 +330,7 @@ public:
 	 */
 	MM_MemorySubSpace *getTopLevelMemorySubSpace(uintptr_t typeFlags);
 
-	MMINLINE uintptr_t getTypeFlags() { return _memoryType; }		
+	MMINLINE uintptr_t getTypeFlags() { return _memoryType; }
 	MMINLINE uint32_t getObjectFlags() { return _objectFlags; }
 
 	virtual bool isActive();

@@ -143,6 +143,25 @@ public:
 	}
 };
 
+class MM_UserSpecifiedParameterDouble {
+	/* Data Members */
+private:
+protected:
+public:
+	bool _wasSpecified; /**< True if this parameter was specified by the user, false means it is undefined */
+	double _valueSpecified; /**< The value specified by the user or undefined in _wasSpecified is false */
+
+	/* Member Functions */
+private:
+protected:
+public:
+	MM_UserSpecifiedParameterDouble()
+		: _wasSpecified(false)
+		, _valueSpecified(0.0)
+	{
+	}
+};
+
 class MM_UserSpecifiedParameterBool {
 	/* Data Members */
 private:
@@ -372,8 +391,12 @@ public:
 	uintptr_t heapFreeMinimumRatioMultiplier;
 	uintptr_t heapFreeMaximumRatioDivisor;
 	uintptr_t heapFreeMaximumRatioMultiplier;
-	uintptr_t heapExpansionGCTimeThreshold; /**< max percentage of time spent in gc before expansion */
-	uintptr_t heapContractionGCTimeThreshold; /**< min percentage of time spent in gc before contraction */
+	uintptr_t heapExpansionGCTimeThreshold; /**< max percentage of time spent in gc before expansion - TO BE REMOVED IN FAVOUR OF `heapExpansionGCRatioThreshold` */
+	uintptr_t heapContractionGCTimeThreshold; /**< min percentage of time spent in gc before contraction - TO BE REMOVED IN FAVOUR OF `heapContractionGCRatioThreshold` */
+
+	MM_UserSpecifiedParameterUDATA heapExpansionGCRatioThreshold; /**< max percentage of time spent in gc before expansion */
+	MM_UserSpecifiedParameterUDATA heapContractionGCRatioThreshold; /**< min percentage of time spent in gc before contraction */
+
 	uintptr_t heapExpansionStabilizationCount; /**< GC count required before the heap is allowed to expand due to excessvie time after last heap expansion */
 	uintptr_t heapContractionStabilizationCount; /**< GC count required before the heap is allowed to contract due to excessvie time after last heap expansion */
 
@@ -505,8 +528,13 @@ public:
 	bool dynamicNewSpaceSizing;
 	bool debugDynamicNewSpaceSizing;
 	bool dnssAvoidMovingObjects;
-	double dnssExpectedTimeRatioMinimum;
-	double dnssExpectedTimeRatioMaximum;
+
+	double dnssExpectedTimeRatioMinimum; /**< TO BE REMOVED IN FAVOUR OF `dnssExpectedRatioMinimum` - When the gc ratio for new/nursery space is below this value, new/nursery space should contract */
+	double dnssExpectedTimeRatioMaximum; /**< TO BE REMOVED IN FAVOUR OF `dnssExpectedRatioMaximum` - When the gc ratio for new/nursery space is above this value, new/nursery space should expand */
+
+	MM_UserSpecifiedParameterDouble dnssExpectedRatioMinimum; /**< When the gc ratio for new/nursery space is below this value, new/nursery space should contract */
+	MM_UserSpecifiedParameterDouble dnssExpectedRatioMaximum; /**< When the gc ratio for new/nursery space is above this value, new/nursery space should expand */
+	
 	double dnssWeightedTimeRatioFactorIncreaseSmall;
 	double dnssWeightedTimeRatioFactorIncreaseMedium;
 	double dnssWeightedTimeRatioFactorIncreaseLarge;
@@ -787,6 +815,7 @@ public:
 	};
 	ReserveRegions tarokReserveRegionsFromCollectionSet;
 	bool tarokEnableRecoverRegionTailsAfterSweep; /**< Enable recovering region tail during post sweep of GMP */
+	uintptr_t tarokTargetMaxPauseTime; /**< An optional, user specified soft max pause time for PGC's in balanced GC*/
 #if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
 	bool _isConcurrentCopyForward;
 #endif
@@ -1488,6 +1517,8 @@ public:
 		, heapFreeMaximumRatioMultiplier(60)
 		, heapExpansionGCTimeThreshold(13)
 		, heapContractionGCTimeThreshold(5)
+		, heapExpansionGCRatioThreshold()
+		, heapContractionGCRatioThreshold()
 		, heapExpansionStabilizationCount(0)
 		, heapContractionStabilizationCount(3)
 		, heapSizeStartupHintConservativeFactor((float)0.7)
@@ -1602,6 +1633,8 @@ public:
 		, dnssAvoidMovingObjects(true)
 		, dnssExpectedTimeRatioMinimum(0.01)
 		, dnssExpectedTimeRatioMaximum(0.05)
+		, dnssExpectedRatioMinimum()
+		, dnssExpectedRatioMaximum()
 		, dnssWeightedTimeRatioFactorIncreaseSmall(0.2)
 		, dnssWeightedTimeRatioFactorIncreaseMedium(0.35)
 		, dnssWeightedTimeRatioFactorIncreaseLarge(0.5)
@@ -1812,6 +1845,7 @@ public:
 		, tarokEnableCopyForwardHybrid(true)
 		, tarokReserveRegionsFromCollectionSet(RESERVE_REGIONS_NO)
 		, tarokEnableRecoverRegionTailsAfterSweep(false)
+		, tarokTargetMaxPauseTime(200)
 #if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
 		, _isConcurrentCopyForward(false)
 #endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
