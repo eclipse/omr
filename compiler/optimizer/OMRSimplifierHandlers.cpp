@@ -10310,7 +10310,7 @@ TR::Node *bshlSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
    if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst())
       {
-      foldByteConstant(node, firstChild->getByte()<<(secondChild->getInt() & INT_SHIFT_MASK), s, false /* !anchorChildren*/);
+      foldByteConstant(node, firstChild->getByte()<<(secondChild->getInt() & BYTE_SHIFT_MASK), s, false /* !anchorChildren*/);
       return node;
       }
 
@@ -10326,7 +10326,7 @@ TR::Node *sshlSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
    if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst())
       {
-      foldShortIntConstant(node, firstChild->getShortInt()<<(secondChild->getInt() & INT_SHIFT_MASK), s, false /* !anchorChildren */);
+      foldShortIntConstant(node, firstChild->getShortInt()<<(secondChild->getInt() & SHORT_SHIFT_MASK), s, false /* !anchorChildren */);
       return node;
       }
    BINARY_IDENTITY_OP(Int, 0)
@@ -10384,7 +10384,7 @@ TR::Node *bshrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
    if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst())
       {
-      foldByteConstant(node, firstChild->getByte()>>(secondChild->getInt() & INT_SHIFT_MASK), s, false /* !anchorChildren*/);
+      foldByteConstant(node, firstChild->getByte()>>(secondChild->getInt() & BYTE_SHIFT_MASK), s, false /* !anchorChildren*/);
       return node;
       }
 
@@ -10400,7 +10400,7 @@ TR::Node *sshrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
    if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst())
       {
-      foldShortIntConstant(node, firstChild->getShortInt()>>(secondChild->getInt() & INT_SHIFT_MASK), s, false /* !anchorChildren */);
+      foldShortIntConstant(node, firstChild->getShortInt()>>(secondChild->getInt() & SHORT_SHIFT_MASK), s, false /* !anchorChildren */);
       return node;
       }
    BINARY_IDENTITY_OP(Int, 0)
@@ -10642,7 +10642,7 @@ TR::Node *bushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
    if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst())
       {
-      foldByteConstant(node, ((uint8_t)firstChild->getByte())>>(secondChild->getInt() & INT_SHIFT_MASK), s, false /* !anchorChildren*/);
+      foldByteConstant(node, ((uint8_t)firstChild->getByte())>>(secondChild->getInt() & BYTE_SHIFT_MASK), s, false /* !anchorChildren*/);
       return node;
       }
 
@@ -10658,7 +10658,7 @@ TR::Node *sushrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
    if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst())
       {
-      foldShortIntConstant(node, firstChild->getUnsignedShortInt()>>(secondChild->getInt() & INT_SHIFT_MASK), s, false /* !anchorChildren */);
+      foldShortIntConstant(node, firstChild->getUnsignedShortInt()>>(secondChild->getInt() & SHORT_SHIFT_MASK), s, false /* !anchorChildren */);
       return node;
       }
    BINARY_IDENTITY_OP(Int, 0)
