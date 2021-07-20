@@ -320,6 +320,8 @@ MM_VerboseHandlerOutput::outputInitializedStanza(MM_EnvironmentBase *env, MM_Ver
 #endif /* OMR_GC_MODRON_SCAVENGER */
 	buffer->formatAndOutput(env, 1, "<attribute name=\"splitFreeListSplitAmount\" value=\"%zu\" />", _extensions->splitFreeListSplitAmount);
 	buffer->formatAndOutput(env, 1, "<attribute name=\"numaNodes\" value=\"%zu\" />", _extensions->_numaManager.getAffinityLeaderCount());
+	buffer->formatAndOutput(env, 1, "<attribute name=\"idleTuning\" value=\"%s\"/>", (_extensions->gcOnIdle) ? "enabled" : "disabled");
+	buffer->formatAndOutput(env, 1, "<attribute name=\"inContainer\" value=\"%s\"/>", (omrsysinfo_is_running_in_container()) ?  "yes" : "no");
 
 	outputInitializedInnerStanza(env, buffer);
 
