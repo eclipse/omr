@@ -385,8 +385,12 @@ OMR::Node::copyValidProperties(TR::Node *fromNode, TR::Node *toNode)
    // Some parts of the code rely on getDataType, which can assert if
    // toNode's opcode before copying has the HasNoDataType property and
    // fromNode's opcode does not have the HasNoDataType property
+   // Also, copy all children in case the node does not have a data type
+   // and it has to be computed from its children
    UnionPropertyA_Type fromUnionPropertyA_Type = fromNode->getUnionPropertyA_Type();
    UnionPropertyA_Type toUnionPropertyA_Type = toNode->getUnionPropertyA_Type();
+
+   toNode->copyChildren(fromNode); 
 
    if (fromUnionPropertyA_Type == toUnionPropertyA_Type)
       {
@@ -461,8 +465,6 @@ OMR::Node::copyValidProperties(TR::Node *fromNode, TR::Node *toNode)
    // _flags
    toNode->setFlags(fromNode->getFlags());  // do not clear hasNodeExtension
 #endif
-
-   toNode->copyChildren(fromNode);
 
    // DONE:
    // OMR::Base
