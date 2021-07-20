@@ -54,6 +54,10 @@ public:
 	uintptr_t _copyBytesTotal;  /**< Total bytes copied into survivor */
 	uintptr_t _copyDiscardBytesTotal;  /**< total bytes discarded due to copying into survivor */
 	uintptr_t _TLHRemainderCount;
+	uintptr_t _preparedRemainderBytes;
+	uintptr_t _preservedRemainderBytes;
+	uintptr_t _unusedPreservedRemainderBytes;
+
 	uintptr_t _scanObjectsTotal; /**< Total count of objects scanned in abort recovery */
 	uintptr_t _scanBytesTotal;   /**< Total bytes scanned in abort recovery */
 	
@@ -209,6 +213,10 @@ public:
 		_copyBytesTotal = 0;
 		_copyDiscardBytesTotal = 0;
 		_TLHRemainderCount = 0;
+		_preparedRemainderBytes = 0;
+		_preservedRemainderBytes = 0;
+		_unusedPreservedRemainderBytes = 0;
+
 		_scanObjectsTotal = 0;
 		_scanBytesTotal = 0;
 		
@@ -303,6 +311,10 @@ public:
 		_copyBytesTotal += stats->_copyBytesTotal;
 		_copyDiscardBytesTotal += stats->_copyDiscardBytesTotal;
 		_TLHRemainderCount += stats->_TLHRemainderCount;
+		_preparedRemainderBytes += stats->_preparedRemainderBytes;
+		_preservedRemainderBytes += stats->_preservedRemainderBytes;
+		_unusedPreservedRemainderBytes += stats->_unusedPreservedRemainderBytes;
+
 		_scanObjectsTotal += stats->_scanObjectsTotal;
 		_scanBytesTotal += stats->_scanBytesTotal;
 
@@ -346,6 +358,9 @@ public:
 		,_copyBytesTotal(0)
 		,_copyDiscardBytesTotal(0)
 		,_TLHRemainderCount(0)
+		,_preparedRemainderBytes(0)
+		,_preservedRemainderBytes(0)
+		,_unusedPreservedRemainderBytes(0)
 		,_scanObjectsTotal(0)
 		,_scanBytesTotal(0)
 		,_copyObjectsEden(0)

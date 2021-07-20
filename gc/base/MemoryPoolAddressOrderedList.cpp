@@ -491,6 +491,12 @@ retry:
 #endif /* OMR_GC_CONCURRENT_SWEEP */
 		goto fail_allocate;
 	}
+	
+//	if (currentFreeEntry->getSize() > _extensions->memoryMax) {
+//		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+//		omrtty_printf("internalAllocate MM_MemoryPoolAddressOrderedList=%p, currentFreeEntry=%p, size=%zu\n",
+//				this, currentFreeEntry, currentFreeEntry->getSize());
+//	}
 
 	_largeObjectAllocateStats->decrementFreeEntrySizeClassStats(currentFreeEntry->getSize());
 	if((walkCount >= J9MODRON_ALLOCATION_MANAGER_HINT_MAX_WALK) || ((walkCount > 1) && allocateHintUsed)) {
@@ -1554,51 +1560,93 @@ MM_MemoryPoolAddressOrderedList::unlock(MM_EnvironmentBase *env)
 }
 
 /**
- * Insert Chunk into correct position on the free list.
+ * Insert/Coalesce Chunk into correct position on the free list.
  * @return true if recycle was successful, false if not.
  */
 bool
-MM_MemoryPoolAddressOrderedList::recycleHeapChunk(void* chunkBase, void* chunkTop)
+MM_MemoryPoolAddressOrderedList::recycleHeapChunk(MM_EnvironmentBase *env, void *chunkBase, void *chunkTop)
 {
 	bool const compressed = compressObjectReferences();
 	bool recycled = false;
+//	bool coalesce = false;
 
+	void *base = chunkBase;
+	void *top = chunkTop;
+	intptr_t freeEntryCount = 1;
 	_heapLock.acquire();
 
-	if ((NULL == _heapFreeList) || (chunkBase < (void*)_heapFreeList)) {
-		/* Add to front of freelist */
-		recycled = recycleHeapChunk(chunkBase, chunkTop, NULL, _heapFreeList);
+//	uintptr_t tempFreeSize = _freeMemorySize;
+//	uintptr_t tempFreeCount = _freeEntryCount;
+
+	MM_HeapLinkedFreeHeader  *currentFreeEntry = _heapFreeList;
+	MM_HeapLinkedFreeHeader  *nextFreeEntry = NULL;
+	MM_HeapLinkedFreeHeader  *previousFreeEntry = NULL;
+	MM_HeapLinkedFreeHeader  *next = NULL;
+	MM_HeapLinkedFreeHeader  *prev = NULL;
+
+	/* Find point chunk should be inserted and insert*/
+	while(NULL != currentFreeEntry) {
+		nextFreeEntry = currentFreeEntry->getNext(compressed);
+
+		if ((NULL == nextFreeEntry) || ((void *)nextFreeEntry > chunkBase)) {
+			break;
+		}
+
+		previousFreeEntry = currentFreeEntry;
+		currentFreeEntry = nextFreeEntry;
+	}
+
+	if ((NULL == currentFreeEntry) || (chunkBase < (void*)currentFreeEntry)) {
+		prev = previousFreeEntry;
+		if (chunkTop == (void *)currentFreeEntry) {
+			top = (void *)((uintptr_t)top + currentFreeEntry->getSize());
+//				coalesce = true;
+			next = nextFreeEntry;
+			freeEntryCount -= 1;
+			_largeObjectAllocateStats->decrementFreeEntrySizeClassStats(currentFreeEntry->getSize());
+		} else {
+			next = currentFreeEntry;
+		}
 	} else {
-		MM_HeapLinkedFreeHeader  *currentFreeEntry = _heapFreeList;
-		MM_HeapLinkedFreeHeader  *next;
+		if (chunkBase == (void *)((uintptr_t)currentFreeEntry + currentFreeEntry->getSize())) {
+			base = (void *) currentFreeEntry;
+			prev = previousFreeEntry;
+	//			coalesce = true;
+			freeEntryCount -= 1;
+			_largeObjectAllocateStats->decrementFreeEntrySizeClassStats(currentFreeEntry->getSize());
+		} else {
+			prev = currentFreeEntry;
+		}
 
-		/* Find point chunk should be inserted and insert*/
-		while(NULL != currentFreeEntry) {
-			next = currentFreeEntry->getNext(compressed);
-
-			/* Have we reached end of list ? */
-			if (NULL == next ) {
-				/* Chunk needs inserting at END of list */
-				recycled = recycleHeapChunk(chunkBase, chunkTop, currentFreeEntry, NULL);
-				break;
-			} else if ((void*)next > chunkBase) {
-				/* Insert chunk between current entry and next one */
-				recycled = recycleHeapChunk(chunkBase, chunkTop, currentFreeEntry, next);
-				break;
-			}
-
-			currentFreeEntry = next;
+		if (chunkTop == (void *)nextFreeEntry) {
+			top = (void *)((uintptr_t)top + nextFreeEntry->getSize());
+			next = nextFreeEntry->getNext(compressed);
+	//			coalesce = true;
+			freeEntryCount -= 1;
+			_largeObjectAllocateStats->decrementFreeEntrySizeClassStats(nextFreeEntry->getSize());
+		} else {
+			next = nextFreeEntry;
 		}
 	}
-
-	/* Was chunk big enough to be recycled ? */
-	if(recycled) {
-		/* Adjust the free memory size and free entry count*/
-		uintptr_t chunkSize = (uintptr_t)chunkTop - (uintptr_t)chunkBase;
-		_freeMemorySize += chunkSize;
-		_freeEntryCount += 1;
-		_largeObjectAllocateStats->incrementFreeEntrySizeClassStats(chunkSize);
+	
+//	MM_HeapLinkedFreeHeader  *oldHeapFreeList = _heapFreeList;
+//
+	recycled = recycleHeapChunk(base, top, prev, next);
+	Assert_MM_true(recycled);
+	if ((NULL == prev) || (chunkTop != top)) {
+		/* inserted freeEntry before _heapFreeList, it might confuse the checking for staled Hint, so clear hints for avoiding the cases.  */
+		clearHints();
 	}
+
+//	{
+//		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+//		omrtty_printf("recycleHeapChunk MM_MemoryPoolAddressOrderedList=%p, chunkTop=%p, chunkBase=%p, top=%p, base=%p, _heapFreeList=%p, oldHeapFreeList=%p, prev=%p, next=%p, size=%zu, _freeMemorySize=%zu, _freeEntryCount=%zu, freeEntryCount=%zu,\n",
+//					this, chunkTop, chunkBase, top, base, _heapFreeList, oldHeapFreeList, prev, next, (uintptr_t)chunkTop - (uintptr_t)chunkBase, _freeMemorySize, _freeEntryCount, freeEntryCount);
+//	}
+//
+	_largeObjectAllocateStats->incrementFreeEntrySizeClassStats((uintptr_t)top - (uintptr_t)base);
+	_freeMemorySize += (uintptr_t)chunkTop - (uintptr_t)chunkBase;
+	_freeEntryCount += freeEntryCount;
 
 	_heapLock.release();
 
@@ -1774,6 +1822,7 @@ MM_MemoryPoolAddressOrderedList::doFreeEntryAlignmentUpTo(MM_EnvironmentBase *en
 			if (((uintptr_t)newEndFreeEntry - (uintptr_t)newStartFreeEntry) < _minimumFreeEntrySize) {
 				/* remove currentFreeEntry */
 				removeFromFreeList((void *)currentFreeEntry, endFreeEntry, previousFreeEntry, nextFreeEntry);
+				removeHint(currentFreeEntry);
 				lostToAlignment += freeEntrySize;
 				freeEntryCount -= 1;
 				freeEntrySize = 0;
@@ -1781,11 +1830,13 @@ MM_MemoryPoolAddressOrderedList::doFreeEntryAlignmentUpTo(MM_EnvironmentBase *en
 			} else {
 				if ((uintptr_t) currentFreeEntry != (uintptr_t) newStartFreeEntry) {
 					fillWithHoles((void *)currentFreeEntry, newStartFreeEntry);
+					updateHint(currentFreeEntry, (MM_HeapLinkedFreeHeader *)newStartFreeEntry);
 				}
 				if ((uintptr_t) endFreeEntry != (uintptr_t) newEndFreeEntry) {
 					fillWithHoles(newEndFreeEntry, endFreeEntry);
 				}
 				recycleHeapChunk(newStartFreeEntry, newEndFreeEntry, previousFreeEntry, nextFreeEntry);
+
 				previousFreeEntry = (MM_HeapLinkedFreeHeader *) newStartFreeEntry;
 				lostToAlignment += freeEntrySize;
 				freeEntrySize = (uintptr_t)newEndFreeEntry - (uintptr_t)newStartFreeEntry;

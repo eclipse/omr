@@ -133,7 +133,7 @@ public:
 	virtual void expandWithRange(MM_EnvironmentBase *env, uintptr_t expandSize, void *lowAddress, void *highAddress, bool canCoalesce);
 	virtual void *contractWithRange(MM_EnvironmentBase *env, uintptr_t contractSize, void *lowAddress, void *highAddress);
 
-	bool recycleHeapChunk(void* chunkBase, void* chunkTop);
+	bool recycleHeapChunk(MM_EnvironmentBase *env, void* chunkBase, void* chunkTop);
 	bool recycleHeapChunk(void *addrBase, void *addrTop, MM_HeapLinkedFreeHeader *previousFreeEntry, MM_HeapLinkedFreeHeader *nextFreeEntry);
 
 	virtual void *findFreeEntryEndingAtAddr(MM_EnvironmentBase *env, void *addr);
