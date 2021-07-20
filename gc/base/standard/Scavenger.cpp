@@ -731,7 +731,9 @@ MM_Scavenger::reportGCEnd(MM_EnvironmentStandard *env)
 		(_extensions->largeObjectArea ? _extensions->heap->getApproximateActiveFreeLOAMemorySize(MEMORY_TYPE_OLD) : 0),
 		(_extensions->largeObjectArea ? _extensions->heap->getActiveLOAMemorySize(MEMORY_TYPE_OLD) :0),
 		_extensions->incrementScavengerStats._tenureAge,
-		_extensions->heap->getMemorySize()
+		_extensions->heap->getMemorySize(),
+		_extensions->scavenger->_cycleEndTime,
+		_extensions->scavenger->_cycleStartTime
 	);
 }
 

@@ -79,7 +79,7 @@ typedef uintptr_t (*condYieldFromGCFunctionPtr) (OMR_VMThread *omrVMThread, uint
 		<data type="uintptr_t" name="fixHeapForWalkReason" description="reason for fixHeapForWalk" />
 		<data type="uint64_t" name="fixHeapForWalkTime" description="time spent in fixHeapForWalk in ms" />
 	</event>
-
+	
 	<event>
 		<name>J9HOOK_MM_OMR_LOCAL_GC_START</name>
 		<description>
@@ -92,7 +92,7 @@ typedef uintptr_t (*condYieldFromGCFunctionPtr) (OMR_VMThread *omrVMThread, uint
 		<data type="uintptr_t" name="globalGCCount" description="the number of global gc's" />
 		<data type="uintptr_t" name="localGCCount" description="the number oflocal gc's" />
 	</event>
-
+	
 	<event>
 		<name>J9HOOK_MM_OMR_LOCAL_GC_END</name>
 		<description>
@@ -127,8 +127,10 @@ typedef uintptr_t (*condYieldFromGCFunctionPtr) (OMR_VMThread *omrVMThread, uint
 		<data type="uintptr_t" name="tenureLOATotalBytes" description="total number of bytes in the LOA" />
 		<data type="uintptr_t" name="tenureAge" description="the age at which objects currently get tenured" />
 		<data type="uintptr_t" name="totalMemorySize" description="the total size of all memory spaces" />
+		<data type="uint64_t" name="cycleStartTime" description="start time of cycle" />
+		<data type="uint64_t" name="cycleEndTime" description="end time of cycle" />
 	</event>
-
+	
 	<event>
 		<name>J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX</name>
 		<description>
