@@ -40,8 +40,6 @@ class MM_ConcurrentMarkPhaseStats : public MM_ConcurrentPhaseStatsBase
 private:
 protected:
 public:
-	uint64_t _startTime;
-	uint64_t _endTime;
 	MM_ConcurrentCardTableStats *_cardTableStats;
 	MM_ConcurrentGCStats *_collectionStats;
 
@@ -51,16 +49,12 @@ protected:
 public:
 	virtual void clear() {
 		MM_ConcurrentPhaseStatsBase::clear();
-		_startTime = 0;
-		_endTime = 0;
 		_cardTableStats = NULL;
 		_collectionStats = NULL;
 	}
 
 	MM_ConcurrentMarkPhaseStats()
 		: MM_ConcurrentPhaseStatsBase(OMR_GC_CYCLE_TYPE_GLOBAL)
-		, _startTime(0)
-		, _endTime(0)
 		, _cardTableStats(NULL)
 		, _collectionStats(NULL)
 		{}

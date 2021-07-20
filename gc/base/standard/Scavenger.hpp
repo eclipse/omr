@@ -70,6 +70,11 @@ class MM_Scavenger : public MM_Collector
 	/*
 	 * Data members
 	 */
+public:
+	/* The following start/end times record total cycle duration, done only by main thread. */
+	uint64_t _cycleStartTime;
+	uint64_t _cycleEndTime;
+
 private:
 	MM_ScavengerDelegate _delegate;
 
@@ -493,7 +498,7 @@ public:
 	void reportGCIncrementStart(MM_EnvironmentStandard *env);
 	void reportGCIncrementEnd(MM_EnvironmentStandard *env);
 	void reportScavengeStart(MM_EnvironmentStandard *env);
-	void reportScavengeEnd(MM_EnvironmentStandard *env, bool lastIncrement);
+	void reportScavengeEnd(MM_EnvironmentStandard *env, bool lastIncrement, uint64_t startTime, uint64_t endTime);
 
 	/**
 	 * Add the specified object to the remembered set.
@@ -899,6 +904,8 @@ public:
 
 	MM_Scavenger(MM_EnvironmentBase *env, MM_HeapRegionManager *regionManager) :
 		MM_Collector()
+		, _cycleStartTime(0)
+		, _cycleEndTime(0)
 		, _delegate(env)
 		, _objectAlignmentInBytes(env->getObjectAlignmentInBytes())
 		, _isRememberedSetInOverflowAtTheBeginning(false)

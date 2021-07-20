@@ -42,6 +42,8 @@ class MM_ConcurrentPhaseStatsBase : public MM_Base
 private:
 protected:
 public:
+	uint64_t _startTime;
+	uint64_t _endTime;
 	uintptr_t _cycleID;	/**< The "_id" of the corresponding cycle */
 	uintptr_t _scanTargetInBytes;	/**< The number of bytes a given concurrent task was expected to scan before terminating */
 	uintptr_t _bytesScanned;	/**< The number of bytes a given concurrent task did scan before it terminated (can be lower than _scanTargetInBytes if the termination was asynchronously requested) */
@@ -67,6 +69,8 @@ public:
 	}
 	
 	virtual void clear() {
+		_startTime = 0;
+		_endTime = 0;
 		_cycleID = 0;
 		_scanTargetInBytes = 0;
 		_bytesScanned = 0;
@@ -76,6 +80,8 @@ public:
 	 
 	MM_ConcurrentPhaseStatsBase(uintptr_t concurrentCycleType = OMR_GC_CYCLE_TYPE_DEFAULT)
 		: MM_Base()
+		, _startTime(0)
+		, _endTime(0)
 		, _cycleID(0)
 		, _scanTargetInBytes(0)
 		, _bytesScanned(0)

@@ -162,6 +162,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<data type="uintptr_t" name="eventid" description="unique identifier for event" />
 		<data type="void*" name="subSpace" description="the subspace which was collected" />
 		<data type="bool" name="cycleEnd" description="true, if last GC increment in a cycle" />
+		<data type="uint64_t" name="startTime" description="start time of scavenging" />
+		<data type="uint64_t" name="endTime" description="end time of scavenging" />
 	</event>
 
 	<event>

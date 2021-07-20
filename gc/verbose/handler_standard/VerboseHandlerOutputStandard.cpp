@@ -405,7 +405,7 @@ MM_VerboseHandlerOutputStandard::handleScavengeEndNoLock(J9HookInterface** hook,
 	MM_ScavengerStats *cycleScavengerStats = &extensions->scavengerStats;
 	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 	uint64_t duration = 0;
-	bool deltaTimeSuccess = getTimeDeltaInMicroSeconds(&duration, scavengerStats->_startTime, scavengerStats->_endTime);
+	bool deltaTimeSuccess = getTimeDeltaInMicroSeconds(&duration, event->startTime, event->endTime);
 
 	handleGCOPOuterStanzaStart(env, "scavenge", env->_cycleState->_verboseContextID, duration, deltaTimeSuccess);
 
@@ -478,6 +478,8 @@ MM_VerboseHandlerOutputStandard::handleConcurrentEndInternal(J9HookInterface** h
 		scavengeEndEvent.eventid = event->eventid;
 		scavengeEndEvent.subSpace = NULL; //unknown info
 		scavengeEndEvent.cycleEnd = false;
+		scavengeEndEvent.startTime = stats->_startTime;
+		scavengeEndEvent.endTime = stats->_endTime;
 
 		handleScavengeEndNoLock(hook, J9HOOK_MM_PRIVATE_SCAVENGE_END, &scavengeEndEvent);
 	}
