@@ -27,6 +27,7 @@
 #include "Location.hpp"
 #include "Operation.hpp"
 #include "OperationCloner.hpp"
+#include "OperationReplacer.hpp"
 #include "TypeDictionary.hpp"
 #include "TypeGraph.hpp"
 #include "Value.hpp"
@@ -312,6 +313,46 @@ Load::clone(Builder *b, OperationCloner *cloner) const
    return create(b, cloner->result(), cloner->symbol());
    }
 
+static bool
+LoadAtStoreAtExpander(OperationReplacer *replacer)
+   {
+   Builder *b = replacer->builder();
+   Operation *op = replacer->operation();
+   assert(op->action() == aLoadAt || op->action() == aStoreAt);
+
+   Type *ptrType = op->operand(0)->type();
+   assert(ptrType->isPointer());
+   TypeDictionary *dict = ptrType->owningDictionary();
+   Type *baseType = static_cast<PointerType *>(ptrType)->BaseType();
+
+   auto explodedTypes = replacer->explodedTypes();
+   if (explodedTypes->find(baseType) != explodedTypes->end())
+      {
+      // convert to sequence of LoadIndirect/StoreIndirect for each field in layout
+      StructType *layout = baseType->layout();
+      assert(layout);
+
+      bool isLoad = (op->action() == aLoadAt);
+      ValueMapper *baseOperandMapper = replacer->operandMapper(0);
+      assert(baseOperandMapper->size() == 1);
+      ValueMapper *resultMapper = replacer->resultMapper();
+      Value *basePtr = b->CoercePointer(dict->PointerTo(layout), baseOperandMapper->next());
+      for (auto it = layout->FieldsBegin(); it != layout->FieldsEnd(); it++)
+         {
+         FieldType *fType = it->second;
+         if (isLoad)
+            resultMapper->add(b->LoadIndirect(fType, basePtr));
+         else
+            {
+            ValueMapper *valueOperandMapper = replacer->operandMapper(1);
+            b->StoreIndirect(fType, basePtr, valueOperandMapper->next());
+            }
+         }
+      return true;
+      }
+   return false;
+   }
+
 LoadAt::LoadAt(Builder * parent, Value * result, Type * pointerType, Value * address)
    : OperationR1V1T1(aLoadAt, parent, result, pointerType, address)
    {
@@ -327,6 +368,12 @@ Operation *
 LoadAt::clone(Builder *b, OperationCloner *cloner) const
    {
    return create(b, cloner->result(), cloner->type(), cloner->operand());
+   }
+
+bool
+LoadAt::expand(OperationReplacer *r) const
+   {
+   return LoadAtStoreAtExpander(r);
    }
 
 void
@@ -396,6 +443,12 @@ Operation *
 StoreAt::clone(Builder *b, OperationCloner *cloner) const
    {
    return create(b, cloner->operand(0), cloner->operand(1));
+   }
+
+bool
+StoreAt::expand(OperationReplacer *r) const
+   {
+   return LoadAtStoreAtExpander(r);
    }
 
 void

@@ -22,6 +22,7 @@
 #include "TextWriter.hpp"
 #include "Builder.hpp"
 #include "Case.hpp"
+#include "DynamicOperation.hpp"
 #include "FunctionBuilder.hpp"
 #include "Operation.hpp"
 #include "Type.hpp"
@@ -220,61 +221,69 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
    {
    TextWriter &w = *this;
    printOperationPrefix(op);
+   if (op->isDynamic())
+      {
+      DynamicOperation *dOp = static_cast<DynamicOperation *>(op);
+      dOp->print(this);
+      return;
+      }
+
+   std::string name = actionName(op->action()) + std::string(" ");
    switch (op->action())
       {
       case aNone :
          break;
 
       case aConstInt8 :
-         w << op->result() << " = ConstInt8 " << (int32_t) op->literal()->getInt8() << w.endl();
+         w << op->result() << " = " << name << (int32_t) op->literal()->getInt8() << w.endl();
          break;
 
       case aConstInt16 :
-         w << op->result() << " = ConstInt16 " << (int32_t) op->literal()->getInt16() << w.endl();
+         w << op->result() << " = " << name << (int32_t) op->literal()->getInt16() << w.endl();
          break;
 
       case aConstInt32 :
-         w << op->result() << " = ConstInt32 " << op->literal()->getInt32() << w.endl();
+         w << op->result() << " = i" << name << op->literal()->getInt32() << w.endl();
          break;
 
       case aConstInt64 :
-         w << op->result() << " = ConstInt64 " << op->literal()->getInt64() << w.endl();
+         w << op->result() << " = " << name << op->literal()->getInt64() << w.endl();
          break;
 
       case aConstFloat :
-         w << op->result() << " = ConstFloat " << op->literal()->getFloat() << w.endl();
+         w << op->result() << " = " << name << op->literal()->getFloat() << w.endl();
          break;
 
       case aConstDouble :
-         w << op->result() << " = ConstDouble " << op->literal()->getDouble() << w.endl();
+         w << op->result() << " = " << name << op->literal()->getDouble() << w.endl();
          break;
 
       case aConstAddress :
-         w << op->result() << " = ConstAddress " << op->literal()->getAddress() << w.endl();
+         w << op->result() << " = " << name << op->literal()->getAddress() << w.endl();
          break;
 
       case aCoercePointer :
-         w << op->result() << " = CoercePointer " << op->type() << " " << op->operand() << w.endl();
+         w << op->result() << " = " << name << op->type() << " " << op->operand() << w.endl();
          break;
 
       case aAdd :
-         w << op->result() << " = Add " << op->operand(0) << " " << op->operand(1) << w.endl();
+         w << op->result() << " = " << name << op->operand(0) << " " << op->operand(1) << w.endl();
          break;
 
       case aSub :
-         w << op->result() << " = Sub " << op->operand(0) << " " << op->operand(1) << w.endl();
+         w << op->result() << " = " << name << op->operand(0) << " " << op->operand(1) << w.endl();
          break;
 
       case aMul :
-         w << op->result() << " = Mul " << op->operand(0) << " " << op->operand(1) << w.endl();
+         w << op->result() << " = " << name << op->operand(0) << " " << op->operand(1) << w.endl();
          break;
 
       case aLoad :
-         w << op->result() << " = Load " << op->symbol() << w.endl();
+         w << op->result() << " = " << name << op->symbol() << w.endl();
          break;
 
       case aLoadAt :
-         w << op->result() << " = LoadAt " << op->type() << " " << op->operand() << w.endl();
+         w << op->result() << " = " << name << op->type() << " " << op->operand() << w.endl();
          break;
 
       case aLoadField :
@@ -282,7 +291,7 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
          LoadField *lfOp = static_cast<LoadField *>(op);
          FieldType *fieldType = lfOp->getFieldType();
          StructType *structType = fieldType->owningStruct();
-         w << lfOp->result() << " = LoadField " << fieldType << " ( " << structType->name() << " . " << fieldType->name() << " ) " << lfOp->operand() << w.endl();
+         w << lfOp->result() << " = " << name << fieldType << " ( " << structType->name() << " . " << fieldType->name() << " ) " << lfOp->operand() << w.endl();
          }
          break;
 
@@ -291,12 +300,12 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
          LoadIndirect *liOp = static_cast<LoadIndirect *>(op);
          FieldType *fieldType = liOp->getFieldType();
          StructType *structType = fieldType->owningStruct();
-         w << liOp->result() << " = LoadIndirect " << fieldType << " ( " << structType->name() << " -> " << fieldType->name() << " ) " << liOp->operand() << w.endl();
+         w << liOp->result() << " = " << name << fieldType << " ( " << structType->name() << " -> " << fieldType->name() << " ) " << liOp->operand() << w.endl();
          }
          break;
 
       case aStore :
-         w << "Store " << op->symbol() << " " << op->operand() << w.endl();
+         w << name << op->symbol() << " " << op->operand() << w.endl();
          break;
 
       case aStoreField :
@@ -304,7 +313,7 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
          StoreField *sfOp = static_cast<StoreField *>(op);
          FieldType *fieldType = sfOp->getFieldType();
          StructType *structType = fieldType->owningStruct();
-         w << "StoreField " << fieldType << " ( " << structType->name() << " . " << fieldType->name() << " ) " << sfOp->operand(0) << " " << sfOp->operand(1) << w.endl();
+         w << name << fieldType << " ( " << structType->name() << " . " << fieldType->name() << " ) " << sfOp->operand(0) << " " << sfOp->operand(1) << w.endl();
          }
          break;
 
@@ -313,16 +322,16 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
          StoreIndirect *siOp = static_cast<StoreIndirect *>(op);
          FieldType *fieldType = siOp->getFieldType();
          StructType *structType = fieldType->owningStruct();
-         w << "StoreIndirect " << fieldType << " ( " << structType->name() << " -> " << fieldType->name() << " ) " << siOp->operand(0) << " " << siOp->operand(1) << w.endl();
+         w << name << fieldType << " ( " << structType->name() << " -> " << fieldType->name() << " ) " << siOp->operand(0) << " " << siOp->operand(1) << w.endl();
          }
          break;
 
       case aStoreAt :
-         w << "StoreAt " << op->operand(0) << " " << op->operand(1) << w.endl();
+         w << name << op->operand(0) << " " << op->operand(1) << w.endl();
          break;
 
       case aIndexAt :
-         w << op->result() << " = IndexAt " << op->type() << " " << op->operand(0) << " " << op->operand(1) << w.endl();
+         w << op->result() << " = " << name << op->type() << " " << op->operand(0) << " " << op->operand(1) << w.endl();
          break;
 
       case aCall :
@@ -330,7 +339,7 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
          Call *callOp = static_cast<Call *>(op);
          if (callOp->result())
             w << callOp->result() << " = ";
-         w << "Call " << callOp->function() << " " << callOp->numOperands();
+         w << name << callOp->function() << " " << callOp->numOperands();
          for (int32_t a=0;a < callOp->numArguments(); a++)
             w << " " << callOp->argument(a);
          w << w.endl();
@@ -341,10 +350,10 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
          {
          Builder * b = op->builder();
          if (b->numOperations() == 0)
-            w << "AppendBuilder " << b << " (Label)" << w.endl();
+            w << name << b << " (Label)" << w.endl();
          else
             {
-            w << "AppendBuilder " << b << w.endl();
+            w << name << b << w.endl();
             if (_visitAppendedBuilders)
                {
                w.indentIn();
@@ -359,14 +368,14 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
          {
          Builder * b = op->builder();
          if (b->numOperations() == 0)
-            w << "Goto " << b << " (Label)" << w.endl();
+            w << name << b << " (Label)" << w.endl();
          else
-            w << "Goto " << b << w.endl();
+            w << name << b << w.endl();
          }
          break;
 
       case aReturn :
-         w << "Return";
+         w << name;
          if (op->numOperands() > 0)
             {
             for (ValueIterator vIt = op->OperandsBegin(); vIt != op->OperandsEnd(); vIt++)
@@ -383,27 +392,27 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
          break;
 
       case aIfCmpGreaterThan :
-         w << "IfCmpGreaterThan " << op->operand(0) << " " << op->operand(1);
+         w << name << op->operand(0) << " " << op->operand(1);
          w << " then " << op->builder() << w.endl();;
          break;
 
       case aIfCmpLessThan :
-         w << "IfCmpLessThan " << op->operand(0) << " " << op->operand(1);
+         w << name << op->operand(0) << " " << op->operand(1);
          w << " then " << op->builder() << w.endl();
          break;
 
       case aIfCmpGreaterOrEqual :
-         w << "IfCmpGreaterOrEqual " << op->operand(0) << " " << op->operand(1);
+         w << name << op->operand(0) << " " << op->operand(1);
          w << " then " << op->builder() << w.endl();;
          break;
 
       case aIfCmpLessOrEqual :
-         w << "IfCmpLessOrEqual " << op->operand(0) << " " << op->operand(1);
+         w << name << op->operand(0) << " " << op->operand(1);
          w << " then " << op->builder() << w.endl();
          break;
 
       case aIfThenElse :
-         w << "IfThenElse " << op->operand() << " then " << op->builder() << " else ";
+         w << name << op->operand() << " then " << op->builder() << " else ";
          w << " else ";
          if (op->numBuilders() == 2)
             w << op->builder(1);
@@ -413,7 +422,7 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
          break;
 
       case aSwitch :
-         w << "Switch " << op->operand(0);
+         w << name << op->operand(0);
          for (CaseIterator cIt = op->CasesBegin(); cIt != op->CasesEnd(); cIt++)
             {
             Case * c = *cIt;
@@ -437,11 +446,11 @@ OMR::JitBuilder::TextWriter::writeOperation(Operation * op)
          break;
 
       case aCreateLocalArray :
-         w << op->result() << " = CreateLocalArray " << op->literal()->getInt32() << " " << op->type() << w.endl();
+         w << op->result() << " = " << name << op->literal()->getInt32() << " " << op->type() << w.endl();
          break;
 
       case aCreateLocalStruct :
-         w << op->result() << " = CreateLocalStruct " << op->type() << w.endl();
+         w << op->result() << " = " << name << op->type() << w.endl();
          break;
 
       // New operations

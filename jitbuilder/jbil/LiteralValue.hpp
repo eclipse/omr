@@ -41,6 +41,8 @@ namespace OMR
 namespace JitBuilder
 {
 
+class DynamicType;
+class TextWriter;
 class Type;
 class TypeDictionary;
 
@@ -57,6 +59,7 @@ enum LiteralKind
    , T_string
    , T_typename
    , T_aggregate
+   , T_dynamic
 
    // new literal base types
    // BEGIN {
@@ -81,6 +84,7 @@ class LiteralValue //: public Object
    static LiteralValue *create(TypeDictionary *dict, void *v);
    static LiteralValue *create(TypeDictionary *dict, std::string v);
    static LiteralValue *create(TypeDictionary *dict, Type *t);
+   static LiteralValue *create(TypeDictionary *dict, DynamicType *t, void *v);
 
    enum LiteralKind kind() const { return _kind; }
    Type *type() const { return _type; }
@@ -95,6 +99,9 @@ class LiteralValue //: public Object
    std::string getString();
    Type * getType();
    std::string getTypeString();
+   void *getDynamicTypeValue();
+
+   void print(TextWriter *w);
 
    // New public API
    // BEGIN {
@@ -114,6 +121,7 @@ class LiteralValue //: public Object
    LiteralValue(TypeDictionary *dict, void *v);
    LiteralValue(TypeDictionary *dict, std::string *v);
    LiteralValue(TypeDictionary *dict, Type *t);
+   LiteralValue(TypeDictionary *dict, DynamicType *t, void *v);
 
    // New protected API
    // BEGIN {
@@ -138,6 +146,7 @@ class LiteralValue //: public Object
       std::string *v_string;
       Type *v_type;
       std::map<std::string, LiteralValue *> *v_aggregate;
+      size_t v_startDynamicTypeValue;
 
       // New literal values
       // BEGIN {
@@ -149,6 +158,8 @@ class LiteralValue //: public Object
  
       };
    };
+
+#define LARGEST_STATIC_TYPE   size_t   // largest type in LiteralValue's union of static types
 
 typedef std::vector<LiteralValue *> LiteralValueVector;
 

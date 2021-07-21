@@ -37,12 +37,16 @@ namespace OMR
 namespace JitBuilder
 {
 
-class TypeGraph;
 class DebugDictionary;
+class DynamicType;
+class OperationBuilder;
+class TypeGraph;
 
 class TypeDictionary
    {
    friend class DebugDictionary;
+   friend class DynamicType;
+   friend class OperationBuilder;
 
 public:
    TypeDictionary();
@@ -149,6 +153,8 @@ protected:
    void initializeGraph();
    void registerPointerType(PointerType * pointerType);
    void forgetType(Type *type);
+   void registerDynamicOperation(OperationBuilder * dynamicOperationBuilder);
+   void registerDynamicType(DynamicType * dynamicType);
 
    int64_t                              _id;
    std::string                          _name;

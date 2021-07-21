@@ -388,7 +388,7 @@ OperationDebugger::OperationDebugger(Debugger *dbgr, Operation *op)
    {
    DefineName(op->fb()->name() + std::string(".op") + std::to_string(op->id()));
    DefineFile("OpDbgr");
-   DefineLine(actionName[op->action()]);
+   DefineLine(actionName(op->action()));
    DefineParameter(_frameName, dbgDict()->_pDebugFrame);
    DefineParameter(_fromBuilderID, Int32);
    DefineReturnType(Int8);

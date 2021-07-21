@@ -19,7 +19,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "DynamicType.hpp"
 #include "LiteralValue.hpp"
+#include "TextWriter.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
 
@@ -83,6 +85,14 @@ LiteralValue *
 LiteralValue::create(TypeDictionary *dict, Type *t)
    {
    return new LiteralValue(dict, t);
+   }
+
+LiteralValue *
+LiteralValue::create(TypeDictionary *dict, DynamicType *t, void *v)
+   {
+   size_t sizeNeeded = sizeof(LiteralValue) + t->layout()->size() - sizeof(LARGEST_STATIC_TYPE);
+   LiteralValue *o = reinterpret_cast<LiteralValue *>(new uint8_t[sizeNeeded]);
+   return new (o) LiteralValue(dict, t, v);
    }
 
 int8_t
@@ -158,6 +168,13 @@ LiteralValue::getTypeString()
    return v_type->name();
    }
 
+void *
+LiteralValue::getDynamicTypeValue()
+   {
+   assert(_kind == T_dynamic);
+   return &v_startDynamicTypeValue;
+   }
+
 LiteralValue::LiteralValue(TypeDictionary *dict, int8_t v)
    : _dict(dict)
    , _kind(T_int8)
@@ -221,6 +238,38 @@ LiteralValue::LiteralValue(TypeDictionary *dict, Type *v)
    , v_type(v)
    { }
 
+LiteralValue::LiteralValue(TypeDictionary *dict, DynamicType *t, void *v)
+   : _dict(dict)
+   , _kind(T_dynamic)
+   , _type(t)
+   {
+   memcpy(&v_startDynamicTypeValue, v, t->layout()->size());
+   }
+
+void
+LiteralValue::print(TextWriter *w)
+   {
+   switch (_kind)
+      {
+      case T_int8 :      (*w) << getInt8(); break;
+      case T_int16 :     (*w) << getInt16(); break;
+      case T_int32 :     (*w) << getInt32(); break;
+      case T_int64 :     (*w) << getInt64(); break;
+      case T_float :     (*w) << getFloat(); break;
+      case T_double :    (*w) << getDouble(); break;
+      case T_address :   (*w) << getAddress(); break;
+      case T_string :    (*w) << getString(); break;
+      case T_typename :  (*w) << getTypeString(); break;
+      case T_dynamic :
+         {
+         _type->printValue(w, &v_startDynamicTypeValue);
+         break;
+         }
+      default:
+         assert(0);
+         break;
+      }
+   }
 
 // New user code
 // BEGIN {

@@ -42,6 +42,7 @@ class LiteralValue;
 class Location;
 class Operation;
 class OperationCloner;
+class OperationReplacer;
 class Type;
 class TypeDictionary;
 class TypeGraph;
@@ -59,6 +60,8 @@ class OperationBase : public Object
    Action action() const                               { return _action; }
    Builder * parent() const                            { return _parent; }
    Location * location() const                         { return _location; }
+
+   virtual bool isDynamic() const                      { return false; }
 
    virtual LiteralIterator LiteralsBegin()             { return LiteralIterator(); }
            LiteralIterator &LiteralsEnd()              { return literalEndIterator; }
@@ -96,7 +99,7 @@ class OperationBase : public Object
    virtual Builder *builder(int i=0) const             { return NULL; }
 
    virtual CaseIterator CasesBegin()                   { return CaseIterator(); }
-   virtual CaseIterator CasesEnd()                     { return CaseIterator(); }
+   virtual CaseIterator CasesEnd()                     { return caseEndIterator; }
    virtual int32_t numCases() const                    { return 0; }
    virtual Case * getCase(int i=0) const               { return NULL; }
 
@@ -113,6 +116,9 @@ class OperationBase : public Object
    // the new clone API
    virtual Operation * clone(Builder *b, OperationCloner *cloner) const = 0;
 
+   virtual bool hasExpander() const                       { return false; }
+   virtual bool expand(OperationReplacer *replacer) const { return false; }
+
 protected:
    OperationBase(Action a, Builder * parent);
 
@@ -126,6 +132,7 @@ protected:
 
    static int64_t globalIndex;
    static BuilderIterator builderEndIterator;
+   static CaseIterator caseEndIterator;
    static LiteralIterator literalEndIterator;
    static SymbolIterator symbolEndIterator;
    static TypeIterator typeEndIterator;

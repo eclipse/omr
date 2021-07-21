@@ -20,8 +20,10 @@
 
 #include "TypeReplacer.hpp"
 #include "Builder.hpp"
+#include "DynamicType.hpp"
 #include "FunctionBuilder.hpp"
 #include "Operation.hpp"
+#include "OperationReplacer.hpp"
 #include "Symbol.hpp"
 #include "TextWriter.hpp"
 #include "Type.hpp"
@@ -1041,113 +1043,49 @@ TypeReplacer::cloneOperation(Builder *b, Operation *op, int numMaps)
    {
    TextWriter *log = _fb->logger(traceEnabled());
    if (log) log->indent() << "Cloning operation" << log->endl();
-   switch (op->action())
+
+   bool needReplacer = false;
+   if (op->hasExpander())
+      needReplacer = true;
+   else
       {
-      // TODO: Return needs special handling eventually if returnType was exploded
-      //       (currently, not supported to explode a return type)
+      for (auto it=op->OperandsBegin();it != op->OperandsEnd();it++)
+         needReplacer |= ((*it)->type()->isDynamic());
+      }
+   
+   if (needReplacer)
+      {
+      OperationReplacer r(op);
+      r.setBuilder(b);
+      for (auto i=0;i < _mappedResultsSize;i++)
+         r.setResultMapper(_mappedResults[i], i);
+      for (auto i=0;i < _mappedOperandsSize;i++)
+         r.setOperandMapper(_mappedOperands[i], i);
+      for (auto i=0;i < _mappedBuildersSize;i++)
+         r.setBuilderMapper(_mappedBuilders[i], i);
+      for (auto i=0;i < _mappedLiteralsSize;i++)
+         r.setLiteralMapper(_mappedLiterals[i], i);
+      for (auto i=0;i < _mappedSymbolsSize;i++)
+         r.setSymbolMapper(_mappedSymbols[i], i);
+      for (auto i=0;i < _mappedTypesSize;i++)
+         r.setTypeMapper(_mappedTypes[i], i);
+      r.setExplodedTypes(&_explodedType);
+     
+      if (op->hasExpander() && op->expand(&r))
+         return;
 
-#if 0
-      case aIndexAt :
+      for (auto it=op->OperandsBegin();it != op->OperandsEnd();it++)
          {
-         Type *ptrType = op->type();
-         assert(ptrType->isPointer());
-         Type *baseType = static_cast<PointerType *>(ptrType)->BaseType();
-
-         if (_explodedType.find(baseType) != _explodedType.end())
+         Value *v = *it;
+         Type *t = v->type();
+         if (t->isDynamic())
             {
-            // IndexAt for a pointer to an exploded type should be exploded
-
-            assert(numMaps == 1); // not expecting IndexAt to be exploded already
-            // we need to explode the result of the IndexAt to Add the offsets for the exploded type elements
-
-            // first, clone the IndexAt and collect its result
-            ValueMapper **indexAtResults = new ValueMapper *[1];
-            ValueMapper *indexAtResult = indexAtResults[0] = new ValueMapper();
-            op->cloneTo(b, indexAtResults, _mappedOperands, _mappedTypes, _mappedLiterals, _mappedSymbols, _mappedBuilders);
-
-            // now, iterate over the exploded type fields, Adding each ones's offset to the IndexAt result
-            // and collecting those results into the operation's resultMappers
-            auto it = _typeMappers.find(baseType);
-            TypeMapper *m = it->second;
-            TypeDictionary *dict = ptrType->owningDictionary();
-            for (int i=0;i < m->size();i++)
-               {
-               size_t offset = m->offset();
-               Type *type = m->next();
-               Type *destType = dict->PointerTo(type);
-               transformTypeIfNeeded(dict, destType);
-               Value *convertedPtr = b->CoercePointer(destType, indexAtResult->next());
-               _mappedResults[0]->add(b->Add(convertedPtr, b->ConstInt64(offset)));
-               }
-
-            delete indexAtResult;
-            delete[] indexAtResults;
-
-            return; // cloning is complete at this point
+            DynamicType *type = static_cast<DynamicType *>(t);
+            if (type->expand(&r))
+               return;
             }
          }
-         break;
-#endif
-
-      case aLoadAt :
-      case aStoreAt :
-         {
-         Type *ptrType = op->operand(0)->type();
-         assert(ptrType->isPointer());
-         TypeDictionary *dict = ptrType->owningDictionary();
-         Type *baseType = static_cast<PointerType *>(ptrType)->BaseType();
-
-         if (_explodedType.find(baseType) != _explodedType.end())
-            {
-            // convert to sequence of LoadIndirect/StoreIndirect for each field in layout
-            StructType *layout = baseType->layout();
-            assert(layout);
-
-            bool isLoad = (op->action() == aLoadAt);
-            assert(_mappedOperands[0]->size() == 1);
-            Value *basePtr = b->CoercePointer(dict->PointerTo(layout), _mappedOperands[0]->next());
-            for (auto it = layout->FieldsBegin(); it != layout->FieldsEnd(); it++)
-               {
-               FieldType *fType = it->second;
-               if (isLoad)
-                  _mappedResults[0]->add(b->LoadIndirect(fType, basePtr));
-               else
-                  b->StoreIndirect(fType, basePtr, _mappedOperands[1]->next());
-               }
-            return;
-#if 0
-            // need to specialize the TypeMapper for this operation
-            assert(_mappedTypesSize == 1);
-            auto it = _typeMappers.find(baseType);
-            TypeMapper *m = it->second;
-            TypeMapper **newMappers = new TypeMapper *[1];
-            TypeMapper *newMapper = newMappers[0] = new TypeMapper();
-            TypeDictionary *dict = ptrType->owningDictionary();
-            for (int i=0;i < m->size();i++)
-               {
-               Type *newPtrType = dict->PointerTo(m->next());
-               transformTypeIfNeeded(dict, newPtrType);
-               newMapper->add(newPtrType);
-               }
-            // dodn't delete _mappedTypes[0] because it originally came from _typeMappers (stll live)
-            delete[] _mappedTypes;
-            _mappedTypes = newMappers;
-#endif
-            }
-         }
-         break;
-
-   //
-   // Special user operation handling
-   // BEGIN {
-
-   // } END
-   // Special user operation handling
-   //
-
-      default:
-         break;
-      } // switch(op->action())
+      }
 
    // otherwise, map the operation generically
    for (int i=0;i < numMaps;i++)

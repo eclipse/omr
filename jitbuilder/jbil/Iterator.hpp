@@ -129,7 +129,7 @@ class Iterator
    };
 
 typedef Iterator<Builder> BuilderIterator;
-typedef std::vector<Case *>::iterator CaseIterator;
+typedef Iterator<Case> CaseIterator; //std::vector<Case *>::iterator CaseIterator;
 typedef Iterator<LiteralValue> LiteralIterator;
 typedef Iterator<Symbol> SymbolIterator;
 typedef Iterator<Type> TypeIterator;

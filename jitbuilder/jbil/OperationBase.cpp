@@ -26,10 +26,11 @@
 
 int64_t OMR::JitBuilder::OperationBase::globalIndex = 0;
 OMR::JitBuilder::BuilderIterator OMR::JitBuilder::OperationBase::builderEndIterator;
+OMR::JitBuilder::CaseIterator OMR::JitBuilder::OperationBase::caseEndIterator;
+OMR::JitBuilder::LiteralIterator OMR::JitBuilder::OperationBase::literalEndIterator;
 OMR::JitBuilder::SymbolIterator OMR::JitBuilder::OperationBase::symbolEndIterator;
 OMR::JitBuilder::TypeIterator OMR::JitBuilder::OperationBase::typeEndIterator;
 OMR::JitBuilder::ValueIterator OMR::JitBuilder::OperationBase::valueEndIterator;
-OMR::JitBuilder::LiteralIterator OMR::JitBuilder::OperationBase::literalEndIterator;
 
 OMR::JitBuilder::OperationBase::OperationBase(Action a, Builder * parent)
    : Object(parent->fb())

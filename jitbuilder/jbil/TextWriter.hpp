@@ -112,6 +112,11 @@ public:
       w._os << v;
       return w;
       }
+   friend TextWriter &operator<<(TextWriter &w, LiteralValue *lv)
+      {
+      lv->print(&w);
+      return w;
+      }
    //
    // User type handlng
    // BEGIN {

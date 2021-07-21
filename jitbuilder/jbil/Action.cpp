@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include <map>
 #include "Action.hpp"
 
 namespace OMR
@@ -26,9 +27,8 @@ namespace OMR
 namespace JitBuilder
 {
 
-std::string actionName[] =
-   {
-     "None"
+static std::string builtinActionNames[] =
+   { "None"
    , "ConstInt8"
    , "ConstInt16"
    , "ConstInt32"
@@ -71,9 +71,33 @@ std::string actionName[] =
    // } END
    // New action names, order must correspond to Action enum order in Action.hpp
 
+   , "DynamicOperationPlaceholderShouldNotAppear"
    };
 
-static_assert(sizeof(actionName)/sizeof(*actionName) == NumActions, "Missing/extra action name");
+static_assert(sizeof(builtinActionNames)/sizeof(*builtinActionNames) == NumStaticActions+1, "Missing/extra action name");
+
+static std::map<Action,std::string> dynamicActionNames;
+
+
+uint32_t NumActions = NumStaticActions;
+
+void
+registerDynamicActionName(Action a, std::string name)
+   {
+   assert(a >= aFirstDynamicOperation && a < NumActions);
+   dynamicActionNames.insert({a, name});
+   }
+
+std::string
+actionName(Action a)
+   {
+   if (a < NumStaticActions)
+      return builtinActionNames[a];
+   auto it = dynamicActionNames.find(a);
+   if (it != dynamicActionNames.end())
+      return it->second;
+   return std::string("Unknown:") + std::to_string(a);
+   }
 
 } // namespace JitBuilder
 } // namespace OMR

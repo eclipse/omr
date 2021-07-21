@@ -7,7 +7,7 @@ LIBJITBDIR=$(OMRBUILDDIR)/jitbuilder
 JITB2=jitbuilder2
 LIBJITB2=lib$(JITB2).a
 
-all: min increment matmult returns testTypeGraph
+all: min increment matmult returns testTypeGraph complexmatmult
 
 LINK_OPTIONS=-L. -l$(JITB2) -L$(LIBJITBDIR) -l$(JITB)
 
@@ -17,7 +17,7 @@ increment: Increment.o JitBuilder.hpp TextWriter.hpp $(LIBJITB2)
 min: Min.o JitBuilder.hpp TextWriter.hpp $(LIBJITB2)
 	g++ -g -o min $(LINK_OPTIONS) Min.o
 
-matmult: MatMult.o JitBuilder.hpp TextWriter.hpp $(LIBJITB2)
+matmult: MatMult.o JitBuilder.hpp $(LIBJITB2)
 	g++ -g -o matmult $(LINK_OPTIONS) MatMult.o
 
 returns: Returns.o JitBuilder.hpp TextWriter.hpp $(LIBJITB2)
@@ -26,7 +26,7 @@ returns: Returns.o JitBuilder.hpp TextWriter.hpp $(LIBJITB2)
 testTypeGraph: testTypeGraph.o
 	g++ -g -o testTypeGraph $(LINK_OPTIONS) testTypeGraph.o
 
-$(LIBJITB2): Action.o Builder.o BuilderBase.o Case.o CodeGenerator.o Debugger.o DialectReducer.o FunctionBuilder.o LiteralValue.o Location.o Object.o Operation.o OperationBase.o OperationCloner.o Symbol.o TextWriter.o Transformer.o Type.o TypeDictionary.o TypeGraph.o TypeReplacer.o Value.o Visitor.o JitBuilder.o
+$(LIBJITB2): Action.o Builder.o BuilderBase.o Case.o CodeGenerator.o Debugger.o DialectReducer.o DynamicOperation.o DynamicType.o FunctionBuilder.o LiteralValue.o Location.o Object.o Operation.o OperationBase.o OperationCloner.o OperationReplacer.o Symbol.o TextWriter.o Transformer.o Type.o TypeDictionary.o TypeGraph.o TypeReplacer.o Value.o Visitor.o JitBuilder.o
 	ar -cr $(LIBJITB2) \
 		Action.o \
 		Builder.o \
@@ -35,6 +35,8 @@ $(LIBJITB2): Action.o Builder.o BuilderBase.o Case.o CodeGenerator.o Debugger.o 
 		CodeGenerator.o \
 		Debugger.o \
 		DialectReducer.o \
+		DynamicOperation.o \
+		DynamicType.o \
 		FunctionBuilder.o \
 		LiteralValue.o \
 		Location.o \
@@ -42,6 +44,7 @@ $(LIBJITB2): Action.o Builder.o BuilderBase.o Case.o CodeGenerator.o Debugger.o 
 		Operation.o \
 		OperationBase.o \
 		OperationCloner.o \
+		OperationReplacer.o \
 		Symbol.o \
 		TextWriter.o \
 		Transformer.o \

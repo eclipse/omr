@@ -828,6 +828,9 @@ class LoadAt : public OperationR1V1T1
 
    virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
+   virtual bool hasExpander() const { return true; }
+   virtual bool expand(OperationReplacer *r) const;
+
    protected:
    LoadAt(Builder * parent, Value * result, Type * pointerType, Value * address);
    };
@@ -937,6 +940,9 @@ class StoreAt : public OperationR0V2
    virtual void cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMapppers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const;
 
    virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
+
+   virtual bool hasExpander() const { return true; }
+   virtual bool expand(OperationReplacer *r) const;
 
    protected:
    StoreAt(Builder * parent, Value * address, Value * value);
@@ -1492,8 +1498,7 @@ class Switch : public OperationR0V1
       }
 
    virtual int32_t numCases() const  { return _cases.size(); }
-   virtual CaseIterator CasesBegin() { return _cases.begin(); }
-   virtual CaseIterator CasesEnd()   { return _cases.end(); }
+   virtual CaseIterator CasesBegin() { return CaseIterator(_cases); }
 
    static void initializeTypeProductions(TypeDictionary * types, TypeGraph * graph);
 

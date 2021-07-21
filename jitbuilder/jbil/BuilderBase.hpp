@@ -55,6 +55,7 @@ class Case;
 class FunctionBuilder;
 class Location;
 class Operation;
+class OperationBuilder;
 class OperationCloner;
 class Type;
 class Value;
@@ -69,11 +70,17 @@ enum MustMayCant {
 class BuilderBase : public Object
    {
    friend class Transformer;
+   friend class OperationBuilder;
 
 public:
 
    Operation * appendClone(Operation *op);
    Operation * appendClone(Operation *op, OperationCloner *cloner);
+
+   Operation * Append(OperationBuilder *opBuilder);
+   Value * Append(OperationBuilder *opBuilder, LiteralValue *l);
+   Value * Append(OperationBuilder *opBuilder, Value *v);
+   Value * Append(OperationBuilder *opBuilder, Value *left, Value *right);
 
    Value * ConstInt8(int8_t v);
    Value * ConstInt16(int16_t v);

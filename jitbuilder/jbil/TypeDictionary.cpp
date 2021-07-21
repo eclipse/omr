@@ -20,6 +20,8 @@
  *******************************************************************************/
 
 #include <string>
+#include "DynamicOperation.hpp"
+#include "DynamicType.hpp"
 #include "Operation.hpp"
 #include "Type.hpp"
 #include "TypeGraph.hpp"
@@ -239,6 +241,20 @@ OMR::JitBuilder::TypeDictionary::registerPointerType(PointerType * pointerType)
 
    _graph->registerValidOperation(baseType, aLoadAt, pointerType);
    _graph->registerValidOperation(NoType, aStoreAt, pointerType, baseType);
+   }
+
+void
+OMR::JitBuilder::TypeDictionary::registerDynamicType(DynamicType * dynamicType)
+   {
+   addType(dynamicType);
+   _graph->registerType(dynamicType);
+   dynamicType->initializeTypeProductions(this, _graph);
+   }
+
+void
+OMR::JitBuilder::TypeDictionary::registerDynamicOperation(OperationBuilder * operationBuilder)
+   {
+   operationBuilder->initializeTypeProductions(this, _graph);
    }
 
 Type *

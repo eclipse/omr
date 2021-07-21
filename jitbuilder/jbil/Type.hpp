@@ -89,16 +89,14 @@ public:
    virtual bool isUnion() const        { return false; }
    virtual bool isField() const        { return false; }
    virtual bool isFunction() const     { return false; }
-
-   // for Types with multiple elements, should a Value of the Type be considered a "sum" of those elements?
-   virtual bool isAdditive() const     { return false; }
+   virtual bool isDynamic() const      { return false; }
 
    virtual void printType(TextWriter *w);
    virtual void printValue(TextWriter *w, void *p) const { assert(_valuePrinter); _valuePrinter(w, this, p); }
 
    // returning NULL from the next function means that values of this type cannot be broken down further
-   virtual StructType *layout() { return NULL; }
-   virtual LiteralMapper *explode(LiteralValue *value, LiteralMapper *m=NULL) { return NULL; }
+   virtual StructType *layout() const { return NULL; }
+   virtual LiteralMapper *explode(LiteralValue *value, LiteralMapper *m=NULL) const { return NULL; }
 
    static TypeID maxID() { return globalIndex; }
 

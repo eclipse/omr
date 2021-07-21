@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2021 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,40 +19,41 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JITBUILDER_INCL
-#define JITBUILDER_INCL
-
-#define TOSTR(x)     #x
-#define LINETOSTR(x) TOSTR(x)
-
-#include "Builder.hpp"
 #include "DynamicOperation.hpp"
 #include "DynamicType.hpp"
-#include "FunctionBuilder.hpp"
-#include "Operation.hpp"
-#include "Symbol.hpp"
-#include "Transformer.hpp"
-#include "TextWriter.hpp"
-#include "Type.hpp"
 #include "TypeDictionary.hpp"
-#include "Value.hpp"
 
-bool initializeJit();
-bool constructFunctionBuilder(OMR::JitBuilder::FunctionBuilder * fb);
-int32_t compileFunctionBuilder(OMR::JitBuilder::FunctionBuilder * fb, void ** entry);
-void shutdownJit();
+namespace OMR
+{
 
-// Legacy definitions: may need to make IlBuilder a class....
-//#define IlBuilder Builder
-//#define MethodBuilder FunctionBuilder
-//#define compileMethodBuilder(fb,e) compileFunctionBuilder(fb, e)
+namespace JitBuilder
+{
 
-// Global user definitions
-// BEGIN {
-//
+DynamicType::DynamicType(TypeDictionary *dict, std::string name, size_t size, ValuePrinter *printer, StructType *layout, LiteralExploder *exploder, OperationExpander *expander, TypeRegistrar *registrar)
+   : Type(dict, name, size, printer)
+   , _layout(layout)
+   , _exploder(exploder)
+   , _expander(expander)
+   , _registrar(registrar)
+   {
+   dict->registerDynamicType(this);
+   }
 
-//
-// } END
-// Global user definitions
+bool
+DynamicType::expand(OperationReplacer *replacer) const
+   {
+   if (_expander)
+      return _expander(replacer);
+   return false;
+   }
 
-#endif // defined(JITBUILDER_INCL)
+void
+DynamicType::initializeTypeProductions(TypeDictionary *dict, TypeGraph *graph)
+   {
+   if (_registrar)
+      _registrar(this, dict, graph);
+   }
+
+} // namespace JitBuilder
+
+} // namespace OMR

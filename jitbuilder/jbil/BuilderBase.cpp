@@ -26,6 +26,7 @@
 #include "Builder.hpp"
 #include "FunctionBuilder.hpp"
 #include "Location.hpp"
+#include "DynamicOperation.hpp"
 #include "OperationCloner.hpp"
 #include "TextWriter.hpp"
 #include "Value.hpp"
@@ -99,7 +100,7 @@ BuilderBase::dict() const
 void
 BuilderBase::creationError(Action a, std::string msg)
    {
-   std::cerr << "Error creating operation " << actionName[a] << "\n";
+   std::cerr << "Error creating operation " << actionName(a) << "\n";
    std::cerr << "\t(builder " << this << ")\n";
    std::cerr << "\t" << msg << "\n";
    assert(0);
@@ -108,7 +109,7 @@ BuilderBase::creationError(Action a, std::string msg)
 void
 BuilderBase::creationError(Action a, std::string sName, std::string s)
    {
-   std::cerr << "Unknown name creating operation " << actionName[a] << "\n";
+   std::cerr << "Unknown name creating operation " << actionName(a) << "\n";
    std::cerr << "\t(builder " << this << ")\n";
    std::cerr << "\t" << sName << " : " << s << "\n";
    assert(0);
@@ -117,7 +118,7 @@ BuilderBase::creationError(Action a, std::string sName, std::string s)
 void
 BuilderBase::creationError(Action a, std::string vName, Value * v)
    {
-   std::cerr << "Incorrect operand type creatign operation " << actionName[a] << "\n";
+   std::cerr << "Incorrect operand type creatign operation " << actionName(a) << "\n";
    std::cerr << "\t(builder b" << _id << ")\n";
    std::cerr << "\t" << vName << " : " << v << " has type " << v->type() << " (" << v->type()->name() << ")\n";
    assert(0);
@@ -126,7 +127,7 @@ BuilderBase::creationError(Action a, std::string vName, Value * v)
 void
 BuilderBase::creationError(Action a, std::string tName, Type * t, std::string vName, Value * v)
    {
-   std::cerr << "Incorrect operand types creating operation " << actionName[a] << "\n";
+   std::cerr << "Incorrect operand types creating operation " << actionName(a) << "\n";
    std::cerr << "\t(builder b" << _id << ")\n";
    std::cerr << "\t" << tName << " : " << t << "\n";
    std::cerr << "\t" << vName << " : " << v << "\n";
@@ -136,7 +137,7 @@ BuilderBase::creationError(Action a, std::string tName, Type * t, std::string vN
 void
 BuilderBase::creationError(Action a, std::string t1Name, Type * t1, std::string t2Name, Type * t2)
    {
-   std::cerr << "Incorrect operand types creating operation " << actionName[a] << "\n";
+   std::cerr << "Incorrect operand types creating operation " << actionName(a) << "\n";
    std::cerr << "\t(builder " << this << ")\n";
    std::cerr << "\t" << t1Name << " : " << t1 << "\n";
    std::cerr << "\t" << t2Name << " : " << t2 << "\n";
@@ -147,7 +148,7 @@ void
 BuilderBase::creationError(Action a, std::string oneName, Value * one,
                        std::string twoName, Value * two, std::string threeName, Value * three)
    {
-   std::cerr << "Incorrect operand types creating operation " << actionName[a] << "\n";
+   std::cerr << "Incorrect operand types creating operation " << actionName(a) << "\n";
    std::cerr << "\t(builder " << this << ")\n";
    std::cerr << "\t" << oneName   << " : " << one   << "\n";
    std::cerr << "\t" << twoName   << " : " << two   << "\n";
@@ -158,7 +159,7 @@ BuilderBase::creationError(Action a, std::string oneName, Value * one,
 void
 BuilderBase::creationError(Action a, std::string lName, Value * left, std::string rName, Value * right)
    {
-   std::cerr << "Incorrect operand types creating operation " << actionName[a] << "\n";
+   std::cerr << "Incorrect operand types creating operation " << actionName(a) << "\n";
    std::cerr << "\t(builder " << this << ")\n";
    std::cerr << "\t" << lName << " : " << left  << "\n";
    std::cerr << "\t" << rName << " : " << right << "\n";
@@ -168,7 +169,7 @@ BuilderBase::creationError(Action a, std::string lName, Value * left, std::strin
 void
 BuilderBase::creationError(Action a, std::string tName, Type * t, std::string firstName, Value * first, std::string secondName, Value * second)
    {
-   std::cerr << "Incorrect operand types creating operation " << actionName[a] << "\n";
+   std::cerr << "Incorrect operand types creating operation " << actionName(a) << "\n";
    std::cerr << "\t(builder " << this << ")\n";
    std::cerr << "\t" << tName      << " : " << t << "\n";
    std::cerr << "\t" << firstName  << " : " << first  << "\n";
@@ -179,7 +180,7 @@ BuilderBase::creationError(Action a, std::string tName, Type * t, std::string fi
 void
 BuilderBase::creationError(Action a, std::string sName, std::string sValue, std::string fName, std::string fValue, std::string bName, Value *bValue)
    {
-   std::cerr << "Incorrect operand types creating operation " << actionName[a] << "\n";
+   std::cerr << "Incorrect operand types creating operation " << actionName(a) << "\n";
    std::cerr << "\t(builder " << this << ")\n";
    std::cerr << "\t" << sName      << " : " << sValue << "\n";
    std::cerr << "\t" << fName      << " : " << fValue << "\n";
@@ -190,7 +191,7 @@ BuilderBase::creationError(Action a, std::string sName, std::string sValue, std:
 void
 BuilderBase::creationError(Action a, std::string sName, std::string sValue, std::string fName, std::string fValue, std::string bName, Value *bValue, std::string vName, Value *vValue)
    {
-   std::cerr << "Incorrect operand types creating operation " << actionName[a] << "\n";
+   std::cerr << "Incorrect operand types creating operation " << actionName(a) << "\n";
    std::cerr << "\t(builder " << this << ")\n";
    std::cerr << "\t" << sName      << " : " << sValue << "\n";
    std::cerr << "\t" << fName      << " : " << fValue << "\n";
@@ -211,7 +212,7 @@ BuilderBase::creationError(Action a, std::string fName, Value *function, int32_t
 void
 BuilderBase::creationError(Action a, std::string fName, Value *function, int32_t numArgs, Value **args)
    {
-   std::cerr << "Incorrect operand types creating operation " << actionName[a] << "\n";
+   std::cerr << "Incorrect operand types creating operation " << actionName(a) << "\n";
    std::cerr << "\t(builder " << this << ")\n";
    std::cerr << "\t" << fName      << " : " << function << "\n";
    std::cerr << "\t" << "numArgs"  << " : " << numArgs  << "\n";
@@ -833,6 +834,64 @@ BuilderBase::SourceLocation(std::string lineNumber, int32_t bcIndex)
    _fb->addLocation(loc);
    setLocation(loc);
    return loc;
+   }
+
+Operation *
+BuilderBase::Append(OperationBuilder *opBuilder)
+   {
+   // ideally do some type checking for the operation to be created
+
+   for (auto i=0;i < opBuilder->numResults();i++)
+      opBuilder->addResult(Value::create(self(), opBuilder->resultType(i)));
+
+   Operation *newOp = opBuilder->createOperation(self());
+   return newOp;
+   }
+
+Value *
+BuilderBase::Append(OperationBuilder *opBuilder, LiteralValue *l)
+   {
+   // ideally do some type checking for the operation to be created
+
+   assert(opBuilder->numResults() == 1);
+   Value *returnValue = Value::create(self(), opBuilder->resultType());
+   opBuilder->addResult(returnValue);
+   opBuilder->addLiteral(l);
+
+   Operation *newOp = opBuilder->createOperation(self());
+   add(newOp);
+   return returnValue;
+   }
+
+Value *
+BuilderBase::Append(OperationBuilder *opBuilder, Value *v)
+   {
+   // ideally do some type checking for the operation to be created
+
+   assert(opBuilder->numResults() == 1);
+   Value *returnValue = Value::create(self(), opBuilder->resultType());
+   opBuilder->addResult(returnValue);
+   opBuilder->addOperand(v);
+
+   Operation *newOp = opBuilder->createOperation(self());
+   add(newOp);
+   return returnValue;
+   }
+
+Value *
+BuilderBase::Append(OperationBuilder *opBuilder, Value *left, Value *right)
+   {
+   // ideally do some type checking for the operation to be created
+
+   assert(opBuilder->numResults() == 1);
+   Value *returnValue = Value::create(self(), opBuilder->resultType());
+   opBuilder->addResult(returnValue);
+   opBuilder->addOperand(left);
+   opBuilder->addOperand(right);
+
+   Operation *newOp = opBuilder->createOperation(self());
+   add(newOp);
+   return returnValue;
    }
 
 Builder *

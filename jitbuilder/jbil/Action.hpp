@@ -29,7 +29,7 @@ namespace OMR
 namespace JitBuilder
 {
 
-enum Action
+enum ActionEnum
    {
    aNone=0,
    aConstInt8,             // create an 8 bit integer constant
@@ -74,12 +74,18 @@ enum Action
    // } END
    // New actions
 
+   aFirstDynamicOperation, // placeholder for first dynamically defined operation
+
    LastActionSentinel
    };
 
-const int32_t NumActions = LastActionSentinel;
+typedef uint32_t Action;
 
-extern std::string actionName[];
+const uint32_t NumStaticActions = aFirstDynamicOperation;
+extern uint32_t NumActions;
+
+extern void registerDynamicActionName(Action a, std::string name);
+extern std::string actionName(Action a);
 
 } // namespace JitBuilder
 } // namespace OMR
