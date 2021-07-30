@@ -551,11 +551,12 @@ OMR::IlBuilder::AppendBuilder(TR::IlBuilder *builder)
 
    builder->_partOfSequence = true;
    _sequenceAppender->add(builderEntry(builder));
-   if (_currentBlock != NULL)
+   if (_currentBlock != NULL && comesBack())
       {
       cfg()->addEdge(_currentBlock, builder->getEntry());
       _currentBlock = NULL;
       }
+   setComesBack();
 
    TraceIL("IlBuilder[ %p ]::AppendBuilder %p\n", this, builder);
 
