@@ -510,7 +510,13 @@ OMR::MethodBuilder::DefineName(const char *name)
 void
 OMR::MethodBuilder::DefineLocal(const char *name, TR::IlType *dt)
    {
-   TR_ASSERT_FATAL(_symbolTypes.find(name) == _symbolTypes.end(), "Symbol '%s' already defined", name);
+   auto sym = _symbolTypes.find(name);
+   if (sym != _symbolTypes.end())
+      {
+      assert(strcmp(name, sym->first) == 0);
+      assert(dt == sym->second);
+      return; // duplicate symbol definition, just ignore
+      }
    _symbolTypes.insert(std::make_pair(name, dt));
    }
 
