@@ -134,6 +134,7 @@ static const OptimizationStrategy JBwarmStrategyOpts[] =
    { OMR::treeSimplification,                        OMR::IfEnabled                },
    { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup                                },
+   { OMR::localDeadStoreElimination,                                               },
    { OMR::globalDeadStoreGroup,                                                    },
    { OMR::redundantGotoElimination,                  OMR::IfEnabled                }, // if global register allocator created new block
    { OMR::rematerialization                                                        },
@@ -197,6 +198,8 @@ Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymb
       new (comp->allocator()) TR::OptimizationManager(self(), TR_TrivialInliner::create, OMR::inlining);
    _opts[OMR::switchAnalyzer] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR::SwitchAnalyzer::create, OMR::switchAnalyzer);
+   _opts[OMR::localDeadStoreElimination] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::LocalDeadStoreElimination::create, OMR::localDeadStoreElimination);
 
    // Initialize optimization groups
    _opts[OMR::cheapTacticalGlobalRegisterAllocatorGroup] =
