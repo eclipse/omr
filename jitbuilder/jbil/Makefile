@@ -20,6 +20,9 @@ min: Min.o JitBuilder.hpp TextWriter.hpp $(LIBJITB2)
 matmult: MatMult.o JitBuilder.hpp $(LIBJITB2)
 	g++ -g -o matmult $(LINK_OPTIONS) MatMult.o
 
+complexmatmult: ComplexMatMult.o JitBuilder.hpp ComplexSupport.o $(LIBJITB2)
+	g++ -g -o complexmatmult $(LINK_OPTIONS) ComplexMatMult.o ComplexSupport.o
+
 returns: Returns.o JitBuilder.hpp TextWriter.hpp $(LIBJITB2)
 	g++ -g -o returns $(LINK_OPTIONS) Returns.o
 
@@ -76,6 +79,7 @@ TypeDictionary.o: TypeDictionary.cpp TypeDictionary.hpp
 TypeGraph.o: TypeGraph.cpp TypeGraph.hpp TextWriter.hpp
 Value.o: Value.cpp Value.hpp
 Visitor.o: Visitor.cpp Visitor.hpp
+ComplexSupport.o: ComplexSupport.cpp ComplexSupport.hpp
 
 JitBuilder.o: JitBuilder.cpp JitBuilder.hpp TextWriter.hpp
 	g++ $(CXXFLAGS) -c -I. -I${OMRDIR}/jitbuilder/x/amd64 -I${OMRDIR}/jitbuilder/x -I${OMRDIR}/jitbuilder -I${OMRDIR}/compiler/x/amd64 -I${OMRDIR}/compiler/x -I${OMRDIR}/compiler -I${OMRDIR}/ -I${OMRDIR}/include_core -I${OMRBUILDDIR} $<
