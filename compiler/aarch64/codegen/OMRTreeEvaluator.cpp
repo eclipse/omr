@@ -3309,7 +3309,12 @@ OMR::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator 
    TR::addDependency(deps, NULL, TR::RealRegister::x3, TR_GPR, cg);
    TR::addDependency(deps, NULL, TR::RealRegister::x4, TR_GPR, cg);
 
-   generateCallToArrayCopyHelper(node, srcAddrReg, dstAddrReg, lengthReg, deps, cg);
+   TR::SymbolReference *arrayCopyHelper = cg->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64arrayCopy, false, false, false);
+
+   generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
+                             (uintptr_t)arrayCopyHelper->getMethodAddress(),
+                             deps, arrayCopyHelper, NULL);
+   cg->machine()->setLinkRegisterKilled(true);
 
    if (!simpleCopy)
       {
