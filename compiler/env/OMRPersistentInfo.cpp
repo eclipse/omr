@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,9 +20,17 @@
  *******************************************************************************/
 
 #include "env/PersistentInfo.hpp"
+#include "ras/DebugCounter.hpp"
+#include "env/TRMemory.hpp"
 
 TR::PersistentInfo *
 OMR::PersistentInfo::self()
    {
    return static_cast<TR::PersistentInfo*>(this);
+   }
+
+void OMR::PersistentInfo::createCounters(TR_PersistentMemory *mem)
+   {
+   _staticCounters  = new (mem) TR::DebugCounterGroup(mem);
+   _dynamicCounters = new (mem) TR::DebugCounterGroup(mem);
    }

@@ -612,9 +612,3 @@ void TR::DebugCounterGroup::resetAll()
 
    // TODO: Aggregations??
    }
-
-void OMR::PersistentInfo::createCounters(TR_PersistentMemory *mem)
-   {
-   _staticCounters  = new (mem) TR::DebugCounterGroup(mem);
-   _dynamicCounters = new (mem) TR::DebugCounterGroup(mem);
-   }
