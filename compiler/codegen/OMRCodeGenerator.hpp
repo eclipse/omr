@@ -1419,10 +1419,6 @@ public:
 
    TR::RealRegister **_unlatchedRegisterList; // dynamically allocated
 
-   bool shouldBuildStructure() { return _enabledFlags.testAny(ShouldBuildStructure); }
-   void setShouldBuildStructure() {_enabledFlags.set(ShouldBuildStructure);}
-
-
    bool enableRefinedAliasSets();
    void setEnableRefinedAliasSets() {_enabledFlags.set(EnableRefinedAliasSets);}
 
@@ -1910,7 +1906,7 @@ public:
       // AVAILABLE                     = 0x0004,
       EnableRefinedAliasSets           = 0x0008,
       // AVAILABLE                     = 0x0010,
-      ShouldBuildStructure             = 0x0020,
+      // AVAILABLE                     = 0x0020,
       LockFreeSpillList                = 0x0040,  // TAROK only (until it matures)
       UseNonLinearRegisterAssigner     = 0x0080,  // TAROK only (until it matures)
       TrackRegisterUsage               = 0x0100,  // TAROK only (until it matures)
