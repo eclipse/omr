@@ -38,6 +38,7 @@
 #include "EnvironmentBase.hpp"
 #include "HeapLinkedFreeHeader.hpp"
 #include "LanguageThreadLocalHeap.hpp"
+#include "MarkingScheme.hpp"
 #if defined(OMR_GC_OBJECT_MAP)
 #include "ObjectMap.hpp"
 #endif /* defined(OMR_GC_OBJECT_MAP) */
@@ -153,10 +154,8 @@ private:
 #if defined(OMR_GC_OBJECT_ALLOCATION_NOTIFY)
 		objectAllocationNotify(env, _tlh->heapBase, getAlloc());
 #endif /* OMR_GC_OBJECT_ALLOCATION_NOTIFY */
-#if defined(OMR_GC_OBJECT_MAP)
 		/* Mark all newly allocated objects from the TLH as valid objects */
 		markValidObjectForRange(env, _tlh->heapBase, getAlloc());
-#endif
 		setupTLH(env, NULL, NULL, NULL, NULL);
 		setRealTop(NULL);
 	}
@@ -165,16 +164,10 @@ private:
 	void objectAllocationNotify(MM_EnvironmentBase *env, void *heapBase, void *heapTop);
 #endif /* OMR_GC_OBJECT_ALLOCATION_NOTIFY */
 
-#if defined(OMR_GC_OBJECT_MAP)
 	/**
-	 * Walk the TLH, marking all allocated objects in the object map.
+	 * Walk the TLH, marking all allocated objects in the object map and mark map (for SATB batch marking).
 	 */
-	MMINLINE void
-	markValidObjectForRange(MM_EnvironmentBase *env, void *heapBase, void *heapTop)
-	{
-		env->getExtensions()->getObjectMap()->markValidObjectForRange(env, heapBase, heapTop);
-	}
-#endif
+	void markValidObjectForRange(MM_EnvironmentBase *env, void *heapBase, void *heapTop);
 
 	void updateFrequentObjectsStats(MM_EnvironmentBase *env);
 

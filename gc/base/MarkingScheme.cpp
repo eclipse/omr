@@ -47,6 +47,8 @@
 #include "WorkPacketsStandard.hpp"
 #endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
 
+#include "ObjectHeapIteratorAddressOrderedList.hpp"
+
 /**
  * Allocate and initialize a new instance of the receiver.
  * @return a new instance of the receiver, or NULL on failure.
@@ -433,5 +435,63 @@ uintptr_t
 MM_MarkingScheme::setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags)
 {
 	return _delegate.setupIndexableScanner(env, objectPtr, reason, sizeToDo, sizeInElementsToDo, basePtr, flags);
+}
+
+void
+MM_MarkingScheme::markObjectsForRange(MM_EnvironmentBase *env, void *heapBase, void *heapTop)
+{
+
+	if (heapBase == NULL || heapTop == NULL || (heapBase == heapTop))
+	{
+		return;
+	}
+
+	/* We must atomically mark bits in the first and last bytes of the MarkMap belonging to this range.
+	 * TLH.  This is because other threads may be marking the same byte.
+	 * Internal MarkMap slots to this range cannot be written to by other threads. */
+
+	GC_ObjectHeapIteratorAddressOrderedList objectHeapIterator(env->getExtensions(), (omrobjectptr_t)heapBase, (omrobjectptr_t)heapTop, false, false);
+	uintptr_t slotIndexLow = 0;
+	uintptr_t slotIndexHigh = 0;
+	omrobjectptr_t object = NULL;
+	uintptr_t slotIndex = 0;
+	uintptr_t bitMask = 0;
+	uintptr_t markBlock = 0;
+
+	/* Find the first and last slot we are marking in the mark map */
+	_markMap->getSlotIndexAndMask((omrobjectptr_t)heapBase, &slotIndexLow, &bitMask);
+	/* Remove one off of the range of heapTop, since heapTop is a non-inclusive bound */
+	_markMap->getSlotIndexAndMask((omrobjectptr_t) ((uintptr_t) heapTop - 1), &slotIndexHigh, &bitMask);
+
+	object = objectHeapIterator.nextObject();
+	_markMap->getSlotIndexAndMask(object, &slotIndex , &bitMask);
+
+	/* Atomically set the first slot */
+	while ((NULL != object)  && (slotIndex == slotIndexLow)) {
+		markBlock |= bitMask;
+		object = objectHeapIterator.nextObject();
+		_markMap->getSlotIndexAndMask(object, &slotIndex, &bitMask);
+	}
+
+	_markMap->markBlockAtomic(slotIndexLow, markBlock);
+
+	if (slotIndexLow != slotIndexHigh) {
+
+		/* Mark the middle slots */
+		while ((NULL != object) && (slotIndex != slotIndexHigh)) {
+			_markMap->setBit(object);
+			object = objectHeapIterator.nextObject();
+			_markMap->getSlotIndexAndMask(object, &slotIndex, &bitMask);
+		}
+
+		/* Atomically set the last slot */
+		markBlock = 0;
+		while ((NULL != object) && (slotIndex == slotIndexHigh)) {
+			markBlock |= bitMask;
+			object = objectHeapIterator.nextObject();
+			_markMap->getSlotIndexAndMask(object, &slotIndex, &bitMask);
+		}
+		_markMap->markBlockAtomic(slotIndexHigh, markBlock);
+	}
 }
 
