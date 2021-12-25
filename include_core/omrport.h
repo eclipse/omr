@@ -1569,7 +1569,7 @@ typedef struct OMRProcessorDesc {
 
 /* z15 facilities */
 
-/* STFLE bit 61 - Miscellaneous-instruction-extensions facility 3 */ 
+/* STFLE bit 61 - Miscellaneous-instruction-extensions facility 3 */
 #define OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3 61
 
 /* STFLE bit 148 - Vector enhancements facility 2 */
@@ -2057,8 +2057,6 @@ typedef struct OMRPortLibrary {
 	void *(*vmem_reserve_memory)(struct OMRPortLibrary *portLibrary, void *address, uintptr_t byteAmount, struct J9PortVmemIdentifier *identifier, uintptr_t mode, uintptr_t pageSize,  uint32_t category) ;
 	/** see @ref omrvmem.c::omrvmem_reserve_memory_ex "omrvmem_reserve_memory_ex"*/
 	void *(*vmem_reserve_memory_ex)(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier, struct J9PortVmemParams *params) ;
-	/** see @ref omrvmem.c::omrvmem_get_contiguous_region_memory "omrvmem_get_contiguous_region_memory"*/
-	void *(*vmem_get_contiguous_region_memory)(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category);
 	/** see @ref omrvmem.c::omrvmem_create_double_mapped_region "omrvmem_create_double_mapped_region"*/
 	void *(*vmem_create_double_mapped_region)(struct OMRPortLibrary *portLibrary, void* regionAddresses[], uintptr_t regionsCount, uintptr_t regionSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category, void *preferredAddress);
 	/** see @ref omrvmem.c::omrvmem_release_double_mapped_region "omrvmem_release_double_mapped_region"*/
@@ -2855,7 +2853,6 @@ extern J9_CFUNC int32_t omrport_getVersion(struct OMRPortLibrary *portLibrary);
 #define omrvmem_vmem_params_init(param1) privateOmrPortLibrary->vmem_vmem_params_init(privateOmrPortLibrary, (param1))
 #define omrvmem_reserve_memory(param1,param2,param3,param4,param5,param6) privateOmrPortLibrary->vmem_reserve_memory(privateOmrPortLibrary, (param1), (param2), (param3), (param4), (param5), (param6))
 #define omrvmem_reserve_memory_ex(param1,param2) privateOmrPortLibrary->vmem_reserve_memory_ex(privateOmrPortLibrary, (param1), (param2))
-#define omrvmem_get_contiguous_region_memory(param1, param2, param3, param4, param5, param6, param7, param8, param9) privateOmrPortLibrary->vmem_get_contiguous_region_memory(privateOmrPortLibrary, (param1), (param2), (param3), (param4), (param5), (param6), (param7), (param8), (param9))
 #define omrvmem_create_double_mapped_region(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10) privateOmrPortLibrary->vmem_create_double_mapped_region(privateOmrPortLibrary, (param1), (param2), (param3), (param4), (param5), (param6), (param7), (param8), (param9), (param10))
 #define omrvmem_release_double_mapped_region(param1, param2, param3) privateOmrPortLibrary->vmem_release_double_mapped_region(privateOmrPortLibrary, (param1), (param2), (param3))
 #define omrvmem_get_page_size(param1) privateOmrPortLibrary->vmem_get_page_size(privateOmrPortLibrary, (param1))

@@ -1316,7 +1316,7 @@ omrvmem_default_large_page_size_ex(struct OMRPortLibrary *portLibrary, uintptr_t
 		}
 	}
 
-	/* 
+	/*
 	 * When mode is OMRPORT_VMEM_MEMORY_EXECUTE we will only consider pagable large pages. Return pageSize of 0 if 1M pageable is not configured on the system.
 	 * When flag is OMRPORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE, we prefer pageable 1M large pages unless they're not provisioned.
 	 */
@@ -1375,7 +1375,7 @@ omrvmem_find_valid_page_size(struct OMRPortLibrary *portLibrary, uintptr_t mode,
 		/* If the page type is PREFER_PAGEABLE try to get 1M pageable large pages. Otherwise, use a fixed large page. */
 		if ((IS_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE(validPageFlags))) {
 
-			/* Try 1M large pages */ 
+			/* Try 1M large pages */
 			if (ONE_M == validPageSize) {
 				/* Keep from calling this again if ONE_M fails. */
 				isPageableAttempted = TRUE;
@@ -1418,7 +1418,7 @@ omrvmem_find_valid_page_size(struct OMRPortLibrary *portLibrary, uintptr_t mode,
 
 	if (FALSE == isPageableAttempted) {
 		pageSizeFound = isLargePageSizeSupported(portLibrary, ONE_M, OMRPORT_VMEM_PAGE_FLAG_PAGEABLE);
-	
+
 		if (TRUE == pageSizeFound) {
 			validPageSize = ONE_M;
 			SET_PAGE_TYPE(validPageFlags, OMRPORT_VMEM_PAGE_FLAG_PAGEABLE);
@@ -1635,13 +1635,6 @@ isRmode64Supported()
 	return FALSE;
 }
 #endif
-
-void *
-omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
-{
-	portLibrary->error_set_last_error(portLibrary,  errno, OMRPORT_ERROR_VMEM_NOT_SUPPORTED);
-	return NULL;
-}
 
 int32_t
 omrvmem_release_double_mapped_region(struct OMRPortLibrary *portLibrary, void *address, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier)

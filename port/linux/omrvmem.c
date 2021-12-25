@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1307,7 +1307,7 @@ omrvmem_release_double_mapped_region(struct OMRPortLibrary *portLibrary, void *a
  *  @param uintptr_t                    pageSize            [in] Constant describing page size
  *  @param OMRMemCategory               *category           [in] Memory allocation category
  *  @param void                         *preferredAddress    [in] Prefered address of contiguous region to be double mapped
- * 
+ *
  * @return pointer to contiguous region to which regions were double mapped into, NULL is returned if unsuccessful
  */
 
@@ -1444,35 +1444,6 @@ omrvmem_create_double_mapped_region(struct OMRPortLibrary *portLibrary, void* re
 	Trc_PRT_double_map_regions_Create_Exit(contiguousMap);
 	return contiguousMap;
 }
-
-/**
- *  Maps a contiguous region of memory to double map addresses[] passed in.
- *
- *  @param OMRPortLibrary*              portLibrary         [in] The port library object
- *  @param void*                        addressesOffeset[]  [in] Addresses to be double mapped
- *  @param uintptr_t                    byteAmount          [in] Total size to allocate for contiguous block of memory
- *  @param struct J9PortVmemIdentifier* oldIdentifier       [in]  Old Identifier containing file descriptor
- *  @param struct J9PortVmemIdentifier* newIdentifier       [out] New Identifier for new block of memory. The structure to be updated
- *  @param uintptr_t                    mode,               [in] Access mode
- *  @param uintptr_t                    pageSize,           [in] Constant describing page size
- *  @param OMRMemCategory*              category            [in] Memory allocation category
- */
-
-void *
-omrvmem_get_contiguous_region_memory(struct OMRPortLibrary *portLibrary, void* addresses[], uintptr_t addressesCount, uintptr_t addressSize, uintptr_t byteAmount, struct J9PortVmemIdentifier *oldIdentifier, struct J9PortVmemIdentifier *newIdentifier, uintptr_t mode, uintptr_t pageSize, OMRMemCategory *category)
-{
-	Trc_PRT_double_map_getContiguousMem_Entry((void *)addresses, addressesCount, addressSize, byteAmount, pageSize);
-	int protectionFlags = PROT_READ | PROT_WRITE;
-	int flags = MAP_PRIVATE | MAP_ANON;
-	int fd = -1;
-	void* contiguousMap = NULL;
-	byteAmount = addressesCount * addressSize;
-	BOOLEAN successfulContiguousMap = FALSE;
-	BOOLEAN shouldUnmapAddr = FALSE;
-
-	if (0 != (OMRPORT_VMEM_MEMORY_MODE_COMMIT & mode)) {
-		protectionFlags = get_protectionBits(mode);
-	}
 
 	if (0 != (OMRPORT_VMEM_MEMORY_MODE_MMAP_HUGE_PAGES & oldIdentifier->mode)) {
 		flags |= MAP_HUGETLB;
