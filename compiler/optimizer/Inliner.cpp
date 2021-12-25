@@ -3324,11 +3324,12 @@ TR::TreeTop * OMR_InlinerUtil::storeValueInATemp(
       bool isInternalPointer = false;
 
       // disable internal pointer symbols for C/C++
-      if ((value->hasPinningArrayPointer() &&
-           value->computeIsInternalPointer()) ||
+      if (comp->cg()->supportsInternalPointers() &&
+          ((value->hasPinningArrayPointer() &&
+            value->computeIsInternalPointer()) ||
             (value->getOpCode().isLoadVarDirect() &&
              value->getSymbolReference()->getSymbol()->isAuto() &&
-             value->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer()))
+             value->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer())))
          isInternalPointer = true;
 
       if ((value->isNotCollected() && dataType == TR::Address) || isIndirect)
