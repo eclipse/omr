@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,7 +99,9 @@ TR_PersistentMemory::printMemStats()
    fprintf(stderr, "TR_PersistentMemory Stats:\n");
    for (uint32_t i = 0; i < TR_MemoryBase::NumObjectTypes; i++)
       {
-      fprintf(stderr, "\t_totalPersistentAllocations[%s]=%lu\n", objectName[i], (unsigned long)_totalPersistentAllocations[i]);
+      unsigned long allocSize = (unsigned long)_totalPersistentAllocations[i];
+      if (allocSize)
+         fprintf(stderr, "\t_totalPersistentAllocations[%s]=%lu\n", objectName[i], allocSize);
       }
    fprintf(stderr, "\n");
    }
@@ -111,6 +113,8 @@ TR_PersistentMemory::printMemStatsToVlog()
    TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "TR_PersistentMemory Stats:");
    for (uint32_t i = 0; i < TR_MemoryBase::NumObjectTypes; i++)
       {
-      TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "\t_totalPersistentAllocations[%s]=%lu", objectName[i], (unsigned long)_totalPersistentAllocations[i]);
+      unsigned long allocSize = (unsigned long)_totalPersistentAllocations[i];
+      if (allocSize)
+         TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "\t_totalPersistentAllocations[%s]=%lu", objectName[i], allocSize);
       }
    }
