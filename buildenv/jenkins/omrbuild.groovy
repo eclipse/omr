@@ -330,15 +330,17 @@ timestamps {
                                 stage('Get Sources') {
                                     def gitConfig = scm.getUserRemoteConfigs().get(0)
                                     def refspec = (gitConfig.getRefspec()) ? gitConfig.getRefspec() : ''
-                                    scmVars = checkout poll: false,
-                                        scm: [$class: 'GitSCM',
-                                        branches: [[name: "${scm.branches[0].name}"]],
-                                        extensions: [[$class: 'CloneOption', honorRefspec: true, timeout: 30, reference: SPECS[params.BUILDSPEC].reference]],
-                                        userRemoteConfigs: [[name: 'origin',
-                                            refspec: "${refspec}",
-                                            url: "${gitConfig.getUrl()}"]
+                                    sshagent(['github-bot-ssh']) {
+                                        scmVars = checkout poll: false,
+                                            scm: [$class: 'GitSCM',
+                                            branches: [[name: "${scm.branches[0].name}"]],
+                                            extensions: [[$class: 'CloneOption', honorRefspec: true, timeout: 30, reference: SPECS[params.BUILDSPEC].reference]],
+                                            userRemoteConfigs: [[name: 'origin',
+                                                refspec: "${refspec}",
+                                                url: "${gitConfig.getUrl()}"]
+                                            ]
                                         ]
-                                    ]
+                                    }
                                     if (!params.ghprbPullId) {
                                         setBuildStatus("In Progress","PENDING","${scmVars.GIT_COMMIT}")
                                     }
