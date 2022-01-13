@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -393,7 +393,7 @@ void TR_LocalAnalysis::initializeLocalAnalysis(bool isSparse, bool lock)
    _info = (TR_LocalAnalysisInfo::LAInfo*) trMemory()->allocateStackMemory(_lainfo._numBlocks*sizeof(TR_LocalAnalysisInfo::LAInfo));
    memset(_info, 0, _lainfo._numBlocks*sizeof(TR_LocalAnalysisInfo::LAInfo));
 
-   TR::BitVector blocksSeen(comp()->allocator());
+   TR_BitVector blocksSeen(trMemory()->currentStackRegion());
    initializeBlocks(toBlock(comp()->getFlowGraph()->getStart()), blocksSeen);
 
    int32_t i;
@@ -408,7 +408,7 @@ void TR_LocalAnalysis::initializeLocalAnalysis(bool isSparse, bool lock)
 
 
 
-void TR_LocalAnalysis::initializeBlocks(TR::Block *block, TR::BitVector &blocksSeen)
+void TR_LocalAnalysis::initializeBlocks(TR::Block *block, TR_BitVector &blocksSeen)
    {
    _info[block->getNumber()]._block = block;
    blocksSeen[block->getNumber()] = true;
@@ -417,13 +417,13 @@ void TR_LocalAnalysis::initializeBlocks(TR::Block *block, TR::BitVector &blocksS
    for (auto nextEdge = block->getSuccessors().begin(); nextEdge != block->getSuccessors().end(); ++nextEdge)
       {
       next = toBlock((*nextEdge)->getTo());
-      if (!blocksSeen.ValueAt(next->getNumber()))
+      if (!blocksSeen.get(next->getNumber()))
          initializeBlocks(next, blocksSeen);
       }
    for (auto nextEdge = block->getExceptionSuccessors().begin(); nextEdge != block->getExceptionSuccessors().end(); ++nextEdge)
       {
       next = toBlock((*nextEdge)->getTo());
-      if (!blocksSeen.ValueAt(next->getNumber()))
+      if (!blocksSeen.get(next->getNumber()))
          initializeBlocks(next, blocksSeen);
       }
    }
