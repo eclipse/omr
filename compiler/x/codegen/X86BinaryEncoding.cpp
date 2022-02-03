@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1094,10 +1094,27 @@ TR::X86ImmSymInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
                   int rType = methodSym->getMethodKind()-1;  //method kinds are 1-based
                   TR_ASSERT(reloTypes[rType], "There shouldn't be direct JNI interface calls!");
 
-                  cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)getNode()->getSymbolReference(),
-                        getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                        (TR_ExternalRelocationTargetKind) reloTypes [rType], cg()),
-                        __FILE__, __LINE__, getNode());
+                  uint8_t *startOfInstruction = self()->getBinaryEncoding();
+                  uint8_t *startOfImmediate = cursor;
+                  intptr_t diff = reinterpret_cast<intptr_t>(startOfImmediate) - reinterpret_cast<intptr_t>(startOfInstruction);
+                  TR_ASSERT_FATAL(diff > 0, "Address of immediate %p less than address of instruction %p\n",
+                                  startOfImmediate, startOfInstruction);
+
+                  TR_RelocationRecordInformation *info =
+                     reinterpret_cast<TR_RelocationRecordInformation *>(
+                        comp->trMemory()->allocateHeapMemory(sizeof(TR_RelocationRecordInformation)));
+                  info->data1 = static_cast<uintptr_t>(diff);
+                  info->data2 = reinterpret_cast<uintptr_t>(getNode()->getSymbolReference());
+                  int16_t inlinedSiteIndex = getNode() ? getNode()->getInlinedSiteIndex() : -1;
+                  info->data3 = static_cast<uintptr_t>(inlinedSiteIndex);
+
+                  cg()->addExternalRelocation(
+                     new (cg()->trHeapMemory()) TR::ExternalRelocation(
+                                                   startOfInstruction,
+                                                   reinterpret_cast<uint8_t *>(info),
+                                                   static_cast<TR_ExternalRelocationTargetKind>(reloTypes[rType]),
+                                                   cg()),
+                     __FILE__, __LINE__, getNode());
                   }
                else if (resolvedMethod)
                   {
@@ -2767,13 +2784,46 @@ TR::AMD64RegImm64Instruction::addMetaDataForCodeAddress(uint8_t *cursor)
                                          __FILE__, __LINE__, getNode());
                   }
                break;
-            case TR_JNIStaticTargetAddress:
-            case TR_JNISpecialTargetAddress:
-            case TR_JNIVirtualTargetAddress:
             case TR_StaticRamMethodConst:
             case TR_VirtualRamMethodConst:
             case TR_SpecialRamMethodConst:
-               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) getNode()->getSymbolReference(), getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,  (TR_ExternalRelocationTargetKind) _reloKind, cg()),  __FILE__,__LINE__, getNode());
+               cg()->addExternalRelocation(
+                  new (cg()->trHeapMemory()) TR::ExternalRelocation(
+                                                cursor,
+                                                (uint8_t *) getNode()->getSymbolReference(),
+                                                getNode()
+                                                   ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex()
+                                                   : (uint8_t *)-1,
+                                                (TR_ExternalRelocationTargetKind) _reloKind,
+                                                cg()),
+                     __FILE__,__LINE__, getNode());
+               break;
+            case TR_JNIStaticTargetAddress:
+            case TR_JNISpecialTargetAddress:
+            case TR_JNIVirtualTargetAddress:
+               {
+               uint8_t *startOfInstruction = self()->getBinaryEncoding();
+               uint8_t *startOfImmediate = cursor;
+               intptr_t diff = reinterpret_cast<intptr_t>(startOfImmediate) - reinterpret_cast<intptr_t>(startOfInstruction);
+               TR_ASSERT_FATAL(diff > 0, "Address of immediate %p less than address of instruction %p\n",
+                               startOfImmediate, startOfInstruction);
+
+               TR_RelocationRecordInformation *info =
+                  reinterpret_cast<TR_RelocationRecordInformation *>(
+                     comp->trMemory()->allocateHeapMemory(sizeof(TR_RelocationRecordInformation)));
+               info->data1 = static_cast<uintptr_t>(diff);
+               info->data2 = reinterpret_cast<uintptr_t>(getNode()->getSymbolReference());
+               int16_t inlinedSiteIndex = getNode() ? getNode()->getInlinedSiteIndex() : -1;
+               info->data3 = static_cast<uintptr_t>(inlinedSiteIndex);
+
+               cg()->addExternalRelocation(
+                  new (cg()->trHeapMemory()) TR::ExternalRelocation(
+                                                startOfInstruction,
+                                                reinterpret_cast<uint8_t *>(info),
+                                                static_cast<TR_ExternalRelocationTargetKind>(_reloKind),
+                                                cg()),
+                     __FILE__,__LINE__, getNode());
+               }
                break;
             }
          }
