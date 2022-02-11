@@ -3150,8 +3150,6 @@ TR::X86BoundaryAvoidanceInstruction  *
 generateBoundaryAvoidanceInstruction(const TR_AtomicRegion *atomicRegions, uint8_t boundarySpacing, uint8_t maxPadding, TR::Instruction *targetCode, TR::CodeGenerator *cg);
 TR::X86PatchableCodeAlignmentInstruction *
 generatePatchableCodeAlignmentInstruction(TR::Instruction *prev, const TR_AtomicRegion *atomicRegions, TR::CodeGenerator *cg);
-TR::X86PatchableCodeAlignmentInstruction  *
-generatePatchableCodeAlignmentInstruction(const TR_AtomicRegion *atomicRegions, TR::Instruction *patchableCode, TR::CodeGenerator *cg);
 
 TR::X86VFPSaveInstruction  *generateVFPSaveInstruction(TR::Instruction *precedingInstruction, TR::CodeGenerator *cg);
 TR::X86VFPSaveInstruction  *generateVFPSaveInstruction(TR::Node *node, TR::CodeGenerator *cg);
