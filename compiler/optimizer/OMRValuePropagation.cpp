@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -602,7 +602,8 @@ TR::VPConstraint *OMR::ValuePropagation::addGlobalConstraint(TR::Node *node, TR:
 
 TR::VPConstraint *OMR::ValuePropagation::addGlobalConstraint(TR::Node *node, int32_t valueNumber, TR::VPConstraint *constraint, int32_t relative)
    {
-   TR_ASSERT(_isGlobalPropagation, "Local VP can't add global constraint");
+   TR_ASSERT_FATAL(_isGlobalPropagation, "Local VP can't add global constraint");
+   TR_ASSERT_FATAL(constraint, "Cannot add null global constraint");
 
    // Add the relationship into the relationship list for the value
    //
