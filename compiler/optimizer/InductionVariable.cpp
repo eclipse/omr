@@ -3553,7 +3553,7 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
    if (isInternalPointer &&
       (node->getOpCodeValue() == TR::iadd || node->getOpCodeValue() == TR::isub ||
          node->getOpCodeValue() == TR::ladd || node->getOpCodeValue() == TR::lsub) &&
-      (node->getSecondChild()->getOpCodeValue() == TR::iconst) || node->getSecondChild()->getOpCodeValue() == TR::lconst)
+      (node->getSecondChild()->getOpCodeValue() == TR::iconst || node->getSecondChild()->getOpCodeValue() == TR::lconst))
       {
       bool isAdd = false;
       if (node->getOpCodeValue() == TR::iadd || node->getOpCodeValue() == TR::ladd)
