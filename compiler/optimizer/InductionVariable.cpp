@@ -3426,24 +3426,24 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
       }
 
    if (isInternalPointer &&
-       examineChildren)
+      examineChildren &&
+      comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers() &&
+      (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
+         _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED))
       {
       bool isConst = false;
       if (node->getOpCode().isLoadConst())
          isConst = true;
 
+      bool isIntrlPtrReplacable = isConst ||
+         (node->getOpCode().hasSymbolReference() &&
+         node->getOpCode().isLoadVar() &&
+         node->getSymbolReference()->getSymbol()->isAutoOrParm() &&
+         _neverWritten->get(node->getSymbolReference()->getReferenceNumber()));
 
-      if ((isConst ||
-           (node->getOpCode().hasSymbolReference() &&
-            node->getOpCode().isLoadVar() &&
-            //node->getSymbolReference()->getSymbol()->isAuto() &&
-            node->getSymbolReference()->getSymbol()->isAutoOrParm() &&
-            _neverWritten->get(node->getSymbolReference()->getReferenceNumber()))) &&
-           (!_registersScarce || (originalNode->getReferenceCount() > 1)) &&
-           (comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers()) &&
-           (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
-               _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
-           performTransformation(comp(), "%s Replacing invariant internal pointer %p based on symRef #%d\n", OPT_DETAILS, node, internalPointerSymbol))
+      if (isIntrlPtrReplacable &&
+         (!_registersScarce || originalNode->getReferenceCount() > 1) &&
+         performTransformation(comp(), "%s Replacing invariant internal pointer %p based on symRef #%d\n", OPT_DETAILS, node, internalPointerSymbol))
          {
          TR::SymbolReference *internalPointerSymRef = NULL;
          auto symRefPairSearchResult = _hoistedAutos->find(originalInternalPointerSymbol);
@@ -3545,12 +3545,15 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
          originalNode->setSymbolReference(internalPointerSymRef);
          originalNode->setNumChildren(0);
          originalNode->setLocalIndex(~0);
-         reassociatedComputation = true;
          examineChildren = false;
+         reassociatedComputation = true;
          }
       }
 
    if (isInternalPointer &&
+      comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers() &&
+      (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
+         _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
       (node->getOpCodeValue() == TR::iadd || node->getOpCodeValue() == TR::isub ||
          node->getOpCodeValue() == TR::ladd || node->getOpCodeValue() == TR::lsub) &&
       (node->getSecondChild()->getOpCodeValue() == TR::iconst || node->getSecondChild()->getOpCodeValue() == TR::lconst))
@@ -3566,11 +3569,10 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
          constValue = node->getSecondChild()->getInt();
 
       int32_t hdrSize = (int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-      if (comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers() &&
-         ((isAdd && constValue == hdrSize) || (!isAdd && constValue == -hdrSize)) &&
+      bool isAddOfHdrSizeConst = (isAdd && constValue == hdrSize) || (!isAdd && constValue == -hdrSize);
+
+      if (isAddOfHdrSizeConst &&
          (!_registersScarce || node->getReferenceCount() > 1 || _reassociatedNodes.find(node)) &&
-         (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
-            _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
          performTransformation(comp(), "%s Replacing reassociated internal pointer based on symRef #%d\n", OPT_DETAILS, internalPointerSymbol))
          {
          if (_reassociatedAutos->find(originalInternalPointerSymbol) == _reassociatedAutos->end())
