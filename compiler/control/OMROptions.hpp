@@ -2107,6 +2107,9 @@ private:
    static char *limitfileOption(char *option, void *, TR::OptionTable *entry);
    static char *versionOption(char *option, void *, TR::OptionTable *entry);
 
+   // Disable most opts
+   //
+   static char *disableMoreOpts(char *option, void *, TR::OptionTable *entry);
    static char *breakOnLoad(char *option, void *, TR::OptionTable *entry);
    static char *setCount(char *option, void *base, TR::OptionTable *entry);
    char *getDefaultCountString();

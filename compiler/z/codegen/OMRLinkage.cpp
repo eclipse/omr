@@ -102,7 +102,7 @@ extern bool storeHelperImmediateInstruction(TR::Node * valueChild, TR::CodeGener
 
 OMR::Z::Linkage::Linkage(TR::CodeGenerator * codeGen)
    : OMR::Linkage(codeGen),
-      _linkageType(TR_None), _raContextSaveNeeded(true),
+      _linkageType(TR_None), _stackSizeCheckNeeded(true), _raContextSaveNeeded(true),
       _integerReturnRegister(TR::RealRegister::NoReg),
       _floatReturnRegister(TR::RealRegister::NoReg),
       _doubleReturnRegister(TR::RealRegister::NoReg),
@@ -137,7 +137,7 @@ OMR::Z::Linkage::Linkage(TR::CodeGenerator * codeGen)
  */
 OMR::Z::Linkage::Linkage(TR::CodeGenerator * codeGen,TR_LinkageConventions lc)
    : OMR::Linkage(codeGen),
-      _linkageType(lc), _raContextSaveNeeded(true),
+      _linkageType(lc), _stackSizeCheckNeeded(true), _raContextSaveNeeded(true),
       _integerReturnRegister(TR::RealRegister::NoReg),
       _floatReturnRegister(TR::RealRegister::NoReg),
       _doubleReturnRegister(TR::RealRegister::NoReg),

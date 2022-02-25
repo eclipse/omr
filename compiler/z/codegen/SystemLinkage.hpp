@@ -88,6 +88,11 @@ class SystemLinkage : public TR::Linkage
    int32_t setOutgoingParmAreaEndOffset(int32_t OutgoingParmAreaEndOffset) { return _OutgoingParmAreaEndOffset = OutgoingParmAreaEndOffset; }
    int32_t getOutgoingParmAreaEndOffset()                                  { return _OutgoingParmAreaEndOffset; }
 
+   virtual int32_t setLocalsAreaBeginOffset(int32_t LocalsAreaBeginOffset)    { return _LocalsAreaBeginOffset = LocalsAreaBeginOffset; }
+   virtual int32_t getLocalsAreaBeginOffset()                                 { return _LocalsAreaBeginOffset; }
+   virtual int32_t setLocalsAreaEndOffset(int32_t LocalsAreaEndOffset)        { return _LocalsAreaEndOffset = LocalsAreaEndOffset; }
+   virtual int32_t getLocalsAreaEndOffset()                                   { return _LocalsAreaEndOffset; }
+
    int32_t setNumUsedArgumentGPRs(int32_t numUsedArgumentGPRs)    { return _numUsedArgumentGPRs = numUsedArgumentGPRs; }
    int32_t getNumUsedArgumentGPRs()  { return _numUsedArgumentGPRs; }
 
@@ -187,6 +192,8 @@ class SystemLinkage : public TR::Linkage
    int32_t _incomingParmAreaEndOffset;
    int32_t _FPRSaveAreaBeginOffset;
    int32_t _FPRSaveAreaEndOffset;
+   int32_t _LocalsAreaBeginOffset;
+   int32_t _LocalsAreaEndOffset;
    int32_t _OutgoingParmAreaBeginOffset;
    int32_t _OutgoingParmAreaEndOffset;
    int32_t _GPRSaveAreaBeginOffset;

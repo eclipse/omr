@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2554,6 +2554,59 @@ class X86FPArithmeticRegRegInstruction : public TR::X86FPRegRegInstruction
    };
 
 
+class X86FPCompareRegRegInstruction : public TR::X86FPRegRegInstruction
+   {
+   public:
+
+   X86FPCompareRegRegInstruction(TR::InstOpCode::Mnemonic    op,
+                                     TR::Node          *node,
+                                     TR::Register      *treg,
+                                     TR::Register      *sreg,
+                                     TR::CodeGenerator *cg);
+
+   X86FPCompareRegRegInstruction(TR::Instruction   *precedingInstruction,
+                                     TR::InstOpCode::Mnemonic    op,
+                                     TR::Register      *treg,
+                                     TR::Register      *sreg,
+                                     TR::CodeGenerator *cg);
+
+   virtual char *description() { return "X86FPCompareRegReg"; }
+
+   virtual Kind getKind() { return IsFPCompareRegReg; }
+
+   bool swapOperands();
+
+   virtual void assignRegisters(TR_RegisterKinds kindsToBeAssigned);
+   virtual uint8_t* generateOperand(uint8_t* cursor);
+   };
+
+
+class X86FPCompareEvalInstruction : public TR::Instruction
+   {
+   TR::Register    *_accRegister;
+   uint8_t         _actionType;
+
+   public:
+
+   X86FPCompareEvalInstruction(TR::InstOpCode::Mnemonic    op,
+                                   TR::Node          *node,
+                                   TR::Register      *accRegister,
+                                   TR::CodeGenerator *cg);
+
+   X86FPCompareEvalInstruction(TR::InstOpCode::Mnemonic                       op,
+                                   TR::Node                             *node,
+                                   TR::Register                         *accRegister,
+                                   TR::RegisterDependencyConditions  *cond,
+                                   TR::CodeGenerator                    *cg);
+
+   virtual char *description() { return "X86FPCompareEval"; }
+
+   virtual Kind getKind() { return IsFPCompareEval; }
+
+   virtual void assignRegisters(TR_RegisterKinds kindsToBeAssigned);
+   };
+
+
 class X86FPRemainderRegRegInstruction : public TR::X86FPST0ST1RegRegInstruction
    {
    TR::Register *_accRegister;
@@ -3097,6 +3150,12 @@ TR::X86FPSTiST0RegRegInstruction  * generateFPSTiST0RegRegInstruction(TR::InstOp
 
 TR::X86FPArithmeticRegRegInstruction  * generateFPArithmeticRegRegInstruction(TR::InstOpCode::Mnemonic op, TR::Node *, TR::Register * reg1, TR::Register * reg2, TR::CodeGenerator *cg);
 
+TR::X86FPCompareRegRegInstruction  * generateFPCompareRegRegInstruction(TR::InstOpCode::Mnemonic op, TR::Node *, TR::Register * reg1, TR::Register * reg2, TR::CodeGenerator *cg);
+
+TR::X86FPCompareEvalInstruction  * generateFPCompareEvalInstruction(TR::InstOpCode::Mnemonic op, TR::Node *, TR::Register * accRegister, TR::CodeGenerator *cg);
+
+TR::X86FPCompareEvalInstruction  * generateFPCompareEvalInstruction(TR::InstOpCode::Mnemonic op, TR::Node *, TR::Register * accRegister, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
+
 TR::X86FPRemainderRegRegInstruction  * generateFPRemainderRegRegInstruction( TR::InstOpCode::Mnemonic op, TR::Node *, TR::Register * reg1, TR::Register * reg2, TR::CodeGenerator *cg);
 TR::X86FPRemainderRegRegInstruction  * generateFPRemainderRegRegInstruction( TR::InstOpCode::Mnemonic op, TR::Node *, TR::Register * reg1, TR::Register * reg2, TR::Register *accReg, TR::RegisterDependencyConditions  *cond, TR::CodeGenerator *cg);
 
@@ -3147,5 +3206,5 @@ TR::RealRegister *assignGPRegister(TR::Instruction   *instr,
                                   TR_RegisterSizes  requestedRegSize,
                                   TR::CodeGenerator *cg);
 
-TR::InstOpCode::Mnemonic getBranchOrSetOpCodeForFPComparison(TR::ILOpCodes cmpOp);
+TR::InstOpCode::Mnemonic getBranchOrSetOpCodeForFPComparison(TR::ILOpCodes cmpOp, bool useFCOMIInstructions);
 #endif

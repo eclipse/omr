@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3040,8 +3040,374 @@ void TR::X86FPArithmeticRegRegInstruction::assignRegisters(TR_RegisterKinds kind
       }
    }
 
+////////////////////////////////////////////////////////////////////////////////
+// TR::X86FPCompareRegRegInstruction:: member functions
+////////////////////////////////////////////////////////////////////////////////
 
-TR::InstOpCode::Mnemonic getBranchOrSetOpCodeForFPComparison(TR::ILOpCodes cmpOp)
+TR::X86FPCompareRegRegInstruction::X86FPCompareRegRegInstruction(TR::InstOpCode::Mnemonic  op,
+                                                                     TR::Node        *node,
+                                                                     TR::Register    *treg,
+                                                                     TR::Register    *sreg,
+                                                                     TR::CodeGenerator *cg)
+   : TR::X86FPRegRegInstruction(sreg, treg, node, op, cg)
+   {
+   }
+
+TR::X86FPCompareRegRegInstruction::X86FPCompareRegRegInstruction(TR::Instruction *precedingInstruction,
+                                                                     TR::InstOpCode::Mnemonic  op,
+                                                                     TR::Register    *treg,
+                                                                     TR::Register    *sreg,
+                                                                     TR::CodeGenerator *cg)
+   : TR::X86FPRegRegInstruction(sreg, treg, op, precedingInstruction, cg)
+   {
+   }
+
+void TR::X86FPCompareRegRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
+   {
+
+   if (kindsToBeAssigned & TR_X87_Mask)
+      {
+      TR::Register     *sourceRegister = getSourceRegister();
+      TR::Register     *targetRegister = getTargetRegister();
+      TR::Machine *machine = cg()->machine();
+      uint32_t         result = 0;
+      bool             needLateSourcePop = false;
+      TR::RealRegister *fpReg;
+
+      result = TR::X86FPRegRegInstruction::assignTargetSourceRegisters();
+
+      TR_ASSERT( result & kSourceOnFPStack,
+              "TR::X86FPCompareRegRegInstruction::assignRegisters ==> source not on FP stack!" );
+
+      TR_ASSERT( result & kTargetOnFPStack,
+              "TR::X86FPCompareRegRegInstruction::assignRegisters ==> target not on FP stack!" );
+
+      if (result & (kSourceCanBePopped | kTargetCanBePopped))
+         {
+         TR::InstOpCode::Mnemonic popOpCode;
+
+         if ((result & (kSourceCanBePopped | kTargetCanBePopped)) == (kSourceCanBePopped | kTargetCanBePopped))
+            {
+            machine->fpCoerceRegistersToTopOfStack(this->getPrev(), targetRegister, sourceRegister, false);
+
+            if (!machine->isFPRTopOfStack(targetRegister))
+               {
+               swapOperands();
+               }
+
+            if (getOpCodeValue() == TR::InstOpCode::FCOMIRegReg || getOpCodeValue() == TR::InstOpCode::DCOMIRegReg)
+               {
+               popOpCode = TR::InstOpCode::FCOMIPReg;
+               needLateSourcePop = true;
+               }
+            else
+               {
+               popOpCode = TR::InstOpCode::FCOMPP;
+               }
+            }
+         else if (result & kTargetCanBePopped)
+            {
+            if (!machine->isFPRTopOfStack(targetRegister))
+               {
+               (void)machine->fpStackFXCH(this->getPrev(), targetRegister);
+               }
+
+            if (getOpCodeValue() == TR::InstOpCode::FCOMIRegReg || getOpCodeValue() == TR::InstOpCode::DCOMIRegReg)
+               {
+               popOpCode = TR::InstOpCode::FCOMIPReg;
+               }
+            else
+               {
+               popOpCode = TR::InstOpCode::FCOMPReg;
+               }
+            }
+         else if (result & kSourceCanBePopped)
+            {
+            needLateSourcePop = true;
+            popOpCode = getOpCodeValue();
+
+            if (!machine->isFPRTopOfStack(targetRegister))
+               {
+               if (swapOperands())
+                  {
+                  needLateSourcePop = false;
+
+                  if (getOpCodeValue() == TR::InstOpCode::FCOMIRegReg || getOpCodeValue() == TR::InstOpCode::DCOMIRegReg)
+                     {
+                     popOpCode = TR::InstOpCode::FCOMIPReg;
+                     }
+                  else
+                     {
+                     popOpCode = TR::InstOpCode::FCOMPReg;
+                     }
+                  }
+               }
+            }
+         else
+            {
+            // This condition should be guaranteed after the FPCompareAnalyser.
+            //
+            TR_ASSERT(0,"TR::X86FPCompareRegRegInstruction::assignRegisters() ==> source operand should not be dead after compare!");
+            }
+
+         setOpCodeValue(popOpCode);
+         }
+      else
+         {
+         // Both operands are live after the compare.  This should ONLY occur in the presence
+         // of a global register allocator.
+         //
+         if (machine->isFPRTopOfStack(sourceRegister) && (sourceRegister != targetRegister))
+            {
+            swapOperands();
+            }
+         else if (!machine->isFPRTopOfStack(targetRegister))
+            {
+            (void)machine->fpStackFXCH(this->getPrev(), targetRegister);
+            }
+         }
+
+      // Final assignment of real registers to this instruction
+      //
+      fpReg = machine->fpMapToStackRelativeRegister(sourceRegister);
+      setSourceRegister(fpReg);
+      fpReg = machine->fpMapToStackRelativeRegister(targetRegister);
+      setTargetRegister(fpReg);
+
+      if (result & kTargetCanBePopped)
+         {
+         machine->fpStackPop();
+         }
+
+      if (result & kSourceCanBePopped)
+         {
+         if (needLateSourcePop)
+            {
+            TR::Instruction *cursor = this;
+            if (!machine->isFPRTopOfStack(sourceRegister))
+               {
+               cursor = machine->fpStackFXCH(this, sourceRegister);
+               }
+
+            TR::RealRegister *realFPReg = machine->fpMapToStackRelativeRegister(sourceRegister);
+            new (cg()->trHeapMemory()) TR::X86FPRegInstruction(cursor, TR::InstOpCode::FSTPReg, realFPReg, cg());
+            }
+
+         machine->fpStackPop();
+         }
+      }
+   }
+
+// Corrects the order of operands in an FP comparison.
+// Returns true if the registers can stay swapped by
+// reversing the sense of the comparison operator,
+// otherwise adds an FXCH and returns false.
+//
+bool TR::X86FPCompareRegRegInstruction::swapOperands()
+   {
+   TR::Node      *node      = getNode();
+   TR::ILOpCodes  swappedOp = node->getOpCode().getOpCodeForSwapChildren();
+
+   if (debug("dumpFPRA"))
+      diagnostic("Register operands out of order: ");
+
+   if (// !debug("saveFXCHs")       ||
+       swappedOp == TR::BadILOp   ||
+       // these cases lead to complicated tests
+       swappedOp == TR::iffcmple  ||
+       swappedOp == TR::ifdcmple  ||
+       swappedOp == TR::fcmple    ||
+       swappedOp == TR::dcmple    ||
+       swappedOp == TR::iffcmpgtu ||
+       swappedOp == TR::ifdcmpgtu ||
+       swappedOp == TR::fcmpgtu   ||
+       swappedOp == TR::dcmpgtu   ||
+       // the following cases lead to complicated tests if using FCOMI,
+       // or lead to code growth (extra CMP) if using FCOM.
+       swappedOp == TR::iffcmplt  ||
+       swappedOp == TR::ifdcmplt  ||
+       swappedOp == TR::fcmplt    ||
+       swappedOp == TR::dcmplt    ||
+       swappedOp == TR::iffcmpgeu ||
+       swappedOp == TR::ifdcmpgeu ||
+       swappedOp == TR::fcmpgeu   ||
+       swappedOp == TR::dcmpgeu)
+      {
+      if (debug("dumpFPRA"))
+         diagnostic("fxch inserted\n");
+
+      (void) cg()->machine()->fpStackFXCH(this->getPrev(), getTargetRegister());
+      return false;
+      }
+
+   if (debug("dumpFPRA"))
+      diagnostic("%s -> ", node->getOpCode().getName());
+
+   // Communicate to TR::InstOpCode::FCMPEVAL what the new opcode is.
+   // This cobbles the tree node; probably not a good idea if
+   // the IL is still needed after register assignment.
+   TR::Node::recreate(node, swappedOp);
+
+   if (debug("dumpFPRA"))
+      diagnostic("%s, ", node->getOpCode().getName());
+
+   // Fix up the branch or set following the comparison.
+   TR::Instruction  *cursor = getNext();
+
+   while (cursor != NULL)
+      {
+      TR::InstOpCode  cursorOp = cursor->getOpCode();
+
+      if (cursorOp.isBranchOp() || cursorOp.isSetRegInstruction())
+         break;
+
+      cursor = cursor->getNext();
+      }
+
+   if (cursor != NULL)
+      {
+      if (debug("dumpFPRA"))
+         diagnostic("%s -> ", cursor->getOpCode().getOpCodeName(cg()));
+
+      TR::InstOpCode::Mnemonic instr = getOpCodeValue();
+      instr = getBranchOrSetOpCodeForFPComparison(swappedOp, (instr == TR::InstOpCode::FCOMIRegReg || instr == TR::InstOpCode::DCOMIRegReg));
+      cursor->setOpCodeValue(instr);
+
+      if (debug("dumpFPRA"))
+         diagnostic("%s\n", cursor->getOpCode().getOpCodeName(cg()));
+      }
+   else
+      {
+      TR_ASSERT(0, "\nTR::X86FPCompareRegRegInstruction::swapOperands() ==> branch or set instruction not found for FP comparison!\n");
+      }
+
+   return true;
+   }
+
+////////////////////////////////////////////////////////////////////////////////
+// TR::X86FPCompareEvalInstruction:: member functions
+////////////////////////////////////////////////////////////////////////////////
+
+TR::X86FPCompareEvalInstruction::X86FPCompareEvalInstruction(TR::InstOpCode::Mnemonic  op,
+                                                                 TR::Node        *node,
+                                                                 TR::Register    *accRegister,
+                                                                 TR::CodeGenerator *cg)
+   : TR::Instruction(node, op, cg), _accRegister(accRegister)
+   {
+   }
+
+TR::X86FPCompareEvalInstruction::X86FPCompareEvalInstruction(TR::InstOpCode::Mnemonic                       op,
+                                                                 TR::Node                             *node,
+                                                                 TR::Register                         *accRegister,
+                                                                 TR::RegisterDependencyConditions  *cond,
+                                                                 TR::CodeGenerator *cg)
+   : TR::Instruction(cond, node, op, cg), _accRegister(accRegister)
+   {
+   }
+
+void TR::X86FPCompareEvalInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
+   {
+   TR::Instruction  *cursor = this;
+   TR::Node            *node   = getNode();
+   TR::ILOpCodes        cmpOp  = node->getOpCodeValue();
+
+   OMR::X86::Instruction::assignRegisters(kindsToBeAssigned);
+
+   if (kindsToBeAssigned & TR_GPR_Mask)
+      {
+      TR_ASSERT(_accRegister != NULL, "TR::X86FPCompareEvalInstruction::assignRegisters() ==> _accRegister is NULL\n");
+
+      // eax should have been assigned to _accRegister at this point.
+      //
+      TR::Register *accRegister = _accRegister->getAssignedRegister();
+      TR_ASSERT(accRegister != NULL, "TR::X86FPCompareEvalInstruction::assignRegisters() ==> _accRegister has not been assigned!\n");
+
+      switch (cmpOp)
+         {
+         case TR::ifdcmpleu:
+         case TR::iffcmpleu:
+         case TR::ifdcmpgt:
+         case TR::iffcmpgt:
+         case TR::dcmpleu:
+         case TR::fcmpleu:
+         case TR::dcmpgt:
+         case TR::fcmpgt:
+            cursor = new (cg()->trHeapMemory()) TR::X86RegImmInstruction(cursor, TR::InstOpCode::AND2RegImm2, accRegister, 0x4500, cg());
+            break;
+
+         case TR::ifdcmple:
+         case TR::iffcmple:
+         case TR::ifdcmpgtu:
+         case TR::iffcmpgtu:
+         case TR::dcmple:
+         case TR::fcmple:
+         case TR::dcmpgtu:
+         case TR::fcmpgtu:
+            TR_ASSERT(0, "TR::X86FPCompareEvalRegInstruction::assignRegisters() ==> shouldn't be able to generate this condition!\n" );
+            break;
+
+         case TR::ifdcmpltu:
+         case TR::iffcmpltu:
+         case TR::ifdcmpge:
+         case TR::iffcmpge:
+         case TR::dcmpltu:
+         case TR::fcmpltu:
+         case TR::dcmpge:
+         case TR::fcmpge:
+            cursor = new (cg()->trHeapMemory()) TR::X86RegImmInstruction(cursor, TR::InstOpCode::AND2RegImm2, accRegister, 0x0500, cg());
+            break;
+
+         case TR::ifdcmplt:
+         case TR::iffcmplt:
+         case TR::ifdcmpgeu:
+         case TR::iffcmpgeu:
+         case TR::dcmplt:
+         case TR::fcmplt:
+         case TR::dcmpgeu:
+         case TR::fcmpgeu:
+            cursor = new (cg()->trHeapMemory()) TR::X86RegImmInstruction(cursor, TR::InstOpCode::AND2RegImm2, accRegister, 0x4500, cg());
+            cursor = new (cg()->trHeapMemory()) TR::X86RegImmInstruction(cursor, TR::InstOpCode::CMP2RegImm2, accRegister, 0x0100, cg());
+            break;
+
+         case TR::ifdcmpneu:
+         case TR::iffcmpneu:
+         case TR::dcmpneu:
+         case TR::fcmpneu:
+         case TR::ifdcmpeq:
+         case TR::iffcmpeq:
+         case TR::dcmpeq:
+         case TR::fcmpeq:
+            cursor = new (cg()->trHeapMemory()) TR::X86RegImmInstruction(cursor, TR::InstOpCode::AND2RegImm2, accRegister, 0x4500, cg());
+            cursor = new (cg()->trHeapMemory()) TR::X86RegImmInstruction(cursor, TR::InstOpCode::CMP2RegImm2, accRegister, 0x4000, cg());
+            break;
+
+         case TR::fcmpl:
+         case TR::fcmpg:
+         case TR::dcmpl:
+         case TR::dcmpg:
+            TR_ASSERT(cg()->comp()->target().is32Bit(), "AMD64 doesn't support TR::InstOpCode::SAHF");
+            cursor = new (cg()->trHeapMemory()) TR::Instruction(TR::InstOpCode::SAHF, cursor, cg());
+            break;
+
+         default:
+            TR_ASSERT(0, "TR::X86FPCompareEvalRegInstruction::assignRegisters() ==> invalid comparison op: %d\n", cmpOp);
+            break;
+         }
+
+      // Remove this instruction from the stream.
+      if (getPrev())
+         {
+         getPrev()->setNext(getNext());
+         }
+
+      if (getNext())
+         {
+         getNext()->setPrev(getPrev());
+         }
+      }
+   }
+
+TR::InstOpCode::Mnemonic getBranchOrSetOpCodeForFPComparison(TR::ILOpCodes cmpOp, bool useFCOMIInstructions)
    {
    TR::InstOpCode::Mnemonic op;
 
@@ -3073,50 +3439,62 @@ TR::InstOpCode::Mnemonic getBranchOrSetOpCodeForFPComparison(TR::ILOpCodes cmpOp
 
       case TR::iffcmpleu:
       case TR::ifdcmpleu:
-         op = TR::InstOpCode::JBE4;
+         op = useFCOMIInstructions ? TR::InstOpCode::JBE4 : TR::InstOpCode::JNE4;
          break;
 
       case TR::fcmpleu:
       case TR::dcmpleu:
-         op = TR::InstOpCode::SETBE1Reg;
+         op = useFCOMIInstructions ? TR::InstOpCode::SETBE1Reg : TR::InstOpCode::SETNE1Reg;
          break;
 
       case TR::iffcmpgt:
       case TR::ifdcmpgt:
-         op = TR::InstOpCode::JA4;
+         op = useFCOMIInstructions ? TR::InstOpCode::JA4 : TR::InstOpCode::JE4;
          break;
 
       case TR::fcmpgt:
       case TR::dcmpgt:
-         op = TR::InstOpCode::SETA1Reg;
+         op = useFCOMIInstructions ? TR::InstOpCode::SETA1Reg : TR::InstOpCode::SETE1Reg;
          break;
 
-      case TR::iffcmplt:
-      case TR::ifdcmplt:
       case TR::iffcmpltu:
       case TR::ifdcmpltu:
-         op = TR::InstOpCode::JB4;
+         op = useFCOMIInstructions ? TR::InstOpCode::JB4 : TR::InstOpCode::JNE4;
          break;
 
-      case TR::fcmplt:
-      case TR::dcmplt:
       case TR::fcmpltu:
       case TR::dcmpltu:
-         op = TR::InstOpCode::SETB1Reg;
+         op = useFCOMIInstructions ? TR::InstOpCode::SETB1Reg : TR::InstOpCode::SETNE1Reg;
          break;
 
       case TR::iffcmpge:
       case TR::ifdcmpge:
-      case TR::iffcmpgeu:
-      case TR::ifdcmpgeu:
-         op = TR::InstOpCode::JAE4;
+         op = useFCOMIInstructions ? TR::InstOpCode::JAE4 : TR::InstOpCode::JE4;
          break;
 
       case TR::fcmpge:
       case TR::dcmpge:
+         op = useFCOMIInstructions ? TR::InstOpCode::SETAE1Reg : TR::InstOpCode::SETE1Reg;
+         break;
+
+      case TR::iffcmplt:
+      case TR::ifdcmplt:
+         op = useFCOMIInstructions ? TR::InstOpCode::JB4 : TR::InstOpCode::JE4;
+         break;
+
+      case TR::fcmplt:
+      case TR::dcmplt:
+         op = useFCOMIInstructions ? TR::InstOpCode::SETB1Reg : TR::InstOpCode::SETE1Reg;
+         break;
+
+      case TR::iffcmpgeu:
+      case TR::ifdcmpgeu:
+         op = useFCOMIInstructions ? TR::InstOpCode::JAE4 : TR::InstOpCode::JNE4;
+         break;
+
       case TR::fcmpgeu:
       case TR::dcmpgeu:
-         op = TR::InstOpCode::SETAE1Reg;
+         op = useFCOMIInstructions ? TR::InstOpCode::SETAE1Reg : TR::InstOpCode::SETNE1Reg;
          break;
 
 #ifdef DEBUG
@@ -4290,6 +4668,24 @@ TR::X86FPArithmeticRegRegInstruction  *
 generateFPArithmeticRegRegInstruction(TR::InstOpCode::Mnemonic op, TR::Node * node, TR::Register * treg, TR::Register * sreg, TR::CodeGenerator *cg)
    {
    return new (cg->trHeapMemory()) TR::X86FPArithmeticRegRegInstruction(op, node, treg, sreg, cg);
+   }
+
+TR::X86FPCompareRegRegInstruction  *
+generateFPCompareRegRegInstruction(TR::InstOpCode::Mnemonic op, TR::Node * node, TR::Register * treg, TR::Register * sreg, TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::X86FPCompareRegRegInstruction(op, node, treg, sreg, cg);
+   }
+
+TR::X86FPCompareEvalInstruction  *
+generateFPCompareEvalInstruction(TR::InstOpCode::Mnemonic op, TR::Node * node, TR::Register * accRegister, TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::X86FPCompareEvalInstruction(op, node, accRegister, cg);
+   }
+
+TR::X86FPCompareEvalInstruction  *
+generateFPCompareEvalInstruction(TR::InstOpCode::Mnemonic op, TR::Node * node, TR::Register * accRegister, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::X86FPCompareEvalInstruction(op, node, accRegister, cond, cg);
    }
 
 TR::X86FPRemainderRegRegInstruction  *

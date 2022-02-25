@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,6 +73,252 @@ static bool isUnevaluatedZero(TR::Node *child)
          }
       }
    return false;
+   }
+
+TR::Register *TR_X86FPCompareAnalyser::fpCompareAnalyser(TR::Node       *root,
+                                                         TR::InstOpCode::Mnemonic cmpRegRegOpCode,
+                                                         TR::InstOpCode::Mnemonic cmpRegMemOpCode,
+                                                         TR::InstOpCode::Mnemonic cmpiRegRegOpCode,
+                                                         bool           useFCOMIInstructions)
+   {
+   TR::Node      *firstChild,
+                *secondChild;
+   TR::ILOpCodes  cmpOp = root->getOpCodeValue();
+   bool          reverseMemOp = false;
+   bool          reverseCmpOp = false;
+   TR::Compilation* comp = _cg->comp();
+   TR::InstOpCode::Mnemonic cmpInstr = useFCOMIInstructions ? cmpiRegRegOpCode : cmpRegRegOpCode;
+
+   // Some operators must have their operands swapped to improve the generated
+   // code needed to evaluate the result of the comparison.
+   //
+   bool mustSwapOperands = (cmpOp == TR::iffcmple ||
+                            cmpOp == TR::ifdcmple ||
+                            cmpOp == TR::iffcmpgtu ||
+                            cmpOp == TR::ifdcmpgtu ||
+                            cmpOp == TR::fcmple ||
+                            cmpOp == TR::dcmple ||
+                            cmpOp == TR::fcmpgtu ||
+                            cmpOp == TR::dcmpgtu ||
+                            (useFCOMIInstructions &&
+                             (cmpOp == TR::iffcmplt ||
+                              cmpOp == TR::ifdcmplt ||
+                              cmpOp == TR::iffcmpgeu ||
+                              cmpOp == TR::ifdcmpgeu ||
+                              cmpOp == TR::fcmplt ||
+                              cmpOp == TR::dcmplt ||
+                              cmpOp == TR::fcmpgeu ||
+                              cmpOp == TR::dcmpgeu))) ? true : false;
+
+   // Some operators should not have their operands swapped to improve the generated
+   // code needed to evaluate the result of the comparison.
+   //
+   bool preventOperandSwapping = (cmpOp == TR::iffcmpltu ||
+                                  cmpOp == TR::ifdcmpltu ||
+                                  cmpOp == TR::iffcmpge ||
+                                  cmpOp == TR::ifdcmpge ||
+                                  cmpOp == TR::fcmpltu ||
+                                  cmpOp == TR::dcmpltu ||
+                                  cmpOp == TR::fcmpge ||
+                                  cmpOp == TR::dcmpge ||
+                                  (useFCOMIInstructions &&
+                                   (cmpOp == TR::iffcmpgt ||
+                                    cmpOp == TR::ifdcmpgt ||
+                                    cmpOp == TR::iffcmpleu ||
+                                    cmpOp == TR::ifdcmpleu ||
+                                    cmpOp == TR::fcmpgt ||
+                                    cmpOp == TR::dcmpgt ||
+                                    cmpOp == TR::fcmpleu ||
+                                    cmpOp == TR::dcmpleu))) ? true : false;
+
+   // For correctness, don't swap operands of these operators.
+   //
+   if (cmpOp == TR::fcmpg || cmpOp == TR::fcmpl ||
+       cmpOp == TR::dcmpg || cmpOp == TR::dcmpl)
+      {
+      preventOperandSwapping = true;
+      }
+
+   // Initial operand evaluation ordering.
+   //
+   if (preventOperandSwapping || (!mustSwapOperands && _cg->whichChildToEvaluate(root) == 0))
+      {
+      firstChild  = root->getFirstChild();
+      secondChild = root->getSecondChild();
+      setReversedOperands(false);
+      }
+   else
+      {
+      firstChild  = root->getSecondChild();
+      secondChild = root->getFirstChild();
+      setReversedOperands(true);
+      }
+
+   TR::Register *firstRegister  = firstChild->getRegister();
+   TR::Register *secondRegister = secondChild->getRegister();
+
+   setInputs(firstChild,
+             firstRegister,
+             secondChild,
+             secondRegister,
+             useFCOMIInstructions,
+
+             // If either 'preventOperandSwapping' or 'mustSwapOperands' is set then the
+             // initial operand ordering set above must be maintained.
+             //
+             preventOperandSwapping || mustSwapOperands);
+
+   // Make sure any required operand ordering is respected.
+   //
+   if ((getCmpReg2Reg1() || getCmpReg2Mem1()) &&
+       (mustSwapOperands || preventOperandSwapping))
+      {
+      reverseCmpOp = getCmpReg2Reg1() ? true : false;
+      reverseMemOp = getCmpReg2Mem1() ? true : false;
+      }
+
+   // If we are not comparing with a memory operand, one of them evaluates
+   // to a zero, and the zero is not already on the stack, then we can use
+   // FTST to save a register.
+   //
+   // (With a memory operand, either the constant zero needs to be loaded
+   // to use FCOM, or the memory operand needs to be loaded to use FTST,
+   // so there is no gain in using FTST.)
+   //
+   // If the constant zero is in the target register, using FTST means the
+   // comparison will be reversed. We cannot do this if the initial ordering
+   // of the operands must be maintained.
+   //
+   // Finally, if FTST is used and this is the last use of the target, the
+   // target register may need to be explicitly popped.
+   //
+   TR::Register *targetRegisterForFTST = NULL;
+   TR::Node     *targetChildForFTST = NULL;
+
+   if (getEvalChild1() && isUnevaluatedZero(firstChild))  // do we need getEvalChild1() here?
+      {
+      if ( ((getCmpReg1Reg2() || reverseCmpOp) && !(preventOperandSwapping || mustSwapOperands)) ||
+            (getCmpReg2Reg1() && !reverseCmpOp))
+         {
+         if (getEvalChild2())
+            {
+            secondRegister = _cg->evaluate(secondChild);
+            }
+         targetRegisterForFTST = secondRegister;
+         targetChildForFTST = secondChild;
+         notReversedOperands();
+         }
+      }
+   else if (getEvalChild2() && isUnevaluatedZero(secondChild))  // do we need getEvalChild2() here?
+      {
+      if ( (getCmpReg1Reg2() || reverseCmpOp) ||
+           (getCmpReg2Reg1() && !reverseCmpOp && !(preventOperandSwapping || mustSwapOperands)) )
+         {
+         if (getEvalChild1())
+            {
+            firstRegister = _cg->evaluate(firstChild);
+            }
+         targetRegisterForFTST = firstRegister;
+         targetChildForFTST = firstChild;
+         }
+      }
+
+   if (!targetRegisterForFTST)
+      {
+      // If we have a choice, evaluate the target operand last.  By doing so, we
+      // help out the register assigner because the target must be TOS.  This
+      // avoids an unneccessary FXCH for the target.
+      //
+      if (getEvalChild1() && getEvalChild2())
+         {
+         if (getCmpReg1Reg2() || getCmpReg1Mem2())
+            {
+            secondRegister = _cg->evaluate(secondChild);
+            firstRegister = _cg->evaluate(firstChild);
+            }
+         else
+            {
+            firstRegister = _cg->evaluate(firstChild);
+            secondRegister = _cg->evaluate(secondChild);
+            }
+         }
+      else
+         {
+         if (getEvalChild1())
+            {
+            firstRegister = _cg->evaluate(firstChild);
+            }
+
+         if (getEvalChild2())
+            {
+            secondRegister = _cg->evaluate(secondChild);
+            }
+         }
+      }
+
+   // Generate the compare instruction.
+   //
+   if (targetRegisterForFTST)
+      {
+      generateFPRegInstruction(TR::InstOpCode::FTSTReg, root, targetRegisterForFTST, _cg);
+      }
+   else if (!useFCOMIInstructions && (getCmpReg1Mem2() || reverseMemOp))
+      {
+      TR::MemoryReference  *tempMR = generateX86MemoryReference(secondChild, _cg);
+      generateFPRegMemInstruction(cmpRegMemOpCode, root, firstRegister, tempMR, _cg);
+      tempMR->decNodeReferenceCounts(_cg);
+      }
+   else if (!useFCOMIInstructions && getCmpReg2Mem1())
+      {
+      TR::MemoryReference  *tempMR = generateX86MemoryReference(firstChild, _cg);
+      generateFPRegMemInstruction(cmpRegMemOpCode, root, secondRegister, tempMR, _cg);
+      notReversedOperands();
+      tempMR->decNodeReferenceCounts(_cg);
+      }
+   else if (getCmpReg1Reg2() || reverseCmpOp)
+      {
+      generateFPCompareRegRegInstruction(cmpInstr, root, firstRegister, secondRegister, _cg);
+      }
+   else if (getCmpReg2Reg1())
+      {
+      generateFPCompareRegRegInstruction(cmpInstr, root, secondRegister, firstRegister, _cg);
+      notReversedOperands();
+      }
+
+   _cg->decReferenceCount(firstChild);
+   _cg->decReferenceCount(secondChild);
+
+   // Evaluate the comparison.
+   //
+   if (getReversedOperands())
+      {
+      cmpOp = TR::ILOpCode(cmpOp).getOpCodeForSwapChildren();
+      TR::Node::recreate(root, cmpOp);
+      }
+
+   if (useFCOMIInstructions && !targetRegisterForFTST)
+      {
+      return NULL;
+      }
+
+   // We must manually move the FP condition flags to the EFLAGS register if we don't
+   // use the FCOMI instructions.
+   //
+   TR::Register *accRegister = _cg->allocateRegister();
+   TR::RegisterDependencyConditions  *dependencies = generateRegisterDependencyConditions((uint8_t)1, 1, _cg);
+   dependencies->addPreCondition(accRegister, TR::RealRegister::eax, _cg);
+   dependencies->addPostCondition(accRegister, TR::RealRegister::eax, _cg);
+   generateRegInstruction(TR::InstOpCode::STSWAcc, root, accRegister, dependencies, _cg);
+
+   // Pop the FTST target register if it is not used any more.
+   //
+   if (targetRegisterForFTST &&
+       targetChildForFTST && targetChildForFTST->getReferenceCount() == 0)
+      {
+      generateFPSTiST0RegRegInstruction(TR::InstOpCode::FSTRegReg, root, targetRegisterForFTST, targetRegisterForFTST, _cg);
+      }
+
+   return accRegister;
    }
 
 

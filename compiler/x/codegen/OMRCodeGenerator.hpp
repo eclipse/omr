@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -144,6 +144,7 @@ struct TR_X86ProcessorInfo
    bool supportsPageGlobalFlag()           {return testFeatureFlags(TR_PageGlobalFlag);}
    bool hasMachineCheckArchitecture()      {return testFeatureFlags(TR_MachineCheckArchitecture);}
    bool supportsCMOVInstructions()         {return testFeatureFlags(TR_CMOVInstructions);}
+   bool supportsFCOMIInstructions()        {return testFeatureFlags(TR_BuiltInFPU | TR_CMOVInstructions);}
    bool hasPageAttributeTable()            {return testFeatureFlags(TR_PageAttributeTable);}
    bool has36BitPageSizeExtension()        {return testFeatureFlags(TR_36BitPageSizeExtension);}
    bool hasProcessorSerialNumber()         {return testFeatureFlags(TR_ProcessorSerialNumber);}
@@ -365,7 +366,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    virtual bool getSupportsBitPermute();
 
    bool supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol);
-
+   
    static bool isILOpCodeSupported(TR::ILOpCodes);
 
    bool hasTMEvaluator()                       {return true;}

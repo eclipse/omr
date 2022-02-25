@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -354,75 +354,11 @@ class ValuePropagation : public TR::Optimization
     * Determine whether the component type of an array is, or might be, a value
     * type.
     * \param arrayConstraint The \ref TR::VPConstraint type constraint for the array reference
-    * \return \c TR_yes if the array's component type is definitely a value type;\n
-    *         \c TR_no if it is definitely not a value type; or\n
-    *         \c TR_maybe otherwise.
+    * \returns \c TR_yes if the array's component type is definitely a value type;\n
+    *          \c TR_no if it is definitely not a value type; or\n
+    *          \c TR_maybe otherwise.
     */
    virtual TR_YesNoMaybe isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint);
-
-   /**
-    * Determine whether assignment of the supplied object reference to an element of the
-    * supplied array reference could cause an \c ArrayStoreException to be thrown.
-    * If the assignment would never trigger an \c ArrayStoreException, the method
-    * returns \c false; otherwise, the method returns \c true.
-    *
-    * The \c mustFail parameter is set to \c true if the assignment would always trigger
-    * an \c ArrayStoreException; otherwise, it is set to \c false.
-    *
-    * The \c storeClassForCheck parameter is set to the type of the object reference if
-    * it is known to be the same as the component type of the array, and the class is
-    * not known to be extended; otherwise, the parameter is set to \c NULL.
-    * If the value is not \c NULL, any \ref TR::ArrayStoreCHK generated for this potential
-    * assignment could be NOPed based on whether the class is ever seen to be extended.
-    *
-    * The \c componentClassForCheck parameter is set to the component type of the array if
-    * the class of the object must be the same class as the component type of the array
-    * or a subtype of the component type; otherwise, the parameter is set to \c NULL.
-    * At run-time, a simple check that the actual component type of the array really is
-    * equal to \c componentClassForCheck can be used to avoid the need for a more extensive
-    * subtype check on any \ref TR::ArrayStoreCHK.
-    *
-    * At most one of \c storeClassForCheck and \c componentClassForCheck will be non-NULL.
-    * The value of \c storeClassForCheck can be set on a \ref TR::ArrayStoreCHK node
-    * via \ref TR::Node::setArrayStoreClassInNode(TR_OpaqueClassBlock*)
-    * The value of \c componentClassForCheck can be set on a \ref TR::ArrayStoreCHK node
-    * via \ref TR::Node::setArrayComponentClassInNode(TR_OpaqueClassBlock*)
-    *
-    * \param[in] arrayRef A \ref TR::Node representing an array reference, an element of
-    *                 which is being considered as the target of an assignment
-    * \param[in] objectRef A \ref TR::Node representing an object reference that is being
-    *                 considered as the value to be assigned to the array element
-    * \param[out] mustFail An output parameter of type \c bool.  Set to \c true if the
-    *                 assignment under consideration would always result in an \c ArrayStoreException
-    * \param[out] storeClassForCheck An output parameter that is a pointer to \ref TR_OpaqueClassBlock
-    *                 representing what VP knows about the type of the object being stored
-    * \param[out] componentClassForCheck An output parameter that is a pointer to \ref TR_OpaqueClassBlock
-    *                 representing what VP knows about the type of the component type of the array
-    *
-    * \return \c false if Value Propagation determines that an \c ArrayStoreException would never
-    *                 be thrown by the assignment;\n
-    *         \c true otherwise
-    */
-   bool isArrayStoreCheckNeeded(TR::Node *arrayRef, TR::Node *objectRef, bool &mustFail,
-              TR_OpaqueClassBlock* &storeClassForCheck, TR_OpaqueClassBlock* &componentClassForCheck);
-
-   /**
-    * Determine the bounds and element size for an array constraint.
-    *
-    * The \c lowerBoundLimit and \c upperBoundLimit are in the range [0,2^31-1] and
-    * \c lowerBoundLimit <= \c upperBoundLimit.  If the array length is unknown,
-    * \c lowerBoundLimit will be zero and \c upperBoundLimit will be 2^31-1.
-    *
-    * \param[in] arrayConstraint A \ref TR::VPConstraint for an array reference
-    * \param[out] lowerBoundLimit The lower bound on the size of the array
-    * \param[out] upperBoundLimit The upper bound on the size of the array
-    * \param[out] elementSize The size of an element of the array; zero if not known
-    * \param[out] isKnownObj Set to \c true if this constraint represents a known object;\n
-    *             \c false otherwise.
-    */
-   virtual void getArrayLengthLimits(TR::VPConstraint *arrayConstraint, int32_t &lowerBoundLimit, int32_t &upperBoundLimit,
-                   int32_t &elementSize, bool &isKnownObj);
-
 
    TR::VPConstraint *getStoreConstraint(TR::Node *node, TR::Node *relative = NULL);
    void createStoreConstraints(TR::Node *node);

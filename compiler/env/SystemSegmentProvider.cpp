@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2016 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,10 +33,6 @@ OMR::SystemSegmentProvider::SystemSegmentProvider(size_t segmentSize, TR::RawAll
 
 OMR::SystemSegmentProvider::~SystemSegmentProvider() throw()
    {
-   for (auto it = _segments.begin(); it != _segments.end(); ++it)
-      {
-      _rawAllocator.deallocate((*it).base());
-      }
    }
 
 TR::MemorySegment &

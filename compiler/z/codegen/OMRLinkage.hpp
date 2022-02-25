@@ -204,6 +204,7 @@ private:
    int32_t _offsetToLongDispSlot;
    uint8_t _numberOfDependencyGPRegisters;
    int32_t _offsetToFirstLocal;
+   bool    _stackSizeCheckNeeded;
    bool    _raContextSaveNeeded;
    bool    _raContextRestoreNeeded;
    int32_t _largestOutgoingArgumentAreaSize; ///< Arguments for registers could be saved in discontiguous area
@@ -241,6 +242,9 @@ enum TR_DispatchType
    bool isFastLinkLinkageType();
 
    bool isZLinuxLinkageType();
+
+   bool    setStackSizeCheckNeeded(bool v) { return _stackSizeCheckNeeded = v; }
+   bool    getStackSizeCheckNeeded() { return _stackSizeCheckNeeded; }
 
    bool    setRaContextSaveNeeded(bool v) { return _raContextSaveNeeded = v; }
    bool    getRaContextSaveNeeded() { return _raContextSaveNeeded; }

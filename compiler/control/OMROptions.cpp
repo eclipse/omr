@@ -448,6 +448,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableMethodIsCold",                "O\tdo not use heuristics to determine whether whole methods are cold based on how many times they have been interpreted",   SET_OPTION_BIT(TR_DisableMethodIsCold), "F"},
    {"disableMHCustomizationLogicCalls",   "C\tdo not insert calls to MethodHandle.doCustomizationLogic for handle invocations outside of thunks", RESET_OPTION_BIT(TR_EnableMHCustomizationLogicCalls), "F"},
    {"disableMonitorCoarsening",           "O\tdisable monitor coarsening",                     SET_OPTION_BIT(TR_DisableMonitorCoarsening), "F"},
+   {"disableMoreOpts",                    "O\tapply noOpt optimization level and disable codegen optimizations", TR::Options::disableMoreOpts, offsetof(OMR::Options, _optLevel), noOpt, "P"},
    {"disableMultiLeafArrayCopy",          "O\tdisable multi-leaf arraycopy for real-time",   SET_OPTION_BIT(TR_DisableMultiLeafArrayCopy), "F"},
    {"disableMultiTargetInlining",         "O\tdisable multi-target inlining",   SET_OPTION_BIT(TR_DisableMultiTargetInlining), "F"},
    {"disableMutableCallSiteGuards",       "O\tdisable virtual guards for calls to java.lang.invoke.MutableCallSite.getTarget().invokeExact(...) (including invokedynamic)",   SET_OPTION_BIT(TR_DisableMutableCallSiteGuards), "F"},
@@ -4984,6 +4985,21 @@ OMR::Options::helpOption(char *option, void *base, TR::OptionTable *entry)
 
    return option;
    }
+
+
+char *
+OMR::Options::disableMoreOpts(char *option, void *base, TR::OptionTable *entry)
+   {
+   TR::Options::processOptionSet(NoOptString "," DisableAllocationInliningString "," DisableInlineCheckCastString ","
+          DisableInlineIfInstanceOfString "," DisableInlineInstanceOfString ","
+          DisableInlineMonEntString "," DisableInlineMonExitString ","
+          DisableInliningOfNativesString ","
+          DisableNewInstanceImplOptString "," DisableFastStringIndexOfString,
+          0, _currentOptionSet);
+
+   return option;
+   }
+
 
 char *OMR::Options::_samplingJProfilingOptionNames[TR_NumSamplingJProfilingFlags] =
    {

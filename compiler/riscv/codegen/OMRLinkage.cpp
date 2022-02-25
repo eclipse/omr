@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,6 +106,11 @@ void OMR::RV::Linkage::initRVRealRegisterLinkage()
 void OMR::RV::Linkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method)
    {
    /* do nothing */
+   }
+
+bool OMR::RV::Linkage::hasToBeOnStack(TR::ParameterSymbol *parm)
+   {
+   return(false);
    }
 
 TR::MemoryReference *OMR::RV::Linkage::getOutgoingArgumentMemRef(TR::Register *argMemReg, int32_t offset, TR::Register *argReg, TR::InstOpCode::Mnemonic opCode, TR::RVMemoryArgument &memArg)

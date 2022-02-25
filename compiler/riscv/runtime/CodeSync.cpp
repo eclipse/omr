@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2022 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,14 +19,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <riscv/runtime/CodeSync.hpp>
-
-void riscvCodeSync(void *codeStart, size_t codeSize)
+// make sure the code gets from the data cache to the instruction cache
+void riscvCodeSync(unsigned char *codeStart, unsigned int codeSize)
    {
 #if defined(TR_HOST_RISCV)
 #if defined(__GNUC__)
    // GCC built-in function
-   __builtin___clear_cache(reinterpret_cast<char*>(codeStart), reinterpret_cast<char*>(codeStart)+codeSize);
+   __builtin___clear_cache(codeStart, codeStart+codeSize);
 #else
 #error Not supported yet
 #endif

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -315,6 +315,12 @@ class OMR_EXTENSIBLE Linkage : public OMR::Linkage
     */
    Linkage (TR::CodeGenerator *cg) : OMR::Linkage(cg) {}
 
+   /**
+    * @brief Parameter has to be on stack or not
+    * @param[in] parm : parameter symbol
+    * @return true if the parameter has to be on stack, false otherwise
+    */
+   virtual bool hasToBeOnStack(TR::ParameterSymbol *parm);
    /**
     * @brief Maps symbols to locations on stack
     * @param[in] method : method for which symbols are mapped on stack

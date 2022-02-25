@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -453,12 +453,7 @@ TR_Debug::dumpOptions(
          if (entry->msg[0] == 'P')
             printIt = (value != 0);
          }
-      else if (entry->fcn == TR::Options::setJitConfigNumericValue)
-         {
-         value = (intptr_t)(*((char**)(base+entry->parm1)));
-         printIt = true;
-         }
-#endif /* J9_PROJECT_SPECIFIC */
+#endif
       else if (entry->fcn == TR::Options::disableOptimization)
          {
          value = ((TR::Options *)base)->isDisabled((OMR::Optimizations)entry->parm1);

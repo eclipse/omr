@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,12 +25,12 @@
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include <infra/Assert.hpp>
-#include "runtime/CodeSync.hpp"
 
+extern void riscvCodeSync(unsigned char *codeStart, unsigned int codeSize);
 
 extern "C" void _patchVirtualGuard(uint8_t *locationAddr, uint8_t *destinationAddr, int32_t smpFlag)
    {
    int64_t distance = (int64_t)destinationAddr - (int64_t)locationAddr;
    *(uint32_t *)locationAddr = TR_RISCV_UJTYPE(TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::_jal), 0, distance);
-   riscvCodeSync(locationAddr, RISCV_INSTRUCTION_LENGTH);
+   riscvCodeSync((unsigned char *)locationAddr, RISCV_INSTRUCTION_LENGTH);
    }

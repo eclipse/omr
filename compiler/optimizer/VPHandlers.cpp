@@ -4854,17 +4854,19 @@ TR::Node *constrainArraylength(OMR::ValuePropagation *vp, TR::Node *node)
    // See if the underlying array has bound limits
    //
    TR::Node *objectRef = node->getFirstChild();
-
    bool isGlobal;
    TR::VPConstraint *constraint = vp->getConstraint(objectRef, isGlobal);
 
-   bool isKnownObj;
-
-   vp->getArrayLengthLimits(constraint, lowerBoundLimit, upperBoundLimit, elementSize, isKnownObj);
-
-#ifdef J9_PROJECT_SPECIFIC
-   if (constraint && !isKnownObj)
+   if (constraint)
       {
+      TR::VPArrayInfo *arrayInfo = constraint->getArrayInfo();
+      if (arrayInfo)
+         {
+         lowerBoundLimit = arrayInfo->lowBound();
+         upperBoundLimit = arrayInfo->highBound();
+         elementSize     = arrayInfo->elementSize();
+         }
+#ifdef J9_PROJECT_SPECIFIC
       TR::KnownObjectTable *knot = vp->comp()->getKnownObjectTable();
       TR::VPKnownObject *kobj = constraint->getKnownObject();
       if (knot && kobj)
@@ -4876,21 +4878,13 @@ TR::Node *constrainArraylength(OMR::ValuePropagation *vp, TR::Node *node)
             uintptr_t array = knot->getPointer(kobj->getIndex());
             if (vp->comp()->fej9()->isClassArray(vp->comp()->fej9()->getObjectClass(array)))
                {
-               isKnownObj = true;
-               lowerBoundLimit = vp->comp()->fej9()->getArrayLengthInElements(array);
-               upperBoundLimit = lowerBoundLimit;
+               uintptr_t length = vp->comp()->fej9()->getArrayLengthInElements(array);
+               vp->replaceByConstant(node, TR::VPIntConst::create(vp, length), isGlobal);
+               return node;
                }
             }
          }
-      }
 #endif
-
-   // If this is a known array object, we definitely know its length
-   //
-   if (isKnownObj)
-      {
-      vp->replaceByConstant(node, TR::VPIntConst::create(vp, lowerBoundLimit), isGlobal);
-      return node;
       }
 
    // If the element size is still not known, try to get it from the node or
@@ -12195,10 +12189,14 @@ TR::Node *constrainArrayStoreChk(OMR::ValuePropagation *vp, TR::Node *node)
    constrainChildren(vp, node);
 
    TR::Node *child = node->getFirstChild();
-   TR::Node *objectRef = child->getSecondChild();
-   TR::Node *arrayRef = child->getChild(2);
+   TR::Node *objectRef;
+   TR::Node *arrayRef;
+   bool canBeRemoved = false;
    bool mustFail = false;
-   bool valueIsFromSameArray = false;
+   bool isGlobal;
+
+   objectRef = child->getSecondChild();
+   arrayRef = child->getChild(2);
 
    if (objectRef->getOpCode().isLoadVar() &&
        objectRef->getOpCode().isIndirect() &&
@@ -12212,17 +12210,104 @@ TR::Node *constrainArrayStoreChk(OMR::ValuePropagation *vp, TR::Node *node)
             base = base->getFirstChild()->getFirstChild();
          }
 
-         valueIsFromSameArray = (vp->getValueNumber(base) == vp->getValueNumber(arrayRef));
+      if (base == arrayRef)
+         canBeRemoved = true;
       }
 
-   TR_OpaqueClassBlock *storeClassForCheck = NULL;
-   TR_OpaqueClassBlock *componentClassForCheck = NULL;
-   bool isStoreCheckNeeded = !valueIsFromSameArray
-                             && vp->isArrayStoreCheckNeeded(arrayRef, objectRef, mustFail, storeClassForCheck, componentClassForCheck);
+   if (canBeRemoved != true)
+      {
+      TR::VPConstraint *object = vp->getConstraint(objectRef, isGlobal);
+      TR::VPConstraint *array  = vp->getConstraint(arrayRef, isGlobal);
+
+      // If the object reference is null we can remove this check, if the
+      // array's element type is not a value type
+      //
+      if (object && object->isNullObject())
+         {
+         canBeRemoved = true;
+         }
+
+      // If the array reference is null we can remove this check, since there
+      // will be a nullcheck on the array reference before storing into it.
+      //
+      else if (array && array->isNullObject())
+         canBeRemoved = true;
+
+      // If the array is a resolved class and known to be an array type we may
+      // still be able to remove the check ...
+      //
+      else if (array && array->getClass())
+         {
+         int32_t len;
+         const char *sig = array->getClassSignature(len);
+         if (sig && sig[0] == '[')
+            {
+            // If the array is known to be a fixed array of Object,
+            // the check can be removed
+            // TODO -  get a pointer to the Object class from somewhere and
+            // compare object pointers instead of signatures
+            //
+            if (len == 19 && array->isFixedClass()
+                && !strncmp(sig, "[Ljava/lang/Object;", 19))
+               {
+               canBeRemoved = true;
+               }
+
+            // If the object's class is resolved too, see if we can prove the
+            // check will succeed.
+            //
+            else if (object && object->getClass())
+               {
+               TR_OpaqueClassBlock *arrayComponentClass = vp->fe()->getComponentClassFromArrayClass(array->getClass());
+               TR_OpaqueClassBlock *objectClass = object->getClass();
+               if (object->asClass() && object->isClassObject() == TR_yes)
+                  objectClass = vp->fe()->getClassClassPointer(objectClass);
+               if (array->asClass() && array->isClassObject() == TR_yes)
+                  arrayComponentClass = vp->fe()->getClassClassPointer(array->getClass());
+
+               TR_YesNoMaybe isInstance = TR_maybe;
+               if (arrayComponentClass)
+                  isInstance = vp->fe()->isInstanceOf(objectClass, arrayComponentClass, object->isFixedClass(), array->isFixedClass());
+                  //isInstance = vp->fe()->isInstanceOf(object->getClass(), arrayComponentClass, object->isFixedClass(), array->isFixedClass());
+
+               if (isInstance == TR_yes)
+                  {
+                  vp->registerPreXClass(object);
+                  canBeRemoved = true;
+                  }
+               else if (isInstance == TR_no && debug("enableMustFailArrayStoreCheckOpt"))
+                  {
+                  vp->registerPreXClass(object);
+                  mustFail = true;
+                  }
+               else if (arrayComponentClass && objectClass && !TR::Compiler->cls.isClassArray(vp->comp(), arrayComponentClass) &&
+                        (arrayComponentClass == objectClass) && !vp->comp()->fe()->classHasBeenExtended(objectClass))
+                  {
+                  if (vp->trace())
+                     traceMsg(vp->comp(),"Setting arrayStoreClass on ArrayStoreChk node [%p] to [%p]\n", node, objectClass);
+                  node->setArrayStoreClassInNode(objectClass);
+                  }
+
+              else if ( !vp->comp()->compileRelocatableCode() &&
+                        !(vp->comp()->getOption(TR_DisableArrayStoreCheckOpts))  &&
+                        arrayComponentClass &&
+                        objectClass  &&
+                        vp->fe()->isInstanceOf(objectClass, arrayComponentClass,true,true)
+                        )
+                  {
+                  if (vp->trace())
+                     traceMsg(vp->comp(),"Setting arrayComponentClass on ArrayStoreChk node [%p] to [%p]\n", node, arrayComponentClass);
+                  node->setArrayComponentClassInNode(arrayComponentClass);
+                  }
+
+               }
+            }
+         }
+      }
 
    // Remove the check if we can
    //
-   if (!isStoreCheckNeeded)
+   if (canBeRemoved)
       {
       // Change the write barrier into iastore
       //
@@ -12243,23 +12328,6 @@ TR::Node *constrainArrayStoreChk(OMR::ValuePropagation *vp, TR::Node *node)
          vp->setChecksRemoved();
          return node;
          }
-      }
-
-   if (storeClassForCheck != NULL)
-      {
-      if (vp->trace())
-         {
-         traceMsg(vp->comp(),"Setting arrayStoreClass on ArrayStoreChk node [%p] to [%p]\n", node, storeClassForCheck);
-         }
-      node->setArrayStoreClassInNode(storeClassForCheck);
-      }
-   else if (componentClassForCheck != NULL)
-      {
-      if (vp->trace())
-         {
-         traceMsg(vp->comp(),"Setting arrayComponentClass on ArrayStoreChk node [%p] to [%p]\n", node, componentClassForCheck);
-         }
-      node->setArrayComponentClassInNode(componentClassForCheck);
       }
 
    vp->createExceptionEdgeConstraints(TR::Block::CanCatchArrayStoreCheck, NULL, node);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ OMR::X86::CPU::detect(OMRPortLibrary * const omrPortLib)
    {
    if (omrPortLib == NULL)
       return TR::CPU();
-
+   
    // Only enable the features that compiler currently uses
    uint32_t const enabledFeatures [] = {OMR_FEATURE_X86_FPU, OMR_FEATURE_X86_CX8, OMR_FEATURE_X86_CMOV,
                                         OMR_FEATURE_X86_MMX, OMR_FEATURE_X86_SSE, OMR_FEATURE_X86_SSE2,
@@ -164,7 +164,7 @@ OMR::X86::CPU::isAuthenticAMD()
    {
    if (TR::Compiler->omrPortLib == NULL)
       return TR::CodeGenerator::getX86ProcessorInfo().isAuthenticAMD();
-
+   
    return self()->isAtLeast(OMR_PROCESSOR_X86_AMD_FIRST) && self()->isAtMost(OMR_PROCESSOR_X86_AMD_LAST);
    }
 
@@ -172,6 +172,15 @@ bool
 OMR::X86::CPU::requiresLFence()
    {
    return false;  /* Dummy for now, we may need TR::InstOpCode::LFENCE in future processors*/
+   }
+
+bool
+OMR::X86::CPU::supportsFCOMIInstructions()
+   {
+   if (TR::Compiler->omrPortLib == NULL)
+      return TR::CodeGenerator::getX86ProcessorInfo().supportsFCOMIInstructions();
+
+   return self()->supportsFeature(OMR_FEATURE_X86_FPU) || self()->supportsFeature(OMR_FEATURE_X86_CMOV);
    }
 
 bool

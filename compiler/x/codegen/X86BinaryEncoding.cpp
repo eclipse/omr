@@ -2614,6 +2614,16 @@ uint8_t* TR::X86FPSTiST0RegRegInstruction::generateOperand(uint8_t* cursor)
    }
 
 
+// TR::X86FPCompareRegRegInstruction:: member functions
+
+uint8_t* TR::X86FPCompareRegRegInstruction::generateOperand(uint8_t* cursor)
+   {
+   uint8_t *opCode = cursor - 1;
+   applyRegistersToOpCode(opCode, cg()->machine());
+   return cursor;
+   }
+
+
 // TR::X86FPRegMemInstruction:: member functions
 
 uint8_t* TR::X86FPRegMemInstruction::generateOperand(uint8_t* cursor)

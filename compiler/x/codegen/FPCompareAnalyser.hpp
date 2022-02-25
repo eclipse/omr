@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,12 @@ class TR_X86FPCompareAnalyser
       : _cg(cg), _machine(cg->machine()),
       _reversedOperands(false),
       _inputs(0) {}
+
+   virtual TR::Register *fpCompareAnalyser(TR::Node       *root,
+                                          TR::InstOpCode::Mnemonic cmpRegRegOpCode,
+                                          TR::InstOpCode::Mnemonic cmpRegMemOpCode,
+                                          TR::InstOpCode::Mnemonic cmpiRegRegOpCode,
+                                          bool           useFCOMIInstructions);
 
    // Possible actions based on the characteristics of the operands.
    //
@@ -117,6 +123,16 @@ class TR_IA32XMMCompareAnalyser : public TR_X86FPCompareAnalyser
    public:
 
    TR_IA32XMMCompareAnalyser(TR::CodeGenerator *cg) : TR_X86FPCompareAnalyser(cg) {}
+
+   virtual TR::Register *fpCompareAnalyser(TR::Node       *root,
+                                          TR::InstOpCode::Mnemonic cmpRegRegOpCode,
+                                          TR::InstOpCode::Mnemonic cmpRegMemOpCode,
+                                          TR::InstOpCode::Mnemonic cmpiRegRegOpCode,
+                                          bool           useFCOMIInstructions)
+      {
+      TR_ASSERT(0, "TR_IA32XMMCompareAnalyser::fpCompareAnalyser() should not be called\n");
+      return NULL;
+      }
 
    TR::Register *xmmCompareAnalyser(TR::Node        *root,
                                    TR::InstOpCode::Mnemonic  cmpRegRegOpCode,
