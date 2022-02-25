@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,9 +114,9 @@ elseif(OMR_OS_LINUX)
 	)
 elseif(OMR_OS_ZOS)
 	set(OMR_ZOS_COMPILE_ARCHITECTURE "7" CACHE STRING "z/OS compile machine architecture")
-	set(OMR_ZOS_COMPILE_TARGET "zOSV1R13" CACHE STRING "z/OS compile target operating system")
+	set(OMR_ZOS_COMPILE_TARGET "ZOSV2R2" CACHE STRING "z/OS compile target operating system")
 	set(OMR_ZOS_COMPILE_TUNE "10" CACHE STRING "z/OS compile machine architecture tuning")
-	set(OMR_ZOS_LINK_COMPAT "ZOSV1R13" CACHE STRING "z/OS link compatible operating system")
+	set(OMR_ZOS_LINK_COMPAT "ZOSV2R2" CACHE STRING "z/OS link compatible operating system")
 
 	# TODO: This should technically be -qhalt=w however c89 compiler used to compile the C sources does not like this
 	# flag. We'll need to investigate whether we actually need c89 for C sources or if we can use xlc and what to do

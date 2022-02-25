@@ -1747,11 +1747,11 @@ Some influential environment variables:
   OMR_ZOS_COMPILE_ARCHITECTURE
               The z/OS compile machine architecture. (Default: 7)
   OMR_ZOS_COMPILE_TARGET
-              The z/OS compile target operating system. (Default: zOSV1R13)
+              The z/OS compile target operating system. (Default: ZOSV2R2)
   OMR_ZOS_COMPILE_TUNE
               The z/OS compile machine architecture tuning. (Default: 10)
   OMR_ZOS_LINK_COMPAT
-              The z/OS link compatible operating system. (Default: ZOSV1R13)
+              The z/OS link compatible operating system. (Default: ZOSV2R2)
   CC          C compiler command
   CFLAGS      C compiler flags
   LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
@@ -2880,9 +2880,9 @@ OMR_PRODUCT_NAME=${OMR_PRODUCT_NAME:-"OMR"}
 OMR_PRODUCT_VERSION=${OMR_PRODUCT_VERSION:-"0.1"}
 
 OMR_ZOS_COMPILE_ARCHITECTURE=${OMR_ZOS_COMPILE_ARCHITECTURE:-"7"}
-OMR_ZOS_COMPILE_TARGET=${OMR_ZOS_COMPILE_TARGET:-"zOSV1R13"}
+OMR_ZOS_COMPILE_TARGET=${OMR_ZOS_COMPILE_TARGET:-"ZOSV2R2"}
 OMR_ZOS_COMPILE_TUNE=${OMR_ZOS_COMPILE_TUNE:-"10"}
-OMR_ZOS_LINK_COMPAT=${OMR_ZOS_LINK_COMPAT:-"ZOSV1R13"}
+OMR_ZOS_LINK_COMPAT=${OMR_ZOS_LINK_COMPAT:-"ZOSV2R2"}
 
 # Check whether --enable-optimized was given.
 if test "${enable_optimized+set}" = set; then :
