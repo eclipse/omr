@@ -4693,7 +4693,6 @@ TR_Debug::traceRegisterAssignment(TR::Instruction *instr, bool insertedByRA, boo
             const bool isGPR = _registerKindsToAssign & TR_GPR_Mask;
             const bool isVRF = _registerKindsToAssign & TR_VRF_Mask;
             const bool isFPR = _registerKindsToAssign & TR_FPR_Mask;
-            const bool isX87 = _registerKindsToAssign & TR_X87_Mask;
 
             TR::RegisterIterator *gprIter = _comp->cg()->getGPRegisterIterator();
             TR::RegisterIterator *hprIter = _comp->cg()->getGPRegisterIterator();

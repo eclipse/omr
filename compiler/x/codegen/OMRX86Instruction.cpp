@@ -1652,14 +1652,11 @@ void TR::X86MemInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
       }
 
 #ifdef J9_PROJECT_SPECIFIC
-   if (kindsToBeAssigned & (TR_X87_Mask | TR_FPR_Mask | TR_VRF_Mask))
+   if (kindsToBeAssigned & (TR_FPR_Mask | TR_VRF_Mask))
       {
       TR::UnresolvedDataSnippet *snippet = getMemoryReference()->getUnresolvedDataSnippet();
       if (snippet)
          {
-         if (kindsToBeAssigned & TR_X87_Mask)
-            snippet->setNumLiveX87Registers(cg()->machine()->fpGetNumberOfLiveFPRs());
-
          if (kindsToBeAssigned & (TR_FPR_Mask | TR_VRF_Mask))
             snippet->setHasLiveXMMRegisters((cg()->machine()->fpGetNumberOfLiveXMMRs() > 0) ? true : false);
          }
@@ -2217,14 +2214,11 @@ void TR::X86RegMemInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigne
       }
 
 #ifdef J9_PROJECT_SPECIFIC
-   if (kindsToBeAssigned & (TR_X87_Mask | TR_FPR_Mask | TR_VRF_Mask))
+   if (kindsToBeAssigned & (TR_FPR_Mask | TR_VRF_Mask))
       {
       TR::UnresolvedDataSnippet *snippet = getMemoryReference()->getUnresolvedDataSnippet();
       if (snippet)
          {
-         if (kindsToBeAssigned & TR_X87_Mask)
-            snippet->setNumLiveX87Registers(cg()->machine()->fpGetNumberOfLiveFPRs());
-
          if (kindsToBeAssigned & (TR_FPR_Mask | TR_VRF_Mask))
             snippet->setHasLiveXMMRegisters((cg()->machine()->fpGetNumberOfLiveXMMRs() > 0) ? true : false);
          }
@@ -2454,46 +2448,6 @@ TR::X86FPRegInstruction::X86FPRegInstruction(TR::Instruction *precedingInstructi
 
 void TR::X86FPRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-   if (kindsToBeAssigned & TR_X87_Mask)
-      {
-      TR::Register            *targetRegister = getTargetRegister();
-      TR_X86FPStackRegister  *assignedRegister = toX86FPStackRegister(targetRegister->getAssignedRealRegister());
-      TR::Machine *machine = cg()->machine();
-
-      if (assignedRegister == NULL)
-         {
-         // The FP register is not on the FP stack
-         //
-         if (targetRegister->getTotalUseCount() != targetRegister->getFutureUseCount())
-            {
-            // FP register has been spilled from the stack
-            //
-            (void)machine->reverseFPRSpillState(this->getPrev(), targetRegister);
-            }
-         else
-            {
-            // First use (e.g., FLDZ)
-            //
-            if ((assignedRegister = machine->findFreeFPRegister()) == NULL)
-               {
-               machine->freeBestFPRegister(this->getPrev());
-               }
-            machine->fpStackPush(targetRegister);
-            }
-         }
-      else
-         {
-         if (!machine->isFPRTopOfStack(targetRegister))
-            {
-            (void)machine->fpStackFXCH(this->getPrev(), targetRegister);
-            }
-         }
-
-      targetRegister->decFutureUseCount();
-
-      TR::RealRegister *fpReg = machine->fpMapToStackRelativeRegister(targetRegister);
-      setTargetRegister(fpReg);
-      }
    }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2625,32 +2579,6 @@ TR::X86FPST0ST1RegRegInstruction::X86FPST0ST1RegRegInstruction(TR::Instruction *
 
 void TR::X86FPST0ST1RegRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-
-   if (kindsToBeAssigned & TR_X87_Mask)
-      {
-      TR::Register *sourceRegister = getSourceRegister();
-      TR::Register *targetRegister = getTargetRegister();
-      TR::Machine *machine = cg()->machine();
-      uint32_t result = 0;
-      TR::RealRegister      *fpReg;
-
-      result = TR::X86FPRegRegInstruction::assignTargetSourceRegisters();
-
-      TR_ASSERT( result & kSourceOnFPStack,
-               "TR::X86FPST0STiRegRegInstruction::assignRegisters ==> source not on FP stack!" );
-
-      TR_ASSERT( result & kTargetOnFPStack,
-               "TR::X86FPST0STiRegRegInstruction::assignRegisters ==> target not on FP stack!" );
-
-      machine->fpCoerceRegistersToTopOfStack(this->getPrev(), targetRegister, sourceRegister, true);
-
-      // Final assignment of real registers to this instruction
-      //
-      fpReg = machine->fpMapToStackRelativeRegister(sourceRegister);
-      setSourceRegister(fpReg);
-      fpReg = machine->fpMapToStackRelativeRegister(targetRegister);
-      setTargetRegister(fpReg);
-      }
    }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2679,69 +2607,6 @@ TR::X86FPSTiST0RegRegInstruction::X86FPSTiST0RegRegInstruction(TR::Instruction *
 
 void TR::X86FPSTiST0RegRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-
-   if (kindsToBeAssigned & TR_X87_Mask)
-      {
-      TR::Register *sourceRegister = getSourceRegister();
-      TR::Register *targetRegister = getTargetRegister();
-      TR::Machine *machine = cg()->machine();
-      TR::RealRegister *fpReg;
-      uint32_t result;
-
-      result = TR::X86FPRegRegInstruction::assignTargetSourceRegisters();
-
-      TR_ASSERT( result & kSourceOnFPStack,
-              "TR::X86FPSTiST0RegRegInstruction::assignRegisters ==> source not on FP stack!" );
-
-      TR_ASSERT( result & kTargetOnFPStack,
-              "TR::X86FPSTiST0RegRegInstruction::assignRegisters ==> target not on FP stack!" );
-
-      TR_ASSERT( (result & (kSourceCanBePopped | kTargetCanBePopped)) != (kSourceCanBePopped | kTargetCanBePopped),
-              "TR::X86FPSTiST0RegRegInstruction::assignRegisters ==> both source and target cannot be popped!" );
-
-      // Safety valve: we currently don't support stores into an arbitrary FP stack register without a pop.
-      //
-      //TR_ASSERT( result & (kSourceCanBePopped | kTargetCanBePopped),
-      //        "TR::X86FPSTiST0RegRegInstruction::assignRegisters ==> at least one of source and target must be popped!");
-
-      if (!machine->isFPRTopOfStack(sourceRegister))
-         (void)machine->fpStackFXCH(this->getPrev(), sourceRegister);
-
-     // Final assignment of real registers to this instruction
-      //
-      fpReg = machine->fpMapToStackRelativeRegister(sourceRegister);
-      setSourceRegister(fpReg);
-      fpReg = machine->fpMapToStackRelativeRegister(targetRegister);
-      setTargetRegister(fpReg);
-
-      if (_forcePop ||
-          ((result & (kSourceCanBePopped | kTargetCanBePopped))))
-         {
-         // If the target can be popped then the source and target must be the same virtual register;
-         // above not necessarily true with new global FP register assignment
-         //
-         if ((_forcePop ||
-              (result & kTargetCanBePopped)) &&
-             (sourceRegister != targetRegister))
-            {
-            TR::Instruction *cursor = this;
-            if (!machine->isFPRTopOfStack(targetRegister))
-               {
-               cursor = machine->fpStackFXCH(cursor, targetRegister);
-               }
-
-            TR::RealRegister *fpReg = machine->fpMapToStackRelativeRegister(targetRegister);
-            new (cg()->trHeapMemory()) TR::X86FPRegInstruction(cursor, TR::InstOpCode::FSTPReg, fpReg, cg());
-            }
-         else
-           //if (result & kSourceCanBePopped)
-            {
-            TR::InstOpCode::Mnemonic popOpCode = machine->fpDeterminePopOpCode(getOpCodeValue());
-            setOpCodeValue(popOpCode);
-            machine->fpStackPop();
-            }
-         }
-      }
    }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2768,69 +2633,6 @@ TR::X86FPST0STiRegRegInstruction::X86FPST0STiRegRegInstruction(TR::Instruction *
 
 void TR::X86FPST0STiRegRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
-
-   if (kindsToBeAssigned & TR_X87_Mask)
-      {
-      bool lateTargetPush         = false;
-      TR::Register *sourceRegister = getSourceRegister();
-      TR::Register *targetRegister = getTargetRegister();
-      TR::Machine *machine = cg()->machine();
-      uint32_t             result = 0;
-      TR::RealRegister      *fpReg;
-
-      result = TR::X86FPRegRegInstruction::assignTargetSourceRegisters();
-
-      TR_ASSERT( result & kSourceOnFPStack,
-               "TR::X86FPST0STiRegRegInstruction::assignRegisters ==> source not on FP stack!" );
-
-      if (!(result & kTargetOnFPStack))
-         {
-         // First def of target.  Note that the register is not pushed onto the stack
-         // here because it only appears on the stack after the instruction executes.
-         //
-         lateTargetPush = true;
-         sourceRegister->block();
-         if (machine->findFreeFPRegister() == NULL)
-            {
-            machine->freeBestFPRegister(this->getPrev());
-            }
-         sourceRegister->unblock();
-         }
-      else if (!machine->isFPRTopOfStack(targetRegister))
-         {
-         (void)machine->fpStackFXCH(this->getPrev(), targetRegister);
-         }
-
-      // Final assignment of real registers to this instruction
-      //
-      fpReg = machine->fpMapToStackRelativeRegister(sourceRegister);
-      setSourceRegister(fpReg);
-
-      if (lateTargetPush)
-         {
-         machine->fpStackPush(targetRegister);
-         }
-      fpReg = machine->fpMapToStackRelativeRegister(targetRegister);
-      setTargetRegister(fpReg);
-      if (result & kSourceCanBePopped)
-         {
-         // If the target can be popped then the source and target must be the same virtual register;
-         // above not necessarily true with new global FP register assignment
-         //
-         if (sourceRegister != targetRegister)
-            {
-            TR::Instruction *cursor = this;
-            if (!machine->isFPRTopOfStack(sourceRegister))
-               {
-               cursor = machine->fpStackFXCH(cursor, sourceRegister);
-               }
-
-            TR::RealRegister *fpReg = machine->fpMapToStackRelativeRegister(sourceRegister);
-            new (cg()->trHeapMemory()) TR::X86FPRegInstruction(cursor, TR::InstOpCode::FSTPReg, fpReg, cg());
-            machine->fpStackPop();
-            }
-         }
-      }
    }
 
 
@@ -2969,52 +2771,6 @@ void TR::X86FPMemRegInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssig
       getMemoryReference()->assignRegisters(this, cg());
       }
 
-   if (kindsToBeAssigned & TR_X87_Mask)
-      {
-      TR::Register            *sourceRegister = getSourceRegister();
-      TR_X86FPStackRegister  *assignedRegister = toX86FPStackRegister(sourceRegister->getAssignedRealRegister());
-      TR::Machine *machine = cg()->machine();
-
-#ifdef J9_PROJECT_SPECIFIC
-      TR::UnresolvedDataSnippet *snippet = getMemoryReference()->getUnresolvedDataSnippet();
-      if (snippet)
-         snippet->setNumLiveX87Registers(machine->fpGetNumberOfLiveFPRs());
-#endif
-
-      if (assignedRegister == NULL)
-         {
-         // The FP register is not on the FP stack
-         //
-         if (sourceRegister->getTotalUseCount() != sourceRegister->getFutureUseCount())
-            {
-            // FP register has been spilled from the stack
-            //
-            (void)machine->reverseFPRSpillState(this->getPrev(), sourceRegister);
-            }
-         else
-            {
-            diagnostic("TR::X86FPMemRegInstruction::assignRegisters ==> first reference of source operand!");
-            }
-         }
-      else
-         {
-         if (!machine->isFPRTopOfStack(sourceRegister))
-            {
-            (void)machine->fpStackFXCH(this->getPrev(), sourceRegister);
-            }
-         }
-
-      setSourceRegister( machine->fpMapToStackRelativeRegister(0) );
-
-      // If last use, use pop form of instruction and pop the register from the FP stack.
-      //
-      if (sourceRegister->decFutureUseCount() == 0)
-         {
-         setOpCodeValue(machine->fpDeterminePopOpCode(getOpCodeValue()));
-         machine->fpStackPop();
-         }
-      }
-
 #ifdef J9_PROJECT_SPECIFIC
    if (kindsToBeAssigned & (TR_FPR_Mask | TR_VRF_Mask))
       {
@@ -3063,79 +2819,6 @@ void TR::X86FPRegMemInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssig
          snippet->setHasLiveXMMRegisters((cg()->machine()->fpGetNumberOfLiveXMMRs() > 0) ? true : false);
       }
 #endif
-
-   if (kindsToBeAssigned & TR_X87_Mask)
-      {
-      TR::Register            *targetRegister = getTargetRegister();
-      TR_X86FPStackRegister  *assignedRegister = toX86FPStackRegister(targetRegister->getAssignedRealRegister());
-      TR::Machine *machine = cg()->machine();
-      bool                    pushRegister = false;
-
-#ifdef J9_PROJECT_SPECIFIC
-      TR::UnresolvedDataSnippet *snippet = getMemoryReference()->getUnresolvedDataSnippet();
-      if (snippet)
-         snippet->setNumLiveX87Registers(machine->fpGetNumberOfLiveFPRs());
-#endif
-
-      if (assignedRegister == NULL)
-         {
-         // The FP register is not on the FP stack
-         //
-         if (targetRegister->getTotalUseCount() != targetRegister->getFutureUseCount())
-            {
-            // FP register has been spilled from the stack
-            //
-            (void)machine->reverseFPRSpillState(this->getPrev(), targetRegister);
-            }
-         else
-            {
-            // First use
-            //
-            if ((assignedRegister = machine->findFreeFPRegister()) == NULL)
-               {
-               machine->freeBestFPRegister(this->getPrev());
-               }
-            pushRegister = true;
-            }
-         }
-      else
-         {
-         if (!machine->isFPRTopOfStack(targetRegister))
-            {
-            (void)machine->fpStackFXCH(this->getPrev(), targetRegister);
-            }
-         }
-
-      if (pushRegister)
-         {
-         machine->fpStackPush(targetRegister);
-         }
-
-      TR::RealRegister *fpReg = machine->fpMapToStackRelativeRegister(targetRegister);
-      setTargetRegister(fpReg);
-
-      if (targetRegister->decFutureUseCount() == 0)
-         {
-         if (getOpCodeValue() == TR::InstOpCode::FLDRegMem || getOpCodeValue() == TR::InstOpCode::DLDRegMem)
-            {
-            // Temporary patch
-            //
-            // If the target register is not used, pop it off the FP stack.  This can happen after
-            // the optimizer runs and eliminates unnecessary stores of unresolved data.
-            //
-            new (cg()->trHeapMemory()) TR::X86FPRegInstruction(this, TR::InstOpCode::FSTPReg, fpReg, cg());
-
-            // Only two uses were added after it was determined the future use count was zero.
-            //
-//            targetRegister->setFutureUseCount(2);
-            }
-         else
-            {
-            setOpCodeValue(machine->fpDeterminePopOpCode(getOpCodeValue()));
-            }
-         machine->fpStackPop();
-         }
-      }
    }
 
 ////////////////////////////////////////////////////////////////////////////////
