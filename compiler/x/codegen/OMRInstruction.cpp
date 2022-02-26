@@ -128,16 +128,8 @@ void OMR::X86::Instruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
 
    if (self()->getOpCodeValue() != TR::InstOpCode::assocreg)
       {
-      if ((self()->cg()->getAssignmentDirection() == self()->cg()->Backward))
-         {
-         self()->getDependencyConditions()->assignPostConditionRegisters(self(), kindsToBeAssigned, self()->cg());
-         self()->getDependencyConditions()->assignPreConditionRegisters(self(), kindsToBeAssigned, self()->cg());
-         }
-      else
-         {
-         self()->getDependencyConditions()->assignPreConditionRegisters(self()->getPrev(), kindsToBeAssigned, self()->cg());
-         self()->getDependencyConditions()->assignPostConditionRegisters(self(), kindsToBeAssigned, self()->cg());
-         }
+      self()->getDependencyConditions()->assignPostConditionRegisters(self(), kindsToBeAssigned, self()->cg());
+      self()->getDependencyConditions()->assignPreConditionRegisters(self(), kindsToBeAssigned, self()->cg());
       }
    else if ((self()->getOpCodeValue() == TR::InstOpCode::assocreg) && self()->cg()->enableRegisterAssociations())
       {
