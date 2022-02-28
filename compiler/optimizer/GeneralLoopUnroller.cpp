@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -230,9 +230,10 @@ void TR_LoopUnroller::unrollLoopOnce(TR_RegionStructure *loop, TR_StructureSubGr
 
    //Create duplicates of all sub structures in the loop
    TR_RegionStructure::Cursor nodeIt(*loop);
-   TR_StructureSubGraphNode *subNode;
-   for (subNode = nodeIt.getFirst(); subNode; subNode = nodeIt.getNext())
+   TR_StructureSubGraphNode *subNode = NULL;
+   for (uint32_t index = 0; index < loop->numSubNodes() && index < static_cast<uint32_t>(_iteration); ++index)
       {
+      subNode = nodeIt.getNthNode(index);
       if (subNode->getNumber() >= _numNodes)
          continue; //clone only original nodes
 

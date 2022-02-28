@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -611,9 +611,7 @@ class TR_RegionStructure : public TR_Structure
    SubNodeList::iterator begin() { return _subNodes.begin(); }
    SubNodeList::iterator end()   { return _subNodes.end();   }
 
-   // The Cursor provides an immutable view of the elements of the region unlike the normal iterators
-   // above, note that there is a non-trivial cost to this Cursor because it must copy the structure's
-   // sublist into itself for the purposes of isolation
+   // The Cursor provides a convenient view of the elements of the region
    class Cursor
       {
       public:
@@ -624,9 +622,10 @@ class TR_RegionStructure : public TR_Structure
       TR_StructureSubGraphNode * getNext()  { _iter++; return getCurrent(); }
       TR_StructureSubGraphNode * getFirst() { return getCurrent(); }
       void reset() { _iter = _nodes.begin(); }
+      TR_StructureSubGraphNode * getNthNode(uint32_t index) { TR_ASSERT(index < _nodes.size(), "Out of Range of SubNodeList"); return _nodes[index]; }
 
       private:
-      SubNodeList _nodes;
+      SubNodeList &_nodes;
       SubNodeList::iterator _iter;
       };
 
