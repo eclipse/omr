@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -592,6 +592,17 @@ class SymbolReferenceTable
 
    TR::SymbolReference * getSymRef(CommonNonhelperSymbol i);
    TR::SymbolReference * getSymRef(int32_t i) { return baseArray.element(i); }
+
+   /**
+    * @brief Retrieves or creates a \c TR::SymbolReference for the specified non-helper
+    *
+    * @param[in] index : \c CommonNonhelperSymbol enum index
+    * @param[in] linkageConvention : \c TR_LinkageConventions to specify on the
+    *               underlying \c TR::MethodSymbol
+    *
+    * @return A \c TR::SymbolReference for the non-helper
+    */
+   TR::SymbolReference * findOrCreateNonHelperSymbolRef(CommonNonhelperSymbol index, TR_LinkageConventions linkageConvention);
 
    TR::SymbolReference * createRuntimeHelper(TR_RuntimeHelper index, bool canGCandReturn, bool canGCandExcept, bool preservesAllRegisters);
    TR::SymbolReference * findOrCreateRuntimeHelper(TR_RuntimeHelper index, bool canGCandReturn = false, bool canGCandExcept = false, bool preservesAllRegisters = false);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -348,19 +348,6 @@ OMR::SymbolReferenceTable::findOrCreateOSRReturnAddressSymbolRef()
    }
 
 TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateInduceOSRSymbolRef(TR_RuntimeHelper induceOSRHelper)
-   {
-   TR_ASSERT(induceOSRHelper == TR_induceOSRAtCurrentPC || induceOSRHelper == TR_induceOSRAtCurrentPCAndRecompile, "unexpected helper index when creating induce OSR helper symbol reference");
-   TR::SymbolReference *induceOSRSymRef = findOrCreateRuntimeHelper(induceOSRHelper,
-                                                                    true /* canGCandReturn */,
-                                                                    true /* canGCandExcept */,
-                                                                    true /* preservesAllRegisters */);
-   // treat jitInduceOSR like an interpreted call so that each platform's codegen generates a snippet for it
-   induceOSRSymRef->getSymbol()->getMethodSymbol()->setInterpreted();
-   return induceOSRSymRef;
-   }
-
-TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateArrayletShadowSymbolRef(TR::DataType type)
    {
    int32_t index = getArrayletShadowIndex(TR::Address);
@@ -528,7 +515,6 @@ OMR::SymbolReferenceTable::createRefinedArrayShadowSymbolRef(
    return newRef;
    }
 
-
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateRecompilationCounterSymbolRef(void *counterAddress)
    {
@@ -542,141 +528,6 @@ OMR::SymbolReferenceTable::findOrCreateRecompilationCounterSymbolRef(void *count
       }
    return element(recompilationCounterSymbol);
    }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateArrayCopySymbol()
-   {
-   if (!element(arrayCopySymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(arrayCopySymbol) = new (trHeapMemory()) TR::SymbolReference(self(), arrayCopySymbol, sym);
-      }
-   return element(arrayCopySymbol);
-   }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateArraySetSymbol()
-   {
-   if (!element(arraySetSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(arraySetSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), arraySetSymbol, sym);
-      }
-   return element(arraySetSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreatePrefetchSymbol()
-   {
-   if (!element(prefetchSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(prefetchSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), prefetchSymbol, sym);
-      }
-   return element(prefetchSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateArrayTranslateSymbol()
-   {
-   if (!element(arrayTranslateSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(arrayTranslateSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), arrayTranslateSymbol, sym);
-      }
-   return element(arrayTranslateSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateArrayTranslateAndTestSymbol()
-   {
-   if (!element(arrayTranslateAndTestSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(arrayTranslateAndTestSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), arrayTranslateAndTestSymbol, sym);
-      }
-   return element(arrayTranslateAndTestSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreatelong2StringSymbol()
-   {
-   if (!element(long2StringSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(long2StringSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), long2StringSymbol, sym);
-      }
-   return element(long2StringSymbol);
-   }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreatebitOpMemSymbol()
-   {
-   if (!element(bitOpMemSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(bitOpMemSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), bitOpMemSymbol, sym);
-      }
-   return element(bitOpMemSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateSinglePrecisionSQRTSymbol()
-   {
-   if (!element(singlePrecisionSQRTSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(singlePrecisionSQRTSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), singlePrecisionSQRTSymbol, sym);
-      }
-   return element(singlePrecisionSQRTSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateArrayCmpSymbol()
-   {
-   if (!element(arrayCmpSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(arrayCmpSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), arrayCmpSymbol, sym);
-      }
-   return element(arrayCmpSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateCurrentTimeMaxPrecisionSymbol()
-   {
-   if (!element(currentTimeMaxPrecisionSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
-      sym->setHelper();
-
-      element(currentTimeMaxPrecisionSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), currentTimeMaxPrecisionSymbol, sym);
-      }
-   return element(currentTimeMaxPrecisionSymbol);
-   }
-
-
 
 TR::SymbolReference *
 OMR::SymbolReferenceTable::createKnownStaticDataSymbolRef(void *dataAddress, TR::DataType type)
@@ -709,7 +560,6 @@ OMR::SymbolReferenceTable::createKnownStaticReferenceSymbolRef(void *dataAddress
    return TR::SymbolReference::create(self(), sym, knownObjectIndex);
    }
 
-
 TR::SymbolReference *
 OMR::SymbolReferenceTable::createIsOverriddenSymbolRef(TR::ResolvedMethodSymbol * calleeSymbol)
    {
@@ -725,152 +575,6 @@ OMR::SymbolReferenceTable::createIsOverriddenSymbolRef(TR::ResolvedMethodSymbol 
    return symRef;
    }
 
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::createRuntimeHelper(TR_RuntimeHelper index,
-                                               bool             canGCandReturn,
-                                               bool             canGCandExcept,
-                                               bool             preservesAllRegisters)
-   {
-   TR::MethodSymbol * methodSymbol = TR::MethodSymbol::create(trHeapMemory(),runtimeHelperLinkage(index));
-   methodSymbol->setHelper();
-   methodSymbol->setMethodAddress(runtimeHelperValue(index));
-
-   if (preservesAllRegisters && !debug("noPreserveHelperRegisters"))
-      methodSymbol->setPreservesAllRegisters();
-
-   TR::SymbolReference * sr = baseArray.element(index) = new (trHeapMemory()) TR::SymbolReference(self(), index, methodSymbol);
-
-   if (canGCandReturn)
-      sr->setCanGCandReturn();
-   if (canGCandExcept)
-      sr->setCanGCandExcept();
-
-   return sr;
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateRuntimeHelper(TR_RuntimeHelper index,
-                                                     bool             canGCandReturn,
-                                                     bool             canGCandExcept,
-                                                     bool             preservesAllRegisters)
-   {
-
-   TR::SymbolReference * symRef = baseArray.element(index);
-   if (!symRef)
-      symRef = createRuntimeHelper(index, canGCandReturn, canGCandExcept, preservesAllRegisters);
-   return symRef;
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateCodeGenInlinedHelper(CommonNonhelperSymbol index)
-   {
-   if (!element(index))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_None);
-      sym->setHelper();
-      sym->setIsInlinedByCG();
-      element(index) = new (trHeapMemory()) TR::SymbolReference(self(), index, sym);
-      }
-   return element(index);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateNewObjectSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_newObject, true, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateNewObjectNoZeroInitSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_newObjectNoZeroInit, true, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateNewValueSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_newValue, true, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateNewValueNoZeroInitSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_newValueNoZeroInit, true, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateNewArraySymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_newArray, true, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateNewArrayNoZeroInitSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_newArrayNoZeroInit, true, true, true);
-   }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateANewArrayNoZeroInitSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_aNewArrayNoZeroInit, true, true, true);
-   }
-
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateInstanceOfSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_instanceOf, false, false, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateVolatileReadLongSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_volatileReadLong, true, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateVolatileWriteLongSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_volatileWriteLong, true, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateVolatileReadDoubleSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_volatileReadDouble, true, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateVolatileWriteDoubleSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_volatileWriteDouble, true, true, true);
-   }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateCheckCastSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_checkCast, false, true, true);
-   }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateAThrowSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_aThrow, false, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateNullCheckSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_nullCheck, false, true, true);
-   }
-
-
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateResolveCheckSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
    {
@@ -884,43 +588,6 @@ OMR::SymbolReferenceTable::findOrCreateResolveCheckSymbolRef(TR::ResolvedMethodS
       element(resolveCheckSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), resolveCheckSymbol, symRef->getSymbol());
       }
    return element(resolveCheckSymbol);
-   }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateArrayBoundsCheckSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_arrayBoundsCheck, false, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateDivCheckSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_divCheck, false, true, true);
-   }
-
-/*
- * The overflowCheck symbol reference is for use only aliasing set in OMR::SymbolReference::getUseonlyAliasesBV.
- * we want to make sure defs are not moved across the overflowCHK in case an exception is thrown and the
- * catch block might get stale values.
- */
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateOverflowCheckSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_overflowCheck, false, true, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateArrayStoreExceptionSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_arrayStoreException, false, true, true);
-   }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateMonitorEntrySymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_monitorEntry, true, false, true);
    }
 
 /**
@@ -1077,44 +744,6 @@ OMR::SymbolReferenceTable::createTempSymRefWithKnownObject(TR::Symbol *symbol, m
    TR::SymbolReference * symRef = new (trHeapMemory()) TR::SymbolReference(self(), symbol, owningMethodIndex, slot, 0 /*unresolvedIndex*/, knownObjectIndex);
    bucket->set(symRef->getReferenceNumber());
    return symRef;
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateMonitorExitSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_monitorExit, true /* canGCandReturn */, true /* canGCandExcept */, true /* preservesAllRegisters */);
-   }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateTransactionEntrySymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_transactionEntry, true, false, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateTransactionAbortSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_transactionAbort, false, false, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateTransactionExitSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_transactionExit, true, false, true);
-   }
-
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateAsyncCheckSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_asyncCheck, true, false, true);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateReportMethodEnterSymbolRef(TR::ResolvedMethodSymbol *)
-   {
-   return findOrCreateRuntimeHelper(TR_reportMethodEnter, true, false, true);
    }
 
 bool OMR::SymbolReferenceTable::shouldMarkBlockAsCold(TR_ResolvedMethod * owningMethod, bool isUnresolvedInCP)
@@ -2011,70 +1640,6 @@ TR_BitVector *OMR::SymbolReferenceTable::getSharedAliases(TR::SymbolReference *s
    return NULL;
    }
 
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateJProfileValuePlaceHolderSymbolRef()
-   {
-   if (!element(jProfileValueSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_None);
-      sym->setHelper();
-      element(jProfileValueSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), jProfileValueSymbol, sym);
-      }
-   return element(jProfileValueSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateJProfileValuePlaceHolderWithNullCHKSymbolRef()
-   {
-   if (!element(jProfileValueWithNullCHKSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_None);
-      sym->setHelper();
-      element(jProfileValueWithNullCHKSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), jProfileValueWithNullCHKSymbol, sym);
-      }
-   return element(jProfileValueWithNullCHKSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreatePotentialOSRPointHelperSymbolRef()
-   {
-   if (!element(potentialOSRPointHelperSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(), TR_None);
-      sym->setHelper();
-      TR::SymbolReference* symRef = new (trHeapMemory()) TR::SymbolReference(self(), potentialOSRPointHelperSymbol, sym);
-      element(potentialOSRPointHelperSymbol) = symRef;
-      }
-   return element(potentialOSRPointHelperSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateOSRFearPointHelperSymbolRef()
-   {
-   if (!element(osrFearPointHelperSymbol))
-      {
-      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(), TR_None);
-      sym->setHelper();
-      TR::SymbolReference* symRef = new (trHeapMemory()) TR::SymbolReference(self(), osrFearPointHelperSymbol, sym);
-      element(osrFearPointHelperSymbol) = symRef;
-      }
-   return element(osrFearPointHelperSymbol);
-   }
-
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findOrCreateEAEscapeHelperSymbolRef()
-   {
-   if (!element(eaEscapeHelperSymbol))
-      {
-      TR::MethodSymbol* sym = TR::MethodSymbol::create(trHeapMemory(), TR_None);
-      sym->setHelper();
-      TR::SymbolReference* symRef = new (trHeapMemory()) TR::SymbolReference(self(), eaEscapeHelperSymbol, sym);
-      element(eaEscapeHelperSymbol) = symRef;
-      }
-   return element(eaEscapeHelperSymbol);
-   }
-
 TR::SymbolReference *
 OMR::SymbolReferenceTable::getOriginalUnimprovedSymRef(TR::SymbolReference *symRef)
    {
@@ -2183,4 +1748,326 @@ OMR::SymbolReferenceTable::getNonHelperSymbolName(CommonNonhelperSymbol nonHelpe
 #endif
 
    return _commonNonHelperSymbolNames[static_cast<int32_t>(nonHelper - OMRfirstPrintableCommonNonhelperSymbol)];
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::createRuntimeHelper(TR_RuntimeHelper index,
+                                               bool             canGCandReturn,
+                                               bool             canGCandExcept,
+                                               bool             preservesAllRegisters)
+   {
+   TR::MethodSymbol * methodSymbol = TR::MethodSymbol::create(trHeapMemory(),runtimeHelperLinkage(index));
+   methodSymbol->setHelper();
+   methodSymbol->setMethodAddress(runtimeHelperValue(index));
+
+   if (preservesAllRegisters)
+      methodSymbol->setPreservesAllRegisters();
+
+   TR::SymbolReference * sr = baseArray.element(index) = new (trHeapMemory()) TR::SymbolReference(self(), index, methodSymbol);
+
+   if (canGCandReturn)
+      sr->setCanGCandReturn();
+   if (canGCandExcept)
+      sr->setCanGCandExcept();
+
+   return sr;
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateRuntimeHelper(TR_RuntimeHelper index,
+                                                     bool             canGCandReturn,
+                                                     bool             canGCandExcept,
+                                                     bool             preservesAllRegisters)
+   {
+   TR::SymbolReference * symRef = baseArray.element(index);
+   if (!symRef)
+      symRef = createRuntimeHelper(index, canGCandReturn, canGCandExcept, preservesAllRegisters);
+   return symRef;
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateNonHelperSymbolRef(CommonNonhelperSymbol index, TR_LinkageConventions linkageConvention)
+   {
+   if (!element(index))
+      {
+      TR::MethodSymbol *sym = TR::MethodSymbol::create(trHeapMemory(), linkageConvention);
+      sym->setHelper();
+      element(index) = new (trHeapMemory()) TR::SymbolReference(self(), index, sym);
+      }
+   return element(index);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateArrayCopySymbol()
+   {
+   return findOrCreateNonHelperSymbolRef(arrayCopySymbol, TR_Helper);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateArraySetSymbol()
+   {
+   return findOrCreateNonHelperSymbolRef(arraySetSymbol, TR_Helper);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreatePrefetchSymbol()
+   {
+   return findOrCreateNonHelperSymbolRef(prefetchSymbol, TR_Helper);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateArrayTranslateSymbol()
+   {
+   return findOrCreateNonHelperSymbolRef(arrayTranslateSymbol, TR_Helper);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateArrayTranslateAndTestSymbol()
+   {
+   return findOrCreateNonHelperSymbolRef(arrayTranslateAndTestSymbol, TR_Helper);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreatelong2StringSymbol()
+   {
+   return findOrCreateNonHelperSymbolRef(long2StringSymbol, TR_Helper);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreatebitOpMemSymbol()
+   {
+   return findOrCreateNonHelperSymbolRef(bitOpMemSymbol, TR_Helper);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateSinglePrecisionSQRTSymbol()
+   {
+   return findOrCreateNonHelperSymbolRef(singlePrecisionSQRTSymbol, TR_Helper);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateArrayCmpSymbol()
+   {
+   return findOrCreateNonHelperSymbolRef(arrayCmpSymbol, TR_Helper);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateCurrentTimeMaxPrecisionSymbol()
+   {
+   return findOrCreateNonHelperSymbolRef(currentTimeMaxPrecisionSymbol, TR_Helper);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateJProfileValuePlaceHolderSymbolRef()
+   {
+   return findOrCreateNonHelperSymbolRef(jProfileValueSymbol, TR_None);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateJProfileValuePlaceHolderWithNullCHKSymbolRef()
+   {
+   return findOrCreateNonHelperSymbolRef(jProfileValueWithNullCHKSymbol, TR_None);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreatePotentialOSRPointHelperSymbolRef()
+   {
+   return findOrCreateNonHelperSymbolRef(potentialOSRPointHelperSymbol, TR_None);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateOSRFearPointHelperSymbolRef()
+   {
+   return findOrCreateNonHelperSymbolRef(osrFearPointHelperSymbol, TR_None);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateEAEscapeHelperSymbolRef()
+   {
+   return findOrCreateNonHelperSymbolRef(eaEscapeHelperSymbol, TR_None);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateCodeGenInlinedHelper(CommonNonhelperSymbol index)
+   {
+   if (!element(index))
+      {
+      TR::SymbolReference *symRef = findOrCreateNonHelperSymbolRef(index, TR_None);
+      symRef->getSymbol()->getMethodSymbol()->setIsInlinedByCG();
+      }
+   return element(index);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateNewObjectSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_newObject, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateNewObjectNoZeroInitSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_newObjectNoZeroInit, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateNewValueSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_newValue, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateNewValueNoZeroInitSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_newValueNoZeroInit, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateNewArraySymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_newArray, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateNewArrayNoZeroInitSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_newArrayNoZeroInit, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateANewArrayNoZeroInitSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_aNewArrayNoZeroInit, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateInstanceOfSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_instanceOf, false, false, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateVolatileReadLongSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_volatileReadLong, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateVolatileWriteLongSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_volatileWriteLong, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateVolatileReadDoubleSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_volatileReadDouble, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateVolatileWriteDoubleSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_volatileWriteDouble, true, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateCheckCastSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_checkCast, false, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateAThrowSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_aThrow, false, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateNullCheckSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_nullCheck, false, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateMonitorExitSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_monitorExit, true /* canGCandReturn */, true /* canGCandExcept */, true /* preservesAllRegisters */);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateTransactionEntrySymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_transactionEntry, true, false, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateTransactionAbortSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_transactionAbort, false, false, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateTransactionExitSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_transactionExit, true, false, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateAsyncCheckSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_asyncCheck, true, false, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateReportMethodEnterSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_reportMethodEnter, true, false, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateArrayBoundsCheckSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_arrayBoundsCheck, false, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateDivCheckSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_divCheck, false, true, true);
+   }
+
+/*
+ * The overflowCheck symbol reference is for use only aliasing set in OMR::SymbolReference::getUseonlyAliasesBV.
+ * we want to make sure defs are not moved across the overflowCHK in case an exception is thrown and the
+ * catch block might get stale values.
+ */
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateOverflowCheckSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_overflowCheck, false, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateArrayStoreExceptionSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_arrayStoreException, false, true, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateMonitorEntrySymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_monitorEntry, true, false, true);
+   }
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateInduceOSRSymbolRef(TR_RuntimeHelper induceOSRHelper)
+   {
+   TR_ASSERT(induceOSRHelper == TR_induceOSRAtCurrentPC || induceOSRHelper == TR_induceOSRAtCurrentPCAndRecompile, "unexpected helper index when creating induce OSR helper symbol reference");
+   TR::SymbolReference *induceOSRSymRef = findOrCreateRuntimeHelper(induceOSRHelper,
+                                                                    true /* canGCandReturn */,
+                                                                    true /* canGCandExcept */,
+                                                                    true /* preservesAllRegisters */);
+   // treat jitInduceOSR like an interpreted call so that each platform's codegen generates a snippet for it
+   induceOSRSymRef->getSymbol()->getMethodSymbol()->setInterpreted();
+   return induceOSRSymRef;
    }
