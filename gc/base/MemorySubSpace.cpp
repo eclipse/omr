@@ -574,6 +574,11 @@ MM_MemorySubSpace::getMemoryPool(MM_EnvironmentBase* env, void* addrBase, void* 
 	return getMemoryPool();
 }
 
+MM_MemoryPool*
+MM_MemorySubSpace::getMemoryPoolForSweep(MM_EnvironmentBase* env, void* addrBase, void* addrTop, void*& highAddr)
+{
+	return getMemoryPool(env, addrBase, addrTop, highAddr);
+}
 
 MM_LargeObjectAllocateStats*
 MM_MemorySubSpace::getLargeObjectAllocateStats()

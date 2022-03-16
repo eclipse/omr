@@ -72,6 +72,7 @@ public:
  * Function members
  */	
 private:
+	bool alignTLHForGC(MM_EnvironmentBase *env, MM_HeapLinkedFreeHeader *freeEntry, uintptr_t *consumedSize);
 	void addHint(MM_HeapLinkedFreeHeader *freeEntry, uintptr_t lookupSize);
 	J9ModronAllocateHint *findHint(uintptr_t lookupSize);
 	void removeHint(MM_HeapLinkedFreeHeader *freeEntry);

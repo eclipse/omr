@@ -68,6 +68,8 @@ public:
 	void* getBackingStoreAddress();
 	uintptr_t getBackingStoreSize();
 
+	void getChunkBoundariesForAddr(MM_EnvironmentBase* env, void* addrToCheck, void* &sweepChunkBaseBoundary, void* &sweepChunkTopBoundary);
+
 	MM_SweepHeapSectioning(MM_EnvironmentBase* env)
 		: _head(NULL)
 		, _totalUsed(0)

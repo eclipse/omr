@@ -110,6 +110,12 @@ MM_MemoryPool::getMemoryPool(MM_EnvironmentBase *env, void *addrBase, void *addr
 	return this;
 }								
 
+MM_MemoryPool *
+MM_MemoryPool::getMemoryPoolForSweep(MM_EnvironmentBase *env, void *addrBase, void *addrTop, void * &highAddr)
+{
+	return getMemoryPool(env, addrBase, addrTop, highAddr);
+}
+
 void
 MM_MemoryPool::registerMemoryPool(MM_MemoryPool *memoryPool)
 {

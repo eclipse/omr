@@ -1374,6 +1374,8 @@ public:
 	bool isSATBBarrierActive();
 	bool usingSATBBarrier();
 
+	MMINLINE bool needSweepAlignedTLH() { return isSATBBarrierActive(); }
+
 	MM_GCExtensionsBase()
 		: MM_BaseVirtual()
 #if defined(OMR_GC_MODRON_SCAVENGER)

@@ -87,6 +87,7 @@ private:
 
 	uintptr_t _currentOldAreaSize;
 	void* _currentLOABase;
+	void* _LOABaseForSweep;
 
 	MM_MemoryPoolAddressOrderedListBase* _memoryPoolSmallObjects;
 	MM_MemoryPoolAddressOrderedListBase* _memoryPoolLargeObjects;
@@ -149,11 +150,21 @@ private:
 				}
 				Assert_MM_true(0 != _currentLOARatio);
 			}
+
+			void* prevLOABase = _currentLOABase;
+
 			if (NULL != newLOABase) {
 				_currentLOABase = newLOABase;
 			} else {
 				_currentLOABase = determineLOABase(env, _soaSize);
 			}
+
+			/* Only need to record LOA base for sweep if we expand LOA to consume SOA during pre-collect after SATB CM phase.
+			 * If needSweepAlignedTLH() is true then we know that this is taking place during pre-collect with SATB active.*/
+			if (_extensions->needSweepAlignedTLH() && (prevLOABase > _currentLOABase)) {
+				_LOABaseForSweep = prevLOABase;
+			}
+
 		}
 		return ret;
 	}
@@ -166,12 +177,15 @@ public:
 	virtual void unlock(MM_EnvironmentBase* env);
 
 	void preCollect(MM_EnvironmentBase* env, bool systemGC, bool aggressive, uintptr_t bytesRequested);
+	void postCollect();
 	virtual void resizeLOA(MM_EnvironmentBase* env);
 	virtual bool completeFreelistRebuildRequired(MM_EnvironmentBase* env);
 
 	virtual MM_MemoryPool* getMemoryPool(void* addr);
 	virtual MM_MemoryPool* getMemoryPool(uintptr_t size);
 	virtual MM_MemoryPool* getMemoryPool(MM_EnvironmentBase* env, void* addrBase, void* addrTop, void*& highAddr);
+	virtual MM_MemoryPool* getMemoryPool(MM_EnvironmentBase* env, void* addrBase, void* addrTop, void*& highAddr, void* LOABase);
+	virtual MM_MemoryPool* getMemoryPoolForSweep(MM_EnvironmentBase* env, void* addrBase, void* addrTop, void*& highAddr);
 
 	virtual uintptr_t getMemoryPoolCount()
 	{
@@ -273,6 +287,7 @@ public:
 		, _omrVM(env->getOmrVM())
 		, _currentOldAreaSize(0)
 		, _currentLOABase(NULL)
+		, _LOABaseForSweep(NULL)
 		, _memoryPoolSmallObjects(smallObjectArea)
 		, _memoryPoolLargeObjects(largeObjectArea)
 		, _loaSize(0)

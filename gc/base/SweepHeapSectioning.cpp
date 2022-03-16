@@ -418,7 +418,7 @@ MM_SweepHeapSectioning::reassignChunks(MM_EnvironmentBase *env)
 				 * the current chunk can only be attributed to one, so we limit the upper range of the chunk
 				 * to the first pool and will continue the assignment at the upper address range.
 				 */
-				MM_MemoryPool *pool = region->getSubSpace()->getMemoryPool(env, heapChunkBase, heapChunkTop, poolHighAddr);
+				MM_MemoryPool *pool = region->getSubSpace()->getMemoryPoolForSweep(env, heapChunkBase, heapChunkTop, poolHighAddr);
 				if (NULL == poolHighAddr) {
 					heapChunkTop = (heapChunkTop > regionHighAddress ? regionHighAddress : heapChunkTop);
 				} else {
@@ -457,4 +457,37 @@ MM_SweepHeapSectioning::reassignChunks(MM_EnvironmentBase *env)
 	}
 
 	return totalChunkCount;
+}
+
+/* For a given address determine the sweep chunk boundaries that contains it. This is the expected chunk that's assigned during heap sectioning (reassignChunks).*/
+void
+MM_SweepHeapSectioning::getChunkBoundariesForAddr(MM_EnvironmentBase *env,  void* addrToCheck, void * &sweepChunkBaseBoundary, void * &sweepChunkTopBoundary)
+{
+	MM_HeapRegionManager *regionManager = _extensions->getHeap()->getHeapRegionManager();
+	MM_HeapRegionDescriptor *region = regionManager->regionDescriptorForAddress(addrToCheck);;
+
+	sweepChunkBaseBoundary = NULL;
+	sweepChunkTopBoundary = NULL;
+
+	uintptr_t *regionBase = (uintptr_t *)region->getLowAddress();
+	uintptr_t *regionTop = (uintptr_t *)region->getHighAddress();
+
+	Assert_MM_true(addrToCheck >= regionBase);
+	Assert_MM_true(addrToCheck < regionTop);
+
+	uintptr_t remainder = ((uintptr_t)addrToCheck - (uintptr_t)regionBase) % _extensions->parSweepChunkSize;
+	sweepChunkBaseBoundary = (void *) ((uintptr_t) addrToCheck - remainder);
+	sweepChunkTopBoundary = (void *) ((uintptr_t) sweepChunkBaseBoundary + _extensions->parSweepChunkSize);
+
+	/* Find out if the range of memory we are considering spans 2 different pools.  If it does,
+	 * the current chunk can only be attributed to one, so we limit the upper range of the chunk.
+	 */
+	void *poolHighAddr = NULL;
+	region->getSubSpace()->getMemoryPool(env, sweepChunkBaseBoundary, sweepChunkTopBoundary, poolHighAddr);
+	if (NULL == poolHighAddr) {
+		sweepChunkTopBoundary = (sweepChunkTopBoundary > regionTop ? regionTop : sweepChunkTopBoundary);
+	} else {
+		Assert_MM_true(poolHighAddr > sweepChunkBaseBoundary && poolHighAddr < sweepChunkTopBoundary);
+		sweepChunkTopBoundary = (uintptr_t *) poolHighAddr;
+	}
 }

@@ -57,6 +57,12 @@ reportGlobalGCIncrementStart(J9HookInterface** hook, uintptr_t eventNum, void* e
 													   event->bytesRequested);
 }
 
+void
+reportGlobalGCIncrementEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData)
+{
+	((MM_MemoryPoolLargeObjects*)userData)->postCollect();
+}
+
 /**
  * Initialization
  */
@@ -98,6 +104,7 @@ MM_MemoryPoolLargeObjects::initialize(MM_EnvironmentBase* env)
 	 * THIS MUST HAPPEN AFTER VERBOSE GC PRINTS LOA SIZE. IT MUST NOT HAPPEN ON SCAVENGES.
 	 */
 	(*mmPrivateHooks)->J9HookRegisterWithCallSite(mmPrivateHooks, J9HOOK_MM_PRIVATE_GLOBAL_GC_INCREMENT_START, reportGlobalGCIncrementStart, OMR_GET_CALLSITE(), (void*)this);
+	(*mmPrivateHooks)->J9HookRegisterWithCallSite(mmPrivateHooks, J9HOOK_MM_PRIVATE_GLOBAL_GC_INCREMENT_END, reportGlobalGCIncrementEnd, OMR_GET_CALLSITE(), (void*)this);
 
 	uintptr_t minimumFreeEntrySize = OMR_MAX(_memoryPoolLargeObjects->getMinimumFreeEntrySize(), _memoryPoolSmallObjects->getMinimumFreeEntrySize());
 	/* this memoryPool can be used by scavenger, maximum tlh size should be max(_extensions->tlhMaximumSize, _extensions->scavengerScanCacheMaximumSize) */
@@ -140,6 +147,7 @@ MM_MemoryPoolLargeObjects::tearDown(MM_EnvironmentBase* env)
 
 	/* Unregister the global GC hooks for this instance */
 	(*mmPrivateHooks)->J9HookUnregister(mmPrivateHooks, J9HOOK_MM_PRIVATE_GLOBAL_GC_INCREMENT_START, reportGlobalGCIncrementStart, (void*)this);
+	(*mmPrivateHooks)->J9HookUnregister(mmPrivateHooks, J9HOOK_MM_PRIVATE_GLOBAL_GC_INCREMENT_END, reportGlobalGCIncrementEnd, (void*)this);
 
 	if (NULL != _memoryPoolSmallObjects) {
 		_memoryPoolSmallObjects->kill(env);
@@ -207,6 +215,12 @@ MM_MemoryPoolLargeObjects::preCollect(MM_EnvironmentBase* env, bool systemGC, bo
 			_memoryPoolLargeObjects->printCurrentFreeList(env, "LOA");
 		}
 	}
+}
+
+void
+MM_MemoryPoolLargeObjects::postCollect()
+{
+	_LOABaseForSweep = NULL;
 }
 
 /**
@@ -603,6 +617,28 @@ MM_MemoryPoolLargeObjects::getMemoryPool(uintptr_t size)
 }
 
 /**
+ * Return the memory pool associated with a specified range of storage locations. This API
+ * is similar to regular getMemoryPool API, however this API accounts for special case with Sweep where we may
+ * need to consider the previous LOA Base as opposed to _currentLOABase. This happens when LOA expand takes
+ * place during pre-collect. Previous SOA/LOA boundaries must be considered for sweep because
+ * SATB CM followed by sweep expects TLH alignment based on the previous pool boundaries.
+ *
+ * @param addrBase Low address in specified range
+ * @param addrTop High address in  specified range
+ * @param highAddr If range spans end of memory pool set to address of first byte
+ * which does not belong in returned pool.
+ * @return MM_MemoryPool for storage location addrBase
+ */
+MM_MemoryPool*
+MM_MemoryPoolLargeObjects::getMemoryPoolForSweep(MM_EnvironmentBase* env, void* addrBase, void* addrTop, void*& highAddr)
+{
+	/* _LOABaseForSweep will only be set when SOA/LOA resizing takes place while SATB is active and LOA expands to consume SOA during pre-collect. */
+	void* LOABase = (NULL != _LOABaseForSweep) ? _LOABaseForSweep : _currentLOABase;
+
+	return getMemoryPool(env, addrBase, addrTop, highAddr, LOABase);
+}
+
+/**
  * Return the memory pool associated with a specified range of storage locations.
  *
  * @param addrBase Low address in specified range
@@ -614,17 +650,23 @@ MM_MemoryPoolLargeObjects::getMemoryPool(uintptr_t size)
 MM_MemoryPool*
 MM_MemoryPoolLargeObjects::getMemoryPool(MM_EnvironmentBase* env, void* addrBase, void* addrTop, void*& highAddr)
 {
-	if (addrBase < _currentLOABase && addrTop <= _currentLOABase) {
+	return getMemoryPool(env, addrBase, addrTop, highAddr, _currentLOABase);
+}
+
+MM_MemoryPool*
+MM_MemoryPoolLargeObjects::getMemoryPool(MM_EnvironmentBase* env, void* addrBase, void* addrTop, void*& highAddr, void* LOABase)
+{
+	if (addrBase < LOABase && addrTop <= LOABase) {
 		/* chunk wholly contained in SOA */
 		highAddr = NULL;
 		return _memoryPoolSmallObjects;
-	} else if (addrBase < _currentLOABase && addrTop > _currentLOABase) {
+	} else if (addrBase < LOABase && addrTop > LOABase) {
 		/* Range spans SOA/LOA boundary so split into 2 */
-		highAddr = _currentLOABase;
+		highAddr = LOABase;
 		return _memoryPoolSmallObjects;
 	} else {
 		/* chunk wholly contained in LOA */
-		assume0(addrBase >= _currentLOABase);
+		assume0(addrBase >= LOABase);
 		highAddr = NULL;
 		return _memoryPoolLargeObjects;
 	}

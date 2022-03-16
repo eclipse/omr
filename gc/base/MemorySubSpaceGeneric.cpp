@@ -109,6 +109,11 @@ MM_MemorySubSpaceGeneric::getMemoryPool(MM_EnvironmentBase* env, void* addrBase,
 	return _memoryPool->getMemoryPool(env, addrBase, addrTop, highAddr);
 }
 
+MM_MemoryPool*
+MM_MemorySubSpaceGeneric::getMemoryPoolForSweep(MM_EnvironmentBase* env, void* addrBase, void* addrTop, void*& highAddr)
+{
+	return _memoryPool->getMemoryPoolForSweep(env, addrBase, addrTop, highAddr);
+}
 
 /* ***************************************
  * Allocation

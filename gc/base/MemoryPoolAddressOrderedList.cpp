@@ -47,6 +47,7 @@
 #include "MemcheckWrapper.hpp"
 #endif /* defined(OMR_VALGRIND_MEMCHECK) */
 
+#include "SweepHeapSectioning.hpp"
 /**
  * Create and initialize a new instance of the receiver.
  */
@@ -587,9 +588,43 @@ MM_MemoryPoolAddressOrderedList::collectorAllocate(MM_EnvironmentBase *env, MM_A
 	return addr;
 }
 
+/* During TLH allocation, check and align free entries to appropriate boundaries as required by GC. Currently, SATB Sweep has strict requirements for
+ * TLH to not span multiple Sweep Chunks. */
+bool
+MM_MemoryPoolAddressOrderedList::alignTLHForGC(MM_EnvironmentBase *env,  MM_HeapLinkedFreeHeader *freeEntry, uintptr_t *consumedSize)
+{
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+	void *sweepChunkTopBoundary = NULL;
+	void *sweepChunkBaseBoundary = NULL;
+	void *tlhTopProjection = NULL;
+
+	if (extensions->needSweepAlignedTLH()) {
+		extensions->sweepHeapSectioning->getChunkBoundariesForAddr(env, (void *)freeEntry, sweepChunkBaseBoundary, sweepChunkTopBoundary);
+
+		Assert_MM_true(NULL != sweepChunkTopBoundary);
+		Assert_MM_true(sweepChunkBaseBoundary <= ((void *)freeEntry));
+		Assert_MM_true(sweepChunkTopBoundary > ((void *)freeEntry));
+
+		tlhTopProjection = (void *) (((uint8_t *)freeEntry) + *consumedSize);
+
+		if (tlhTopProjection >  sweepChunkTopBoundary) {
+			uintptr_t offset = ((uintptr_t)tlhTopProjection - (uintptr_t)sweepChunkTopBoundary);
+			*consumedSize -= offset;
+		}
+
+		if (*consumedSize < _minimumFreeEntrySize) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 MMINLINE bool
 MM_MemoryPoolAddressOrderedList::internalAllocateTLH(MM_EnvironmentBase *env, uintptr_t maximumSizeInBytesRequired, void * &addrBase, void * &addrTop, bool lockingRequired, MM_LargeObjectAllocateStats *largeObjectAllocateStats)
 {
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 	bool const compressed = compressObjectReferences();
 	uintptr_t freeEntrySize = 0;
 	void *topOfRecycledChunk = NULL;
@@ -634,9 +669,29 @@ retry:
 	consumedSize = (maximumSizeInBytesRequired > freeEntrySize) ? freeEntrySize : maximumSizeInBytesRequired;
 	_largeObjectAllocateStats->decrementFreeEntrySizeClassStats(freeEntrySize);
 
-	/* If the leftover chunk is smaller than the minimum size, hand it out */
+	if (!alignTLHForGC(env, freeEntry, &consumedSize)) {
+		/* If alignment was required and it failed (i.e resulted in consumedSize < minEntrySize), abandon entry and retry */
+		abandonHeapChunk((void *)freeEntry, (void *)(((uint8_t *)freeEntry) + freeEntrySize));
+
+		_freeMemorySize -= freeEntrySize;
+		_allocDiscardedBytes += freeEntrySize;
+
+		entryNext = freeEntry->getNext(compressed);
+
+		if (entryNext == _firstUnalignedFreeEntry) {
+			_prevFirstUnalignedFreeEntry = FREE_ENTRY_END;
+		}
+
+		_heapFreeList = entryNext;
+		_freeEntryCount -= 1;
+
+		goto retry;
+	}
+
+	/* If the leftover chunk is smaller than the minimum size, hand it out. Handing out the leftover chunk may break alignment,
+	 * ensure we don't require alignment first. */
 	recycleEntrySize = freeEntrySize - consumedSize;
-	if (recycleEntrySize && (recycleEntrySize < _minimumFreeEntrySize)) {
+	if (recycleEntrySize && (recycleEntrySize < _minimumFreeEntrySize) && !extensions->needSweepAlignedTLH()) {
 		consumedSize += recycleEntrySize;
 		recycleEntrySize = 0;
 	}

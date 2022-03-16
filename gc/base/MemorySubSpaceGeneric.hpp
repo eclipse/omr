@@ -55,6 +55,7 @@ public:
 	virtual MM_MemoryPool* getMemoryPool(void* addr);
 	virtual MM_MemoryPool* getMemoryPool(uintptr_t size);
 	virtual MM_MemoryPool* getMemoryPool(MM_EnvironmentBase* env, void* addrBase, void* addrTop, void*& highAddr);
+	virtual MM_MemoryPool* getMemoryPoolForSweep(MM_EnvironmentBase* env, void* addrBase, void* addrTop, void*& highAddr);
 
 	virtual uintptr_t getMemoryPoolCount();
 	virtual uintptr_t getActiveMemoryPoolCount();
