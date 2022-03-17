@@ -166,10 +166,6 @@ OMR::Node::Node(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uint16_t nu
       self()->setChild(1, NULL);
       }
 
-   self()->setReferenceCount(0);
-   self()->setVisitCount(0);
-   self()->setLocalIndex(0);
-   self()->setKnownObjectIndex(TR::KnownObjectTable::UNKNOWN),
    memset( &(_unionA), 0, sizeof( _unionA ) );
    if (self()->getGlobalIndex() == MAX_NODE_COUNT)
       {
@@ -237,10 +233,10 @@ OMR::Node::Node(TR::Node * from, uint16_t numChildren)
      _numChildren(0),
      _globalIndex(0),
      _flags(0),
-     _visitCount(0),
-     _localIndex(0),
-     _referenceCount(0),
-     _knownObjectIndex(TR::KnownObjectTable::UNKNOWN),
+     _visitCount(from->getVisitCount()),
+     _localIndex(from->getLocalIndex()),
+     _referenceCount(from->getReferenceCount()),
+     _knownObjectIndex(from->getKnownObjectIndex()),
      _byteCodeInfo(),
      _unionBase(),
      _unionPropertyA()
@@ -258,10 +254,6 @@ OMR::Node::Node(TR::Node * from, uint16_t numChildren)
    self()->setGlobalIndex(comp->getNodePool().getLastGlobalIndex());
    // a memcpy is used above to copy fields from the argument "node" to "this", but
    // opt attributes are separate, and need separate initialization.
-   self()->setReferenceCount(from->getReferenceCount());
-   self()->setVisitCount(from->getVisitCount());
-   self()->setLocalIndex(from->getLocalIndex());
-   self()->setKnownObjectIndex(from->getKnownObjectIndex());
    _unionA = from->_unionA;
 
    if (self()->getGlobalIndex() == MAX_NODE_COUNT)
