@@ -50,6 +50,8 @@ typedef int32_t CASECONST_TYPE;
 
 #define LONG_SHIFT_MASK 63
 #define INT_SHIFT_MASK 31
+#define SHORT_SHIFT_MASK 15
+#define BYTE_SHIFT_MASK 7
 
 /**
  * @name OMRDataTypeFPLimits
