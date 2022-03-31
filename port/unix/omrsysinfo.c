@@ -3059,35 +3059,33 @@ retrieveLinuxCgroupMemoryStats(struct OMRPortLibrary *portLibrary, struct OMRCgr
 	cgroupMemInfo->memoryAndSwapUsage = OMRPORT_MEMINFO_NOT_AVAILABLE;
 	cgroupMemInfo->cached = OMRPORT_MEMINFO_NOT_AVAILABLE;
 
-	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_LIMIT_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryLimit);
+	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_LIMIT_IN_BYTES_FILE, numItemsToRead, "%" SCNu64, &cgroupMemInfo->memoryLimit);
 	if (0 != rc) {
 		goto _exit;
 	}
-	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_USAGE_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryUsage);
+
+	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_USAGE_IN_BYTES_FILE, numItemsToRead, "%" SCNu64, &cgroupMemInfo->memoryUsage);
 	if (0 != rc) {
 		goto _exit;
 	}
-	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAP_LIMIT_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryAndSwapLimit);
+
+	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAP_LIMIT_IN_BYTES_FILE, numItemsToRead, "%" SCNu64, &cgroupMemInfo->memoryAndSwapLimit);
 	if (0 != rc) {
 		if (OMRPORT_ERROR_FILE_NOENT == rc) {
 			/* It is possible file memory.memsw.limit_in_bytes is not present if
-			 * swap space is not configured. In such cases, set memoryAndSwapLimit to same as memoryLimit.
+			 * the kernel is not configured with swap support or swap accounting is off.
+			 * In such case process in cgroup has no restriction on swap usage.
 			 */
-			cgroupMemInfo->memoryAndSwapLimit = cgroupMemInfo->memoryLimit;
 			rc = 0;
 		} else {
 			goto _exit;
 		}
 	}
-	rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAP_USAGE_IN_BYTES_FILE, numItemsToRead, "%lu", &cgroupMemInfo->memoryAndSwapUsage);
-	if (0 != rc) {
-		if (OMRPORT_ERROR_FILE_NOENT == rc) {
-			/* It is possible file memory.memsw.usage_in_bytes is not present if
-			 * swap space is not configured. In such cases, set memoryAndSwapUsage to memoryUsage.
-			 */
-			cgroupMemInfo->memoryAndSwapUsage = cgroupMemInfo->memoryUsage;
-			rc = 0;
-		} else {
+
+	/* Check for mem+swap usage only if mem+swap limit is available */
+	if (OMRPORT_MEMINFO_NOT_AVAILABLE != cgroupMemInfo->memoryAndSwapLimit) {
+		rc = readCgroupSubsystemFile(portLibrary, OMR_CGROUP_SUBSYSTEM_MEMORY, CGROUP_MEMORY_SWAP_USAGE_IN_BYTES_FILE, numItemsToRead, "%" SCNu64, &cgroupMemInfo->memoryAndSwapUsage);
+		if (0 != rc) {
 			goto _exit;
 		}
 	}
@@ -3150,8 +3148,6 @@ retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo
 	uint64_t maxVirtual = 0;
 #if !defined(OMRZTPF)
 	struct OMRCgroupMemoryInfo cgroupMemInfo = {0};
-	BOOLEAN isCgroupMemUsageValid = FALSE;
-	BOOLEAN isCgroupMemAndSwapLimitValid = FALSE;
 	uint64_t swapLimit = 0;
 #endif /* !defined(OMRZTPF) */
 	Trc_PRT_retrieveLinuxMemoryStats_Entered();
@@ -3185,30 +3181,20 @@ retrieveLinuxMemoryStats(struct OMRPortLibrary *portLibrary, struct J9MemoryInfo
 	}
 
 	/* Update memInfo based on cgroup limits */
-	if (cgroupMemInfo.memoryLimit > memInfo->totalPhysical) {
-		/* cgroup limit is not set; use host limits */
-		goto _exit;
-	}
-	memInfo->totalPhysical = cgroupMemInfo.memoryLimit;
-
-	if (cgroupMemInfo.memoryUsage <= cgroupMemInfo.memoryLimit) {
-		memInfo->availPhysical = cgroupMemInfo.memoryLimit - cgroupMemInfo.memoryUsage;
-		isCgroupMemUsageValid = TRUE;
-	} else {
-		memInfo->availPhysical = OMRPORT_MEMINFO_NOT_AVAILABLE;
+	if ((PPG_cgroupMemoryParamNotSetValue != cgroupMemInfo.memoryLimit)
+		&& (cgroupMemInfo.memoryLimit < memInfo->totalPhysical))
+	{
+		memInfo->totalPhysical = cgroupMemInfo.memoryLimit;
+		memInfo->availPhysical = memInfo->totalPhysical - cgroupMemInfo.memoryUsage;
 	}
 
-	swapLimit = cgroupMemInfo.memoryAndSwapLimit - cgroupMemInfo.memoryLimit;
-	if (swapLimit < memInfo->totalSwap) {
-		memInfo->totalSwap = swapLimit;
-		isCgroupMemAndSwapLimitValid = TRUE;
-	}
-
-	if (isCgroupMemUsageValid && isCgroupMemAndSwapLimitValid) {
-		if (cgroupMemInfo.memoryAndSwapUsage < cgroupMemInfo.memoryAndSwapLimit) {
-			memInfo->availSwap = memInfo->totalSwap - (cgroupMemInfo.memoryAndSwapUsage - cgroupMemInfo.memoryUsage);
-		} else {
-			memInfo->availSwap = OMRPORT_MEMINFO_NOT_AVAILABLE;
+	if (OMRPORT_MEMINFO_NOT_AVAILABLE != cgroupMemInfo.memoryAndSwapLimit) {
+		if (PPG_cgroupMemoryParamNotSetValue != cgroupMemInfo.memoryAndSwapLimit) {
+			swapLimit = cgroupMemInfo.memoryAndSwapLimit - cgroupMemInfo.memoryLimit;
+			if (swapLimit < memInfo->totalSwap) {
+				memInfo->totalSwap = swapLimit;
+				memInfo->availSwap = memInfo->totalSwap - (cgroupMemInfo.memoryAndSwapUsage - cgroupMemInfo.memoryUsage);
+			}
 		}
 	}
 
@@ -6014,6 +6000,8 @@ omrsysinfo_cgroup_is_system_available(struct OMRPortLibrary *portLibrary)
 			if (0 != rc) {
 				goto _end;
 			}
+			/* This value makes use of a system call, therefore it is better to cache it in some global variable */
+			PPG_cgroupMemoryParamNotSetValue = ROUND_DOWN_TO_POWEROF2(LONG_MAX, sysconf(_SC_PAGESIZE));
 		}
 	} else {
 		rc = 0;
@@ -6326,7 +6314,7 @@ _end:
 		}
 		if (currentElement->isValueToBeChecked) {
 			int64_t result = 0;
-			sscanf(metricElement->value, "%" PRId64, &result);
+			sscanf(metricElement->value, "%" SCNd64, &result);
 			if ((result > (MAX_DEFAULT_VALUE_CHECK)) || (result < 0)) {
 				metricElement->units = NULL;
 				strcpy(metricElement->value, "Not Set");
