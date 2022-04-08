@@ -233,7 +233,13 @@ bool
 MM_SparseAddressOrderedFixedSizeDataPool::isValidDataPtr(void *dataPtr)
 {
 	MM_SparseDataTableEntry *entry = findSparseDataTableEntryForSparseDataPtr(dataPtr);
-	return ((entry != NULL) && (entry->_dataPtr == dataPtr));
+	bool ret = true;
+
+	if (entry != NULL) {
+		ret = (entry->_dataPtr == dataPtr);
+	}
+
+	return ret;
 }
 
 MM_SparseHeapLinkedFreeHeader *
@@ -394,14 +400,12 @@ MM_SparseAddressOrderedFixedSizeDataPool::updateSparseDataEntryAfterObjectHasMov
 	MM_SparseDataTableEntry lookupEntry = MM_SparseDataTableEntry(dataPtr);
 	MM_SparseDataTableEntry *entry = (MM_SparseDataTableEntry *)hashTableFind(_objectToSparseDataTable, &lookupEntry);
 
-	if (NULL == entry || (entry->_dataPtr != dataPtr)) {
-		Trc_MM_SparseAddressOrderedFixedSizeDataPool_findEntry_failure(dataPtr);
-		/* This should never occur - we should never fail to find the off-heap entry we are trying to update */
-		Assert_MM_true(false);
-		ret = false;
-	} else {
+	if ((NULL != entry) && (entry->_dataPtr == dataPtr)) {
 		Trc_MM_SparseAddressOrderedFixedSizeDataPool_updateEntry_success(dataPtr, entry->_proxyObjPtr, proxyObjPtr);
 		entry->_proxyObjPtr = proxyObjPtr;
+	} else {
+		Trc_MM_SparseAddressOrderedFixedSizeDataPool_findEntry_failure(dataPtr);
+		ret = false;
 	}
 
 	return ret;

@@ -919,7 +919,7 @@ TraceAssert=Assert_MM_double_map_unreachable noEnv Overhead=1 Level=1 Assert="(f
 
 TraceEvent=Trc_ParallelGlobalGC_shouldCompactThisCycle Overhead=1 Level=1 Group=compact Template="Current page granularity fragmented ratio: %f  Threshold: %f"
 
-TraceEntry=Trc_MM_double_map_Entry Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. spine: %p, leafSize=%zu leavesCount=%zu"
+TraceEntry=Trc_MM_double_map_EntryOld Obsolete Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. spine: %p, leafSize=%zu leavesCount=%zu"
 TraceException=Trc_MM_double_map_TraverseLeavesNULLPointer Overhead=1 Level=1 Group=arraylet Template="Found a NULL pointer as the last leaf in arraylet spine"
 TraceException=Trc_MM_double_map_Failed Overhead=1 Level=1 Group=arraylet Template="Failed to double map arraylets"
 TraceExit=Trc_MM_double_map_Exit Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. result=%p"
@@ -1027,4 +1027,5 @@ TraceEvent=Trc_MM_MSSSS_flip_restore_tilt_after_percolate_with_stats Overhead=1 
 TraceEvent=Trc_MM_MSSSS_flip_restore_tilt_after_percolate_current_status Overhead=1 Level=1 Group=scavenge Template="MSSSS::flip restore_tilt_after_percolate %sallocateSize %zu survivorSize %zu"
 
 TraceEvent=Trc_MM_clearheap Overhead=1 Level=1 Group=gclogger Template="clearheap with free memory size: %zu, object size: %zu"
-TraceEvent=Trc_MM_cleanUpSegmentsInAnonymousClassLoader_stats Overhead=1 Level=1 Group=gclogger Template="Anonymous classes: total: %zu, unloaded: %zu, searched ROM: %zu, found ROM fast: %zu, found ROM slow: %zu, not found ROM: %zu"
+//Redefine Trc_MM_double_map_Entry to add originalDataSize and adjustedDataSize
+TraceEntry=Trc_MM_double_map_Entry Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. originalDataSize: %p, adjustedDataSize: %p, spine: %p, leafSize: %p leavesCount: %zu"
