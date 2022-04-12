@@ -205,6 +205,8 @@ public:
 		return marked;
 	}
 
+	void markObjectsForRange(MM_EnvironmentBase *env, void *heapBase, void *heapTop);
+
 	uintptr_t numMarkBitsInRange(MM_EnvironmentBase *env, void *heapBase, void *heapTop);
 	uintptr_t setMarkBitsInRange(MM_EnvironmentBase *env, void *heapBase, void *heapTop, bool clear);
 	uintptr_t numHeapBytesPerMarkMapByte() { return (_markMap->getObjectGrain() * BITS_PER_BYTE); };

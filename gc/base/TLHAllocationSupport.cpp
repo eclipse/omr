@@ -48,6 +48,7 @@
 #include "MemorySubSpace.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectHeapIteratorAddressOrderedList.hpp"
+#include "ParallelGlobalGC.hpp"
 
 #if defined(OMR_VALGRIND_MEMCHECK)
 #include "MemcheckWrapper.hpp"
@@ -418,5 +419,22 @@ MM_TLHAllocationSupport::objectAllocationNotify(MM_EnvironmentBase *env, void *h
 	}
 }
 #endif /* OMR_GC_OBJECT_ALLOCATION_NOTIFY */
+
+void
+MM_TLHAllocationSupport::markValidObjectForRange(MM_EnvironmentBase *env, void *heapBase, void *heapTop)
+{
+#if defined(OMR_GC_REALTIME)
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+	if (extensions->isSATBBarrierActive()) {
+		MM_MarkingScheme *markingScheme = ((MM_ParallelGlobalGC *)extensions->getGlobalCollector())->getMarkingScheme();
+		/* Mark all newly allocated objects */
+		markingScheme->markObjectsForRange(env, heapBase, heapTop);
+	}
+#endif /* defined(OMR_GC_REALTIME) */
+
+#if defined(OMR_GC_OBJECT_MAP)
+	env->getExtensions()->getObjectMap()->markValidObjectForRange(env, heapBase, heapTop);
+#endif
+}
 
 #endif /* defined(OMR_GC_THREAD_LOCAL_HEAP) */

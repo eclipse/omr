@@ -203,14 +203,12 @@ MM_TLHAllocationInterface::allocateObject(MM_EnvironmentBase *env, MM_AllocateDe
 
 	}
 
-	if ((extensions->usingSATBBarrier()) && (NULL != result)) {
-		/* This is temporarily required to support a Standard SATB configuration. Any obj allocated while SATB is active must be marked to preserve the tri-color invariant.
-		 * This is sufficient as allocations are all done OOL with SATB. The final implementation will have TLH marked instead and specific
-		 * object marking will be left to the subspace/AC */
-		(extensions->getGlobalCollector())->checkColorAndMark(env, (omrobjectptr_t)result);
-	}
-
 	if ((NULL != result) && !allocDescription->isCompletedFromTlh()) {
+		if ((extensions->usingSATBBarrier())) {
+			/* Objs allocated while SATB is active must be marked to preserve the tri-color invariant.
+			 * Typically the cache is marked, we must mark this obj given that it was not completed from the cache. */
+			(extensions->getGlobalCollector())->checkColorAndMark(env, (omrobjectptr_t)result);
+		}
 #if defined(OMR_GC_OBJECT_ALLOCATION_NOTIFY)
 		env->objectAllocationNotify((omrobjectptr_t)result);
 #endif /* OMR_GC_OBJECT_ALLOCATION_NOTIFY */
