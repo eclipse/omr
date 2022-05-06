@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1272,7 +1272,11 @@ TEST(PortSockTest, poll_functionality_many_sockets)
 	for (int32_t i = 0; i < 8; i++) {
 		ASSERT_EQ(OMRPORTLIB->sock_socket(OMRPORTLIB, &sockets[i], OMRSOCK_AF_INET, OMRSOCK_STREAM, OMRSOCK_IPPROTO_DEFAULT), 0);
 		ASSERT_EQ(OMRPORTLIB->sock_fcntl(OMRPORTLIB, sockets[i], OMRSOCK_O_NONBLOCK), 0);
+#if defined(OMRSOCK_POLLHUP)
 		ASSERT_EQ(OMRPORTLIB->sock_pollfd_init(OMRPORTLIB, &pollArray[i], sockets[i], OMRSOCK_POLLIN | OMRSOCK_POLLHUP), 0);
+#else /* defined(OMRSOCK_POLLHUP) */
+		ASSERT_EQ(OMRPORTLIB->sock_pollfd_init(OMRPORTLIB, &pollArray[i], sockets[i], OMRSOCK_POLLIN), 0);
+#endif /* defined(OMRSOCK_POLLHUP) */
 	}
 	EXPECT_EQ(OMRPORTLIB->sock_pollfd_init(OMRPORTLIB, &pollArray[SERVER_SOCKET_POLL_IDX], connectedServerSocket, OMRSOCK_POLLIN), 0);
 	EXPECT_EQ(OMRPORTLIB->sock_pollfd_init(OMRPORTLIB, &pollArray[CLIENT_SOCKET_POLL_IDX], clientSocket, OMRSOCK_POLLOUT), 0);
@@ -1299,8 +1303,11 @@ TEST(PortSockTest, poll_functionality_many_sockets)
 
 	/* Ignore OMRSOCK_POLLOUT on client socket, since its state is indeterminate
 	 * Listen for HUP, since an error is returned if sock_pollfd_init recieves an event arg of 0. */
-	 EXPECT_EQ(OMRPORTLIB->sock_pollfd_init(OMRPORTLIB, &pollArray[CLIENT_SOCKET_POLL_IDX], clientSocket, OMRSOCK_POLLHUP), 0);
-
+#if defined(OMRSOCK_POLLHUP)
+	EXPECT_EQ(OMRPORTLIB->sock_pollfd_init(OMRPORTLIB, &pollArray[CLIENT_SOCKET_POLL_IDX], clientSocket, OMRSOCK_POLLHUP), 0);
+#else /* defined(OMRSOCK_POLLHUP) */
+	EXPECT_EQ(OMRPORTLIB->sock_pollfd_init(OMRPORTLIB, &pollArray[CLIENT_SOCKET_POLL_IDX], clientSocket, 0), 0);
+#endif /* defined(OMRSOCK_POLLHUP) */
 	/* Check that server POLLIN is ready. Give poll up to 10 times to be ready. */
 	bool succeeded = false;
 	for (int32_t i = 0; i < 10; i++) {
