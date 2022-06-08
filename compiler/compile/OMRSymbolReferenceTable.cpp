@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2110,12 +2110,16 @@ const char *OMR::SymbolReferenceTable::_commonNonHelperSymbolNames[] =
    "<contiguousArraySize>",
    "<discontiguousArraySize>",
    "<arrayClassRomPtr>",
+   "<classRomPtr>",
    "<javaLangClassFromClass>",
    "<classFromJavaLangClass>",
    "<addressOfClassOfMethod>",
+   "<ramStaticsFromClass>",
    "<componentClass>",
+   "<componentClassAsPrimitive>",
    "<isArray>",
    "<isClassAndDepthFlags>",
+   "<initializeStatusFromClass>",
    "<isClassFlags>",
    "<vft>",
    "<currentThread>",
@@ -2130,8 +2134,12 @@ const char *OMR::SymbolReferenceTable::_commonNonHelperSymbolNames[] =
    "<reverseLoad>",
    "<reverseStore>",
    "<currentTimeMaxPrecision>",
+   "<encodeASCII>",
    "<headerFlags>",
    "<singlePrecisionSQRT>",
+   "<threadPrivateFlags>",
+   "<arrayletSpineFirstElement>",
+   "<dltBlock>",
    "<countForRecompile>",
    "<gcrPatchPoint>",
    "<counterAddress>",
@@ -2148,9 +2156,21 @@ const char *OMR::SymbolReferenceTable::_commonNonHelperSymbolNames[] =
    "<potentialOSRPointHelper>",
    "<osrFearPointHelper>",
    "<eaEscapeHelper>",
+   "<lowTenureAddress>",
+   "<highTenureAddress>",
+   "<fragmentParent>",
+   "<globalFragment>",
    "<instanceShape>",
    "<instanceDescription>",
    "<descriptionWordFromPtr>",
+   "<classFromJavaLangClassAsPrimitive>",
+   "<javaVM>",
+   "<heapBase>",
+   "<heapTop>",
+   "<j9methodExtraField>",
+   "<j9methodConstantPoolField>",
+   "<startPCLinkageInfo>",
+   "<instanceShapeFromROMClass>",
    "<objectEqualityComparison>",
    "<objectInequalityComparison>",
    "<nonNullableArrayNullStoreCheck>",
@@ -2165,7 +2185,12 @@ const char *OMR::SymbolReferenceTable::_commonNonHelperSymbolNames[] =
    "<atomicCompareAndSwapReturnStatus>",
    "<atomicCompareAndSwapReturnValue>",
    "<jProfileValueSymbol>",
-   "<jProfileValueWithNullCHKSymbol>"
+   "<jProfileValueWithNullCHKSymbol>",
+   "<j9VMThreadTempSlotField>",
+   "<computedStaticCallSymbol>",
+   "<j9VMThreadFloatTemp1>",
+   "<J9JNIMethodIDvTableIndexFieldSymbol>",
+   "<defaultValue>"
    };
 
 
