@@ -2966,6 +2966,120 @@ TEST_F(CgroupTest, sysinfo_is_running_in_container)
 	reportTestExit(OMRPORTLIB, testName);
 	return;
 }
+
+/**
+ * Test omrsysinfo_cgroup_subsystem_iterator_* functions.
+ */
+TEST_F(CgroupTest, sysinfo_cgroup_subsystem_iterator)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+	const char *testName = "omrsysinfo_cgroup_subsystem_iterator";
+
+	reportTestEntry(OMRPORTLIB, testName);
+
+#if defined(LINUX) && !defined(OMRZTPF)
+	const OMRCgroupEntry *entryHead = omrsysinfo_get_cgroup_subsystem_list();
+	OMRCgroupEntry *cgEntry = (OMRCgroupEntry *)entryHead;
+	if (NULL != cgEntry) {
+		do {
+			OMRCgroupMetricIteratorState cgroupState = {0};
+			int32_t rc = omrsysinfo_cgroup_subsystem_iterator_init(cgEntry->flag, &cgroupState);
+			ASSERT_EQ(rc, 0);
+			ASSERT_EQ(cgroupState.count, (uint32_t)0);
+			ASSERT_EQ(cgroupState.subsystemid, cgEntry->flag);
+			ASSERT_EQ(cgroupState.fileMetricCounter, 0);
+			ASSERT_GT(cgroupState.numElements, (uint32_t)0);
+
+			int32_t count = 0;
+			while (omrsysinfo_cgroup_subsystem_iterator_hasNext(&cgroupState)) {
+				const char *metricKey = NULL;
+				OMRCgroupMetricElement metricElement = {0};
+				rc = omrsysinfo_cgroup_subsystem_iterator_metricKey(&cgroupState, &metricKey);
+				ASSERT_EQ(rc, 0);
+				rc = omrsysinfo_cgroup_subsystem_iterator_next(&cgroupState, &metricElement);
+				if (0 == rc) {
+					/* Verify a few important metrics. */
+					if (omrsysinfo_cgroup_are_subsystems_available(OMR_CGROUP_SUBSYSTEM_MEMORY)) {
+						if (0 == strcmp(metricKey, "Memory Limit")) {
+							if (CgroupTest::isV1Available) {
+								if (omrsysinfo_cgroup_is_memlimit_set()) {
+									EXPECT_EQ(strtoull(metricElement.value, NULL, 10), CgroupTest::memLimit);
+									EXPECT_STREQ(metricElement.units, "bytes");
+								} else {
+									EXPECT_STREQ(metricElement.value, "Not Set");
+									EXPECT_EQ(metricElement.units, nullptr);
+								}
+							} else {
+								/* CgroupTest::isV2Available */
+								if (omrsysinfo_cgroup_is_memlimit_set()) {
+									EXPECT_STREQ(metricElement.value, CgroupTest::memLimitString.c_str());
+									EXPECT_STREQ(metricElement.units, "bytes");
+								} else {
+									EXPECT_STREQ(metricElement.value, "Not Set");
+									EXPECT_EQ(metricElement.units, nullptr);
+								}
+							}
+						}
+					}
+					if (omrsysinfo_cgroup_are_subsystems_available(OMR_CGROUP_SUBSYSTEM_CPU)) {
+						if (0 == strcmp(metricKey, "CPU Quota")) {
+							if (CgroupTest::isV1Available) {
+								if (-1 != CgroupTest::cpuQuota) {
+									EXPECT_EQ(strtoll(metricElement.value, NULL, 10), CgroupTest::cpuQuota);
+									EXPECT_STREQ(metricElement.units, "microseconds");
+								} else {
+									EXPECT_STREQ(metricElement.value, "Not Set");
+									EXPECT_EQ(metricElement.units, nullptr);
+								}
+							} else {
+								/* CgroupTest::isV2Available */
+								if ("max" != CgroupTest::cpuQuotaString) {
+									EXPECT_STREQ(metricElement.value, CgroupTest::cpuQuotaString.c_str());
+									EXPECT_STREQ(metricElement.units, "microseconds");
+								} else {
+									EXPECT_STREQ(metricElement.value, "Not Set");
+									EXPECT_EQ(metricElement.units, nullptr);
+								}
+							}
+						} else if (0 == strcmp(metricKey, "CPU Period")) {
+							EXPECT_EQ(strtoull(metricElement.value, NULL, 10), CgroupTest::cpuPeriod);
+							EXPECT_STREQ(metricElement.units, "microseconds");
+						}
+					}
+				} else {
+					/* Swap memory files may not be present under certain conditions, e.g.
+					 * swap memory not configured.
+					 */
+					std::string metricString(metricKey);
+					EXPECT_EQ(cgroupState.subsystemid, OMR_CGROUP_SUBSYSTEM_MEMORY)
+							<< "omrsysinfo_cgroup_subsystem_iterator_next failed for non-memory subsystem, rc=" << rc;
+					EXPECT_EQ(rc, OMRPORT_ERROR_FILE_NOENT);
+					/* Check that metricKey contains "swap" (indicates metric is related to swap memory). */
+					EXPECT_TRUE(
+							(std::string::npos != metricString.find("Swap"))
+							|| (std::string::npos != metricString.find("swap"))
+							) << "omrsysinfo_cgroup_subsystem_iterator_next failed for non-swap memory metric: "
+								<< metricString << ", rc=" << rc;
+				}
+				count += 1;
+			}
+			ASSERT_GT(count, 0);
+
+			omrsysinfo_cgroup_subsystem_iterator_destroy(&cgroupState);
+			cgEntry = cgEntry->next;
+		} while (cgEntry != entryHead);
+	}
+#else /* defined(LINUX) && !defined(OMRZTPF) */
+	OMRCgroupMetricIteratorState cgroupState = {0};
+	ASSERT_EQ(omrsysinfo_cgroup_subsystem_iterator_init(0, &cgroupState), OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM);
+	ASSERT_EQ(omrsysinfo_cgroup_subsystem_iterator_hasNext(&cgroupState), FALSE);
+	ASSERT_EQ(omrsysinfo_cgroup_subsystem_iterator_metricKey(&cgroupState, NULL), OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_METRIC_NOT_AVAILABLE);
+	ASSERT_EQ(omrsysinfo_cgroup_subsystem_iterator_next(&cgroupState, NULL), OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM);
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
+
+	reportTestExit(OMRPORTLIB, testName);
+	return;
+}
 #else /* !defined(LINUX) || (GTEST_GCC_VER_ >= 40900) */
 #pragma message("Cgroup tests are disabled due to an unsupported compiler.")
 #endif /* !defined(LINUX) || (GTEST_GCC_VER_ >= 40900) */
