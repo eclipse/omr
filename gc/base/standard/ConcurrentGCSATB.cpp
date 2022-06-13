@@ -596,4 +596,15 @@ MM_ConcurrentGCSATB::preAllocCacheFlush(MM_EnvironmentBase *env, void *base, voi
 	/* Mark all newly allocated objects */
 	_markingScheme->markObjectsForRange(env, (uint8_t *)base, (uint8_t *)top);
 }
+
+#if defined(OMR_GC_MODRON_SCAVENGER)
+void
+MM_ConcurrentGCSATB::objectTenured(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
+{
+	Assert_MM_true(CONCURRENT_OFF != _stats.getExecutionMode());
+	Assert_MM_true(_extensions->isOld(objectPtr));
+
+	_concurrentDelegate.rememberObjectToRescan(env, objectPtr);
+}
+#endif /* OMR_GC_MODRON_SCAVENGER */
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK && OMR_GC_REALTIME */

@@ -412,7 +412,6 @@ MM_TLHAllocationSupport::restoreTLHTopForGC(MM_EnvironmentBase *env)
 	if (NULL == getBase()) {
 		Assert_MM_true(NULL == getTop());
 		Assert_MM_true(0 == _reservedBytesForGC);
-
 	} else {
 		Assert_MM_true(NULL != getTop());
 

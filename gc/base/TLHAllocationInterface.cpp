@@ -193,9 +193,11 @@ MM_TLHAllocationInterface::allocateObject(MM_EnvironmentBase *env, MM_AllocateDe
 	}
 
 	if ((NULL != result) && !allocDescription->isCompletedFromTlh()) {
-		/* Objs allocated while SATB is active must be marked. Typically the TLH is marked,
-		 * however since this alloc is not completed form TLH we must mark it individually. */
-		extensions->getGlobalCollector()->checkColorAndMark(env, (omrobjectptr_t)result);
+		/* Non-TLH OLD allocations must be marked individually while concurrent SATB is active.
+		 * Typically the TLH is marked (for non-generational), since this alloc is not completed from TLH it must be marked now. */
+		if (extensions->isOld((omrobjectptr_t) result)) {
+			extensions->getGlobalCollector()->checkColorAndMark(env, (omrobjectptr_t)result);
+		}
 #if defined(OMR_GC_OBJECT_ALLOCATION_NOTIFY)
 		env->objectAllocationNotify((omrobjectptr_t)result);
 #endif /* OMR_GC_OBJECT_ALLOCATION_NOTIFY */

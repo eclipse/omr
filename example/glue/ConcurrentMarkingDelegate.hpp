@@ -304,6 +304,12 @@ public:
 	}
 
 	/**
+	 * Deprecated. Use this default implementation unless otherwise required.
+	 */
+	MMINLINE void
+	rememberObjectToRescan(MM_EnvironmentBase *env, omrobjectptr_t objectPtr) { }
+
+	/**
 	 * Constructor.
 	 */
 	MMINLINE MM_ConcurrentMarkingDelegate()
