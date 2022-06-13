@@ -130,7 +130,7 @@ if(OMR_OS_AIX)
 	)
 endif()
 
-if (OMR_OS_ZOS AND OMR_ENV_DATA64)
+if(OMR_OS_ZOS AND OMR_ENV_DATA64)
 	omr_add_library(sltestlib31 SHARED
 		sltestlib31/sltest.cpp
 	)
@@ -205,7 +205,15 @@ elseif(OMR_OS_LINUX AND OMR_ENV_DATA32)
 	set(EXCLUDE_LIST "${EXCLUDE_LIST}-PortVmemTest.vmem_test_reserveExecutableMemory")
 endif()
 
-if (EXCLUDE_LIST)
+if($ENV{OMR_RUNNING_IN_DOCKER})
+	if(EXCLUDE_LIST)
+		set(EXCLUDE_LIST "${EXCLUDE_LIST}:PortStrTest.str_test4")
+	else()
+		set(EXCLUDE_LIST "${EXCLUDE_LIST}-PortStrTest.str_test4")
+	endif()
+endif()
+
+if(EXCLUDE_LIST)
 	set(EXCLUDE_LIST "--gtest_filter=${EXCLUDE_LIST}")
 	message(WARNING "Excluded omrport tests: ${EXCLUDE_LIST}")
 endif()
