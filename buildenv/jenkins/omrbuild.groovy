@@ -20,26 +20,43 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-def setBuildStatus(String message, String state, String sha) {
-    context = "continuous-integration/eclipse-omr/branch/${params.BUILDSPEC}"
-    step([
-        $class: "GitHubCommitStatusSetter",
-        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
-        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-        commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
-        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: "${BUILD_URL}flowGraphTable/"],
-        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-    ]);
-}
+defaultCompile = 'make -j4'
+defaultReference = '${HOME}/gitcache'
+autoconfBuildDir = '.'
+cmakeBuildDir = 'build'
+workspaceName = 'Build'
+scmVars = null
+customWorkspace = null
 
-def defaultCompile = 'make -j4'
-def defaultReference = '${HOME}/gitcache'
-def autoconfBuildDir = '.'
-def cmakeBuildDir = 'build'
-def workspaceName = 'Build'
+dockerImage = null
+dockerImageName = (params.IMAGE_NAME) ? params.IMAGE_NAME : "buildomr"
 
-def SPECS = [
+/**
+ * Move the below parameters into SPECS while implementing a generic
+ * approach to support Dockerfiles.
+ */
+os = (params.OS) ? params.OS : "ubuntu20"
+arch = (params.ARCH) ? params.ARCH : "x86_64"
+
+buildSpec = (params.BUILDSPEC) ? params.BUILDSPEC : error("BUILDSPEC not specified")
+cmdLine = params.ghprbCommentBody
+pullId = params.ghprbPullId
+
+cgroupV1Specs = ["linux_x86"]
+cgroupV2Specs = ["linux_x86-64", "linux_ppc-64_le_gcc"]
+dockerSpecs = ["linux_x86", "linux_x86-64"]
+
+nodeLabels = []
+runInDocker = false
+
+cmakeAppend = ""
+compileAppend = ""
+testAppend = ""
+envAppend = []
+
+SPECS = [
     'aix_ppc-64' : [
+        'alias': 'aix',
         'label' : 'compile:aix',
         'reference' : defaultReference,
         'environment' : [
@@ -62,6 +79,7 @@ def SPECS = [
         'junitPublish' : true
     ],
     'linux_390-64' : [
+        'alias': 'zlinux',
         'label': 'compile:zlinux',
         'reference' : defaultReference,
         'environment' : [
@@ -82,6 +100,7 @@ def SPECS = [
         'junitPublish' : true
     ],
     'linux_aarch64' : [
+        'alias': 'aarch64',
         'label' : 'compile:aarch64:cross',
         'reference' : defaultReference,
         'environment' : [
@@ -101,6 +120,7 @@ def SPECS = [
         'test' : false
     ],
     'linux_arm' : [
+        'alias': 'arm',
         'label' : 'compile:arm:cross',
         'reference' : defaultReference,
         'environment' : [
@@ -120,6 +140,7 @@ def SPECS = [
         'test' : false
     ],
     'linux_ppc-64_le_gcc' : [
+        'alias': 'plinux',
         'label' : 'compile:plinux',
         'reference' : defaultReference,
         'environment' : [
@@ -140,6 +161,7 @@ def SPECS = [
         'junitPublish' : true
     ],
     'linux_riscv64' : [
+        'alias': 'riscv',
         'label' : 'compile:riscv64',
         'reference' : defaultReference,
         'environment' : [
@@ -159,6 +181,7 @@ def SPECS = [
         'junitPublish' : true
     ],
     'linux_riscv64_cross' : [
+        'alias': 'riscv',
         'label' : 'compile:riscv64:cross',
         'reference' : defaultReference,
         'environment' : [
@@ -178,7 +201,8 @@ def SPECS = [
         'junitPublish' : true
     ],
     'linux_x86' : [
-        'label' : 'compile:xlinux && cgroup.v1',
+        'alias': 'x32linux',
+        'label' : 'compile:xlinux',
         'reference' : defaultReference,
         'environment' : [
             'PATH+CCACHE=/usr/lib/ccache/',
@@ -198,7 +222,8 @@ def SPECS = [
         'junitPublish' : true
     ],
     'linux_x86-64' : [
-        'label' : 'compile:xlinux && cgroup.v2',
+        'alias': 'xlinux',
+        'label' : 'compile:xlinux',
         'reference' : defaultReference,
         'environment' : [
             'PATH+CCACHE=/usr/lib/ccache/',
@@ -218,6 +243,7 @@ def SPECS = [
         'junitPublish' : true
     ],
     'linux_x86-64_cmprssptrs' : [
+        'alias': 'xcrlinux',
         'label' : 'compile:xlinux',
         'reference' : defaultReference,
         'environment' : [
@@ -238,6 +264,7 @@ def SPECS = [
         'junitPublish' : true
     ],
     'osx_x86-64' : [
+        'alias': 'osx',
         'label' : 'compile:xosx',
         'reference' : defaultReference,
         'environment' : [
@@ -259,6 +286,7 @@ def SPECS = [
         'junitPublish' : true
     ],
     'win_x86-64' : [
+        'alias': 'win',
         'label' : 'compile:xwindows',
         'reference' : defaultReference,
         'environment' : [
@@ -279,6 +307,7 @@ def SPECS = [
         'junitPublish' : true
     ],
     'zos_390-64' : [
+        'alias': 'zos',
         'label' : 'compile:zos',
         'reference' : '',
         'environment' : [
@@ -301,103 +330,322 @@ def SPECS = [
     ]
 ]
 
+def setBuildStatus(String message, String state, String sha) {
+    context = "continuous-integration/eclipse-omr/branch/" + buildSpec
+    step([
+        $class: "GitHubCommitStatusSetter",
+        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
+        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+        commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
+        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: "${BUILD_URL}flowGraphTable/"],
+        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+    ]);
+}
+
+def getSources() {
+    stage('Get Sources') {
+        def gitConfig = scm.getUserRemoteConfigs().get(0)
+        def refspec = (gitConfig.getRefspec()) ? gitConfig.getRefspec() : ''
+        scmVars = checkout poll: false,
+            scm: [$class: 'GitSCM',
+            branches: [[name: "${scm.branches[0].name}"]],
+            extensions: [[$class: 'CloneOption', honorRefspec: true, timeout: 30, reference: SPECS[buildSpec].reference]],
+            userRemoteConfigs: [[name: 'origin',
+                refspec: "${refspec}",
+                url: "${gitConfig.getUrl()}"]
+            ]
+        ]
+        if (!pullId) {
+            setBuildStatus("In Progress","PENDING","${scmVars.GIT_COMMIT}")
+        }
+    }
+}
+
+def build() {
+    stage('Build') {
+        if (SPECS[buildSpec].ccache) {
+            echo 'Output CCACHE stats before running and clear them'
+            sh 'ccache -s -z'
+        }
+
+        for (build in SPECS[buildSpec].builds) {
+            dir("${build.buildDir}") {
+                echo 'Configure...'
+                switch (SPECS[buildSpec].buildSystem) {
+                    case 'cmake':
+                        sh "cmake ${build.configureArgs} ${cmakeAppend} .."
+                        break
+                    case 'autoconf':
+                        sh "make -f run_configure.mk OMRGLUE=./example/glue ${build.configureArgs} ${cmakeAppend}"
+                        break
+                    default:
+                        error("Unknown buildSystem type")
+                }
+
+                echo 'Compile...'
+                sh "${build.compile} ${compileAppend}"
+            }
+        }
+
+        if (SPECS[buildSpec].ccache) {
+            echo 'Output CCACHE stats after running'
+            sh 'ccache -s'
+        }
+    }
+}
+
+def test() {
+    stage('Test') {
+        if (SPECS[buildSpec].test) {
+            echo 'Sanity Test...'
+            switch (SPECS[buildSpec].buildSystem) {
+                case 'cmake':
+                    dir("${cmakeBuildDir}") {
+                        sh "ctest -V ${SPECS[buildSpec].testArgs} ${testAppend}"
+                        if (SPECS[buildSpec].junitPublish) {
+                            junit '**/*results.xml'
+                        }
+                    }
+                    break
+                case 'autoconf':
+                    sh "make test ${SPECS[buildSpec].testArgs} ${testAppend}"
+                    break
+                default:
+                    error("Unknown buildSystem type")
+            }
+        } else {
+            echo "Currently no sanity tests..."
+        }
+    }
+}
+
+def cleanDockerContainers() {
+    stage("Docker Remove Containers") {
+        println("Listing docker containers to attempt removal")
+        sh "docker ps -a"
+        def containers = sh (script: "docker ps -a --format \"{{.ID}}\"", returnStdout: true).trim()
+        if (containers) {
+            println("Stop all docker containers")
+            sh "docker ps -a --format \"{{.ID}}\" | xargs docker stop"
+            println("Remove all docker containers")
+            sh "docker ps -a --format \"{{.ID}}\" | xargs docker rm --force"
+        }
+    }
+}
+
+def buildDockerImage() {
+    stage("Docker Build") {
+        dir("buildenv/docker/${arch}/${os}") {
+            dockerImage = docker.build(dockerImageName)
+        }
+    }
+}
+
+def allStages() {
+    try {
+        timeout(time: 2, unit: 'HOURS') {
+            def tmpDesc = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+            currentBuild.description = tmpDesc + "<a href=${JENKINS_URL}computer/${NODE_NAME}>${NODE_NAME}</a>"
+
+            def environmentVars = SPECS[buildSpec].environment
+
+            if (!envAppend.isEmpty()) {
+                environmentVars.addAll(envAppend)
+            }
+
+            if (runInDocker) {
+                environmentVars += "OMR_RUNNING_IN_DOCKER=1"
+            }
+
+            println "env vars: " + environmentVars
+
+            withEnv(environmentVars) {
+                sh 'printenv'
+                /* Source already populated in runAllStagesInDocker while creating
+                 * the Docker image. Avoid this redundant operation while running in a
+                 * Docker container.
+                 */
+                if (!runInDocker) {
+                    getSources()
+                }
+                build()
+                test()
+            }
+        }
+    } finally {
+        if (!pullId && scmVars) {
+            setBuildStatus("Complete", currentBuild.currentResult, "${scmVars.GIT_COMMIT}")
+        }
+    }
+}
+
+def runAllStages() {
+    ws(customWorkspace) {
+        try {
+            allStages()
+        } finally {
+            cleanWs()
+        }
+    }
+}
+
+def runAllStagesInDocker() {
+    ws(customWorkspace) {
+        try {
+            cleanDockerContainers()
+            getSources()
+            buildDockerImage()
+            dockerImage.inside("-v /home/jenkins:/home/jenkins:rw,z") {
+                dir(customWorkspace) {
+                    allStages()
+                }
+            }
+        } finally {
+            cleanWs()
+        }
+    }
+}
+
+def parseCmdLine() {
+    def selectedMatcher = null
+
+    def specMatcher = (cmdLine =~ /.*jenkins build.*${buildSpec}?(?<match>\(.*\))?.*/)
+
+    def alias = SPECS[buildSpec].alias
+    def aliasMatcher = (cmdLine =~ /.*jenkins build.*${alias}?(?<match>\(.*\))?.*/)
+
+    def allMatcher = (cmdLine =~ /.*jenkins build.*all?(?<match>\(.*\))?.*/)
+
+    def specIndex = -1
+    if (specMatcher.find()) {
+        specIndex = specMatcher.start("match")
+    }
+
+    def aliasIndex = -1
+    if (aliasMatcher.find()) {
+        aliasIndex = aliasMatcher.start("match")
+    }
+
+    def allIndex = -1
+    if (allMatcher.find()) {
+        allIndex = allMatcher.start("match")
+    }
+
+    if ((specIndex != -1) || (aliasIndex != -1)) {
+        if (specIndex > aliasIndex) {
+            selectedMatcher = specMatcher
+        } else {
+            selectedMatcher = aliasMatcher
+        }
+    } else if (allIndex != -1) {
+        selectedMatcher = allMatcher
+    }
+
+    println "custom option matcher: " + selectedMatcher
+
+    if (selectedMatcher != null) {
+        def customConfig = selectedMatcher.group("match")
+        println "custom options: " + customConfig
+
+        if (customConfig != null) {
+            def cmakeMatcher = (customConfig =~ /cmake:'(?<match>.*?)'/)
+            if (cmakeMatcher.find()) {
+                cmakeAppend += cmakeMatcher.group("match")
+                customConfig -= ~/cmake:'(?<match>.*?)'/
+            }
+            println "cmake append: " + cmakeAppend
+
+            def compileMatcher = (customConfig =~ /compile:'(?<match>.*?)'/)
+            if (compileMatcher.find()) {
+                compileAppend += compileMatcher.group("match")
+                customConfig -= ~/compile:'(?<match>.*?)'/
+            }
+            println "compile append: " + compileAppend
+
+            def testMatcher = (customConfig =~ /test:'(?<match>.*?)'/)
+            if (testMatcher.find()) {
+                testAppend += testMatcher.group("match")
+                customConfig -= ~/test:'(?<match>.*?)'/
+            }
+            println "test append: " + testAppend
+
+            def envMatcher = (customConfig =~ /env:'(?<match>.*?)'/)
+            if (envMatcher.find()) {
+                envAppend.addAll(envMatcher.group("match").tokenize(","))
+                customConfig -= ~/env:'(?<match>.*?)'/
+            }
+            println "env append: " + envAppend
+            println "remaining custom options: " + customConfig
+
+            def options = customConfig.replace("(", "").replace(")", "").split(",")
+            for (option in options) {
+                if (option == "cgroupv1") {
+                    nodeLabels += "cgroup.v1"
+                    nodeLabels -= "cgroup.v2"
+                }
+
+                if (option == "cgroupv2") {
+                    nodeLabels += "cgroup.v2"
+                    nodeLabels -= "cgroup.v1"
+                }
+
+                if (option == "!cgroupv1") {
+                    nodeLabels -= "cgroup.v1"
+                }
+
+                if (option == "!cgroupv2") {
+                    nodeLabels -= "cgroup.v2"
+                }
+
+                if (option == "docker") {
+                    runInDocker = true
+                }
+
+                if (option == "!docker") {
+                    runInDocker = false
+                }
+            }
+        }
+    }
+}
+
 timestamps {
     timeout(time: 8, unit: 'HOURS') {
         stage('Queue') {
-            node(SPECS[params.BUILDSPEC].label) {
-                /*
-                 * Use a custom workspace name.
+            nodeLabels += SPECS[buildSpec].label
+            runInDocker = dockerSpecs.contains(buildSpec)
+
+            if (cgroupV1Specs.contains(buildSpec)) {
+                nodeLabels += "cgroup.v1"
+            }
+
+            if (cgroupV2Specs.contains(buildSpec)) {
+                nodeLabels += "cgroup.v2"
+            }
+
+            parseCmdLine()
+
+            nodeLabels = nodeLabels.unique()
+
+            println nodeLabels
+            println "run in docker: " + runInDocker
+
+            assert !(nodeLabels.contains("cgroup.v1") && nodeLabels.contains("cgroup.v2"))
+
+            node(nodeLabels.join(" && ")) {
+                /* Use a custom workspace name.
                  * This is becasue the LIBPATH on z/os includes the build's workspace.
                  * Since we cannot add a variable to the 'environment' in the SPECS, as
                  * it will get evaluated early, we'll use a custom ws in order to
                  * hardcode the value in the SPECS.
                  */
-                def customWorkspace = WORKSPACE - "/${JOB_NAME}" + "/${workspaceName}"
-                scmVars = null
-                ws(customWorkspace) {
-                    try {
-                        timeout(time: 2, unit: 'HOURS') {
-                            def tmpDesc = (currentBuild.description) ? currentBuild.description + "<br>" : ""
-                            currentBuild.description = tmpDesc + "<a href=${JENKINS_URL}computer/${NODE_NAME}>${NODE_NAME}</a>"
+                customWorkspace = WORKSPACE - "/${JOB_NAME}" + "/${workspaceName}"
+                println "customWorkspace: " + customWorkspace
 
-                            withEnv(SPECS[params.BUILDSPEC].environment) {
-                                sh 'printenv'
-                                stage('Get Sources') {
-                                    def gitConfig = scm.getUserRemoteConfigs().get(0)
-                                    def refspec = (gitConfig.getRefspec()) ? gitConfig.getRefspec() : ''
-                                    scmVars = checkout poll: false,
-                                        scm: [$class: 'GitSCM',
-                                        branches: [[name: "${scm.branches[0].name}"]],
-                                        extensions: [[$class: 'CloneOption', honorRefspec: true, timeout: 30, reference: SPECS[params.BUILDSPEC].reference]],
-                                        userRemoteConfigs: [[name: 'origin',
-                                            refspec: "${refspec}",
-                                            url: "${gitConfig.getUrl()}"]
-                                        ]
-                                    ]
-                                    if (!params.ghprbPullId) {
-                                        setBuildStatus("In Progress","PENDING","${scmVars.GIT_COMMIT}")
-                                    }
-                                }
-                                stage('Build') {
-                                    if (SPECS[params.BUILDSPEC].ccache) {
-                                        echo 'Output CCACHE stats before running and clear them'
-                                        sh 'ccache -s -z'
-                                    }
-
-                                    for (build in SPECS[params.BUILDSPEC].builds) {
-                                        dir("${build.buildDir}") {
-                                            echo 'Configure...'
-                                            switch (SPECS[params.BUILDSPEC].buildSystem) {
-                                                case 'cmake':
-                                                    sh "cmake ${build.configureArgs} .."
-                                                    break
-                                                case 'autoconf':
-                                                    sh "make -f run_configure.mk OMRGLUE=./example/glue ${build.configureArgs}"
-                                                    break
-                                                default:
-                                                    error("Unknown buildSystem type")
-                                            }
-
-                                            echo 'Compile...'
-                                            sh "${build.compile}"
-                                        }
-                                    }
-
-                                    if (SPECS[params.BUILDSPEC].ccache) {
-                                        echo 'Output CCACHE stats after running'
-                                        sh 'ccache -s'
-                                    }
-                                }
-                                stage('Test') {
-                                    if (SPECS[params.BUILDSPEC].test) {
-                                        echo 'Sanity Test...'
-                                        switch (SPECS[params.BUILDSPEC].buildSystem) {
-                                            case 'cmake':
-                                                dir("${cmakeBuildDir}") {
-                                                    sh "ctest -V ${SPECS[params.BUILDSPEC].testArgs}"
-                                                    if (SPECS[params.BUILDSPEC].junitPublish) {
-                                                        junit '**/*results.xml'
-                                                    }
-                                                }
-                                                break
-                                            case 'autoconf':
-                                                sh "make test ${SPECS[params.BUILDSPEC].testArgs}"
-                                                break
-                                            default:
-                                                error("Unknown buildSystem type")
-                                        }
-                                    } else {
-                                        echo "Currently no sanity tests..."
-                                    }
-                                }
-                            }
-                        }
-                    } finally {
-                        if (!params.ghprbPullId && scmVars) {
-                            setBuildStatus("Complete", currentBuild.currentResult, "${scmVars.GIT_COMMIT}")
-                        }
-                        cleanWs()
-                    }
+                if (runInDocker) {
+                    runAllStagesInDocker()
+                } else {
+                    runAllStages()
                 }
             }
         }
