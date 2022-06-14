@@ -6796,7 +6796,7 @@ _end:
 int32_t
 omrsysinfo_cgroup_subsystem_iterator_next(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state, struct OMRCgroupMetricElement *metricElement)
 {
-	int32_t rc = OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
+	int32_t rc = OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM;
 #if defined(LINUX) && !defined(OMRZTPF)
 	struct OMRCgroupMetricInfoElement *currentElement = NULL;
 	const struct OMRCgroupSubsystemMetricMap *subsystemMetricMap = NULL;
