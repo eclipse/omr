@@ -2375,7 +2375,8 @@ exit:
 #if !defined(LINUX) || (GTEST_GCC_VER_ >= 40900)
 class CgroupTest : public ::testing::Test {
 protected:
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
+	static bool isRunningInContainer;
 	static bool isV1Available;
 	static bool isV2Available;
 	static std::string memCgroup;
@@ -2395,6 +2396,11 @@ protected:
 	static void
 	SetUpTestCase()
 	{
+		char *omrRunningInDocker = getenv("OMR_RUNNING_IN_DOCKER");
+		if ((NULL != omrRunningInDocker) && (0 == strcmp(omrRunningInDocker, "1"))) {
+			isRunningInContainer = true;
+		}
+
 		isV1Available = isCgroupV1Available();
 		isV2Available = isCgroupV2Available();
 		ASSERT_TRUE(isV1Available != isV2Available);
@@ -2426,13 +2432,25 @@ protected:
 							available |= it->second;
 							switch(it->second) {
 							case OMR_CGROUP_SUBSYSTEM_CPU:
-								cpuCgroup = sm[2].str();
+								if (isRunningInContainer) {
+									cpuCgroup = "/";
+								} else {
+									cpuCgroup = sm[2].str();
+								}
 								break;
 							case OMR_CGROUP_SUBSYSTEM_MEMORY:
-								memCgroup = sm[2].str();
+								if (isRunningInContainer) {
+									memCgroup = "/";
+								} else {
+									memCgroup = sm[2].str();
+								}
 								break;
 							case OMR_CGROUP_SUBSYSTEM_CPUSET:
-								cpusetCgroup = sm[2].str();
+								if (isRunningInContainer) {
+									cpusetCgroup = "/";
+								} else {
+									cpusetCgroup = sm[2].str();
+								}
 								break;
 							default:
 								FAIL() << "Unsupported subsystem";
@@ -2525,10 +2543,11 @@ protected:
 
 		return result;
 	}
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 };
 
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
+bool CgroupTest::isRunningInContainer = false;
 bool CgroupTest::isV1Available = false;
 bool CgroupTest::isV2Available = false;
 std::string CgroupTest::memCgroup;
@@ -2547,7 +2566,7 @@ int64_t CgroupTest::cpuQuota = 0;
 std::string CgroupTest::cpuQuotaString;
 uint64_t CgroupTest::cpuPeriod = 0;
 bool CgroupTest::setUpSucceeded = false;
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 
 /**
  * Test omrsysinfo_cgroup_is_system_available.
@@ -2562,15 +2581,15 @@ TEST(PortSysinfoTest, sysinfo_cgroup_is_system_available)
 
 	result = omrsysinfo_cgroup_is_system_available();
 
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
 	if (FALSE == result) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_cgroup_is_system_available returned FALSE on Linux\n");
 	}
-#else /* defined(LINUX) */
+#else /* defined(LINUX) && !defined(OMRZTPF) */
 	if (TRUE == result) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_cgroup_is_system_available returned TRUE on non-Linux\n");
 	}
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 
 	reportTestExit(OMRPORTLIB, testName);
 	return;
@@ -2589,13 +2608,13 @@ TEST_F(CgroupTest, sysinfo_cgroup_get_available_subsystems)
 
 	available = omrsysinfo_cgroup_get_available_subsystems();
 
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
 	ASSERT_EQ(available, CgroupTest::available);
-#else /* defined(LINUX) */
+#else /* defined(LINUX) && !defined(OMRZTPF) */
 	if (0 != available) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_cgroup_get_available_subsystems returned nonzero on non-Linux\n");
 	}
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 
 	reportTestExit(OMRPORTLIB, testName);
 	return;
@@ -2611,7 +2630,7 @@ TEST_F(CgroupTest, sysinfo_cgroup_are_subsystems_available)
 
 	reportTestEntry(OMRPORTLIB, testName);
 
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
 	EXPECT_EQ(omrsysinfo_cgroup_are_subsystems_available(OMR_CGROUP_SUBSYSTEM_CPU), CgroupTest::available & OMR_CGROUP_SUBSYSTEM_CPU);
 	EXPECT_EQ(omrsysinfo_cgroup_are_subsystems_available(OMR_CGROUP_SUBSYSTEM_MEMORY), CgroupTest::available & OMR_CGROUP_SUBSYSTEM_MEMORY);
 	EXPECT_EQ(omrsysinfo_cgroup_are_subsystems_available(OMR_CGROUP_SUBSYSTEM_CPUSET), CgroupTest::available & OMR_CGROUP_SUBSYSTEM_CPUSET);
@@ -2629,11 +2648,11 @@ TEST_F(CgroupTest, sysinfo_cgroup_are_subsystems_available)
 	EXPECT_EQ(
 			omrsysinfo_cgroup_are_subsystems_available(OMR_CGROUP_SUBSYSTEM_ALL),
 			CgroupTest::available & (OMR_CGROUP_SUBSYSTEM_ALL));
-#else /* defined(LINUX) */
+#else /* defined(LINUX) && !defined(OMRZTPF) */
 	if (0 != omrsysinfo_cgroup_are_subsystems_available(OMR_CGROUP_SUBSYSTEM_ALL)) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_cgroup_are_subsystems_available returned nonzero on non-Linux\n");
 	}
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 
 	reportTestExit(OMRPORTLIB, testName);
 	return;
@@ -2650,7 +2669,7 @@ TEST_F(CgroupTest, sysinfo_cgroup_enable)
 
 	reportTestEntry(OMRPORTLIB, testName);
 
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
 	uint64_t enabled = 0;
 	/* Clear enabled subsystems. */
 	ASSERT_EQ(omrsysinfo_cgroup_enable_subsystems(0), (uint64_t)0);
@@ -2690,13 +2709,13 @@ TEST_F(CgroupTest, sysinfo_cgroup_enable)
 	EXPECT_EQ(
 			omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_CPU | OMR_CGROUP_SUBSYSTEM_CPUSET),
 			enabled);
-#else /* defined(LINUX) */
+#else /* defined(LINUX) && !defined(OMRZTPF) */
 	ASSERT_EQ(omrsysinfo_cgroup_get_enabled_subsystems(), (uint64_t)0);
 	ASSERT_EQ(omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_ALL), (uint64_t)0);
 	ASSERT_EQ(
 			omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_ALL),
 			(uint64_t)0);
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 
 	reportTestExit(OMRPORTLIB, testName);
 	return;
@@ -2714,7 +2733,7 @@ TEST_F(CgroupTest, sysinfo_cgroup_get_memlimit)
 
 	reportTestEntry(OMRPORTLIB, testName);
 
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
 	/* Compare sysinfo_get_physical_memory and sysinfo_cgroup_get_memlimit after enabling memory subsystem */
 	uint64_t enabledSubsystems = omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_MEMORY);
 	if (OMR_ARE_ALL_BITS_SET(enabledSubsystems, OMR_CGROUP_SUBSYSTEM_MEMORY)) {
@@ -2745,12 +2764,12 @@ TEST_F(CgroupTest, sysinfo_cgroup_get_memlimit)
 			}
 		}
 	}
-#else /* defined(LINUX) */
+#else /* defined(LINUX) && !defined(OMRZTPF) */
 	rc = omrsysinfo_cgroup_get_memlimit(&cgroupMemLimit);
 	if (OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_cgroup_get_memlimit returned %d, expected %d on platform that does not support cgroups\n", rc, OMRPORT_ERROR_SYSINFO_CGROUP_UNSUPPORTED_PLATFORM);
 	}
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 
 	reportTestExit(OMRPORTLIB, testName);
 	return;
@@ -2769,7 +2788,7 @@ TEST_F(CgroupTest, sysinfo_cgroup_is_memlimit_set)
 
 	result = omrsysinfo_cgroup_is_memlimit_set();
 
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
 	uint64_t enabledSubsystems = omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_MEMORY);
 	if (OMR_ARE_ALL_BITS_SET(enabledSubsystems, OMR_CGROUP_SUBSYSTEM_MEMORY)) {
 		if (CgroupTest::isV1Available) {
@@ -2779,11 +2798,11 @@ TEST_F(CgroupTest, sysinfo_cgroup_is_memlimit_set)
 			EXPECT_EQ(result, CgroupTest::memLimitString != "max");
 		}
 	}
-#else /* defined(LINUX) */
+#else /* defined(LINUX) && !defined(OMRZTPF) */
 	if (FALSE != result) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_cgroup_is_memlimit_set returned TRUE on non-Linux");
 	}
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 
 	reportTestExit(OMRPORTLIB, testName);
 	return;
@@ -2799,7 +2818,7 @@ TEST_F(CgroupTest, sysinfo_get_cgroup_subsystem_list)
 
 	reportTestEntry(OMRPORTLIB, testName);
 
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
 	OMRCgroupEntry *entries = omrsysinfo_get_cgroup_subsystem_list();
 	OMRCgroupEntry *temp = entries;
 
@@ -2827,17 +2846,17 @@ TEST_F(CgroupTest, sysinfo_get_cgroup_subsystem_list)
 			temp = temp->next;
 		} while (temp != entries);
 	}
-#else /* defined(LINUX) */
+#else /* defined(LINUX) && !defined(OMRZTPF) */
 	if (NULL != omrsysinfo_get_cgroup_subsystem_list()) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_get_cgroup_subsystem_list returned not null on non-Linux\n");
 	}
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 
 	reportTestExit(OMRPORTLIB, testName);
 	return;
 }
 
-#if defined(LINUX)
+#if defined(LINUX) && !defined(OMRZTPF)
 /**
  * Test omrsysinfo_get_number_CPUs_by_type for the OMRPORT_CPU_BOUND type (specifically, fetching
  * and calculating the number of cpus allocated to this process via cgroup).
@@ -2919,7 +2938,34 @@ TEST_F(CgroupTest, sysinfo_get_number_CPUs_cgroup)
 	reportTestExit(OMRPORTLIB, testName);
 	return;
 }
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
+
+/**
+ * Test omrsysinfo_is_running_in_container.
+ */
+TEST_F(CgroupTest, sysinfo_is_running_in_container)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+	const char *testName = "omrsysinfo_is_running_in_container";
+
+	reportTestEntry(OMRPORTLIB, testName);
+
+	BOOLEAN runningInContainer = omrsysinfo_is_running_in_container();
+
+#if defined(LINUX) && !defined(OMRZTPF)
+	/* If the following fails, check that the env var OMR_RUNNING_IN_DOCKER is either set to 1 for a containerized
+	 * run or 0 or unset for a non-containerized run.
+	 */
+	ASSERT_EQ(runningInContainer, CgroupTest::isRunningInContainer);
+#else /* defined(LINUX) && !defined(OMRZTPF) */
+	if (runningInContainer) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "omrsysinfo_is_running_in_container returned TRUE on non-Linux\n");
+	}
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
+
+	reportTestExit(OMRPORTLIB, testName);
+	return;
+}
 #else /* !defined(LINUX) || (GTEST_GCC_VER_ >= 40900) */
 #pragma message("Cgroup tests are disabled due to an unsupported compiler.")
 #endif /* !defined(LINUX) || (GTEST_GCC_VER_ >= 40900) */
