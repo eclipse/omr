@@ -43,6 +43,7 @@ compiler_library(x
 	${CMAKE_CURRENT_LIST_DIR}/codegen/X86BinaryEncoding.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/X86Debug.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/X86FPConversionSnippet.cpp
+	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRAheadOfTimeCompile.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRInstruction.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRInstructionDelegate.cpp
 	${CMAKE_CURRENT_LIST_DIR}/codegen/OMRX86Instruction.cpp

@@ -131,6 +131,8 @@ const char * objectName[] =
    "CoarseningInterProceduralAnalyzer",
 
    "AheadOfTimeCompile",
+   "AOTLoadStoreDriver",
+   "AOTMethodHeader",
    "HWProfile",
    "TR_HWProfileCallSiteElem",
    "TR_HWProfileCallSiteList",

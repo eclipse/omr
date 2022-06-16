@@ -254,6 +254,9 @@ JIT_PRODUCT_SOURCE_FILES+=\
     $(JIT_OMR_DIRTY_DIR)/env/OMRKnownObjectTable.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/Globals.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRCompilerEnv.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/OMRAOTMethodHeader.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/OMRAOTStorage.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/OMRAOTLoadStoreDriver.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/PersistentAllocator.cpp \
     $(JIT_OMR_DIRTY_DIR)/ilgen/IlInjector.cpp \
     $(JIT_OMR_DIRTY_DIR)/ilgen/OMRBytecodeBuilder.cpp \
@@ -277,6 +280,10 @@ JIT_PRODUCT_SOURCE_FILES+=\
     $(JIT_OMR_DIRTY_DIR)/runtime/OMRCodeCacheManager.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/OMRCodeCacheMemorySegment.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/OMRCodeCacheConfig.cpp \
+    $(JIT_OMR_DIRTY_DIR)/runtime/OMRRelocationRecord.cpp \
+    $(JIT_OMR_DIRTY_DIR)/runtime/OMRRelocationRuntime.cpp \
+    $(JIT_OMR_DIRTY_DIR)/runtime/OMRAOTRelocationRuntime.cpp \
+    $(JIT_OMR_DIRTY_DIR)/runtime/OMRRelocationTarget.cpp \
     $(JIT_PRODUCT_DIR)/compile/ResolvedMethod.cpp \
     $(JIT_PRODUCT_DIR)/control/TestJit.cpp \
     $(JIT_PRODUCT_DIR)/env/FrontEnd.cpp \
