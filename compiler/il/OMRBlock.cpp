@@ -1628,9 +1628,9 @@ OMR::Block::split(TR::TreeTop * startOfNewBlock, TR::CFG * cfg, bool fixupCommon
          TR_RegionStructure *parentStructure = thisBlockStructure->getParent()->asRegion();
          TR_StructureSubGraphNode *blockStructureNode2 = new (cfg->structureMemoryRegion()) TR_StructureSubGraphNode(blockStructure2);
          TR_StructureSubGraphNode *subNode;
-         TR_RegionStructure::Cursor si(*parentStructure);
-         for (subNode = si.getCurrent(); subNode != NULL; subNode = si.getNext())
+         for (TR_RegionStructure::SubNodeList::iterator it = parentStructure->begin(); it != parentStructure->end(); ++it)
             {
+            subNode = *it;
             if (subNode->getStructure() == thisBlockStructure)
                break;
             }

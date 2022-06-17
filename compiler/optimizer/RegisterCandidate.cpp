@@ -2520,7 +2520,7 @@ TR_RegisterCandidates::assign(TR::Block ** cfgBlocks, int32_t numberOfBlocks, in
          continue;
          }
 
-      if (dt == TR::Aggregate && (1 || rc->getSymbolReference()->getSymbol()->getSize() > 8))
+      if (dt == TR::Aggregate)
          {
          if (trace)
             traceMsg(comp(),"Leaving candidate because its an aggregate and > 64 bits\n");
