@@ -214,7 +214,7 @@ GLOBAL_LIBPATH += . $(exe_output_dir) $(lib_output_dir)
 
 ## Special settings for fvtests
 # Location of fvtest framework
-OMR_GTEST_DIR := $(top_srcdir)/third_party/gtest-1.8.0
+OMR_GTEST_DIR := $(top_srcdir)/third_party/gtest-1.12.0
 OMR_GTEST_INCLUDES := $(OMR_GTEST_DIR) $(OMR_GTEST_DIR)/include $(top_srcdir)/fvtest/omrGtestGlue
 OMR_PUGIXML_DIR := $(top_srcdir)/third_party/pugixml-1.5
 

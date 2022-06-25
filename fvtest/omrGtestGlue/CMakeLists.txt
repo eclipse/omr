@@ -25,10 +25,10 @@ omr_add_library(omrGtest STATIC
 
 target_include_directories(omrGtest
 	PRIVATE
-		${PROJECT_SOURCE_DIR}/third_party/gtest-1.8.0/
-		${PROJECT_SOURCE_DIR}/third_party/gtest-1.8.0/src
+		${PROJECT_SOURCE_DIR}/third_party/gtest-1.12.0/
+		${PROJECT_SOURCE_DIR}/third_party/gtest-1.12.0/src
 	PUBLIC
-		${PROJECT_SOURCE_DIR}/third_party/gtest-1.8.0/include
+		${PROJECT_SOURCE_DIR}/third_party/gtest-1.12.0/include
 )
 
 # MSVC throws a bunch of warnings (STL4002)about the TR1 namespace on gtest headers
