@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,7 +124,7 @@ TEST_P(Int8ToInt32, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int8ToInt32, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int8ToInt32, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int8_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int8_t)>("b2i", b2i)
@@ -181,7 +181,7 @@ TEST_P(UInt8ToInt32, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, UInt8ToInt32, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, UInt8ToInt32, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<uint8_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(uint8_t)>("bu2i", bu2i)
@@ -238,7 +238,7 @@ TEST_P(Int8ToInt64, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int8ToInt64, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int8ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int8_t>()),
     ::testing::Values(
         std::tuple<const char*, int64_t(*)(int8_t)>("b2l", b2l)
@@ -295,7 +295,7 @@ TEST_P(UInt8ToInt64, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, UInt8ToInt64, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, UInt8ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<uint8_t>()),
     ::testing::Values(
         std::tuple<const char*, int64_t(*)(uint8_t)>("bu2l", bu2l)
@@ -352,7 +352,7 @@ TEST_P(Int16ToInt32, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int16ToInt32, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int16ToInt32, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int16_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int16_t)>("s2i", s2i)
@@ -409,7 +409,7 @@ TEST_P(UInt16ToInt32, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, UInt16ToInt32, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, UInt16ToInt32, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<uint16_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(uint16_t)>("su2i", su2i)
@@ -466,7 +466,7 @@ TEST_P(Int16ToInt64, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int16ToInt64, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int16ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int16_t>()),
     ::testing::Values(
         std::tuple<const char*, int64_t(*)(int16_t)>("s2l", s2l)
@@ -523,7 +523,7 @@ TEST_P(UInt16ToInt64, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, UInt16ToInt64, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, UInt16ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<uint16_t>()),
     ::testing::Values(
         std::tuple<const char*, int64_t(*)(uint16_t)>("su2l", su2l)
@@ -579,7 +579,7 @@ TEST_P(Int32ToInt64, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int32ToInt64, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int32ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int32_t>()),
     ::testing::Values(
         std::tuple<const char*, int64_t(*)(int32_t)>("i2l", i2l)
@@ -637,7 +637,7 @@ TEST_P(UInt32ToInt64, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, UInt32ToInt64, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, UInt32ToInt64, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<uint32_t>()),
     ::testing::Values(
         std::tuple<const char*, int64_t(*)(uint32_t)>("iu2l", iu2l)
@@ -697,7 +697,7 @@ TEST_P(Int64ToInt32, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int64ToInt32, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int64ToInt32, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int64_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int64_t)>("l2i", l2i)
@@ -770,7 +770,7 @@ TEST_P(Int32ToFloat, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int32ToFloat, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int32ToFloat, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int32_t>()),
     ::testing::Values(
         std::tuple<const char*, float(*)(int32_t)>("i2f", i2f)
@@ -826,7 +826,7 @@ TEST_P(Int64ToFloat, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int64ToFloat, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int64ToFloat, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int64_t>()),
     ::testing::Values(
         std::tuple<const char*, float(*)(int64_t)>("l2f", l2f)
@@ -882,7 +882,7 @@ TEST_P(Int32ToDouble, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int32ToDouble, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int32ToDouble, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int32_t>()),
     ::testing::Values(
         std::tuple<const char*, double(*)(int32_t)>("i2d", i2d)
@@ -938,7 +938,7 @@ TEST_P(Int64ToDouble, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int64ToDouble, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int64ToDouble, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int64_t>()),
     ::testing::Values(
         std::tuple<const char*, double(*)(int64_t)>("l2d", l2d)
@@ -1039,7 +1039,7 @@ TEST_P(FloatToInt32, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, FloatToInt32, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, FloatToInt32, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<float>(), fp_filter<float, int32_t>)),
     ::testing::Values(
@@ -1101,7 +1101,7 @@ TEST_P(FloatToInt64, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, FloatToInt64, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, FloatToInt64, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<float>(), fp_filter<float, int64_t>)),
     ::testing::Values(
@@ -1163,7 +1163,7 @@ TEST_P(DoubleToInt32, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, DoubleToInt32, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, DoubleToInt32, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<double>(), fp_filter<double, int32_t>)),
     ::testing::Values(
@@ -1225,7 +1225,7 @@ TEST_P(DoubleToInt64, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, DoubleToInt64, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, DoubleToInt64, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<double>(), fp_filter<double, int64_t>)),
     ::testing::Values(
@@ -1310,7 +1310,7 @@ TEST_P(FloatToDouble, UsingLoadParam) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, FloatToDouble, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, FloatToDouble, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<float>(), smallFp_filter<float>)),
     ::testing::Values(
@@ -1380,7 +1380,7 @@ TEST_P(DoubleToFloat, UsingLoadParam) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, DoubleToFloat, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, DoubleToFloat, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<double>(), smallFp_filter<double>)),
     ::testing::Values(
@@ -1525,7 +1525,7 @@ TEST_P(FloatNormalizeNan, UsingLoadConst) {
     ASSERT_EQ(normalize_fnan(value), entry_point());
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, FloatNormalizeNan, ::testing::ValuesIn(normalize_fnan_values()));
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, FloatNormalizeNan, ::testing::ValuesIn(normalize_fnan_values()));
 
 class DoubleNormalizeNan : public NormalizeNanTest<uint64_t> {};
 
@@ -1608,7 +1608,7 @@ TEST_P(DoubleNormalizeNan, UsingLoadConst) {
     ASSERT_EQ(normalize_dnan(value), entry_point());
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, DoubleNormalizeNan, ::testing::ValuesIn(normalize_dnan_values()));
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, DoubleNormalizeNan, ::testing::ValuesIn(normalize_dnan_values()));
 
 float ibits2f(int32_t x) {
     float f;
@@ -1669,7 +1669,7 @@ TEST_P(Int32BitsToFloat, UsingLoadParam) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int32BitsToFloat, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int32BitsToFloat, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int32_t>()),
     ::testing::Values(
         std::tuple<const char*, float(*)(int32_t)>("ibits2f", ibits2f) )));
@@ -1737,7 +1737,7 @@ TEST_P(FloatBitsToInt32, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, FloatBitsToInt32, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, FloatBitsToInt32, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<float>(), smallFp_filter<float>)),
     ::testing::Values(
@@ -1807,7 +1807,7 @@ TEST_P(Int64BitsToDouble, UsingLoadParam) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, Int64BitsToDouble, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, Int64BitsToDouble, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int64_t>()),
     ::testing::Values(
         std::tuple<const char*, double(*)(int64_t)>("lbits2d", lbits2d) )));
@@ -1874,7 +1874,7 @@ TEST_P(DoubleBitsToInt64, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(TypeConversionTest, DoubleBitsToInt64, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(TypeConversionTest, DoubleBitsToInt64, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_values<double>(), smallFp_filter<double>)),
     ::testing::Values(

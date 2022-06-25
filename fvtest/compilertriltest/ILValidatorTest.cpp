@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ TEST_P(IllformedTrees, FailCompilation) {
 }
 
 #ifdef OMR_ENV_DATA64
-INSTANTIATE_TEST_CASE_P(ILValidatorTest, IllformedTrees, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ILValidatorTest, IllformedTrees, ::testing::Values(
     "(method return=Int32 (block (ireturn (iadd (iconst 1) (sconst 3)))))",
     "(method return=Int32 (block (ireturn (sadd (iconst 1) (iconst 3)))))",
     "(method return=Address (block (areturn (aiadd (aconst 4) (lconst 1)))))",
@@ -60,7 +60,7 @@ INSTANTIATE_TEST_CASE_P(ILValidatorTest, IllformedTrees, ::testing::Values(
 #endif
 
 #ifdef OMR_ENV_DATA32
-INSTANTIATE_TEST_CASE_P(ILValidatorTest, IllformedTrees, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ILValidatorTest, IllformedTrees, ::testing::Values(
     "(method return=Int32 (block (ireturn (iadd (iconst 1) (sconst 3)))))",
     "(method return=Int32 (block (ireturn (sadd (iconst 1) (iconst 3)))))",
     "(method return=Address (block (areturn (aiadd (aconst 4) (lconst 1)))))",
@@ -95,7 +95,7 @@ TEST_P(WellformedTrees, CompileOnly) {
     ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly";
 }
 
-INSTANTIATE_TEST_CASE_P(ILValidatorTest, WellformedTrees, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ILValidatorTest, WellformedTrees, ::testing::Values(
     "(method return=Int32 (block (ireturn (iconst 3))))",
     "(method return=Int32 (block (ireturn (s2i (sconst 3)))))",
     "(method return=Int32 (block (ireturn (iadd (iconst 1) (iconst 3)))))",
@@ -165,7 +165,7 @@ TEST_P(CommoningTest, CommoningWithinBlock)
    ASSERT_EQ(1, entry_point(std::get<0>(param), std::get<1>(param)));
    }
 
-INSTANTIATE_TEST_CASE_P(CommoningValidationTest, CommoningTest,
+INSTANTIATE_TEST_SUITE_P(CommoningValidationTest, CommoningTest,
   ::testing::ValuesIn(TRTest::const_value_pairs<int32_t, int32_t>()));
 
 class InvalidCommoningTest : public TRTest::JitTest {};

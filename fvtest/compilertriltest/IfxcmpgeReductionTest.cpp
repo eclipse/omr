@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,7 +129,7 @@ TEST_P(Int8ReductionTest, Reduction)
    ASSERT_EQ(param.oracle(param.val1, param.val2), entry_point(param.val1));
    }
 
-INSTANTIATE_TEST_CASE_P(IfxcmpgeReductionTest, Int8ReductionTest,
+INSTANTIATE_TEST_SUITE_P(IfxcmpgeReductionTest, Int8ReductionTest,
         ::testing::Combine(
             ::testing::ValuesIn(TRTest::const_values<int8_t>()),
             ::testing::ValuesIn(TRTest::const_values<int8_t>()),
@@ -176,7 +176,7 @@ TEST_P(UInt8ReductionTest, Reduction)
    ASSERT_EQ(param.oracle(param.val1, param.val2), entry_point(param.val1));
    }
 
-INSTANTIATE_TEST_CASE_P(IfxcmpgeReductionTest, UInt8ReductionTest,
+INSTANTIATE_TEST_SUITE_P(IfxcmpgeReductionTest, UInt8ReductionTest,
         ::testing::Combine(
             ::testing::ValuesIn(TRTest::const_values<uint8_t>()),
             ::testing::ValuesIn(TRTest::const_values<uint8_t>()),
@@ -223,7 +223,7 @@ TEST_P(Int16ReductionTest, Reduction)
    ASSERT_EQ(param.oracle(param.val1, param.val2), entry_point(param.val1));
    }
 
-INSTANTIATE_TEST_CASE_P(IfxcmpgeReductionTest, Int16ReductionTest,
+INSTANTIATE_TEST_SUITE_P(IfxcmpgeReductionTest, Int16ReductionTest,
         ::testing::Combine(
             ::testing::ValuesIn(TRTest::const_values<int16_t>()),
             ::testing::ValuesIn(TRTest::const_values<int16_t>()),
@@ -270,7 +270,7 @@ TEST_P(UInt16ReductionTest, Reduction)
    ASSERT_EQ(param.oracle(param.val1, param.val2), entry_point(param.val1));
    }
 
-INSTANTIATE_TEST_CASE_P(IfxcmpgeReductionTest, UInt16ReductionTest,
+INSTANTIATE_TEST_SUITE_P(IfxcmpgeReductionTest, UInt16ReductionTest,
         ::testing::Combine(
             ::testing::ValuesIn(TRTest::const_values<uint16_t>()),
             ::testing::ValuesIn(TRTest::const_values<uint16_t>()),
@@ -313,7 +313,7 @@ TEST_P(Int32ReductionTest, Reduction)
    ASSERT_EQ(param.oracle(param.val1, param.val2), entry_point(param.val1));
    }
 
-INSTANTIATE_TEST_CASE_P(IfxcmpgeReductionTest, Int32ReductionTest,
+INSTANTIATE_TEST_SUITE_P(IfxcmpgeReductionTest, Int32ReductionTest,
         ::testing::Combine(
             ::testing::ValuesIn(TRTest::const_values<int32_t>()),
             ::testing::ValuesIn(TRTest::const_values<int32_t>()),
@@ -356,7 +356,7 @@ TEST_P(UInt32ReductionTest, Reduction)
    ASSERT_EQ(param.oracle(param.val1, param.val2), entry_point(param.val1));
    }
 
-INSTANTIATE_TEST_CASE_P(IfxcmpgeReductionTest, UInt32ReductionTest,
+INSTANTIATE_TEST_SUITE_P(IfxcmpgeReductionTest, UInt32ReductionTest,
         ::testing::Combine(
             ::testing::ValuesIn(TRTest::const_values<uint32_t>()),
             ::testing::ValuesIn(TRTest::const_values<uint32_t>()),
@@ -399,7 +399,7 @@ TEST_P(Int64ReductionTest, Reduction)
    ASSERT_EQ(param.oracle(param.val1, param.val2), entry_point(param.val1));
    }
 
-INSTANTIATE_TEST_CASE_P(IfxcmpgeReductionTest, Int64ReductionTest,
+INSTANTIATE_TEST_SUITE_P(IfxcmpgeReductionTest, Int64ReductionTest,
         ::testing::Combine(
             ::testing::ValuesIn(TRTest::const_values<int64_t>()),
             ::testing::ValuesIn(TRTest::const_values<int64_t>()),
@@ -442,7 +442,7 @@ TEST_P(UInt64ReductionTest, Reduction)
    ASSERT_EQ(param.oracle(param.val1, param.val2), entry_point(param.val1));
    }
 
-INSTANTIATE_TEST_CASE_P(IfxcmpgeReductionTest, UInt64ReductionTest,
+INSTANTIATE_TEST_SUITE_P(IfxcmpgeReductionTest, UInt64ReductionTest,
         ::testing::Combine(
             ::testing::ValuesIn(TRTest::const_values<uint64_t>()),
             ::testing::ValuesIn(TRTest::const_values<uint64_t>()),

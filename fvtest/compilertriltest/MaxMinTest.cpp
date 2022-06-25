@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,7 +127,7 @@ TEST_P(Int32MaxMin, UsingLoadParam) {
 }
 
 
-INSTANTIATE_TEST_CASE_P(MaxMin, Int32MaxMin, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(MaxMin, Int32MaxMin, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int32_t, int32_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("imax", imax),
@@ -188,7 +188,7 @@ TEST_P(Int64MaxMin, UsingLoadParam) {
 }
 
 
-INSTANTIATE_TEST_CASE_P(MaxMin, Int64MaxMin, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(MaxMin, Int64MaxMin, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int64_t, int64_t>()),
     ::testing::Values(
         std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lmax", lmax),
@@ -265,7 +265,7 @@ TEST_P(FloatMaxMin, UsingLoadParam) {
 }
 
 
-INSTANTIATE_TEST_CASE_P(MaxMin, FloatMaxMin, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(MaxMin, FloatMaxMin, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<float, float>(), smallFp_filter<float>)),
     ::testing::Values(
@@ -344,7 +344,7 @@ TEST_P(DoubleMaxMin, UsingLoadParam) {
 }
 
 
-INSTANTIATE_TEST_CASE_P(MaxMin, DoubleMaxMin, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(MaxMin, DoubleMaxMin, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<double, double>(), smallFp_filter<double>)),
     ::testing::Values(

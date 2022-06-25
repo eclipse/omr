@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,7 +128,7 @@ TEST_P(Int32Compare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, Int32Compare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, Int32Compare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int32_t, int32_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("icmpeq", icmpeq),
@@ -235,7 +235,7 @@ TEST_P(UInt32Compare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, UInt32Compare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, UInt32Compare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<uint32_t, uint32_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(uint32_t, uint32_t)>("iucmpgt", iucmpgt),
@@ -352,7 +352,7 @@ TEST_P(Int64Compare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, Int64Compare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, Int64Compare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int64_t, int64_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int64_t, int64_t)>("lcmpeq", lcmpeq),
@@ -461,7 +461,7 @@ TEST_P(UInt64Compare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, UInt64Compare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, UInt64Compare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<uint64_t, uint64_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(uint64_t, uint64_t)>("lucmpgt", lucmpgt),
@@ -555,7 +555,7 @@ TEST_P(Int32IfCompare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, Int32IfCompare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, Int32IfCompare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int32_t, int32_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ificmpeq", ificmpeq),
@@ -640,7 +640,7 @@ TEST_P(UInt32IfCompare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, UInt32IfCompare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, UInt32IfCompare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<uint32_t, uint32_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(uint32_t, uint32_t)>("ifiucmplt", ifiucmplt),
@@ -731,7 +731,7 @@ TEST_P(Int64IfCompare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, Int64IfCompare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, Int64IfCompare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int64_t, int64_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int64_t, int64_t)>("iflcmpeq", iflcmpeq),
@@ -816,7 +816,7 @@ TEST_P(UInt64IfCompare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, UInt64IfCompare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, UInt64IfCompare, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<uint64_t, uint64_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(uint64_t, uint64_t)>("iflucmplt", iflucmplt),
@@ -978,7 +978,7 @@ TEST_P(FloatCompare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, FloatCompare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, FloatCompare, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<float, float>(), smallFp_filter<float>)),
     ::testing::Values(
@@ -1136,7 +1136,7 @@ TEST_P(DoubleCompare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, DoubleCompare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, DoubleCompare, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<double, double>(), smallFp_filter<double>)),
     ::testing::Values(
@@ -1260,7 +1260,7 @@ TEST_P(FloatIfCompare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, FloatIfCompare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, FloatIfCompare, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<float, float>(), smallFp_filter<float>)),
     ::testing::Values(
@@ -1382,7 +1382,7 @@ TEST_P(DoubleIfCompare, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, DoubleIfCompare, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, DoubleIfCompare, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<double, double>(), smallFp_filter<double>)),
     ::testing::Values(
@@ -1529,7 +1529,7 @@ TEST_P(FloatCompareOrUnordered, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, FloatCompareOrUnordered, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, FloatCompareOrUnordered, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<float, float>(), smallFp_filter<float>)),
     ::testing::Values(
@@ -1676,7 +1676,7 @@ TEST_P(DoubleCompareOrUnordered, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, DoubleCompareOrUnordered, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, DoubleCompareOrUnordered, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<double, double>(), smallFp_filter<double>)),
     ::testing::Values(
@@ -1794,7 +1794,7 @@ TEST_P(FloatIfCompareOrUnordered, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, FloatIfCompareOrUnordered, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, FloatIfCompareOrUnordered, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<float, float>(), smallFp_filter<float>)),
     ::testing::Values(
@@ -1911,7 +1911,7 @@ TEST_P(DoubleIfCompareOrUnordered, UsingLoadParam) {
     ASSERT_EQ(exp, act);
 }
 
-INSTANTIATE_TEST_CASE_P(CompareTest, DoubleIfCompareOrUnordered, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(CompareTest, DoubleIfCompareOrUnordered, ::testing::Combine(
     ::testing::ValuesIn(
         TRTest::filter(TRTest::const_value_pairs<double, double>(), smallFp_filter<double>)),
     ::testing::Values(

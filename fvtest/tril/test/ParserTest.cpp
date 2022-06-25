@@ -41,7 +41,7 @@ TEST_P(SingleNodeWithName, VerifyNode) {
     ASSERT_EQ(reinterpret_cast<ASTNode*>(NULL), trees->next);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ParserTest,
     SingleNodeWithName,
     testing::Values(
@@ -123,7 +123,7 @@ TEST_P(SingleNodeWithIntArg, VerifyNode) {
     ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ParserTestSingleNodeWithIntArgAsDecValue,
     SingleNodeWithIntArg,
     testing::Values(
@@ -134,7 +134,7 @@ INSTANTIATE_TEST_CASE_P(
         TestParamWithExpectedResultInt("(nodeName 18446744073709551615)", 18446744073709551615ULL)
 ));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ParserTestSingleNodeWithIntArgAsHexValue,
     SingleNodeWithIntArg,
     testing::Values(
@@ -163,7 +163,7 @@ TEST_P(SingleNodeWithFloatArg, VerifyNode) {
     ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ParserTest,
     SingleNodeWithFloatArg,
     testing::Values(
@@ -206,7 +206,7 @@ TEST_P(SingleNodeWithUnnamedArg, VerifyNode) {
     ASSERT_EQ(reinterpret_cast<ASTNodeArg*>(NULL), arg->next);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ParserTest,
     SingleNodeWithUnnamedArg,
     testing::Values(

@@ -1080,7 +1080,7 @@ TEST_P(PPCFenceEncodingTest, testEntryRelative32Bit) {
  * and rlwinm), it is not possible to fully automate this process.
  */
 
-INSTANTIATE_TEST_CASE_P(Special, PPCDirectEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Special, PPCDirectEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::assocreg, TRTest::BinaryInstruction(), false),
     std::make_tuple(TR::InstOpCode::bad,      TRTest::BinaryInstruction("00000000"), false),
     std::make_tuple(TR::InstOpCode::isync,    TRTest::BinaryInstruction("4c00012c"), false),
@@ -1090,19 +1090,19 @@ INSTANTIATE_TEST_CASE_P(Special, PPCDirectEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::pnop,     TRTest::BinaryInstruction("0700000000000000"), true)
 ));
 
-INSTANTIATE_TEST_CASE_P(Special, PPCLabelEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Special, PPCLabelEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::label, -1, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(Special, PPCImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Special, PPCImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dd, 0x00000000u, TRTest::BinaryInstruction("00000000")),
     std::make_tuple(TR::InstOpCode::dd, 0xffffffffu, TRTest::BinaryInstruction("ffffffff")),
     std::make_tuple(TR::InstOpCode::dd, 0x12345678u, TRTest::BinaryInstruction("12345678"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Special, PPCFenceEncodingTest, ::testing::Values(0, 4, 8));
+INSTANTIATE_TEST_SUITE_P(Special, PPCFenceEncodingTest, ::testing::Values(0, 4, 8));
 
-INSTANTIATE_TEST_CASE_P(Special, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Special, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::assocreg, TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::dd,       TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::isync,    TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -1112,14 +1112,14 @@ INSTANTIATE_TEST_CASE_P(Special, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::nop,      TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(Branch, PPCDirectEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Branch, PPCDirectEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::bctr,  TRTest::BinaryInstruction("4e800420"), false),
     std::make_tuple(TR::InstOpCode::bctrl, TRTest::BinaryInstruction("4e800421"), false),
     std::make_tuple(TR::InstOpCode::blr,   TRTest::BinaryInstruction("4e800020"), false),
     std::make_tuple(TR::InstOpCode::blrl,  TRTest::BinaryInstruction("4e800021"), false)
 ));
 
-INSTANTIATE_TEST_CASE_P(Branch, PPCLabelEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Branch, PPCLabelEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::b,           0, TRTest::BinaryInstruction("48000000")),
     std::make_tuple(TR::InstOpCode::b,          -4, TRTest::BinaryInstruction("4bfffffc")),
     std::make_tuple(TR::InstOpCode::b,   0x1fffffc, TRTest::BinaryInstruction("49fffffc")),
@@ -1130,7 +1130,7 @@ INSTANTIATE_TEST_CASE_P(Branch, PPCLabelEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::bl, -0x2000000, TRTest::BinaryInstruction("4a000001"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Branch, PPCConditionalBranchEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, ssize_t, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(Branch, PPCConditionalBranchEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, ssize_t, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::beq,   TR::RealRegister::cr0,       0, TRTest::BinaryInstruction("41820000")),
     std::make_tuple(TR::InstOpCode::beq,   TR::RealRegister::cr0,      -4, TRTest::BinaryInstruction("4182fffc")),
     std::make_tuple(TR::InstOpCode::beq,   TR::RealRegister::cr7,  0x7ffc, TRTest::BinaryInstruction("419e7ffc")),
@@ -1201,7 +1201,7 @@ INSTANTIATE_TEST_CASE_P(Branch, PPCConditionalBranchEncodingTest, ::testing::Val
     std::make_tuple(TR::InstOpCode::bun,   TR::RealRegister::cr7, -0x8000, TRTest::BinaryInstruction("419f8000"))
 )));
 
-INSTANTIATE_TEST_CASE_P(Branch, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Branch, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::b,     TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::bctr,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::bctrl, TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -1230,7 +1230,7 @@ INSTANTIATE_TEST_CASE_P(Branch, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::bun,   TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(SprMove, PPCImm2EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(SprMove, PPCImm2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mtfsfi, 0x0, 0x0, TRTest::BinaryInstruction("fc01010c")),
     std::make_tuple(TR::InstOpCode::mtfsfi, 0xf, 0x0, TRTest::BinaryInstruction("fc01f10c")),
     std::make_tuple(TR::InstOpCode::mtfsfi, 0x0, 0xf, TRTest::BinaryInstruction("ff80010c")),
@@ -1238,7 +1238,7 @@ INSTANTIATE_TEST_CASE_P(SprMove, PPCImm2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mtfsfi, 0x0, 0x8, TRTest::BinaryInstruction("fc00010c"))
 ));
 
-INSTANTIATE_TEST_CASE_P(SprMove, PPCTrg1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(SprMove, PPCTrg1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mfcr,      TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c000026")),
     std::make_tuple(TR::InstOpCode::mfcr,      TR::RealRegister::gr31, TRTest::BinaryInstruction("7fe00026")),
     std::make_tuple(TR::InstOpCode::mfctr,     TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c0902a6")),
@@ -1253,12 +1253,12 @@ INSTANTIATE_TEST_CASE_P(SprMove, PPCTrg1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mftexasru, TR::RealRegister::gr31, TRTest::BinaryInstruction("7fe322a6"))
 ));
 
-INSTANTIATE_TEST_CASE_P(SprMove, PPCTrg1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(SprMove, PPCTrg1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mcrfs, TR::RealRegister::cr7, 0, TRTest::BinaryInstruction("ff800080")),
     std::make_tuple(TR::InstOpCode::mcrfs, TR::RealRegister::cr0, 7, TRTest::BinaryInstruction("fc1c0080"))
 ));
 
-INSTANTIATE_TEST_CASE_P(SprMove, PPCSrc1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(SprMove, PPCSrc1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mtctr,  TR::RealRegister::gr0,     0u, TRTest::BinaryInstruction("7c0903a6")),
     std::make_tuple(TR::InstOpCode::mtctr,  TR::RealRegister::gr31,    0u, TRTest::BinaryInstruction("7fe903a6")),
     std::make_tuple(TR::InstOpCode::mtfsf,  TR::RealRegister::fp0,  0xffu, TRTest::BinaryInstruction("fdfe058e")),
@@ -1271,7 +1271,7 @@ INSTANTIATE_TEST_CASE_P(SprMove, PPCSrc1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mtlr,   TR::RealRegister::gr31,    0u, TRTest::BinaryInstruction("7fe803a6"))
 ));
 
-INSTANTIATE_TEST_CASE_P(SprMove, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(SprMove, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mcrfs,     TR::InstOpCode::bad,      TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::mfcr,      TR::InstOpCode::bad,      TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::mfctr,     TR::InstOpCode::bad,      TRTest::BinaryInstruction()),
@@ -1287,7 +1287,7 @@ INSTANTIATE_TEST_CASE_P(SprMove, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mtlr,      TR::InstOpCode::bad,      TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(Trap, PPCSrc1EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, uint32_t, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(Trap, PPCSrc1EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, uint32_t, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::tdeqi,  TR::RealRegister::gr31, 0x00000000u, TRTest::BinaryInstruction("089f0000")),
     std::make_tuple(TR::InstOpCode::tdeqi,  TR::RealRegister::gr0,  0x00007fffu, TRTest::BinaryInstruction("08807fff")),
     std::make_tuple(TR::InstOpCode::tdeqi,  TR::RealRegister::gr31, 0xffff8000u, TRTest::BinaryInstruction("089f8000")),
@@ -1370,7 +1370,7 @@ INSTANTIATE_TEST_CASE_P(Trap, PPCSrc1EncodingTest, ::testing::ValuesIn(*TRTest::
     std::make_tuple(TR::InstOpCode::twneqi, TR::RealRegister::gr0,  0xffffffffu, TRTest::BinaryInstruction("0f00ffff"))
 )));
 
-INSTANTIATE_TEST_CASE_P(Trap, PPCSrc2EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Trap, PPCSrc2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::tdeq,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c9f0088")),
     std::make_tuple(TR::InstOpCode::tdeq,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c80f888")),
     std::make_tuple(TR::InstOpCode::tdge,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7d9f0088")),
@@ -1413,7 +1413,7 @@ INSTANTIATE_TEST_CASE_P(Trap, PPCSrc2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::twneq, TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7f00f808"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Trap, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Trap, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::tdeq,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::tdeqi,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::tdge,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -1456,7 +1456,7 @@ INSTANTIATE_TEST_CASE_P(Trap, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::twneqi, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(Arithmetic, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Arithmetic, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::addi,   TR::RealRegister::gr1,  TR::RealRegister::gr2,  0x00000000u, TRTest::BinaryInstruction("38220000")),
     std::make_tuple(TR::InstOpCode::addi,   TR::RealRegister::gr31, TR::RealRegister::gr0,  0x00007fffu, TRTest::BinaryInstruction("3be07fff")),
     std::make_tuple(TR::InstOpCode::addi,   TR::RealRegister::gr0,  TR::RealRegister::gr31, 0xffff8000u, TRTest::BinaryInstruction("381f8000")),
@@ -1479,7 +1479,7 @@ INSTANTIATE_TEST_CASE_P(Arithmetic, PPCTrg1Src1ImmEncodingTest, ::testing::Value
     std::make_tuple(TR::InstOpCode::subfic, TR::RealRegister::gr15, TR::RealRegister::gr16, 0xffffffffu, TRTest::BinaryInstruction("21f0ffff"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Arithmetic, PPCTrg1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Arithmetic, PPCTrg1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::li,  TR::RealRegister::gr31, 0x00000000u, TRTest::BinaryInstruction("3be00000")),
     std::make_tuple(TR::InstOpCode::li,  TR::RealRegister::gr0,  0x00007fffu, TRTest::BinaryInstruction("38007fff")),
     std::make_tuple(TR::InstOpCode::li,  TR::RealRegister::gr31, 0xffff8000u, TRTest::BinaryInstruction("3be08000")),
@@ -1490,7 +1490,7 @@ INSTANTIATE_TEST_CASE_P(Arithmetic, PPCTrg1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::lis, TR::RealRegister::gr0,  0xffffffffu, TRTest::BinaryInstruction("3c00ffff"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Arithmetic, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Arithmetic, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::addme,   TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe001d4")),
     std::make_tuple(TR::InstOpCode::addme,   TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c1f01d4")),
     std::make_tuple(TR::InstOpCode::addmeo,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe005d4")),
@@ -1513,7 +1513,7 @@ INSTANTIATE_TEST_CASE_P(Arithmetic, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::subfzeo, TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c1f0590"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Arithmetic, PPCTrg1Src2EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(Arithmetic, PPCTrg1Src2EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::add,    TR::RealRegister::gr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe00214")),
     std::make_tuple(TR::InstOpCode::add,    TR::RealRegister::gr0,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c1f0214")),
     std::make_tuple(TR::InstOpCode::add,    TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00fa14")),
@@ -1609,14 +1609,14 @@ INSTANTIATE_TEST_CASE_P(Arithmetic, PPCTrg1Src2EncodingTest, ::testing::ValuesIn
     std::make_tuple(TR::InstOpCode::subfeo, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00fd10"))
 )));
 
-INSTANTIATE_TEST_CASE_P(Arithmetic, PPCTrg1Src3EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Arithmetic, PPCTrg1Src3EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::maddld, TR::RealRegister::gr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("13e00033")),
     std::make_tuple(TR::InstOpCode::maddld, TR::RealRegister::gr0,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("101f0033")),
     std::make_tuple(TR::InstOpCode::maddld, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("1000f833")),
     std::make_tuple(TR::InstOpCode::maddld, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("100007f3"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Arithmetic, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Arithmetic, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::add,     TR::InstOpCode::add_r,     TRTest::BinaryInstruction("00000001")),
     std::make_tuple(TR::InstOpCode::addc,    TR::InstOpCode::addc_r,    TRTest::BinaryInstruction("00000001")),
     std::make_tuple(TR::InstOpCode::addco,   TR::InstOpCode::addco_r,   TRTest::BinaryInstruction("00000001")),
@@ -1668,7 +1668,7 @@ INSTANTIATE_TEST_CASE_P(Arithmetic, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::subfzeo, TR::InstOpCode::subfzeo_r, TRTest::BinaryInstruction("00000001"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Comparison, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Comparison, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::cmpi4,  TR::RealRegister::cr1, TR::RealRegister::gr2,  0x00000000u, TRTest::BinaryInstruction("2c820000")),
     std::make_tuple(TR::InstOpCode::cmpi4,  TR::RealRegister::cr7, TR::RealRegister::gr0,  0x00007fffu, TRTest::BinaryInstruction("2f807fff")),
     std::make_tuple(TR::InstOpCode::cmpi4,  TR::RealRegister::cr0, TR::RealRegister::gr31, 0xffff8000u, TRTest::BinaryInstruction("2c1f8000")),
@@ -1687,7 +1687,7 @@ INSTANTIATE_TEST_CASE_P(Comparison, PPCTrg1Src1ImmEncodingTest, ::testing::Value
     std::make_tuple(TR::InstOpCode::cmpli8, TR::RealRegister::cr3, TR::RealRegister::gr16, 0x0000ffffu, TRTest::BinaryInstruction("29b0ffff"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Comparison, PPCTrg1Src2EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Comparison, PPCTrg1Src2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::cmp4,   TR::RealRegister::cr7, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7f800000")),
     std::make_tuple(TR::InstOpCode::cmp4,   TR::RealRegister::cr0, TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c1f0000")),
     std::make_tuple(TR::InstOpCode::cmp4,   TR::RealRegister::cr0, TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00f800")),
@@ -1711,7 +1711,7 @@ INSTANTIATE_TEST_CASE_P(Comparison, PPCTrg1Src2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::fcmpu,  TR::RealRegister::cr0, TR::RealRegister::fp0,  TR::RealRegister::fp31, TRTest::BinaryInstruction("fc00f800"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Comparison, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Comparison, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::cmprb, TR::RealRegister::cr7, TR::RealRegister::gr0,  TR::RealRegister::gr0,  0, TRTest::BinaryInstruction("7f800180")),
     std::make_tuple(TR::InstOpCode::cmprb, TR::RealRegister::cr0, TR::RealRegister::gr31, TR::RealRegister::gr0,  0, TRTest::BinaryInstruction("7c1f0180")),
     std::make_tuple(TR::InstOpCode::cmprb, TR::RealRegister::cr0, TR::RealRegister::gr0,  TR::RealRegister::gr31, 0, TRTest::BinaryInstruction("7c00f980")),
@@ -1720,7 +1720,7 @@ INSTANTIATE_TEST_CASE_P(Comparison, PPCTrg1Src2ImmEncodingTest, ::testing::Value
     std::make_tuple(TR::InstOpCode::cmprb, TR::RealRegister::cr0, TR::RealRegister::gr0,  TR::RealRegister::gr31, 1, TRTest::BinaryInstruction("7c20f980"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Comparison, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Comparison, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::cmp4,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::cmp8,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::cmpi4,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -1734,14 +1734,14 @@ INSTANTIATE_TEST_CASE_P(Comparison, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::fcmpu,  TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ConditionLogic, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mcrf, TR::RealRegister::cr7,  TR::RealRegister::cr0, TRTest::BinaryInstruction("4f800000")),
     std::make_tuple(TR::InstOpCode::mcrf, TR::RealRegister::cr0,  TR::RealRegister::cr7, TRTest::BinaryInstruction("4c1c0000")),
     std::make_tuple(TR::InstOpCode::setb, TR::RealRegister::gr31, TR::RealRegister::cr0, TRTest::BinaryInstruction("7fe00100")),
     std::make_tuple(TR::InstOpCode::setb, TR::RealRegister::gr0,  TR::RealRegister::cr7, TRTest::BinaryInstruction("7c1c0100"))
 ));
 
-INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCSrc1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ConditionLogic, PPCSrc1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mtcr,   TR::RealRegister::gr0,      0, TRTest::BinaryInstruction("7c0ff120")),
     std::make_tuple(TR::InstOpCode::mtcr,   TR::RealRegister::gr31,     0, TRTest::BinaryInstruction("7feff120")),
     std::make_tuple(TR::InstOpCode::mtocrf, TR::RealRegister::gr0,  0x01u, TRTest::BinaryInstruction("7c101120")),
@@ -1750,14 +1750,14 @@ INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCSrc1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mtocrf, TR::RealRegister::gr31, 0x80u, TRTest::BinaryInstruction("7ff80120"))
 ));
 
-INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCTrg1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ConditionLogic, PPCTrg1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mfocrf, TR::RealRegister::gr0,  0x01u, TRTest::BinaryInstruction("7c101026")),
     std::make_tuple(TR::InstOpCode::mfocrf, TR::RealRegister::gr31, 0x01u, TRTest::BinaryInstruction("7ff01026")),
     std::make_tuple(TR::InstOpCode::mfocrf, TR::RealRegister::gr0,  0x80u, TRTest::BinaryInstruction("7c180026")),
     std::make_tuple(TR::InstOpCode::mfocrf, TR::RealRegister::gr31, 0x80u, TRTest::BinaryInstruction("7ff80026"))
 ));
 
-INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ConditionLogic, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::setbc,   TR::RealRegister::gr31, TR::RealRegister::cr0, TR::RealRegister::CRCC_LT, TRTest::BinaryInstruction("7fe00300")),
     std::make_tuple(TR::InstOpCode::setbc,   TR::RealRegister::gr0,  TR::RealRegister::cr7, TR::RealRegister::CRCC_LT, TRTest::BinaryInstruction("7c1c0300")),
     std::make_tuple(TR::InstOpCode::setbc,   TR::RealRegister::gr0,  TR::RealRegister::cr0, TR::RealRegister::CRCC_GT, TRTest::BinaryInstruction("7c010300")),
@@ -1780,7 +1780,7 @@ INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCTrg1Src1ImmEncodingTest, ::testing::V
     std::make_tuple(TR::InstOpCode::setnbcr, TR::RealRegister::gr0,  TR::RealRegister::cr0, TR::RealRegister::CRCC_FU, TRTest::BinaryInstruction("7c0303c0"))
 ));
 
-INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCTrg1Src3EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ConditionLogic, PPCTrg1Src3EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::iseleq, TR::RealRegister::gr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::cr0, TRTest::BinaryInstruction("7fe0009e")),
     std::make_tuple(TR::InstOpCode::iseleq, TR::RealRegister::gr0,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TR::RealRegister::cr0, TRTest::BinaryInstruction("7c1f009e")),
     std::make_tuple(TR::InstOpCode::iseleq, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TR::RealRegister::cr0, TRTest::BinaryInstruction("7c00f89e")),
@@ -1804,7 +1804,7 @@ INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCTrg1Src3EncodingTest, ::testing::Valu
 #define CR_RB(cond) (TR::RealRegister::CRCC_ ## cond << TR::RealRegister::pos_RB)
 #define CR_TEST_ALL (CR_RT(LT) | CR_RA(GT) | CR_RB(EQ))
 
-INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCTrg1Src2ImmEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, uint64_t, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(ConditionLogic, PPCTrg1Src2ImmEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, uint64_t, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::crand,  TR::RealRegister::cr7, TR::RealRegister::cr0, TR::RealRegister::cr0, 0,           TRTest::BinaryInstruction("4f800202")),
     std::make_tuple(TR::InstOpCode::crand,  TR::RealRegister::cr0, TR::RealRegister::cr7, TR::RealRegister::cr0, 0,           TRTest::BinaryInstruction("4c1c0202")),
     std::make_tuple(TR::InstOpCode::crand,  TR::RealRegister::cr0, TR::RealRegister::cr0, TR::RealRegister::cr7, 0,           TRTest::BinaryInstruction("4c00e202")),
@@ -1863,7 +1863,7 @@ INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCTrg1Src2ImmEncodingTest, ::testing::V
     std::make_tuple(TR::InstOpCode::crxor,  TR::RealRegister::cr1, TR::RealRegister::cr2, TR::RealRegister::cr3, CR_TEST_ALL, TRTest::BinaryInstruction("4c897182"))
 )));
 
-INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ConditionLogic, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::crand,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::crandc, TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::creqv,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -1879,7 +1879,7 @@ INSTANTIATE_TEST_CASE_P(ConditionLogic, PPCRecordFormSanityTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::setb,   TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(Bitwise, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Bitwise, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::andi_r,  TR::RealRegister::gr1,  TR::RealRegister::gr2,  0x00000000u, TRTest::BinaryInstruction("70410000")),
     std::make_tuple(TR::InstOpCode::andi_r,  TR::RealRegister::gr31, TR::RealRegister::gr0,  0x00007fffu, TRTest::BinaryInstruction("701f7fff")),
     std::make_tuple(TR::InstOpCode::andi_r,  TR::RealRegister::gr0,  TR::RealRegister::gr31, 0x00008000u, TRTest::BinaryInstruction("73e08000")),
@@ -1906,7 +1906,7 @@ INSTANTIATE_TEST_CASE_P(Bitwise, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xoris,   TR::RealRegister::gr15, TR::RealRegister::gr16, 0x0000ffffu, TRTest::BinaryInstruction("6e0fffff"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Bitwise, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Bitwise, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::brd,   TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c1f0176")),
     std::make_tuple(TR::InstOpCode::brd,   TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7fe00176")),
     std::make_tuple(TR::InstOpCode::brh,   TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c1f01b6")),
@@ -1923,7 +1923,7 @@ INSTANTIATE_TEST_CASE_P(Bitwise, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mr,    TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("63e00000"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Bitwise, PPCTrg1Src2EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Bitwise, PPCTrg1Src2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::AND,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c1f0038")),
     std::make_tuple(TR::InstOpCode::AND,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe00038")),
     std::make_tuple(TR::InstOpCode::AND,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00f838")),
@@ -1950,7 +1950,7 @@ INSTANTIATE_TEST_CASE_P(Bitwise, PPCTrg1Src2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::XOR,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00fa78"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Bitwise, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Bitwise, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::AND,   TR::InstOpCode::and_r,   TRTest::BinaryInstruction("00000001")),
     std::make_tuple(TR::InstOpCode::andc,  TR::InstOpCode::andc_r,  TRTest::BinaryInstruction("00000001")),
     std::make_tuple(TR::InstOpCode::bad,   TR::InstOpCode::andi_r,  TRTest::BinaryInstruction()),
@@ -1972,7 +1972,7 @@ INSTANTIATE_TEST_CASE_P(Bitwise, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xoris, TR::InstOpCode::bad,     TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(BitCounting, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(BitCounting, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::cntlzd,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c1f0074")),
     std::make_tuple(TR::InstOpCode::cntlzd,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7fe00074")),
     std::make_tuple(TR::InstOpCode::cntlzw,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c1f0034")),
@@ -1983,14 +1983,14 @@ INSTANTIATE_TEST_CASE_P(BitCounting, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::popcntw, TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7fe002f4"))
 ));
 
-INSTANTIATE_TEST_CASE_P(BitCounting, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(BitCounting, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::cntlzd,  TR::InstOpCode::cntlzd_r, TRTest::BinaryInstruction("00000001")),
     std::make_tuple(TR::InstOpCode::cntlzw,  TR::InstOpCode::cntlzw_r, TRTest::BinaryInstruction("00000001")),
     std::make_tuple(TR::InstOpCode::popcntd, TR::InstOpCode::bad,      TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::popcntw, TR::InstOpCode::bad,      TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotate, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotate, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::extswsli, TR::RealRegister::gr1,  TR::RealRegister::gr2,   0u, TRTest::BinaryInstruction("7c4106f4")),
     std::make_tuple(TR::InstOpCode::extswsli, TR::RealRegister::gr31, TR::RealRegister::gr0,  20u, TRTest::BinaryInstruction("7c1fa6f4")),
     std::make_tuple(TR::InstOpCode::extswsli, TR::RealRegister::gr0,  TR::RealRegister::gr31, 63u, TRTest::BinaryInstruction("7fe0fef6")),
@@ -2005,7 +2005,7 @@ INSTANTIATE_TEST_CASE_P(ShiftAndRotate, PPCTrg1Src1ImmEncodingTest, ::testing::V
     std::make_tuple(TR::InstOpCode::srawi,    TR::RealRegister::gr15, TR::RealRegister::gr16, 16u, TRTest::BinaryInstruction("7e0f8670"))
 ));
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotate, PPCTrg1Src1Imm2EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotate, PPCTrg1Src1Imm2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::rldic,  TR::RealRegister::gr31, TR::RealRegister::gr0,   0u, 0xffffffffffffffffull, TRTest::BinaryInstruction("781f0008")),
     std::make_tuple(TR::InstOpCode::rldic,  TR::RealRegister::gr0,  TR::RealRegister::gr31,  0u, 0xffffffffffffffffull, TRTest::BinaryInstruction("7be00008")),
     std::make_tuple(TR::InstOpCode::rldic,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  63u, 0x8000000000000000ull, TRTest::BinaryInstruction("7800f80a")),
@@ -2058,7 +2058,7 @@ INSTANTIATE_TEST_CASE_P(ShiftAndRotate, PPCTrg1Src1Imm2EncodingTest, ::testing::
     std::make_tuple(TR::InstOpCode::rlwinm, TR::RealRegister::gr0,  TR::RealRegister::gr0,   0u, 0x00000000ff0000ffull, TRTest::BinaryInstruction("5400060e"))
 ));
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotate, PPCTrg1Src2EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotate, PPCTrg1Src2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::sld,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c1f0036")),
     std::make_tuple(TR::InstOpCode::sld,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe00036")),
     std::make_tuple(TR::InstOpCode::sld,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00f836")),
@@ -2079,7 +2079,7 @@ INSTANTIATE_TEST_CASE_P(ShiftAndRotate, PPCTrg1Src2EncodingTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::srw,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00fc30"))
 ));
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotate, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotate, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::rldcl, TR::RealRegister::gr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  0xffffffffffffffffull, TRTest::BinaryInstruction("781f0010")),
     std::make_tuple(TR::InstOpCode::rldcl, TR::RealRegister::gr0,  TR::RealRegister::gr31, TR::RealRegister::gr0,  0xffffffffffffffffull, TRTest::BinaryInstruction("7be00010")),
     std::make_tuple(TR::InstOpCode::rldcl, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, 0xffffffffffffffffull, TRTest::BinaryInstruction("7800f810")),
@@ -2097,7 +2097,7 @@ INSTANTIATE_TEST_CASE_P(ShiftAndRotate, PPCTrg1Src2ImmEncodingTest, ::testing::V
     std::make_tuple(TR::InstOpCode::rlwnm, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  0x00000000ff0000ffull, TRTest::BinaryInstruction("5c00060e"))
 ));
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotate, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotate, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::extswsli, TR::InstOpCode::extswsli_r, TRTest::BinaryInstruction("00000001")),
     std::make_tuple(TR::InstOpCode::rldcl,    TR::InstOpCode::rldcl_r,    TRTest::BinaryInstruction("00000001")),
     std::make_tuple(TR::InstOpCode::rldic,    TR::InstOpCode::rldic_r,    TRTest::BinaryInstruction("00000001")),
@@ -2117,7 +2117,7 @@ INSTANTIATE_TEST_CASE_P(ShiftAndRotate, PPCRecordFormSanityTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::srw,      TR::InstOpCode::srw_r,      TRTest::BinaryInstruction("00000001"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VMX, PPCTrg1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::vspltisb, TR::RealRegister::vr31, 0x00000000u, TRTest::BinaryInstruction("13e0030c")),
     std::make_tuple(TR::InstOpCode::vspltisb, TR::RealRegister::vr0,  0x0000000fu, TRTest::BinaryInstruction("100f030c")),
     std::make_tuple(TR::InstOpCode::vspltisb, TR::RealRegister::vr15, 0xfffffff0u, TRTest::BinaryInstruction("11f0030c")),
@@ -2132,7 +2132,7 @@ INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::vspltisw, TR::RealRegister::vr16, 0xffffffffu, TRTest::BinaryInstruction("121f038c"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VMX, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::vspltb, TR::RealRegister::vr1,  TR::RealRegister::vr2,   0u, TRTest::BinaryInstruction("1020120c")),
     std::make_tuple(TR::InstOpCode::vspltb, TR::RealRegister::vr31, TR::RealRegister::vr0,   5u, TRTest::BinaryInstruction("13e5020c")),
     std::make_tuple(TR::InstOpCode::vspltb, TR::RealRegister::vr0,  TR::RealRegister::vr31, 15u, TRTest::BinaryInstruction("100ffa0c")),
@@ -2147,7 +2147,7 @@ INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::vspltw, TR::RealRegister::vr15, TR::RealRegister::vr16,  1u, TRTest::BinaryInstruction("11e1828c"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VMX, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::vupkhsb,  TR::RealRegister::vr31, TR::RealRegister::vr0,  TRTest::BinaryInstruction("13e0020e")),
     std::make_tuple(TR::InstOpCode::vupkhsb,  TR::RealRegister::vr0,  TR::RealRegister::vr31, TRTest::BinaryInstruction("1000fa0e")),
     std::make_tuple(TR::InstOpCode::vupkhsh,  TR::RealRegister::vr31, TR::RealRegister::vr0,  TRTest::BinaryInstruction("13e0024e")),
@@ -2166,7 +2166,7 @@ INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::vctzlsbb, TR::RealRegister::gr31, TR::RealRegister::vr31, TRTest::BinaryInstruction("13e1fe02"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src2EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(VMX, PPCTrg1Src2EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::vaddsbs,  TR::RealRegister::vr31, TR::RealRegister::vr0,  TR::RealRegister::vr0,  TRTest::BinaryInstruction("13e00300")),
     std::make_tuple(TR::InstOpCode::vaddsbs,  TR::RealRegister::vr0,  TR::RealRegister::vr31, TR::RealRegister::vr0,  TRTest::BinaryInstruction("101f0300")),
     std::make_tuple(TR::InstOpCode::vaddsbs,  TR::RealRegister::vr0,  TR::RealRegister::vr0,  TR::RealRegister::vr31, TRTest::BinaryInstruction("1000fb00")),
@@ -2406,14 +2406,14 @@ INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src2EncodingTest, ::testing::ValuesIn(*TRTes
     std::make_tuple(TR::InstOpCode::vxor,     TR::RealRegister::vr0,  TR::RealRegister::vr0,  TR::RealRegister::vr31, TRTest::BinaryInstruction("1000fcc4"))
 )));
 
-INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VMX, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::vsldoi, TR::RealRegister::vr31, TR::RealRegister::vr0,  TR::RealRegister::vr0,   0, TRTest::BinaryInstruction("13e0002c")),
     std::make_tuple(TR::InstOpCode::vsldoi, TR::RealRegister::vr0,  TR::RealRegister::vr31, TR::RealRegister::vr0,   0, TRTest::BinaryInstruction("101f002c")),
     std::make_tuple(TR::InstOpCode::vsldoi, TR::RealRegister::vr0,  TR::RealRegister::vr0,  TR::RealRegister::vr31,  0, TRTest::BinaryInstruction("1000f82c")),
     std::make_tuple(TR::InstOpCode::vsldoi, TR::RealRegister::vr0,  TR::RealRegister::vr0,  TR::RealRegister::vr0,  15, TRTest::BinaryInstruction("100003ec"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src3EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VMX, PPCTrg1Src3EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::vmsumuhm, TR::RealRegister::vr31, TR::RealRegister::vr0,  TR::RealRegister::vr0,  TR::RealRegister::vr0,  TRTest::BinaryInstruction("13e00026")),
     std::make_tuple(TR::InstOpCode::vmsumuhm, TR::RealRegister::vr0,  TR::RealRegister::vr31, TR::RealRegister::vr0,  TR::RealRegister::vr0,  TRTest::BinaryInstruction("101f0026")),
     std::make_tuple(TR::InstOpCode::vmsumuhm, TR::RealRegister::vr0,  TR::RealRegister::vr0,  TR::RealRegister::vr31, TR::RealRegister::vr0,  TRTest::BinaryInstruction("1000f826")),
@@ -2432,7 +2432,7 @@ INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src3EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::vmladduhm,TR::RealRegister::vr0,  TR::RealRegister::vr0,  TR::RealRegister::vr0,  TR::RealRegister::vr31, TRTest::BinaryInstruction("100007e2"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VMX, PPCRecordFormSanityTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::InstOpCode::Mnemonic, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(VMX, PPCRecordFormSanityTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::InstOpCode::Mnemonic, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::vaddsbs,  TR::InstOpCode::bad,        TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::vaddshs,  TR::InstOpCode::bad,        TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::vaddsws,  TR::InstOpCode::bad,        TRTest::BinaryInstruction()),
@@ -2529,7 +2529,7 @@ INSTANTIATE_TEST_CASE_P(VMX, PPCRecordFormSanityTest, ::testing::ValuesIn(*TRTes
     std::make_tuple(TR::InstOpCode::vxor,     TR::InstOpCode::bad,        TRTest::BinaryInstruction())
 )));
 
-INSTANTIATE_TEST_CASE_P(VSXScalarFixed, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXScalarFixed, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mfvsrd,   TR::RealRegister::gr31,  TR::RealRegister::vsr0,  TRTest::BinaryInstruction("7c1f0066")),
     std::make_tuple(TR::InstOpCode::mfvsrd,   TR::RealRegister::gr0,   TR::RealRegister::vsr63, TRTest::BinaryInstruction("7fe00067")),
     std::make_tuple(TR::InstOpCode::mfvsrd,   TR::RealRegister::gr0,   TR::RealRegister::vsr31, TRTest::BinaryInstruction("7fe00066")),
@@ -2547,7 +2547,7 @@ INSTANTIATE_TEST_CASE_P(VSXScalarFixed, PPCTrg1Src1EncodingTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::mtvsrwz,  TR::RealRegister::vsr0,  TR::RealRegister::gr31,  TRTest::BinaryInstruction("7c1f01e6"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXScalarFixed, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXScalarFixed, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::mfvsrd,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::mfvsrwz, TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::mtvsrd,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -2555,7 +2555,7 @@ INSTANTIATE_TEST_CASE_P(VSXScalarFixed, PPCRecordFormSanityTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::mtvsrwa, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXScalarConvert, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXScalarConvert, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xscvdpsp,  TR::RealRegister::vsr63, TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e00425")),
     std::make_tuple(TR::InstOpCode::xscvdpsp,  TR::RealRegister::vsr31, TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e00424")),
     std::make_tuple(TR::InstOpCode::xscvdpsp,  TR::RealRegister::vsr0,  TR::RealRegister::vsr63, TRTest::BinaryInstruction("f000fc26")),
@@ -2574,14 +2574,14 @@ INSTANTIATE_TEST_CASE_P(VSXScalarConvert, PPCTrg1Src1EncodingTest, ::testing::Va
     std::make_tuple(TR::InstOpCode::xscvspdpn, TR::RealRegister::vsr0,  TR::RealRegister::vsr31, TRTest::BinaryInstruction("f000fd2c"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXScalarConvert, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXScalarConvert, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xscvdpsp,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::xscvdpspn, TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::xscvspdp,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::xscvspdpn, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorConvert, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXVectorConvert, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xvcvsxddp, TR::RealRegister::vsr63, TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e007e1")),
     std::make_tuple(TR::InstOpCode::xvcvsxddp, TR::RealRegister::vsr31, TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e007e0")),
     std::make_tuple(TR::InstOpCode::xvcvsxddp, TR::RealRegister::vsr0,  TR::RealRegister::vsr63, TRTest::BinaryInstruction("f000ffe2")),
@@ -2592,19 +2592,19 @@ INSTANTIATE_TEST_CASE_P(VSXVectorConvert, PPCTrg1Src1EncodingTest, ::testing::Va
     std::make_tuple(TR::InstOpCode::xvcvsxdsp, TR::RealRegister::vsr0,  TR::RealRegister::vsr31, TRTest::BinaryInstruction("f000fee0"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorConvert, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXVectorConvert, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xvcvsxddp, TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::xvcvsxdsp, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorFixed, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXVectorFixed, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xxspltw, TR::RealRegister::vsr1,  TR::RealRegister::vsr2,  0u, TRTest::BinaryInstruction("f0201290")),
     std::make_tuple(TR::InstOpCode::xxspltw, TR::RealRegister::vsr63, TR::RealRegister::vsr0,  2u, TRTest::BinaryInstruction("f3e20291")),
     std::make_tuple(TR::InstOpCode::xxspltw, TR::RealRegister::vsr0,  TR::RealRegister::vsr63, 3u, TRTest::BinaryInstruction("f003fa92")),
     std::make_tuple(TR::InstOpCode::xxspltw, TR::RealRegister::vsr33, TR::RealRegister::vsr34, 1u, TRTest::BinaryInstruction("f0211293"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorFixed, PPCTrg1Src2EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(VSXVectorFixed, PPCTrg1Src2EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::xxland,  TR::RealRegister::vsr63, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e00411")),
     std::make_tuple(TR::InstOpCode::xxland,  TR::RealRegister::vsr31, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e00410")),
     std::make_tuple(TR::InstOpCode::xxland,  TR::RealRegister::vsr0,  TR::RealRegister::vsr63, TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f01f0414")),
@@ -2661,7 +2661,7 @@ INSTANTIATE_TEST_CASE_P(VSXVectorFixed, PPCTrg1Src2EncodingTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::xxmrglw, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TR::RealRegister::vsr31, TRTest::BinaryInstruction("f000f990"))
 )));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorFixed, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXVectorFixed, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xxpermdi, TR::RealRegister::vsr63, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  0x0u, TRTest::BinaryInstruction("f3e00051")),
     std::make_tuple(TR::InstOpCode::xxpermdi, TR::RealRegister::vsr31, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  0x0u, TRTest::BinaryInstruction("f3e00050")),
     std::make_tuple(TR::InstOpCode::xxpermdi, TR::RealRegister::vsr0,  TR::RealRegister::vsr63, TR::RealRegister::vsr0,  0x0u, TRTest::BinaryInstruction("f01f0054")),
@@ -2678,7 +2678,7 @@ INSTANTIATE_TEST_CASE_P(VSXVectorFixed, PPCTrg1Src2ImmEncodingTest, ::testing::V
     std::make_tuple(TR::InstOpCode::xxsldwi,  TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TR::RealRegister::vsr0,     3, TRTest::BinaryInstruction("f0000310"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorFixed, PPCTrg1Src3EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXVectorFixed, PPCTrg1Src3EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xxsel, TR::RealRegister::vsr31, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e00030")),
     std::make_tuple(TR::InstOpCode::xxsel, TR::RealRegister::vsr63, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e00031")),
     std::make_tuple(TR::InstOpCode::xxsel, TR::RealRegister::vsr0,  TR::RealRegister::vsr31, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f01f0030")),
@@ -2689,14 +2689,14 @@ INSTANTIATE_TEST_CASE_P(VSXVectorFixed, PPCTrg1Src3EncodingTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::xxsel, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TR::RealRegister::vsr63, TRTest::BinaryInstruction("f00007f8"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorFixed, PPCTrg1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXVectorFixed, PPCTrg1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xxspltib, TR::RealRegister::vsr31, 0x00000000u, TRTest::BinaryInstruction("f3e002d0")),
     std::make_tuple(TR::InstOpCode::xxspltib, TR::RealRegister::vsr0,  0x0000000fu, TRTest::BinaryInstruction("f0007ad0")),
     std::make_tuple(TR::InstOpCode::xxspltib, TR::RealRegister::vsr15, 0xfffffff0u, TRTest::BinaryInstruction("f1e782d0")),
     std::make_tuple(TR::InstOpCode::xxspltib, TR::RealRegister::vsr16, 0xffffffffu, TRTest::BinaryInstruction("f207fad0"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorFixed, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXVectorFixed, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xxland,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::xxlandc,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::xxleqv,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -2713,7 +2713,7 @@ INSTANTIATE_TEST_CASE_P(VSXVectorFixed, PPCRecordFormSanityTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::xxspltib, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorFloat, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXVectorFloat, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xvnegdp,  TR::RealRegister::vsr63, TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e007e5")),
     std::make_tuple(TR::InstOpCode::xvnegdp,  TR::RealRegister::vsr31, TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e007e4")),
     std::make_tuple(TR::InstOpCode::xvnegdp,  TR::RealRegister::vsr0,  TR::RealRegister::vsr63, TRTest::BinaryInstruction("f000ffe6")),
@@ -2740,7 +2740,7 @@ INSTANTIATE_TEST_CASE_P(VSXVectorFloat, PPCTrg1Src1EncodingTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::xvabsdp,  TR::RealRegister::vsr0,  TR::RealRegister::vsr31, TRTest::BinaryInstruction("f000ff64"))
 ));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorFloat, PPCTrg1Src2EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(VSXVectorFloat, PPCTrg1Src2EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::xvadddp,    TR::RealRegister::vsr63, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e00301")),
     std::make_tuple(TR::InstOpCode::xvadddp,    TR::RealRegister::vsr31, TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f3e00300")),
     std::make_tuple(TR::InstOpCode::xvadddp,    TR::RealRegister::vsr0,  TR::RealRegister::vsr63, TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f01f0304")),
@@ -2947,7 +2947,7 @@ INSTANTIATE_TEST_CASE_P(VSXVectorFloat, PPCTrg1Src2EncodingTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::xvsubsp,    TR::RealRegister::vsr0,  TR::RealRegister::vsr0,  TR::RealRegister::vsr31, TRTest::BinaryInstruction("f000fa40"))
 )));
 
-INSTANTIATE_TEST_CASE_P(VSXVectorFloat, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(VSXVectorFloat, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::xvadddp,    TR::InstOpCode::bad,         TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::xvaddsp,    TR::InstOpCode::bad,         TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::xvcmpeqdp,  TR::InstOpCode::xvcmpeqdp_r, TRTest::BinaryInstruction("00000400")),
@@ -2990,7 +2990,7 @@ INSTANTIATE_TEST_CASE_P(VSXVectorFloat, PPCRecordFormSanityTest, ::testing::Valu
     std::make_tuple(TR::InstOpCode::xvsubsp,    TR::InstOpCode::bad,         TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(FloatArithmetic, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(FloatArithmetic, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::fabs,   TR::RealRegister::fp31, TR::RealRegister::fp0,  TRTest::BinaryInstruction("ffe00210")),
     std::make_tuple(TR::InstOpCode::fabs,   TR::RealRegister::fp0,  TR::RealRegister::fp31, TRTest::BinaryInstruction("fc00fa10")),
     std::make_tuple(TR::InstOpCode::fmr,    TR::RealRegister::fp31, TR::RealRegister::fp0,  TRTest::BinaryInstruction("ffe00090")),
@@ -3005,7 +3005,7 @@ INSTANTIATE_TEST_CASE_P(FloatArithmetic, PPCTrg1Src1EncodingTest, ::testing::Val
     std::make_tuple(TR::InstOpCode::fsqrts, TR::RealRegister::fp0,  TR::RealRegister::fp31, TRTest::BinaryInstruction("ec00f82c"))
 ));
 
-INSTANTIATE_TEST_CASE_P(FloatArithmetic, PPCTrg1Src2EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(FloatArithmetic, PPCTrg1Src2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::fadd,  TR::RealRegister::fp31, TR::RealRegister::fp0,  TR::RealRegister::fp0,  TRTest::BinaryInstruction("ffe0002a")),
     std::make_tuple(TR::InstOpCode::fadd,  TR::RealRegister::fp0,  TR::RealRegister::fp31, TR::RealRegister::fp0,  TRTest::BinaryInstruction("fc1f002a")),
     std::make_tuple(TR::InstOpCode::fadd,  TR::RealRegister::fp0,  TR::RealRegister::fp0,  TR::RealRegister::fp31, TRTest::BinaryInstruction("fc00f82a")),
@@ -3032,7 +3032,7 @@ INSTANTIATE_TEST_CASE_P(FloatArithmetic, PPCTrg1Src2EncodingTest, ::testing::Val
     std::make_tuple(TR::InstOpCode::fsubs, TR::RealRegister::fp0,  TR::RealRegister::fp0,  TR::RealRegister::fp31, TRTest::BinaryInstruction("ec00f828"))
 ));
 
-INSTANTIATE_TEST_CASE_P(FloatArithmetic, PPCTrg1Src3EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(FloatArithmetic, PPCTrg1Src3EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::fmadd,   TR::RealRegister::fp31, TR::RealRegister::fp0,  TR::RealRegister::fp0,  TR::RealRegister::fp0,  TRTest::BinaryInstruction("ffe0003a")),
     std::make_tuple(TR::InstOpCode::fmadd,   TR::RealRegister::fp0,  TR::RealRegister::fp31, TR::RealRegister::fp0,  TR::RealRegister::fp0,  TRTest::BinaryInstruction("fc1f003a")),
     std::make_tuple(TR::InstOpCode::fmadd,   TR::RealRegister::fp0,  TR::RealRegister::fp0,  TR::RealRegister::fp31, TR::RealRegister::fp0,  TRTest::BinaryInstruction("fc0007fa")),
@@ -3073,7 +3073,7 @@ INSTANTIATE_TEST_CASE_P(FloatArithmetic, PPCTrg1Src3EncodingTest, ::testing::Val
 
 // NOTE: Many of these opcodes *do* have record form variants in the Power ISA, but we have not yet
 // made use of them. These tests should be updated when/if we do add these instructions.
-INSTANTIATE_TEST_CASE_P(FloatArithmetic, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(FloatArithmetic, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::fabs,    TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::fadd,    TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::fadds,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -3099,7 +3099,7 @@ INSTANTIATE_TEST_CASE_P(FloatArithmetic, PPCRecordFormSanityTest, ::testing::Val
     std::make_tuple(TR::InstOpCode::fsubs,   TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(FloatConvert, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(FloatConvert, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::fcfid,   TR::RealRegister::fp31, TR::RealRegister::fp0,  TRTest::BinaryInstruction("ffe0069c")),
     std::make_tuple(TR::InstOpCode::fcfid,   TR::RealRegister::fp0,  TR::RealRegister::fp31, TRTest::BinaryInstruction("fc00fe9c")),
     std::make_tuple(TR::InstOpCode::fcfids,  TR::RealRegister::fp31, TR::RealRegister::fp0,  TRTest::BinaryInstruction("efe0069c")),
@@ -3120,7 +3120,7 @@ INSTANTIATE_TEST_CASE_P(FloatConvert, PPCTrg1Src1EncodingTest, ::testing::Values
 
 // NOTE: Many of these opcodes *do* have record form variants in the Power ISA, but we have not yet
 // made use of them. These tests should be updated when/if we do add these instructions.
-INSTANTIATE_TEST_CASE_P(FloatConvert, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(FloatConvert, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::fcfid,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::fcfids,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::fcfidu,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -3131,7 +3131,7 @@ INSTANTIATE_TEST_CASE_P(FloatConvert, PPCRecordFormSanityTest, ::testing::Values
     std::make_tuple(TR::InstOpCode::fctiwz,  TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(FloatRound, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(FloatRound, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::frim, TR::RealRegister::fp31, TR::RealRegister::fp0,  TRTest::BinaryInstruction("ffe003d0")),
     std::make_tuple(TR::InstOpCode::frim, TR::RealRegister::fp0,  TR::RealRegister::fp31, TRTest::BinaryInstruction("fc00fbd0")),
     std::make_tuple(TR::InstOpCode::frin, TR::RealRegister::fp31, TR::RealRegister::fp0,  TRTest::BinaryInstruction("ffe00310")),
@@ -3144,14 +3144,14 @@ INSTANTIATE_TEST_CASE_P(FloatRound, PPCTrg1Src1EncodingTest, ::testing::Values(
 
 // NOTE: Many of these opcodes *do* have record form variants in the Power ISA, but we have not yet
 // made use of them. These tests should be updated when/if we do add these instructions.
-INSTANTIATE_TEST_CASE_P(FloatRound, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(FloatRound, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::frim, TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::frin, TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::frip, TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::frsp, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(DFP, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(DFP, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dtstdc, TR::RealRegister::cr0, TR::RealRegister::fp31, 0x3fu, TRTest::BinaryInstruction("ec1ffd84")),
     std::make_tuple(TR::InstOpCode::dtstdc, TR::RealRegister::cr7, TR::RealRegister::fp0,  0x3fu, TRTest::BinaryInstruction("ef80fd84")),
     std::make_tuple(TR::InstOpCode::dtstdc, TR::RealRegister::cr0, TR::RealRegister::fp31, 0x00u, TRTest::BinaryInstruction("ec1f0184")),
@@ -3162,7 +3162,7 @@ INSTANTIATE_TEST_CASE_P(DFP, PPCTrg1Src1ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dtstdg, TR::RealRegister::cr7, TR::RealRegister::fp0,  0x00u, TRTest::BinaryInstruction("ef8001c4"))
 ));
 
-INSTANTIATE_TEST_CASE_P(DFP, PPCTrg1Src1EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(DFP, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dcffix,  TR::RealRegister::fp31, TR::RealRegister::fp0,  TRTest::BinaryInstruction("efe00644")),
     std::make_tuple(TR::InstOpCode::dcffix,  TR::RealRegister::fp0,  TR::RealRegister::fp31, TRTest::BinaryInstruction("ec00fe44")),
     std::make_tuple(TR::InstOpCode::dcffixq, TR::RealRegister::fp30, TR::RealRegister::fp0,  TRTest::BinaryInstruction("ffc00644")),
@@ -3179,7 +3179,7 @@ INSTANTIATE_TEST_CASE_P(DFP, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dxex,    TR::RealRegister::fp0,  TR::RealRegister::fp31, TRTest::BinaryInstruction("ec00fac4"))
 ));
 
-INSTANTIATE_TEST_CASE_P(DFP, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(DFP, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dqua,  TR::RealRegister::fp31, TR::RealRegister::fp0,  TR::RealRegister::fp0,  0x0u, TRTest::BinaryInstruction("efe00006")),
     std::make_tuple(TR::InstOpCode::dqua,  TR::RealRegister::fp0,  TR::RealRegister::fp31, TR::RealRegister::fp0,  0x0u, TRTest::BinaryInstruction("ec1f0006")),
     std::make_tuple(TR::InstOpCode::dqua,  TR::RealRegister::fp0,  TR::RealRegister::fp0,  TR::RealRegister::fp31, 0x0u, TRTest::BinaryInstruction("ec00f806")),
@@ -3194,7 +3194,7 @@ INSTANTIATE_TEST_CASE_P(DFP, PPCTrg1Src2ImmEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::drrnd, TR::RealRegister::fp0,  TR::RealRegister::fp0,  TR::RealRegister::fp0,  0x1u, TRTest::BinaryInstruction("ec000246"))
 ));
 
-INSTANTIATE_TEST_CASE_P(DFP, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(DFP, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dcffix,  TR::InstOpCode::dcffix_r,  TRTest::BinaryInstruction("00000001")),
     std::make_tuple(TR::InstOpCode::dcffixq, TR::InstOpCode::dcffixq_r, TRTest::BinaryInstruction("00000001")),
     std::make_tuple(TR::InstOpCode::ddedpd,  TR::InstOpCode::ddedpd_r,  TRTest::BinaryInstruction("00000001")),
@@ -3207,14 +3207,14 @@ INSTANTIATE_TEST_CASE_P(DFP, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dxex,    TR::InstOpCode::dxex_r,    TRTest::BinaryInstruction("00000001"))
 ));
 
-INSTANTIATE_TEST_CASE_P(TM, PPCDirectEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(TM, PPCDirectEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::tabort_r,   TRTest::BinaryInstruction("7c00071d"), false),
     std::make_tuple(TR::InstOpCode::tbegin_r,   TRTest::BinaryInstruction("7c00051d"), false),
     std::make_tuple(TR::InstOpCode::tbeginro_r, TRTest::BinaryInstruction("7c20051d"), false),
     std::make_tuple(TR::InstOpCode::tend_r,     TRTest::BinaryInstruction("7c00055d"), false)
 ));
 
-INSTANTIATE_TEST_CASE_P(TM, PPCSrc1EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, uint32_t, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(TM, PPCSrc1EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, uint32_t, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::tabortdeqi_r,  TR::RealRegister::gr31, 0x00000000u, TRTest::BinaryInstruction("7c9f06dd")),
     std::make_tuple(TR::InstOpCode::tabortdeqi_r,  TR::RealRegister::gr0,  0x0000000fu, TRTest::BinaryInstruction("7c807edd")),
     std::make_tuple(TR::InstOpCode::tabortdeqi_r,  TR::RealRegister::gr31, 0xfffffff0u, TRTest::BinaryInstruction("7c9f86dd")),
@@ -3297,7 +3297,7 @@ INSTANTIATE_TEST_CASE_P(TM, PPCSrc1EncodingTest, ::testing::ValuesIn(*TRTest::Ma
     std::make_tuple(TR::InstOpCode::tabortwneqi_r, TR::RealRegister::gr0,  0xffffffffu, TRTest::BinaryInstruction("7f00fe9d"))
 )));
 
-INSTANTIATE_TEST_CASE_P(TM, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(TM, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::bad, TR::InstOpCode::tabort_r,      TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::bad, TR::InstOpCode::tabortdeqi_r,  TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::bad, TR::InstOpCode::tabortdgei_r,  TRTest::BinaryInstruction()),
@@ -3324,7 +3324,7 @@ INSTANTIATE_TEST_CASE_P(TM, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::bad, TR::InstOpCode::tend_r,        TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(Prefetch, PPCMemEncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Prefetch, PPCMemEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dcbt,    MemoryReference(TR::RealRegister::gr0,  TR::RealRegister::gr0 ), TRTest::BinaryInstruction("7c00022c")),
     std::make_tuple(TR::InstOpCode::dcbt,    MemoryReference(TR::RealRegister::gr0,  TR::RealRegister::gr31), TRTest::BinaryInstruction("7c00fa2c")),
     std::make_tuple(TR::InstOpCode::dcbt,    MemoryReference(TR::RealRegister::gr31, TR::RealRegister::gr0 ), TRTest::BinaryInstruction("7c1f022c")),
@@ -3339,13 +3339,13 @@ INSTANTIATE_TEST_CASE_P(Prefetch, PPCMemEncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dcbtstt, MemoryReference(TR::RealRegister::gr15, TR::RealRegister::gr15), TRTest::BinaryInstruction("7e0f79ec"))
 ));
 
-INSTANTIATE_TEST_CASE_P(Prefetch, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Prefetch, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::dcbt,    TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::dcbtst,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::dcbtstt, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(LoadPrefix, PPCTrg1MemEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, MemoryReference, TRTest::BinaryInstruction, bool>>(
+INSTANTIATE_TEST_SUITE_P(LoadPrefix, PPCTrg1MemEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, MemoryReference, TRTest::BinaryInstruction, bool>>(
     std::make_tuple(TR::InstOpCode::plbz,   TR::RealRegister::gr0,   MemoryReference(TR::RealRegister::gr0,  0x000000000), TRTest::BinaryInstruction("0600000088000000"), true),
     std::make_tuple(TR::InstOpCode::plbz,   TR::RealRegister::gr31,  MemoryReference(TR::RealRegister::gr0,  0x000000000), TRTest::BinaryInstruction("060000008be00000"), true),
     std::make_tuple(TR::InstOpCode::plbz,   TR::RealRegister::gr0,   MemoryReference(TR::RealRegister::gr31, 0x000000000), TRTest::BinaryInstruction("06000000881f0000"), true),
@@ -3469,7 +3469,7 @@ INSTANTIATE_TEST_CASE_P(LoadPrefix, PPCTrg1MemEncodingTest, ::testing::ValuesIn(
     std::make_tuple(TR::InstOpCode::plxv,   TR::RealRegister::vsr0,  MemoryReference(TR::RealRegister::gr0, -0x000008000), TRTest::BinaryInstruction("0403ffffc8008000"), true)
 )));
 
-INSTANTIATE_TEST_CASE_P(LoadPrefix, PPCTrg1MemPCRelativeEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, int64_t, int64_t, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(LoadPrefix, PPCTrg1MemPCRelativeEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, int64_t, int64_t, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::plbz,   TR::RealRegister::gr0,    0x000000000,  0x000000000, TRTest::BinaryInstruction("0610000088000000")),
     std::make_tuple(TR::InstOpCode::plbz,   TR::RealRegister::gr31,   0x000000000,  0x000000000, TRTest::BinaryInstruction("061000008be00000")),
     std::make_tuple(TR::InstOpCode::plbz,   TR::RealRegister::gr0,   -0x200000000,  0x000000000, TRTest::BinaryInstruction("0612000088000000")),
@@ -3629,7 +3629,7 @@ INSTANTIATE_TEST_CASE_P(LoadPrefix, PPCTrg1MemPCRelativeEncodingTest, ::testing:
     std::make_tuple(TR::InstOpCode::plxv,   TR::RealRegister::vsr0,   0x0ffffffff,  0x100000000, TRTest::BinaryInstruction("0411ffffc800ffff"))
 )));
 
-INSTANTIATE_TEST_CASE_P(LoadPrefix, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(LoadPrefix, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::plbz,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::pld,    TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::plfd,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -3644,7 +3644,7 @@ INSTANTIATE_TEST_CASE_P(LoadPrefix, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::plxv,   TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(LoadDisp, PPCTrg1MemEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, MemoryReference, TRTest::BinaryInstruction, bool>>(
+INSTANTIATE_TEST_SUITE_P(LoadDisp, PPCTrg1MemEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, MemoryReference, TRTest::BinaryInstruction, bool>>(
     std::make_tuple(TR::InstOpCode::lbz,  TR::RealRegister::gr0,   MemoryReference(TR::RealRegister::gr0,  0x0000), TRTest::BinaryInstruction("88000000"), false),
     std::make_tuple(TR::InstOpCode::lbz,  TR::RealRegister::gr0,   MemoryReference(TR::RealRegister::gr0,  0x0000), TRTest::BinaryInstruction("88000000"), false),
     std::make_tuple(TR::InstOpCode::lbz,  TR::RealRegister::gr31,  MemoryReference(TR::RealRegister::gr0,  0x0000), TRTest::BinaryInstruction("8be00000"), false),
@@ -3854,7 +3854,7 @@ INSTANTIATE_TEST_CASE_P(LoadDisp, PPCTrg1MemEncodingTest, ::testing::ValuesIn(*T
     std::make_tuple(TR::InstOpCode::lxv,  TR::RealRegister::vsr0,  MemoryReference(TR::RealRegister::gr0, -0x0010), TRTest::BinaryInstruction("f400fff1"), false)
 )));
 
-INSTANTIATE_TEST_CASE_P(LoadDisp, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(LoadDisp, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::lbz,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::lbzu, TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::ld,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -3873,7 +3873,7 @@ INSTANTIATE_TEST_CASE_P(LoadDisp, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::lwzu, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(LoadIndex, PPCTrg1MemEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, MemoryReference, TRTest::BinaryInstruction, bool>>(
+INSTANTIATE_TEST_SUITE_P(LoadIndex, PPCTrg1MemEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, MemoryReference, TRTest::BinaryInstruction, bool>>(
     std::make_tuple(TR::InstOpCode::lbzux,   TR::RealRegister::gr0,   MemoryReference(TR::RealRegister::gr1,  TR::RealRegister::gr0 ), TRTest::BinaryInstruction("7c0100ee"), false),
     std::make_tuple(TR::InstOpCode::lbzux,   TR::RealRegister::gr31,  MemoryReference(TR::RealRegister::gr1,  TR::RealRegister::gr0 ), TRTest::BinaryInstruction("7fe100ee"), false),
     std::make_tuple(TR::InstOpCode::lbzux,   TR::RealRegister::gr0,   MemoryReference(TR::RealRegister::gr31, TR::RealRegister::gr0 ), TRTest::BinaryInstruction("7c1f00ee"), false),
@@ -4025,7 +4025,7 @@ INSTANTIATE_TEST_CASE_P(LoadIndex, PPCTrg1MemEncodingTest, ::testing::ValuesIn(*
     std::make_tuple(TR::InstOpCode::lxvb16x, TR::RealRegister::vsr0,  MemoryReference(TR::RealRegister::gr0,  TR::RealRegister::gr31), TRTest::BinaryInstruction("7c00fed8"), false)
 )));
 
-INSTANTIATE_TEST_CASE_P(LoadIndex, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(LoadIndex, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::lbzux,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::lbzx,    TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::ldarx,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -4063,7 +4063,7 @@ INSTANTIATE_TEST_CASE_P(LoadIndex, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::lxvb16x, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(LoadVSXLength, PPCTrg1Src2EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(LoadVSXLength, PPCTrg1Src2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::lxvl,  TR::RealRegister::vsr0,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c00021a")),
     std::make_tuple(TR::InstOpCode::lxvl,  TR::RealRegister::vsr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe0021a")),
     std::make_tuple(TR::InstOpCode::lxvl,  TR::RealRegister::vsr63, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe0021b")),
@@ -4077,12 +4077,12 @@ INSTANTIATE_TEST_CASE_P(LoadVSXLength, PPCTrg1Src2EncodingTest, ::testing::Value
     std::make_tuple(TR::InstOpCode::lxvll, TR::RealRegister::vsr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00fa5a"))
 ));
 
-INSTANTIATE_TEST_CASE_P(LoadVSXLength, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(LoadVSXLength, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::lxvl,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::lxvll, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(StorePrefix, PPCMemSrc1EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, MemoryReference, TR::RealRegister::RegNum, TRTest::BinaryInstruction, bool>>(
+INSTANTIATE_TEST_SUITE_P(StorePrefix, PPCMemSrc1EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, MemoryReference, TR::RealRegister::RegNum, TRTest::BinaryInstruction, bool>>(
     std::make_tuple(TR::InstOpCode::pstb,    MemoryReference(TR::RealRegister::gr0,  0x000000000), TR::RealRegister::gr0,   TRTest::BinaryInstruction("0600000098000000"), true),
     std::make_tuple(TR::InstOpCode::pstb,    MemoryReference(TR::RealRegister::gr0,  0x000000000), TR::RealRegister::gr31,  TRTest::BinaryInstruction("060000009be00000"), true),
     std::make_tuple(TR::InstOpCode::pstb,    MemoryReference(TR::RealRegister::gr31, 0x000000000), TR::RealRegister::gr0,   TRTest::BinaryInstruction("06000000981f0000"), true),
@@ -4186,7 +4186,7 @@ INSTANTIATE_TEST_CASE_P(StorePrefix, PPCMemSrc1EncodingTest, ::testing::ValuesIn
     std::make_tuple(TR::InstOpCode::pstxv,   MemoryReference(TR::RealRegister::gr0, -0x000008000), TR::RealRegister::vsr0,  TRTest::BinaryInstruction("0403ffffd8008000"), true)
 )));
 
-INSTANTIATE_TEST_CASE_P(StorePrefix, PPCMemSrc1PCRelativeEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, int64_t, int64_t, TRTest::BinaryInstruction>>(
+INSTANTIATE_TEST_SUITE_P(StorePrefix, PPCMemSrc1PCRelativeEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, int64_t, int64_t, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::pstb,    TR::RealRegister::gr0,    0x000000000,  0x000000000, TRTest::BinaryInstruction("0610000098000000")),
     std::make_tuple(TR::InstOpCode::pstb,    TR::RealRegister::gr31,   0x000000000,  0x000000000, TRTest::BinaryInstruction("061000009be00000")),
     std::make_tuple(TR::InstOpCode::pstb,    TR::RealRegister::gr0,   -0x200000000,  0x000000000, TRTest::BinaryInstruction("0612000098000000")),
@@ -4320,7 +4320,7 @@ INSTANTIATE_TEST_CASE_P(StorePrefix, PPCMemSrc1PCRelativeEncodingTest, ::testing
     std::make_tuple(TR::InstOpCode::pstxv,   TR::RealRegister::vsr0,   0x0ffffffff,  0x100000000, TRTest::BinaryInstruction("0411ffffd800ffff"))
 )));
 
-INSTANTIATE_TEST_CASE_P(StorePrefix, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(StorePrefix, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::pstb,    TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::pstd,    TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::pstfd,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -4333,7 +4333,7 @@ INSTANTIATE_TEST_CASE_P(StorePrefix, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::pstxv,   TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(StoreDisp, PPCMemSrc1EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, MemoryReference, TR::RealRegister::RegNum, TRTest::BinaryInstruction, bool>>(
+INSTANTIATE_TEST_SUITE_P(StoreDisp, PPCMemSrc1EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, MemoryReference, TR::RealRegister::RegNum, TRTest::BinaryInstruction, bool>>(
     std::make_tuple(TR::InstOpCode::stb,   MemoryReference(TR::RealRegister::gr0,   0x0000), TR::RealRegister::gr0,   TRTest::BinaryInstruction("98000000"), false),
     std::make_tuple(TR::InstOpCode::stb,   MemoryReference(TR::RealRegister::gr31,  0x0000), TR::RealRegister::gr0,   TRTest::BinaryInstruction("981f0000"), false),
     std::make_tuple(TR::InstOpCode::stb,   MemoryReference(TR::RealRegister::gr0,   0x0000), TR::RealRegister::gr31,  TRTest::BinaryInstruction("9be00000"), false),
@@ -4421,7 +4421,7 @@ INSTANTIATE_TEST_CASE_P(StoreDisp, PPCMemSrc1EncodingTest, ::testing::ValuesIn(*
     std::make_tuple(TR::InstOpCode::stxv,  MemoryReference(TR::RealRegister::gr0,  -0x0010), TR::RealRegister::vsr0,  TRTest::BinaryInstruction("f400fff5"), false)
 )));
 
-INSTANTIATE_TEST_CASE_P(StoreDisp, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(StoreDisp, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::stb,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::stbu,  TR::InstOpCode::bad, TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::std,   TR::InstOpCode::bad, TRTest::BinaryInstruction()),
@@ -4437,7 +4437,7 @@ INSTANTIATE_TEST_CASE_P(StoreDisp, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::stwu,  TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(StoreIndex, PPCMemSrc1EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, MemoryReference, TR::RealRegister::RegNum, TRTest::BinaryInstruction, bool>>(
+INSTANTIATE_TEST_SUITE_P(StoreIndex, PPCMemSrc1EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, MemoryReference, TR::RealRegister::RegNum, TRTest::BinaryInstruction, bool>>(
     std::make_tuple(TR::InstOpCode::stbux,   MemoryReference(TR::RealRegister::gr1,  TR::RealRegister::gr0 ), TR::RealRegister::gr0,   TRTest::BinaryInstruction("7c0101ee"), false),
     std::make_tuple(TR::InstOpCode::stbux,   MemoryReference(TR::RealRegister::gr31, TR::RealRegister::gr0 ), TR::RealRegister::gr0,   TRTest::BinaryInstruction("7c1f01ee"), false),
     std::make_tuple(TR::InstOpCode::stbux,   MemoryReference(TR::RealRegister::gr1,  TR::RealRegister::gr31), TR::RealRegister::gr0,   TRTest::BinaryInstruction("7c01f9ee"), false),
@@ -4563,7 +4563,7 @@ INSTANTIATE_TEST_CASE_P(StoreIndex, PPCMemSrc1EncodingTest, ::testing::ValuesIn(
     std::make_tuple(TR::InstOpCode::stxvb16x,MemoryReference(TR::RealRegister::gr0,  TR::RealRegister::gr0 ), TR::RealRegister::vsr63, TRTest::BinaryInstruction("7fe007d9"), false)
 )));
 
-INSTANTIATE_TEST_CASE_P(StoreIndex, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(StoreIndex, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::stbux,   TR::InstOpCode::bad,     TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::stbx,    TR::InstOpCode::bad,     TRTest::BinaryInstruction()),
     std::make_tuple(TR::InstOpCode::bad,     TR::InstOpCode::stdcx_r, TRTest::BinaryInstruction()),
@@ -4595,7 +4595,7 @@ INSTANTIATE_TEST_CASE_P(StoreIndex, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::stxvb16x,TR::InstOpCode::bad,     TRTest::BinaryInstruction())
 ));
 
-INSTANTIATE_TEST_CASE_P(StoreVSXLength, PPCSrc3EncodingTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(StoreVSXLength, PPCSrc3EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::stxvl, TR::RealRegister::vsr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe0031a")),
     std::make_tuple(TR::InstOpCode::stxvl, TR::RealRegister::vsr63, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe0031b")),
     std::make_tuple(TR::InstOpCode::stxvl, TR::RealRegister::vsr0,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c00031a")),
@@ -4603,6 +4603,6 @@ INSTANTIATE_TEST_CASE_P(StoreVSXLength, PPCSrc3EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::stxvl, TR::RealRegister::vsr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00fb1a"))
 ));
 
-INSTANTIATE_TEST_CASE_P(StoreVSXLength, PPCRecordFormSanityTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(StoreVSXLength, PPCRecordFormSanityTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::stxvl, TR::InstOpCode::bad, TRTest::BinaryInstruction())
 ));

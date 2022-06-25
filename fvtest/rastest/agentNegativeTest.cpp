@@ -71,7 +71,7 @@ protected:
  *  - missing OnUnload entry point in agent
  *  - <dllpath> indicates nonexistent file
  *
- *  Please see INSTANTIATE_TEST_CASE_P for GetParam() values
+ *  Please see INSTANTIATE_TEST_SUITE_P for GetParam() values
  */
 TEST_P(RASAgentNegativeTest, InvalidAgentC)
 {
@@ -93,7 +93,7 @@ TEST_P(RASAgentNegativeTest, InvalidAgentCPP)
 	OMR_Agent::destroyAgent(agent);
 }
 
-INSTANTIATE_TEST_CASE_P(InvalidAgentOpts, RASAgentNegativeTest,
+INSTANTIATE_TEST_SUITE_P(InvalidAgentOpts, RASAgentNegativeTest,
 	::testing::Values("invalidAgentMissingOnLoad=test",
 		"invalidAgentMissingOnUnload", "/tmp/invalidAgentPath/agent=def"));
 

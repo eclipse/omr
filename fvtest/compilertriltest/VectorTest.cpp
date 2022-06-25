@@ -75,7 +75,7 @@ TEST_P(ParameterizedVectorTest, VLoadStore) {
     EXPECT_EQ(0, memcmp(output + TR::DataType::getSize(vt), zero, maxVectorLength - TR::DataType::getSize(vt)));
 }
 
-INSTANTIATE_TEST_CASE_P(VLoadStoreVectorTest, ParameterizedVectorTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorLength, TR::DataTypes>>(
+INSTANTIATE_TEST_SUITE_P(VLoadStoreVectorTest, ParameterizedVectorTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorLength, TR::DataTypes>>(
     std::make_tuple(TR::VectorLength128, TR::Int8),
     std::make_tuple(TR::VectorLength128, TR::Int16),
     std::make_tuple(TR::VectorLength128, TR::Int32),

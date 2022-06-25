@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -557,28 +557,28 @@ TEST_P(bBitPermuteTest, NoConstTest)
    }
 
 #if defined (TR_TARGET_X86) || defined (TR_TARGET_S390)
-INSTANTIATE_TEST_CASE_P(lBitPermute, lBitPermuteTest,
+INSTANTIATE_TEST_SUITE_P(lBitPermute, lBitPermuteTest,
               ::testing::Combine(
                  ::testing::ValuesIn(longValues),
                  ::testing::ValuesIn(testArrays),
                  ::testing::ValuesIn(longLengths),
                  ::testing::Values(static_cast<uint64_t (*) (uint64_t, const uint8_t*, uint32_t)> (bitPermuteOracle))));
 
-INSTANTIATE_TEST_CASE_P(iBitPermute, iBitPermuteTest,
+INSTANTIATE_TEST_SUITE_P(iBitPermute, iBitPermuteTest,
               ::testing::Combine(
                  ::testing::ValuesIn(intValues),
                  ::testing::ValuesIn(testArrays),
                  ::testing::ValuesIn(intLengths),
                  ::testing::Values(static_cast<uint32_t (*) (uint32_t, const uint8_t*, uint32_t)> (bitPermuteOracle))));
 
-INSTANTIATE_TEST_CASE_P(sBitPermute, sBitPermuteTest,
+INSTANTIATE_TEST_SUITE_P(sBitPermute, sBitPermuteTest,
               ::testing::Combine(
                  ::testing::ValuesIn(shortValues),
                  ::testing::ValuesIn(testArrays),
                  ::testing::ValuesIn(shortLengths),
                  ::testing::Values(static_cast<uint16_t (*) (uint16_t, const uint8_t*, uint32_t)> (bitPermuteOracle))));
 
-INSTANTIATE_TEST_CASE_P(bBitPermute, bBitPermuteTest,
+INSTANTIATE_TEST_SUITE_P(bBitPermute, bBitPermuteTest,
               ::testing::Combine(
                  ::testing::ValuesIn(byteValues),
                  ::testing::ValuesIn(testArrays),
