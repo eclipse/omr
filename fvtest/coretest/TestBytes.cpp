@@ -28,18 +28,18 @@ namespace OMR
 
 TEST(TestBytes, CompareZeroToZero)
 {
-	EXPECT_EQ(0, bytes(0));
-	EXPECT_EQ(0, kibibytes(0));
-	EXPECT_EQ(0, mebibytes(0));
-	EXPECT_EQ(0, gibibytes(0));
+	EXPECT_EQ(0u, bytes(0));
+	EXPECT_EQ(0u, kibibytes(0));
+	EXPECT_EQ(0u, mebibytes(0));
+	EXPECT_EQ(0u, gibibytes(0));
 }
 
 TEST(TestBytes, CompareOneUnitToBytes)
 {
-	EXPECT_EQ(1, bytes(1));
-	EXPECT_EQ(1024, kibibytes(1));
-	EXPECT_EQ(1024 * 1024, mebibytes(1));
-	EXPECT_EQ(1024 * 1024 * 1024, gibibytes(1));
+	EXPECT_EQ(1u, bytes(1));
+	EXPECT_EQ(1024u, kibibytes(1));
+	EXPECT_EQ(1024u * 1024u, mebibytes(1));
+	EXPECT_EQ(1024u * 1024u * 1024u, gibibytes(1));
 }
 
 TEST(TestBytes, CompareOneUnitToSmallerUnit)
@@ -89,56 +89,56 @@ TEST(TestBytes, AlignToZero)
 	// Zero is considered an invalid input, since the calculation always results in zero.
 	// This test is validating that behaviour, but users should NOT be aligning to zero.
 	// the minimum valid alignment is 1.
-	EXPECT_EQ(0, alignNoCheck(0, 0));
-	EXPECT_EQ(0, alignNoCheck(1, 0));
-	EXPECT_EQ(0, alignNoCheck(2, 0));
-	EXPECT_EQ(0, alignNoCheck(3, 0));
-	EXPECT_EQ(0, alignNoCheck(gibibytes(1), 0));
+	EXPECT_EQ(0u, alignNoCheck(0, 0));
+	EXPECT_EQ(0u, alignNoCheck(1, 0));
+	EXPECT_EQ(0u, alignNoCheck(2, 0));
+	EXPECT_EQ(0u, alignNoCheck(3, 0));
+	EXPECT_EQ(0u, alignNoCheck(gibibytes(1), 0));
 }
 
 TEST(TestBytes, AlignToOne)
 {
-	EXPECT_EQ(0, align(0, 1));
-	EXPECT_EQ(1, align(1, 1));
-	EXPECT_EQ(2, align(2, 1));
-	EXPECT_EQ(3, align(3, 1));
+	EXPECT_EQ(0u, align(0, 1));
+	EXPECT_EQ(1u, align(1, 1));
+	EXPECT_EQ(2u, align(2, 1));
+	EXPECT_EQ(3u, align(3, 1));
 	EXPECT_EQ(gibibytes(1), align(gibibytes(1), 1));
 }
 
 TEST(TestBytes, AlignToTwo)
 {
-	EXPECT_EQ(0, align(0, 2));
-	EXPECT_EQ(2, align(1, 2));
-	EXPECT_EQ(2, align(2, 2));
-	EXPECT_EQ(4, align(3, 2));
+	EXPECT_EQ(0u, align(0, 2));
+	EXPECT_EQ(2u, align(1, 2));
+	EXPECT_EQ(2u, align(2, 2));
+	EXPECT_EQ(4u, align(3, 2));
 	EXPECT_EQ(gibibytes(1), align(gibibytes(1), 2));
 }
 
 TEST(TestBytes, AlignToFour)
 {
-	EXPECT_EQ(0, align(0, 4));
-	EXPECT_EQ(4, align(1, 4));
-	EXPECT_EQ(4, align(2, 4));
-	EXPECT_EQ(4, align(3, 4));
-	EXPECT_EQ(4, align(4, 4));
-	EXPECT_EQ(8, align(5, 4));
+	EXPECT_EQ(0u, align(0, 4));
+	EXPECT_EQ(4u, align(1, 4));
+	EXPECT_EQ(4u, align(2, 4));
+	EXPECT_EQ(4u, align(3, 4));
+	EXPECT_EQ(4u, align(4, 4));
+	EXPECT_EQ(8u, align(5, 4));
 	EXPECT_EQ(gibibytes(1), align(gibibytes(1), 4));
 }
 
 TEST(TestBytes, AlignToEight)
 {
-	EXPECT_EQ(0, align(0, 8));
-	EXPECT_EQ(8, align(1, 8));
-	EXPECT_EQ(8, align(7, 8));
-	EXPECT_EQ(8, align(8, 8));
-	EXPECT_EQ(16, align(9, 8));
+	EXPECT_EQ(0u, align(0, 8));
+	EXPECT_EQ(8u, align(1, 8));
+	EXPECT_EQ(8u, align(7, 8));
+	EXPECT_EQ(8u, align(8, 8));
+	EXPECT_EQ(16u, align(9, 8));
 	EXPECT_EQ(gibibytes(1), align(gibibytes(1), 8));
 }
 
 TEST(TestBytes, SaneAlignmentMaximums)
 {
-	EXPECT_NE(0, ALIGNMENT_MAX);
-	EXPECT_NE(0, UNALIGNED_SIZE_MAX);
+	EXPECT_NE(0u, ALIGNMENT_MAX);
+	EXPECT_NE(0u, UNALIGNED_SIZE_MAX);
 	EXPECT_TRUE(isPow2(ALIGNMENT_MAX));
 	EXPECT_TRUE(isPow2(UNALIGNED_SIZE_MAX));
 	EXPECT_LE(ALIGNMENT_MAX, UNALIGNED_SIZE_MAX);
@@ -152,7 +152,7 @@ TEST(TestBytes, SaneAlignmentMaximums)
 
 TEST(TestBytes, AlignToMaximumAlignment)
 {
-	EXPECT_EQ(0, align(0, ALIGNMENT_MAX));
+	EXPECT_EQ(0u, align(0, ALIGNMENT_MAX));
 	EXPECT_EQ(ALIGNMENT_MAX, align(1, ALIGNMENT_MAX));
 
 	EXPECT_EQ(UNALIGNED_SIZE_MAX, align(UNALIGNED_SIZE_MAX - 1, ALIGNMENT_MAX));
@@ -174,8 +174,8 @@ TEST(TestBytes, TautologicalAlign)
 TEST(TestBytes, AlignAndOverflow)
 {
 	// purposefully overflow while aligning.
-	EXPECT_EQ(0, alignNoCheck(UNALIGNED_SIZE_MAX + 1, ALIGNMENT_MAX));
-	EXPECT_EQ(0, alignNoCheck(ALIGNMENT_MAX + 1, ALIGNMENT_MAX));
+	EXPECT_EQ(0u, alignNoCheck(UNALIGNED_SIZE_MAX + 1, ALIGNMENT_MAX));
+	EXPECT_EQ(0u, alignNoCheck(ALIGNMENT_MAX + 1, ALIGNMENT_MAX));
 }
 
 TEST(TestBytes, AlignMaximumSizeFor16byteAlignment)
@@ -204,7 +204,7 @@ TEST(TestBytes, AlignPointers)
 		const uintptr_t alignedPtrValue = reinterpret_cast<uintptr_t>(alignedPtr);
 
 		// Whatever was returned must be aligned.
-		EXPECT_EQ(alignedPtrValue & (alignment - 1), 0);
+		EXPECT_EQ(alignedPtrValue & (alignment - 1), 0u);
 
 		if (alignedPtr != NULL) {
 			// The passed-in ptr reference must be updated to match the returned pointer.
