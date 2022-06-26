@@ -2172,7 +2172,7 @@ std::string String::FormatByte(unsigned char value) {
 // Converts the buffer in a stringstream to an std::string, converting NUL
 // bytes to "\\0" along the way.
 std::string StringStreamToString(::std::stringstream* ss) {
-  const ::std::string& str = ss->str();
+  const ::std::string str = ss->str();
   const char* const start = str.c_str();
   const char* const end = start + str.length();
 
@@ -3146,7 +3146,7 @@ static std::string PrintTestPartResultToString(
 
 // Prints a TestPartResult.
 static void PrintTestPartResult(const TestPartResult& test_part_result) {
-  const std::string& result = PrintTestPartResultToString(test_part_result);
+  const std::string result = PrintTestPartResultToString(test_part_result);
   printf("%s\n", result.c_str());
   fflush(stdout);
   // If the test program runs in Visual Studio or a debugger, the
@@ -3640,6 +3640,11 @@ void PrettyUnitTestResultPrinter::OnTestIterationEnd(const UnitTest& unit_test,
     ColoredPrintf(GTestColor::kYellow, "  YOU HAVE %d DISABLED %s\n\n",
                   num_disabled, num_disabled == 1 ? "TEST" : "TESTS");
   }
+
+  if (unit_test.Passed()) {
+    ColoredPrintf(GTestColor::kGreen, "[ ALL TESTS PASSED ]\n");
+  }
+
   // Ensure that Google Test output is printed before, e.g., heapchecker output.
   fflush(stdout);
 }
@@ -4155,7 +4160,7 @@ void XmlUnitTestResultPrinter::OutputXmlCDataSection(::std::ostream* stream,
 void XmlUnitTestResultPrinter::OutputXmlAttribute(
     std::ostream* stream, const std::string& element_name,
     const std::string& name, const std::string& value) {
-  const std::vector<std::string>& allowed_names =
+  const std::vector<std::string> allowed_names =
       GetReservedOutputAttributesForElement(element_name);
 
   GTEST_CHECK_(std::find(allowed_names.begin(), allowed_names.end(), name) !=
@@ -5584,7 +5589,7 @@ void UnitTestImpl::SuppressTestEventsIfInSubprocess() {
 // Initializes event listeners performing XML output as specified by
 // UnitTestOptions. Must not be called before InitGoogleTest.
 void UnitTestImpl::ConfigureXmlOutput() {
-  const std::string& output_format = UnitTestOptions::GetOutputFormat();
+  const std::string output_format = UnitTestOptions::GetOutputFormat();
   if (output_format == "xml") {
     listeners()->SetDefaultXmlGenerator(new XmlUnitTestResultPrinter(
         UnitTestOptions::GetAbsolutePathToOutputFile().c_str()));
@@ -5601,7 +5606,7 @@ void UnitTestImpl::ConfigureXmlOutput() {
 // Initializes event listeners for streaming test results in string form.
 // Must not be called before InitGoogleTest.
 void UnitTestImpl::ConfigureStreamingOutput() {
-  const std::string& target = GTEST_FLAG_GET(stream_result_to);
+  const std::string target = GTEST_FLAG_GET(stream_result_to);
   if (!target.empty()) {
     const size_t pos = target.find(':');
     if (pos != std::string::npos) {
@@ -5859,7 +5864,7 @@ bool UnitTestImpl::RunAllTests() {
           const TestPartResult& test_part_result =
               test_result.GetTestPartResult(j);
           if (test_part_result.type() == TestPartResult::kSkip) {
-            const std::string& result = test_part_result.message();
+            const std::string result = test_part_result.message();
             printf("%s\n", result.c_str());
           }
         }
@@ -6057,7 +6062,7 @@ int UnitTestImpl::FilterTests(ReactionToSharding shard_tests) {
   int num_runnable_tests = 0;
   int num_selected_tests = 0;
   for (auto* test_suite : test_suites_) {
-    const std::string& test_suite_name = test_suite->name();
+    const std::string test_suite_name = test_suite->name();
     test_suite->set_should_run(false);
 
     for (size_t j = 0; j < test_suite->test_info_list().size(); j++) {

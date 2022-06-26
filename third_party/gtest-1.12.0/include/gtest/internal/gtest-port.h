@@ -834,6 +834,22 @@ typedef struct _RTL_CRITICAL_SECTION GTEST_CRITICAL_SECTION;
 #define GTEST_ATTRIBUTE_NO_SANITIZE_THREAD_
 #endif  // __clang__
 
+#if defined(J9ZOS390) || defined(AIXPPC)
+// On z/OS and AIX, tuple is defined in the ::std::tr1 namespace as it is an
+// extension class since xlc does not support the full C++11 standard. As such,
+// we expose the tuple class in the ::std namespace such that code below will
+// work.
+namespace std
+{
+using ::std::tr1::get;
+using ::std::tr1::make_tuple;
+using ::std::tr1::tuple;
+using ::std::tr1::tuple_element;
+using ::std::tr1::tuple_size;
+using ::snprintf;
+}
+#endif
+
 namespace testing {
 
 class Message;
@@ -1935,12 +1951,24 @@ inline bool IsXDigit(wchar_t ch) {
   return ch == low_byte && isxdigit(low_byte) != 0;
 }
 
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
+/* We need to define tolower and toupper macros for ToLower/ToUpper to use a2e tolower/toupper. */
+#define toupper(c)     (islower(c) ? (c & 0xDF) : c)
+#define tolower(c)     (isupper(c) ? (c | 0xDF) : c)
+#endif
+
 inline char ToLower(char ch) {
   return static_cast<char>(tolower(static_cast<unsigned char>(ch)));
 }
 inline char ToUpper(char ch) {
   return static_cast<char>(toupper(static_cast<unsigned char>(ch)));
 }
+
+#if defined(J9ZOS390) && !defined(OMR_EBCDIC)
+/* We need to undefine the macros in order to avoid function definitions for tolower and toupper in xlocale */
+#undef toupper
+#undef tolower
+#endif
 
 inline std::string StripTrailingSpaces(std::string str) {
   std::string::iterator it = str.end();
