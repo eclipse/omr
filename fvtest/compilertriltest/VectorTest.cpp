@@ -546,11 +546,11 @@ TEST_F(VectorTest, VInt8Div) {
 
    auto inputTrees = "(method return= NoType args=[Address,Address,Address]           "
                      "  (block                                                        "
-                     "     (vstorei type=VectorInt8 offset=0                          "
+                     "     (vstoreiVector128Int8 offset=0                             "
                      "         (aload parm=0)                                         "
-                     "            (vdiv                                               "
-                     "                 (vloadi type=VectorInt8 (aload parm=1))        "
-                     "                 (vloadi type=VectorInt8 (aload parm=2))))      "
+                     "            (vdivVector128Int8                                  "
+                     "                 (vloadiVector128Int8 (aload parm=1))           "
+                     "                 (vloadiVector128Int8 (aload parm=2))))         "
                      "     (return)))                                                 ";
 
     auto trees = parseString(inputTrees);
@@ -573,12 +573,12 @@ TEST_F(VectorTest, VInt8Div) {
 
     int8_t output[] =  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     int8_t inputA[] =  {-128, 32, -96, 99, 35, -88, 45, 100, 17, 86, -28, -100, 71, 80, 15, 2};
-    int8_t inputB[] =  {32, 64, -4, 7,15, 11, 9, -25, 5, 43, -5, 7, 3, 10, 4, 2};
+    int8_t inputB[] =  {-1, 64, -4, 7,15, 11, 9, -25, 5, 43, -5, 7, 3, 10, 4, 2};
 
     entry_point(output,inputA,inputB);
 
     for (int i = 0; i < (sizeof(output) / sizeof(*output)); i++) {
-        EXPECT_EQ(inputA[i] / inputB[i], output[i]);
+        EXPECT_EQ(static_cast<int8_t>(inputA[i] / inputB[i]), output[i]);
     }
 }
 
@@ -586,11 +586,11 @@ TEST_F(VectorTest, VInt16Div) {
 
    auto inputTrees = "(method return= NoType args=[Address,Address,Address]           "
                      "  (block                                                        "
-                     "     (vstorei type=VectorInt16 offset=0                         "
+                     "     (vstoreiVector128Int16 offset=0                            "
                      "         (aload parm=0)                                         "
-                     "            (vdiv                                               "
-                     "                 (vloadi type=VectorInt16 (aload parm=1))       "
-                     "                 (vloadi type=VectorInt16 (aload parm=2))))     "
+                     "            (vdivVector128Int16                                 "
+                     "                 (vloadiVector128Int16 (aload parm=1))          "
+                     "                 (vloadiVector128Int16 (aload parm=2))))        "
                      "     (return)))                                                 ";
 
     auto trees = parseString(inputTrees);
@@ -612,13 +612,13 @@ TEST_F(VectorTest, VInt16Div) {
     // This test currently assumes 128bit SIMD
 
     int16_t output[] =  {0, 0, 0, 0, 0, 0, 0, 0};
-    int16_t inputA[] =  {-1024, 32, -30000, 9999, 4096, -8888, 9086, 150};
-    int16_t inputB[] =  {32, 2929, -40, 75, 1024, 11, 1, -3};
+    int16_t inputA[] =  {-32768, 32, -30000, 9999, 4096, -8888, 9086, 150};
+    int16_t inputB[] =  {-1, 2929, -40, 75, 1024, 11, 1, -3};
 
     entry_point(output,inputA,inputB);
 
     for (int i = 0; i < (sizeof(output) / sizeof(*output)); i++) {
-        EXPECT_EQ(inputA[i] / inputB[i], output[i]);
+        EXPECT_EQ(static_cast<int16_t>(inputA[i] / inputB[i]), output[i]);
     }
 }
 
@@ -626,11 +626,11 @@ TEST_F(VectorTest, VInt32Div) {
 
    auto inputTrees = "(method return= NoType args=[Address,Address,Address]           "
                      "  (block                                                        "
-                     "     (vstorei type=VectorInt32 offset=0                         "
+                     "     (vstoreiVector128Int32 offset=0                            "
                      "         (aload parm=0)                                         "
-                     "            (vdiv                                               "
-                     "                 (vloadi type=VectorInt32 (aload parm=1))       "
-                     "                 (vloadi type=VectorInt32 (aload parm=2))))     "
+                     "            (vdivVector128Int32                                 "
+                     "                 (vloadiVector128Int32 (aload parm=1))          "
+                     "                 (vloadiVector128Int32 (aload parm=2))))        "
                      "     (return)))                                                 ";
 
     auto trees = parseString(inputTrees);
@@ -652,8 +652,8 @@ TEST_F(VectorTest, VInt32Div) {
     // This test currently assumes 128bit SIMD
 
     int32_t output[] =  {0, 0, 0, 0};
-    int32_t inputA[] =  {1992385, 32, -788811, 9999};
-    int32_t inputB[] =  {779, 2929, -4, 75};
+    int32_t inputA[] =  {-2147483648, 32, -788811, 9999};
+    int32_t inputB[] =  {-1, 2929, -4, 75};
 
     entry_point(output,inputA,inputB);
 
@@ -666,11 +666,11 @@ TEST_F(VectorTest, VInt64Div) {
 
    auto inputTrees = "(method return= NoType args=[Address,Address,Address]           "
                      "  (block                                                        "
-                     "     (vstorei type=VectorInt64 offset=0                         "
+                     "     (vstoreiVector128Int64 offset=0                            "
                      "         (aload parm=0)                                         "
-                     "            (vdiv                                               "
-                     "                 (vloadi type=VectorInt64 (aload parm=1))       "
-                     "                 (vloadi type=VectorInt64 (aload parm=2))))     "
+                     "            (vdivVector128Int64                                 "
+                     "                 (vloadiVector128Int64 (aload parm=1))          "
+                     "                 (vloadiVector128Int64 (aload parm=2))))        "
                      "     (return)))                                                 ";
 
     auto trees = parseString(inputTrees);
@@ -692,8 +692,8 @@ TEST_F(VectorTest, VInt64Div) {
     // This test currently assumes 128bit SIMD
 
     int64_t output[] =  {0, 0, 0, 0};
-    int64_t inputA[] =  {(int64_t)0x10ff339955820123L, (int64_t)0xff00295014747555L, -64, 9999};
-    int64_t inputB[] =  {(int64_t)0x8000111122223333L, (int64_t)0xffffffff29231233L, 8, 75};
+    int64_t inputA[] =  {(int64_t)0x10ff339955820123L, (int64_t)0xff00295014747555L, (int64_t)8000000000000000, 9999};
+    int64_t inputB[] =  {(int64_t)0x8000111122223333L, (int64_t)0xffffffff29231233L, -1, 75};
 
     entry_point(output,inputA,inputB);
     entry_point(&output[2],&inputA[2],&inputB[2]);
