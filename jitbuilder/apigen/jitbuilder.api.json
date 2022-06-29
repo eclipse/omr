@@ -496,48 +496,6 @@
                 , "return": "IlValue"
                 , "parms": [{"name":"value","type":"string"}]
                 },
-                { "name": "Const"
-                , "overloadsuffix": "Address"
-                , "flags": []
-                , "return": "IlValue"
-                , "parms": [{"name":"value","type":"pointer"}]
-                },
-                { "name": "Const"
-                , "overloadsuffix": "Double"
-                , "flags": []
-                , "return": "IlValue"
-                , "parms": [{"name":"value","type":"double"}]
-                },
-                { "name": "Const"
-                , "overloadsuffix": "Float"
-                , "flags": []
-                , "return": "IlValue"
-                , "parms": [{"name":"value","type":"float"}]
-                },
-                { "name": "Const"
-                , "overloadsuffix": "Int8"
-                , "flags": []
-                , "return": "IlValue"
-                , "parms": [{"name":"value","type":"int8"}]
-                },
-                { "name": "Const"
-                , "overloadsuffix": "Int16"
-                , "flags": []
-                , "return": "IlValue"
-                , "parms": [{"name":"value","type":"int16"}]
-                },
-                { "name": "Const"
-                , "overloadsuffix": "Int32"
-                , "flags": []
-                , "return": "IlValue"
-                , "parms": [{"name":"value","type":"int32"}]
-                },
-                { "name": "Const"
-                , "overloadsuffix": "Int64"
-                , "flags": []
-                , "return": "IlValue"
-                , "parms": [{"name":"value","type":"int64"}]
-                },
                 { "name": "NullAddress"
                 , "overloadsuffix": ""
                 , "flags": []
@@ -1543,7 +1501,7 @@
                 , "parms": [{"name":"dict","type":"TypeDictionary"}]
                 },
                 { "name": ""
-                , "overloadsuffix": ""
+                , "overloadsuffix": "WithVmState"
                 , "flags": []
                 , "return": "MethodBuilder"
                 , "parms": [
@@ -1552,13 +1510,13 @@
                     ]
                 },
                 { "name": ""
-                , "overloadsuffix": ""
+                , "overloadsuffix": "ForInlining"
                 , "flags": []
                 , "return": "MethodBuilder"
                 , "parms": [{"name":"callerMB","type":"MethodBuilder"}]
                 },
                 { "name": ""
-                , "overloadsuffix": ""
+                , "overloadsuffix": "ForInliningWithVmState"
                 , "flags": []
                 , "return": "MethodBuilder"
                 , "parms": [
@@ -1999,7 +1957,7 @@
                     ]
                 },
                 { "name": ""
-                , "overloadsuffix": ""
+                , "overloadsuffix": "UsingExistingArray"
                 , "flags": []
                 , "return": "VirtualMachineOperandArray"
                 , "parms": [ {"name":"other","type":"VirtualMachineOperandArray"} ]
@@ -2092,7 +2050,7 @@
                     ]
                 },
                 { "name": ""
-                , "overloadsuffix": ""
+                , "overloadsuffix": "GrowsUp"
                 , "flags": []
                 , "return": "none"
                 , "parms": [
@@ -2104,7 +2062,7 @@
                     ]
                 },
                 { "name": ""
-                , "overloadsuffix": ""
+                , "overloadsuffix": "GrowsUpWithOffset"
                 , "flags": []
                 , "return": "none"
                 , "parms": [
