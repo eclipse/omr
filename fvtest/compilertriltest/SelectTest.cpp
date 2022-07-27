@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -265,7 +265,7 @@ TEST_P(Int8SelectTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(param.selector, param.v1, param.v2), entry_point(param.selector));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectTest, Int8SelectTest,
+INSTANTIATE_TEST_SUITE_P(SelectTest, Int8SelectTest,
     ::testing::Combine(
         ::testing::ValuesIn(selectors()),
         ::testing::ValuesIn(resultInputs<int8_t>())));
@@ -359,7 +359,7 @@ TEST_P(Int16SelectTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(param.selector, param.v1, param.v2), entry_point(param.selector));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectTest, Int16SelectTest,
+INSTANTIATE_TEST_SUITE_P(SelectTest, Int16SelectTest,
     ::testing::Combine(
         ::testing::ValuesIn(selectors()),
         ::testing::ValuesIn(resultInputs<int16_t>())));
@@ -444,7 +444,7 @@ TEST_P(Int32SelectTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(param.selector, param.v1, param.v2), entry_point(param.selector));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectTest, Int32SelectTest,
+INSTANTIATE_TEST_SUITE_P(SelectTest, Int32SelectTest,
     ::testing::Combine(
         ::testing::ValuesIn(selectors()),
         ::testing::ValuesIn(resultInputs<int32_t>())));
@@ -529,7 +529,7 @@ TEST_P(Int64SelectTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(param.selector, param.v1, param.v2), entry_point(param.selector));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectTest, Int64SelectTest,
+INSTANTIATE_TEST_SUITE_P(SelectTest, Int64SelectTest,
     ::testing::Combine(
         ::testing::ValuesIn(selectors()),
         ::testing::ValuesIn(resultInputs<int64_t>())));
@@ -626,7 +626,7 @@ TEST_P(FloatSelectTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(param.selector, param.v1, param.v2), entry_point(param.selector));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectTest, FloatSelectTest,
+INSTANTIATE_TEST_SUITE_P(SelectTest, FloatSelectTest,
     ::testing::Combine(
         ::testing::ValuesIn(selectors()),
         ::testing::ValuesIn(resultInputs<float>())));
@@ -723,7 +723,7 @@ TEST_P(DoubleSelectTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(param.selector, param.v1, param.v2), entry_point(param.selector));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectTest, DoubleSelectTest,
+INSTANTIATE_TEST_SUITE_P(SelectTest, DoubleSelectTest,
     ::testing::Combine(
         ::testing::ValuesIn(selectors()),
         ::testing::ValuesIn(resultInputs<double>())));
@@ -826,7 +826,7 @@ TEST_P(Int8SelectInt32CompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, Int8SelectInt32CompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, Int8SelectInt32CompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<int32_t>()),
@@ -930,7 +930,7 @@ TEST_P(Int16SelectInt32CompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, Int16SelectInt32CompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, Int16SelectInt32CompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<int32_t>()),
@@ -1031,7 +1031,7 @@ TEST_P(Int32SelectInt32CompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, Int32SelectInt32CompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, Int32SelectInt32CompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<int32_t>()),
@@ -1132,7 +1132,7 @@ TEST_P(Int64SelectInt32CompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, Int64SelectInt32CompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, Int64SelectInt32CompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<int32_t>()),
@@ -1239,7 +1239,7 @@ TEST_P(FloatSelectInt32CompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, FloatSelectInt32CompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, FloatSelectInt32CompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<int32_t>()),
@@ -1346,7 +1346,7 @@ TEST_P(DoubleSelectInt32CompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, DoubleSelectInt32CompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, DoubleSelectInt32CompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<int32_t>()),
@@ -1462,7 +1462,7 @@ TEST_P(Int32SelectInt8CompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, Int32SelectInt8CompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, Int32SelectInt8CompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<int8_t>()),
@@ -1578,7 +1578,7 @@ TEST_P(Int32SelectInt16CompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, Int32SelectInt16CompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, Int32SelectInt16CompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<int16_t>()),
@@ -1679,7 +1679,7 @@ TEST_P(Int32SelectInt64CompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, Int32SelectInt64CompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, Int32SelectInt64CompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<int64_t>()),
@@ -1785,7 +1785,7 @@ TEST_P(Int32SelectFloatCompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, Int32SelectFloatCompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, Int32SelectFloatCompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<float>()),
@@ -1891,7 +1891,7 @@ TEST_P(Int32SelectDoubleCompareTest, UsingConstValues) {
     ASSERT_EQ(xselectOracle(xcmpOracle(param.cmp, param.c1, param.c2), param.v1, param.v2), entry_point(param.c1, param.c2));
 }
 
-INSTANTIATE_TEST_CASE_P(SelectCompareTest, Int32SelectDoubleCompareTest,
+INSTANTIATE_TEST_SUITE_P(SelectCompareTest, Int32SelectDoubleCompareTest,
     ::testing::Combine(
         ::testing::ValuesIn(allComparisons()),
         ::testing::ValuesIn(compareInputs<double>()),

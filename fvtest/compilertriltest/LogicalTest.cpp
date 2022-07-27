@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,7 +153,7 @@ TEST_P(Int16LogicalUnary, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(LogicalTest, Int16LogicalUnary, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(LogicalTest, Int16LogicalUnary, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int16_t>()),
     ::testing::Values(
         std::tuple<const char*, int16_t(*)(int16_t)>("sbyteswap", sbyteswap)
@@ -208,7 +208,7 @@ TEST_P(Int32LogicalUnary, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(LogicalTest, Int32LogicalUnary, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(LogicalTest, Int32LogicalUnary, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int32_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int32_t)>("ibyteswap", ibyteswap),
@@ -255,7 +255,7 @@ TEST_P(Int32LogicalBinary, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
 }
 
-INSTANTIATE_TEST_CASE_P(LogicalTest, Int32LogicalBinary, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(LogicalTest, Int32LogicalBinary, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int32_t,int32_t>()),
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ior", ior),
@@ -316,7 +316,7 @@ TEST_P(Int64LogicalBinary, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
 }
 
-INSTANTIATE_TEST_CASE_P(LogicalTest, Int64LogicalBinary, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(LogicalTest, Int64LogicalBinary, ::testing::Combine(
 	::testing::ValuesIn(TRTest::const_value_pairs<int64_t,int64_t>()),
 	::testing::Values(
 		std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lor", lor),
@@ -390,7 +390,7 @@ TEST_P(Int64LogicalUnary, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(LogicalTest, Int64LogicalUnary, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(LogicalTest, Int64LogicalUnary, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_values<int64_t>()),
     ::testing::Values(
         std::tuple<const char*, int64_t(*)(int64_t)>("lbyteswap", lbyteswap),

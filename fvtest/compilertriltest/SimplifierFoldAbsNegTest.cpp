@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,7 +110,7 @@ class SimplifierFoldAbsNegTest : public TRTest::JitOptTest
    };
 
 typedef ::testing::Types<int32_t, int64_t, float, double> Types;
-TYPED_TEST_CASE(SimplifierFoldAbsNegTest, Types);
+TYPED_TEST_SUITE(SimplifierFoldAbsNegTest, Types);
 
 
 class NoAbsAbsIlVerifier : public SimplifierFoldAbsNegTestIlVerifierBase

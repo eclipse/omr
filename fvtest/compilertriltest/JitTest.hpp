@@ -679,7 +679,7 @@ AssertionResult CmpHelperEQ<volatile double, volatile double>(const char* lhs_ex
    switch (0) case 0: default: /* guard against ambiguous else */ \
    if (!(condition)) { /* allow test to proceed normally */ } \
    else \
-      return SkipHelper(SkipReason::reason) = ::testing::Message()
+      GTEST_SKIP()
 
 /*
  * @brief A macro to allow a test to be conditionally skipped on given platform

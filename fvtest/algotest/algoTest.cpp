@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2015 IBM Corp. and others
+ * Copyright (c) 2015, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -167,7 +167,7 @@ TEST_P(AVLTest, test)
 	ASSERT_EQ(0, buildAndVerifyAVLTree(omrTestEnv->getPortLibrary(), success, data)) << "Test verification failed for " << testName;
 }
 
-INSTANTIATE_TEST_CASE_P(OmrAlgoTest, AVLTest, ::testing::ValuesIn(avlParams));
+INSTANTIATE_TEST_SUITE_P(OmrAlgoTest, AVLTest, ::testing::ValuesIn(avlParams));
 
 class PoolTest: public ::testing::TestWithParam<PoolInputData>
 {
@@ -180,7 +180,7 @@ TEST_P(PoolTest, test)
 	ASSERT_EQ(0, createAndVerifyPool(omrTestEnv->getPortLibrary(), &params)) << "Test verification failed for " << params.poolName;
 }
 
-INSTANTIATE_TEST_CASE_P(OmrAlgoTest, PoolTest, ::testing::ValuesIn(poolParams));
+INSTANTIATE_TEST_SUITE_P(OmrAlgoTest, PoolTest, ::testing::ValuesIn(poolParams));
 
 TEST(OmrAlgoTest, PoolTestPuddleSharing)
 {
@@ -221,7 +221,7 @@ TEST_P(HashtableTest, NoForce)
 	ASSERT_EQ(0, buildAndVerifyHashtable(omrTestEnv->getPortLibrary(), &params)) << "Test verification failed for " << params.hashtableName;
 }
 
-INSTANTIATE_TEST_CASE_P(OmrAlgoTest, HashtableTest, ::testing::ValuesIn(hastableParams));
+INSTANTIATE_TEST_SUITE_P(OmrAlgoTest, HashtableTest, ::testing::ValuesIn(hastableParams));
 
 class CollisionResilientHashtableTest: public ::testing::TestWithParam< ::testing::tuple<HashtableInputData, uint32_t> >
 {
@@ -247,7 +247,7 @@ TEST_P(CollisionResilientHashtableTest, NoForce)
 	ASSERT_EQ(0, buildAndVerifyHashtable(omrTestEnv->getPortLibrary(), &params)) << "Test verification failed for " << params.hashtableName;
 }
 
-INSTANTIATE_TEST_CASE_P(OmrAlgoTest, CollisionResilientHashtableTest,
+INSTANTIATE_TEST_SUITE_P(OmrAlgoTest, CollisionResilientHashtableTest,
 	::testing::Combine(
 		::testing::ValuesIn(hastableParams),
 		::testing::ValuesIn(listToTreeThresholdValues)

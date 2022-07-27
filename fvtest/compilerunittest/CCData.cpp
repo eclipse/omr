@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,7 @@ using CCDataTestTypes = testing::Types<uint8_t, uint16_t, uint32_t, uint64_t,
                                        //,float, double
                                       >;
 
-TYPED_TEST_CASE(CCDataTest, CCDataTestTypes);
+TYPED_TEST_SUITE(CCDataTest, CCDataTestTypes);
 
 TYPED_TEST(CCDataTest, test_basics_templated)
    {

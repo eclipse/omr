@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,7 +77,7 @@ template <typename T>
 class LinkageTest : public TRTest::JitTest {};
 
 typedef ::testing::Types<int32_t, int64_t, float, double> InputTypes;
-TYPED_TEST_CASE(LinkageTest, InputTypes);
+TYPED_TEST_SUITE(LinkageTest, InputTypes);
 
 TYPED_TEST(LinkageTest, InvalidLinkageTest) {
     OMRPORT_ACCESS_FROM_OMRPORT(TRTest::TestWithPortLib::privateOmrPortLibrary);
@@ -684,7 +684,7 @@ template <typename T>
 class LinkageWithMixedTypesTest : public TRTest::JitTest {};
 
 typedef ::testing::Types<int32_t, int64_t, float, double> InputTypes;
-TYPED_TEST_CASE(LinkageWithMixedTypesTest, InputTypes);
+TYPED_TEST_SUITE(LinkageWithMixedTypesTest, InputTypes);
 
 TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing2ArgWithMixedTypes) {
     OMRPORT_ACCESS_FROM_OMRPORT(TRTest::TestWithPortLib::privateOmrPortLibrary);

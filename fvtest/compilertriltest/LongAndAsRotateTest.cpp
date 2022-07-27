@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -476,14 +476,14 @@ TEST_P(iu2lLongAndAsRotateTest, GreaterThanOneRefCount2)
 // for cases where contiguous ones only appear once in the binary value
 // ex: 00011110000, 0111110, 1111111
 // i2l case
-INSTANTIATE_TEST_CASE_P(i2lZerosAroundOnes, i2lLongAndAsRotateTest,
+INSTANTIATE_TEST_SUITE_P(i2lZerosAroundOnes, i2lLongAndAsRotateTest,
               ::testing::Combine(
                  ::testing::ValuesIn(i2lInput),
                  ::testing::ValuesIn(lconstInput_zerosAroundOnes),
                  ::testing::Values(static_cast<uint64_t (*) (int32_t, uint64_t)> (longAndAsRotateOracle))));
 
 //iu2l case
-INSTANTIATE_TEST_CASE_P(iu2lZerosAroundOnes, iu2lLongAndAsRotateTest,
+INSTANTIATE_TEST_SUITE_P(iu2lZerosAroundOnes, iu2lLongAndAsRotateTest,
               ::testing::Combine(
                  ::testing::ValuesIn(iu2lInput),
                  ::testing::ValuesIn(lconstInput_zerosAroundOnes),
@@ -493,14 +493,14 @@ INSTANTIATE_TEST_CASE_P(iu2lZerosAroundOnes, iu2lLongAndAsRotateTest,
 // for cases where contiguous zeros only appear once in the binary value
 // ex: 11100001111, 1000001, 0000000
 // i2l case
-INSTANTIATE_TEST_CASE_P(i2lOnesAroundZeros, i2lLongAndAsRotateTest,
+INSTANTIATE_TEST_SUITE_P(i2lOnesAroundZeros, i2lLongAndAsRotateTest,
               ::testing::Combine(                                                   
                  ::testing::ValuesIn(i2lInput), 
                  ::testing::ValuesIn(lconstInput_onesAroundZeros),
                  ::testing::Values(static_cast<uint64_t (*) (int32_t, uint64_t)> (longAndAsRotateOracle))));
 
 // iu2l case
-INSTANTIATE_TEST_CASE_P(iu2lOnesAroundZeros, iu2lLongAndAsRotateTest,
+INSTANTIATE_TEST_SUITE_P(iu2lOnesAroundZeros, iu2lLongAndAsRotateTest,
               ::testing::Combine(                                                   
                  ::testing::ValuesIn(iu2lInput), 
                  ::testing::ValuesIn(lconstInput_onesAroundZeros),
@@ -508,14 +508,14 @@ INSTANTIATE_TEST_CASE_P(iu2lOnesAroundZeros, iu2lLongAndAsRotateTest,
 
 // none of the tests in this group should generate a RISBG instruction
 // i2l case
-INSTANTIATE_TEST_CASE_P(i2lInvalidPatterns, i2lLongAndAsRotateTest,
+INSTANTIATE_TEST_SUITE_P(i2lInvalidPatterns, i2lLongAndAsRotateTest,
               ::testing::Combine(
                  ::testing::ValuesIn(i2lInput),
                  ::testing::ValuesIn(lconstInput_invalidPatterns),
                  ::testing::Values(static_cast<uint64_t (*) (int32_t, uint64_t)> (longAndAsRotateOracle))));
 
 // iu2l case
-INSTANTIATE_TEST_CASE_P(iu2lInvalidPatterns, iu2lLongAndAsRotateTest,
+INSTANTIATE_TEST_SUITE_P(iu2lInvalidPatterns, iu2lLongAndAsRotateTest,
               ::testing::Combine(
                  ::testing::ValuesIn(iu2lInput),
                  ::testing::ValuesIn(lconstInput_invalidPatterns),

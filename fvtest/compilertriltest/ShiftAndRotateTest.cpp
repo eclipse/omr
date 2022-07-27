@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 IBM Corp. and others
+ * Copyright (c) 2017, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,7 +178,7 @@ TEST_P(Int32ShiftAndRotate, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int32ShiftAndRotate, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, Int32ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<int32_t, int32_t>> (*) (void) > (test_input_values)()),
     ::testing::Values(std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ishl", static_cast<int32_t(*)(int32_t, int32_t)>(shift_left)),
                       std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ishr", static_cast<int32_t(*)(int32_t, int32_t)>(shift_right)),
@@ -287,7 +287,7 @@ TEST_P(Int64ShiftAndRotate, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int64ShiftAndRotate, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, Int64ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<int64_t, int32_t>> (*) (void) > (test_input_values)()),
     ::testing::Values(std::tuple<const char*, int64_t(*)(int64_t, int32_t)>("lshl", static_cast<int64_t(*)(int64_t, int32_t)>(shift_left)),
                       std::tuple<const char*, int64_t(*)(int64_t, int32_t)>("lshr", static_cast<int64_t(*)(int64_t, int32_t)>(shift_right)),
@@ -408,7 +408,7 @@ TEST_P(Int8ShiftAndRotate, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int8ShiftAndRotate, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, Int8ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<int8_t, int32_t>> (*) (void) > (test_input_values)()),
     ::testing::Values(std::tuple<const char*, int8_t(*)(int8_t, int32_t)>("bshl", static_cast<int8_t(*)(int8_t, int32_t)>(shift_left)),
                       std::tuple<const char*, int8_t(*)(int8_t, int32_t)>("bshr", static_cast<int8_t(*)(int8_t, int32_t)>(shift_right))
@@ -528,7 +528,7 @@ TEST_P(Int16ShiftAndRotate, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int16ShiftAndRotate, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, Int16ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<int16_t, int32_t>> (*) (void) > (test_input_values)()),
     ::testing::Values(std::tuple<const char*, int16_t(*)(int16_t, int32_t)>("sshl", static_cast<int16_t(*)(int16_t, int32_t)>(shift_left)),
                       std::tuple<const char*, int16_t(*)(int16_t, int32_t)>("sshr", static_cast<int16_t(*)(int16_t, int32_t)>(shift_right))
@@ -636,7 +636,7 @@ TEST_P(UInt32ShiftAndRotate, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt32ShiftAndRotate, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, UInt32ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<uint32_t, int32_t>> (*) (void)>(test_input_values)()),
     ::testing::Values(std::tuple<const char*, uint32_t (*) (uint32_t, int32_t)>("iushr", static_cast<uint32_t (*) (uint32_t, int32_t)>(shift_right))
     )));
@@ -743,7 +743,7 @@ TEST_P(UInt64ShiftAndRotate, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt64ShiftAndRotate, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, UInt64ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<uint64_t, int32_t>> (*) (void)>(test_input_values)()),
     ::testing::Values(std::tuple<const char*, uint64_t (*) (uint64_t, int32_t)>("lushr", static_cast<uint64_t (*) (uint64_t, int32_t)>(shift_right))
     )));
@@ -862,7 +862,7 @@ TEST_P(UInt8ShiftAndRotate, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt8ShiftAndRotate, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, UInt8ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<uint8_t, int32_t>> (*) (void) > (test_input_values)()),
     ::testing::Values(std::tuple<const char*, uint8_t (*) (uint8_t, int32_t)>("bushr", static_cast<uint8_t (*) (uint8_t, int32_t)>(shift_right))
     )));
@@ -981,7 +981,7 @@ TEST_P(UInt16ShiftAndRotate, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt16ShiftAndRotate, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, UInt16ShiftAndRotate, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<uint16_t, int32_t>> (*) (void) >(test_input_values)()),
     ::testing::Values(std::tuple<const char*, uint16_t (*) (uint16_t, int32_t)>("sushr", static_cast<uint16_t (*) (uint16_t, int32_t)>(shift_right))
     )));
@@ -1187,7 +1187,7 @@ TEST_P(UInt64MaskThenShift, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value, param.mask, param.shift), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt64MaskThenShift, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, UInt64MaskThenShift, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, int32_t>> (*) (void)>(test_mask_then_shift_values)()),
     ::testing::Values(std::tuple<const char*, uint64_t (*) (uint64_t, uint64_t, int32_t)>("lushr", static_cast<uint64_t (*) (uint64_t, uint64_t, int32_t)>(mask_then_shift_right))
     )));
@@ -1222,7 +1222,7 @@ TEST_P(Int64MaskThenShift, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value, param.mask, param.shift), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int64MaskThenShift, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, Int64MaskThenShift, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<std::tuple<int64_t, int64_t>, int32_t>> (*) (void)>(test_mask_then_shift_values)()),
     ::testing::Values(
         std::tuple<const char*, int64_t (*) (int64_t, int64_t, int32_t)>("lshr", static_cast<int64_t (*) (int64_t, int64_t, int32_t)>(mask_then_shift_right)),
@@ -1259,7 +1259,7 @@ TEST_P(UInt32MaskThenShift, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value, param.mask, param.shift), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt32MaskThenShift, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, UInt32MaskThenShift, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<std::tuple<uint32_t, uint32_t>, int32_t>> (*) (void)>(test_mask_then_shift_values)()),
     ::testing::Values(std::tuple<const char*, uint32_t (*) (uint32_t, uint32_t, int32_t)>("iushr", static_cast<uint32_t (*) (uint32_t, uint32_t, int32_t)>(mask_then_shift_right))
     )));
@@ -1294,7 +1294,7 @@ TEST_P(Int32MaskThenShift, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value, param.mask, param.shift), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int32MaskThenShift, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, Int32MaskThenShift, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<std::tuple<int32_t, int32_t>, int32_t>> (*) (void)>(test_mask_then_shift_values)()),
     ::testing::Values(std::tuple<const char*, int32_t (*) (int32_t, int32_t, int32_t)>("ishr", static_cast<int32_t (*) (int32_t, int32_t, int32_t)>(mask_then_shift_right))
     )));
@@ -1332,7 +1332,7 @@ TEST_P(UInt16MaskThenShift, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value, param.mask, param.shift), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt16MaskThenShift, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, UInt16MaskThenShift, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<std::tuple<uint16_t, uint16_t>, int32_t>> (*) (void)>(test_mask_then_shift_values)()),
     ::testing::Values(std::tuple<const char*, uint16_t (*) (uint16_t, uint16_t, int32_t)>("sushr", static_cast<uint16_t (*) (uint16_t, uint16_t, int32_t)>(mask_then_shift_right))
     )));
@@ -1370,7 +1370,7 @@ TEST_P(Int16MaskThenShift, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value, param.mask, param.shift), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int16MaskThenShift, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, Int16MaskThenShift, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<std::tuple<int16_t, int16_t>, int32_t>> (*) (void)>(test_mask_then_shift_values)()),
     ::testing::Values(std::tuple<const char*, int16_t (*) (int16_t, int16_t, int32_t)>("sshr", static_cast<int16_t (*) (int16_t, int16_t, int32_t)>(mask_then_shift_right))
     )));
@@ -1408,7 +1408,7 @@ TEST_P(UInt8MaskThenShift, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value, param.mask, param.shift), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, UInt8MaskThenShift, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, UInt8MaskThenShift, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<std::tuple<uint8_t, uint8_t>, int32_t>> (*) (void)>(test_mask_then_shift_values)()),
     ::testing::Values(std::tuple<const char*, uint8_t (*) (uint8_t, uint8_t, int32_t)>("bushr", static_cast<uint8_t (*) (uint8_t, uint8_t, int32_t)>(mask_then_shift_right))
     )));
@@ -1446,7 +1446,7 @@ TEST_P(Int8MaskThenShift, UsingLoadParam) {
     ASSERT_EQ(param.oracle(param.value, param.mask, param.shift), entry_point(param.value));
 }
 
-INSTANTIATE_TEST_CASE_P(ShiftAndRotateTest, Int8MaskThenShift, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ShiftAndRotateTest, Int8MaskThenShift, ::testing::Combine(
     ::testing::ValuesIn(static_cast< std::vector<std::tuple<std::tuple<int8_t, int8_t>, int32_t>> (*) (void)>(test_mask_then_shift_values)()),
     ::testing::Values(std::tuple<const char*, int8_t (*) (int8_t, int8_t, int32_t)>("bshr", static_cast<int8_t (*) (int8_t, int8_t, int32_t)>(mask_then_shift_right))
     )));

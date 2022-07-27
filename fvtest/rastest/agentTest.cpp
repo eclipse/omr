@@ -73,9 +73,9 @@ TEST_P(RASAgentTest, AgentC)
 	omr_agent_destroy(agent);
 }
 
-INSTANTIATE_TEST_CASE_P(TraceNotStartedAgentOpts, RASAgentTest, ::testing::Values("traceNotStartedAgent", "traceNotStartedAgent=", "traceNotStartedAgent=abc"));
-INSTANTIATE_TEST_CASE_P(CpuLoadAgentOpts, RASAgentTest, ::testing::Values("cpuLoadAgent"));
-INSTANTIATE_TEST_CASE_P(BindThreadAgentOpts, RASAgentTest, ::testing::Values("bindthreadagent"));
+INSTANTIATE_TEST_SUITE_P(TraceNotStartedAgentOpts, RASAgentTest, ::testing::Values("traceNotStartedAgent", "traceNotStartedAgent=", "traceNotStartedAgent=abc"));
+INSTANTIATE_TEST_SUITE_P(CpuLoadAgentOpts, RASAgentTest, ::testing::Values("cpuLoadAgent"));
+INSTANTIATE_TEST_SUITE_P(BindThreadAgentOpts, RASAgentTest, ::testing::Values("bindthreadagent"));
 
 /*
  * Test scenario for ArgNullC and ArgNullCPP:

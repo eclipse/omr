@@ -1059,8 +1059,8 @@ TEST_P(GCConfigTest, test)
 	}
 }
 
-INSTANTIATE_TEST_CASE_P(gcFunctionalTest,GCConfigTest,
+INSTANTIATE_TEST_SUITE_P(gcFunctionalTest,GCConfigTest,
         ::testing::ValuesIn(gcTests));
 
-INSTANTIATE_TEST_CASE_P(perfTest,GCConfigTest,
+INSTANTIATE_TEST_SUITE_P(perfTest,GCConfigTest,
         ::testing::ValuesIn(perfTests));
