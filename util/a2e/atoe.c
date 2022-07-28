@@ -1249,26 +1249,39 @@ int
 atoe_fprintf(FILE *file, const char *ascii_chars, ...)
 {
 	va_list args;
-	char buf[BUFLEN];
-	char *ebuf;
-	int len;
+	char buf[BUFLEN] = {0};
+	char *ebuf = NULL;
+	int len = 0;
 
 	va_start(args, ascii_chars);
 
 	len = atoe_vsnprintf(buf, BUFLEN, ascii_chars, args);
 
+	va_end(args);
 	/* Abort if failed... */
-	if (len == -1) {
+	if (-1 == len) {
 		return len;
-	}
+	} else if (len >= BUFLEN) {
+		/* Add 1 to accommodate for the null terminating char. */
+		int _len = len + 1;
+		char *_buf = (char *)malloc(_len);
+		va_start(args, ascii_chars);
 
-	ebuf = a2e(buf, len);
+		len = atoe_vsnprintf(_buf, _len, ascii_chars, args);
+
+		va_end(args);
+		if (-1 == len) {
+			return len;
+		}
+		ebuf = a2e(_buf, len);
+		free(ebuf);
+	} else {
+		ebuf = a2e(buf, len);
+	}
 #pragma convlit(suspend)
 	len = fprintf(file, "%s", ebuf);
 #pragma convlit(resume)
 	free(ebuf);
-
-	va_end(args);
 
 	return len;
 }
@@ -1284,26 +1297,39 @@ int
 atoe_printf(const char *ascii_chars, ...)
 {
 	va_list args;
-	char buf[BUFLEN];
-	char *ebuf;
-	int len;
+	char buf[BUFLEN] = {0};
+	char *ebuf = NULL;
+	int len = 0;
 
 	va_start(args, ascii_chars);
 
 	len = atoe_vsnprintf(buf, BUFLEN, ascii_chars, args);
 
+	va_end(args);
 	/* Abort if failed... */
-	if (len == -1) {
+	if (-1 == len) {
 		return len;
-	}
+	} else if (len >= BUFLEN) {
+		/* Add 1 to accommodate for the null terminating char. */
+		int _len = len + 1;
+		char *_buf = (char *)malloc(_len);
+		va_start(args, ascii_chars);
 
-	ebuf = a2e(buf, len);
+		len = atoe_vsnprintf(_buf, _len, ascii_chars, args);
+
+		va_end(args);
+		if (-1 == len) {
+			return len;
+		}
+		ebuf = a2e(_buf, len);
+		free(_buf);
+	} else {
+		ebuf = a2e(buf, len);
+	}
 #pragma convlit(suspend)
 	len = printf("%s", ebuf);
 #pragma convlit(resume)
 	free(ebuf);
-
-	va_end(args);
 
 	return len;
 }
@@ -1341,8 +1367,8 @@ std_sprintf(const char *buf, char *ascii_chars, ...)
 int
 atoe_sprintf(char *buf, char *ascii_chars, ...)
 {
-	int len;
-	char wrkbuf[BUFLEN];
+	int len = 0;
+	char wrkbuf[BUFLEN] = {0};
 
 	va_list args;
 	va_start(args, ascii_chars);
@@ -1352,9 +1378,23 @@ atoe_sprintf(char *buf, char *ascii_chars, ...)
 	va_end(args);
 	if (-1 == len) {
 		return len;
-	}
+	} else if (len >= BUFLEN) {
+		/* Add 1 to accommodate for the null terminating char. */
+		int _len = len + 1;
+		char *_wrkbuf = (char *)malloc(_len);
+		va_start(args, ascii_chars);
+		
+		len = atoe_vsnprintf(_wrkbuf, _len, ascii_chars, args);
 
-	strcpy((char *)buf, wrkbuf);
+		va_end(args);
+		if(-1 == len) {
+		       return len;
+		}
+		strcpy((char *)buf, _wrkbuf);
+		free(_wrkbuf);
+	} else {
+		strcpy((char *)buf, wrkbuf);
+	}
 
 	return len;
 }
@@ -1406,17 +1446,31 @@ atoe_vprintf(const char *ascii_chars, va_list args)
 int
 atoe_vfprintf(FILE *file, const char *ascii_chars, va_list args)
 {
-	char buf[BUFLEN];
-	char *ebuf;
-	int len;
+	char buf[BUFLEN] = {0};
+	char *ebuf = NULL;
+	int len = 0;
+	va_list _args;
+	va_copy(_args, args);
 
-	len = atoe_vsnprintf(buf, BUFLEN, ascii_chars, args);
-
-	if (len == -1) {
+	len = atoe_vsnprintf(buf, BUFLEN, ascii_chars, _args);
+	
+	va_end(_args);
+	if (-1 == len) {
 		return len;
-	}
+	} else if (len >= BUFLEN) {
+		/* Add 1 to accommodate for the null terminating char. */
+		int _len = len + 1;
+		char *_buf = (char *)malloc(_len);
 
-	ebuf = a2e(buf, len);
+		len = atoe_vsnprintf(_buf, _len, ascii_chars, args);
+
+		if (-1 == len) {
+			return len;
+		}
+		ebuf = a2e(_buf, len);
+	} else {	
+		ebuf = a2e(buf, len);
+	}
 #pragma convlit(suspend)
 	len = fprintf(file, "%s", ebuf);
 #pragma convlit(resume)
@@ -1435,14 +1489,31 @@ atoe_vfprintf(FILE *file, const char *ascii_chars, va_list args)
 int
 atoe_vsprintf(char *target, const char *ascii_chars, va_list args)
 {
-	char buf[BUFLEN];                                     /*ibm@029013*/
+	char buf[BUFLEN] = {0};                                     /*ibm@029013*/
 	int  bsize = 0;                                       /*ibm@029013*/
+	va_list _args;
+	va_copy(_args, args);
 
-	bsize = atoe_vsnprintf(buf, BUFLEN, ascii_chars, args); /*ibm@029013*/
+	bsize = atoe_vsnprintf(buf, BUFLEN, ascii_chars, _args); /*ibm@029013*/
+
+	va_end(_args);
 	if (-1 == bsize) {
 		return bsize;
+	} else if (bsize >= BUFLEN) {
+		/* Add 1 to accommodate for the null terminating char */
+		int _bsize = bsize + 1;
+		char *_buf = (char *)malloc(_bsize);
+
+		bsize = atoe_vsnprintf(_buf, _bsize, ascii_chars, args);
+
+		if (-1 == bsize) {
+			return bsize;
+		}
+		strcpy(target, _buf);
+		free(_buf);
+	} else {
+		strcpy(target, buf);                                  /*ibm@029013*/
 	}
-	strcpy(target, buf);                                  /*ibm@029013*/
 	return bsize;                                         /*ibm@029013*/
 }
 
