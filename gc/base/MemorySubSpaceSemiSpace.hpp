@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -169,6 +169,8 @@ public:
 	 * Not thread safe - caller has to make sure no other threads are modifying the stats for any of children.
 	 */
 	virtual void mergeLargeObjectAllocateStats(MM_EnvironmentBase *env);
+
+	virtual void *getLowAddressAllocate() { return _memorySubSpaceAllocate->getLowAddressAllocate(); }
 
 	/**
 	 * Create a MemorySubSpaceSemiSpace object.

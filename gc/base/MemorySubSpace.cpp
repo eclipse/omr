@@ -1,3 +1,4 @@
+
 /*******************************************************************************
  * Copyright (c) 1991, 2022 IBM Corp. and others
  *
@@ -2013,4 +2014,10 @@ MM_MemorySubSpace::releaseFreeMemoryPages(MM_EnvironmentBase* env)
 {
 	Assert_MM_unreachable();
         return 0;
+}
+
+void *
+MM_MemorySubSpace::getLowAddressAllocate()
+{
+	return getFirstRegion()->getLowAddress();
 }
