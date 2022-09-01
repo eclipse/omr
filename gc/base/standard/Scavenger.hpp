@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -249,11 +249,9 @@ public:
 	 * @param objectptr the object to scan
 	 * @param objectScannerState points to space for inline allocation of scanner
 	 * @param flags scanner flags
-	 * @param[in] reason See MM_ScavengeScanReason
-	 * @param[out]shouldRemember
 	 * @return the object scanner
 	 */
-	MMINLINE GC_ObjectScanner *getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectptr, void *objectScannerState, uintptr_t flags, MM_ScavengeScanReason reason, bool *shouldRemember);
+	MMINLINE GC_ObjectScanner *getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectptr, void *objectScannerState, uintptr_t flags);
 
 	uintptr_t calculateCopyScanCacheSizeForWaitingThreads(uintptr_t maxCacheSize, uintptr_t threadCount, uintptr_t waitingThreads);
 	uintptr_t calculateCopyScanCacheSizeForQueueLength(uintptr_t maxCacheSize, uintptr_t threadCount, uintptr_t scanCacheCount);
@@ -370,7 +368,6 @@ public:
 	 * @return True If Object should be remembered
 	 */
 	bool shouldRememberObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
-	bool shouldRememberSlot(omrobjectptr_t *slotPtr);
 
 	/**
 	 * BackOutFixSlot implementation
@@ -385,16 +382,7 @@ public:
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	void fixupNurserySlots(MM_EnvironmentStandard *env);
 	void fixupObjectScan(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
-	bool fixupSlot(omrobjectptr_t *slotPtr);
-	MMINLINE bool fixupSlot(GC_SlotObject *slotObject)
-	{
-		omrobjectptr_t objectPtr = slotObject->readReferenceFromSlot();
-		if (fixupSlot(&objectPtr)) {
-			slotObject->writeReferenceToSlot(objectPtr);
-			return true;
-		}
-		return false;
-	}
+	bool fixupSlot(GC_SlotObject *slotObject);
 	bool fixupSlotWithoutCompression(volatile omrobjectptr_t *slotPtr);
 	
 	void scavengeRememberedSetListIndirect(MM_EnvironmentStandard *env);

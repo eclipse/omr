@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,14 +50,12 @@ public:
 	uintptr_t _allocationCount;
 	uintptr_t _allocationBytes;
 	uintptr_t _ownableSynchronizerObjectCount;  /**< Number of Ownable Synchronizer Object allocations */
-	uintptr_t _continuationObjectCount;  /**< Number of Continuation Object allocations */
 	uintptr_t _discardedBytes;
 	uintptr_t _allocationSearchCount;
 	uintptr_t _allocationSearchCountMax;
 
 	void clear();
 	void clearOwnableSynchronizer() { _ownableSynchronizerObjectCount = 0; }
-	void clearContinuation() { _continuationObjectCount = 0; }
 	void merge(MM_AllocationStats * stats);
 
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
@@ -102,7 +100,6 @@ public:
 		_allocationCount(0),
 		_allocationBytes(0),
 		_ownableSynchronizerObjectCount(0),
-		_continuationObjectCount(0),
 		_discardedBytes(0),
 		_allocationSearchCount(0),
 		_allocationSearchCountMax(0)

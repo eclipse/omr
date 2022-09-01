@@ -411,20 +411,18 @@ MM_MarkingScheme::createWorkPackets(MM_EnvironmentBase *env)
 }
 
 void
-MM_MarkingScheme::fixupForwardedSlot(omrobjectptr_t *slotPtr) {
+MM_MarkingScheme::fixupForwardedSlotOutline(GC_SlotObject *slotObject) {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (_extensions->isConcurrentScavengerEnabled() && _extensions->isScavengerBackOutFlagRaised()) {
-		bool const compressed = _extensions->compressObjectReferences();
-		if (_extensions->getGlobalCollector()->isStwCollectionInProgress()) {
-			MM_ForwardedHeader forwardHeader(*slotPtr, compressed);
-			omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
+	bool const compressed = _extensions->compressObjectReferences();
+	if (_extensions->getGlobalCollector()->isStwCollectionInProgress()) {
+		MM_ForwardedHeader forwardHeader(slotObject->readReferenceFromSlot(), compressed);
+		omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 
-			if (NULL != forwardPtr) {
-				if (forwardHeader.isSelfForwardedPointer()) {
-					forwardHeader.restoreSelfForwardedPointer();
-				} else {
-					*slotPtr = forwardPtr;
-				}
+		if (NULL != forwardPtr) {
+			if (forwardHeader.isSelfForwardedPointer()) {
+				forwardHeader.restoreSelfForwardedPointer();
+			} else {
+				slotObject->writeReferenceToSlot(forwardPtr);
 			}
 		}
 	}

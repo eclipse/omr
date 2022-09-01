@@ -288,13 +288,15 @@ public:
 	 * in the final phase of Concurrent GC when we scan Nursery. 
 	 */
 
-	MMINLINE void fixupForwardedSlot(GC_SlotObject *slotObject) {
-		omrobjectptr_t slot = slotObject->readReferenceFromSlot();
-		fixupForwardedSlot(&slot);
-		slotObject->writeReferenceToSlot(slot);
+	void fixupForwardedSlot(GC_SlotObject *slotObject) {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		if (_extensions->isConcurrentScavengerEnabled() && _extensions->isScavengerBackOutFlagRaised()) {
+			fixupForwardedSlotOutline(slotObject);
+		}
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	}
-
-	void fixupForwardedSlot(omrobjectptr_t *slotPtr);
+	
+	void fixupForwardedSlotOutline(GC_SlotObject *slotObject);
 	virtual uintptr_t setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags);
 
 	/**

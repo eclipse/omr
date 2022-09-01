@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -131,15 +131,11 @@ public:
 	 * @param[in] objectPtr The object to be scanned
 	 * @param[in] allocSpace Space for in-place instantiation of scanner
 	 * @param[in] flags See GC_ObjectScanner::InstanceFlags. One of scanRoots or scanHeap will be set , but not both.
-	 * @param[in] reason See MM_ScavengeScanReason
-	 * @param[out]shouldRemember
 	 * @return Pointer to object scanner, or NULL if object not to be scanned (eg, leaf object).
 	 * @see GC_ObjectScanner
 	 */
-	GC_ObjectScanner *getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags, MM_ScavengeScanReason reason, bool *shouldRemember);
-
-	/* temporary API for backward dependency, will be removed  after related changes are merged. */
 	GC_ObjectScanner *getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags);
+
 	/**
 	 * Scavenger calls this method when required to force GC threads to flush any locally-held references into
 	 * associated global buffers.

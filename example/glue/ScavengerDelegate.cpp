@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,18 +99,6 @@ MM_ScavengerDelegate::internalGarbageCollect_shouldPercolateGarbageCollect(MM_En
 	return false;
 }
 
-GC_ObjectScanner *
-MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags, MM_ScavengeScanReason reason, bool *shouldRemember)
-{
-#if defined(OMR_GC_MODRON_SCAVENGER_STRICT)
-	Assert_MM_true((GC_ObjectScanner::scanHeap == flags) ^ (GC_ObjectScanner::scanRoots == flags));
-#endif /* defined(OMR_GC_MODRON_SCAVENGER_STRICT) */
-	GC_ObjectScanner *objectScanner = NULL;
-	objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
-	return objectScanner;
-}
-
-/* temporary API for backward dependency, will be removed  after related changes are merged. */
 GC_ObjectScanner *
 MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags)
 {

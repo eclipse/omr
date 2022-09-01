@@ -1870,10 +1870,8 @@ MM_Scavenger::copyHotField(MM_EnvironmentStandard *env, omrobjectptr_t destinati
  */
 
 GC_ObjectScanner *
-MM_Scavenger::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectptr, void *objectScannerState, uintptr_t flags, MM_ScavengeScanReason reason, bool *shouldRemember)
+MM_Scavenger::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr_t objectptr, void *objectScannerState, uintptr_t flags)
 {
-// for temporary backdependence, need to be updated after related changes are merged.
-//	return _delegate.getObjectScanner(env, objectptr, (void*) objectScannerState, flags, reason, shouldRemember);
 	return _delegate.getObjectScanner(env, objectptr, (void*) objectScannerState, flags);
 }
 
@@ -1974,11 +1972,10 @@ MM_Scavenger::scavengeObjectSlots(MM_EnvironmentStandard *env, MM_CopyScanCacheS
 {
 	GC_ObjectScanner *objectScanner = NULL;
 	GC_ObjectScannerState objectScannerState;
-	bool shouldRemember = false;
 	/* scanCache will be NULL if called from outside completeScan() */
 	if ((NULL == scanCache) || !scanCache->isSplitArray()) {
 		/* try to get a new scanner instance from the cli */
-		objectScanner = getObjectScanner(env, objectPtr, &objectScannerState, flags, SCAN_REASON_SCAVENGE, &shouldRemember);
+		objectScanner = getObjectScanner(env, objectPtr, &objectScannerState, flags);
 		if ((NULL == objectScanner) || objectScanner->isLeafObject()) {
 			/* Object scanner will be NULL if object not scannable by cli (eg, empty pointer array, primitive array) */
 			if (NULL != objectScanner) {
@@ -2012,6 +2009,7 @@ MM_Scavenger::scavengeObjectSlots(MM_EnvironmentStandard *env, MM_CopyScanCacheS
 
 	uint64_t slotsCopied = 0;
 	uint64_t slotsScanned = 0;
+	bool shouldRemember = false;
 	GC_SlotObject *slotObject = NULL;
 
 	MM_CopyScanCacheStandard **copyCache = &(env->_effectiveCopyScanCache);
@@ -2107,7 +2105,7 @@ MM_Scavenger::incrementalScavengeObjectSlots(MM_EnvironmentStandard *env, omrobj
 	if (!scanCache->_hasPartiallyScannedObject) {
 		if (!scanCache->isSplitArray()) {
 			/* try to get a new scanner instance from the cli */
-			objectScanner = getObjectScanner(env, objectPtr, scanCache->getObjectScanner(), GC_ObjectScanner::scanHeap, SCAN_REASON_SCAVENGE, &scanCache->_shouldBeRemembered);
+			objectScanner = getObjectScanner(env, objectPtr, scanCache->getObjectScanner(), GC_ObjectScanner::scanHeap);
 			if ((NULL == objectScanner) || objectScanner->isLeafObject()) {
 				/* Object scanner will be NULL if object not scannable by cli (eg, empty pointer array, primitive array) */
 				if (NULL != objectScanner) {
@@ -2762,21 +2760,6 @@ MM_Scavenger::processRememberedThreadReference(MM_EnvironmentStandard *env, omro
 	return result;
 }
 
-bool
-MM_Scavenger::shouldRememberSlot(omrobjectptr_t *slotPtr)
-{
-	omrobjectptr_t slotObjectPtr = *slotPtr;
-	if (NULL != slotObjectPtr) {
-		if (isObjectInNewSpace(slotObjectPtr)) {
-			Assert_MM_true(!isObjectInEvacuateMemory(slotObjectPtr));
-			return true;
-		} else if (IS_CONCURRENT_ENABLED && isBackOutFlagRaised() && isObjectInEvacuateMemory(slotObjectPtr)) {
-			/* Could happen if we aborted before completing RS scan */
-			return true;
-		}
-	}
-	return false;
-}
 /********************************************************************
  * Object Scan Routines for Remembered Set Overflow (RSO) conditions
  * All objects taken as input MUST be in Tenured (Old) Space
@@ -2793,12 +2776,8 @@ MM_Scavenger::shouldRememberObject(MM_EnvironmentStandard *env, omrobjectptr_t o
 	 * So we must not split, if it's indexable
 	 */
 	uintptr_t scannerFlags = GC_ObjectScanner::scanRoots | GC_ObjectScanner::indexableObjectNoSplit;
-	bool shouldRemember = false;
 
-	GC_ObjectScanner *objectScanner = getObjectScanner(env, objectPtr, &objectScannerState, scannerFlags, SCAN_REASON_SHOULDREMEMBER, &shouldRemember);
-	if (shouldRemember) {
-		return true;
-	}
+	GC_ObjectScanner *objectScanner = getObjectScanner(env, objectPtr, &objectScannerState, scannerFlags);
 	if (NULL != objectScanner) {
 		GC_SlotObject *slotPtr;
 		while (NULL != (slotPtr = objectScanner->getNextSlot())) {
@@ -3814,8 +3793,7 @@ MM_Scavenger::backOutObjectScan(MM_EnvironmentStandard *env, omrobjectptr_t obje
 {
 	GC_SlotObject *slotObject = NULL;
 	GC_ObjectScannerState objectScannerState;
-	bool shouldRemember = false;
-	GC_ObjectScanner *objectScanner = getObjectScanner(env, objectPtr, &objectScannerState, GC_ObjectScanner::scanRoots, SCAN_REASON_BACKOUT, &shouldRemember);
+	GC_ObjectScanner *objectScanner = getObjectScanner(env, objectPtr, &objectScannerState, GC_ObjectScanner::scanRoots);
 	if (NULL != objectScanner) {
 #if defined(OMR_SCAVENGER_TRACE_BACKOUT)
 		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
@@ -3942,15 +3920,16 @@ MM_Scavenger::fixupSlotWithoutCompression(volatile omrobjectptr_t *slotPtr)
 }
 
 bool
-MM_Scavenger::fixupSlot(omrobjectptr_t *slotPtr)
+MM_Scavenger::fixupSlot(GC_SlotObject *slotObject)
 {
-	omrobjectptr_t objectPtr = *slotPtr;
+	omrobjectptr_t objectPtr = slotObject->readReferenceFromSlot();
 	bool const compressed = _extensions->compressObjectReferences();
-	if (NULL != objectPtr) {
+
+	if(NULL != objectPtr) {
 		MM_ForwardedHeader forwardHeader(objectPtr, compressed);
 		if (forwardHeader.isStrictlyForwardedPointer()) {
-			*slotPtr = forwardHeader.getForwardedObject();
-			Assert_MM_false(isObjectInEvacuateMemory(*slotPtr));
+			slotObject->writeReferenceToSlot(forwardHeader.getForwardedObject());
+			Assert_MM_false(isObjectInEvacuateMemory(slotObject->readReferenceFromSlot()));
 			return true;
 		} else {
 			Assert_MM_false(_extensions->objectModel.isDeadObject(objectPtr));
@@ -3964,8 +3943,7 @@ MM_Scavenger::fixupObjectScan(MM_EnvironmentStandard *env, omrobjectptr_t object
 {
 	GC_SlotObject *slotObject = NULL;
 	GC_ObjectScannerState objectScannerState;
-	bool shouldRemember = false;
-	GC_ObjectScanner *objectScanner = getObjectScanner(env, objectPtr, (void *) &objectScannerState, GC_ObjectScanner::scanRoots, SCAN_REASON_FIXUP, &shouldRemember);
+	GC_ObjectScanner *objectScanner = getObjectScanner(env, objectPtr, (void *) &objectScannerState, GC_ObjectScanner::scanRoots);
 	if (NULL != objectScanner) {
 		while (NULL != (slotObject = objectScanner->getNextSlot())) {
 			fixupSlot(slotObject);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,6 @@ MM_AllocationStats::clear()
 	_allocationCount = 0;
 	_allocationBytes = 0;
 	_ownableSynchronizerObjectCount = 0;
-	_continuationObjectCount = 0;
 	_discardedBytes = 0;
 	_allocationSearchCount = 0;
 	_allocationSearchCountMax = 0;
@@ -76,7 +75,6 @@ MM_AllocationStats::merge(MM_AllocationStats *stats)
 	MM_AtomicOperations::add(&_allocationCount, stats->_allocationCount);
 	MM_AtomicOperations::add(&_allocationBytes, stats->_allocationBytes);
 	MM_AtomicOperations::add(&_ownableSynchronizerObjectCount, stats->_ownableSynchronizerObjectCount);
-	MM_AtomicOperations::add(&_continuationObjectCount, stats->_continuationObjectCount);
 	MM_AtomicOperations::add(&_discardedBytes, stats->_discardedBytes);
 	MM_AtomicOperations::add(&_allocationSearchCount, stats->_allocationSearchCount);
 	/* looping to set a maximum value in _tlhMaxAbandonedListSize */
