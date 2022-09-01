@@ -410,7 +410,7 @@ MM_MarkingScheme::createWorkPackets(MM_EnvironmentBase *env)
 	return workPackets;
 }
 
-void
+bool
 MM_MarkingScheme::fixupForwardedSlot(omrobjectptr_t *slotPtr) {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	bool const compressed = _extensions->compressObjectReferences();
@@ -423,10 +423,12 @@ MM_MarkingScheme::fixupForwardedSlot(omrobjectptr_t *slotPtr) {
 				forwardHeader.restoreSelfForwardedPointer();
 			} else {
 				*slotPtr = forwardPtr;
+				return true;
 			}
 		}
 	}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
+	return false;
 }
 
 uintptr_t

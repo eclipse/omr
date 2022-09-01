@@ -291,12 +291,13 @@ public:
 	MMINLINE void fixupForwardedSlot(GC_SlotObject *slotObject) {
 		if (_extensions->isConcurrentScavengerEnabled() && _extensions->isScavengerBackOutFlagRaised()) {
 			omrobjectptr_t slot = slotObject->readReferenceFromSlot();
-			fixupForwardedSlot(&slot);
-			slotObject->writeReferenceToSlot(slot);
+			if (fixupForwardedSlot(&slot)) {
+				slotObject->writeReferenceToSlot(slot);
+			}
 		}
 	}
 
-	void fixupForwardedSlot(omrobjectptr_t *slotPtr);
+	bool fixupForwardedSlot(omrobjectptr_t *slotPtr);
 	virtual uintptr_t setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags);
 
 	/**
