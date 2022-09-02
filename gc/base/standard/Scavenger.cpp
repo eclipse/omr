@@ -2803,14 +2803,8 @@ MM_Scavenger::shouldRememberObject(MM_EnvironmentStandard *env, omrobjectptr_t o
 		GC_SlotObject *slotPtr;
 		while (NULL != (slotPtr = objectScanner->getNextSlot())) {
 			omrobjectptr_t slotObjectPtr = slotPtr->readReferenceFromSlot();
-			if (NULL != slotObjectPtr) {
-				if (isObjectInNewSpace(slotObjectPtr)) {
-					Assert_MM_true(!isObjectInEvacuateMemory(slotObjectPtr));
-					return true;
-				} else if (IS_CONCURRENT_ENABLED && isBackOutFlagRaised() && isObjectInEvacuateMemory(slotObjectPtr)) {
-					/* Could happen if we aborted before completing RS scan */
-					return true;
-				}
+			if (shouldRememberSlot(&slotObjectPtr)) {
+				return true;
 			}
 		}
 	}
