@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,5 @@ typedef struct MarkAllPagesWritableHeader {
 uintptr_t renameDump(struct OMRPortLibrary *portLibrary, char *filename, pid_t pid, int signalNumber);
 char *markAllPagesWritable(struct OMRPortLibrary *portLibrary);
 
-
-
+uintptr_t userspace_dump_create(struct OMRPortLibrary *portLibrary, char *filename);
 

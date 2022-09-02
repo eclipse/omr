@@ -173,6 +173,7 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 
 		/* Move to specified folder before dumping? */
 		if (lastSep != NULL) {
+			char replaced = lastSep[1];
 			lastSep[1] = '\0';
 			/*
 			 * There isn't much we can do if chdir() fails, but we don't want
@@ -182,11 +183,19 @@ omrdump_create(struct OMRPortLibrary *portLibrary, char *filename, char *dumpTyp
 			if (0 != chdir(filename)) {
 				lastSep[1] = '\0';
 			}
+			lastSep[1] = replaced;
 		}
 
-#if defined(LINUX) || defined(OSX)
-		pthread_kill(pthread_self(), J9_DUMP_SIGNAL);
-#endif /* defined(LINUX) || defined(OSX) */
+#if defined(LINUX)
+		if (getenv("J9_USER_DUMP")) {
+			if (0 != userspace_dump_create(portLibrary, filename)) {
+				fprintf(stderr, "core dump creation failed\n");
+			}
+			raise(SIGKILL); /* kill child process without running any exit procedures */
+		} else {
+			pthread_kill(pthread_self(), J9_DUMP_SIGNAL);
+		}
+#endif /* defined(LINUX) */
 
 		abort();
 	} /* end of child process */

@@ -31,7 +31,10 @@
 #include <sys/stat.h>
 #if defined(LINUX)
 #include <sys/prctl.h>
+#include <sys/procfs.h>
 #include <sys/resource.h>
+#include <sys/ptrace.h>
+#include <sys/wait.h>
 #endif
 #include <elf.h>
 #include <fcntl.h>
@@ -49,7 +52,7 @@
 static intptr_t waitCore(char *path);
 static void setChecksumMarkAllPagesWritableHeader(MarkAllPagesWritableHeader *header);
 static char linuxMemoryMapsFile[] = "/proc/self/maps";
-static uintptr_t getSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, intptr_t fd, uintptr_t addrSize, uint8_t **ppStart, uint8_t **ppEnd);
+static uintptr_t getSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, intptr_t fd, uintptr_t addrSize, uint8_t **ppStart, uint8_t **ppEnd, char *flags, long *fileOff, char *filePath);
 
 static uintptr_t readElfHeader(struct OMRPortLibrary *portLibrary, intptr_t fd, Elf64_Ehdr *pElfheader);
 static uintptr_t findProgramHeader(struct OMRPortLibrary *portLibrary, intptr_t fd, uintptr_t addrSize, Elf64_Off phoff, Elf64_Half phnum, uint8_t *start, uint8_t *end);
@@ -145,6 +148,10 @@ renameDump(struct OMRPortLibrary *portLibrary, char *filename, pid_t pid, int si
 	struct stat attrBuf;
 
 	memset(corePatternFormat, 0, sizeof(corePatternFormat));
+
+	if (getenv("J9_USER_DUMP")) {
+		return stat(filename, &attrBuf);
+	}
 
 	procRC = getContentsFromProcFileSystem(portLibrary, corePatternFileName, corePatternFormat, PATH_MAX);
 	if (0 == procRC) {
@@ -898,11 +905,14 @@ printMemoryMap(struct OMRPortLibrary *portLibrary, uintptr_t addrSize)
  * @param[in] addrSize Size of the machine addresses.
  * @param[out] ppStart address of start ptr.
  * @param[out] ppEnd address of end ptr.
+ * @param[out] flags flags of the segment, needs to be array of size 4, can be NULL if not needed
+ * @param[out] fileOff offset in mapped file, can be NULL if not needed
+ * @param[out] filePath string representing filepath, size EsMaxPath, can be NULL if not needed
  *
  * @return non zero on success, zero otherwise.
  */
 static uintptr_t
-getSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, intptr_t fd, uintptr_t addrSize, uint8_t **ppStart, uint8_t **ppEnd)
+getSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, intptr_t fd, uintptr_t addrSize, uint8_t **ppStart, uint8_t **ppEnd, char *flags, long *fileOff, char *filePath)
 {
 	char ch;
 	char outbuf[EsMaxPath];
@@ -937,25 +947,42 @@ getSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, intptr_t fd,
 
 					end = (uint8_t *)(uintptr_t)strtoull(next, &next, 16);
 
-					/* skip the read flag */
-					next++;
-
-					/* skip the write flag */
-					next++;
-
-					/* skip the exec flag */
-					next++;
-
-					/* get the attr flag */
-					next++;
-					attr_flag = *next;
+					if (NULL == flags) {
+						/* skip the read flag */
+						next++;
+						/* skip the write flag */
+						next++;
+						/* skip the exec flag */
+						next++;
+						/* get the attr flag */
+						next++;
+						attr_flag = *next;
+					} else {
+						/* get the read flag */
+						next++;
+						flags[0] = *next;
+						/* get the write flag */
+						next++;
+						flags[1] = *next;
+						/* get the exec flag */
+						next++;
+						flags[2] = *next;
+						/* get the attr flag */
+						next++;
+						flags[3] = *next;
+						attr_flag = *next;
+					}
 
 					if ('s' == attr_flag || 'p' == attr_flag) {
 						/* found a shared or private memory segment */
 
 						/* get the offset */
 						next++;
-						J9_IGNORE_RETURNVAL(strtoull(next, &next, 16));
+						if (NULL != fileOff) {
+							*fileOff = strtoull(next, &next, 16);
+						} else {
+							J9_IGNORE_RETURNVAL(strtoull(next, &next, 16));
+						}
 
 						/* skip over the device (+5) and get the inode (+1) */
 						next += 6;
@@ -967,6 +994,9 @@ getSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, intptr_t fd,
 							next++;
 						}
 						strcpy(path, next);
+						if (NULL != filePath) {
+							strcpy(filePath, path);
+						}
 
 #ifdef DUMP_DBG
 						if (32 == addrSize) {
@@ -1218,7 +1248,7 @@ insertSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, char *cor
 			printMemoryMap(portLibrary, addrSize);
 #endif
 			/* read all the shared classes segments */
-			while (getSharedAndPrivateDataSegments(portLibrary, fd_maps, addrSize, &start, &end)) {
+			while (getSharedAndPrivateDataSegments(portLibrary, fd_maps, addrSize, &start, &end, NULL, NULL, NULL)) {
 				/* find a program header that represents this data */
 				phoff_update = findProgramHeader(portLibrary, fd_core, addrSize, phoff, phnum, start, end);
 				if (0 == phoff_update) {
@@ -1250,4 +1280,886 @@ insertSharedAndPrivateDataSegments(struct OMRPortLibrary *portLibrary, char *cor
 		/* close the maps file. */
 		portLibrary->file_close(portLibrary, fd_maps);
 	}
+}
+
+/* gathers memory segment information from the map file and allocates an array
+ * to to pass the segment info to the core dump function
+ * returns non zero on success, zero on failure
+ */
+static int
+list_segment_headers(struct OMRPortLibrary *portLibrary, int addrsize, void **segment_headers, uint32_t *segment_count)
+{
+#ifdef _LP64
+	Elf64_Phdr *segments = NULL;
+	Elf64_Phdr *tmp_segments = NULL;
+#else
+	Elf32_Phdr *segments = NULL;
+	Elf32_Phdr *tmp_segments = NULL;
+#endif
+	pid_t ppid = getppid();
+	uint32_t segment_array_size = 128;
+	int fd_maps = 0;
+	char mapfile_name[32] = "/proc/";
+	uint8_t *start_addr = 0;
+	uint8_t *end_addr = 0;
+	char vmmap_flags[4];
+	uint32_t pagesize = sysconf(_SC_PAGESIZE);
+	int rc = 0;
+
+	snprintf(mapfile_name + 6, 32 - 6, "%d/maps", ppid);
+	fd_maps = open(mapfile_name, O_RDONLY, 0);
+	if (fd_maps < 0) {
+		perror("open() on memory map");
+		goto error;
+	}
+
+	*segment_count = 0;
+	segments = calloc(segment_array_size, sizeof(*segments));
+	if (NULL == segments) {
+		perror("no memory to list core memory segments");
+		goto error;
+	}
+
+	while (getSharedAndPrivateDataSegments(portLibrary, fd_maps, addrsize, &start_addr, &end_addr, vmmap_flags, NULL, NULL)) {
+		if (*segment_count >= segment_array_size) {
+			segment_array_size += segment_array_size / 2;
+			tmp_segments = calloc(segment_array_size, sizeof(*tmp_segments));
+			if (NULL == tmp_segments) {
+				perror("no memory to list core memory segments");
+				goto error;
+			}
+			memcpy(tmp_segments, segments, *segment_count * sizeof(*tmp_segments));
+			free(segments);
+			segments = tmp_segments;
+			tmp_segments = NULL;
+		}
+
+		segments[*segment_count].p_type = PT_LOAD;
+		segments[*segment_count].p_offset = 0;
+		segments[*segment_count].p_vaddr = (Elf64_Addr)start_addr;
+		segments[*segment_count].p_paddr = 0;
+		segments[*segment_count].p_filesz = 0;
+		segments[*segment_count].p_memsz = (Elf64_Addr)end_addr - (Elf64_Addr)start_addr;
+		segments[*segment_count].p_flags = 0;
+		if ('r' == vmmap_flags[0]) {
+			segments[*segment_count].p_flags |= PF_R;
+		}
+		if ('w' == vmmap_flags[1]) {
+			segments[*segment_count].p_flags |= PF_W;
+		}
+		if ('x' == vmmap_flags[2]) {
+			segments[*segment_count].p_flags |= PF_X;
+		}
+		segments[*segment_count].p_align = pagesize;
+
+		*segment_count += 1;
+	}
+
+	*segment_headers = segments;
+	rc = 1;
+
+error:
+	if ((0 == rc) && (NULL != segments)) {
+		free(segments);
+	}
+	if (fd_maps > 0) {
+		close(fd_maps);
+	}
+	return rc;
+}
+
+/* writes data portion of an auxv note
+ * returns non zero on success, zero on failure
+ */
+static int
+write_note_auxv_data(int outfile_fd, off_t *outfile_off, unsigned int *data_size)
+{
+	pid_t ppid = getppid();
+	char proc_filename[32] = "/proc/";
+	int proc_fd = 0;
+	off_t file_off = *outfile_off;
+	ssize_t written = 0;
+	ssize_t bytes_read = 0;
+	long auxv_entry[2]; /* elem 0 is identifier, elem 1 is data */
+
+	snprintf(proc_filename + 6, 32 - 6, "%d/auxv", ppid);
+	proc_fd = open(proc_filename, O_RDONLY, 0);
+	if (proc_fd < 0) {
+		perror("open() on /proc/pid/auxv");
+		goto error;
+	}
+
+	do {
+		bytes_read = read(proc_fd, auxv_entry, sizeof auxv_entry);
+		if (bytes_read > 0) {
+			written = pwrite(outfile_fd, auxv_entry, sizeof auxv_entry, file_off);
+			if (written < 0) {
+				perror("writing auxv note to core");
+				goto error;
+			}
+			file_off += written;
+			*data_size += written;
+		} else if (bytes_read < 0) {
+			perror("reading /proc/pid/auxv file");
+			goto error;
+		}
+	} while (bytes_read > 0);
+	*outfile_off = file_off;
+
+error:
+	if (proc_fd > 0) {
+		close(proc_fd);
+	}
+	return file_off = *outfile_off;
+}
+
+/* helper to read a "word", which is anything between whitespace from the /proc/$pid/stat
+ * file and stores it into a character array passed from a parameter
+ */
+static int
+read_word_from_stat(int file_fd, char *buffer)
+{
+	char ch = 0;
+	char local_buffer[EsMaxPath] = {0};
+	ssize_t bytes_read = 0;
+	int index = 0;
+	int rc = 0;
+
+	if (file_fd > 0) {
+		while (bytes_read > -1) {
+			bytes_read = read(file_fd, &ch, 1);
+			if (bytes_read <= 0) {
+				break;
+			}
+			if (isspace(ch)) {
+				if (0 == index) {
+					continue;
+				} else {
+					break;
+				}
+			} else {
+				local_buffer[index++] = ch;
+			}
+		}
+		if (bytes_read > -1) {
+			local_buffer[index++] = '\0';
+			if (NULL != buffer) {
+				memcpy(buffer, local_buffer, index);
+			}
+			rc = 1;
+		}
+		else {
+			perror("reading /proc/pid/stat file");
+		}
+	}
+	return rc;
+}
+
+/* reads process info from /proc filesystem into the prpsinfo and prstatus structures
+ * returns non zero on success, zero on failure
+ */
+static int
+gather_process_data(int outfile_fd, prpsinfo_t *prpsinfo, prstatus_t *prstatus)
+{
+	pid_t ppid = getppid();
+	char proc_filename[32] = "/proc/";
+	int proc_fd = 0;
+	size_t bytes_read = 0;
+	char read_buffer[EsMaxPath];
+
+	snprintf(proc_filename + 6, 32 - 6, "%d/stat", ppid);
+	proc_fd = open(proc_filename, O_RDONLY, 0);
+	if (proc_fd < 0) {
+		perror("open() on /proc/pid/stat");
+		return 0;
+	}
+
+	/* fill out prpsinfo and general process prstatus info */
+	prpsinfo->pr_uid = getuid();
+	prpsinfo->pr_gid = getgid();
+	if (read_word_from_stat(proc_fd, read_buffer)) {
+		prpsinfo->pr_pid = strtol(read_buffer, NULL, 0);
+		prstatus->pr_pid = prpsinfo->pr_pid;
+	}
+	if (read_word_from_stat(proc_fd, read_buffer)) {
+		strncpy(prpsinfo->pr_fname, read_buffer, 16);
+		prpsinfo->pr_fname[15] = '\0';
+	}
+	if (read_word_from_stat(proc_fd, read_buffer)) {
+		prpsinfo->pr_sname = read_buffer[0];
+		prpsinfo->pr_zomb = ('Z' == prpsinfo->pr_sname);
+	}
+	if (read_word_from_stat(proc_fd, read_buffer)) {
+		prpsinfo->pr_ppid = strtol(read_buffer, NULL, 0);
+		prstatus->pr_ppid = prpsinfo->pr_ppid;
+	}
+	if (read_word_from_stat(proc_fd, read_buffer)) {
+		prpsinfo->pr_pgrp = strtol(read_buffer, NULL, 0);
+		prstatus->pr_pgrp = prpsinfo->pr_pgrp;
+	}
+	if (read_word_from_stat(proc_fd, read_buffer)) {
+		prpsinfo->pr_sid = strtol(read_buffer, NULL, 0);
+		prstatus->pr_sid = prpsinfo->pr_sid;
+	}
+	read_word_from_stat(proc_fd, NULL); /* skip tty_nr */
+	read_word_from_stat(proc_fd, NULL); /* skip tpgid */
+	if (read_word_from_stat(proc_fd, read_buffer)) {
+		prpsinfo->pr_flag = strtol(read_buffer, NULL, 0);
+	}
+	read_word_from_stat(proc_fd, NULL); /* skip minflt */
+	read_word_from_stat(proc_fd, NULL); /* skip cminflt */
+	read_word_from_stat(proc_fd, NULL); /* skip majflt */
+	read_word_from_stat(proc_fd, NULL); /* skip cmajflt */
+	read_word_from_stat(proc_fd, NULL); /* skip utime */
+	read_word_from_stat(proc_fd, NULL); /* skip stime */
+	read_word_from_stat(proc_fd, NULL); /* skip cutime */
+	read_word_from_stat(proc_fd, NULL); /* skip cstime */
+	read_word_from_stat(proc_fd, NULL); /* skip priority */
+	if (read_word_from_stat(proc_fd, read_buffer)) {
+		prpsinfo->pr_nice = strtol(read_buffer, NULL, 0);
+	}
+	close(proc_fd);
+
+	snprintf(proc_filename + 6, 32 - 6, "%d/cmdline", ppid);
+	proc_fd = open(proc_filename, O_RDONLY, 0);
+	if (proc_fd < 0) {
+		perror("open() on /proc/pid/cmdline");
+		return 0;
+	}
+
+	bytes_read = read(proc_fd, read_buffer, ELF_PRARGSZ);
+	if (bytes_read > 0) {
+		strncpy(prpsinfo->pr_psargs, read_buffer, ELF_PRARGSZ);
+	}
+	prpsinfo->pr_psargs[ELF_PRARGSZ - 1] = '\0';
+
+	if (proc_fd > 0) {
+		close(proc_fd);
+	}
+	return 1;
+}
+
+static int
+write_thread_notes(int addrsize, int outfile_fd, off_t *outfile_off, prstatus_t *global_prstatus) {
+	char corename[8] = "CORE"; /* size 8 for alignment */
+	off_t file_off = *outfile_off;
+#ifdef _LP64
+	Elf64_Nhdr note_hdr = {};
+#else
+	Elf32_Nhdr note_hdr = {};
+#endif
+	pid_t ppid = getppid();
+	char taskdir_filename[32] = "/proc/";
+	DIR *proc_taskdir = NULL;
+	int procfile_fd = 0;
+	struct dirent *taskdirent = NULL;
+	long clock_ticks = sysconf(_SC_CLK_TCK);
+	int rc = 0;
+
+	snprintf(taskdir_filename + 6, 32 - 6, "%d/task", ppid);
+	proc_taskdir = opendir(taskdir_filename);
+	if (NULL == proc_taskdir) {
+		perror("opening task dir for process");
+		goto done;
+	}
+
+	while ((0 == (errno = 0)) && (NULL != (taskdirent = readdir(proc_taskdir)))) {
+		if (DT_DIR == taskdirent->d_type) {
+			int i = 0;
+			pid_t tid = strtoul(taskdirent->d_name, NULL, 0);
+			char thread_procfile[64] = {0};
+			siginfo_t thread_siginfo;
+			prgregset_t gen_regs;
+			prfpregset_t fpregs;
+			prstatus_t thread_prstatus = *global_prstatus;
+			char read_buffer[EsMaxPath] = {0};
+			ssize_t written = 0;
+
+			/* skip directories that do not convert to thread ids */
+			if (tid < 1) {
+				continue;
+			}
+
+			snprintf(thread_procfile, 64, "%s/%d/stat", taskdir_filename, tid);
+			procfile_fd = open(thread_procfile, O_RDONLY, 0);
+			if (procfile_fd < 0) {
+				perror("open() on thread stat file");
+				goto done;
+			}
+
+			/* skip first 13 entries in stat file */
+			for (i=0; i < 13; i++) {
+				read_word_from_stat(procfile_fd, NULL);
+			}
+			if (read_word_from_stat(procfile_fd, read_buffer)) {
+				thread_prstatus.pr_utime.tv_sec = strtoul(read_buffer, NULL, 0) / clock_ticks;
+				thread_prstatus.pr_utime.tv_usec = thread_prstatus.pr_utime.tv_sec * 1000;
+			}
+			if (read_word_from_stat(procfile_fd, read_buffer)) {
+				thread_prstatus.pr_stime.tv_sec = strtoul(read_buffer, NULL, 0) / clock_ticks;
+				thread_prstatus.pr_stime.tv_usec = thread_prstatus.pr_stime.tv_sec * 1000;
+			}
+			if (read_word_from_stat(procfile_fd, read_buffer)) {
+				thread_prstatus.pr_cutime.tv_sec = strtoul(read_buffer, NULL, 0) / clock_ticks;
+				thread_prstatus.pr_cutime.tv_usec = thread_prstatus.pr_cutime.tv_sec * 1000;
+			}
+			if (read_word_from_stat(procfile_fd, read_buffer)) {
+				thread_prstatus.pr_cstime.tv_sec = strtoul(read_buffer, NULL, 0) / clock_ticks;
+				thread_prstatus.pr_cstime.tv_usec = thread_prstatus.pr_cstime.tv_sec * 1000;
+			}
+			/* skip entries again until signal entry in stat file */
+			for (i=17; i < 32; i++) {
+				read_word_from_stat(procfile_fd, NULL);
+			}
+			if (read_word_from_stat(procfile_fd, read_buffer)) {
+				thread_prstatus.pr_sigpend = strtoul(read_buffer, NULL, 0);
+			}
+			if (read_word_from_stat(procfile_fd, read_buffer)) {
+				thread_prstatus.pr_sighold = strtoul(read_buffer, NULL, 0);
+			}
+
+			close(procfile_fd);
+
+			errno = 0;
+			if (-1 == ptrace(PTRACE_GETSIGINFO, ppid, NULL, &thread_siginfo)) {
+				perror("PTRACE_GETSIGINFO on thread failed");
+				goto thread_done;
+			}
+			errno = 0;
+			if (-1 == ptrace(PTRACE_GETREGS, ppid, NULL, &gen_regs)) {
+				perror("PTRACE_GETREGS on thread failed");
+				goto thread_done;
+			}
+			errno = 0;
+			if (-1 == ptrace(PTRACE_GETFPREGS, ppid, NULL, &fpregs)) {
+				perror("PTRACE_GETFPREGS on thread failed");
+				goto thread_done;
+			}
+			memcpy(thread_prstatus.pr_reg, gen_regs, sizeof thread_prstatus.pr_reg);
+			thread_prstatus.pr_info.si_signo = thread_siginfo.si_signo;
+			thread_prstatus.pr_info.si_code = thread_siginfo.si_code;
+			thread_prstatus.pr_info.si_errno = thread_siginfo.si_errno;
+
+			/* write the prstatus, siginfo and fp regs notes for each thread */
+			note_hdr.n_type = NT_PRSTATUS;
+			note_hdr.n_namesz = 5;
+			note_hdr.n_descsz =  sizeof thread_prstatus;
+			written = pwrite(outfile_fd, &note_hdr, sizeof note_hdr, file_off);
+			if (written < 0) {
+				perror("writing prstatus note to core");
+				goto thread_done;
+			}
+			file_off += sizeof note_hdr;
+			written = pwrite(outfile_fd, corename, sizeof corename, file_off);
+			if (written < 0) {
+				perror("writing prstatus note to core");
+				goto thread_done;
+			}
+			file_off += sizeof corename;
+			written = pwrite(outfile_fd, &thread_prstatus, sizeof thread_prstatus, file_off);
+			if (written < 0) {
+				perror("writing prstatus note to core");
+				goto thread_done;
+			}
+			file_off += sizeof thread_prstatus;
+			/* 4 byte alignment */
+			if (file_off % 4) {
+				file_off +=  4 - (file_off % 4);
+			}
+
+			note_hdr.n_type = NT_SIGINFO;
+			note_hdr.n_namesz = 5;
+			note_hdr.n_descsz =  sizeof thread_siginfo;
+			written = pwrite(outfile_fd, &note_hdr, sizeof note_hdr, file_off);
+			if (written < 0) {
+				perror("writing siginfo note to core");
+				goto thread_done;
+			}
+			file_off += sizeof note_hdr;
+			written = pwrite(outfile_fd, corename, sizeof corename, file_off);
+			if (written < 0) {
+				perror("writing siginfo note to core");
+				goto thread_done;
+			}
+			file_off += sizeof corename;
+			written = pwrite(outfile_fd, &thread_siginfo, sizeof thread_siginfo, file_off);
+			if (written < 0) {
+				perror("writing siginfo note to core");
+				goto thread_done;
+			}
+			file_off += sizeof thread_siginfo;
+			/* 4 byte alignment */
+			if (file_off % 4) {
+				file_off +=  4 - (file_off % 4);
+			}
+
+			note_hdr.n_type = NT_FPREGSET;
+			note_hdr.n_namesz = 5;
+			note_hdr.n_descsz =  sizeof fpregs;
+			written = pwrite(outfile_fd, &note_hdr, sizeof note_hdr, file_off);
+			if (written < 0) {
+				perror("writing fpregset note to core");
+				goto thread_done;
+			}
+			file_off += sizeof note_hdr;
+			written = pwrite(outfile_fd, corename, sizeof corename, file_off);
+			if (written < 0) {
+				perror("writing fpregset note to core");
+				goto thread_done;
+			}
+			file_off += sizeof corename;
+			written = pwrite(outfile_fd, &fpregs, sizeof fpregs, file_off);
+			if (written < 0) {
+				perror("writing fpregset note to core");
+				goto thread_done;
+			}
+			file_off += sizeof fpregs;
+			/* 4 byte alignment */
+			if (file_off % 4) {
+				file_off +=  4 - (file_off % 4);
+			}
+
+thread_done:
+			if (0 != procfile_fd) {
+				close(procfile_fd);
+			}
+		}
+	}
+	if (0 == errno) {
+		rc = 1;
+		*outfile_off = file_off;
+	} else {
+		perror("failed to write thread notes");
+	}
+
+done:
+	if (NULL != proc_taskdir) {
+		closedir(proc_taskdir);
+	}
+	if (0 != procfile_fd) {
+		close(procfile_fd);
+	}
+	return rc;
+}
+
+
+/* writes the notes for process info to the corefile
+ * returns non zero on success, zero on failure
+ */
+static int
+write_process_notes(struct OMRPortLibrary *portLibrary, int addrsize, int outfile_fd, off_t *outfile_off)
+{
+	char corename[8] = "CORE"; /* size 8 for alignment */
+	ssize_t written = 0;
+	off_t file_off = *outfile_off;
+	off_t note_start_off = file_off;
+#ifdef _LP64
+	Elf64_Nhdr note_hdr = {};
+#else
+	Elf32_Nhdr note_hdr = {};
+#endif
+	prpsinfo_t prpsinfo = {};
+	prstatus_t prstatus = {};
+
+	/* auxillary vector note */
+	note_hdr.n_type = NT_AUXV;
+	note_hdr.n_namesz = 5;
+	note_hdr.n_descsz = 0;
+	file_off += sizeof note_hdr;
+	written = pwrite(outfile_fd, corename, sizeof corename, file_off);
+	if (written < 0) {
+		perror("writing auxv note to core");
+		return 0;
+	}
+	file_off += sizeof corename;
+
+	if(!write_note_auxv_data(outfile_fd, &file_off, &note_hdr.n_descsz)) {
+		return 0;
+	}
+	written = pwrite(outfile_fd, &note_hdr, sizeof note_hdr, note_start_off);
+	if (written < 0) {
+		perror("writing auxv note to core");
+		return 0;
+	}
+	/* 4 byte alignment */
+	if (file_off % 4) {
+		file_off +=  4 - (file_off % 4);
+	}
+
+	/* prpsinfo note, general process info */
+	note_start_off = file_off;
+	note_hdr.n_type = NT_PRPSINFO;
+	note_hdr.n_namesz = 5;
+	note_hdr.n_descsz = sizeof prpsinfo;
+	written = pwrite(outfile_fd, &note_hdr, sizeof note_hdr, note_start_off);
+	if (written < 0) {
+		perror("writing prpsinfo note to core");
+		return 0;
+	}
+	file_off += sizeof note_hdr;
+	written = pwrite(outfile_fd, corename, sizeof corename, file_off);
+	if (written < 0) {
+		perror("writing prpsinfo note to core");
+		return 0;
+	}
+	file_off += sizeof corename;
+	if(!gather_process_data(outfile_fd, &prpsinfo, &prstatus)) {
+		return 0;
+	}
+	written = pwrite(outfile_fd, &prpsinfo, sizeof prpsinfo, file_off);
+	if (written < 0) {
+		perror("writing prpsinfo note to core");
+		return 0;
+	}
+	file_off += sizeof prpsinfo;
+
+	/* 4 byte alignment */
+	if (file_off % 4) {
+		file_off +=  4 - (file_off % 4);
+	}
+
+	if(!write_thread_notes(addrsize, outfile_fd, &file_off, &prstatus)) {
+		return 0;
+	}
+
+	*outfile_off = file_off;
+	return 1;
+}
+
+/* writes file note, which contains info for mapped memory segments for the core
+ * returns non zero on success, zero on failure
+ */
+static int
+write_file_note(struct OMRPortLibrary *portLibrary, int addrsize, int seg_count, int outfile_fd, off_t *outfile_off)
+{
+	pid_t ppid = getppid();
+	int fd_maps = 0;
+	char mapfile_name[32] = "/proc/";
+	uint8_t *start_addr = 0;
+	uint8_t *end_addr = 0;
+	char filePath[EsMaxPath];
+	ssize_t written = 0;
+	off_t file_off = *outfile_off;
+	int i = 0;
+	char corename[8] = "CORE"; /* size 8 for alignment */
+#ifdef _LP64
+	Elf64_Nhdr note_hdr = {};
+#else
+	Elf32_Nhdr note_hdr = {};
+#endif
+	long noteinfo[2] = {0}; /* elem 0 is mapped segment count, elem 1 is page size */
+	long note_seginfo[3] = {0}; /* start addr, end addr, page offset */
+
+
+	snprintf(mapfile_name + 6, 32 - 6, "%d/maps", ppid);
+	fd_maps = open(mapfile_name, O_RDONLY, 0);
+	if (fd_maps < 0) {
+		perror("open() on memory map");
+		goto error;
+	}
+
+	note_hdr.n_type = NT_FILE;
+	note_hdr.n_namesz = 5;
+	noteinfo[1] = sysconf(_SC_PAGESIZE);
+	file_off += sizeof note_hdr;
+	written = pwrite(outfile_fd, corename, sizeof corename, file_off);
+	if (written < 0) {
+		perror("writing file note for mapped segments");
+		goto error;
+	}
+	file_off += sizeof corename;
+	file_off += sizeof noteinfo; /* write noteinfo later when we have segment count */
+	for (i = 0; i < seg_count; i++) {
+		long page_off = 0;
+		if (getSharedAndPrivateDataSegments(portLibrary, fd_maps, addrsize, &start_addr, &end_addr, NULL, &page_off, filePath)) {
+			if ((strlen(filePath)) > 0 && ('[' != filePath[0])) { /* exclude names like [heap] */
+				note_seginfo[0] = (long)start_addr;
+				note_seginfo[1] = (long)end_addr;
+				note_seginfo[2] = page_off / noteinfo[1];
+				written = pwrite(outfile_fd, note_seginfo, sizeof note_seginfo, file_off);
+				if (written < 0) {
+					perror("writing addresses for mapped segments into file note");
+					goto error;
+				}
+				noteinfo[0] += 1;
+				file_off += written;
+				note_hdr.n_descsz += written;
+
+			}
+		}
+	}
+	lseek(fd_maps, 0, SEEK_SET);
+	for (i = 0; i < seg_count; i++) {
+		if (getSharedAndPrivateDataSegments(portLibrary, fd_maps, addrsize, &start_addr, &end_addr, NULL, NULL, filePath)) {
+			int filePathLen = strlen(filePath);
+			if ((filePathLen > 0) && ('[' != filePath[0])) {
+				written = pwrite(outfile_fd, filePath, filePathLen + 1, file_off);
+				if (written < 0) {
+					perror("writing names for mapped segments into file note");
+					goto error;
+				}
+				file_off += written;
+				note_hdr.n_descsz += written;
+			}
+		}
+	}
+
+	written = pwrite(outfile_fd, noteinfo, sizeof noteinfo, (*outfile_off) + (sizeof note_hdr) + 8);
+	if (written < 0) {
+		perror("writing file note for mapped segments");
+		goto error;
+	}
+	note_hdr.n_descsz += written;
+
+	written = pwrite(outfile_fd, &note_hdr, sizeof note_hdr, *outfile_off);
+	if (written < 0) {
+		perror("writing file note for mapped segments");
+		goto error;
+	}
+	/* 4 byte alignment */
+	if (file_off % 4) {
+		file_off +=  4 - (file_off % 4);
+	}
+	*outfile_off = file_off;
+
+error:
+	if (fd_maps > 0) {
+		close(fd_maps);
+	}
+	return file_off == *outfile_off;
+}
+
+/* @internal
+ * creates a dump from userspace
+ * should be called after fork
+ */
+uintptr_t
+userspace_dump_create(struct OMRPortLibrary *portLibrary, char *filename)
+{
+	uintptr_t rc = 1;
+	char *lastSep = NULL;
+	char corefile_name[PATH_MAX];
+	int corefile_fd = 0;
+	pid_t ppid = getppid();
+	char taskdir_filename[32] = "/proc/";
+	DIR *proc_taskdir = NULL;
+	struct dirent *taskdirent = NULL;
+	int memfile_fd = 0;
+	char memfile_name[32] = "/proc/";
+	ssize_t written = 0;
+	int i = 0;
+	off_t file_off = 0;
+	off_t seg_file_off = 0;
+#ifdef _LP64
+	Elf64_Ehdr elfheader = {};
+	Elf64_Phdr notepheader = {};
+	Elf64_Phdr *pheaders = NULL;
+	int addrsize = 64;
+#else
+	Elf32_Ehdr elfheader = {};
+	Elf32_Ehdr notepheader = {};
+	Elf32_Phdr *pheaders = NULL;
+	int addrsize = 32;
+#endif /* _LP64 */
+	uint32_t segment_count = 0;
+
+	/* filename cannot be null */
+	if (NULL == filename) {
+		return 1;
+	}
+	/* set default file name if none given */
+	if ('\0' == filename[0]) {
+		snprintf(filename, PATH_MAX, "core.%u", ppid);
+	} else {
+		lastSep = strrchr(filename, DIR_SEPARATOR);
+		if (NULL != lastSep) {
+			strncpy(corefile_name, lastSep + 1, PATH_MAX - 1);
+		} else {
+			strncpy(corefile_name, filename, PATH_MAX - 1);
+		}
+	}
+
+
+	snprintf(taskdir_filename + 6, 32 - 6, "%d/task", ppid);
+	proc_taskdir = opendir(taskdir_filename);
+	if (NULL == proc_taskdir) {
+		perror("opening task dir for process");
+		goto done;
+	}
+
+	/* attach to all threads in parent process, stopping them and allowing access to memory */
+	while ((0 == (errno = 0)) && (NULL != (taskdirent = readdir(proc_taskdir)))) {
+		if (DT_DIR == taskdirent->d_type) {
+			pid_t tid = strtoul(taskdirent->d_name, NULL, 0);
+			/* skip non tid directories */
+			if (tid < 1) {
+				continue;
+			}
+			if (-1 == ptrace(PTRACE_ATTACH, tid, NULL, NULL)) {
+				perror("failed to attach to parent process threads");
+				goto done;
+			}
+
+		}
+	}
+	waitpid(ppid, NULL, 0);
+
+
+	corefile_fd = open(corefile_name, O_RDWR | O_CREAT | O_EXCL, 0600);
+	if (corefile_fd < 0) {
+		fprintf(stderr, "failed to open core file: %s ", corefile_name);
+		perror("open()");
+		rc = corefile_fd;
+		goto done;
+	}
+
+	snprintf(memfile_name + 6, 32 - 6, "%d/mem", ppid);
+	memfile_fd = open(memfile_name, O_RDONLY, 0);
+	if (memfile_fd < 0) {
+		perror("open() on memory file");
+		goto done;
+	}
+
+
+	/* set header values */
+	elfheader.e_ident[EI_MAG0] = ELFMAG0;
+	elfheader.e_ident[EI_MAG1] = ELFMAG1;
+	elfheader.e_ident[EI_MAG2] = ELFMAG2;
+	elfheader.e_ident[EI_MAG3] = ELFMAG3;
+	elfheader.e_ident[EI_CLASS] = (64 == addrsize) ? ELFCLASS64 : ELFCLASS32;
+#ifdef OMR_ENV_LITTLE_ENDIAN
+	elfheader.e_ident[EI_DATA] = ELFDATA2LSB;
+#else
+	elfheader.e_ident[EI_DATA] = ELFDATA2MSB;
+#endif /* OMR_ENV_LITTLE_ENDIAN */
+	elfheader.e_ident[EI_VERSION] = EV_CURRENT;
+	elfheader.e_version = EV_CURRENT;
+	elfheader.e_type = ET_CORE;
+#ifdef PPC64
+	elfheader.e_machine = EM_PPC64;
+#elif defined(J9X86)
+	elfheader.e_machine = EM_386;
+#elif defined(S390) || defined(J9ZOS390)
+	elfheader.e_machine = EM_S390;
+#elif defined(J9HAMMER)
+	elfheader.e_machine = EM_X86_64;
+#elif defined(J9ARM)
+	elfheader.e_machine = EM_ARM;
+#elif defined(J9AARCH64)
+	elfheader.e_machine = EM_AARCH64;
+#elif defined(RISCV)
+	elfheader.e_machine = EM_RISCV;
+#else
+	elfheader.e_machine = EM_NONE;
+#endif /* PPC64 */
+	elfheader.e_ehsize = sizeof elfheader;
+	elfheader.e_phoff = sizeof elfheader;
+	elfheader.e_phentsize = sizeof (*pheaders);
+
+	file_off += elfheader.e_phoff;
+
+	if (!list_segment_headers(portLibrary, addrsize, (void **)&pheaders, &segment_count))  {
+		fprintf(stderr, "error reading memory segments from map\n");
+		goto done;
+	}
+
+	elfheader.e_phnum = segment_count + 1;
+	seg_file_off = file_off + elfheader.e_phnum * elfheader.e_phentsize;
+
+	written = pwrite(corefile_fd, &elfheader, elfheader.e_ehsize, 0);
+	if (written < 0) {
+		perror("error writing elf header");
+		rc = written;
+	}
+
+	/* write notes */
+	notepheader.p_type = PT_NOTE;
+	notepheader.p_offset = seg_file_off;
+
+	if (!write_process_notes(portLibrary, addrsize, corefile_fd, &seg_file_off)) {
+		fprintf(stderr, "failed to write notes about process info to core\n");
+		goto done;
+	}
+
+	if(!write_file_note(portLibrary, addrsize, segment_count, corefile_fd, &seg_file_off)) {
+		fprintf(stderr, "failed to write file note to core\n");
+		goto done;
+	}
+
+	notepheader.p_filesz = seg_file_off - notepheader.p_offset;
+	written = pwrite(corefile_fd, &notepheader, elfheader.e_phentsize, file_off);
+	if (written < 0) {
+		perror("failed to write note header to corefile");
+		goto done;
+	}
+	file_off += elfheader.e_phentsize;
+
+	for (i = 0; i < segment_count; i++) {
+		pheaders[i].p_offset = seg_file_off;
+		if (pheaders[i].p_flags & PF_R) {
+			off_t mem_off = pheaders[i].p_vaddr;
+			off_t read_size = 65535;
+			char mem_buffer[read_size];
+			ssize_t bytes_read = 0;
+
+			pheaders[i].p_offset = seg_file_off;
+			while (mem_off < pheaders[i].p_vaddr + pheaders[i].p_memsz) {
+				size_t to_read = read_size;
+				ssize_t read_result;
+				if (mem_off + to_read > pheaders[i].p_vaddr + pheaders[i].p_memsz) {
+					to_read = pheaders[i].p_vaddr + pheaders[i].p_memsz - mem_off;
+				}
+				read_result = pread(memfile_fd, mem_buffer, to_read, mem_off);
+				if (read_result >= 0) {
+					bytes_read += read_result;
+					mem_off += read_result;
+					written = pwrite(corefile_fd, mem_buffer, read_result, seg_file_off);
+					if (written != read_result) {
+						perror("failed to write memory segment to corefile");
+						goto done;
+					}
+					seg_file_off += written;
+				} else {
+					/* skip to next segment if we fail to read this one */
+					break;
+				}
+			}
+			pheaders[i].p_filesz = bytes_read;
+		}
+
+		written = pwrite(corefile_fd, &pheaders[i], elfheader.e_phentsize, file_off);
+		if (written < 0) {
+			perror("failed to write memory segment header to corefile");
+			goto done;
+		}
+		file_off += elfheader.e_phentsize;
+	}
+
+	rc = 0;
+
+done:
+	if (corefile_fd > 0) {
+		close(corefile_fd);
+		if (rc) {
+			remove(corefile_name);
+		}
+	}
+	rewinddir(proc_taskdir);
+	while ((0 == (errno = 0)) && (NULL != (taskdirent = readdir(proc_taskdir)))) {
+		if (DT_DIR == taskdirent->d_type) {
+			pid_t tid = strtoul(taskdirent->d_name, NULL, 0);
+			/* skip non tid directories */
+			if (tid < 1) {
+				continue;
+			}
+			ptrace(PTRACE_DETACH, tid, NULL, NULL); /* failure doesn't matter here */
+		}
+	}
+	if (NULL != proc_taskdir) {
+		closedir(proc_taskdir);
+	}
+	if (NULL != pheaders) {
+		free(pheaders);
+	}
+	return rc;
 }
