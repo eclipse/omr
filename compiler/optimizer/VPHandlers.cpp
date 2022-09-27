@@ -9896,7 +9896,52 @@ static TR::Node *constrainIfcmpeqne(OMR::ValuePropagation *vp, TR::Node *node, b
        static const char* disableProfiled2Overridden = feGetEnv ("TR_DisableProfiled2Overridden");
        if (!disableProfiled2Overridden && callNode && vp->lastTimeThrough())
           {
+          bool isFixedClass = false;
 
+          // If the guard has a method test, then we need to get objectClass
+          // from the child of the lhs node (a load of a vft symbol).
+          // We also need to ensure that the inlined method is not overridden in
+          // the hierarchy of the receiver's class.
+          static const char* disableMethodTest2Hierarchy = feGetEnv ("TR_DisableMethodTest2Hierarchy");
+          bool isMethodTest = vp->comp()->getSymRefTab()->isVtableEntrySymbolRef(node->getFirstChild()->getSymbolReference());
+          TR_OpaqueClassBlock* inlinedMethodClass = NULL;
+          if (!disableMethodTest2Hierarchy && isMethodTest && !callNode->getSymbolReference()->isUnresolved())
+             {
+             // If the profiled guard is a method test, get objectClass from the
+             // child of the lhs node.
+             TR::Node *loadNode = node->getFirstChild()->getFirstChild();
+             bool isGlobal = false;
+             TR::VPConstraint *loadConstraint = vp->getConstraint(loadNode, isGlobal);
+             objectClass = loadConstraint ? loadConstraint->getClass() : NULL;
+             isFixedClass = loadConstraint && loadConstraint->isFixedClass();
+
+             TR::Node *methodPtrNode = node->getSecondChild();
+             inlinedMethodClass = vp->comp()->fe()->getClassFromMethodBlock((TR_OpaqueMethodBlock*)methodPtrNode->getAddress());
+
+             TR_PersistentCHTable *chTable = vp->comp()->getPersistentInfo()->getPersistentCHTable();
+             TR_ResolvedMethod* inlinedMethod = vp->comp()->getInlinedResolvedMethod(vGuard->getCurrentInlinedSiteIndex());
+             int32_t vftSlot = callNode->getSymbolReference()->getOffset();
+             if (objectClass && !chTable->isOverriddenInThisHierarchy(inlinedMethod, objectClass, vftSlot, vp->comp()))
+                {
+                if (vp->trace())
+                   {
+                   traceMsg(vp->comp(), "P2O: Found profiled guard with method test where method is not overidden in the hierarchy of the receiver's class.\n"
+                                        "   Child of lhs has constraint: ");
+                   loadConstraint->print(vp);
+                   traceMsg(vp->comp(), "\n");
+                   }
+                }
+             else
+                {
+                // If method is overridden, set objectClass to null so that the
+                // transformation is not performed.
+                objectClass = NULL;
+                }
+             }
+          else
+             {
+             isFixedClass = lhs && lhs->isFixedClass();
+             }
 
           TR_OpaqueClassBlock* callClass = NULL;
           TR::MethodSymbol* interfaceMethodSymbol = NULL;
@@ -9938,8 +9983,9 @@ static TR::Node *constrainIfcmpeqne(OMR::ValuePropagation *vp, TR::Node *node, b
           //of a call and the type of a receiver (e.g. abstract, interface, normal classes)
           //if findSingleImplementer returns a method than it must be the implementation Inliner used since
           //it would be the only one available
-          if (objectClass && rhsClass && callClass && !lhs->isFixedClass() &&
-              vp->comp()->fe()->isInstanceOf (rhsClass, objectClass, true, true, true) == TR_yes &&
+          if (objectClass && callClass && !isFixedClass &&
+              (((isMethodTest && inlinedMethodClass && vp->comp()->fe()->isInstanceOf (objectClass, inlinedMethodClass, true, true, false) == TR_yes))
+               || (rhsClass && vp->comp()->fe()->isInstanceOf (rhsClass, objectClass, true, true, true) == TR_yes)) &&
               vp->comp()->fe()->isInstanceOf (objectClass, callClass, true, true, true) == TR_yes) /*the object class may be less specific than callClass*/
              {
 
