@@ -89,25 +89,6 @@ typedef struct ConHelperThreadInfo {
 #define CON_HELPER_INFO_FLAG_FAIL 2
 
 extern "C" {
-
-/**
- * @deprecated Caller should make use of new concurrentPostWriteBarrierStore API
- */
-void
-J9ConcurrentWriteBarrierStore(OMR_VMThread *vmThread, omrobjectptr_t destinationObject, omrobjectptr_t storedObject)
-{
-	concurrentPostWriteBarrierStore(vmThread, destinationObject, storedObject);
-}
-
-/**
- * @deprecated Caller should make use of new concurrentPostWriteBarrierBatchStore API
- */
-void
-J9ConcurrentWriteBarrierBatchStore(OMR_VMThread *vmThread, omrobjectptr_t destinationObject)
-{
-	concurrentPostWriteBarrierBatchStore(vmThread, destinationObject);
-}
-
 /**
  * Concurrent helper thread procedure
  *
@@ -164,6 +145,11 @@ con_helper_thread_proc2(OMRPortLibrary* portLib, void *info)
 void oldToOldReferenceCreated(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
 {
 	((MM_ConcurrentGC *)env->getExtensions()->getGlobalCollector())->oldToOldReferenceCreated(env, objectPtr);
+}
+
+void objectTenured(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
+{
+	((MM_ConcurrentGC *)env->getExtensions()->getGlobalCollector())->objectTenured(env, objectPtr);
 }
 #endif /* OMR_GC_MODRON_SCAVENGER */
 

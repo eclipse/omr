@@ -1128,7 +1128,7 @@ public:
 	MMINLINE BackOutState getScavengerBackOutState() { return _backOutState; }
 	MMINLINE bool isScavengerBackOutFlagRaised() { return backOutFlagCleared < _backOutState; }
 
-	MMINLINE bool shouldScavengeNotifyGlobalGCOfOldToOldReference() { return _concurrentGlobalGCInProgress; }
+	MMINLINE bool shouldScavengeNotifyGlobalGCOfOldReference() { return _concurrentGlobalGCInProgress; }
 	MMINLINE void setConcurrentGlobalGCInProgress(bool inProgress) { _concurrentGlobalGCInProgress = inProgress; }
 
 	/**

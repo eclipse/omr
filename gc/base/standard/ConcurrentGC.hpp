@@ -44,8 +44,6 @@ int con_helper_thread_proc(void *info);
 uintptr_t con_helper_thread_proc2(OMRPortLibrary* portLib, void *info);
 void concurrentPostWriteBarrierStore(OMR_VMThread *vmThread, omrobjectptr_t destinationObject, omrobjectptr_t storedObject);
 void concurrentPostWriteBarrierBatchStore(OMR_VMThread *vmThread, omrobjectptr_t destinationObject);
-void J9ConcurrentWriteBarrierStore (OMR_VMThread *vmThread, omrobjectptr_t destinationObject, omrobjectptr_t storedObject);
-void J9ConcurrentWriteBarrierBatchStore (OMR_VMThread *vmThread, omrobjectptr_t destinationObject);
 }
 
 /**
@@ -437,7 +435,8 @@ public:
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	void scanRememberedSet(MM_EnvironmentBase *env);
-	virtual void oldToOldReferenceCreated(MM_EnvironmentBase *env, omrobjectptr_t objectPtr) = 0;
+	virtual void oldToOldReferenceCreated(MM_EnvironmentBase *env, omrobjectptr_t objectPtr) {};
+	virtual void objectTenured(MM_EnvironmentBase *env, omrobjectptr_t objectPtr) {};
 #endif /* OMR_GC_MODRON_SCAVENGER */
 	
 	/**

@@ -67,11 +67,8 @@ protected:
 	virtual void adjustTraceTarget();
 	virtual uintptr_t getTraceTarget() { return _traceTarget; };
 #if defined(OMR_GC_MODRON_SCAVENGER)
-	/**
-	 * Process event from an external GC (Scavenger) when old-to-old reference is created.
-	 * @param objectPtr  Parent old object that has a reference to a child old object
-	 */
-	virtual void oldToOldReferenceCreated(MM_EnvironmentBase *env, omrobjectptr_t objectPtr) {};
+	/* Process event from an external GC (Scavenger) when an object is tenured. */
+	virtual void objectTenured(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
 #endif /* OMR_GC_MODRON_SCAVENGER */
 
 	virtual bool acquireExclusiveVMAccessForCycleStart(MM_EnvironmentBase *env)
@@ -94,7 +91,15 @@ public:
 	virtual void preAllocCacheFlush(MM_EnvironmentBase *env, void *base, void *top);
 
 	/* Refer to preAllocCacheFlush implementation for reasoning behind this. */
-	virtual uintptr_t reservedForGCAllocCacheSize() { return (_extensions->isSATBBarrierActive() ? OMR_MINIMUM_OBJECT_SIZE : 0); }
+	virtual uintptr_t reservedForGCAllocCacheSize() {
+#if defined(OMR_GC_MODRON_SCAVENGER)
+		if (_extensions->scavengerEnabled) {
+			return 0;
+		}
+#endif /* OMR_GC_MODRON_SCAVENGER */
+
+		return (_extensions->isSATBBarrierActive() ? OMR_MINIMUM_OBJECT_SIZE : 0);
+	}
 
 	MM_ConcurrentGCSATB(MM_EnvironmentBase *env)
 		: MM_ConcurrentGC(env)

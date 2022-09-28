@@ -1926,6 +1926,11 @@ MM_MemoryPoolAddressOrderedList::doFreeEntryCardAlignmentUpTo(MM_EnvironmentBase
 void
 MM_MemoryPoolAddressOrderedList::setParallelGCAlignment(MM_EnvironmentBase *env, bool alignmentEnabled)
 {
+#if defined(OMR_GC_MODRON_SCAVENGER)
+	if (_extensions->scavengerEnabled) {
+		return;
+	}
+#endif /* OMR_GC_MODRON_SCAVENGER */
 	if (alignmentEnabled) {
 		_parallelGCAlignmentBase = _memorySubSpace->getFirstRegion()->getLowAddress();
 		_parallelGCAlignmentSize = _extensions->parSweepChunkSize;
