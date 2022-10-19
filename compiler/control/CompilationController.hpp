@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,34 @@
 
 class TR_MethodEvent;
 namespace TR { class Recompilation; }
+
+//------------------------------- TR::CompilationController ------------------------
+// All methods and fields are static. The most important field is _compilationStrategy
+// that store the compilation strategy in use.
+//---------------------------------------------------------------------------------
+namespace TR
+{
+class CompilationController
+   {
+   public:
+   enum {LEVEL1=1, LEVEL2, LEVEL3}; // verbosity levels;
+   enum {DEFAULT, THRESHOLD}; // strategy codes
+   static bool    init(TR::CompilationInfo *);
+   static void    shutdown();
+   static bool    useController() { return _useController; }
+   static int32_t verbose() { return _verbose; }
+   static void    setVerbose(int32_t v) { _verbose = v; }
+   static TR::CompilationStrategy * getCompilationStrategy() { return _compilationStrategy; }
+   static TR::CompilationInfo     * getCompilationInfo() { return _compInfo; }
+   private:
+   static TR::CompilationStrategy *_compilationStrategy;
+   static TR::CompilationInfo     *_compInfo;        // stored here for convenience
+   static int32_t                 _verbose;
+   static bool                    _useController;
+   static bool                    _tlsCompObjCreated;
+   };
+
+} // namespace TR
 
 namespace TR
 {

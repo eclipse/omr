@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,7 @@
 #include "env/DebugSegmentProvider.hpp"
 #include "omrformatconsts.h"
 #include "runtime/CodeCacheManager.hpp"
+#include "control/CompilationController.hpp"
 
 static void
 writePerfToolEntry(void *start, uint32_t size, const char *name)

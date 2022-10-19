@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 #include "runtime/CodeCache.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/TestJitConfig.hpp"
+#include "control/CompilationController.hpp"
 
 extern TR_RuntimeHelperTable runtimeHelpers;
 extern void setupCodeCacheParameters(int32_t *, OMR::CodeCacheCodeGenCallbacks *callBacks, int32_t *numHelpers, int32_t *CCPreLoadedCodeSize);
