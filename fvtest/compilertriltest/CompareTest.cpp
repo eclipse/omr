@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 IBM Corp. and others
+ * Copyright (c) 2018, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -898,6 +898,10 @@ TEST_P(FloatCompare, UsingConst) {
         SKIP_ON_WINDOWS(KnownBug) << "TRIL parser cannot handle NaN values on Windows (see issue #5324)";
     }
 
+    if ( param.opcode == "fcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_AARCH64(KnownBug) << "fcmpne returns wrong value on AArch64 (see #6788)";
+    }
+
     char inputTrees[1024] = {0};
     std::snprintf(inputTrees, 1024,
        "(method return=Int32 "
@@ -929,6 +933,10 @@ TEST_P(FloatCompare, UsingRhsConst) {
         SKIP_ON_WINDOWS(KnownBug) << "TRIL parser cannot handle NaN values on Windows (see issue #5324)";
     }
 
+    if ( param.opcode == "fcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_AARCH64(KnownBug) << "fcmpne returns wrong value on AArch64 (see #6788)";
+    }
+
     char inputTrees[1024] = {0};
     std::snprintf(inputTrees, 1024,
        "(method return=Int32 args=[Float] "
@@ -954,6 +962,10 @@ TEST_P(FloatCompare, UsingRhsConst) {
 
 TEST_P(FloatCompare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
+
+    if ( param.opcode == "fcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_AARCH64(KnownBug) << "fcmpne returns wrong value on AArch64 (see #6788)";
+    }
 
     char inputTrees[160] = {0};
     std::snprintf(inputTrees, 160,
@@ -1056,6 +1068,10 @@ TEST_P(DoubleCompare, UsingConst) {
         SKIP_ON_WINDOWS(KnownBug) << "TRIL parser cannot handle NaN values on Windows (see issue #5324)";
     }
 
+    if ( param.opcode == "dcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_AARCH64(KnownBug) << "dcmpne returns wrong value on AArch64 (see #6788)";
+    }
+
     char inputTrees[1024] = {0};
     std::snprintf(inputTrees, 1024,
        "(method return=Int32 "
@@ -1087,6 +1103,10 @@ TEST_P(DoubleCompare, UsingRhsConst) {
         SKIP_ON_WINDOWS(KnownBug) << "TRIL parser cannot handle NaN values on Windows (see issue #5324)";
     }
 
+    if ( param.opcode == "dcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_AARCH64(KnownBug) << "dcmpne returns wrong value on AArch64 (see #6788)";
+    }
+
     char inputTrees[1024] = {0};
     std::snprintf(inputTrees, 1024,
        "(method return=Int32 args=[Double] "
@@ -1112,6 +1132,10 @@ TEST_P(DoubleCompare, UsingRhsConst) {
 
 TEST_P(DoubleCompare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
+
+    if ( param.opcode == "dcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
+        SKIP_ON_AARCH64(KnownBug) << "dcmpne returns wrong value on AArch64 (see #6788)";
+    }
 
     char inputTrees[160] = {0};
     std::snprintf(inputTrees, 160,
@@ -1195,6 +1219,7 @@ TEST_P(FloatIfCompare, UsingConst) {
 
     if ( param.opcode == "iffcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
         SKIP_ON_POWER(KnownBug) << "iffcmpne returns wrong value on POWER (see #5152)";
+        SKIP_ON_AARCH64(KnownBug) << "iffcmpne returns wrong value on AArch64 (see #6790)";
     }
     if ( std::isnan(param.lhs) || std::isnan(param.rhs) ) {
         SKIP_ON_ZOS(KnownBug) << "TRIL parser cannot handle NaN values on zOS (see issue #5183)";
@@ -1233,6 +1258,7 @@ TEST_P(FloatIfCompare, UsingLoadParam) {
 
     if ( param.opcode == "iffcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
         SKIP_ON_POWER(KnownBug) << "iffcmpne returns wrong value on POWER (see #5152)";
+        SKIP_ON_AARCH64(KnownBug) << "iffcmpne returns wrong value on AArch64 (see #6790)";
     }
 
     char inputTrees[256] = {0};
@@ -1317,6 +1343,7 @@ TEST_P(DoubleIfCompare, UsingConst) {
 
     if ( param.opcode == "ifdcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
         SKIP_ON_POWER(KnownBug) << "ifdcmpne returns wrong value on POWER (see #5152)";
+        SKIP_ON_AARCH64(KnownBug) << "ifdcmpne returns wrong value on AArch64 (see #6790)";
     }
     if ( std::isnan(param.lhs) || std::isnan(param.rhs) ) {
         SKIP_ON_ZOS(KnownBug) << "TRIL parser cannot handle NaN values on zOS (see issue #5183)";
@@ -1355,6 +1382,7 @@ TEST_P(DoubleIfCompare, UsingLoadParam) {
 
     if ( param.opcode == "ifdcmpne" && (std::isnan(param.lhs) || std::isnan(param.rhs)) ) {
         SKIP_ON_POWER(KnownBug) << "ifdcmpne returns wrong value on POWER (see #5152)";
+        SKIP_ON_AARCH64(KnownBug) << "ifdcmpne returns wrong value on AArch64 (see #6790)";
     }
 
     char inputTrees[256] = {0};
