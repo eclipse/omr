@@ -507,6 +507,7 @@ OMR::Z::CodeGenerator::initialize()
    if (!comp->compileRelocatableCode())
       {
       cg->setSupportsArrayTranslateTRxx();
+      cg->setSupportsCountDecimalDigit();
       }
 
    cg->setSupportsTestCharComparisonControl();  // TRXX instructions on Danu have mask to disable test char comparison.

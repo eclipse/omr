@@ -1592,6 +1592,10 @@ public:
    void setSupportsArrayTranslateTRxx() {_flags2.set(SupportsArrayTranslate);}
    void resetSupportsArrayTranslateTRxx() {_flags2.reset(SupportsArrayTranslate);}
 
+   bool getSupportsCountDecimalDigit() {return _flags2.testAny(SupportsCountDecimalDigit);}
+   void setSupportsCountDecimalDigit() {_flags2.set(SupportsCountDecimalDigit);}
+   void resetSupportsCountDecimalDigit() {_flags2.reset(SupportsCountDecimalDigit);}
+
    bool getSupportsSelect() {return _flags2.testAny(SupportsSelect);}
    void setSupportsSelect() {_flags2.set(SupportsSelect);}
 
@@ -1838,7 +1842,7 @@ public:
       SupportsArrayTranslateAndTest                       = 0x00000800,
       SupportsDynamicANewArray                            = 0x00001000,
       SupportsSelect                                      = 0x00002000,
-      // AVAILABLE                                        = 0x00004000,
+      SupportsCountDecimalDigit                           = 0x00004000,
       SupportsPostProcessArrayCopy                        = 0x00008000,
       // AVAILABLE                                        = 0x00010000,
       SupportsCurrentTimeMaxPrecision                     = 0x00020000,
