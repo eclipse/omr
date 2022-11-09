@@ -1172,6 +1172,16 @@ public:
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 	}
 
+	MMINLINE bool
+	isConcurrentGlobalGCInProgress()
+	{
+#if defined(OMR_GC_MODRON_SCAVENGER)
+		return _concurrentGlobalGCInProgress;
+#else
+		return false;
+#endif /* defined(OMR_GC_MODRON_SCAVENGER) */
+	}
+
 	MMINLINE void
 	setConcurrentGlobalGCInProgress(bool inProgress)
 	{
