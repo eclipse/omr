@@ -904,7 +904,7 @@ omrsock_recvfrom(struct OMRPortLibrary *portLibrary, omrsock_socket_t sock, uint
 int32_t
 omrsock_pollfd_init(struct OMRPortLibrary *portLibrary, omrsock_pollfd_t handle, omrsock_socket_t sock, int16_t events)
 {
-	if (NULL == handle || NULL == sock || 0 == events) {
+	if (NULL == handle || NULL == sock ) {
 		return OMRPORT_ERROR_INVALID_ARGUMENTS;
 	}
 	memset(handle, 0, sizeof(OMRPollFd));
