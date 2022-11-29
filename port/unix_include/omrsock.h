@@ -81,10 +81,10 @@ typedef struct sockaddr_in6 omr_os_sockaddr_in6; /* IPv6 */
 /* Socket Poll */
 #define OS_POLLIN POLLIN
 #define OS_POLLOUT POLLOUT
-
-#if !defined(AIXPPC)
 #define OS_POLLERR POLLERR
 #define OS_POLLNVAL POLLNVAL
+
+#if !defined(AIXPPC)
 #define OS_POLLHUP POLLHUP
 #endif
 

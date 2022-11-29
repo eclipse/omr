@@ -326,13 +326,13 @@ get_omr_poll_constant(int16_t osPollConstant)
 	if (OMR_ARE_ANY_BITS_SET(osPollConstant, OS_POLLOUT)) {
 		omrPollConstant |= OMRSOCK_POLLOUT;
 	}
-#if !defined(AIXPPC)
 	if (OMR_ARE_ANY_BITS_SET(osPollConstant, OS_POLLERR)) {
 		omrPollConstant |= OMRSOCK_POLLERR;
 	}
 	if (OMR_ARE_ANY_BITS_SET(osPollConstant, OS_POLLNVAL)) {
 		omrPollConstant |= OMRSOCK_POLLNVAL;
 	}
+#if !defined(AIXPPC)
 	if (OMR_ARE_ANY_BITS_SET(osPollConstant, OS_POLLHUP)) {
 		omrPollConstant |= OMRSOCK_POLLHUP;
 	}
