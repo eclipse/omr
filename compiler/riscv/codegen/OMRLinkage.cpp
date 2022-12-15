@@ -113,7 +113,7 @@ TR::MemoryReference *OMR::RV::Linkage::getOutgoingArgumentMemRef(TR::Register *a
    TR::Machine *machine = cg()->machine();
    const TR::RVLinkageProperties& properties = self()->getProperties();
 
-   TR::MemoryReference *result = new (self()->trHeapMemory()) TR::MemoryReference(argMemReg, offset, cg()); // post-increment
+   TR::MemoryReference *result = TR::MemoryReference::createWithDisplacement(cg(), argMemReg, offset); // post-increment
    memArg.argRegister = argReg;
    memArg.argMemory = result;
    memArg.opCode = opCode; // opCode must be post-index form
@@ -335,7 +335,7 @@ OMR::RV::Linkage::copyParametersToHomeLocation(TR::Instruction *cursor, bool par
                diagnostic("copyParametersToHomeLocation: Loading %d\n", ai);
 
             // ai := stack
-            TR::MemoryReference *stackMR = new (cg()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, cg());
+            TR::MemoryReference *stackMR = TR::MemoryReference::createWithDisplacement(cg(), stackPtr, offset);
             loadCursor = generateLOAD(getOpCodeForParmLoads(paramType), NULL, machine->getRealRegister(ai), stackMR, cg(), loadCursor);
             }
          }
@@ -359,7 +359,7 @@ OMR::RV::Linkage::copyParametersToHomeLocation(TR::Instruction *cursor, bool par
                   diagnostic("copyParametersToHomeLocation: Storing %d\n", sourceIndex);
 
                TR::RealRegister *linkageReg = machine->getRealRegister(sourceIndex);
-               TR::MemoryReference *stackMR = new (cg()->trHeapMemory()) TR::MemoryReference(stackPtr, offset, cg());
+               TR::MemoryReference *stackMR = TR::MemoryReference::createWithDisplacement(cg(), stackPtr, offset);
                cursor = generateSTORE(getOpCodeForParmStores(paramType), NULL, stackMR, linkageReg, cg(), cursor);
                }
             }
