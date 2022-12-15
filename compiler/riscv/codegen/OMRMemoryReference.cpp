@@ -27,8 +27,34 @@
 #include "codegen/RVInstruction.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GenerateInstructions.hpp"
+#include "codegen/UnresolvedDataSnippet.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+TR::MemoryReference *TR::MemoryReference::create(TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::MemoryReference(cg);
+   }
+
+TR::MemoryReference *TR::MemoryReference::createWithIndexReg(TR::CodeGenerator *cg, TR::Register *baseReg, TR::Register *indexReg, uint8_t scale)
+   {
+   TR_UNIMPLEMENTED();
+   //return new (cg->trHeapMemory()) TR::MemoryReference(baseReg, indexReg, cg);
+   }
+
+TR::MemoryReference *TR::MemoryReference::createWithDisplacement(TR::CodeGenerator *cg, TR::Register *baseReg, int64_t displacement)
+   {
+   return new (cg->trHeapMemory()) TR::MemoryReference(baseReg, displacement, cg);
+   }
+
+TR::MemoryReference *TR::MemoryReference::createWithRootLoadOrStore(TR::CodeGenerator *cg, TR::Node *rootLoadOrStore)
+   {
+   return new (cg->trHeapMemory()) TR::MemoryReference(rootLoadOrStore, cg);
+   }
+
+TR::MemoryReference *TR::MemoryReference::createWithSymRef(TR::CodeGenerator *cg, TR::Node *node, TR::SymbolReference *symRef)
+   {
+   return new (cg->trHeapMemory()) TR::MemoryReference(node, symRef, cg);
+   }
 
 
 OMR::RV::MemoryReference::MemoryReference(

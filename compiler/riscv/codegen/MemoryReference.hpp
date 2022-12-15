@@ -84,7 +84,16 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReferenceConnector
       TR::SymbolReference *symRef,
       TR::CodeGenerator *cg) :
          OMR::MemoryReferenceConnector(node, symRef, cg) {}
+
+   public:
+
+   static TR::MemoryReference *create(TR::CodeGenerator *cg);
+   static TR::MemoryReference *createWithIndexReg(TR::CodeGenerator *cg, TR::Register *baseReg, TR::Register *indexReg, uint8_t scale = 0);
+   static TR::MemoryReference *createWithDisplacement(TR::CodeGenerator *cg, TR::Register *baseReg, int64_t displacement);
+   static TR::MemoryReference *createWithRootLoadOrStore(TR::CodeGenerator *cg, TR::Node *rootLoadOrStore);
+   static TR::MemoryReference *createWithSymRef(TR::CodeGenerator *cg, TR::Node *node, TR::SymbolReference *symRef);
    };
+
 } // TR
 
 #endif
