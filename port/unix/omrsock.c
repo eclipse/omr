@@ -326,13 +326,13 @@ get_omr_poll_constant(int16_t osPollConstant)
 	if (OMR_ARE_ANY_BITS_SET(osPollConstant, OS_POLLOUT)) {
 		omrPollConstant |= OMRSOCK_POLLOUT;
 	}
-#if !defined(AIXPPC)
 	if (OMR_ARE_ANY_BITS_SET(osPollConstant, OS_POLLERR)) {
 		omrPollConstant |= OMRSOCK_POLLERR;
 	}
 	if (OMR_ARE_ANY_BITS_SET(osPollConstant, OS_POLLNVAL)) {
 		omrPollConstant |= OMRSOCK_POLLNVAL;
 	}
+#if !defined(AIXPPC)
 	if (OMR_ARE_ANY_BITS_SET(osPollConstant, OS_POLLHUP)) {
 		omrPollConstant |= OMRSOCK_POLLHUP;
 	}
@@ -904,7 +904,7 @@ omrsock_recvfrom(struct OMRPortLibrary *portLibrary, omrsock_socket_t sock, uint
 int32_t
 omrsock_pollfd_init(struct OMRPortLibrary *portLibrary, omrsock_pollfd_t handle, omrsock_socket_t sock, int16_t events)
 {
-	if (NULL == handle || NULL == sock || 0 == events) {
+	if (NULL == handle || NULL == sock ) {
 		return OMRPORT_ERROR_INVALID_ARGUMENTS;
 	}
 	memset(handle, 0, sizeof(OMRPollFd));

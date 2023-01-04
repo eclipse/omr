@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,6 +20,7 @@
 #############################################################################
 
 list(APPEND OMR_PLATFORM_DEFINITIONS
+	-DOMR_OS_ZOS
 	-D_ALL_SOURCE
 	-D_OPEN_THREADS=2
 	-D_POSIX_SOURCE

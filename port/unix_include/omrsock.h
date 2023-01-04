@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,11 +26,6 @@
 /* According to AIX documentation, this file is needed. */
 #if defined(OMR_OS_AIX)
 #include <sys/socketvar.h>
-#endif
-
-/* According to ZOS documentation, this definition is needed. */
-#if defined(OMR_OS_ZOS) && !defined(_OE_SOCKETS)
-#define _OE_SOCKETS
 #endif
 
 /* This exposes some definitions needed by the socket api */
@@ -86,10 +81,10 @@ typedef struct sockaddr_in6 omr_os_sockaddr_in6; /* IPv6 */
 /* Socket Poll */
 #define OS_POLLIN POLLIN
 #define OS_POLLOUT POLLOUT
-
-#if !defined(AIXPPC)
 #define OS_POLLERR POLLERR
 #define OS_POLLNVAL POLLNVAL
+
+#if !defined(AIXPPC)
 #define OS_POLLHUP POLLHUP
 #endif
 
