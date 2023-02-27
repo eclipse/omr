@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,6 +69,27 @@ if(NOT DiaSDK_ROOT)
 	endif()
 endif()
 
+# Gather up the include directories listed in the INCLUDE environment variable.
+set(env_includes)
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "CYGWIN")
+	# INCLUDE is a list of windows style paths.
+	# This needs to be converted to cygwin style paths to feed to CMake.
+	if(CMAKE_CYGPATH AND (NOT "$ENV{INCLUDE}" STREQUAL ""))
+		execute_process(
+			COMMAND "${CMAKE_CYGPATH}" -c $ENV{INCLUDE}
+			OUTPUT_VARIABLE unix_paths
+			RESULT_VARIABLE rc
+		)
+		if(rc EQUAL 0)
+			# Convert newline separated entries into CMake style list.
+			string(REPLACE "\n" ";" env_includes "${unix_paths}")
+		endif()
+	endif()
+
+elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+	set(env_includes "$ENV{INCLUDE}")
+endif()
+
 # Note we need to tell CMake to search DiaSDK_ROOT
 # this is default behavior on newer versions of cmake
 find_path(DIA2_H_DIR "dia2.h"
@@ -77,6 +98,7 @@ find_path(DIA2_H_DIR "dia2.h"
 		"$ENV{DIASDK}/include"
 		"$ENV{VSSDK140Install}../DIA SDK/include"
 		"${DiaSDK_ROOT}/include"
+		${env_includes}
 )
 
 if(OMR_ENV_DATA64)
@@ -86,6 +108,8 @@ else()
 endif()
 find_library(DIAGUIDS_LIBRARY "diaguids"
 	HINTS
+		# First try looking relative to the found header
+		"${DIA2_H_DIR}/../${lib_dir}"
 		"${VSPath}/../../../DIA SDK/${lib_dir}"
 		"$ENV{DIASDK}/${lib_dir}"
 		"$ENV{VSSDK140Install}../DIA SDK/${lib_dir}"
