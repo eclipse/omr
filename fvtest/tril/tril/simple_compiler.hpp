@@ -48,6 +48,9 @@ class SimpleCompiler : public Tril::MethodCompiler {
          * @return 0 on complilation success, an error code or exception otherwise. 
          */
         int32_t compileWithVerifier(TR::IlVerifier* verifier);
+
+    protected:
+        static TR::TypeDictionary* types;
 };
 
 } // namespace Tril
