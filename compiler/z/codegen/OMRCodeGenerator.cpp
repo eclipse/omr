@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corp. and others
+ * Copyright (c) 2000, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -498,15 +498,21 @@ OMR::Z::CodeGenerator::initialize()
       {
       cg->setSupportsVirtualGuardNOPing();
       }
-   if (!comp->getOption(TR_DisableArraySetOpts))
+   if (!TR::Compiler->om.canGenerateArraylets())
       {
-      cg->setSupportsArraySet();
-      }
-   cg->setSupportsArrayCmp();
-   cg->setSupportsArrayCmpSign();
-   if (!comp->compileRelocatableCode())
-      {
-      cg->setSupportsArrayTranslateTRxx();
+      if (!comp->getOption(TR_DisableArraySetOpts))
+         {
+         cg->setSupportsArraySet();
+         }
+      cg->setSupportsArrayCmp();
+      cg->setSupportsArrayCmpSign();
+      if (!comp->compileRelocatableCode())
+         {
+         cg->setSupportsArrayTranslateTRxx();
+         }
+
+      cg->setSupportsPrimitiveArrayCopy();
+      cg->setSupportsReferenceArrayCopy();
       }
 
    cg->setSupportsTestCharComparisonControl();  // TRXX instructions on Danu have mask to disable test char comparison.
@@ -568,9 +574,6 @@ OMR::Z::CodeGenerator::initialize()
    cg->setLiveRegisters(new (cg->trHeapMemory()) TR_LiveRegisters(comp), TR_GPR);
    cg->setLiveRegisters(new (cg->trHeapMemory()) TR_LiveRegisters(comp), TR_FPR);
    cg->setLiveRegisters(new (cg->trHeapMemory()) TR_LiveRegisters(comp), TR_VRF);
-
-   cg->setSupportsPrimitiveArrayCopy();
-   cg->setSupportsReferenceArrayCopy();
 
    cg->setSupportsPartialInlineOfMethodHooks();
 
