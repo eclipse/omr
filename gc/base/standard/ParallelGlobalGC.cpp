@@ -410,6 +410,7 @@ MM_ParallelGlobalGC::cleanupAfterGC(MM_EnvironmentBase *env, MM_AllocateDescript
 		MM_EnvironmentStandard *threadEnvironment = MM_EnvironmentStandard::getEnvironment(walkThread);
 		threadEnvironment->_tenureTLHRemainderBase = NULL;
 		threadEnvironment->_tenureTLHRemainderTop = NULL;
+		threadEnvironment->_loaAllocation = false;
 	}
 
 	_extensions->_mainThreadTenureTLHRemainderTop = NULL;

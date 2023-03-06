@@ -1113,6 +1113,7 @@ MM_Scavenger::activateTenureCopyScanCache(MM_EnvironmentStandard *env)
 			Assert_MM_true(env->_tenureTLHRemainderTop == cache->cacheTop);
 			env->_tenureTLHRemainderBase = NULL;
 			env->_tenureTLHRemainderTop = NULL;
+			env->_loaAllocation = false;
 			env->_tenureCopyScanCache = cache;
 			activateDeferredCopyScanCache(env);
 			/* Force slow path release VM access, to be able to push mutator copy caches to scanning and reliable tell if thread is inactive */
