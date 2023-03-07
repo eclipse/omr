@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1878,6 +1878,10 @@ void TR_LoopReplicator::fixUpLoopEntry(LoopInfo *lInfo, TR::Block *loopHeader)
    {
    _cfg->setStructure(_rootStructure);
    TR_RegionStructure *region = lInfo->_region;
+
+   TR_ScratchList<TR::Block> blocksInLoop(trMemory());
+   region->getBlocks(&blocksInLoop);
+
    // collect the backedges to the loop header
    TR_ScratchList<TR::CFGEdge> backEdges(trMemory());
    TR::CFGEdge *e = NULL;
@@ -2062,11 +2066,39 @@ void TR_LoopReplicator::fixUpLoopEntry(LoopInfo *lInfo, TR::Block *loopHeader)
    // rip out the trees from the original loop header
    loopHeader->getEntry()->join(loopHeader->getExit());
 
-   // add the async tree into the loopheader
+   // add the async tree into the clonedHeader
    //
    TR::TreeTop *asyncTT = TR::TreeTop::create(comp(), TR::Node::createWithSymRef(bbstartNode, TR::asynccheck, 0, comp()->getSymRefTab()->findOrCreateAsyncCheckSymbolRef(comp()->getMethodSymbol())));
-   loopHeader->getEntry()->join(asyncTT);
-   asyncTT->join(loopHeader->getExit());
+   TR::TreeTop *clonedEntry = clonedHeader->getEntry();
+   TR::TreeTop *clonedEntryNext = clonedEntry->getNextTreeTop();
+
+   clonedEntry->join(asyncTT);
+   asyncTT->join(clonedEntryNext);
+
+   // remove all async checks from the blocks that were in the original loop
+   // since there will be an async check added at the start of the cloned header
+   // we don't need any other async check in the body of the loop
+   //
+   ListIterator<TR::Block> bilIt(&blocksInLoop);
+   TR::Block *b = NULL;
+   for (b = bilIt.getFirst(); b; b = bilIt.getNext())
+      {
+      TR::TreeTop *curTT = b->getEntry();
+      TR::TreeTop *exitTT = b->getExit();
+      while (curTT != exitTT)
+         {
+         TR::TreeTop *nextTT = curTT->getNextTreeTop();
+         if (curTT->getNode()->getOpCodeValue() == TR::asynccheck &&
+            performTransformation(comp(), "%sremoving redundant asynccheck %p\n", OPT_DETAILS, curTT->getNode()))
+             {
+             TR::TreeTop *prevTT = curTT->getPrevTreeTop();
+             curTT->getNode()->recursivelyDecReferenceCount();
+             prevTT->join(nextTT);
+             }
+
+         curTT = nextTT;
+         }
+      }
    }
 
 // given a number, find the corresponding sub-node in the structure graph
