@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,8 @@
 
 extern TR_RuntimeHelperTable runtimeHelpers;
 extern void setupCodeCacheParameters(int32_t *, OMR::CodeCacheCodeGenCallbacks *callBacks, int32_t *numHelpers, int32_t *CCPreLoadedCodeSize);
+
+static OMRPortLibrary portLibrary;
 
 static void
 initHelper(void *helper, TR_RuntimeHelper id)
@@ -150,11 +152,19 @@ initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t n
    //
    TR::RawAllocator rawAllocator;
 
+   // initialize and attach current thread to thread library, and then initialize port library
+   if (0 == omrthread_init_library())
+      {
+      omrthread_t currentThread = NULL;
+      if (0 == omrthread_attach_ex(&currentThread, J9THREAD_ATTR_DEFAULT))
+         omrport_init_library(&portLibrary, sizeof(OMRPortLibrary));
+      }
+
    try
       {
       // Allocate the host environment structure
       //
-      TR::Compiler = new (rawAllocator) TR::CompilerEnv(rawAllocator, TR::PersistentAllocatorKit(rawAllocator));
+      TR::Compiler = new (rawAllocator) TR::CompilerEnv(rawAllocator, TR::PersistentAllocatorKit(rawAllocator), &portLibrary);
       }
    catch (const std::bad_alloc&)
       {
@@ -173,6 +183,9 @@ initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t n
       return false;
 
    initializeCodeCache(fe.codeCacheManager());
+
+   if (TR::Compiler->omrPortLib == NULL)
+      return false;
 
    return true;
    }
@@ -201,6 +214,14 @@ shutdownJit()
    codeCacheManager.destroy();
 
    TR::CompilationController::shutdown();
+
+   omrthread_t currentThread = NULL;
+   if (0 == omrthread_attach_ex(&currentThread, J9THREAD_ATTR_DEFAULT))
+      {
+      portLibrary.port_shutdown_library(&portLibrary);
+      omrthread_detach(currentThread);
+      omrthread_shutdown_library();
+      }
    }
 
 extern "C"

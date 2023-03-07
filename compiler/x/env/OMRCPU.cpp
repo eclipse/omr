@@ -377,15 +377,15 @@ OMR::X86::CPU::supports_feature_test(uint32_t feature)
       case OMR_FEATURE_X86_AVX:
          return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX() == ans;
       case OMR_FEATURE_X86_AVX2:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX2();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX2() == ans;
       case OMR_FEATURE_X86_AVX512F:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512F();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512F() == ans;
       case OMR_FEATURE_X86_AVX512VL:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VL();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VL() == ans;
       case OMR_FEATURE_X86_AVX512BW:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512BW();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512BW() == ans;
       case OMR_FEATURE_X86_AVX512DQ:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512DQ();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512DQ() == ans;
       default:
          return false;
       }

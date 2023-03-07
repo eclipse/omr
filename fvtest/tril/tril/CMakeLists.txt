@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,7 @@ target_include_directories(tril PUBLIC
 target_link_libraries(tril PUBLIC
 	${TRIL_BACKEND_LIB}
 	${CMAKE_DL_LIBS}
+	${OMR_PORT_LIB}
 )
 
 # TODO system thread library should be linked in a more generic way.
