@@ -577,12 +577,8 @@ bool decodeConversionOpcode(TR::ILOpCode op, TR::DataType nodeDataType, TR::Data
       {
       targetDataType = nodeDataType;
       TR::ILOpCodes opValue = op.getOpCodeValue();
-      for (int i = 0; i < TR::NumAllTypes; i++)
+      for (int i = 0; i <= TR::LastTRScalarType; i++)
           {
-          if (TR::NumOMRTypes == i)
-             {
-             continue;
-             }
           sourceDataType = (TR::DataTypes)i;
           if (opValue == TR::ILOpCode::getProperConversion(sourceDataType, targetDataType, false /*!wantZeroExtension*/))
              {

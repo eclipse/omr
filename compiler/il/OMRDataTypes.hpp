@@ -236,6 +236,7 @@ enum VectorLength
  */
 enum DataTypes
    {
+   FirstOMRScalarType,
    NoType=0,
    Int8,
    Int16,
@@ -245,25 +246,29 @@ enum DataTypes
    Double,
    Address,
    Aggregate,
-   NumOMRTypes,
+   LastOMRScalarType = Aggregate,
 #include "il/DataTypesEnum.hpp"
-   NumScalarTypes,
-   NumVectorElementTypes = Double,
+   FirstVectorElementType = Int8,
+   LastVectorElementType = Double,
+   NumVectorElementTypes = Double, //currently equivalent to more general LastVectorElementType - FirstVectorElementType + 1
    //
    // this space is reserved for vector and mask types generated at runtime
    // the generated types can be used to index tables of size NumAllTypes as any other type
    //
-   NumVectorTypes = NumVectorElementTypes * NumVectorLengths,
-   NumMaskTypes = NumVectorTypes,
 
-   FirstVectorType = NumScalarTypes,
-   LastVectorType = FirstVectorType + NumVectorTypes - 1,
+   FirstVectorType = LastTRScalarType + 1,
+   LastVectorType = FirstVectorType + (NumVectorElementTypes * NumVectorLengths) - 1,
 
    FirstMaskType = LastVectorType + 1,
-   LastMaskType = FirstMaskType + NumMaskTypes - 1,
+   LastMaskType = FirstMaskType + (NumVectorElementTypes * NumVectorLengths) - 1,
 
-   NumAllTypes =  NumScalarTypes + NumVectorTypes + NumMaskTypes
+   LastTRDataType = LastMaskType
    };
+
+   const uint32_t NumOMRTypes = LastOMRScalarType + 1;
+   const uint32_t NumVectorTypes = NumVectorElementTypes * NumVectorLengths;
+   const uint32_t NumMaskTypes = NumVectorTypes;
+   const uint32_t NumAllTypes = LastTRDataType + 1;
 }
 
 
