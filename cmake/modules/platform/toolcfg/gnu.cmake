@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,6 +66,20 @@ endif()
 
 if(OMR_HOST_ARCH STREQUAL "s390")
 	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -march=z9-109)
+endif()
+
+if(OMR_ARCH_AARCH64 AND (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 9))
+	# There is a gcc compiler bug (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88469)
+	# on AArch64 affecting pre-gcc 9 versions involving the passing of arguments with
+	# 128-bit bitfields.  Newer versions of gcc with the fix generate an ABI warning
+	# when code passing bitfields is encountered to warn of consequences when linking
+	# object files produced from older compiler versions.
+	#
+	# Suppress the ABI warning for gcc >= 9 compilers.
+	#
+	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
+		-Wno-psabi
+	)
 endif()
 
 # Testarossa build variables. Longer term the distinction between TR and the rest
