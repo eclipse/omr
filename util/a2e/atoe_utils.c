@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -417,6 +417,7 @@ atoe_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 	bool_t long_flag, long_long_flag;                         /*ibm@9094*/
 	bool_t fPrecision;
 	int min_width, precision, ch;
+	int final_len = 0;
 	static char NULLCHARSTRING[] = "[null]";                /*ibm@029013*/
 	/*ibm@029013*/
 	if (fmt == NULL) {                                      /*ibm@029013*/
@@ -496,6 +497,7 @@ next_char:
 				goto next_char;
 			case 's':
 				strvalue = va_arg(args, char *);
+				final_len += (int)strlen(strvalue);
 				CheckRet(fstring(&this, strvalue, left_justify,
 								 min_width, precision));
 				break;
@@ -581,11 +583,12 @@ next_char:
 				return ERROR_RETVAL;
 			}
 		} else {
+			final_len++;
 			CheckRet(pchar(&this, ch));
 		}
 	}
 	*this.buffer = '\0';
-	return strlen(str);
+	return final_len;
 }
 
 /* END OF FILE */
