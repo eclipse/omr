@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2020 IBM Corp. and others
+# Copyright (c) 2016, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,12 @@ ifeq (linux,$(OMR_HOST_OS))
   endif
   ifeq (s390,$(OMR_HOST_ARCH))
     MODULE_SHARED_LIBS += elf z
+  endif
+  ifeq (aarch64,$(OMR_HOST_ARCH))
+    ifeq (1,$(OMR_CROSS_COMPILE))
+      MODULE_SHARED_LIBS += elf z
+      MODULE_LDFLAGS += -static
+    endif
   endif
 endif
 

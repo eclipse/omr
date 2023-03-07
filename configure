@@ -6742,9 +6742,7 @@ fi
   *) :
 
 			# other host types: look for DWARF support
-			if test "x$OMR_CROSS_CONFIGURE" != "xyes"
-			then
-				for ac_header in dwarf.h libdwarf/dwarf.h libdwarf.h libdwarf/libdwarf.h
+			for ac_header in dwarf.h libdwarf/dwarf.h libdwarf.h libdwarf/libdwarf.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -6757,7 +6755,7 @@ fi
 
 done
 
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dwarf_init" >&5
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dwarf_init" >&5
 $as_echo_n "checking for library containing dwarf_init... " >&6; }
 if ${ac_cv_search_dwarf_init+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -6813,7 +6811,7 @@ if test "$ac_res" != no; then :
 
 fi
 
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dwarf_init" >&5
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dwarf_init" >&5
 $as_echo_n "checking for library containing dwarf_init... " >&6; }
 if ${ac_cv_search_dwarf_init+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -6869,7 +6867,7 @@ if test "$ac_res" != no; then :
 
 fi
 
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing elf_begin" >&5
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing elf_begin" >&5
 $as_echo_n "checking for library containing elf_begin... " >&6; }
 if ${ac_cv_search_elf_begin+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -6925,19 +6923,17 @@ if test "$ac_res" != no; then :
 
 fi
 
-			else
-				# Can't run AC_CHECK_HEADERS when cross-configuring.
-				# If DDR is enabled set these flags and hope for the best,
-				# otherwise the build will fail even if the headers are available.
-				$as_echo "#define HAVE_DWARF_H 1" >>confdefs.h
-
-				$as_echo "#define HAVE_LIBDWARF_H 1" >>confdefs.h
-
-			fi
-
 	 ;;
 esac
 
+fi
+
+if test "$enable_DDR" = "yes" && test "$OMR_HOST_OS" = "linux" && test "$OMR_CROSS_CONFIGURE" = "yes"; then :
+	# Can't run AC_CHECK_HEADERS when cross-configuring.
+	# If DDR is enabled set these flags and hope for the best,
+	# otherwise the build will fail even if the headers are available.
+	$as_echo "#define HAVE_LIBDWARF_DWARF_H 1" >>confdefs.h
+	$as_echo "#define HAVE_LIBDWARF_LIBDWARF_H 1" >>confdefs.h
 fi
 
 # Check whether --enable-OMR_GC_IDLE_HEAP_MANAGER was given.
