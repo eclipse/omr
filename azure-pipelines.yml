@@ -193,7 +193,7 @@ jobs:
   - job:
     displayName: 'x86-64 macOS'
     pool:
-      vmImage: 'macOS-latest'
+      vmImage: 'macOS-12'
     variables:
       CCACHE_DIR: $(Pipeline.Workspace)/ccache
     steps:
