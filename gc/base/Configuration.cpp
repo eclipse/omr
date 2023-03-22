@@ -539,6 +539,14 @@ MM_Configuration::reinitializeGCThreadCountForRestore(MM_EnvironmentBase* env)
 
 	initializeGCThreadCount(env);
 
+	/* Limit the restore thread count/ensure it is reasonable considering that the collector was initialized to
+	 * optimize for the initial startup thread count (e.g., allocated split lists).
+	 */
+	if (!extensions->gcThreadCountForced) {
+		uintptr_t threadCountLimit = MM_Math::roundToCeiling(8, extensions->dispatcher->getPoolMaxCapacity()) * 2;
+		extensions->gcThreadCount = OMR_MIN(threadCountLimit, extensions->gcThreadCount);
+	}
+
 	/* Currently, threads don't shutdown during restore, so ensure
 	 * thread count doesn't fall below the checkpoint thread count.
 	 * This adjustment can be removed in the future when dispatcher
