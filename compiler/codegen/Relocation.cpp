@@ -26,6 +26,7 @@
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Instruction.hpp"
+#include "codegen/Linkage.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
@@ -540,4 +541,11 @@ void TR::IteratedExternalRelocation::addRelocationEntry(uint32_t locationOffset)
       *(uint32_t *)_relocationDataCursor = locationOffset;
       _relocationDataCursor += 4;
       }
+   }
+
+void
+TR::CompiledMethodEntryAbsoluteRelocation::apply(TR::CodeGenerator *cg)
+   {
+   intptr_t startPC = cg->getLinkage()->entryPointFromCompiledMethod();
+   *(reinterpret_cast<intptr_t *>(getUpdateLocation())) = startPC;
    }
