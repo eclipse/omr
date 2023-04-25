@@ -725,7 +725,6 @@ omrmmap_test5_child_1(OMRPortLibrary *portLibrary)
 	const char *mappingName = "C:\\full\\path\\to\\mmapTest5.tst";
 	intptr_t fd;
 	intptr_t rc;
-	portTestEnv->changeIndent(1);
 
 #define J9MMAP_TEST5_BUFFER_SIZE 100
 	char buffer[J9MMAP_TEST5_BUFFER_SIZE];
@@ -738,6 +737,7 @@ omrmmap_test5_child_1(OMRPortLibrary *portLibrary)
 	int32_t lastErrorNumber = 0;
 	J9MmapHandle *mmapHandle = NULL;
 
+	outputComment(OMRPORTLIB, "Child 1: Entered \n");
 	reportTestEntry(OMRPORTLIB, testName);
 
 	/* Initialize buffer to be written */
@@ -773,7 +773,7 @@ omrmmap_test5_child_1(OMRPortLibrary *portLibrary)
 		goto exit;
 	}
 
-	portTestEnv->log("Child 1: Created file\n");
+	outputComment(OMRPORTLIB, "Child 1: Created file\n");
 
 	fileLength = omrfile_length(filename);
 	if (-1 == fileLength) {
@@ -807,7 +807,7 @@ omrmmap_test5_child_1(OMRPortLibrary *portLibrary)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Close of file %s after mapping failed: lastErrorNumber=%d, lastErrorMessage=%s\n", filename, lastErrorNumber, lastErrorMessage);
 	}
 
-	portTestEnv->log("Child 1: Mapped file, readable text = \"%s\"\n", mapAddr + 30);
+	outputComment(OMRPORTLIB, "Child 1: Mapped file, readable text = \"%s\"\n", mapAddr + 30);
 
 	omrfile_create_status_file(OMRPORTLIB, "omrmmap_test5_child_1_mapped_file", testName);
 
@@ -815,7 +815,7 @@ omrmmap_test5_child_1(OMRPortLibrary *portLibrary)
 		SleepFor(1);
 	}
 
-	portTestEnv->log("Child 1: Child 2 has changed file, readable text = \"%s\"\n", mapAddr + 30);
+	outputComment(OMRPORTLIB, "Child 1: Child 2 has changed file, readable text = \"%s\"\n", mapAddr + 30);
 
 	if (strcmp(mapAddr + 30, modifiedText) != 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Modified string does not match in mapped buffer\n");
@@ -823,7 +823,6 @@ omrmmap_test5_child_1(OMRPortLibrary *portLibrary)
 
 	omrmmap_unmap_file(mmapHandle);
 
-	portTestEnv->changeIndent(-1);
 	omrfile_create_status_file(OMRPORTLIB, "omrmmap_test5_child_1_checked_file", testName);
 
 exit:
@@ -840,7 +839,6 @@ omrmmap_test5_child_2(OMRPortLibrary *portLibrary)
 	const char *mappingName = "C:\\full\\path\\to\\mmapTest5.tst";
 	intptr_t fd;
 	intptr_t rc;
-	portTestEnv->changeIndent(1);
 
 #define J9MMAP_TEST5_BUFFER_SIZE 100
 	const char *readableText = "Here is some readable text in the file";
@@ -851,6 +849,7 @@ omrmmap_test5_child_2(OMRPortLibrary *portLibrary)
 	int32_t lastErrorNumber = 0;
 	J9MmapHandle *mmapHandle = NULL;
 
+	outputComment(OMRPORTLIB, "Child 2: Entered \n");
 	reportTestEntry(OMRPORTLIB, testName);
 
 	while (!omrfile_status_file_exists(OMRPORTLIB, "omrmmap_test5_child_1_mapped_file", testName)) {
@@ -889,7 +888,7 @@ omrmmap_test5_child_2(OMRPortLibrary *portLibrary)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Close of file %s after mapping failed: lastErrorNumber=%d, lastErrorMessage=%s\n", filename, lastErrorNumber, lastErrorMessage);
 	}
 
-	portTestEnv->log("Child 2: Mapped file, readable text = \"%s\"\n", mapAddr + 30);
+	outputComment(OMRPORTLIB, "Child 2: Mapped file, readable text = \"%s\"\n", mapAddr + 30);
 
 	/* Check mapped area */
 	if (strcmp(mapAddr + 30, readableText) != 0) {
@@ -906,7 +905,7 @@ omrmmap_test5_child_2(OMRPortLibrary *portLibrary)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Msync failed: lastErrorNumber=%d, lastErrorMessage=%s\n", lastErrorNumber, lastErrorMessage);
 	}
 
-	portTestEnv->log("Child 2: Changed file, readable text = \"%s\"\n", mapAddr + 30);
+	outputComment(OMRPORTLIB, "Child 2: Changed file, readable text = \"%s\"\n", mapAddr + 30);
 
 	omrfile_create_status_file(OMRPORTLIB, "omrmmap_test5_child_2_changed_file", testName);
 
@@ -914,10 +913,9 @@ omrmmap_test5_child_2(OMRPortLibrary *portLibrary)
 		SleepFor(1);
 	}
 
-	portTestEnv->log("Child 2: Child 1 has checked file, exiting\n");
+	outputComment(OMRPORTLIB, "Child 2: Child 1 has checked file, exiting\n");
 
 	omrmmap_unmap_file(mmapHandle);
-	portTestEnv->changeIndent(-1);
 
 exit:
 	return reportTestExit(OMRPORTLIB, testName);
