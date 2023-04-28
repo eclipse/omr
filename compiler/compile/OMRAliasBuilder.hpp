@@ -82,6 +82,7 @@ public:
    TR_BitVector & methodSymRefs() { return _methodSymRefs; }
    TR_BitVector & arrayElementSymRefs() { return _arrayElementSymRefs; }
    TR_BitVector & immutableArrayElementSymRefs() { return _immutableArrayElementSymRefs; }
+   TR_BitVector & methodMetaDataSymRefs() { return _methodMetaDataSymRefs; }
 
    TR::SymbolReference *getSymRefForAliasing(TR::Node *node, TR::Node *addrChild);
 
@@ -164,6 +165,7 @@ protected:
    TR_BitVector _methodSymRefs;
    TR_BitVector _arrayElementSymRefs;
    TR_BitVector _immutableArrayElementSymRefs;
+   TR_BitVector _methodMetaDataSymRefs;
 
    TR_BitVector _arrayletElementSymRefs;
    TR_BitVector _unsafeSymRefNumbers;

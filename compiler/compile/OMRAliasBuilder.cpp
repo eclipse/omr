@@ -52,6 +52,7 @@ OMR::AliasBuilder::AliasBuilder(TR::SymbolReferenceTable *symRefTab, size_t size
      _cpConstantSymRefs(sizeHint, c->trMemory(), heapAlloc, growable),
      _cpSymRefs(sizeHint, c->trMemory(), heapAlloc, growable),
      _immutableArrayElementSymRefs(1, c->trMemory(), heapAlloc, growable),
+     _methodMetaDataSymRefs(sizeHint, c->trMemory(), heapAlloc, growable),
      _refinedNonIntPrimitiveArrayShadows(1, c->trMemory(), heapAlloc, growable),
      _refinedAddressArrayShadows(1, c->trMemory(), heapAlloc, growable),
      _refinedIntArrayShadows(1, c->trMemory(), heapAlloc, growable),
@@ -130,6 +131,7 @@ OMR::AliasBuilder::createAliasInfo()
    unsafeSymRefNumbers().pack();
    unsafeArrayElementSymRefs().pack();
    gcSafePointSymRefNumbers().pack();
+   methodMetaDataSymRefs().pack();
 
    setCatchLocalUseSymRefs();
 
@@ -144,6 +146,7 @@ OMR::AliasBuilder::createAliasInfo()
    defaultMethodDefAliases() |= nonIntPrimitiveStaticSymRefs();
    defaultMethodDefAliases() |= unsafeSymRefNumbers();
    defaultMethodDefAliases() |= gcSafePointSymRefNumbers();
+   defaultMethodDefAliases() |= methodMetaDataSymRefs();
 
    defaultMethodDefAliasesWithoutImmutable().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
    defaultMethodDefAliasesWithoutUserField().init(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
