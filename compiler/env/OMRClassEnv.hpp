@@ -35,7 +35,6 @@ namespace OMR { typedef OMR::ClassEnv ClassEnvConnector; }
 #include "infra/Annotations.hpp"
 #include "env/jittypes.h"
 #include "env/TRMemory.hpp"
-#include "il/DataTypes.hpp"
 
 struct OMR_VMThread;
 namespace TR { class ClassEnv; }
@@ -103,7 +102,6 @@ public:
     */
    bool isZeroInitializable(TR_OpaqueClassBlock *clazz) { return true; }
    bool isPrimitiveArray(TR::Compilation *comp, TR_OpaqueClassBlock *) { return false; }
-   TR::DataTypes primitiveArrayComponentType(TR::Compilation *comp, TR_OpaqueClassBlock *) { return TR::NoType; }
    bool isReferenceArray(TR::Compilation *comp, TR_OpaqueClassBlock *) { return false; }
    bool isClassArray(TR::Compilation *comp, TR_OpaqueClassBlock *) { return false; }
    bool isClassFinal(TR::Compilation *comp, TR_OpaqueClassBlock *) { return false; }

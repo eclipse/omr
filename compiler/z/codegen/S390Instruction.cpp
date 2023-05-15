@@ -1165,7 +1165,15 @@ TR::S390ImmInstruction::generateBinaryEncoding()
       //
       void **locationToPatch = (void**)(cursor - (comp->target().is64Bit()?4:0));
       cg()->jitAddPicToPatchOnClassRedefinition(*locationToPatch, locationToPatch);
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)locationToPatch, (uint8_t *)*locationToPatch, TR_HCR, cg()), __FILE__,__LINE__, getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            (uint8_t *)locationToPatch,
+            (uint8_t *)*locationToPatch,
+            TR_HCR,
+            cg()),
+         __FILE__,
+         __LINE__,
+         getNode());
       }
 
    cursor += getOpCode().getInstructionLength();

@@ -1645,7 +1645,7 @@ TEST(PortVmemTest, vmem_testReserveMemoryExTopDown)
 /**
  * See @ref omrvmem_testReserveMemoryEx_impl
  */
-TEST(PortVmemTest, vmem_testReserveMemoryExStrictAdress)
+TEST(PortVmemTest, vmem_testReserveMemoryExStrictAddress)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
 	if (memoryIsAvailable(OMRPORTLIB, TRUE)) {

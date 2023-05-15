@@ -82,10 +82,14 @@ uint32_t encodeHelperBranch(bool isBranchAndLink, TR::SymbolReference *symRef, u
       }
 
    cg->addExternalRelocation(
-      new (cg->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                     (uint8_t *)symRef,
-                                     TR_HelperAddress, cg),
-      __FILE__, __LINE__, node);
+      TR::ExternalRelocation::create(
+         cursor,
+         (uint8_t *)symRef,
+         TR_HelperAddress,
+         cg),
+      __FILE__,
+      __LINE__,
+      node);
 
    return (isBranchAndLink ? 0x0B000000 : 0x0A000000) | encodeBranchDistance((uintptr_t) cursor, (uint32_t)target) | (((uint32_t) cc) << 28);
    }
@@ -218,13 +222,37 @@ uint8_t *TR::ARMImmInstruction::generateBinaryEncoding()
       switch(getReloKind())
          {
          case TR_AbsoluteHelperAddress:
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)getSymbolReference(), TR_AbsoluteHelperAddress, cg()), __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *)getSymbolReference(),
+                  TR_AbsoluteHelperAddress,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             break;
          case TR_RamMethod:
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_RamMethod, cg()), __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  NULL,
+                  TR_RamMethod,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             break;
          case TR_BodyInfoAddress:
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, 0, TR_BodyInfoAddress, cg()), __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  0,
+                  TR_BodyInfoAddress,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             break;
          default:
             TR_ASSERT(false, "Unsupported AOT relocation type specified.");
@@ -236,7 +264,15 @@ uint8_t *TR::ARMImmInstruction::generateBinaryEncoding()
       //
       void **locationToPatch = (void**)cursor;
       cg()->jitAddPicToPatchOnClassRedefinition(*locationToPatch, locationToPatch);
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)locationToPatch, (uint8_t *)*locationToPatch, TR_HCR, cg()), __FILE__,__LINE__, getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            (uint8_t *)locationToPatch,
+            (uint8_t *)*locationToPatch,
+            TR_HCR,
+            cg()),
+         __FILE__,
+         __LINE__,
+         getNode());
       }
 
    cursor += ARM_INSTRUCTION_LENGTH;
@@ -327,12 +363,15 @@ uint8_t *TR::ARMImmSymInstruction::generateBinaryEncoding()
 #endif
                // no need to add 4 to cursor, it is done below in the
                // common path
-               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
-                  cursor,
-                  NULL,
-                  TR_AbsoluteMethodAddress,
-                  cg()),
-                  __FILE__, __LINE__, getNode());
+               cg()->addExternalRelocation(
+                  TR::ExternalRelocation::create(
+                     cursor,
+                     NULL,
+                     TR_AbsoluteMethodAddress,
+                     cg()),
+                  __FILE__,
+                  __LINE__,
+                  getNode());
                }
             }
          }

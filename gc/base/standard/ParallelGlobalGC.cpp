@@ -1917,12 +1917,15 @@ MM_ParallelGlobalGC::healHeap(MM_EnvironmentBase *env)
 bool
 MM_ParallelGlobalGC::reinitializeForRestore(MM_EnvironmentBase *env)
 {
-	bool result = true;
+	bool rc = true;
+
 	/* Consider reinitializing sweepHeapSectioning through the collector's _sweepScheme. */
-	if (!_extensions->sweepHeapSectioning->reinitializeForRestore(env)) {
-		result = false;
+	if (!_extensions->sweepHeapSectioning->reinitializeForRestore(env)
+		|| !_markingScheme->getWorkPackets()->reinitializeForRestore(env)
+	) {
+		rc = false;
 	}
 
-	return result;
+	return rc;
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

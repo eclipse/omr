@@ -46,12 +46,11 @@ class MM_PacketList: public MM_BaseNonVirtual
 /* Data Section */
 public:
 	struct PacketSublist {
-		MM_Packet * _head;  /**< Head of the list */
-		MM_Packet * _tail;  /**< Tail of the list */
+		MM_Packet *_head;  /**< Head of the list */
+		MM_Packet *_tail;  /**< Tail of the list */
 		MM_LightweightNonReentrantLock _lock;  /**< Lock for getting/putting packets */
 
-		bool
-		initialize(MM_EnvironmentBase *env)
+		bool initialize(MM_EnvironmentBase *env)
 		{
 			if (!_lock.initialize(env, &env->getExtensions()->lnrlOptions, "MM_PacketList:_sublists[]._lock")) {
 				return false;
@@ -69,9 +68,9 @@ public:
 protected:
 	
 private:
-	struct PacketSublist *_sublists;	/**< An array of PacketSublist structures which is _sublistCount elements long */
+	PacketSublist *_sublists;	/**< An array of PacketSublist structures which is _sublistCount elements long */
 	
-	uintptr_t _sublistCount; /**< the number of lists (split for parallelism). Must be at least 1 */
+	uintptr_t _sublistCount; /**< The number of lists (split for parallelism). Must be at least 1 */
 	volatile uintptr_t _count;  /**< Number of items in the list */
 	
 /* Functionality Section */
@@ -127,7 +126,7 @@ protected:
 public:
 	
 	bool initialize(MM_EnvironmentBase *env);
-	void tearDown(MM_EnvironmentBase *env) ;
+	void tearDown(MM_EnvironmentBase *env);
 	
 	/**
 	 * Push a list of packets onto this packet list.
@@ -224,7 +223,7 @@ public:
 	 */
 	MMINLINE bool isEmpty() 
 	{
-		return 0 == _count;
+		return (0 == _count);
 	}
 	
 	/**
@@ -246,6 +245,16 @@ public:
 	 */
 	MM_Packet *getHead();
 	
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * Split the PacketList into PacketSublists based on the restore thread count.
+	 *
+	 * @param[in] env the current environment.
+	 * @return boolean indicating whether the PackList was successfully split.
+	 */
+	virtual bool reinitializeForRestore(MM_EnvironmentBase *env);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	/**
 	 * Create a PacketList object.
 	 */

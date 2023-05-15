@@ -137,9 +137,9 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
         TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), warm},
    {"bigAppThreshold=", "R<nnn>\tNumber of loaded classes used to determine if crt app is 'big'",
         TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_bigAppThreshold, 0, "F%d", NOT_IN_SUBSET},
-   {"bigCalleeFreqCutoffAtHot=", "O<nnn>\tInliner threshold for block frequncy for cold callees for opt level higher then warm",
+   {"bigCalleeFreqCutoffAtHot=", "O<nnn>\tInliner threshold for block frequency for cold callees for opt level higher then warm",
         TR::Options::set32BitNumeric, offsetof(OMR::Options, _bigCalleeFreqCutoffAtHot), 40, "F%d"},
-   {"bigCalleeFreqCutoffAtWarm=", "O<nnn>\tInliner threshold for block frequncy for cold callees for opt level less of equal to warm",
+   {"bigCalleeFreqCutoffAtWarm=", "O<nnn>\tInliner threshold for block frequency for cold callees for opt level less of equal to warm",
         TR::Options::set32BitNumeric, offsetof(OMR::Options, _bigCalleeFreqCutoffAtWarm), 40, "F%d"},
    {"bigCalleeHotOptThreshold=", "O<nnn>\tInliner threshold", TR::Options::set32BitNumeric, offsetof(OMR::Options, _bigCalleeHotOptThreshold), 0, "F%d" },
    {"bigCalleeScorchingOptThreshold=", "O<nnn>\tInliner threshold", TR::Options::set32BitNumeric, offsetof(OMR::Options, _bigCalleeScorchingOptThreshold), 0, "F%d" },
@@ -251,8 +251,8 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableAOTStaticField",               "O\tdisable AOT static field inlining",                      SET_OPTION_BIT(TR_DisableAOTStaticField), "F"},
    {"disableAOTValidationOpts",           "O\tdisable AOT optimizations with validations",                      SET_OPTION_BIT(TR_DisableAOTCheckCastInlining | TR_DisableAOTInstanceOfInlining | TR_DisableAOTInstanceFieldResolution | TR_DisableAOTStaticField), "F"},
    {"disableAOTWarmRunThroughputImprovement", "O\tdisable change iprofiler entry choosing heuristic to improve aot warm run throughput",                      SET_OPTION_BIT(TR_DisableAOTWarmRunThroughputImprovement), "F"},
-   {"disableArrayCopyOpts",               "O\tdisable array copy optimiations",                SET_OPTION_BIT(TR_DisableArrayCopyOpts), "F"},
-   {"disableArraySetOpts",                "O\tdisable array set optimiations",                 SET_OPTION_BIT(TR_DisableArraySetOpts), "F"},
+   {"disableArrayCopyOpts",               "O\tdisable array copy optimizations",                SET_OPTION_BIT(TR_DisableArrayCopyOpts), "F"},
+   {"disableArraySetOpts",                "O\tdisable array set optimizations",                 SET_OPTION_BIT(TR_DisableArraySetOpts), "F"},
    {"disableArraySetStoreElimination",     "O\tdisable arrayset store elimination",                SET_OPTION_BIT(TR_DisableArraysetStoreElimination), "F"},
    {"disableArrayStoreCheckOpts",          "O\tdisable array store check optimizations",SET_OPTION_BIT(TR_DisableArrayStoreCheckOpts), "F"},
    {"disableAsyncCheckInsertion",         "O\tdisable insertion of async checks in large loopless methods", TR::Options::disableOptimization, asyncCheckInsertion, 0, "F" },
@@ -276,7 +276,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableCatchBlockRemoval",           "O\tdisable catch block removal",                    TR::Options::disableOptimization, catchBlockRemoval, 0, "P"},
    {"disableCFGSimplification",           "O\tdisable Control Flow Graph simplification",      TR::Options::disableOptimization, CFGSimplification, 0, "P"},
    {"disableCheapWarmOpts",               "O\tenable cheap warm optimizations",               SET_OPTION_BIT(TR_DisableCheapWarmOpts), "F"},
-   {"disableCheckcastAndProfiledGuardCoalescer", "O\tdisable checkcast and profiled guard  coalescion optimization ",   SET_OPTION_BIT(TR_DisableCheckcastAndProfiledGuardCoalescer), "F"},
+   {"disableCheckcastAndProfiledGuardCoalescer", "O\tdisable checkcast and profiled guard coalescence optimization ",   SET_OPTION_BIT(TR_DisableCheckcastAndProfiledGuardCoalescer), "F"},
    {"disableCHOpts",                      "O\tdisable CHTable based optimizations",            SET_OPTION_BIT(TR_DisableCHOpts), "F"},
    {"disableClassChainSharing",            "M\tdisable class sharing", RESET_OPTION_BIT(TR_EnableClassChainSharing), "F", NOT_IN_SUBSET},
    {"disableClassChainValidationCaching",  "M\tdisable class chain validation caching", RESET_OPTION_BIT(TR_EnableClassChainValidationCaching), "F", NOT_IN_SUBSET},
@@ -294,7 +294,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableConservativeColdInlining",   "O\tDo not be conservative with inlining at cold", SET_OPTION_BIT(TR_DisableConservativeColdInlining), "F" },
    {"disableConservativeHotRecompForServerMode", "R\tDo not be more conservative in server mode", SET_OPTION_BIT(TR_DisableConservativeHotRecompilationForServerMode), "F", NOT_IN_SUBSET},
    {"disableConservativeInlining",        "O\tDo not be conservative with inlining", SET_OPTION_BIT(TR_DisableConservativeInlining), "F" },
-   {"disableConverterReducer",            "O\tdisable reuducing converters methods to intrinisic arrayTranslate",SET_OPTION_BIT(TR_DisableConverterReducer), "F"},
+   {"disableConverterReducer",            "O\tdisable reducing converters methods to intrinsic arrayTranslate",SET_OPTION_BIT(TR_DisableConverterReducer), "F"},
    {"disableCPUUtilization",              "M\tdisable tracking of cpu utilization", SET_OPTION_BIT(TR_DisableCPUUtilization), "F", NOT_IN_SUBSET},
    {"disableCrackedEdit",                 "O\tdisable cracking of edit/edit-and-mark", SET_OPTION_BIT(TR_DisableCrackedEditOptimization), "F" },
    {"disableCustomMethodHandleThunks",    "R\tdisable creation of custom invokeExact thunks for MethodHandles", SET_OPTION_BIT(TR_DisableCustomMethodHandleThunks), "F", NOT_IN_SUBSET},
@@ -310,7 +310,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableDirectToJNIInline",           "O\tdisable direct calls to JNI methods from jitted methods (but still create thunks)", SET_OPTION_BIT(TR_DisableDirectToJNIInline), "F"},
    {"disableDLTBytecodeIndex=",           "O<nnn>\tprevent DLT compilation at the specified bytecode index", TR::Options::set32BitNumeric, offsetof(OMR::Options,_disableDLTBytecodeIndex), 0, "F%d"},
    {"disableDLTrecompilationPrevention",  "M\tdisable the prevention of DLT bogus recompilations", SET_OPTION_BIT(TR_DisableDLTrecompilationPrevention), "F", NOT_IN_SUBSET},
-   {"disableDoubleWordStackAlignment",    "O\tdisable double word java stack alignement on z", SET_OPTION_BIT(TR_DisableDoubleWordStackAlignment), "F"},
+   {"disableDoubleWordStackAlignment",    "O\tdisable double word java stack alignment on z", SET_OPTION_BIT(TR_DisableDoubleWordStackAlignment), "F"},
    {"disableDowngradeToColdOnVMPhaseStartup", "M\tdisable downgrading optLevel to cold during STARTUP VM phase", SET_OPTION_BIT( TR_DisableDowngradeToColdOnVMPhaseStartup), "F", NOT_IN_SUBSET},
    {"disableDualTLH",                     "D\tDisable use of non-zero initialized TLH", SET_OPTION_BIT(TR_DisableDualTLH), "F"},
    {"disableDumpFlowGraph",               "L\tDisable dumping of the flow graph into trace file", SET_OPTION_BIT(TR_DisableDumpFlowGraph), "P"},
@@ -560,7 +560,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableTlhPrefetch",                 "O\tdisable software prefetch on allocation", SET_OPTION_BIT(TR_DisableTLHPrefetch), "F"},
    {"disableTM",                          "O\tdisable transactional memory support", SET_OPTION_BIT(TR_DisableTM), "F"},
    {"disableTOC",                         "O\tdisable use of the Table of Constants (TOC) on relevant architectures", SET_OPTION_BIT(TR_DisableTOC), "F"},
-   {"disableTraceRegDeps",                "O\tdisable printing of register dependancies for each instruction in trace file",              SET_OPTION_BIT(TR_DisableTraceRegDeps), "F"},
+   {"disableTraceRegDeps",                "O\tdisable printing of register dependencies for each instruction in trace file",              SET_OPTION_BIT(TR_DisableTraceRegDeps), "F"},
    {"disableTraps",                       "C\tdisable trap instructions",                       SET_OPTION_BIT(TR_DisableTraps), "F"},
    {"disableTreeCleansing",               "O\tdisable tree cleansing",                         TR::Options::disableOptimization, treesCleansing, 0, "P"},
    {"disableTreeSimplification",          "O\tdisable tree simplification",                    TR::Options::disableOptimization, treeSimplification, 0, "P"},
@@ -571,7 +571,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableUnsafe",                      "O\tdisable code to inline Unsafe natives",          SET_OPTION_BIT(TR_DisableUnsafe), "F"},
    {"disableUnsafeFastPath",              "O\tdisable unsafe fast path",               TR::Options::disableOptimization, unsafeFastPath, 0, "P"},  // Java specific option
    {"disableUpdateAOTBytesSize",          "M\tDon't send VM size of bodies that could have been AOT'd if the SCC wasn't full", SET_OPTION_BIT(TR_DisableUpdateAOTBytesSize), "F", NOT_IN_SUBSET},
-   {"disableUpdateJITBytesSize",          "M\tDon't send VM size of IProfiler Entires and Hints that could have been persisted if the SCC wasn't full", SET_OPTION_BIT(TR_DisableUpdateJITBytesSize), "F", NOT_IN_SUBSET},
+   {"disableUpdateJITBytesSize",          "M\tDon't send VM size of IProfiler Entries and Hints that could have been persisted if the SCC wasn't full", SET_OPTION_BIT(TR_DisableUpdateJITBytesSize), "F", NOT_IN_SUBSET},
    {"disableUpgradeBootstrapAtWarm",      "R\tRecompile bootstrap AOT methods at warm instead of cold", RESET_OPTION_BIT(TR_UpgradeBootstrapAtWarm), "F", NOT_IN_SUBSET},
    {"disableUpgrades",                    "O\tPrevent Jit Sampling from upgrading cold compilations",
                                           SET_OPTION_BIT(TR_DisableUpgrades), "F", NOT_IN_SUBSET},
@@ -678,7 +678,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"enableCompilationYieldStats",        "M\tenable statistics on time between 2 consecutive yield points", SET_OPTION_BIT(TR_EnableCompYieldStats), "F", NOT_IN_SUBSET},
    {"enableCopyingTROTInduction1Idioms",  "O\tenable CopyingTROTInduction1 idiom patterns", SET_OPTION_BIT(TR_EnableCopyingTROTInduction1Idioms), "F", NOT_IN_SUBSET},
    {"enableDataCacheStatistics",          "I\tenable the collection and display of data cache related statistics.", SET_OPTION_BIT(TR_EnableDataCacheStatistics),"F", NOT_IN_SUBSET},
-   {"enableDeterministicOrientedCompilation", "O\tenable deteministic oriented compilation", SET_OPTION_BIT(TR_EnableDeterministicOrientedCompilation), "F"},
+   {"enableDeterministicOrientedCompilation", "O\tenable deterministic oriented compilation", SET_OPTION_BIT(TR_EnableDeterministicOrientedCompilation), "F"},
    {"enableDLTBytecodeIndex=",            "O<nnn>\tforce attempted DLT compilation to use specified bytecode index", TR::Options::set32BitNumeric, offsetof(OMR::Options,_enableDLTBytecodeIndex), 0, "F%d"},
    {"enableDowngradeOnHugeQSZ",           "M\tdowngrade first time compilations when the compilation queue is huge (1000+ entries)", SET_OPTION_BIT(TR_EnableDowngradeOnHugeQSZ), "F", NOT_IN_SUBSET},
    {"enableDualTLH",                      "D\tEnable use of non-zero initialized TLH. TR_EnableBatchClear must be set too.", RESET_OPTION_BIT(TR_DisableDualTLH), "F"},
@@ -732,7 +732,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"enableMHCustomizationLogicCalls",   "C\tinsert calls to MethodHandle.doCustomizationLogic for handle invocations outside of thunks", SET_OPTION_BIT(TR_EnableMHCustomizationLogicCalls), "F"},
    {"enableMonitorCacheLookup",          "O\tenable  monitor cache lookup under lock nursery ",                       SET_OPTION_BIT(TR_EnableMonitorCacheLookup), "F"},
    {"enableMultipleGCRPeriods",          "M\tallow JIT to get in and out of GCR", SET_OPTION_BIT(TR_EnableMultipleGCRPeriods), "F", NOT_IN_SUBSET},
-   {"enableMutableCallSiteGuards",       "O\tenable virgual guards for calls to java.lang.invoke.MutableCallSite.getTarget().invokeExact(...) (including invokedynamic)",   RESET_OPTION_BIT(TR_DisableMutableCallSiteGuards), "F"},
+   {"enableMutableCallSiteGuards",       "O\tenable virtual guards for calls to java.lang.invoke.MutableCallSite.getTarget().invokeExact(...) (including invokedynamic)",   RESET_OPTION_BIT(TR_DisableMutableCallSiteGuards), "F"},
    {"enableNewAllocationProfiling",      "O\tenable profiling of new allocations", SET_OPTION_BIT(TR_EnableNewAllocationProfiling), "F"},
    {"enableNewCheckCastInstanceOf",      "O\tenable new Checkcast/InstanceOf evaluator", SET_OPTION_BIT(TR_EnableNewCheckCastInstanceOf), "F"},
    {"enableNewX86PrefetchTLH",           "O\tenable new X86 TLH prefetch algorithm", SET_OPTION_BIT(TR_EnableNewX86PrefetchTLH), "F"},
@@ -773,7 +773,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"enableSnapshotBlockOpts",            "O\tenable block ordering/redirecting optimizations in the presences of snapshot nodes", SET_OPTION_BIT(TR_EnableSnapshotBlockOpts), "F"},
    {"enableSymbolValidationManager",      "M\tEnable Symbol Validation Manager for Relocatable Compile Validations", SET_OPTION_BIT(TR_EnableSymbolValidationManager), "F"},
    {"enableTailCallOpt",                  "R\tenable tall call optimization in peephole", SET_OPTION_BIT(TR_EnableTailCallOpt), "F"},
-   {"enableThisLiveRangeExtension",       "R\tenable this live range extesion to the end of the method", SET_OPTION_BIT(TR_EnableThisLiveRangeExtension), "F"},
+   {"enableThisLiveRangeExtension",       "R\tenable this live range extension to the end of the method", SET_OPTION_BIT(TR_EnableThisLiveRangeExtension), "F"},
    {"enableTM",                           "O\tenable transactional memory support", SET_OPTION_BIT(TR_EnableTM), "F"},
    {"enableTraps",                        "C\tenable trap instructions",                     RESET_OPTION_BIT(TR_DisableTraps), "F"},
    {"enableTreePatternMatching",          "O\tEnable opts that use the TR_Pattern framework", RESET_OPTION_BIT(TR_DisableTreePatternMatching), "F"},
@@ -787,12 +787,12 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"enableYieldVMAccess",                "O\tenable yielding of VM access when GC is waiting", SET_OPTION_BIT(TR_EnableYieldVMAccess), "F"},
    {"enableZEpilogue",                    "O\tenable 64-bit 390 load-multiple breakdown.", SET_OPTION_BIT(TR_Enable39064Epilogue), "F"},
    {"enableZNext",                        "O\tenable zNext support",                        RESET_OPTION_BIT(TR_DisableZNext), "F"},
-   {"enforceVectorAPIExpansion",          "O\tSets up platform specific sub options to enforce Vector API Expansion of Vector API Instrinsics",           SET_OPTION_BIT(TR_EnforceVectorAPIExpansion), "F"},
+   {"enforceVectorAPIExpansion",          "O\tSets up platform specific sub options to enforce Vector API Expansion of Vector API Intrinsics",           SET_OPTION_BIT(TR_EnforceVectorAPIExpansion), "F"},
    {"enumerateAddresses=", "D\tselect kinds of addresses to be replaced by unique identifiers in trace file", TR::Options::setAddressEnumerationBits, offsetof(OMR::Options, _addressToEnumerate), 0, "F"},
    {"estimateRegisterPressure",           "O\tdeprecated; equivalent to enableRegisterPressureSimulation", RESET_OPTION_BIT(TR_DisableRegisterPressureSimulation), "F"},
    {"experimentalClassLoadPhase",         "O\tenable the experimental class load phase algorithm", SET_OPTION_BIT(TR_ExperimentalClassLoadPhase), "F"},
    {"extractExitsByInvalidatingStructure", "O\tInstead of running exit extraction normally, detect nodes that would be extracted, and invalidate structure if there are any", SET_OPTION_BIT(TR_ExtractExitsByInvalidatingStructure), "F"},
-   {"failPreXRecompile",                  "I\tfail prexistance based recompilatoins", SET_OPTION_BIT(TR_FailPreXRecompile), "F"},
+   {"failPreXRecompile",                  "I\tfail preexistence based recompilations", SET_OPTION_BIT(TR_FailPreXRecompile), "F"},
    {"failRecompile",                      "I\tfail the compile whenever recompiling a method", SET_OPTION_BIT(TR_FailRecompile), "F"},
    {"fanInCallGraphFactor=", "R<nnn>\tFactor by which the weight of the callgraph for a particular caller is multiplied",
         TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::INLINE_fanInCallGraphFactor, 0, "F%d", NOT_IN_SUBSET},
@@ -819,9 +819,9 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"fullInliningUnderOSRDebug", "O\tDo full inlining under OSR based debug (new FSD)", SET_OPTION_BIT(TR_FullInlineUnderOSRDebug), "F"},
    {"GCRCount=",       "R<nnn>\tthe value to which the counter is set for a method containing GCR body. The default is the upgrade compilation count",
     TR::Options::setCount, offsetof(OMR::Options,_GCRCount), 0, "F%d"},
-   {"GCRdecCount=",       "R<nnn>\tthe value by which the counter is decremented by guarded counting recompilations (postitive value)",
+   {"GCRdecCount=",       "R<nnn>\tthe value by which the counter is decremented by guarded counting recompilations (positive value)",
     TR::Options::setCount, offsetof(OMR::Options,_GCRDecCount), 0, "F%d"},
-   {"GCRresetCount=",       "R<nnn>\tthe value to which the counter is reset to after being tripped by guarded counting recompilations (postive value)",
+   {"GCRresetCount=",       "R<nnn>\tthe value to which the counter is reset to after being tripped by guarded counting recompilations (positive value)",
     TR::Options::setCount, offsetof(OMR::Options,_GCRResetCount), 0, "F%d"},
    {"generateCompleteInlineRanges", "O\tgenerate meta data ranges for each change in inliner depth", SET_OPTION_BIT(TR_GenerateCompleteInlineRanges), "F"},
    {"help",               " \tdisplay this help information", TR::Options::helpOption, 0, 0, "F", NOT_IN_SUBSET},
@@ -843,7 +843,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"ignoreAssert",         "Ignore any failing assertions", SET_OPTION_BIT(TR_IgnoreAssert), "F"},
    {"ignoreIEEE",           "O\tallow non-IEEE compliant optimizations",  SET_OPTION_BIT(TR_IgnoreIEEERestrictions), "F"},
 #ifdef DEBUG
-   {"ignoreUnimp",        "D\tdo not fail compilation for unimpemented opcodes",
+   {"ignoreUnimp",        "D\tdo not fail compilation for unimplemented opcodes",
         TR::Options::setDebug, (intptr_t)"continueWithUnimplementedOpCode"},
 #endif
    {"immediateCountingRecompilation",  "D\tRecompile GCR methods as soon as possible",  SET_OPTION_BIT(TR_ImmediateCountingRecompilation), "F", NOT_IN_SUBSET},
@@ -1076,7 +1076,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_sampleThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"samplingFrequency=", "R<nnn>\tnumber of milliseconds between samples for hotness",
         TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_samplingFrequency, 0, "F%d", NOT_IN_SUBSET},
-   {"scalarizeSSOps",                      "O\tsupport o-type optimization via scalarization of storega to storage operations",
+   {"scalarizeSSOps",                      "O\tsupport o-type optimization via scalarization of storage to storage operations",
                                           SET_OPTION_BIT(TR_ScalarizeSSOps), "F"},
    {"scount=",            "O<nnn>\tnumber of invocations before loading relocatable method in shared cache",
         TR::Options::setCount, offsetof(OMR::Options,_initialSCount), 1, "F%d"},
@@ -1209,7 +1209,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"traceOpts=",                       "L{regex}\tlist of optimizations to trace", TR::Options::setRegex, offsetof(OMR::Options, _optsToTrace), 0, "P"},
    {"traceOptTreeLowering",             "L\ttrace tree lowering optimization",             TR::Options::traceOptimization, treeLowering,   0, "P"},
    {"traceOSR",                         "L\ttrace OSR",                                    SET_OPTION_BIT(TR_TraceOSR), "P"},
-   {"traceOSRDefAnalysis",              "L\ttrace OSR reaching defintions analysis",       TR::Options::traceOptimization, osrDefAnalysis, 0, "P"},
+   {"traceOSRDefAnalysis",              "L\ttrace OSR reaching definitions analysis",       TR::Options::traceOptimization, osrDefAnalysis, 0, "P"},
 #ifdef J9_PROJECT_SPECIFIC
    {"traceOSRGuardInsertion",           "L\ttrace HCR guard insertion",                    TR::Options::traceOptimization, osrGuardInsertion, 0, "P"},
    {"traceOSRGuardRemoval",             "L\ttrace HCR guard removal",                      TR::Options::traceOptimization, osrGuardRemoval, 0, "P"},
@@ -1240,7 +1240,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"traceSequentialStoreSimplification", "L\ttrace sequential load or store simplification", TR::Options::traceOptimization, sequentialStoreSimplification, 0, "P"},
 #endif
    {"traceStaticFinalFieldFolding",     "L\ttrace generic static final field folding",             TR::Options::traceOptimization, staticFinalFieldFolding, 0, "P"},
-   {"traceStringBuilderTransformer",    "L\ttrace StringBuilder tranfsofermer optimization", TR::Options::traceOptimization, stringBuilderTransformer, 0, "P"},
+   {"traceStringBuilderTransformer",    "L\ttrace StringBuilder transformer optimization", TR::Options::traceOptimization, stringBuilderTransformer, 0, "P"},
    {"traceStringPeepholes",             "L\ttrace string peepholes",                       TR::Options::traceOptimization, stringPeepholes, 0, "P"},
    {"traceStripMining",                 "L\ttrace strip mining",                           TR::Options::traceOptimization, stripMining, 0, "P"},
    {"traceStructuralAnalysis",          "L\ttrace structural analysis", SET_OPTION_BIT(TR_TraceSA), "P"},
@@ -1259,7 +1259,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"traceVirtualGuardHeadMerger",      "L\ttrace virtual head merger",                    TR::Options::traceOptimization, virtualGuardHeadMerger, 0, "P"},
    {"traceVirtualGuardTailSplitter",    "L\ttrace virtual guard tail splitter",            TR::Options::traceOptimization, virtualGuardTailSplitter, 0, "P"},
    {"traceVPConstraints",               "L\ttrace the execution of value propagation merging and intersecting", SET_OPTION_BIT(TR_TraceVPConstraints), "F"},
-   {"trampolineSpacePercentage=",       "R<nnn>\tpercent of code cache space to reserve for tranmpolines",
+   {"trampolineSpacePercentage=",       "R<nnn>\tpercent of code cache space to reserve for trampolines",
                                          TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_trampolineSpacePercentage, 0, "F%d", NOT_IN_SUBSET},
    {"transactionalMemoryRetryCount=",   "R<nnn>\tthe time of retries when transactions get abort",
                                          TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_TransactionalMemoryRetryCount, 0, "F%d", NOT_IN_SUBSET},
@@ -1540,7 +1540,7 @@ OMR::Options::setDebug(char *option, void *base, TR::OptionTable *entry)
                break;
                }
             else if(*position == ',')
-               {//replace ',' seperators with spaces so addDebug can parse them properly
+               {//replace ',' separators with spaces so addDebug can parse them properly
                *position = ' ';
                }
             }
@@ -2766,7 +2766,7 @@ OMR::Options::jitPreProcess()
 
       // Now that we have set the default values for the options let's see if we need to override some of them
       // The aggressivenessLevel is set as a VM option. JIT options have not been processed at this point
-      // When JIT processing is taking place, some of these decisions can be overidden
+      // When JIT processing is taking place, some of these decisions can be overridden
       //
       self()->setAggressivenessLevelOpts();
 

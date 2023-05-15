@@ -545,7 +545,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::bu2iEvaluator(TR::Node *node, TR::CodeG
        && child->getRegister() == NULL)
       {
       // Use unsigned load
-      TR::Register *trgReg = commonLoadEvaluator(child, TR::InstOpCode::ldrbimm, cg);
+      TR::Register *trgReg = commonLoadEvaluator(child, TR::InstOpCode::ldrbimm, 1, cg);
       node->setRegister(trgReg);
       cg->decReferenceCount(child);
       return trgReg;
@@ -565,7 +565,7 @@ TR::Register *OMR::ARM64::TreeEvaluator::su2iEvaluator(TR::Node *node, TR::CodeG
        && child->getRegister() == NULL)
       {
       // Use unsigned load
-      TR::Register *trgReg = commonLoadEvaluator(child, TR::InstOpCode::ldrhimm, cg);
+      TR::Register *trgReg = commonLoadEvaluator(child, TR::InstOpCode::ldrhimm, 2, cg);
       node->setRegister(trgReg);
       cg->decReferenceCount(child);
       return trgReg;

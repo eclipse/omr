@@ -53,26 +53,29 @@ TR::Register *genericReturnEvaluator(TR::Node *node, TR::RealRegister::RegNum rn
  * @brief Helper function for xloadEvaluators
  * @param[in] node : node
  * @param[in] op : instruction for load
+ * @param[in] size : size
  * @param[in] cg : CodeGenerator
  */
-TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg);
+TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t size, TR::CodeGenerator *cg);
 
 /**
  * @brief Helper function for xloadEvaluators
  * @param[in] node : node
  * @param[in] op : instruction for load
+ * @param[in] size : size
  * @param[in] targetReg : target register
  * @param[in] cg : CodeGenerator
  */
-TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::Register *targetReg, TR::CodeGenerator *cg);
+TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t size, TR::Register *targetReg, TR::CodeGenerator *cg);
 
 /**
  * @brief Helper function for xstoreEvaluators
  * @param[in] node : node
  * @param[in] op : instruction for store
+ * @param[in] size : size
  * @param[in] cg : CodeGenerator
  */
-TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg);
+TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t size, TR::CodeGenerator *cg);
 
 namespace OMR
 {

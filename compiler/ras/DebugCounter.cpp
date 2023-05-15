@@ -141,12 +141,15 @@ TR::DebugCounter::generateRelocation(TR::Compilation *comp, uint8_t *location, T
    {
    counter->finalizeReloData(comp, node);
 
-   TR::ExternalRelocation *r = new (comp->trHeapMemory()) TR::ExternalRelocation(location,
-                                                                                 (uint8_t *)counter,
-                                                                                 TR_DebugCounter,
-                                                                                 comp->cg());
-
-   comp->cg()->addExternalRelocation(r, __FILE__, __LINE__, node);
+   comp->cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         location,
+         (uint8_t *)counter,
+         TR_DebugCounter,
+         comp->cg()),
+      __FILE__,
+      __LINE__,
+      node);
    }
 
 void

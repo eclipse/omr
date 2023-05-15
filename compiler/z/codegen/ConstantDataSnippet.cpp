@@ -98,33 +98,45 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
             {
             TR_ASSERT_FATAL(getDataAs8Bytes(), "Static Sym can not be NULL");
 
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                       (uint8_t *) getDataAs8Bytes(),
-                                                                                       (uint8_t *) TR::SymbolType::typeClass,
-                                                                                       TR_SymbolFromManager,
-                                                                                       cg()),
-                                                                                       __FILE__, __LINE__, getNode());
-
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *) getDataAs8Bytes(),
+                  (uint8_t *) TR::SymbolType::typeClass,
+                  TR_SymbolFromManager,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          else
             {
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) reloSymRef,
-                                                                                 getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                                 (TR_ExternalRelocationTargetKind) reloType, cg()),
-                                                                                 __FILE__, __LINE__, getNode());
-
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *) reloSymRef,
+                  getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                  (TR_ExternalRelocationTargetKind) reloType,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
-
-
          }
          break;
       case TR_MethodObject:
          {
          TR::SymbolReference *reloSymRef= (reloType==TR_ClassAddress)?getNode()->getSymbolReference():getSymbolReference();
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) reloSymRef,
-                                                                                getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                                (TR_ExternalRelocationTargetKind) reloType, cg()),
-                                   __FILE__, __LINE__, getNode());
+         cg()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *) reloSymRef,
+               getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+               (TR_ExternalRelocationTargetKind) reloType,
+               cg()),
+            __FILE__,
+            __LINE__,
+            getNode());
          }
          break;
 
@@ -139,12 +151,14 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
          info->data3 = static_cast<uintptr_t>(inlinedSiteIndex);
 
          cg()->addExternalRelocation(
-            new (cg()->trHeapMemory()) TR::ExternalRelocation(
+            TR::ExternalRelocation::create(
                cursor,
                reinterpret_cast<uint8_t *>(info),
                static_cast<TR_ExternalRelocationTargetKind>(reloType),
                cg()),
-            __FILE__, __LINE__, getNode());
+            __FILE__,
+            __LINE__,
+            getNode());
          }
          break;
 
@@ -152,30 +166,56 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
          {
          if (cg()->needRelocationsForStatics())
             {
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) getNode()->getSymbolReference(),
-                                     getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                                   (TR_ExternalRelocationTargetKind) reloType, cg()),
-                                     __FILE__,__LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *) getNode()->getSymbolReference(),
+                  getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                  (TR_ExternalRelocationTargetKind) reloType,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          }
          break;
 
       case TR_ArrayCopyHelper:
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) getSymbolReference(),
-                                                                                (TR_ExternalRelocationTargetKind) reloType, cg()),
-                                __FILE__, __LINE__, getNode());
+         cg()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *) getSymbolReference(),
+               (TR_ExternalRelocationTargetKind) reloType,
+               cg()),
+            __FILE__,
+            __LINE__,
+            getNode());
          break;
 
       case TR_HelperAddress:
          if (cg()->comp()->target().is64Bit())
             {
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) *((uint64_t*) cursor), TR_AbsoluteHelperAddress, cg()),
-                                __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *) *((uint64_t*) cursor),
+                  TR_AbsoluteHelperAddress,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          else
             {
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)(intptr_t) *((uint32_t*) cursor), TR_AbsoluteHelperAddress, cg()),
-                                __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *)(intptr_t) *((uint32_t*) cursor),
+                  TR_AbsoluteHelperAddress,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          break;
 
@@ -183,29 +223,54 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
       case TR_BodyInfoAddress:
          if (cg()->comp()->target().is64Bit())
             {
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) *((uint64_t*) cursor),
-                  (TR_ExternalRelocationTargetKind) reloType, cg()),
-                  __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *) *((uint64_t*) cursor),
+                  (TR_ExternalRelocationTargetKind) reloType,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          else
             {
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)(intptr_t) *((uint32_t*) cursor),
-                  (TR_ExternalRelocationTargetKind) reloType, cg()),
-                  __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *)(intptr_t) *((uint32_t*) cursor),
+                  (TR_ExternalRelocationTargetKind) reloType,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          break;
 
       case TR_CatchBlockCounter:
          {
-         TR::Relocation *relocation = new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_CatchBlockCounter, cg());
-         cg()->addExternalRelocation(relocation, __FILE__, __LINE__, getNode());
+         cg()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               NULL,
+               TR_CatchBlockCounter,
+               cg()),
+            __FILE__,
+            __LINE__,
+            getNode());
          }
          break;
 
       case TR_GlobalValue:
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) TR_CountForRecompile,
-                                                                                TR_GlobalValue, cg()),
-                                  __FILE__, __LINE__, getNode());
+         cg()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *) TR_CountForRecompile,
+               TR_GlobalValue,
+               cg()),
+            __FILE__,
+            __LINE__,
+            getNode());
          break;
 
       case TR_RamMethod:
@@ -216,30 +281,40 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
          if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
             {
             TR_ASSERT_FATAL(getDataAs8Bytes(), "Static Sym can not be NULL");
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                 (uint8_t *) getDataAs8Bytes(),
-                                                                                 (uint8_t *)symbolKind,
-                                                                                 TR_SymbolFromManager,
-                                                                                 cg()),
-                                                                              __FILE__, __LINE__,
-                                                                              getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *) getDataAs8Bytes(),
+                  (uint8_t *)symbolKind,
+                  TR_SymbolFromManager,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          else
             {
-            TR::Relocation *relo;
             //for optimizations where we are trying to relocate either profiled j9class or getfrom signature we can't use node to get the target address
             //so we need to pass it to relocation in targetaddress2 for now
             //two instances where use this relotype in such way are: profile checkcast and arraystore check object check optimiztaions
-            uint8_t * targetAdress2 = NULL;
+            uint8_t * targetAddress2 = NULL;
             if (getNode()->getOpCodeValue() != TR::aconst)
                {
                if (cg()->comp()->target().is64Bit())
-                  targetAdress2 = (uint8_t *) *((uint64_t*) cursor);
+                  targetAddress2 = (uint8_t *) *((uint64_t*) cursor);
                else
-                  targetAdress2 = (uint8_t *) *((uintptr_t*) cursor);
+                  targetAddress2 = (uint8_t *) *((uintptr_t*) cursor);
                }
-            relo = new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) getNode(), targetAdress2, (TR_ExternalRelocationTargetKind) reloType, cg());
-            cg()->addExternalRelocation(relo, __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *) getNode(),
+                  targetAddress2,
+                  (TR_ExternalRelocationTargetKind) reloType,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          break;
 
@@ -263,15 +338,29 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
          TR_RelocationRecordInformation *recordInfo = ( TR_RelocationRecordInformation *)comp->trMemory()->allocateMemory(sizeof( TR_RelocationRecordInformation), heapAlloc);
          recordInfo->data1 = (uintptr_t)getNode()->getSymbolReference();
          recordInfo->data2 = 0; // seqKind
-         TR::Relocation *relocation = new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)recordInfo, TR_BlockFrequency, cg());
-         cg()->addExternalRelocation(relocation, __FILE__, __LINE__, getNode());
+         cg()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *)recordInfo,
+               TR_BlockFrequency,
+               cg()),
+            __FILE__,
+            __LINE__,
+            getNode());
          }
          break;
 
       case TR_RecompQueuedFlag:
          {
-         TR::Relocation *relocation = new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_RecompQueuedFlag, cg());
-         cg()->addExternalRelocation(relocation, __FILE__, __LINE__, getNode());
+         cg()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               NULL,
+               TR_RecompQueuedFlag,
+               cg()),
+            __FILE__,
+            __LINE__,
+            getNode());
          }
          break;
 

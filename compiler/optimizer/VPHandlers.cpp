@@ -41,9 +41,10 @@
 #include "env/ObjectModel.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/TRMemory.hpp"
-#include "env/TypeLayout.hpp"
 #include "env/jittypes.h"
+#ifdef J9_PROJECT_SPECIFIC
 #include "env/VMAccessCriticalSection.hpp"
+#endif
 #include "il/AliasSetInterface.hpp"
 #include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
@@ -666,222 +667,33 @@ static bool findConstant(OMR::ValuePropagation *vp, TR::Node *node)
    return false;
    }
 
-static bool refuseToConstrainUnsafe(
-   OMR::ValuePropagation *vp, TR::Node *node, const char *why)
+static bool containsUnsafeSymbolReference(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   if (vp->trace())
+   if (node->getSymbolReference()->isLitPoolReference())
+      return true;
+
+   if (node->getSymbolReference()->getSymbol()->isShadow())
       {
-      traceMsg(
-         vp->comp(),
-         "Refusing to constrain unsafe access n%un [%p]: %s\n",
-         node->getGlobalIndex(),
-         node,
-         why);
-      }
+      if (node->getSymbol()->isUnsafeShadowSymbol())
+         {
+         if (vp->trace())
+            traceMsg(vp->comp(), "Node [%p] has an unsafe symbol reference %d, no constraint\n", node,
+                     node->getSymbolReference()->getReferenceNumber());
+         return true;
+         }
 
-   return true;
-   }
 
-// Returns true to tell the handler to leave node unconstrained, or false to
-// allow it to keep constraining. When the result is false, node may have been
-// mutated.
-static bool refineUnsafeAccess(OMR::ValuePropagation *vp, TR::Node *node)
-   {
-   const bool okToConstrainNormally = false;
-   TR::Compilation *comp = vp->comp();
-
-   TR::SymbolReference *symRef = node->getSymbolReference();
-   if (symRef->isLitPoolReference())
-      return refuseToConstrainUnsafe(vp, node, "literal pool reference");
-
-   TR::Symbol *sym = symRef->getSymbol();
-   if (!sym->isShadow())
-      return okToConstrainNormally;
-
-   if (symRef == vp->getSymRefTab()->findInstanceShapeSymbolRef()
-       || symRef == vp->getSymRefTab()->findInstanceDescriptionSymbolRef()
-       || symRef == vp->getSymRefTab()->findDescriptionWordFromPtrSymbolRef()
+      if (node->getSymbolReference() == vp->getSymRefTab()->findInstanceShapeSymbolRef() ||
+          node->getSymbolReference() == vp->getSymRefTab()->findInstanceDescriptionSymbolRef() ||
+          node->getSymbolReference() == vp->getSymRefTab()->findDescriptionWordFromPtrSymbolRef() ||
 #ifdef J9_PROJECT_SPECIFIC
-       || symRef == vp->getSymRefTab()->findClassFromJavaLangClassAsPrimitiveSymbolRef()
+          node->getSymbolReference() == vp->getSymRefTab()->findClassFromJavaLangClassAsPrimitiveSymbolRef() ||
 #endif
-       || sym == comp->getSymRefTab()->findGenericIntShadowSymbol())
-      {
-      return refuseToConstrainUnsafe(vp, node, "special symref other than unsafe shadow");
+          (node->getSymbolReference()->getSymbol() == vp->comp()->getSymRefTab()->findGenericIntShadowSymbol()))
+         return true;
       }
 
-   if (!sym->isUnsafeShadowSymbol())
-      return okToConstrainNormally;
-
-   if (vp->trace())
-      {
-      traceMsg(
-         comp,
-         "Found unsafe shadow access n%un [%p]\n",
-         node->getGlobalIndex(),
-         node);
-      }
-
-   if (comp->compileRelocatableCode()
-       && !comp->getOption(TR_UseSymbolValidationManager))
-      {
-      return refuseToConstrainUnsafe(vp, node, "AOT without SVM");
-      }
-
-   if (symRef->getOffset() != 0)
-      return refuseToConstrainUnsafe(vp, node, "shadow symref has nonzero offset");
-
-   TR::Node *addr = node->getChild(0);
-   TR::ILOpCodes addrOp = addr->getOpCodeValue();
-   if (addrOp != TR::aladd && addrOp != TR::aiadd)
-      return refuseToConstrainUnsafe(vp, node, "address not from an offset op");
-
-   TR::Node *obj = addr->getChild(0);
-   bool objIsGlobal = false;
-   TR::VPConstraint *objConstraint = vp->getConstraint(obj, objIsGlobal);
-   if (objConstraint == NULL)
-      return refuseToConstrainUnsafe(vp, node, "unconstrained base object");
-
-   TR_OpaqueClassBlock *objClass = NULL;
-   if (objConstraint->isClassObject() != TR_yes)
-      {
-      objClass = objConstraint->getClass();
-      }
-   else
-      {
-      // objConstraint->getClass() is a bound on the *represented* class. If
-      // the base happens to be a known object, try to get its type that way.
-      TR::VPKnownObject *knownObj = objConstraint->getKnownObject();
-      if (knownObj != NULL)
-         {
-         TR::VMAccessCriticalSection getClassCriticalSection(
-            comp,
-            TR::VMAccessCriticalSection::tryToAcquireVMAccess);
-
-         if (getClassCriticalSection.hasVMAccess())
-            {
-            TR::KnownObjectTable *knot = comp->getKnownObjectTable();
-            TR::KnownObjectTable::Index koi = knownObj->getIndex();
-            objClass = TR::Compiler->cls.objectClass(comp, knot->getPointer(koi));
-            }
-         else if (vp->trace())
-            {
-            traceMsg(comp, "Failed to get VM access\n");
-            }
-         }
-      }
-
-   if (objClass == NULL)
-      return refuseToConstrainUnsafe(vp, node, "unknown-type base object");
-
-   int32_t objClassSigLen = 0;
-   const char *objClassSig =
-      TR::VPResolvedClass::create(vp, objClass)->getClassSignature(objClassSigLen);
-
-   if (vp->trace())
-      {
-      traceMsg(
-         comp,
-         "Base object type is %p %.*s\n",
-         objClass,
-         objClassSigLen,
-         objClassSig);
-      }
-
-   TR::DataTypes nodeType = node->getOpCode().getDataType().getDataType();
-   TR::SymbolReferenceTable *srTab = comp->getSymRefTab();
-
-   if (TR::Compiler->cls.isClassArray(comp, objClass))
-      {
-      if (vp->trace())
-         traceMsg(comp, "Base object is an array\n");
-
-      TR::DataTypes elemType = TR::NoType;
-      if (TR::Compiler->cls.isPrimitiveArray(comp, objClass))
-         elemType = TR::Compiler->cls.primitiveArrayComponentType(comp, objClass);
-      else if (TR::Compiler->cls.isReferenceArray(comp, objClass))
-         elemType = TR::Address;
-
-      if (elemType == TR::NoType)
-         return refuseToConstrainUnsafe(vp, node, "unknown array component type");
-
-      if (elemType != nodeType)
-         {
-         static const bool dontRefineTypePun =
-            feGetEnv("TR_dontRefineUnsafeToTypePunnedArrayShadow") != NULL;
-
-         if (dontRefineTypePun)
-            return refuseToConstrainUnsafe(vp, node, "type-punned array access");
-         }
-
-      TR::SymbolReference *arrayShadow =
-         srTab->findOrCreateArrayShadowSymbolRef(elemType, obj);
-
-      if (!performTransformation(
-            comp,
-            "%sRefine unsafe shadow acess n%un [%p] to %s array shadow #%d\n",
-            OPT_DETAILS,
-            node->getGlobalIndex(),
-            node,
-            TR::DataType::getName(elemType),
-            arrayShadow->getReferenceNumber()))
-         return refuseToConstrainUnsafe(vp, node, "performTransformation denied");
-
-      node->setSymbolReference(arrayShadow);
-      return okToConstrainNormally;
-      }
-
-   const TR::TypeLayout *layout = comp->typeLayout(objClass);
-   if (layout == NULL)
-      return refuseToConstrainUnsafe(vp, node, "missing type layout");
-
-   TR::Node *offset = addr->getChild(1);
-   if (!offset->getOpCode().isLoadConst())
-      return refuseToConstrainUnsafe(vp, node, "non-constant offset");
-
-   int64_t offsetValueSigned = offset->getConstValue();
-   if (offsetValueSigned < 0)
-      return refuseToConstrainUnsafe(vp, node, "negative offset");
-
-   uint64_t offsetValue = (uint64_t)offsetValueSigned;
-   const TR::TypeLayoutEntry *field = NULL;
-   size_t i = 0;
-   for (; i < layout->count(); i++)
-      {
-      field = &layout->entry(i);
-      if (field->_offset == offsetValue && field->_datatype.getDataType() == nodeType)
-         break;
-      }
-
-   if (i >= layout->count())
-      return refuseToConstrainUnsafe(vp, node, "no matching field");
-
-   TR::SymbolReference *refinedSymRef = srTab->findOrFabricateShadowSymbol(
-      objClass,
-      field->_datatype,
-      field->_offset,
-      field->_isVolatile,
-      field->_isPrivate,
-      field->_isFinal,
-      field->_fieldname,
-      field->_typeSignature);
-
-   if (!performTransformation(
-         comp,
-         "%sRefine unsafe shadow acess n%un [%p] to field shadow #%d %.*s.%s %s\n",
-         OPT_DETAILS,
-         node->getGlobalIndex(),
-         node,
-         refinedSymRef->getReferenceNumber(),
-         objClassSigLen,
-         objClassSig,
-         field->_fieldname,
-         field->_typeSignature))
-      return refuseToConstrainUnsafe(vp, node, "performTransformation denied");
-
-   node->setSymbolReference(refinedSymRef);
-   node->setAndIncChild(0, obj);
-   addr->recursivelyDecReferenceCount();
-   return okToConstrainNormally;
+   return false;
    }
 
 static bool owningMethodDoesNotContainNullChecks(OMR::ValuePropagation *vp, TR::Node *node)
@@ -1524,6 +1336,38 @@ bool simplifyJ9ClassFlags(OMR::ValuePropagation *vp, TR::Node *node, bool isLong
    return false;
    }
 
+static void checkUnsafeArrayAccess(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+      if (node->getSymbol()->isUnsafeShadowSymbol())
+         {
+         if (vp->trace())
+            traceMsg(vp->comp(), "Node [%p] has an unsafe symbol reference %d\n", node,
+                     node->getSymbolReference()->getReferenceNumber());
+
+         if (node->getFirstChild()->getOpCode().isArrayRef() &&
+             node->getFirstChild()->getFirstChild()->getOpCode().isRef())
+            {
+            TR::Node *baseAddress = node->getFirstChild()->getFirstChild();
+            bool isGlobal;
+            TR::VPConstraint *baseConstraint = vp->getConstraint(baseAddress, isGlobal);
+
+            if (baseConstraint &&
+                baseConstraint->getClassType() &&
+                baseConstraint->getClassType()->isArray())
+               {
+               if (vp->trace())
+                  traceMsg(vp->comp(), "is an array access\n");
+               vp->addUnsafeArrayAccessNode(node->getGlobalIndex());
+               }
+            else
+               {
+               if (vp->trace())
+                 traceMsg(vp->comp(), "is not an array access\n");
+               }
+            }
+         }
+   }
+
 // Also handles lloadi
 //
 TR::Node *constrainLload(OMR::ValuePropagation *vp, TR::Node *node)
@@ -1534,7 +1378,11 @@ TR::Node *constrainLload(OMR::ValuePropagation *vp, TR::Node *node)
 
    if (node->getOpCode().isIndirect())
       {
-      if (refineUnsafeAccess(vp, node))
+      checkUnsafeArrayAccess(vp, node);
+
+      // if the node contains an unsafe symbol reference
+      // then don't inject a constraint
+      if (containsUnsafeSymbolReference(vp, node))
          return node;
 
       if (constrainCompileTimeLoad(vp, node))
@@ -1576,7 +1424,9 @@ TR::Node *constrainFload(OMR::ValuePropagation *vp, TR::Node *node)
 
    if (node->getOpCode().isIndirect())
       {
-      if (refineUnsafeAccess(vp, node))
+      // if the node contains an unsafe symbol reference
+      // then don't inject a constraint
+      if (containsUnsafeSymbolReference(vp, node))
          return node;
       }
 
@@ -1596,7 +1446,11 @@ TR::Node *constrainDload(OMR::ValuePropagation *vp, TR::Node *node)
 
    if (node->getOpCode().isIndirect())
       {
-      if (refineUnsafeAccess(vp, node))
+      checkUnsafeArrayAccess(vp, node);
+
+      // if the node contains an unsafe symbol reference
+      // then don't inject a constraint
+      if (containsUnsafeSymbolReference(vp, node))
          return node;
       }
 
@@ -2097,7 +1951,9 @@ TR::Node *constrainIiload(OMR::ValuePropagation *vp, TR::Node *node)
       return node;
    constrainChildren(vp, node);
 
-   if (refineUnsafeAccess(vp, node))
+   // if the node contains an unsafe symbol reference
+   // then don't inject a constraint
+   if (containsUnsafeSymbolReference(vp, node))
       return node;
 
    if (constrainCompileTimeLoad(vp, node))
@@ -2167,7 +2023,9 @@ TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
       return node;
    constrainChildren(vp, node);
 
-   if (refineUnsafeAccess(vp, node))
+   // if the node contains an unsafe symbol reference
+   // then don't inject a constraint
+   if (containsUnsafeSymbolReference(vp, node))
       return node;
 
    bool isGlobal;
@@ -2179,10 +2037,6 @@ TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
    TR::VPConstraint *constraint;
    int32_t len = 0;
    const char *sig = getFieldSignature(vp, node, len);
-   int32_t arrLength = -1;
-   int32_t elementSize = -1;
-   bool foundInfo = false;
-   bool isFixed = false;
 
    if (node->getOpCode().hasSymbolReference())
       {
@@ -2537,41 +2391,6 @@ TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
 
       if (!symRef->getSymbol()->isArrayShadowSymbol())
          {
-         TR::Symbol *sym = symRef->getSymbol();
-         bool allowForAOT = vp->comp()->getOption(TR_UseSymbolValidationManager);
-         if (((sym->isShadow() && node->getFirstChild()->isThisPointer()) || sym->isStatic()) &&
-            !symRef->isUnresolved() && (sym->isPrivate() || sym->isFinal()))
-            {
-            TR_PersistentClassInfo * classInfo =
-               vp->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(vp->comp()->getCurrentMethod()->containingClass(), vp->comp());
-            if (classInfo && classInfo->getFieldInfo())
-               {
-               TR_PersistentFieldInfo * fieldInfo = classInfo->getFieldInfo()->findFieldInfo(vp->comp(), node, false);
-               if (fieldInfo)
-                  {
-                  TR_PersistentArrayFieldInfo *arrayFieldInfo = fieldInfo ? fieldInfo->asPersistentArrayFieldInfo() : 0;
-                  if (arrayFieldInfo && arrayFieldInfo->isDimensionInfoValid())
-                     {
-                     arrLength = arrayFieldInfo->getDimensionInfo(0);
-                     if (arrLength >= 0 && sig && (len > 0) &&
-                         (sig[0] == '[' || sig[0] == 'L' || sig[0] == 'Q'))
-                        {
-                        elementSize = arrayElementSize(sig, len, node, vp);
-                        if (elementSize != 0)
-                           {
-                           if (vp->trace())
-                              traceMsg(vp->comp(), "Using class lookahead info to find out non null, array dimension\n");
-                           //vp->addGlobalConstraint(node, TR::VPNonNullObject::create(vp));
-                           //vp->addGlobalConstraint(node, TR::VPArrayInfo::create(vp, arrLength, arrLength, elementSize));
-                           isFixed = true;
-                           foundInfo = true;
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-
          TR::Node *underlyingObject = node->getFirstChild();
           constraint = vp->getConstraint(underlyingObject, isGlobal);
           if (constraint && constraint->getClass())
@@ -2624,15 +2443,20 @@ TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
    // don't use getClassFromSignature for arrays to determine the type of the
    // component as its done below later using the right api
    //
-   if (sig &&
+   TR::Symbol *sym = node->getSymbol();
+   TR_OpaqueClassBlock *declaredClass = sym->getDeclaredClass();
+   if ((declaredClass != NULL || sig != NULL) &&
          !(node->getOpCode().hasSymbolReference() &&
             node->getSymbol()->isArrayShadowSymbol() &&
             node->getFirstChild()->getOpCode().isArrayRef()))
       {
       TR_ResolvedMethod *method = node->getSymbolReference()->getOwningMethod(vp->comp());
-      TR_OpaqueClassBlock *classBlock = vp->fe()->getClassFromSignature(sig, len, method);
-      TR_OpaqueClassBlock *erased = NULL;
+      TR::Symbol *sym = node->getSymbol();
+      TR_OpaqueClassBlock *classBlock = declaredClass;
+      if (classBlock == NULL)
+         classBlock = vp->fe()->getClassFromSignature(sig, len, method);
 
+      TR_OpaqueClassBlock *erased = NULL;
       if (!classBlock || vp->isUnreliableSignatureType(classBlock, erased))
          {
          classBlock = erased;
@@ -2651,17 +2475,16 @@ TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
             {
             if (classBlock != jlClass)
                {
-               constraint = TR::VPClassType::create(vp, sig, len, method, isFixed, classBlock);
-
-               if (*sig == '[' || sig[0] == 'L' || sig[0] == 'Q')
+               constraint = TR::VPResolvedClass::create(vp, classBlock);
+               if (TR::Compiler->cls.isClassArray(vp->comp(), classBlock))
                   {
-                  elementSize = arrayElementSize(sig, len, node, vp);
-                  if (elementSize != 0)
-                     {
-                     constraint = TR::VPClass::create(vp, (TR::VPClassType*)constraint, NULL, NULL,
-                           TR::VPArrayInfo::create(vp, 0, elementSize == 0 ? TR::getMaxSigned<TR::Int32>() : TR::getMaxSigned<TR::Int32>()/elementSize, elementSize),
-                           TR::VPObjectLocation::create(vp, TR::VPObjectLocation::NotClassObject));
-                     }
+                  int32_t elementSize =
+                     TR::Compiler->cls.getArrayElementWidthInBytes(
+                        vp->comp(), classBlock);
+
+                  constraint = TR::VPClass::create(vp, (TR::VPClassType*)constraint, NULL, NULL,
+                        TR::VPArrayInfo::create(vp, 0, TR::getMaxSigned<TR::Int32>() / elementSize, elementSize),
+                        TR::VPObjectLocation::create(vp, TR::VPObjectLocation::NotClassObject));
                   }
                }
             else
@@ -2670,15 +2493,7 @@ TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
             }
          }
       }
-#endif
 
-
-   if (foundInfo)
-      {
-      vp->addGlobalConstraint(node, TR::VPArrayInfo::create(vp, arrLength, arrLength, elementSize));
-      }
-
-#ifdef J9_PROJECT_SPECIFIC
    if (node->getOpCode().hasSymbolReference() &&
        node->getSymbol()->isArrayShadowSymbol() &&
        node->getFirstChild()->getOpCode().isArrayRef())
@@ -2811,7 +2626,6 @@ TR::Node *constrainIaload(OMR::ValuePropagation *vp, TR::Node *node)
       }
 #endif
 
-
    if (node->isNonNull())
       vp->addBlockConstraint(node, TR::VPNonNullObject::create(vp));
    else if (node->isNull())
@@ -2869,7 +2683,10 @@ TR::Node *constrainStore(OMR::ValuePropagation *vp, TR::Node *node)
          }
       }
 
-   if (refineUnsafeAccess(vp, node) ||
+
+   // if the node contains an unsafe symbol reference
+   // then don't inject a constraint
+   if (containsUnsafeSymbolReference(vp, node) ||
        (node->getSymbol()->isAutoOrParm() &&
         node->storedValueIsIrrelevant()))
       return node;
@@ -3056,7 +2873,9 @@ TR::Node *constrainWrtBar(OMR::ValuePropagation *vp, TR::Node *node)
 
    if (node->getOpCode().isIndirect())
       {
-      if (refineUnsafeAccess(vp, node))
+      // if the node contains an unsafe symbol reference
+      // then don't inject a constraint
+      if (containsUnsafeSymbolReference(vp, node))
          return node;
       }
 

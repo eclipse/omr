@@ -305,9 +305,15 @@ uint8_t *TR::ARMConstantDataSnippet::emitSnippetBody()
 
                if (kind != TR_NoRelocation)
                   {
-                  TR::Relocation *relo;
-                  relo = new (cg()->trHeapMemory()) TR::ExternalRelocation(codeCursor, (uint8_t *)node, kind, cg());
-                  cg()->addExternalRelocation(relo, __FILE__, __LINE__, node);
+                  cg()->addExternalRelocation(
+                     TR::ExternalRelocation::create(
+                        codeCursor,
+                        (uint8_t *)node,
+                        kind,
+                        cg()),
+                     __FILE__,
+                     __LINE__,
+                     node);
                   }
                }
             }

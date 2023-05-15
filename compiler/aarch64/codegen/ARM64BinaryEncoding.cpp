@@ -72,13 +72,37 @@ uint8_t *TR::ARM64RelocatableImmInstruction::generateBinaryEncoding()
       switch(getReloKind())
          {
          case TR_AbsoluteHelperAddress:
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)getSymbolReference(), TR_AbsoluteHelperAddress, cg()), __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *)getSymbolReference(),
+                  TR_AbsoluteHelperAddress,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             break;
          case TR_RamMethod:
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_RamMethod, cg()), __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  NULL,
+                  TR_RamMethod,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             break;
          case TR_BodyInfoAddress:
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_BodyInfoAddress, cg()), __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  NULL,
+                  TR_BodyInfoAddress,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             break;
          default:
             TR_ASSERT(false, "Unsupported AOT relocation type specified.");
@@ -92,7 +116,15 @@ uint8_t *TR::ARM64RelocatableImmInstruction::generateBinaryEncoding()
       //
       void **locationToPatch = (void**)cursor;
       cg()->jitAddPicToPatchOnClassRedefinition(*locationToPatch, locationToPatch);
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)locationToPatch, (uint8_t *)*locationToPatch, TR_HCR, cg()), __FILE__,__LINE__, getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            (uint8_t *)locationToPatch,
+            (uint8_t *)*locationToPatch,
+            TR_HCR,
+            cg()),
+         __FILE__,
+         __LINE__,
+         getNode());
       }
 
    cursor += sizeof(uintptr_t);
@@ -161,11 +193,14 @@ uint8_t *TR::ARM64ImmSymInstruction::generateBinaryEncoding()
             insertImmediateField(toARM64Cursor(cursor), distance);
             setAddrImmediate(destination);
 
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
-                                           cursor,
-                                           (uint8_t *)symRef,
-                                           TR_HelperAddress, cg()),
-                                        __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *)symRef,
+                  TR_HelperAddress, cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          else
             {

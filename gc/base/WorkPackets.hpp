@@ -105,7 +105,7 @@ private:
 	
 /* Methods */
 public:
-	static MM_WorkPackets  *newInstance(MM_EnvironmentBase *env);
+	static MM_WorkPackets *newInstance(MM_EnvironmentBase *env);
 	void kill(MM_EnvironmentBase *env);
 
 	void reuseDeferredPackets(MM_EnvironmentBase *env);
@@ -131,18 +131,19 @@ public:
 	 */
 	MMINLINE bool isAllPacketsEmpty()
 	{
-		return(_emptyPacketList.getCount() == _activePackets);
-	};
+		return (_emptyPacketList.getCount() == _activePackets);
+	}
 	
 	/**
 	 * Returns TRUE if all non-deferred packets are empty, FALSE otherwise.
 	 */
 	MMINLINE bool tracingExhausted()
 	{
-		return(_emptyPacketList.getCount() + _deferredPacketList.getCount() + _deferredFullPacketList.getCount() == _activePackets);
-	};
+		return (_emptyPacketList.getCount() + _deferredPacketList.getCount() + _deferredFullPacketList.getCount() == _activePackets);
+	}
 	
-	MMINLINE uintptr_t getThreadWaitCount() {
+	MMINLINE uintptr_t getThreadWaitCount()
+	{
 		return _inputListWaitCount;
 	}
 
@@ -151,39 +152,39 @@ public:
 	 */
 	MMINLINE uintptr_t getNonEmptyPacketCount()
 	{
-		return(_activePackets - _emptyPacketList.getCount());
-	};
+		return (_activePackets - _emptyPacketList.getCount());
+	}
 	
 	/** Returns number of active packets
 	 */
 	MMINLINE uintptr_t getActivePacketCount()
 	{
 		return _activePackets;
-	};
+	}
 	
 	/**
 	 * Returns number of non-empty packets 
 	 */
 	MMINLINE uintptr_t getEmptyPacketCount()
 	{
-		return(_emptyPacketList.getCount());
-	};
+		return (_emptyPacketList.getCount());
+	}
 
 	/**
 	 * Returns number of deferred packets 
 	 */
 	MMINLINE uintptr_t getDeferredPacketCount()
 	{
-		return(_deferredPacketList.getCount() + _deferredFullPacketList.getCount());
-	};
+		return (_deferredPacketList.getCount() + _deferredFullPacketList.getCount());
+	}
 
 
-	MMINLINE omrthread_monitor_t* getInputListMonitorPtr()
+	MMINLINE omrthread_monitor_t *getInputListMonitorPtr()
 	{
 		return &_inputListMonitor;
 	}
 
-	MMINLINE volatile uintptr_t* getInputListWaitCountPtr()
+	MMINLINE volatile uintptr_t *getInputListWaitCountPtr()
 	{
 		return &_inputListWaitCount;
 	}
@@ -216,6 +217,16 @@ public:
 	 */
 	bool handleWorkPacketOverflow(MM_EnvironmentBase *env);
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * Reinitialize (split) the WorkPacketLists to accommodate the restore thread count.
+	 *
+	 * @param[in] env the current environment.
+	 * @return boolean indicating whether the WorkPacket lists were successfully updated.
+	 */
+	virtual bool reinitializeForRestore(MM_EnvironmentBase *env);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	/**
 	 * Create a WorkPackets object.
 	 */
@@ -242,7 +253,7 @@ public:
 	
 protected:
 	virtual MM_Packet *getPacketByOverflowing(MM_EnvironmentBase *env);
-	MM_Packet* getPacketByAdddingWorkPacketBlock(MM_EnvironmentBase *env);
+	MM_Packet *getPacketByAdddingWorkPacketBlock(MM_EnvironmentBase *env);
 	virtual float getHeapCapacityFactor(MM_EnvironmentBase *env);
 	
 	/**

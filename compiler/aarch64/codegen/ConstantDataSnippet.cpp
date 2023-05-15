@@ -67,27 +67,36 @@ TR::ARM64ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
             if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
                {
                TR_ASSERT_FATAL(getData<uint8_t *>(), "Static Sym can not be NULL");
-               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                    getData<uint8_t *>(),
-                                                                                    reinterpret_cast<uint8_t *>(symbolKind),
-                                                                                    TR_SymbolFromManager,
-                                                                                    cg()),
-                                                                                    __FILE__, __LINE__,
-                                                                                    node);
+               cg()->addExternalRelocation(
+                  TR::ExternalRelocation::create(
+                     cursor,
+                     getData<uint8_t *>(),
+                     reinterpret_cast<uint8_t *>(symbolKind),
+                     TR_SymbolFromManager,
+                     cg()),
+                  __FILE__,
+                  __LINE__,
+                  node);
                }
             else
                {
-               TR::Relocation *relo;
                //for optimizations where we are trying to relocate either profiled j9class or getfrom signature we can't use node to get the target address
                //so we need to pass it to relocation in targetaddress2 for now
-               uint8_t * targetAdress2 = NULL;
+               uint8_t * targetAddress2 = NULL;
                if (getNode()->getOpCodeValue() != TR::aconst)
                   {
-                  targetAdress2 = reinterpret_cast<uint8_t *>(*(reinterpret_cast<uint64_t*>(cursor)));
+                  targetAddress2 = reinterpret_cast<uint8_t *>(*(reinterpret_cast<uint64_t*>(cursor)));
                   }
-               relo = new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, reinterpret_cast<uint8_t *>(node),
-                                                                        targetAdress2, reloType, cg());
-               cg()->addExternalRelocation(relo, __FILE__, __LINE__, node);
+               cg()->addExternalRelocation(
+                  TR::ExternalRelocation::create(
+                     cursor,
+                     reinterpret_cast<uint8_t *>(node),
+                     targetAddress2,
+                     reloType,
+                     cg()),
+                  __FILE__,
+                  __LINE__,
+                  node);
                }
             break;
 
@@ -95,9 +104,16 @@ TR::ARM64ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
             {
             uint8_t *targetAddress = reinterpret_cast<uint8_t *>(*(reinterpret_cast<uint64_t*>(cursor)));
             uint8_t *targetAddress2 = getNode() ? reinterpret_cast<uint8_t *>(getNode()->getInlinedSiteIndex()) : reinterpret_cast<uint8_t *>(-1);
-            TR::Relocation *relo = new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, targetAddress,
-                                                                        targetAddress2, reloType, cg());
-            cg()->addExternalRelocation(relo, __FILE__, __LINE__, node);
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  targetAddress,
+                  targetAddress2,
+                  reloType,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               node);
             }
             break;
 

@@ -6112,6 +6112,7 @@ populateCgroupEntryListV2(struct OMRPortLibrary *portLibrary, int pid, OMRCgroup
 	 */
 	char subsystems[PATH_MAX];
 	char *cursor = NULL;
+	char *newline = NULL;
 	char *separator = NULL;
 
 	Assert_PRT_true(NULL != cgroupEntryList);
@@ -6184,6 +6185,15 @@ populateCgroupEntryListV2(struct OMRPortLibrary *portLibrary, int pid, OMRCgroup
 	}
 
 	cursor = subsystems;
+
+	/* Strip the \n at the end (see Linux kernel source, file
+	 * kernel/cgroup/cgroup.c, function cgroup_print_ss_mask()).
+	 */
+	newline = strchr(cursor, '\n');
+	if (NULL != newline) {
+		*newline = '\0';
+	}
+
 	do {
 		int32_t i = 0;
 

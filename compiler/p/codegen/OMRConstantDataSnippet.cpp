@@ -258,8 +258,16 @@ OMR::ConstantDataSnippet::emitAddressConstant(PPCConstant<intptr_t> *acursor, ui
             else
                TR_ASSERT_FATAL(false, "Unable to relocate node %p", node);
 
-            TR::Relocation *relo = new (cg()->trHeapMemory()) TR::ExternalRelocation(codeCursor, (uint8_t *)node->getAddress(), (uint8_t*)type, TR_SymbolFromManager, cg());
-            cg()->addExternalRelocation(relo, __FILE__, __LINE__, node);
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  codeCursor,
+                  (uint8_t *)node->getAddress(),
+                  (uint8_t*)type,
+                  TR_SymbolFromManager,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               node);
             }
          else
             {
@@ -271,8 +279,15 @@ OMR::ConstantDataSnippet::emitAddressConstant(PPCConstant<intptr_t> *acursor, ui
 
             if (kind != TR_NoRelocation)
                {
-               TR::Relocation *relo = new (cg()->trHeapMemory()) TR::ExternalRelocation(codeCursor, (uint8_t *)node, kind, cg());
-               cg()->addExternalRelocation(relo, __FILE__, __LINE__, node);
+               cg()->addExternalRelocation(
+                  TR::ExternalRelocation::create(
+                     codeCursor,
+                     (uint8_t *)node,
+                     kind,
+                     cg()),
+                  __FILE__,
+                  __LINE__,
+                  node);
                }
             }
          }

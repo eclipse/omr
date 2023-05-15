@@ -1237,7 +1237,7 @@ TR_Debug::print(TR::SymbolReference * symRef, TR_PrettyPrinterString& output, bo
          case TR::Symbol::IsShadow:
             if (sym->isNamedShadowSymbol() && sym->getNamedShadowSymbol()->getName() != NULL)
                {
-               symRefKind.appendf(" %s", sym->getNamedShadowSymbol()->getName());
+               symRefKind.appendf(" Named Shadow");
                symRefName.appendf(" %s", getName(symRef));
                }
             else
@@ -1279,7 +1279,20 @@ TR_Debug::print(TR::SymbolReference * symRef, TR_PrettyPrinterString& output, bo
 
        if(sym)
           {
-          output.appendf(" (%s)",TR::DataType::getName(sym->getDataType()));
+          output.appendf(" (%s",TR::DataType::getName(sym->getDataType()));
+
+          TR_OpaqueClassBlock *klass = sym->getDeclaredClass();
+          if (klass != NULL)
+             {
+             int32_t len = 0;
+             const char *className =
+                TR::Compiler->cls.classNameChars(_comp, klass, len);
+
+             output.appendf(": %p %.*s", klass, len, className);
+             }
+
+          output.appendf(")");
+
           if (sym->isVolatile())
              {
              output.appends(" [volatile]");

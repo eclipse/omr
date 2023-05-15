@@ -606,7 +606,15 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
          if ((self()->isUnresolved() && !_symbol->isConstObjectRef()) || _symbol->isVolatile() || self()->isLiteralPoolAddress() || self()->isFromLiteralPool() ||
              (_symbol->isUnsafeShadowSymbol() && !self()->reallySharesSymbol()))
             {
-            return &comp->getSymRefTab()->aliasBuilder.defaultMethodDefAliasesWithoutImmutable();
+            if (symRefTab->aliasBuilder.unsafeArrayElementSymRefs().get(self()->getReferenceNumber()))
+               {
+               TR_BitVector *aliases = new (aliasRegion) TR_BitVector(bvInitialSize, aliasRegion, growability);
+               *aliases |= comp->getSymRefTab()->aliasBuilder.defaultMethodDefAliasesWithoutImmutable();
+               *aliases -= symRefTab->aliasBuilder.cpSymRefs();
+               return aliases;
+               }
+            else
+               return &comp->getSymRefTab()->aliasBuilder.defaultMethodDefAliasesWithoutImmutable();
             }
 
          TR_BitVector *aliases = NULL;
@@ -744,6 +752,11 @@ OMR::SymbolReference::getUseDefAliasesBV(bool isDirectCall, bool includeGCSafePo
 
          if (aliases)
             aliases->set(self()->getReferenceNumber());
+
+         if (symRefTab->aliasBuilder.unsafeArrayElementSymRefs().get(self()->getReferenceNumber()))
+            *aliases -= symRefTab->aliasBuilder.cpSymRefs();
+         else if (symRefTab->aliasBuilder.cpSymRefs().get(self()->getReferenceNumber()))
+            *aliases -= symRefTab->aliasBuilder.unsafeArrayElementSymRefs();
 
          return aliases;
          }

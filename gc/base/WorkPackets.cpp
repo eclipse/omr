@@ -90,15 +90,19 @@ MM_WorkPackets::initialize(MM_EnvironmentBase *env)
 	if (!_emptyPacketList.initialize(env)) {
 		return false;
 	}
+
 	if (!_fullPacketList.initialize(env)) {
 		return false;
 	}
+
 	if (!_nonEmptyPacketList.initialize(env)) {
 		return false;
 	}
+
 	if (!_relativelyFullPacketList.initialize(env)) {
 		return false;
 	}
+
 	if (!_deferredPacketList.initialize(env)) {
 		return false;
 	}
@@ -107,11 +111,11 @@ MM_WorkPackets::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
-	if(omrthread_monitor_init_with_name(&_inputListMonitor, 0, "MM_WorkPackets::inputList")) {
+	if (omrthread_monitor_init_with_name(&_inputListMonitor, 0, "MM_WorkPackets::inputList")) {
 		return false;
 	}
 
-	if(omrthread_monitor_init_with_name(&_allocatingPackets, 0, "MM_WorkPackets::allocatingPackets")) {
+	if (omrthread_monitor_init_with_name(&_allocatingPackets, 0, "MM_WorkPackets::allocatingPackets")) {
 		return false;
 	}
 	
@@ -120,7 +124,7 @@ MM_WorkPackets::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
-	if(0 != _extensions->workpacketCount) {
+	if (0 != _extensions->workpacketCount) {
 		/* -Xgcworkpackets was specified, so base the number on that */
 		initialPacketCount = _extensions->workpacketCount;
 	} else {
@@ -145,19 +149,41 @@ MM_WorkPackets::initialize(MM_EnvironmentBase *env)
 	_maxPackets = (0 != _extensions->workpacketCount) ? initialPacketCount : initialPacketCount * _increaseFactor;
 	
 	/* NULL out the packetsBlocks array to begin with */
-	for(uintptr_t i = 0; i < _maxPacketsBlocks; i++) {    
+	for (uintptr_t i = 0; i < _maxPacketsBlocks; i++) {
 		_packetsStart[i] = NULL;
 	}
 	
 	/* now allocate the initial active packets */
-	while(initialPacketCount > _activePackets) {
-		if(!initWorkPacketsBlock(env)) {
+	while (initialPacketCount > _activePackets) {
+		if (!initWorkPacketsBlock(env)) {
 			return false;
 		}
 	}
 	
 	return true;
 }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+bool
+MM_WorkPackets::reinitializeForRestore(MM_EnvironmentBase *env)
+{
+	bool rc = true;
+
+	Assert_MM_true(isAllPacketsEmpty());
+
+	if (!_emptyPacketList.reinitializeForRestore(env)
+		|| !_fullPacketList.reinitializeForRestore(env)
+		|| !_nonEmptyPacketList.reinitializeForRestore(env)
+		|| !_relativelyFullPacketList.reinitializeForRestore(env)
+		|| !_deferredPacketList.reinitializeForRestore(env)
+		|| !_deferredFullPacketList.reinitializeForRestore(env)
+	) {
+		rc = false;
+	}
+
+	return rc;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /**
  * Allocate another workpacket block
@@ -191,7 +217,7 @@ MM_WorkPackets::initWorkPacketsBlock(MM_EnvironmentBase *env)
 	uintptr_t dataSize = _slotsInPacket * sizeof(uintptr_t);
 	uintptr_t *baseAddress = NULL;
 
-	for(uintptr_t i = 0; i < _packetsPerBlock; i++) {
+	for (uintptr_t i = 0; i < _packetsPerBlock; i++) {
 		baseAddress = (uintptr_t *) (dataStart + (i * dataSize));
 		currentPtr->initialize(env, nextPtr, previousPtr, baseAddress, _slotsInPacket);
 
@@ -224,8 +250,8 @@ MM_WorkPackets::tearDown(MM_EnvironmentBase *env)
 		_overflowHandler = NULL;
 	}
 
-	for(uintptr_t i = 0; i < _packetsBlocksTop; i++) {
-		if(NULL != _packetsStart[i]) {
+	for (uintptr_t i = 0; i < _packetsBlocksTop; i++) {
+		if (NULL != _packetsStart[i]) {
 			env->getForge()->free(_packetsStart[i]);
 			_packetsStart[i] = NULL;
 		}
@@ -263,32 +289,34 @@ MM_WorkPackets::resetAllPackets(MM_EnvironmentBase *env)
 {	
 	MM_Packet *packet;
 	
-	while(NULL != (packet = getPacket(env, &_fullPacketList))) {
-		packet->resetData(env);
-		putPacket(env, packet);
-	}
-	while(NULL != (packet = getPacket(env, &_relativelyFullPacketList))) {
-		packet->resetData(env);
-		putPacket(env, packet);
-	}
-	while(NULL != (packet = getPacket(env, &_nonEmptyPacketList))) {
+	while (NULL != (packet = getPacket(env, &_fullPacketList))) {
 		packet->resetData(env);
 		putPacket(env, packet);
 	}
 
-	while(NULL != (packet = getPacket(env, &_deferredPacketList))) {
+	while (NULL != (packet = getPacket(env, &_relativelyFullPacketList))) {
+		packet->resetData(env);
+		putPacket(env, packet);
+	}
+
+	while (NULL != (packet = getPacket(env, &_nonEmptyPacketList))) {
+		packet->resetData(env);
+		putPacket(env, packet);
+	}
+
+	while (NULL != (packet = getPacket(env, &_deferredPacketList))) {
 		packet->resetData(env); 
 		putPacket(env, packet);
 	}
 
-	while(NULL != (packet = getPacket(env, &_deferredFullPacketList))) {
+	while (NULL != (packet = getPacket(env, &_deferredFullPacketList))) {
 		packet->resetData(env);
 		putPacket(env, packet);
 	}
 
 	/* Do sanity check on ctrs */	
-	assume0(_deferredFullPacketList.getCount() == 0);
-	assume0(_deferredPacketList.getCount() == 0);
+	assume0(0 ==_deferredFullPacketList.getCount());
+	assume0(0 == _deferredPacketList.getCount());
 	assume0(_emptyPacketList.getCount() == _activePackets);
 
 	clearOverflowFlag();
@@ -302,21 +330,21 @@ MM_WorkPackets::reuseDeferredPackets(MM_EnvironmentBase *env)
 {
 	MM_Packet *packet;
 
-	if(_deferredPacketList.isEmpty() && _deferredFullPacketList.isEmpty()) {
+	if (_deferredPacketList.isEmpty() && _deferredFullPacketList.isEmpty()) {
 		/* Both deferred lists are empty, so there is nothing to do */
 		return;
 	}
 
 	/* Un-defer all partially full packets */
-	if(!_deferredPacketList.isEmpty()) {
-		while(NULL != (packet = getPacket(env, &_deferredPacketList))) {
+	if (!_deferredPacketList.isEmpty()) {
+		while (NULL != (packet = getPacket(env, &_deferredPacketList))) {
 			putPacket(env, packet);
 		}
 	}
-	
+
 	/* Un-defer all totally full packets */
-	if(!_deferredFullPacketList.isEmpty()) {
-		while(NULL != (packet = getPacket(env, &_deferredFullPacketList))) {
+	if (!_deferredFullPacketList.isEmpty()) {
+		while (NULL != (packet = getPacket(env, &_deferredFullPacketList))) {
 			putPacket(env, packet);
 		}
 	}
@@ -359,15 +387,15 @@ MM_WorkPackets::getInputPacketFromOverflow(MM_EnvironmentBase *env)
 {
 	MM_Packet *overflowPacket;
 
-	while(!_overflowHandler->isEmpty()) {
-		if(NULL != (overflowPacket = getPacket(env, &_emptyPacketList))) {
+	while (!_overflowHandler->isEmpty()) {
+		if (NULL != (overflowPacket = getPacket(env, &_emptyPacketList))) {
 			
 			_overflowHandler->fillFromOverflow(env, overflowPacket);
 			
-			if(overflowPacket->isEmpty()) {
+			if (overflowPacket->isEmpty()) {
 				/* If we didn't end up filling the packet with anything, don't return it and try again */
 				putPacket(env, overflowPacket);
-			} else {	
+			} else {
 				return overflowPacket;
 			}
 		}
@@ -390,29 +418,29 @@ MM_WorkPackets::getInputPacketNoWait(MM_EnvironmentBase *env)
 		return NULL;
 	}
 
-	if((!_nonEmptyPacketList.isEmpty()) && (_emptyPacketList.getCount() < (_activePackets >> 2))) {
-		if(NULL == (packet = getPacket(env, &_nonEmptyPacketList))) {
-			if(NULL == (packet = getPacket(env, &_relativelyFullPacketList))) {
+	if ((!_nonEmptyPacketList.isEmpty()) && (_emptyPacketList.getCount() < (_activePackets >> 2))) {
+		if (NULL == (packet = getPacket(env, &_nonEmptyPacketList))) {
+			if (NULL == (packet = getPacket(env, &_relativelyFullPacketList))) {
 				packet = getPacket(env, &_fullPacketList);
 			}
 		}
 	} else {
-		if(NULL == (packet = getPacket(env, &_fullPacketList))) {
-			if(NULL == (packet = getPacket(env, &_relativelyFullPacketList)))  {
+		if (NULL == (packet = getPacket(env, &_fullPacketList))) {
+			if (NULL == (packet = getPacket(env, &_relativelyFullPacketList)))  {
 				packet = getPacket(env, &_nonEmptyPacketList);
 			}
 		}
 	}
 
-	if(NULL == packet) {
+	if (NULL == packet) {
 		packet = getInputPacketFromOverflow(env);
 	}
 
-	if(NULL != packet) {
+	if (NULL != packet) {
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 		env->_workPacketStats.workPacketsAcquired += 1;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
-		if((_inputListWaitCount > 0) && inputPacketAvailable(env)) {
+		if ((_inputListWaitCount > 0) && inputPacketAvailable(env)) {
 			notifyWaitingThreads(env);
 		}
 	}
@@ -433,7 +461,7 @@ MM_WorkPackets::getInputPacket(MM_EnvironmentBase *env)
 	volatile uintptr_t doneIndex = _inputListDoneIndex;
 	bool mustSyncThreadsAndExit = (NULL != env->_currentTask) && env->_currentTask->shouldYieldFromTask(env);
 	
-	while(!doneFlag) {
+	while (!doneFlag) {
 		if (!mustSyncThreadsAndExit) {
 			while (inputPacketAvailable(env)) {
 				/* Check if the regular cache list has work to be done */
@@ -445,16 +473,16 @@ MM_WorkPackets::getInputPacket(MM_EnvironmentBase *env)
 
 		omrthread_monitor_enter(_inputListMonitor);
 
-		if(doneIndex == _inputListDoneIndex) {
+		if (doneIndex == _inputListDoneIndex) {
 			_inputListWaitCount += 1;
 			
-			if(((NULL == env->_currentTask) || (_inputListWaitCount == env->_currentTask->getThreadCount())) 
+			if (((NULL == env->_currentTask) || (_inputListWaitCount == env->_currentTask->getThreadCount()))
 					&& (mustSyncThreadsAndExit || !inputPacketAvailable(env))) {
 				_inputListDoneIndex += 1;
 				_inputListWaitCount = 0;
 				omrthread_monitor_notify_all(_inputListMonitor);
 			} else {
-				while(mustSyncThreadsAndExit || (!inputPacketAvailable(env) && (_inputListDoneIndex == doneIndex))) {
+				while (mustSyncThreadsAndExit || (!inputPacketAvailable(env) && (_inputListDoneIndex == doneIndex))) {
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 					uint64_t waitStartTime, waitEndTime;
 					OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
@@ -487,7 +515,7 @@ MM_WorkPackets::getInputPacket(MM_EnvironmentBase *env)
 		/* Set the local done flag. If we are done ,exit
 		 *  if we are not yet done only decrement the wait count */
 		doneFlag = (_inputListDoneIndex != doneIndex);
-		if(!doneFlag) {
+		if (!doneFlag) {
 			_inputListWaitCount -= 1;
 		}
 		omrthread_monitor_exit(_inputListMonitor);
@@ -509,13 +537,13 @@ MM_WorkPackets::getOutputPacket(MM_EnvironmentBase *env)
 
 	/* Check the free list */
 	outputPacket = getPacket(env, &_emptyPacketList);
-	if(NULL != outputPacket) {
+	if (NULL != outputPacket) {
 		return outputPacket;
 	}
 
 	/* emptyPacketList was empty so attempt to get a packet from one of the list of partial full packets */
 	outputPacket = getLeastFullPacket(env, 2);
-	if(NULL != outputPacket) {
+	if (NULL != outputPacket) {
 		return outputPacket;
 	}
 	
@@ -526,7 +554,7 @@ MM_WorkPackets::getOutputPacket(MM_EnvironmentBase *env)
 	
 	/* emptyPacketList was empty after attempt to grow.  Try the partially full lists */
 	outputPacket = getLeastFullPacket(env, 2);
-	if(NULL != outputPacket) {
+	if (NULL != outputPacket) {
 		return outputPacket;
 	}
 	
@@ -551,11 +579,11 @@ MM_WorkPackets::getPacketByAdddingWorkPacketBlock(MM_EnvironmentBase *env)
 	 * another WorkPacket block while this thread was attempting to take control of the allocatingPackets field
 	 */
 	packet = getPacket(env, &_emptyPacketList);
-	if(NULL == packet) {
+	if (NULL == packet) {
 		/* Since the current thread now has control of the allocatingPackets field and there are no packets
 		 * on the emptyPacketList attempt to initialize another workPackets block
 		 */
-		if(initWorkPacketsBlock(env)) {
+		if (initWorkPacketsBlock(env)) {
 			/* Successfully initialized another workpacket block so get a packet off of the emptyPacketList */
 			packet = getPacket(env, &_emptyPacketList);
 		}
@@ -578,21 +606,21 @@ MM_WorkPackets::getPacketByOverflowing(MM_EnvironmentBase *env)
 	MM_Packet *packet = NULL;
 	
 	packet = getPacket(env, &_fullPacketList);
-	if(NULL != packet) {
+	if (NULL != packet) {
 		/* Move the contents of the packet to overflow */
 		emptyToOverflow(env, packet, OVERFLOW_TYPE_WORKSTACK);
 		
 		omrthread_monitor_enter(_inputListMonitor);
 
 		/* Overflow was created - alert other threads that are waiting */
-		if(_inputListWaitCount > 0) {
+		if (_inputListWaitCount > 0) {
 			omrthread_monitor_notify(_inputListMonitor);
 		}
 		
 		omrthread_monitor_exit(_inputListMonitor);
 	} else {
 		packet = getPacket(env, &_emptyPacketList);
-		if(NULL == packet) {
+		if (NULL == packet) {
 			packet = getLeastFullPacket(env, 2);
 		}
 	}
@@ -617,14 +645,14 @@ MM_WorkPackets::getLeastFullPacket(MM_EnvironmentBase *env, int requiredSlots)
 
 	/* Search for a satisfactory packet */
 	selected = -1;
-	for(j = 0, i = 0; i < _maxPacketSearch; i++) {
+	for (j = 0, i = 0; i < _maxPacketSearch; i++) {
 
 		/* Get a packet from either the non empty list or the relatively 
 		 * full list. If this fails then leave the loop as there are no more 
 		 * packets available
 		 */
-		if(NULL == (temps[i] = getPacket(env, &_nonEmptyPacketList))) {
-			if(NULL == (temps[i] = getPacket(env, &_relativelyFullPacketList))) {
+		if (NULL == (temps[i] = getPacket(env, &_nonEmptyPacketList))) {
+			if (NULL == (temps[i] = getPacket(env, &_relativelyFullPacketList))) {
 				break;
 			}
 		}
@@ -637,14 +665,14 @@ MM_WorkPackets::getLeastFullPacket(MM_EnvironmentBase *env, int requiredSlots)
 		 * going to find a better packet.
 		 */
 		curCapacity = temps[i]->freeSlots();
-		if(curCapacity > maxCapacity) {
+		if (curCapacity > maxCapacity) {
 			maxCapacity = curCapacity;
 			selected = i;
-			if(satisfactoryCapacity <= maxCapacity) {
+			if (satisfactoryCapacity <= maxCapacity) {
 				break; 
 			}
 		} else {
-			if((maxCapacity >= _fullPacketThreshold)   /* we have a non-empty packet already */
+			if ((maxCapacity >= _fullPacketThreshold)   /* we have a non-empty packet already */
 			&& (curCapacity < _fullPacketThreshold)) {   /* we got to the full packet list */
 				break;
 			}
@@ -652,14 +680,14 @@ MM_WorkPackets::getLeastFullPacket(MM_EnvironmentBase *env, int requiredSlots)
 	}
 
 	/* If we didn't get any packets then return */
-	if(0 == j) {
+	if (0 == j) {
 		return NULL;
 	}
 
 	/* Return the non selected packets. */
-	while(j > 0) {
+	while (j > 0) {
 		j -= 1;
-		if(j != selected) {
+		if (j != selected) {
 			putPacket(env, temps[j]);
 		}
 	}
@@ -667,7 +695,7 @@ MM_WorkPackets::getLeastFullPacket(MM_EnvironmentBase *env, int requiredSlots)
 	/* Return the selected packet. If here is not a selected packet, 
 	 * then return NULL.
 	 */
-	if(-1 == selected) {
+	if (-1 == selected) {
 		return NULL;
 	} else {
 		return temps[selected];
@@ -709,18 +737,18 @@ MM_WorkPackets::putPacket(MM_EnvironmentBase *env, MM_Packet *packet)
 	bool mustNotifyWaitingThreads = false;
 
     /* Empty packet */
-	if(freeSlots == _slotsInPacket) {
+	if (freeSlots == _slotsInPacket) {
 		list = &_emptyPacketList;
 		packet->clearOwner();
 				
 	/* Full packet */
-	} else if(freeSlots == 0) {
+	} else if (0 == freeSlots) {
 		list = &_fullPacketList;
 		mustNotifyWaitingThreads = list->isEmpty();
 		packet->resetOwner();
 
 	/* Relatively full packet */
-	} else if(freeSlots < _fullPacketThreshold) {
+	} else if (freeSlots < _fullPacketThreshold) {
 		list = &_relativelyFullPacketList;
 		mustNotifyWaitingThreads = list->isEmpty();
 		packet->resetOwner();
@@ -734,7 +762,7 @@ MM_WorkPackets::putPacket(MM_EnvironmentBase *env, MM_Packet *packet)
 	
 	list->push(env, packet);
 	
-	if(mustNotifyWaitingThreads && (_inputListWaitCount > 0)) {
+	if (mustNotifyWaitingThreads && (_inputListWaitCount > 0)) {
 		notifyWaitingThreads(env);
 	}
 }
@@ -776,7 +804,7 @@ MM_WorkPackets::getDeferredPacket(MM_EnvironmentBase *env)
 {	
 	MM_Packet *packet;
  	
-	if(NULL == (packet = getPacket(env, &_deferredPacketList))) {
+	if (NULL == (packet = getPacket(env, &_deferredPacketList))) {
 		packet = getPacket(env, &_emptyPacketList);
 	}
 	
@@ -796,7 +824,7 @@ MM_WorkPackets::putDeferredPacket(MM_EnvironmentBase *env, MM_Packet *packet)
 
 	packet->resetOwner();
 	
-	if(0 == freeSlots) {
+	if (0 == freeSlots) {
 		list = &_deferredFullPacketList;
 	} else {
 		list = &_deferredPacketList;

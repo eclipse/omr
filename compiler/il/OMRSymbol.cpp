@@ -60,6 +60,7 @@ TR::Symbol * OMR::Symbol::create(AllocatorType m, TR::DataType d, uint32_t s)
 OMR::Symbol::Symbol(TR::DataType d) :
    _size(0),
    _name(0),
+   _declaredClass(0),
    _flags(0),
    _flags2(0),
    _localIndex(0)
@@ -69,6 +70,7 @@ OMR::Symbol::Symbol(TR::DataType d) :
 
 OMR::Symbol::Symbol(TR::DataType d, uint32_t size) :
    _name(0),
+   _declaredClass(0),
    _flags(0),
    _flags2(0),
    _localIndex(0)

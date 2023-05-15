@@ -56,9 +56,15 @@ TR::X86DataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
       bool needRelocation = TR::Compiler->cls.classUnloadAssumptionNeedsRelocation(cg()->comp());
       if (needRelocation && !cg()->comp()->compileRelocatableCode())
          {
-         cg()->addExternalRelocation(new (TR::comp()->trHeapMemory())
-                                  TR::ExternalRelocation(cursor, NULL, TR_ClassUnloadAssumption, cg()),
-                                  __FILE__, __LINE__, self()->getNode());
+         cg()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               NULL,
+               TR_ClassUnloadAssumption,
+               cg()),
+            __FILE__,
+            __LINE__,
+            getNode());
          }
 
       if (cg()->comp()->target().is64Bit())
@@ -75,11 +81,16 @@ TR::X86DataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
       TR_OpaqueClassBlock *clazz = getData<TR_OpaqueClassBlock *>();
       if (clazz && cg()->comp()->compileRelocatableCode() && cg()->comp()->getOption(TR_UseSymbolValidationManager))
          {
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                               (uint8_t *)clazz,
-                                                               (uint8_t *)TR::SymbolType::typeClass,
-                                                               TR_SymbolFromManager,
-                                                               cg()),  __FILE__, __LINE__, getNode());
+         cg()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *)clazz,
+               (uint8_t *)TR::SymbolType::typeClass,
+               TR_SymbolFromManager,
+               cg()),
+            __FILE__,
+            __LINE__,
+            getNode());
          }
       }
    }

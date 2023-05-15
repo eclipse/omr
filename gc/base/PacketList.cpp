@@ -36,7 +36,9 @@ MM_PacketList::initialize(MM_EnvironmentBase *env)
 	_sublistCount = extensions->packetListSplit;
 	Assert_MM_true(0 < _sublistCount);
 
-	_sublists = (struct PacketSublist *)extensions->getForge()->allocate(sizeof(struct PacketSublist) * _sublistCount, OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
+	_sublists = (PacketSublist *)extensions->getForge()->allocate(
+			sizeof(PacketSublist) * _sublistCount,
+			OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (NULL == _sublists) {
 		result = false;
 	} else {
@@ -51,6 +53,47 @@ MM_PacketList::initialize(MM_EnvironmentBase *env)
 
 	return result;
 }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+bool
+MM_PacketList::reinitializeForRestore(MM_EnvironmentBase *env)
+{
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+	uintptr_t newSublistCount = extensions->packetListSplit;
+	bool result = true;
+
+	Assert_MM_true(0 < newSublistCount);
+
+	if (newSublistCount > _sublistCount) {
+		PacketSublist *newSublists = (PacketSublist *)extensions->getForge()->allocate(
+				sizeof(PacketSublist) * newSublistCount,
+				OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
+		if (NULL == newSublists) {
+			result = false;
+		} else {
+			for (uintptr_t i = 0; i < _sublistCount; i++) {
+				newSublists[i] = _sublists[i];
+			}
+
+			for (uintptr_t i = _sublistCount; i < newSublistCount; i++) {
+				newSublists[i] = PacketSublist();
+				if (!newSublists[i].initialize(env)) {
+					result = false;
+					break;
+				}
+			}
+
+			if (result) {
+				extensions->getForge()->free(_sublists);
+				_sublists = newSublists;
+				_sublistCount = newSublistCount;
+			}
+		}
+	}
+
+	return result;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 void
 MM_PacketList::tearDown(MM_EnvironmentBase *env)

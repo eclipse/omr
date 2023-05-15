@@ -543,3 +543,22 @@ void TR::IteratedExternalRelocation::addRelocationEntry(uint32_t locationOffset)
       _relocationDataCursor += 4;
       }
    }
+
+TR::ExternalRelocation *TR::ExternalRelocation::create(
+      uint8_t *codeAddress,
+      uint8_t *targetAddress,
+      TR_ExternalRelocationTargetKind kind,
+      TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::ExternalRelocation(codeAddress, targetAddress, kind, cg);
+   }
+
+TR::ExternalRelocation *TR::ExternalRelocation::create(
+      uint8_t *codeAddress,
+      uint8_t *targetAddress,
+      uint8_t *targetAddress2,
+      TR_ExternalRelocationTargetKind kind,
+      TR::CodeGenerator *cg)
+   {
+   return new (cg->trHeapMemory()) TR::ExternalRelocation(codeAddress, targetAddress, targetAddress2, kind, cg);
+   }

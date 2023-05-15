@@ -42,10 +42,15 @@ TR::RVHelperCallSnippet::emitSnippetBody()
 
    *(int32_t *)cursor = TR_RISCV_UJTYPE(TR::InstOpCode::_jal, cg()->machine()->getRealRegister(OMR::RealRegister::ra) , distance);
 
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
-                               cursor,
-                               (uint8_t *)getDestination(),
-                               TR_HelperAddress, cg()), __FILE__, __LINE__, getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         (uint8_t *)getDestination(),
+         TR_HelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
    cursor += RISCV_INSTRUCTION_LENGTH;
 
    gcMap().registerStackMap(cursor, cg());

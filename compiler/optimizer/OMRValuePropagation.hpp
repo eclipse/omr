@@ -217,6 +217,8 @@ class ValuePropagation : public TR::Optimization
 
    TR_LinkHead<StoreRelationship> _storeRelationshipCache;
 
+   void addUnsafeArrayAccessNode(ncount_t index) { _unsafeArrayAccessNodes->set(index); }
+
    // Value constraint. This represents constraints applied to a particular
    // value number, and is represented by a linked list of relationships.
    //
@@ -876,6 +878,8 @@ class ValuePropagation : public TR::Optimization
    bool _enableVersionBlocks;
    bool _disableVersionBlockForThisBlock;
    TR::Block *_startEBB;
+
+   TR_BitVector *_unsafeArrayAccessNodes;
 
    // Blocks that are unreachable and can be removed.
    //

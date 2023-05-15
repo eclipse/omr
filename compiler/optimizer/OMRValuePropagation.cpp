@@ -7243,6 +7243,40 @@ bool OMR::ValuePropagation::isUnreliableSignatureType(
    return false;
    }
 
+bool OMR::ValuePropagation::checkAllUnsafeReferences(TR::Node *node, vcount_t visitCount)
+   {
+   if (node->getVisitCount() == visitCount)
+      return true;
+
+   node->setVisitCount(visitCount);
+
+   if (node->getOpCode().hasSymbolReference() &&
+       node->getSymbol()->isUnsafeShadowSymbol())
+      {
+      if (_unsafeArrayAccessNodes->get(node->getGlobalIndex()))
+         {
+         comp()->getSymRefTab()->aliasBuilder.unsafeArrayElementSymRefs().set(node->getSymbolReference()->getReferenceNumber());
+         }
+      else
+         {
+         if (trace())
+            traceMsg(comp(), "Node is unsafe but not an array access %p \n", node);
+         return false;
+         }
+      }
+
+   int32_t childNum;
+   for (childNum=0; childNum < node->getNumChildren(); childNum++)
+      {
+      if (!checkAllUnsafeReferences(node->getChild(childNum), visitCount))
+         return false;
+      }
+
+   return true;
+   }
+
+
+
 void OMR::ValuePropagation::doDelayedTransformations()
    {
    ListIterator<TR_TreeTopNodePair> treesIt1(&_scalarizedArrayCopies);
@@ -8010,6 +8044,31 @@ void OMR::ValuePropagation::doDelayedTransformations()
       }
 
    _classesToCheckInit.setFirst(0);
+
+   comp()->getSymRefTab()->aliasBuilder.unsafeArrayElementSymRefs().empty();
+
+   if (!_unsafeArrayAccessNodes->isEmpty())
+      {
+      vcount_t visitCount = comp()->incVisitCount();
+      TR::TreeTop *curTree = comp()->getStartTree();
+      while (curTree)
+         {
+         if (curTree->getNode() &&
+            !checkAllUnsafeReferences(curTree->getNode(), visitCount))
+            {
+            comp()->getSymRefTab()->aliasBuilder.unsafeArrayElementSymRefs().empty();
+            break;
+            }
+         curTree = curTree->getNextTreeTop();
+         }
+      }
+
+   if (trace())
+      {
+      traceMsg(comp(), "Unsafe references that are only used to access array elements: ");
+      comp()->getSymRefTab()->aliasBuilder.unsafeArrayElementSymRefs().print(comp());
+      traceMsg(comp(), "\n");
+      }
    }
 
 TR_OpaqueClassBlock *OMR::ValuePropagation::findLikelySubtype(TR_OpaqueClassBlock *klass)

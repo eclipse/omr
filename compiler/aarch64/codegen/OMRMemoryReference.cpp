@@ -348,6 +348,11 @@ void OMR::ARM64::MemoryReference::validateImmediateOffsetAlignment(TR::Node *nod
    intptr_t displacement = self()->getOffset();
    if ((displacement % alignment) != 0)
       {
+      TR::Compilation *comp = cg->comp();
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "Validating immediate offset (%d) at node %p for alignment (%d)\n", displacement, node, alignment);
+         }
       TR::Register *newBase;
 
       self()->setOffset(0);

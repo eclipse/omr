@@ -49,6 +49,7 @@ namespace OMR { typedef OMR::Symbol SymbolConnector; }
 #include <stdint.h>
 #include "infra/Annotations.hpp"
 #include "env/TRMemory.hpp"
+#include "env/jittypes.h"
 #include "il/DataTypes.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Flags.hpp"
@@ -102,6 +103,7 @@ protected:
    Symbol() :
       _size(0),
       _name(0),
+      _declaredClass(0),
       _flags(0),
       _flags2(0),
       _localIndex(0)
@@ -196,6 +198,12 @@ public:
 
    const char * getName()                   { return _name; }
    void         setName(const char * name)  { _name = name; }
+
+   // When DataType is TR::Address, the declared class of the field, so that it
+   // can be found even without a signature. When present, this type info is
+   // exactly as reliable as the type signature.
+   TR_OpaqueClassBlock *getDeclaredClass() { return _declaredClass; }
+   void setDeclaredClass(TR_OpaqueClassBlock* klass) { _declaredClass = klass; }
 
    uint32_t getFlags()                      { return _flags.getValue(); }
    uint32_t getFlags2()                     { return _flags2.getValue(); }
@@ -598,6 +606,7 @@ protected:
 
    size_t        _size;
    const char *  _name;
+   TR_OpaqueClassBlock *_declaredClass;
    flags32_t     _flags;
    flags32_t     _flags2;
    uint16_t      _localIndex;

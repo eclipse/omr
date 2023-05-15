@@ -70,6 +70,22 @@ MM_WorkPacketsSATB::initialize(MM_EnvironmentBase *env)
 	return true;
 }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+bool
+MM_WorkPacketsSATB::reinitializeForRestore(MM_EnvironmentBase *env)
+{
+	bool rc = true;
+
+	if (!MM_WorkPackets::reinitializeForRestore(env)
+		|| !_inUseBarrierPacketList.reinitializeForRestore(env)
+	) {
+		rc = false;
+	}
+
+	return rc;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 /**
  * Destroy the resources a MM_WorkPacketsSATB is responsible for
  */
@@ -101,7 +117,7 @@ MM_WorkPacketsSATB::getBarrierPacket(MM_EnvironmentBase *env)
 
 	/* Check the free list */
 	barrierPacket = getPacket(env, &_emptyPacketList);
-	if(NULL != barrierPacket) {
+	if (NULL != barrierPacket) {
 		return barrierPacket;
 	}
 
@@ -133,7 +149,7 @@ MM_WorkPacketsSATB::getPacketByOverflowing(MM_EnvironmentBase *env)
 		omrthread_monitor_enter(_inputListMonitor);
 
 		/* Overflow was created - alert other threads that are waiting */
-		if(_inputListWaitCount > 0) {
+		if (_inputListWaitCount > 0) {
 			omrthread_monitor_notify(_inputListMonitor);
 		}
 		omrthread_monitor_exit(_inputListMonitor);
@@ -215,12 +231,12 @@ MM_WorkPacketsSATB::getInputPacketFromOverflow(MM_EnvironmentBase *env)
 	 * would turn into an infinite busy loop.
 	 * while(!_overflowHandler->isEmpty()) {
 	 */
-	if(!_overflowHandler->isEmpty()) {
-		if(NULL != (overflowPacket = getPacket(env, &_emptyPacketList))) {
+	if (!_overflowHandler->isEmpty()) {
+		if (NULL != (overflowPacket = getPacket(env, &_emptyPacketList))) {
 
 			_overflowHandler->fillFromOverflow(env, overflowPacket);
 
-			if(overflowPacket->isEmpty()) {
+			if (overflowPacket->isEmpty()) {
 				/* If we didn't end up filling the packet with anything, don't return it and try again */
 				putPacket(env, overflowPacket);
 			} else {

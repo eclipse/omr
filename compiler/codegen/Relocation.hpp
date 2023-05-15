@@ -334,6 +334,41 @@ class IteratedExternalRelocation : public TR_Link<TR::IteratedExternalRelocation
 class ExternalRelocation : public TR::Relocation
    {
    public:
+
+   /**
+    * @brief Factory method for ExternalRelocation
+    *
+    * @param[in] codeAddress : the code cache address this relocation applies to
+    * @param[in] targetAddress : the external address for this relocation
+    * @param[in] kind : external relocation kind
+    * @param[in] cg : \c TR::CodeGenerator object
+    *
+    * @return Allocated \c ExternalRelocation object
+    */
+   static ExternalRelocation *create(
+      uint8_t *codeAddress,
+      uint8_t *targetAddress,
+      TR_ExternalRelocationTargetKind kind,
+      TR::CodeGenerator *cg);
+
+   /**
+    * @brief Factory method for ExternalRelocation
+    *
+    * @param[in] codeAddress : the code cache address this relocation applies to
+    * @param[in] targetAddress : the external address for this relocation
+    * @param[in] targetAddress2 : the second external address for this relocation
+    * @param[in] kind : external relocation kind
+    * @param[in] cg : \c TR::CodeGenerator object
+    *
+    * @return Allocated \c ExternalRelocation object
+    */
+   static ExternalRelocation *create(
+      uint8_t *codeAddress,
+      uint8_t *targetAddress,
+      uint8_t *targetAddress2,
+      TR_ExternalRelocationTargetKind kind,
+      TR::CodeGenerator *cg);
+
    ExternalRelocation()
       : TR::Relocation(),
         _targetAddress(NULL),

@@ -1362,13 +1362,21 @@ TR::PPCImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
          switch(getReloKind())
             {
             case TR_AbsoluteHelperAddress:
-               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)getSymbolReference(), TR_AbsoluteHelperAddress, cg()), __FILE__, __LINE__, getNode());
+               cg()->addExternalRelocation(
+                  TR::ExternalRelocation::create(
+                     cursor,
+                     (uint8_t *)getSymbolReference(),
+                     TR_AbsoluteHelperAddress,
+                     cg()),
+                  __FILE__,
+                  __LINE__,
+                  getNode());
                break;
             case TR_RamMethod:
                if (comp()->getOption(TR_UseSymbolValidationManager))
                   {
                   cg()->addExternalRelocation(
-                     new (comp()->trHeapMemory()) TR::ExternalRelocation(
+                     TR::ExternalRelocation::create(
                         cursor,
                         (uint8_t *)comp()->getJittedMethodSymbol()->getResolvedMethod()->resolvedMethodAddress(),
                         (uint8_t *)TR::SymbolType::typeMethod,
@@ -1380,11 +1388,27 @@ TR::PPCImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
                   }
                else
                   {
-                  cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_RamMethod, cg()), __FILE__, __LINE__, getNode());
+                  cg()->addExternalRelocation(
+                     TR::ExternalRelocation::create(
+                        cursor,
+                        NULL,
+                        TR_RamMethod,
+                        cg()),
+                     __FILE__,
+                     __LINE__,
+                     getNode());
                   }
                break;
             case TR_BodyInfoAddress:
-               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, 0, TR_BodyInfoAddress, cg()), __FILE__, __LINE__, getNode());
+               cg()->addExternalRelocation(
+                  TR::ExternalRelocation::create(
+                     cursor,
+                     0,
+                     TR_BodyInfoAddress,
+                     cg()),
+                  __FILE__,
+                  __LINE__,
+                  getNode());
                break;
             default:
                TR_ASSERT(false, "Unsupported AOT relocation type specified.");
@@ -1408,7 +1432,15 @@ TR::PPCImmInstruction::addMetaDataForCodeAddress(uint8_t *cursor)
       //
       void **locationToPatch = (void**)(cursor - (comp->target().is64Bit()?4:0));
       cg()->jitAddPicToPatchOnClassRedefinition(*locationToPatch, locationToPatch);
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)locationToPatch, (uint8_t *)*locationToPatch, TR_HCR, cg()), __FILE__,__LINE__, getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            (uint8_t *)locationToPatch,
+            (uint8_t *)*locationToPatch,
+            TR_HCR,
+            cg()),
+         __FILE__,
+         __LINE__,
+         getNode());
       }
 
    }

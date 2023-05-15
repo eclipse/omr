@@ -402,9 +402,14 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
          //
          TR::Register *baseRegister;
          if (toRealRegister(_baseRegister)->getRegisterNumber() == TR::RealRegister::vfp)
+            {
             baseRegister = toRealRegister(_baseRegister)->getAssignedRealRegister();
+            TR_ASSERT_FATAL(baseRegister, "virtual frame pointer must be assigned before binary encoding!\n");
+            }
          else
+            {
             baseRegister = _baseRegister;
+            }
          rxbBits |= toRealRegister(baseRegister)->rexBits(TR::RealRegister::REX_B, false);
          }
       if (_indexRegister)
