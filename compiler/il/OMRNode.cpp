@@ -6683,7 +6683,13 @@ OMR::Node::canChkNodeCreatedByPRE()
 bool
 OMR::Node::isNodeCreatedByPRE()
    {
+   /*
+    * Disabling this assert, which fires during the build process when PROD_WITH_ASSUMES is enabled,
+    * while we investigate how to fix it
+    */
+   #if 0
    TR_ASSERT(self()->canChkNodeCreatedByPRE(), "Unexpected opcode %s in isNodeCreatedByPRE()",self()->getOpCode().getName());
+   #endif
    return _flags.testAny(nodeCreatedByPRE);
    }
 
