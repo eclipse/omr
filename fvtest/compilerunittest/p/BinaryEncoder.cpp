@@ -1948,6 +1948,9 @@ INSTANTIATE_TEST_CASE_P(Bitwise, PPCTrg1Src2EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::XOR,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c1f0278")),
     std::make_tuple(TR::InstOpCode::XOR,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe00278")),
     std::make_tuple(TR::InstOpCode::XOR,  TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00fa78"))
+    std::make_tuple(TR::InstOpCode::cmpb, TR::RealRegister::gr31, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TRTest::BinaryInstruction("7fe003f8"))
+    std::make_tuple(TR::InstOpCode::cmpb, TR::RealRegister::gr0,  TR::RealRegister::gr31, TR::RealRegister::gr0,  TRTest::BinaryInstruction("7c1f03f8"))
+    std::make_tuple(TR::InstOpCode::cmpb, TR::RealRegister::gr0,  TR::RealRegister::gr0,  TR::RealRegister::gr31, TRTest::BinaryInstruction("7c00fbf8"))
 ));
 
 INSTANTIATE_TEST_CASE_P(Bitwise, PPCRecordFormSanityTest, ::testing::Values(
@@ -2168,6 +2171,10 @@ INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src1EncodingTest, ::testing::Values(
     std::make_tuple(TR::InstOpCode::vnegw,    TR::RealRegister::vr0,  TR::RealRegister::vr31, TRTest::BinaryInstruction("1006fe02")),
     std::make_tuple(TR::InstOpCode::vnegd,    TR::RealRegister::vr31, TR::RealRegister::vr0,  TRTest::BinaryInstruction("13e70602")),
     std::make_tuple(TR::InstOpCode::vnegd,    TR::RealRegister::vr0,  TR::RealRegister::vr31, TRTest::BinaryInstruction("1007fe02"))
+    std::make_tuple(TR::InstOpCode::vclzd,    TR::RealRegister::vr31, TR::RealRegister::vr0,  TRTest::BinaryInstruction("13E007C2"))
+    std::make_tuple(TR::InstOpCode::vclzd,    TR::RealRegister::vr0,  TR::RealRegister::vr31, TRTest::BinaryInstruction("1000FFC2"))
+    std::make_tuple(TR::InstOpCode::vclzw,    TR::RealRegister::vr31, TR::RealRegister::vr0,  TRTest::BinaryInstruction("13E00782"))
+    std::make_tuple(TR::InstOpCode::vclzw,    TR::RealRegister::vr0,  TR::RealRegister::vr31, TRTest::BinaryInstruction("1000FF82"))
 ));
 
 INSTANTIATE_TEST_CASE_P(VMX, PPCTrg1Src2EncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TRTest::BinaryInstruction>>(
