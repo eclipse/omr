@@ -40,7 +40,6 @@ TR::CompilationInfo *    TR::CompilationController::_compInfo = 0;
 bool                     TR::CompilationController::_useController = false;
 bool                     TR::CompilationController::_tlsCompObjCreated = false;
 
-
 bool TR::CompilationController::init(TR::CompilationInfo *compInfo)
    {
    _compInfo = compInfo;
@@ -77,4 +76,58 @@ void TR::CompilationController::shutdown()
    int32_t remainingPlans = TR_OptimizationPlan::freeEntirePool();
 
    _compilationStrategy->shutdown();
+   }
+
+uint64_t
+TR::CompilationController::computeFreePhysicalMemory(bool &incompleteInfo)
+   {
+   bool incomplete = false;
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+
+   static bool _cgroupMemorySubsystemEnabled = (OMR_CGROUP_SUBSYSTEM_MEMORY == omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_MEMORY));
+   uint64_t freePhysicalMemory = OMRPORT_MEMINFO_NOT_AVAILABLE;
+   J9MemoryInfo memInfo;
+   if (0 == omrsysinfo_get_memory_info(&memInfo)
+      && memInfo.availPhysical != OMRPORT_MEMINFO_NOT_AVAILABLE
+      && memInfo.hostAvailPhysical != OMRPORT_MEMINFO_NOT_AVAILABLE)
+      {
+      freePhysicalMemory = memInfo.availPhysical;
+      uint64_t freeHostPhysicalMemorySizeB = memInfo.hostAvailPhysical;
+
+      if (memInfo.cached != OMRPORT_MEMINFO_NOT_AVAILABLE)
+         freePhysicalMemory += memInfo.cached;
+      else
+         incomplete = !_cgroupMemorySubsystemEnabled;
+
+      if (memInfo.hostCached != OMRPORT_MEMINFO_NOT_AVAILABLE)
+         freeHostPhysicalMemorySizeB += memInfo.hostCached;
+      else
+         incomplete = true;
+#if defined(LINUX)
+      if (memInfo.buffered != OMRPORT_MEMINFO_NOT_AVAILABLE)
+         freePhysicalMemory += memInfo.buffered;
+      else
+         incomplete = incomplete || !_cgroupMemorySubsystemEnabled;
+
+      if (memInfo.hostBuffered != OMRPORT_MEMINFO_NOT_AVAILABLE)
+         freeHostPhysicalMemorySizeB += memInfo.hostBuffered;
+      else
+         incomplete = true;
+#endif
+      // If we run in a container, freePhysicalMemory is the difference between
+      // the container memory limit and how much physical memory the container used
+      // It's possible that on the entire machine there is less physical memory
+      // available because other processes have consumed it. Thus, we need to take
+      // into account the available physical memory on the host
+      if (freeHostPhysicalMemorySizeB < freePhysicalMemory)
+         freePhysicalMemory = freeHostPhysicalMemorySizeB;
+      }
+   else
+      {
+      incomplete= true;
+      freePhysicalMemory = OMRPORT_MEMINFO_NOT_AVAILABLE;
+      }
+
+   incompleteInfo = incomplete;
+   return freePhysicalMemory;
    }

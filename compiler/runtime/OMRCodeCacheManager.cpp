@@ -29,6 +29,7 @@
 #include "env/FrontEnd.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
+#include "control/CompilationController.hpp"
 #include "env/IO.hpp"
 #include "env/defines.h"
 #include "env/CompilerEnv.hpp"
@@ -1042,6 +1043,9 @@ OMR::CodeCacheManager::carveCodeCacheSpaceFromRepository(size_t segmentSize,
    uint8_t* end = NULL;
    size_t freeSpace = 0;
 
+   bool incomplete;
+   uint64_t freeMem = TR::CompilationController::computeFreePhysicalMemory(incomplete);
+
    TR::CodeCacheMemorySegment *repositorySegment = _codeCacheRepositorySegment;
 
    // If codeCachePadKB is defined, get the maximum between the requested size and codeCachePadKB.
@@ -1060,7 +1064,8 @@ OMR::CodeCacheManager::carveCodeCacheSpaceFromRepository(size_t segmentSize,
          codeCacheSizeToAllocate -= sizeof(TR::CodeCache*);
 
       freeSpace = repositorySegment->segmentTop() - repositorySegment->segmentAlloc();
-      if (freeSpace >= codeCacheSizeToAllocate)
+      if ((freeSpace >= codeCacheSizeToAllocate)
+         // && (freeMem > (TR::Options::getSafeReservePhysicalMemoryValue() + codeCacheSizeToAllocate)))
          {
          // buy the space
          start = repositorySegment->segmentAlloc();
@@ -1072,8 +1077,8 @@ OMR::CodeCacheManager::carveCodeCacheSpaceFromRepository(size_t segmentSize,
    if (config.verboseCodeCache())
       {
       if (start)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "carved size=%u range: " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
-                  codeCacheSizeToAllocate, start, end);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "carved size=%u freeMem=%u safeReservePhysicalMemoryValue=%d range: " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
+                  codeCacheSizeToAllocate, freeMem >> 20, TR::Options::getSafeReservePhysicalMemoryValue(), start, end);
       else
          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "failed to carve size=%lu. Free space = %u",
                   codeCacheSizeToAllocate, freeSpace);

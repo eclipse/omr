@@ -1597,6 +1597,7 @@ bool OMR::Options::_hasLogFile = false;
 bool OMR::Options::_suppressLogFileBecauseDebugObjectNotCreated = false;
 TR_Debug *OMR::Options::_debug = 0;
 
+int32_t OMR::Options::_safeReservePhysicalMemoryValue = 32 << 20;  // 32 MB
 bool OMR::Options::_canJITCompile = false;
 bool OMR::Options::_fullyInitialized = false;
 

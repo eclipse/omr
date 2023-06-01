@@ -1540,6 +1540,10 @@ public:
           bool        hasOptionSets() {return _optionSets != NULL;}
    char*              setCounts();
 
+   static int32_t _safeReservePhysicalMemoryValue;
+   inline static int32_t getSafeReservePhysicalMemoryValue() { return _safeReservePhysicalMemoryValue; }
+   inline static void setSafeReservePhysicalMemoryValue(int32_t size) { _safeReservePhysicalMemoryValue = size; }
+
    static bool     useCompressedPointers();
 
    TR::FILE *          getLogFile()          {return _logFile;}

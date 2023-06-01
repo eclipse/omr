@@ -44,6 +44,14 @@ class CompilationController
    static void    setVerbose(int32_t v) { _verbose = v; }
    static TR::CompilationStrategy * getCompilationStrategy() { return _compilationStrategy; }
    static TR::CompilationInfo     * getCompilationInfo() { return _compInfo; }
+   /**
+   * @brief Compute free physical memory taking into account container limits
+   *
+   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered memory couldn't be read
+   * @return                 A value representing the free physicalMemory
+                             or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
+   */
+   static uint64_t computeFreePhysicalMemory(bool &incompleteInfo);
    private:
    static TR::CompilationStrategy *_compilationStrategy;
    static TR::CompilationInfo     *_compInfo;        // stored here for convenience
