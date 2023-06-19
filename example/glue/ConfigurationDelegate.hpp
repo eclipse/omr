@@ -175,6 +175,15 @@ public:
 	 */
 	MM_GCPolicy getGCPolicy() { return _gcPolicy; }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * Reinitialize the language specific configuration structures.
+	 *
+	 * @return boolean indicating whether configuration reinitialization was successful.
+	 */
+	bool reinitializeForRestore(MM_EnvironmentBase *env) { return true; }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	/**
 	 * Constructor.
 	 * @param gcPolicy The GC policy preselected for the GC configuration.
