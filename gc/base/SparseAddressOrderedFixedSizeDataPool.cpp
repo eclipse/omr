@@ -127,37 +127,6 @@ MM_SparseAddressOrderedFixedSizeDataPool::kill(MM_EnvironmentBase *env)
 	env->getForge()->free(this);
 }
 
-#if defined(OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-struct J9PortVmemIdentifier*
-MM_SparseAddressOrderedFixedSizeDataPool::findIdentifierForSparseDataPtr(void *dataPtr)
-{
-	struct J9PortVmemIdentifier *identifier = NULL;
-	MM_SparseDataTableEntry lookupEntry = MM_SparseDataTableEntry(dataPtr);
-	MM_SparseDataTableEntry *entry = (MM_SparseDataTableEntry *)hashTableFind(_objectToSparseDataTable, &lookupEntry);
-	if ((NULL == entry) || (entry->dataPtr != dataPtr)) {
-		Trc_MM_SparseAddressOrderedFixedSizeDataPool_findEntry_failure(dataPtr);
-	} else {
-		identifier = entry->identifier;
-	}
-
-	return identifier;
-}
-
-void
-MM_SparseAddressOrderedFixedSizeDataPool::recordDoubleMapIdentifierForData(void *dataPtr, struct J9PortVmemIdentifier *identifier)
-{
-	MM_SparseDataTableEntry lookupEntry = MM_SparseDataTableEntry(dataPtr);
-	MM_SparseDataTableEntry *entry = (MM_SparseDataTableEntry *)hashTableFind(_objectToSparseDataTable, &lookupEntry);
-
-	if ((NULL == entry) || (entry->dataPtr != dataPtr)) {
-		Trc_MM_SparseAddressOrderedFixedSizeDataPool_findEntry_failure(dataPtr);
-	} else {
-		Trc_MM_SparseAddressOrderedFixedSizeDataPool_findEntry_success(dataPtr);
-		entry->identifier = identifier;
-	}
-}
-#endif /* OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
-
 bool
 MM_SparseAddressOrderedFixedSizeDataPool::mapSparseDataPtrToHeapProxyObjectPtr(void *dataPtr, void *proxyObjPtr, uintptr_t size)
 {

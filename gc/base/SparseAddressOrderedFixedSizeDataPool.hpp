@@ -45,9 +45,6 @@ public:
 	void *_dataPtr; /**< Object data pointer related to proxy object */
 	void *_proxyObjPtr; /**< Pointer to proxy object that is residing in-heap */
 	uintptr_t _size; /**< Total size of the data pointed to by dataPtr */
-#if defined(OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-	struct J9PortVmemIdentifier *_identifier; /**< Identifier associated with double mapped region */
-#endif /* OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
 
 /*
  *  Function members
@@ -74,16 +71,6 @@ public:
 		, _size(size)
 	{
 	}
-
-#if defined(OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-	MM_SparseDataTableEntry(void *dataPtr, void* proxyObjPtr, uintptr_t size, struct J9PortVmemIdentifier *identifier)
-		: _dataPtr(dataPtr)
-		, _proxyObjPtr(proxyObjPtr)
-		, _size(size)
-		, _identifier(identifier)
-	{
-	}
-#endif /* OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
 };
 
 class MM_SparseAddressOrderedFixedSizeDataPool : public MM_BaseVirtual
@@ -131,24 +118,6 @@ public:
 	 * @param size		uintptr_t	Size of region to be returned to freeList
 	 */
 	bool returnFreeListEntry(void *address, uintptr_t size);
-
-#if defined(OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-	/**
-	 * Record J9PortVmemIdentifier associated with data pointer
-	 *
-	 * @param dataPtr		void*	Data pointer
-	 * @param identifier 	J9PortVmemIdentifier for data pointer
-	 */
-	void recordDoubleMapIdentifierForData(void *dataPtr, struct J9PortVmemIdentifier *identifier);
-
-	/**
-	 * Get J9PortVmemIdentifier associated with data pointer
-	 *
-	 * @param dataPtr	void*		Data pointer
-	 * @return J9PortVmemIdentifier of data pointer
-	 */
-	struct J9PortVmemIdentifier* findIdentifierForSparseDataPtr(void *dataPtr);
-#endif /* OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
 
 	/**
 	 * Add object entry to the hash table that maps the proxyObjPtr to the data pointer

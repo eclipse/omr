@@ -66,19 +66,6 @@ public:
  * Function members
  */
 private:
-#if defined(OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-	/**
-	 * This is primarily meant for OSX since OSX is very lazy when it comes to releasing memory. Simply calling msync, or
-	 * madvise is not enough to decommit memory. Therefore, we need to force the OS to return the pages to the OS, and
-	 * we do so by mmaping the region in interest.
-	 *
-	 * @param dataSize	uintptr_t	size of region to be mmaped
-	 * @param dataPtr	dataPtr		Region location that'll be mmaped
-	 *
-	 * @return true if sparse region was successfully mmaped, false otherwise
-	 */
-	bool decommitMemoryForDoubleMapping(MM_EnvironmentBase* env, void *dataPtr, uintptr_t dataSize);
-#endif /* OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
 
 protected:
 	bool initialize(MM_EnvironmentBase* env, uint32_t memoryCategory);
@@ -106,16 +93,6 @@ public:
 	 * @return true if the table entry was successfully updated, false otherwise
 	 */
 	bool updateSparseDataEntryAfterObjectHasMoved(void *dataPtr, void *proxyObjPtr);
-
-#if defined(OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-	/**
-	 * Record J9PortVmemIdentifier associated with data pointer
-	 *
-	 * @param dataPtr		void*	Data pointer
-	 * @param identifier 	J9PortVmemIdentifier for data pointer
-	 */
-	void recordDoubleMapIdentifierForData(void *dataPtr, struct J9PortVmemIdentifier *identifier);
-#endif /* OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
 
 	/**
 	 * Find free space at sparse heap address space that satisfies the given size
