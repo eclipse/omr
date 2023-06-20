@@ -21,10 +21,6 @@
  *******************************************************************************/
 
 #include <string.h>
-#if defined(OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-#include <sys/mman.h>
-#include <sys/errno.h>
-#endif /* OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
 
 #include "omrcomp.h"
 #include "omrport.h"
@@ -187,48 +183,8 @@ bool
 MM_SparseVirtualMemory::decommitMemory(MM_EnvironmentBase* env, void* address, uintptr_t size)
 {
 	bool ret = false;
-#if defined(OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-	ret = decommitMemoryForDoubleMapping(env, address, size);
-#else /* OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
 	void *highValidAddress = (void *)((uintptr_t)address + size);
 	ret = MM_VirtualMemory::decommitMemory(address, size, address, highValidAddress);
-#endif /* OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
 
 	return ret;
 }
-
-#if defined(OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION)
-bool
-MM_SparseVirtualMemory::decommitMemoryForDoubleMapping(MM_EnvironmentBase* env, void *dataPtr, uintptr_t dataSize)
-{
-	int rc = 0;
-	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
-	struct J9PortVmemIdentifier *identifier = _sparseDataPool->findIdentifierForSparseDataPtr(dataPtr);
-
-	if ((0 == identifier->size) || (NULL == identifier->address)) {
-		/* Maybe this address was already returned to the pool - Should be unreachable, but should we assert? */
-		Assert_MM_unreachable();
-	} else {
-		Assert_GC_true_with_message4(env, ((identifier->size == dataSize) && (identifier->address == dataPtr)),
-			"dataPtr: %p, identifier->address: %p, dataSize: %zu, identifier->size: %zu\n", dataPtr, identifier->address, dataSize, identifier->size);
-		Assert_MM_true((getHeapBase() <= dataPtr) && (getHeapTop() > dataPtr));
-
-		rc = omrvmem_release_double_mapped_region(dataPtr, dataSize, identifier);
-
-		if (-1 == rc) {
-			Trc_MM_SparseVirtualMemory_releaseDoubleMappedRegion_failure(dataPtr, identifier->address, (void *)dataSize, (void *)identifier->size);
-		} else {
-			Trc_MM_SparseVirtualMemory_releaseDoubleMappedRegion_success(dataPtr, identifier->address, (void *)dataSize, (void *)identifier->size);
-		}
-	}
-	return -1 != rc;
-}
-
-void
-MM_SparseVirtualMemory::recordDoubleMapIdentifierForData(void *dataPtr, struct J9PortVmemIdentifier *identifier)
-{
-	omrthread_monitor_enter(_largeObjectVirtualMemoryMutex);
-	_sparseDataPool->recordDoubleMapIdentifierForData(dataPtr, identifier);
-	omrthread_monitor_exit(_largeObjectVirtualMemoryMutex);
-}
-#endif /* OMR_GC_DOUBLE_MAPPING_FOR_SPARSE_HEAP_ALLOCATION */
