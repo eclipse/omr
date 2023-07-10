@@ -773,10 +773,7 @@ class SymbolReferenceTable
 
    TR::SymbolReference * findOrCreateArrayTranslateSymbol();
    TR::SymbolReference * findOrCreateSinglePrecisionSQRTSymbol();
-   TR::SymbolReference * findOrCreateCurrentTimeMaxPrecisionSymbol();
    TR::SymbolReference * findOrCreateArrayTranslateAndTestSymbol();
-   TR::SymbolReference * findOrCreatelong2StringSymbol();
-   TR::SymbolReference * findOrCreatebitOpMemSymbol();
 
    // compilation, optimizer
    TR::SymbolReference * findArrayClassRomPtrSymbolRef();
