@@ -60,6 +60,9 @@
 // Methods of Value Propagation Constraints
 //
 // ***************************************************************************
+TR::VPByteConstraint    *TR::VPConstraint::asByteConstraint()    { return NULL; }
+TR::VPByteConst         *TR::VPConstraint::asByteConst()         { return NULL; }
+TR::VPByteRange         *TR::VPConstraint::asByteRange()         { return NULL; }
 TR::VPShortConstraint   *TR::VPConstraint::asShortConstraint()   { return NULL; }
 TR::VPShortConst        *TR::VPConstraint::asShortConst()        { return NULL; }
 TR::VPShortRange        *TR::VPConstraint::asShortRange()        { return NULL; }
@@ -129,6 +132,20 @@ TR::VPGreaterThanOrEqual*TR::VPGreaterThanOrEqual::asGreaterThanOrEqual(){ retur
 TR::VPEqual             *TR::VPEqual::asEqual()                         { return this; }
 TR::VPNotEqual          *TR::VPNotEqual::asNotEqual()                   { return this; }
 
+int8_t TR::VPConstraint::getLowByte()
+   {
+   if (isUnsigned())
+       return static_cast<int8_t>(TR::getMinUnsigned<TR::Int8>());
+   return static_cast<int8_t>(TR::getMinSigned<TR::Int8>());
+   }
+
+int8_t TR::VPConstraint::getHighByte()
+   {
+   if (isUnsigned())
+       return static_cast<int8_t>(TR::getMaxUnsigned<TR::Int8>());
+   return static_cast<int8_t>(TR::getMaxSigned<TR::Int8>());
+   }
+
 int16_t TR::VPConstraint::getLowShort()
    {
    if (isUnsigned())
@@ -167,6 +184,21 @@ int64_t TR::VPConstraint::getHighLong()
    return TR::getMaxSigned<TR::Int64>();
    }
 
+uint8_t TR::VPConstraint::getUnsignedLowByte()
+   {
+   if ( (getLowByte() ^ getHighByte()) >= 0)       // if both numbers are the same sign, return the small value
+      return static_cast<uint8_t>(getLowByte());
+
+   return static_cast<uint8_t>(TR::getMinUnsigned<TR::Int8>());
+   }
+
+uint8_t TR::VPConstraint::getUnsignedHighByte()
+   {
+   if ( (getLowByte() ^ getHighByte()) >= 0)       // if both numbers have the same sign, getHigh is the high value
+      return static_cast<uint8_t>(getHighByte());
+
+   return static_cast<uint8_t>(TR::getMaxUnsigned<TR::Int8>());
+   }
 
 uint16_t TR::VPConstraint::getUnsignedLowShort()
    {
@@ -333,6 +365,16 @@ TR_YesNoMaybe TR::VPConstraint::isJ9ClassObject()
    return TR_maybe;
    }
 
+int8_t TR::VPByteConstraint::getLowByte()
+   {
+   return getLow();
+   }
+
+int8_t TR::VPByteConstraint::getHighByte()
+   {
+   return getHigh();
+   }
+
 int16_t TR::VPShortConstraint::getLowShort()
    {
    return getLow();
@@ -364,6 +406,16 @@ int64_t TR::VPLongConstraint::getHighLong()
    return getHigh();
    }
 
+int8_t TR::VPMergedConstraints::getLowByte()
+   {
+   return _constraints.getListHead()->getData()->getLowByte();
+   }
+
+int8_t TR::VPMergedConstraints::getHighByte()
+   {
+   return _constraints.getListHead()->getData()->getHighByte();
+   }
+
 int16_t TR::VPMergedConstraints::getLowShort()
    {
    return _constraints.getListHead()->getData()->getLowShort();
@@ -392,6 +444,16 @@ int64_t TR::VPMergedConstraints::getLowLong()
 int64_t TR::VPMergedConstraints::getHighLong()
    {
    return _constraints.getLastElement()->getData()->getHighLong();
+   }
+
+uint8_t TR::VPMergedConstraints::getUnsignedLowByte()
+   {
+   return _constraints.getListHead()->getData()->getUnsignedLowShort();
+   }
+
+uint8_t TR::VPMergedConstraints::getUnsignedHighByte()
+   {
+   return _constraints.getListHead()->getData()->getUnsignedHighShort();
    }
 
 uint16_t TR::VPMergedConstraints::getUnsignedLowShort()
@@ -902,6 +964,22 @@ TR::VPConstraint *TR::VPConstraint::create(OMR::ValuePropagation *vp, const char
    return NULL;
    }
 
+TR::VPByteConst *TR::VPByteConst::create(OMR::ValuePropagation *vp, int8_t v)
+   {
+   int32_t hash = ((uint32_t)v) % VP_HASH_TABLE_SIZE;
+   TR::VPByteConst * constraint;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   for (entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
+       {
+       constraint = entry->constraint->asByteConst();
+       if (constraint && constraint->getByte() == v)
+           return constraint;
+       }
+   constraint = new (vp->trStackMemory()) TR::VPByteConst(v);
+   vp->addConstraint(constraint,hash);
+   return constraint;
+   }
+
 TR::VPShortConst *TR::VPShortConst::create(OMR::ValuePropagation *vp, int16_t v)
    {
    int32_t hash = ((uint32_t)v) % VP_HASH_TABLE_SIZE;
@@ -941,6 +1019,15 @@ TR::VPIntConst *TR::VPIntConst::create(OMR::ValuePropagation *vp, int32_t v)
    return constraint;
    }
 
+TR::VPConstraint *TR::VPByteConst::createExclusion(OMR::ValuePropagation *vp, int8_t v)
+   {
+   if (v == TR::getMinSigned<TR::Int8>())
+       return TR::VPShortRange::create(vp,v+1,static_cast<int8_t>(TR::getMaxSigned<TR::Int8>()));
+   if (v == TR::getMaxSigned<TR::Int8>())
+       return TR::VPShortRange::create(vp,static_cast<int8_t>(TR::getMinSigned<TR::Int8>()),v-1);
+   return TR::VPMergedConstraints::create(vp, TR::VPShortRange::create(vp,static_cast<int8_t>(TR::getMinSigned<TR::Int8>()),v-1),TR::VPShortRange::create(vp,v+1,static_cast<int8_t>(TR::getMaxSigned<TR::Int8>())));
+   }
+
 TR::VPConstraint *TR::VPShortConst::createExclusion(OMR::ValuePropagation *vp, int16_t v)
    {
    if (v == TR::getMinSigned<TR::Int16>())
@@ -957,6 +1044,47 @@ TR::VPConstraint *TR::VPIntConst::createExclusion(OMR::ValuePropagation *vp, int
    if (v == TR::getMaxSigned<TR::Int32>())
       return TR::VPIntRange::create(vp, static_cast<int32_t>(TR::getMinSigned<TR::Int32>()), v-1);
    return TR::VPMergedConstraints::create(vp, TR::VPIntRange::create(vp, static_cast<int32_t>(TR::getMinSigned<TR::Int32>()), v-1), TR::VPIntRange::create(vp, v+1, static_cast<int32_t>(TR::getMaxSigned<TR::Int32>())));
+   }
+
+TR::VPByteConstraint * TR::VPByteRange::create(OMR::ValuePropagation * vp, int8_t low, int8_t high, TR_YesNoMaybe canOverflow)
+   {
+   if (low == TR::getMinSigned<TR::Int8>() && high == TR::getMaxSigned<TR::Int8>())
+       return NULL;
+
+   if (low == high)
+       return TR::VPByteConst::create(vp,low);
+
+   uint32_t uint32low = (uint32_t)low;
+   uint32_t uint32high = (uint32_t)high;
+
+   int32_t hash = ((uint32low<<4)+uint32high) % VP_HASH_TABLE_SIZE;
+   TR::VPByteRange *constraint;
+   OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
+   for(entry = vp->_constraintsHashTable[hash]; entry; entry = entry->next)
+       {
+        constraint = entry->constraint->asByteRange();
+        if(constraint &&
+           constraint->_low == low &&
+           constraint->_high == high &&
+           constraint->_overflow == canOverflow)
+           return constraint;
+       }
+   constraint = new (vp->trStackMemory()) TR::VPByteRange(low,high);
+   constraint->setCanOverflow(canOverflow);
+   vp->addConstraint(constraint,hash);
+   return constraint;
+   }
+
+TR::VPByteConstraint *TR::VPByteRange::create(OMR::ValuePropagation *vp)
+   {
+   return TR::VPByteRange::createWithPrecision(vp, VP_UNDEFINED_PRECISION);
+   }
+
+TR::VPByteConstraint *TR::VPByteRange::createWithPrecision(OMR::ValuePropagation *vp, int32_t precision, bool isNonNegative)
+   {
+   int64_t lo, hi;
+   constrainRangeByPrecision(TR::getMinSigned<TR::Int8>(), TR::getMaxSigned<TR::Int8>(), precision, lo, hi, isNonNegative);
+   return TR::VPByteRange::create(vp, static_cast<int8_t>(lo), static_cast<int8_t>(hi));
    }
 
 TR::VPShortConstraint * TR::VPShortRange::create(OMR::ValuePropagation * vp, int16_t low, int16_t high, TR_YesNoMaybe canOverflow)
@@ -1754,6 +1882,26 @@ TR::VPConstraint * TR::VPConstraint::merge1(TR::VPConstraint *other, OMR::ValueP
    return NULL;
    }
 
+TR::VPConstraint *TR::VPByteConstraint::merge1(TR::VPConstraint * other, OMR::ValuePropagation * vp)
+   {
+   TRACER(vp, this, other);
+
+     TR::VPByteConstraint *otherByte = other->asByteConstraint();
+     if (otherByte)
+        {
+        if (otherByte->getLow() < getLow())
+            return otherByte->merge1(this,vp);
+        if (otherByte->getHigh() <= getHigh())
+            return this;
+        if (otherByte->getLow() <= getHigh() + 1)
+           {
+           if (getLow() == TR::getMinSigned<TR::Int8>() && otherByte->getHigh() == TR::getMaxSigned<TR::Int8>())
+               return NULL;
+           return TR::VPByteRange::create(vp, getLow(),otherByte->getHigh());
+           }
+        }
+     return NULL;
+   }
 
 TR::VPConstraint *TR::VPShortConstraint::merge1(TR::VPConstraint * other, OMR::ValuePropagation * vp)
    {
@@ -2193,6 +2341,115 @@ TR::VPConstraint *TR::VPMergedConstraints::merge1(TR::VPConstraint *other, OMR::
 
    return NULL;
    }
+
+TR::VPConstraint *TR::VPMergedConstraints::byteMerge(TR::VPConstraint * other, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation * vp)
+   {
+   TR::VPShortConstraint *otherCur = other->asByteConstraint();
+
+   TR_ScratchList<TR::VPConstraint>  result (vp->trMemory());
+   ListElement <TR::VPConstraint> *  next   = _constraints.getListHead();
+   TR::VPShortConstraint          *  cur    = next->getData()->asByteConstraint();
+   ListElement<TR::VPConstraint>  *  lastResultEntry = NULL;
+   TR::VPConstraint               *  mergeResult;
+
+   if (otherCur)
+      {
+      next = next->getNextElement();
+      while (cur || otherCur)
+         {
+         if (lastResultEntry &&
+             lastResultEntry->getData()->asByteConstraint())
+            {
+            TR::VPByteConstraint *lastResult = lastResultEntry->getData()->asByteConstraint();
+            if (cur && (!otherCur || cur->getLow() <= otherCur->getLow()))
+               {
+               if (lastResult->getHigh() == TR::getMaxSigned<TR::Int8>() || cur->getLow() <= lastResult->getHigh()+1)
+                  {
+                  mergeResult = lastResult->merge(cur, vp);
+                  if (!mergeResult)
+                     return NULL;
+                  lastResultEntry->setData(mergeResult);
+                  }
+               else
+                  {
+                  lastResultEntry = result.addAfter(cur, lastResultEntry);
+                  }
+               if (next)
+                  {
+                  cur = next->getData()->asByteConstraint();
+                  TR_ASSERT(cur, "Expecting byte constraints in byteMerge");
+                  next = next->getNextElement();
+                  }
+               else
+                  cur = NULL;
+               }
+            else
+               {
+               if (lastResult->getHigh() == TR::getMaxSigned<TR::Int8>() || otherCur->getLow() <= lastResult->getHigh()+1)
+                  {
+                  mergeResult = lastResult->merge(otherCur, vp);
+                  if (!mergeResult)
+                     return NULL;
+                  lastResultEntry->setData(mergeResult);
+                  }
+               else
+                  {
+                  lastResultEntry = result.addAfter(otherCur, lastResultEntry);
+                  }
+               if (otherNext)
+                  {
+                  otherCur = otherNext->getData()->asByteConstraint();
+                  TR_ASSERT(otherCur, "Expecting byte constraints in byteMerge");
+                  otherNext = otherNext->getNextElement();
+                  }
+               else
+                  otherCur = NULL;
+               }
+            }
+         else
+            {
+            // Put the lower of cur and otherCur into the result list
+            //
+            if (cur && (!otherCur || cur->getLow() <= otherCur->getLow()))
+               {
+               lastResultEntry = result.add(cur);
+               if (next)
+                  {
+                  cur = next->getData()->asByteConstraint();
+                  TR_ASSERT(cur, "Expecting byte constraints in byteMerge");
+                  next = next->getNextElement();
+                  }
+               else
+                  cur = NULL;
+               }
+            else
+               {
+               lastResultEntry = result.add(otherCur);
+               if (otherNext)
+                  {
+                  otherCur = otherNext->getData()->asByteConstraint();
+                  TR_ASSERT(otherCur, "Expecting byte constraints in byteMerge");
+                  otherNext = otherNext->getNextElement();
+                  }
+               else
+                  otherCur = NULL;
+               }
+            }
+         }
+
+      lastResultEntry = result.getListHead();
+      if (!lastResultEntry->getNextElement())
+         return lastResultEntry->getData();
+      return TR::VPMergedConstraints::create(vp, lastResultEntry);
+      }
+    else
+      {
+       TR_ASSERT(false, "Merging byte with another type");
+      }
+
+   return NULL;
+   }
+
 
 TR::VPConstraint *TR::VPMergedConstraints::shortMerge(TR::VPConstraint * other, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation * vp)
    {
@@ -2842,6 +3099,65 @@ TR::VPConstraint * TR::VPConstraint::intersect1(TR::VPConstraint *other, OMR::Va
 //       }
 //    return NULL;
 //    }
+
+TR::VPConstraint *TR::VPByteConstraint::intersect1(TR::VPConstraint * other, OMR::ValuePropagation *vp)
+   {
+   TRACER(vp, this, other);
+
+   TR::VPByteConstraint *otherByte = other->asByteConstraint();
+   TR::VPShortConstraint *otherShort = other->asShortConstraint();
+   TR::VPIntConstraint *otherInt = other->asIntConstraint();
+   TR::VPLongConstraint *otherLong = other->asLongConstraint();
+   if (otherByte)
+      {
+      if (otherByte->getLow() < getLow())
+         return otherByte->intersect(this, vp);
+      if (otherByte->getHigh() <= getHigh())
+         return other;
+      if (otherByte->getLow() <= getHigh())
+         return TR::VPShortRange::create(vp, otherByte->getLow(), getHigh());
+      return NULL;
+      }
+   else if (otherShort)
+      {
+      if (otherShort->getLow() < getLow())
+         return otherShort->intersect(this, vp);
+      if (otherShort->getHigh() <= getHigh())
+         return other;
+      if (otherShort->getLow() <= getHigh())
+         return TR::VPShortRange::create(vp, otherShort->getLow(), getHigh());
+      return NULL;
+      }
+   else if (otherInt)
+      {
+      int64_t lowVal, highVal;
+      if ((int64_t)otherInt->getLow() < (int64_t)getLow())
+         lowVal = getLow();
+      else
+         lowVal = otherInt->getLow();
+      if ((int64_t)otherInt->getHigh() <= (int64_t)getHigh())
+         highVal = otherInt->getHigh();
+      else
+         highVal = getHigh();
+
+      return TR::VPShortRange::create(vp, (int16_t)lowVal, (int16_t)highVal);
+      }
+   else if (otherLong)
+      {
+      int64_t lowVal, highVal;
+      if ((int64_t)otherLong->getLow() < (int64_t)getLow())
+         lowVal = getLow();
+      else
+         lowVal = otherLong->getLow();
+      if ((int64_t)otherLong->getHigh() <= (int64_t)getHigh())
+         highVal = otherLong->getHigh();
+      else
+         highVal = getHigh();
+
+      return TR::VPShortRange::create(vp, (int16_t)lowVal, (int16_t)highVal);
+      }
+   return NULL;
+   }
 
 TR::VPConstraint *TR::VPShortConstraint::intersect1(TR::VPConstraint * other, OMR::ValuePropagation *vp)
    {
@@ -4023,6 +4339,102 @@ TR::VPConstraint *TR::VPMergedConstraints::intersect1(TR::VPConstraint *other, O
 //       }
 //    }
 
+TR::VPConstraint *TR::VPMergedConstraints::byteIntersect(TR::VPConstraint * other, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation *vp)
+   {
+   TR::VPShortConstraint *otherCur = other->asByteConstraint();
+
+   TR_ScratchList<TR::VPConstraint>  result (vp->trMemory());
+   ListElement<TR::VPConstraint>    *next = _constraints.getListHead();
+   TR::VPShortConstraint            *cur  = next->getData()->asByteConstraint();
+   ListElement<TR::VPConstraint>    *lastResultEntry = NULL;
+
+   if (otherCur)
+      {
+      int8_t curLow = cur->getLow();
+      int8_t curHigh = cur->getHigh();
+      int8_t otherLow = otherCur->getLow();
+      int8_t otherHigh = otherCur->getHigh();
+
+      next = next->getNextElement();
+      while (cur && otherCur)
+         {
+         bool skipCur      = false;
+         bool skipOtherCur = false;
+
+         // If the two current ranges do not overlap, skip the lower range and
+         // try again
+         //
+         if (curHigh < otherLow)
+            skipCur = true;
+         else if (otherHigh < curLow)
+            skipOtherCur = true;
+
+         else
+            {
+            // Put the intersection of the two current ranges into the result list
+            //
+            int8_t resultLow = (curLow > otherLow) ? curLow : otherLow;
+            int8_t resultHigh = (curHigh < otherHigh) ? curHigh : otherHigh;
+            lastResultEntry = result.addAfter(TR::VPByteRange::create(vp, resultLow, resultHigh), lastResultEntry);
+
+            // Reduce the two current ranges. If either is exhausted, move to the
+            // next
+            //
+            if (resultHigh == TR::getMaxSigned<TR::Int8>())
+               break;
+            curLow = otherLow = resultHigh+1;
+            if (curLow > curHigh)
+               skipCur = true;
+            if (otherLow > otherHigh)
+               skipOtherCur = true;
+            }
+
+         if (skipCur)
+            {
+            if (next)
+               {
+               cur = next->getData()->asByteConstraint();
+               TR_ASSERT(cur, "Expecting byte constraints in byteIntersect");
+               next = next->getNextElement();
+               curLow = cur->getLow();
+               curHigh = cur->getHigh();
+               }
+            else
+               break;
+            }
+         if (skipOtherCur)
+            {
+            if (otherNext)
+               {
+               otherCur = otherNext->getData()->asByteConstraint();
+               TR_ASSERT(otherCur, "Expecting byte constraints in byteIntersect");
+               otherNext = otherNext->getNextElement();
+               otherLow = otherCur->getLow();
+               otherHigh = otherCur->getHigh();
+               }
+            else
+               break;
+            }
+         }
+
+      lastResultEntry = result.getListHead();
+      if (!lastResultEntry)
+         return NULL;
+
+      // If only one entry, collapse the merged list into the single entry
+      //
+      if (!lastResultEntry->getNextElement())
+         return lastResultEntry->getData();
+
+      return TR::VPMergedConstraints::create(vp, lastResultEntry);
+      }
+    else
+      {
+        TR_ASSERT(false,"Intersecting with another type for byte");
+      }
+    return NULL;
+   }
+
 TR::VPConstraint *TR::VPMergedConstraints::shortIntersect(TR::VPConstraint * other, ListElement<TR::VPConstraint> *otherNext, OMR::ValuePropagation *vp)
    {
    TR::VPShortConstraint *otherCur = other->asShortConstraint();
@@ -4590,6 +5002,28 @@ TR::VPConstraint *TR::VPConstraint::subtract(TR::VPConstraint *other, TR::DataTy
    return NULL;
    }
 
+TR::VPConstraint *TR::VPByteConstraint::add(TR::VPConstraint *other, TR::DataType dt, OMR::ValuePropagation *vp)
+   {
+    TR::VPByteConstraint *otherByte = other->asByteConstraint();
+    if(!otherShort)
+        return NULL;
+
+    TR::DataType type(dt);
+
+    if(!type.isInt8())
+        return NULL;
+
+   //Compute the lower and upper bound values, and determine whether or not the arithmetic
+   //has overflowed in either case.
+   bool lowOverflow;
+   int8_t low  = TR::addWithOverflow<int8_t>(getLow(), otherShort->getLow(), lowOverflow);
+
+   bool highOverflow;
+   int8_t high = TR::addWithOverflow<int8_t>(getHigh(), otherShort->getHigh(), highOverflow);
+
+   return getRange(low, high, lowOverflow, highOverflow, vp);
+   }
+
 TR::VPConstraint *TR::VPShortConstraint::add(TR::VPConstraint *other, TR::DataType dt, OMR::ValuePropagation *vp)
    {
     TR::VPShortConstraint *otherShort = other->asShortConstraint();
@@ -4697,6 +5131,29 @@ TR::VPConstraint *TR::VPIntConstraint::add(TR::VPConstraint *other, TR::DataType
 //    return range;
 //    }
 
+TR::VPConstraint *TR::VPByteConstraint::subtract(TR::VPConstraint *other, TR::DataType dt, OMR::ValuePropagation * vp)
+   {
+   TR::VPByteConstraint *otherByte = other->asByteConstraint();
+
+   if(!otherByte)
+       return NULL;
+
+   TR::DataType type(dt);
+
+   if (!type.isInt8())
+       return NULL;
+
+   //Compute the lower and upper bound values, and determine whether or not the arithmetic
+   //has overflowed in either case.
+   bool lowOverflow;
+   int8_t low  = TR::subWithOverflow<int8_t>(getLow(), otherShort->getHigh(), lowOverflow);
+
+   bool highOverflow;
+   int8_t high = TR::subWithOverflow<int8_t>(getHigh(), otherShort->getLow(), highOverflow);
+
+   return getRange(low, high, lowOverflow, highOverflow, vp);
+   }
+
 TR::VPConstraint *TR::VPShortConstraint::subtract(TR::VPConstraint *other, TR::DataType dt, OMR::ValuePropagation * vp)
    {
    TR::VPShortConstraint *otherShort = other->asShortConstraint();
@@ -4743,6 +5200,33 @@ TR::VPConstraint *TR::VPIntConstraint::subtract(TR::VPConstraint *other, TR::Dat
    int32_t high = TR::subWithOverflow<int32_t>(getHigh(), otherInt->getLow(), highOverflow);
 
    return getRange(low, high, lowOverflow, highOverflow, vp);
+   }
+
+TR::VPConstraint *TR::VPByteConstraint::getRange(int8_t low, int8_t high, bool lowCanOverflow, bool highCanOverflow, OMR::ValuePropagation * vp)
+   {
+
+   if ( lowCanOverflow && highCanOverflow )
+      {
+
+      if ( ( high ^ low ) < 0 )
+         return NULL;
+
+      return TR::VPByteRange::create(vp, low, high, TR_yes);
+      }
+
+   else if ( lowCanOverflow || highCanOverflow )
+      {
+
+      if ( high >= low )
+         return NULL;
+
+      TR::VPConstraint* range1 = TR::VPByteRange::create(vp, static_cast<int8_t>(TR::getMinSigned<TR::Int8>()), static_cast<int8_t>(high), TR_yes);
+      TR::VPConstraint* range2 = TR::VPByteRange::create(vp, static_cast<int8_t>(low), static_cast<int8_t>(TR::getMaxSigned<TR::Int8>()), TR_yes);
+      return TR::VPMergedConstraints::create(vp, range1, range2);
+      }
+
+   //no overflow
+   return TR::VPShortRange::create(vp, low, high, TR_no);
    }
 
 TR::VPConstraint *TR::VPShortConstraint::getRange(int16_t low, int16_t high, bool lowCanOverflow, bool highCanOverflow, OMR::ValuePropagation * vp)
@@ -4912,6 +5396,14 @@ TR::VPConstraint *TR::VPLongConstraint::getRange(int64_t low, int64_t high, bool
 bool TR::VPConstraint::mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp)
    {
    return false;
+   }
+
+bool TR::VPByteConst::mustBeEqual(TR::VPConstraint * other, OMR::ValuePropagation *vp)
+   {
+   TR::VPByteConst * otherConst = other->asByteConst();
+   if (isUnsigned() && otherConst && otherConst->isUnsigned())
+       return ((uint8_t)otherConst->getByte() == (uint8_t)getByte());
+   return otherConst && otherConst->getByte() == getByte();
    }
 
 bool TR::VPShortConst::mustBeEqual(TR::VPConstraint * other, OMR::ValuePropagation *vp)
@@ -5781,7 +6273,7 @@ void TR::VPConstraint::print(TR::Compilation *comp, TR::FILE *outFile, int32_t r
    trfprintf(outFile, "unknown constraint relative to value number %d", relative);
    }
 
-void TR::VPShortConst::print(TR::Compilation * comp, TR::FILE *outFile)
+void TR::VPByteConst::print(TR::Compilation * comp, TR::FILE *outFile)
    {
    if (outFile == NULL)
        return;
@@ -5789,6 +6281,48 @@ void TR::VPShortConst::print(TR::Compilation * comp, TR::FILE *outFile)
       trfprintf(outFile, "%u US ", getLow());
    else
       trfprintf(outFile, "%d S ", getLow());
+
+   }
+
+
+void TR::VPByteRange::print(TR::Compilation * comp, TR::FILE *outFile)
+   {
+   if (outFile == NULL)
+       return;
+
+   if (isUnsigned())
+      {
+       if ((uint8_t)getLow() == TR::getMinUnsigned<TR::Int8>())
+           trfprintf(outFile, "(TR::getMinUnsigned<TR::Int8>() ");
+       else
+           trfprintf(outFile, "(%u ", getLow());
+
+       if ((uint8_t)getHigh() == TR::getMaxUnsigned<TR::Int8>())
+           trfprintf(outFile, "to TR::getMaxUnsigned<TR::Int8>())UB");
+       else
+           trfprintf(outFile, "to %u)UB",getHigh());
+      }
+   else
+      {
+      if (getLow() == TR::getMinSigned<TR::Int8>())
+         trfprintf(outFile, "(TR::getMinSigned<TR::Int8>() ");
+      else
+         trfprintf(outFile, "(%d ", getLow());
+      if (getHigh() == TR::getMaxSigned<TR::Int8>())
+         trfprintf(outFile, "to TR::getMaxSigned<TR::Int8>())S");
+      else
+         trfprintf(outFile, "to %d)B", getHigh());
+      }
+   }
+
+void TR::VPShortConst::print(TR::Compilation * comp, TR::FILE *outFile)
+   {
+   if (outFile == NULL)
+       return;
+   if (isUnsigned())
+      trfprintf(outFile, "%u UB ", getLow());
+   else
+      trfprintf(outFile, "%d B ", getLow());
 
    }
 

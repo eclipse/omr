@@ -69,7 +69,9 @@ class VPConstraint
    TR_ALLOC(TR_Memory::ValuePropagation)
 
    VPConstraint(int32_t p) : _mergePriority(p) {_unsignedType = false;}
-
+   virtual class VPByteConstraint    *asByteConstraint();
+   virtual class VPByteConst         *asByteConst();
+   virtual class VPByteRange         *asByteRange();
    virtual class VPShortConstraint   *asShortConstraint();
    virtual class VPShortConst        *asShortConst();
    virtual class VPShortRange        *asShortRange();
@@ -143,6 +145,8 @@ class VPConstraint
 
    // Integer information
    //
+   virtual int8_t getLowByte();
+   virtual int8_t getHighByte();
    virtual int16_t getLowShort();
    virtual int16_t getHighShort();
    virtual int32_t getLowInt();
@@ -150,7 +154,8 @@ class VPConstraint
    virtual int64_t getLowLong();
    virtual int64_t getHighLong();
 
-
+   virtual uint8_t getUnsignedLowByte();
+   virtual uint8_t getUnsignedHighByte();
    virtual uint16_t getUnsignedLowShort();
    virtual uint16_t getUnsignedHighShort();
    virtual uint32_t getUnsignedLowInt();
@@ -213,11 +218,12 @@ class VPConstraint
 
    enum MergePriorities
       {
-      EqualPriority             = 19,
-      GreaterThanOrEqualPriority= 18,
-      LessThanOrEqualPriority   = 17,
-      NotEqualPriority          = 16,
-      MergedConstraintPriority  = 15,
+      EqualPriority             = 20,
+      GreaterThanOrEqualPriority= 19,
+      LessThanOrEqualPriority   = 18,
+      NotEqualPriority          = 17,
+      MergedConstraintPriority  = 16,
+      BytePriority              = 15,
       ShortPriority             = 14,
       IntPriority               = 13,
       LongPriority              = 12,
@@ -273,6 +279,78 @@ class VPConstraint
    };
 
 #define TRACER(vp, self, other) Tracer _tracer_(vp, self, other, __func__)
+
+class VPByteConstraint: public TR::VPConstraint
+   {
+   public:
+   VPByteConstraint(int8_t v) : TR::VPConstraint(BytePriority) {_low=v; _overflow = TR_no;}
+   virtual TR::VPByteConstraint * asByteConstraint();
+
+   int8_t getByte() {return _low; }
+   int8_t getLow() {return _low; }
+   virtual int8_t  getHigh() = 0;
+   virtual int8_t  getLowByte();
+   virtual int8_t  getHighByte();
+
+   virtual TR::VPConstraint * merge1 ( TR::VPConstraint * other, OMR::ValuePropagation * vp);
+   virtual TR::VPConstraint * intersect1 (TR::VPConstraint * other, OMR::ValuePropagation * vp);
+
+   virtual bool mustBeNotEqual (TR::VPConstraint * other, OMR::ValuePropagation *vp);
+   virtual bool mustBeLessThan (TR::VPConstraint * other, OMR::ValuePropagation *vp);
+   virtual bool mustBeLessThanOrEqual (TR::VPConstraint * other, OMR::ValuePropagation *vp);
+
+   virtual TR::VPConstraint *add(TR::VPConstraint * other, TR::DataType type, OMR::ValuePropagation *vp);
+   virtual TR::VPConstraint *subtract(TR::VPConstraint *other, TR::DataType type, OMR::ValuePropagation * vp);
+
+   virtual TR_YesNoMaybe canOverflow() {return _overflow;}
+   virtual void setCanOverflow(TR_YesNoMaybe v) {_overflow = v;}
+
+   virtual int32_t getPrecision() {return getPrecisionFromValue(TR::getMaxSigned<TR::Int8>());}
+
+   protected:
+   int8_t _low;
+   TR_YesNoMaybe _overflow;
+
+   private:
+   TR::VPConstraint *getRange(int8_t, int8_t, bool, bool, OMR::ValuePropagation * vp);
+   };
+
+class VPByteConst : public TR::VPByteConstraint
+   {
+   public:
+   VPByteConst(int8_t v) : TR::VPByteConstraint(v) {}
+   static TR::VPByteConst *create(OMR::ValuePropagation *vp, int8_t v);
+   static TR::VPConstraint *createExclusion(OMR::ValuePropagation *vp, int8_t v);
+   // unsigned createExclusion
+   //static TR::VPConstraint *createExclusion(OMR::ValuePropagation *vp, int32_t v);
+   virtual TR::VPByteConst *asByteConst();
+   virtual int8_t getHigh() {return _low;}
+   virtual bool mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp);
+
+   virtual void print(TR::Compilation *, TR::FILE *);
+   virtual const char *name();
+
+   virtual int32_t getPrecision() {return getPrecisionFromValue(_low);}
+   };
+
+class VPByteRange : public TR::VPByteConstraint
+   {
+   public:
+   VPByteRange(int8_t low, int8_t high) : TR::VPByteConstraint(low), _high(high) {}
+   static TR::VPByteConstraint *create(OMR::ValuePropagation *vp, int8_t low, int8_t high, TR_YesNoMaybe canOverflow = TR_no);
+   static TR::VPByteConstraint *create(OMR::ValuePropagation *vp);
+   static TR::VPByteConstraint *createWithPrecision(OMR::ValuePropagation *vp, int32_t precision, bool isNonNegative = false);
+   virtual TR::VPByteRange *asByteRange();
+   virtual int8_t getHigh() {return _high;}
+
+   virtual void print(TR::Compilation *, TR::FILE *);
+   virtual const char *name();
+
+   virtual int32_t getPrecision() {return getPrecisionFromRange(_low, _high);}
+
+   private:
+   int8_t _high;
+   };
 
 class VPShortConstraint: public TR::VPConstraint
    {
@@ -1012,6 +1090,8 @@ class VPMergedConstraints : public TR::VPConstraint
    virtual bool mustBeLessThan(TR::VPConstraint *other, OMR::ValuePropagation *vp);
    virtual bool mustBeLessThanOrEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp);
 
+   virtual int8_t getLowByte();
+   virtual int8_t getHighByte();
    virtual int16_t getLowShort();
    virtual int16_t getHighShort();
    virtual int32_t getLowInt();
@@ -1019,6 +1099,8 @@ class VPMergedConstraints : public TR::VPConstraint
    virtual int64_t getLowLong();
    virtual int64_t getHighLong();
 
+   virtual uint8_t getUnsignedLowByte();
+   virtual uint8_t getUnsignedHighByte();
    virtual uint16_t getUnsignedLowShort();
    virtual uint16_t getUnsignedHighShort();
    virtual uint32_t getUnsignedLowInt();

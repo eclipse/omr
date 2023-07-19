@@ -8434,14 +8434,14 @@ static TR::Node *constrainNarrowIntValue(OMR::ValuePropagation *vp, TR::Node *no
    // Constrain the result.
    switch (node->getDataType())
       {
+      case TR::Int8: // byte nodes now using Byte constraint
+		   constraint = TR::VPByteRange::create(vp, (int8_t)low, (int8_t)high);
+         break;
       case TR::Int16:
          constraint = TR::VPShortRange::create(vp, (int16_t)low, (int16_t)high);
          break;
-
-      case TR::Int8: // byte nodes are still using Int constraint
-		     // need some changes
       case TR::Int32:
-         constraint = TR::VPIntRange::create(vp, (int32_t)low, (int32_t)high);
+         constraint = TR::VPByteRange::create(vp, (int8_t)low, (int8_t)high);
          break;
 
       default:
