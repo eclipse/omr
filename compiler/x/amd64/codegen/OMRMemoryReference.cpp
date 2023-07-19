@@ -396,6 +396,12 @@ uint32_t OMR::X86::AMD64::MemoryReference::estimateBinaryLength(TR::CodeGenerato
       // the size after adding the big load instruction.)
       //
       estimate += IMM64_LOAD_SIZE;
+
+      // Add one byte to the estimate to account for the REX prefix
+      // in the event that the index register has been changed during
+      // code generation due to the insertion of an address load instruction
+      if (_indexRegister == NULL)
+         estimate += 1;
       }
 
    return estimate;

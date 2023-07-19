@@ -710,6 +710,8 @@ bool OMR::ARM64::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::CPU *cpu, TR::I
       case TR::vmbitswap:
       case TR::vbyteswap:
       case TR::vmbyteswap:
+      case TR::mmAllTrue:
+      case TR::mmAnyTrue:
          // Float/ Double are not supported
          return (et == TR::Int8 || et == TR::Int16 || et == TR::Int32 || et == TR::Int64);
       case TR::vload:

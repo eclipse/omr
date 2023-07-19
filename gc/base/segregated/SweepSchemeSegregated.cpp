@@ -532,7 +532,6 @@ MM_SweepSchemeSegregated::incrementalSweepSmall(MM_EnvironmentBase *env)
 				if ((actualSweepRegions = sweepList->dequeue(env->getRegionWorkList(), sweepSmallRegionsPerIteration)) > 0) {
 					regionPool->decrementCurrentCountOfSweepRegions(sizeClass, actualSweepRegions);
 					regionPool->decrementCurrentTotalCountOfSweepRegions(actualSweepRegions);
-					uintptr_t freedRegions = 0, processedRegions = 0;
 					MM_HeapRegionQueue *fullList = env->getRegionLocalFull();
 					while ((currentRegion = env->getRegionWorkList()->dequeue()) != NULL) {
 						sweepRegion(env, currentRegion);
@@ -552,9 +551,7 @@ MM_SweepSchemeSegregated::incrementalSweepSmall(MM_EnvironmentBase *env)
 							currentRegion->emptyRegionReturned(env);
 							currentRegion->setFree(1);
 							env->getRegionLocalFree()->enqueue(currentRegion);
-							freedRegions++;
 						}
-						processedRegions++;
 						
 						if (updateSweepSmallRegionCount()) {
 							yieldFromSweep(env, yieldSlackTime);

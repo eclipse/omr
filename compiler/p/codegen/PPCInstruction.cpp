@@ -1374,11 +1374,13 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, PPCOpProp_BranchUnlikely, currentNode, label2, getTargetRegister(0), cursor));
          else
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, currentNode, label2, getTargetRegister(0), cursor));
+#ifdef OMR_ENABLE_POWER_INTMODULO // Re-enable this code with new hardware update
          if (cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9))
             {
             cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::modsw, currentNode, getTargetRegister(1), getSourceRegister(0), getSourceRegister(1), cursor));
             }
          else
+#endif
             {
             cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::divw, currentNode, getTargetRegister(1), getSourceRegister(0), getSourceRegister(1), cursor));
             cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::mullw, currentNode, getTargetRegister(1), getSourceRegister(1), getTargetRegister(1), cursor));
@@ -1405,11 +1407,13 @@ void TR::PPCControlFlowInstruction::assignRegisters(TR_RegisterKinds kindToBeAss
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, PPCOpProp_BranchUnlikely, currentNode, label2, getTargetRegister(0), cursor));
          else
             cg()->traceRAInstruction(cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::beq, currentNode, label2, getTargetRegister(0), cursor));
+#ifdef OMR_ENABLE_POWER_INTMODULO // Re-enable this code with new hardware update
          if (cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9))
             {
             cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::modsd, currentNode, getTargetRegister(1), getSourceRegister(0), getSourceRegister(1), cursor));
             }
          else
+#endif
             {
             cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::divd, currentNode, getTargetRegister(1), getSourceRegister(0), getSourceRegister(1), cursor));
             cg()->traceRAInstruction(cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::mulld, currentNode, getTargetRegister(1), getSourceRegister(1), getTargetRegister(1), cursor));

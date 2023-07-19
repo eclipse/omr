@@ -1621,12 +1621,14 @@ static TR::Register *signedIntegerDivisionOrRemainderAnalyser(TR::Node          
             generateTrg1Src1Instruction(cg, TR::InstOpCode::neg, node, trgReg, trgReg);
          }
       }
+#ifdef OMR_ENABLE_POWER_INTMODULO // Re-enable this code with new hardware update
    else if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9) && isRemainder)
       {
       if (divisorReg == NULL)
          divisorReg = cg->evaluate(node->getSecondChild());
       generateTrg1Src2Instruction(cg, TR::InstOpCode::modsw, node, trgReg, dividendReg, divisorReg);
       }
+#endif
    else
       {
       if (tmp1Reg == NULL)
@@ -2078,11 +2080,13 @@ strengthReducingLongDivideOrRemainder32BitMode(TR::Node *node,      TR::CodeGene
 
          if (isRemainder)
             {
+#ifdef OMR_ENABLE_POWER_INTMODULO // Re-enable this code with new hardware update
             if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9))
                {
                generateTrg1Src2Instruction(cg, TR::InstOpCode::moduw, node, dr_l, dd_l, dr_l);
                }
             else
+#endif
                {
                generateTrg1Src2Instruction(cg, TR::InstOpCode::divwu, node, tmp2Reg, dd_l, dr_l);
                generateTrg1Src2Instruction(cg, TR::InstOpCode::mullw, node, tmp1Reg, tmp2Reg, dr_l);
@@ -2154,11 +2158,13 @@ TR::Register *OMR::Power::TreeEvaluator::iremEvaluator(TR::Node *node, TR::CodeG
          {
          TR::Register *divisorReg = cg->evaluate(secondChild);
          trgReg = cg->allocateRegister();
+#ifdef OMR_ENABLE_POWER_INTMODULO // Re-enable this code with new hardware update
          if(cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9))
             {
             generateTrg1Src2Instruction(cg, TR::InstOpCode::modsw, node, trgReg, dividendReg, divisorReg);
             }
          else
+#endif
             {
             generateTrg1Src2Instruction(cg, TR::InstOpCode::divw, node, trgReg, dividendReg, divisorReg);
             generateTrg1Src2Instruction(cg, TR::InstOpCode::mullw, node, trgReg, divisorReg, trgReg);
@@ -2210,11 +2216,13 @@ TR::Register *OMR::Power::TreeEvaluator::iremEvaluator(TR::Node *node, TR::CodeG
             generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, doneLabel, condReg);
             cg->stopUsingRegister(condReg);
             }
+#ifdef OMR_ENABLE_POWER_INTMODULO // Re-enable this code with new hardware update
          if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9))
             {
             generateTrg1Src2Instruction(cg, TR::InstOpCode::modsw, node, trgReg, dividendReg, divisorReg);
             }
          else
+#endif
             {
             generateTrg1Src2Instruction(cg, TR::InstOpCode::divw, node, trgReg, dividendReg, divisorReg);
             generateTrg1Src2Instruction(cg, TR::InstOpCode::mullw, node, trgReg, divisorReg, trgReg);
@@ -2250,11 +2258,13 @@ TR::Register *lrem64Evaluator(TR::Node *node, TR::CodeGenerator *cg)
          {
          TR::Register *divisorReg = cg->evaluate(secondChild);
          trgReg = cg->allocateRegister();
+#ifdef OMR_ENABLE_POWER_INTMODULO // Re-enable this code with new hardware update
          if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9))
             {
             generateTrg1Src2Instruction(cg, TR::InstOpCode::modsd, node, trgReg, dividendReg, divisorReg);
             }
          else
+#endif
             {
             generateTrg1Src2Instruction(cg, TR::InstOpCode::divd, node, trgReg, dividendReg, divisorReg);
             generateTrg1Src2Instruction(cg, TR::InstOpCode::mulld, node, trgReg, divisorReg, trgReg);
@@ -2306,11 +2316,13 @@ TR::Register *lrem64Evaluator(TR::Node *node, TR::CodeGenerator *cg)
             generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, doneLabel, condReg);
             cg->stopUsingRegister(condReg);
             }
+#ifdef OMR_ENABLE_POWER_INTMODULO // Re-enable this code with new hardware update
          if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9))
             {
             generateTrg1Src2Instruction(cg, TR::InstOpCode::modsd, node, trgReg, dividendReg, divisorReg);
             }
          else
+#endif
             {
             generateTrg1Src2Instruction(cg, TR::InstOpCode::divd, node, trgReg, dividendReg, divisorReg);
             generateTrg1Src2Instruction(cg, TR::InstOpCode::mulld, node, trgReg, divisorReg, trgReg);

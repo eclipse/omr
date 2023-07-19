@@ -1232,13 +1232,73 @@ OMR::ARM64::TreeEvaluator::mAllTrueEvaluator(TR::Node *node, TR::CodeGenerator *
 TR::Register*
 OMR::ARM64::TreeEvaluator::mmAnyTrueEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR_ASSERT_FATAL_WITH_NODE(node, firstChild->getDataType().getVectorLength() == TR::VectorLength128,
+                   "Only 128-bit vectors are supported %s", firstChild->getDataType().toString());
+
+   TR::Register *maskReg = cg->evaluate(firstChild);
+   TR::Register *mask2Reg = cg->evaluate(secondChild);
+   TR::Register *resultReg = cg->allocateRegister(TR_GPR);
+   TR::Register *tempReg = cg->allocateRegister(TR_VRF);
+
+   /*
+    * and   v2.16b, v0.16b, v1.16b
+    * ; umaxp is fast if arrangement specifier is 4s.
+    * umaxp v2.4s, v2.4s, v2.4s
+    * ; now relevant data is in lower 64bit of v2.
+    * umov  x0, v2.2d[0]
+    * cmp   x0, #0
+    * cset  x0, ne
+    */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vand16b, node, tempReg, maskReg, mask2Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vumaxp4s, node, tempReg, tempReg, tempReg);
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, resultReg, tempReg, 0);
+   generateCompareImmInstruction(cg, node, resultReg, 0, true);
+   generateCSetInstruction(cg, node, resultReg, TR::CC_NE);
+
+   cg->stopUsingRegister(tempReg);
+   node->setRegister(resultReg);
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+
+   return resultReg;
    }
 
 TR::Register*
 OMR::ARM64::TreeEvaluator::mmAllTrueEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR_ASSERT_FATAL_WITH_NODE(node, firstChild->getDataType().getVectorLength() == TR::VectorLength128,
+                   "Only 128-bit vectors are supported %s", firstChild->getDataType().toString());
+
+   TR::Register *maskReg = cg->evaluate(firstChild);
+   TR::Register *mask2Reg = cg->evaluate(secondChild);
+   TR::Register *resultReg = cg->allocateRegister(TR_GPR);
+   TR::Register *tempReg = cg->allocateRegister(TR_VRF);
+
+   /*
+    * and   v2.16b, v0.16b, v1.16b
+    * ; uminp is fast if arrangement specifier is 4s.
+    * uminp v2.4s, v2.4s, v2.4s
+    * ; now relevant data is in lower 64bit of v2.
+    * umov  x0, v2.2d[0]
+    * cmn   x0, #1
+    * cset  x0, eq
+    */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vand16b, node, tempReg, maskReg, mask2Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vuminp4s, node, tempReg, tempReg, tempReg);
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, resultReg, tempReg, 0);
+   generateCompareImmInstruction(cg, node, resultReg, -1, true);
+   generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
+
+   cg->stopUsingRegister(tempReg);
+   node->setRegister(resultReg);
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+
+   return resultReg;
    }
 
 TR::Register*
@@ -4441,6 +4501,10 @@ vectorRotateHelper(TR::Node *node, TR::Register *resultReg, TR::Register *lhsReg
    TR::DataType elementType = node->getDataType().getVectorElementType();
    TR_ASSERT_FATAL_WITH_NODE(node, (elementType >= TR::Int8) && (elementType <= TR::Int64), "elementType must be integer");
    TR::Register *tempReg = cg->allocateRegister(TR_VRF);
+   TR::Register *temp2Reg = cg->allocateRegister(TR_VRF);
+   TR::Register *temp3Reg = cg->allocateRegister(TR_VRF);
+   TR::InstOpCode::Mnemonic cmpOp = static_cast<TR::InstOpCode::Mnemonic>(TR::InstOpCode::vcmlt16b_zero + (elementType - TR::Int8));
+   TR::InstOpCode::Mnemonic addOp = static_cast<TR::InstOpCode::Mnemonic>(TR::InstOpCode::vadd16b + (elementType - TR::Int8));
    TR::InstOpCode::Mnemonic negOp = static_cast<TR::InstOpCode::Mnemonic>(TR::InstOpCode::vneg16b + (elementType - TR::Int8));
    TR::InstOpCode::Mnemonic shiftOp = static_cast<TR::InstOpCode::Mnemonic>(TR::InstOpCode::vushl16b + (elementType - TR::Int8));
    TR::InstOpCode::Mnemonic subOp = static_cast<TR::InstOpCode::Mnemonic>(TR::InstOpCode::vsub16b + (elementType - TR::Int8));
@@ -4462,13 +4526,26 @@ vectorRotateHelper(TR::Node *node, TR::Register *resultReg, TR::Register *lhsReg
       generateTrg1ImmInstruction(cg, movOp, node, tempReg, sizeInBits);
       }
 
-   /* (lhs << rhs) || (lhs >>> (sizeInBits - rhs)) */
-   generateTrg1Src2Instruction(cg, subOp, node, tempReg, rhsReg, tempReg);
-   generateTrg1Src2Instruction(cg, shiftOp, node, resultReg, lhsReg, rhsReg);
-   generateTrg1Src2Instruction(cg, shiftOp, node, tempReg, lhsReg, tempReg);
+   /*
+    * cmlt_zero temp2Reg, rhsReg
+    * add       temp3Reg, rhsReg, tempReg     ; rhs + sizeInBits
+    * bif       temp3Reg, rhsReg, temp2Reg    ; leftShitAmount = (rhs < 0) ? (rhs + sizeInBits) : rhs
+    * sub       temp2Reg, temp3Reg, tempReg
+    * ushl      resultReg, lhsReg, temp3Reg
+    * ushl      tempReg, lhsReg, temp2Reg
+    * orr       resultReg, resultReg, tempReg ; (lhs << leftShitAmount) || (lhs >>> (sizeInBits - leftShitAmount))
+    */
+   generateTrg1Src1Instruction(cg, cmpOp, node, temp2Reg, rhsReg);
+   generateTrg1Src2Instruction(cg, addOp, node, temp3Reg, rhsReg, tempReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vbif16b, node, temp3Reg, rhsReg, temp2Reg);
+   generateTrg1Src2Instruction(cg, subOp, node, temp2Reg, temp3Reg, tempReg);
+   generateTrg1Src2Instruction(cg, shiftOp, node, resultReg, lhsReg, temp3Reg);
+   generateTrg1Src2Instruction(cg, shiftOp, node, tempReg, lhsReg, temp2Reg);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vorr16b, node, resultReg, resultReg, tempReg);
 
    cg->stopUsingRegister(tempReg);
+   cg->stopUsingRegister(temp2Reg);
+   cg->stopUsingRegister(temp3Reg);
 
    return resultReg;
    }

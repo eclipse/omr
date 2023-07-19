@@ -58,7 +58,7 @@ extern int64_t __getNanos(void);
 #define OMRTIME_HIRES_CLOCK_FREQUENCY J9CONST_U64(1000000000)
 
 #define OMRTIME_NANOSECONDS_PER_SECOND J9CONST_I64(1000000000)
-static const clockid_t J9TIME_NANO_CLOCK = CLOCK_MONOTONIC;
+static const clockid_t OMRTIME_NANO_CLOCK = CLOCK_MONOTONIC;
 
 /*
  * We don't need anything in this structure, because assembler code has the required fields hard coded
@@ -147,7 +147,7 @@ omrtime_nano_time(struct OMRPortLibrary *portLibrary)
 	struct timespec ts;
 	int64_t hiresTime = 0;
 
-	if (0 == clock_gettime(J9TIME_NANO_CLOCK, &ts)) {
+	if (0 == clock_gettime(OMRTIME_NANO_CLOCK, &ts)) {
 		hiresTime = ((int64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (int64_t)ts.tv_nsec;
 	}
 
@@ -170,7 +170,7 @@ omrtime_hires_clock(struct OMRPortLibrary *portLibrary)
 		ret = __getNanos();
 	} else {
 		struct timespec ts;
-		if (0 == clock_gettime(CLOCK_MONOTONIC_RAW, &ts)) {
+		if (0 == clock_gettime(OMRTIME_NANO_CLOCK, &ts)) {
 			ret = ((uint64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (uint64_t)ts.tv_nsec;
 		}
 	}
@@ -309,7 +309,7 @@ omrtime_startup(struct OMRPortLibrary *portLibrary)
 	}
 
 	/* check if the clock is available */
-	if (0 != clock_getres(J9TIME_NANO_CLOCK, &ts)) {
+	if (0 != clock_getres(OMRTIME_NANO_CLOCK, &ts)) {
 		rc = OMRPORT_ERROR_STARTUP_TIME;
 	}
 

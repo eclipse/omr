@@ -148,7 +148,6 @@ MM_CopyScanCacheList::resizeCacheEntries(MM_EnvironmentBase *env, uintptr_t allo
 	if (0 != ext->fvtest_scanCacheCount) {
 		if (0 == _totalAllocatedEntryCount) {
 			allocateCacheEntryCount = ext->fvtest_scanCacheCount;
-			_incrementEntryCount = 0;
 			return appendCacheEntries(env, allocateCacheEntryCount);
 		} else {
 			return true;
@@ -235,9 +234,6 @@ MM_CopyScanCacheList::removeAllHeapAllocatedChunks(MM_EnvironmentStandard *env)
 		_allocationInHeap = false;
 
 		Assert_MM_true(0 < reservedInHeap);
-
-		/* increase number of permanent scan caches by number of incrementEntryCount */
-		appendCacheEntries(env, _incrementEntryCount);
 	}
 }
 

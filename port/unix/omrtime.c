@@ -164,7 +164,7 @@ omrtime_hires_clock(struct OMRPortLibrary *portLibrary)
 #elif defined(LINUX) /* defined(OSX) */
 	uint64_t ret = 0;
 	struct timespec ts;
-	if (0 == clock_gettime(CLOCK_MONOTONIC_RAW, &ts)) {
+	if (0 == clock_gettime(OMRTIME_NANO_CLOCK, &ts)) {
 		ret = ((uint64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (uint64_t)ts.tv_nsec;
 	}
 	return ret;
