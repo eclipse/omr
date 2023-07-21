@@ -919,7 +919,7 @@ TraceAssert=Assert_MM_double_map_unreachable noEnv Overhead=1 Level=1 Assert="(f
 
 TraceEvent=Trc_ParallelGlobalGC_shouldCompactThisCycle Overhead=1 Level=1 Group=compact Template="Current page granularity fragmented ratio: %f  Threshold: %f"
 
-TraceEntry=Trc_MM_double_map_Entry Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. spine: %p, leafSize=%zu leavesCount=%zu"
+TraceEntry=Trc_MM_double_map_EntryOld Obsolete Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. spine: %p, leafSize=%zu leavesCount=%zu"
 TraceException=Trc_MM_double_map_TraverseLeavesNULLPointer Overhead=1 Level=1 Group=arraylet Template="Found a NULL pointer as the last leaf in arraylet spine"
 TraceException=Trc_MM_double_map_Failed Overhead=1 Level=1 Group=arraylet Template="Failed to double map arraylets"
 TraceExit=Trc_MM_double_map_Exit Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. result=%p"
@@ -1019,3 +1019,6 @@ TraceException=Trc_MM_ParallelDispatcher_internalStartupThreads_Failed noEnv Ove
 
 TraceExit=Trc_MM_MemorySubSpaceUniSpace_timeForHeapContract_Exit8 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_timeForHeapContract Exit8 Heap cannot contract in implicit aggressive GC"
 TraceExit=Trc_MM_MemorySubSpaceUniSpace_timeForHeapContract_Exit9 Overhead=1 Level=1 Group=resize Template="MM_MemorySubSpace_timeForHeapContract Exit9 Contraction required due to SoftMX request, size = %zu bytes"
+
+//Redefine Trc_MM_double_map_Entry to add originalDataSize and adjustedDataSize
+TraceEntry=Trc_MM_double_map_Entry Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. originalDataSize: %p, adjustedDataSize: %p, spine: %p, leafSize: %p leavesCount: %zu"
