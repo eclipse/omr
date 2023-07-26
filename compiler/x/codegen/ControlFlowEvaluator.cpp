@@ -76,6 +76,9 @@
 #include "x/codegen/X86Instruction.hpp"
 #include "codegen/InstOpCode.hpp"
 
+#define OPT_DETAILS_SHIFT_PEEPHOLE "O^O SHIFT PEEPHOLE: "
+#define OPT_DETAILS_OVERFLOW_CHECK_RECOGNITION "O^O OVERFLOW CHECK RECOGNITION: "
+
 class TR_OpaqueClassBlock;
 class TR_OpaqueMethodBlock;
 
@@ -1521,8 +1524,8 @@ TR::Register *OMR::X86::TreeEvaluator::integerIfCmpneEvaluator(TR::Node *node, T
             (node->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::iloadi || node->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::iload) &&
             node->getFirstChild()->getSecondChild()->getOpCodeValue() == TR::iconst &&
             node->getSecondChild()->getOpCodeValue() == TR::iconst && node->getSecondChild()->getInt() == 0 &&
-            performTransformation(comp, "O^O SHIFT PEEPHOLE: detected shift pattern for node %p shifting so mask = %p shift amount = %d \n",
-                node, (((int32_t)-1) << node->getFirstChild()->getSecondChild()->getInt()), node->getFirstChild()->getSecondChild()->getInt())
+            performTransformation(comp, "%sdetected shift pattern for node %p shifting so mask = %p shift amount = %d \n",
+                OPT_DETAILS_SHIFT_PEEPHOLE, node, (((int32_t)-1) << node->getFirstChild()->getSecondChild()->getInt()), node->getFirstChild()->getSecondChild()->getInt())
           ){
           TR::Node     *loadNode = node->getFirstChild()->getFirstChild();
           TR::Register *loadReg  = loadNode->getRegister();
@@ -1580,7 +1583,7 @@ bool OMR::X86::TreeEvaluator::generateIAddOrSubForOverflowCheck(TR::Node *compar
       && (u.operationNode->getOpCode().isAdd() || u.operationNode->getOpCode().isSub())
       && (u.leftChild->getReferenceCount() >= 1)
       && (u.rightChild->getReferenceCount() >= 1)
-      && performTransformation(cg->comp(), "O^O OVERFLOW CHECK RECOGNITION: Recognizing %s\n", cg->getDebug()->getName(compareNode)))
+      && performTransformation(cg->comp(), "%sRecognizing %s\n", OPT_DETAILS_OVERFLOW_CHECK_RECOGNITION, cg->getDebug()->getName(compareNode)))
       {
       TR::Register *rightReg = cg->evaluate(u.rightChild);
       // leftChild might appear twice in this tree, and we need a clobber evaluate only if it also appears elsewhere
@@ -1617,7 +1620,7 @@ bool OMR::X86::TreeEvaluator::generateLAddOrSubForOverflowCheck(TR::Node *compar
       && (u.operationNode->getOpCode().isAdd() || u.operationNode->getOpCode().isSub())
       && (u.leftChild->getReferenceCount() >= 1)
       && (u.rightChild->getReferenceCount() >= 1)
-      && performTransformation(cg->comp(), "O^O OVERFLOW CHECK RECOGNITION: Recognizing %s\n", cg->getDebug()->getName(compareNode)))
+      && performTransformation(cg->comp(), "%sRecognizing %s\n", OPT_DETAILS_OVERFLOW_CHECK_RECOGNITION, cg->getDebug()->getName(compareNode)))
       {
       TR::Register *rightReg = cg->evaluate(u.rightChild);
       // leftChild might appear twice in this tree, and we need a clobber evaluate only if it also appears elsewhere

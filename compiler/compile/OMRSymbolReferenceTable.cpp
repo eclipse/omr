@@ -85,6 +85,8 @@
 #include "env/VMJ9.h"
 #endif
 
+#define OPT_DETAILS "O^O SYMBOL SHARING: "
+
 class TR_OpaqueClassBlock;
 class TR_OpaqueMethodBlock;
 
@@ -1432,7 +1434,7 @@ OMR::SymbolReferenceTable::findOrCreateMethodSymbol(
          TR::ResolvedMethodSymbol *existingMethod = symRef->getSymbol()->getResolvedMethodSymbol();
          if (existingMethod && (existingMethod->getMethodKind() == callKind) && resolvedMethod->canAlwaysShareSymbolDespiteOwningMethod(existingMethod->getResolvedMethod()))
             {
-            if (performTransformation(comp(), "O^O SYMBOL SHARING: Reusing #%d M%p for M%p\n", symRef->getReferenceNumber(), existingMethod->getResolvedMethod(), resolvedMethod))
+            if (performTransformation(comp(), "%sReusing #%d M%p for M%p\n", OPT_DETAILS, symRef->getReferenceNumber(), existingMethod->getResolvedMethod(), resolvedMethod))
                {
                TR_ResolvedMethod * owningMethod = comp()->getOwningMethodSymbol(owningMethodIndex)->getResolvedMethod();
                symRef->setHasBeenAccessedAtRuntime(isUnresolvedInCP ? TR_no: TR_maybe);

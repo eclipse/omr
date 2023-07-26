@@ -68,6 +68,10 @@
 #include "x/codegen/X86Instruction.hpp"
 #include "codegen/InstOpCode.hpp"
 
+#define OPT_DETAILS "O^O: OMR Tree Evaluator: "
+#define OPT_DETAILS_COMOPARE_LONG_AND_SET_ORDERED_BOOLEAN "O^O compareLongAndSetOrderedBoolean: "
+#define OPT_DETAILS_COMPARE_LONGS_FOR_ORDER "O^O compareLongsForOrder: "
+
 class TR_OpaqueMethodBlock;
 
 ///////////////////////
@@ -135,7 +139,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::compareLongAndSetOrderedBoolean(
 
    TR::Register * testRegister = secondChild->getRegister();
    if (secondChild->getOpCodeValue() == TR::lconst &&
-       testRegister == NULL && performTransformation(comp, "O^O compareLongAndSetOrderedBoolean: checking that the second child node does not have an assigned register: %d\n", testRegister))
+       testRegister == NULL && performTransformation(comp, "%schecking that the second child node does not have an assigned register: %d\n", OPT_DETAILS_COMOPARE_LONG_AND_SET_ORDERED_BOOLEAN, testRegister))
       {
       int32_t      lowValue    = secondChild->getLongIntLow();
       int32_t      highValue   = secondChild->getLongIntHigh();
@@ -196,7 +200,7 @@ void OMR::X86::I386::TreeEvaluator::compareLongsForOrder(
    TR::Node *secondChild = node->getSecondChild();
    TR::Register * testRegister = secondChild->getRegister();
    if (secondChild->getOpCodeValue() == TR::lconst &&
-       testRegister == NULL && performTransformation(comp, "O^O compareLongsForOrder: checking that the second child node does not have an assigned register: %d\n", testRegister))
+       testRegister == NULL && performTransformation(comp, "%schecking that the second child node does not have an assigned register: %d\n", OPT_DETAILS_COMPARE_LONGS_FOR_ORDER, testRegister))
       {
       int32_t        lowValue          = secondChild->getLongIntLow();
       int32_t        highValue         = secondChild->getLongIntHigh();
@@ -2504,7 +2508,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::lstoreEvaluator(TR::Node *node, TR:
 
          if (isVolatile)
             {
-            if (performTransformation(comp, "O^O Using SSE for volatile store %s\n", cg->getDebug()->getName(node)))
+            if (performTransformation(comp, "%sUsing SSE for volatile store %s\n", OPT_DETAILS, cg->getDebug()->getName(node)))
                {
                //Get stack piece
                TR::MemoryReference *stackLow  = cg->machine()->getDummyLocalMR(TR::Int64);
@@ -4939,7 +4943,7 @@ TR::Register *OMR::X86::I386::TreeEvaluator::performLload(TR::Node *node, TR::Me
       {
       TR::Machine *machine = cg->machine();
 
-      if (performTransformation(comp, "O^O Using SSE for volatile load %s\n", cg->getDebug()->getName(node)))
+      if (performTransformation(comp, "%sUsing SSE for volatile load %s\n", OPT_DETAILS, cg->getDebug()->getName(node)))
          {
          TR_X86ProcessorInfo &p = cg->getX86ProcessorInfo();
 

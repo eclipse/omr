@@ -65,6 +65,8 @@
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/Runtime.hpp"
 
+#define OPT_DETAILS_PPC_EVALUATOR "O^O PPC Evaluator: "
+
 class TR_OpaqueClassBlock;
 
 static TR::RealRegister::RegNum choose_rX(TR::Instruction *, TR::RealRegister *);
@@ -599,7 +601,7 @@ void OMR::Power::MemoryReference::populateMemoryReference(TR::Node *subTree, TR:
    // Skip sign extension if the offset is known to be >= 0; this is only safe to do if the child is the result of a load, otherwise the upper 32 bits may be undefined
    if (subTree->getOpCodeValue() == TR::i2l && subTree->isNonNegative() && subTree->getFirstChild()->getOpCode().isLoadVar() && subTree->getReferenceCount() == 1 && subTree->getRegister() == NULL)
       {
-      if (performTransformation(cg->comp(), "O^O PPC Evaluator: Skip unecessary sign extension on index [%p].\n", subTree))
+      if (performTransformation(cg->comp(), "%sSkip unecessary sign extension on index [%p].\n", OPT_DETAILS_PPC_EVALUATOR, subTree))
          {
          static bool dontSkipIndexSignExt = feGetEnv("TR_dontSkipIndexSignExt") != NULL;
          if (!dontSkipIndexSignExt)

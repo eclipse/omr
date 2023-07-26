@@ -62,6 +62,8 @@
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/Runtime.hpp"
 
+#define OPT_DETAILS "O^O FP Tree Evaluator: "
+
 static void ifFloatEvaluator( TR::Node *node, TR::InstOpCode::Mnemonic branchOp1, TR::InstOpCode::Mnemonic branchOp2, TR::CodeGenerator *cg);
 static TR::Register *singlePrecisionEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic OpCode, TR::CodeGenerator *cg);
 static TR::Register *doublePrecisionEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic OpCode, TR::CodeGenerator *cg);
@@ -689,7 +691,7 @@ TR::Register *OMR::Power::TreeEvaluator::faddEvaluator(TR::Node *node, TR::CodeG
    TR::Register *result=NULL;
    if((isFPStrictMul(node->getFirstChild(), comp) ||
        isFPStrictMul(node->getSecondChild(), comp)) &&
-       performTransformation(comp, "O^O Changing [%p] to fmadd\n",node))
+       performTransformation(comp, "%sChanging [%p] to fmadd\n", OPT_DETAILS, node))
       result = generateFusedMultiplyAdd(node, TR::InstOpCode::fmadds, cg);
    else
       result = singlePrecisionEvaluator(node, TR::InstOpCode::fadds, cg);
@@ -701,7 +703,7 @@ TR::Register *OMR::Power::TreeEvaluator::daddEvaluator(TR::Node *node, TR::CodeG
    TR::Register *result=NULL;
    if((isFPStrictMul(node->getFirstChild(), comp) ||
       isFPStrictMul(node->getSecondChild(), comp)) &&
-       performTransformation(comp, "O^O Changing [%p] to dmadd\n",node))
+       performTransformation(comp, "%sChanging [%p] to dmadd\n", OPT_DETAILS, node))
       result = generateFusedMultiplyAdd(node, TR::InstOpCode::fmadd, cg);
    else
       result = doublePrecisionEvaluator(node, TR::InstOpCode::fadd, cg);
@@ -713,12 +715,12 @@ TR::Register *OMR::Power::TreeEvaluator::dsubEvaluator(TR::Node *node, TR::CodeG
    TR::Compilation *comp = cg->comp();
    TR::Register *result=NULL;
    if(isFPStrictMul(node->getFirstChild(), comp) &&
-      performTransformation(comp, "O^O Changing [%p] to fmsub\n",node))
+      performTransformation(comp, "%sChanging [%p] to fmsub\n", OPT_DETAILS, node))
       result = generateFusedMultiplyAdd(node, TR::InstOpCode::fmsub, cg);
    else
       {
       if (isFPStrictMul(node->getSecondChild(), comp) &&
-          performTransformation(comp, "O^O Changing [%p] to fnmsub\n",node))
+          performTransformation(comp, "%sChanging [%p] to fnmsub\n", OPT_DETAILS, node))
          {
          result = generateFusedMultiplyAdd(node, TR::InstOpCode::fnmsub, cg);
          }
@@ -734,12 +736,12 @@ TR::Register *OMR::Power::TreeEvaluator::fsubEvaluator(TR::Node *node, TR::CodeG
    TR::Compilation *comp = cg->comp();
    TR::Register *result=NULL;
    if(isFPStrictMul(node->getFirstChild(), comp)&&
-       performTransformation(comp, "O^O Changing [%p] to fmsub\n",node))
+       performTransformation(comp, "%sChanging [%p] to fmsub\n", OPT_DETAILS, node))
       result = generateFusedMultiplyAdd(node, TR::InstOpCode::fmsubs, cg);
    else
       {
       if (isFPStrictMul(node->getSecondChild(), comp) &&
-          performTransformation(comp, "O^O Changing [%p] to fnmsub\n",node))
+          performTransformation(comp, "%sChanging [%p] to fnmsub\n", OPT_DETAILS, node))
          {
          result = generateFusedMultiplyAdd(node, TR::InstOpCode::fnmsubs, cg);
          }
@@ -893,7 +895,7 @@ TR::Register *OMR::Power::TreeEvaluator::fnegEvaluator(TR::Node *node, TR::CodeG
 
       if((isFPStrictMul(firstChild->getFirstChild(), comp) ||
             (isAdd && isFPStrictMul(firstChild->getSecondChild(), comp))) &&
-         performTransformation(comp, "O^O Changing [%p] to fnmadd/sub\n",node))
+         performTransformation(comp, "%sChanging [%p] to fnmadd/sub\n", OPT_DETAILS, node))
          {
          TR::InstOpCode::Mnemonic opCode =
             node->getOpCode().isFloat()

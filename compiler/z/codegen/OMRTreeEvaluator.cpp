@@ -110,6 +110,8 @@
 #include "z/codegen/S390Register.hpp"
 #endif
 
+#define OPT_DETAILS "O^O OMR Tree Evaluator: "
+#define OPT_DETAILS_REDUCING_BLOCK "O^O Reducing block: "
 
 #ifdef J9_PROJECT_SPECIFIC
 TR::Instruction *
@@ -4744,7 +4746,8 @@ tryGenerateConversionRXComparison(TR::Node *node, TR::CodeGenerator *cg, bool *i
              regNode->getReferenceCount() == 1 &&
              regNode->getRegister() == NULL &&
              performTransformation(comp,
-                                    "O^O Convert zero extension node [%p] to sign extension so that we can use CH/CGH\n",
+                                    "%sConvert zero extension node [%p] to sign extension so that we can use CH/CGH\n",
+                                     OPT_DETAILS,
                                      regNode))
             {
             convertToSignExtension = true;
@@ -6186,7 +6189,7 @@ checkForCandidateBlockForConditionalLoadAndStores(TR::Node* node, TR::CodeGenera
       return NULL;
 
 
-   if (performTransformation(comp, "O^O Reducing block: %d using conditional instructions\n", candidateBlock->getNumber()))
+   if (performTransformation(comp, "%s%d using conditional instructions\n", OPT_DETAILS_REDUCING_BLOCK, candidateBlock->getNumber()))
        return candidateBlock;
    else
        return NULL;
@@ -8046,7 +8049,7 @@ OMR::Z::TreeEvaluator::bstoreEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             cg->isInMemoryInstructionCandidate(node) &&
             // trying to use OI, NI, XI, so second child of RX op code must be load const
             valueChild->getSecondChild()->getOpCode().isLoadConst() &&
-            performTransformation(comp, "O^O for bstore [%p], emitting single in-memory instruction OI/NI/XI\n", node))
+            performTransformation(comp, "%sfor bstore [%p], emitting single in-memory instruction OI/NI/XI\n", OPT_DETAILS, node))
       {
       // Attempt using only one instruction
       TR::InstOpCode::Mnemonic instrOpCode = TR::InstOpCode::NOP;
@@ -15152,7 +15155,7 @@ OMR::Z::TreeEvaluator::arraytranslateDecodeSIMDEvaluator(TR::Node * node, TR::Co
    TR::Node* inputLenNode = node->getChild(4);
 
    // Optimize the constant length case
-   bool isLenConstant = inputLenNode->getOpCode().isLoadConst() && performTransformation(comp, "O^O [%p] Reduce input length to constant.\n", inputLenNode);
+   bool isLenConstant = inputLenNode->getOpCode().isLoadConst() && performTransformation(comp, "%s[%p] Reduce input length to constant.\n", OPT_DETAILS, inputLenNode);
 
    // Initialize the number of translated characters to 0
    generateRREInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, translated, translated);
@@ -15430,7 +15433,7 @@ OMR::Z::TreeEvaluator::arraytranslateEncodeSIMDEvaluator(TR::Node * node, TR::Co
    TR::Node* inputLenNode = node->getChild(4);
 
    // Optimize the constant length case
-   bool isLenConstant = inputLenNode->getOpCode().isLoadConst() && performTransformation(comp, "O^O [%p] Reduce input length to constant.\n", inputLenNode);
+   bool isLenConstant = inputLenNode->getOpCode().isLoadConst() && performTransformation(comp, "%s[%p] Reduce input length to constant.\n", OPT_DETAILS, inputLenNode);
 
    // Initialize the number of translated characters to 0
    generateRREInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, translated, translated);
@@ -16010,7 +16013,7 @@ generateFusedMultiplyAddIfPossible(TR::CodeGenerator *cg, TR::Node *addNode, TR:
        && !comp->getOption(TR_FloatMAF) && !mulNode->isFPStrictCompliant())
       return false;
 
-   if (!performTransformation(comp, "O^O Changing [%p] to fused multiply and add (FMA) operation\n", addNode))
+   if (!performTransformation(comp, "%sChanging [%p] to fused multiply and add (FMA) operation\n", OPT_DETAILS, addNode))
       return false;
 
    TR_ASSERT(mulNode->getOpCode().isMul(),"Unexpected op!=mul %p\n",mulNode);

@@ -67,6 +67,8 @@
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
 
+#define OPT_DETAILS "O^O Binary Evaluator: "
+
 /**
  * lnegFor32bit - 32 bit code generation to negate a long integer
  */
@@ -168,7 +170,7 @@ laddConst(TR::Node * node, TR::CodeGenerator * cg, TR::RegisterPair * targetRegi
    TR::Register * lowOrder = targetRegisterPair->getLowOrder();
    TR::Register * highOrder = targetRegisterPair->getHighOrder();
 
-   if (performTransformation(comp, "O^O Use AL/ALC to perform long add.\n"))
+   if (performTransformation(comp, "%sUse AL/ALC to perform long add.\n", OPT_DETAILS))
       {     // wrong carry bit to be set
       if ( l_value != 0 )
          {
@@ -581,7 +583,7 @@ generic32BitAddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          {
          generateRIEInstruction(cg, TR::InstOpCode::AHIK, node, targetRegister, childTargetReg, value);
          }
-      else if (useLA && performTransformation(comp, "O^O Use LA/LAY instead of AHI for %p.\n",node))
+      else if (useLA && performTransformation(comp, "%sUse LA/LAY instead of AHI for %p.\n", OPT_DETAILS, node))
          {
          TR::MemoryReference * memRef = generateS390MemoryReference(childTargetReg, value, cg);
          generateRXInstruction(cg, TR::InstOpCode::LA, node, targetRegister, memRef);
@@ -1542,7 +1544,7 @@ genericRotateLeft(TR::Node * node, TR::CodeGenerator * cg)
          mask2 = andChild->getSecondChild()->getLongInt();
       bitPos = 63 - shiftBy;
 
-      if (mask1 && mask1 == (~mask2) && shiftBy <= 63 && performTransformation(cg->comp(), "O^O Insert bit using RISBG node [%p]\n", node))
+      if (mask1 && mask1 == (~mask2) && shiftBy <= 63 && performTransformation(cg->comp(), "%sInsert bit using RISBG node [%p]\n", OPT_DETAILS, node))
          {
          TR::Node* otherData = andChild->getFirstChild();
          TR::Register* toReg = cg->evaluate(otherData);
@@ -1563,7 +1565,7 @@ genericRotateLeft(TR::Node * node, TR::CodeGenerator * cg)
       else if (mask2 && shiftBy)
          {
          mask1 = (1ULL << shiftBy) - 1;
-         if (mask1 == mask2 && performTransformation(cg->comp(), "O^O Insert contiguous bits using RISBG node [%p]\n", node))
+         if (mask1 == mask2 && performTransformation(cg->comp(), "%sInsert contiguous bits using RISBG node [%p]\n", OPT_DETAILS, node))
             {
             TR::Register* toReg = cg->evaluate(andChild->getFirstChild());
             TR::Register* fromReg = cg->evaluate(shiftChild->getFirstChild());
@@ -1600,7 +1602,7 @@ genericRotateLeft(TR::Node * node, TR::CodeGenerator * cg)
             shiftChild->getSecondChild()->getOpCode().isLoadConst() &&
             shiftChild->getReferenceCount() == 1 &&
             shiftChild->getRegister() == NULL &&
-            performTransformation(cg->comp(), "O^O Combine or/shift into rotate node [%p]\n", node))
+            performTransformation(cg->comp(), "%sCombine or/shift into rotate node [%p]\n", OPT_DETAILS, node))
          {
          uint32_t shiftBy = shiftChild->getSecondChild()->getInt();
          uint32_t firstBit = 0;
@@ -1936,7 +1938,7 @@ OMR::Z::TreeEvaluator::tryToReplaceShiftLandWithRotateInstruction(TR::Node * nod
             }
          }
 
-      if (doTransformation && performTransformation(comp, "O^O Use RISBG instead of 2 ANDs for %p.\n", node))
+      if (doTransformation && performTransformation(comp, "%sUse RISBG instead of 2 ANDs for %p.\n", OPT_DETAILS, node))
          {
          TR::Register * targetReg = cg->allocateRegister();
          TR::Register * sourceReg = cg->evaluate(firstChild);
@@ -3029,7 +3031,7 @@ OMR::Z::TreeEvaluator::inegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             firstChild->getSecondChild()->getInt() != 0x80000000 &&
             firstChild->getReferenceCount() == 1 &&
             firstChild->getRegister() == NULL &&
-            performTransformation(cg->comp(), "O^O Replace ineg/imul by const with imul by -const.\n"))
+            performTransformation(cg->comp(), "%sReplace ineg/imul by const with imul by -const.\n", OPT_DETAILS))
       {
       TR::Node* oldConst = firstChild->getSecondChild();
       int32_t val = oldConst->getInt();

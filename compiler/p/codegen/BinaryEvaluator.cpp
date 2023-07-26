@@ -55,6 +55,9 @@
 #include "p/codegen/PPCInstruction.hpp"
 #include "runtime/Runtime.hpp"
 
+#define OPT_DETAILS_EXTSWSLI "O^O EXTSWSLI: "
+$define OPT_DETAILS_MASK_SHIFT_MERGING "O^O MASK/SHIFT MERGING: "
+
 static TR::Register *ldiv64Evaluator(TR::Node *node, TR::CodeGenerator *cg);
 static TR::Register *lrem64Evaluator(TR::Node *node, TR::CodeGenerator *cg);
 
@@ -2375,7 +2378,7 @@ static bool isPower9Extswsli(TR::CodeGenerator *cg, TR::Node *node)
    if (lhs->getOpCodeValue() != TR::i2l)
       return false;
 
-   return performTransformation(cg->comp(), "O^O EXTSWSLI: combining shift n%dn and i2l n%dn into extswsli\n", node->getGlobalIndex(), lhs->getGlobalIndex());
+   return performTransformation(cg->comp(), "%scombining shift n%dn and i2l n%dn into extswsli\n", OPT_DETAILS_EXTSWSLI, node->getGlobalIndex(), lhs->getGlobalIndex());
    }
 
 static bool isZeroExtendThenShiftLeftCandidate(TR::CodeGenerator *cg, TR::Node *node)
@@ -2394,7 +2397,7 @@ static bool isZeroExtendThenShiftLeftCandidate(TR::CodeGenerator *cg, TR::Node *
    if (!(lhs->getOpCode().isZeroExtension() || (lhs->getOpCode().isSignExtension() && lhs->getFirstChild()->isNonNegative())))
       return false;
 
-   return performTransformation(cg->comp(), "O^O MASK/SHIFT MERGING: combining shift n%dn and zero-extending conversion n%dn into one operation\n", node->getGlobalIndex(), lhs->getGlobalIndex());
+   return performTransformation(cg->comp(), "%scombining shift n%dn and zero-extending conversion n%dn into one operation\n", OPT_DETAILS_MASK_SHIFT_MERGING, node->getGlobalIndex(), lhs->getGlobalIndex());
    }
 
 static uint64_t getExtensionMask(TR::ILOpCode op)
@@ -2660,7 +2663,7 @@ static bool isMaskThenShiftRightCandidate(TR::CodeGenerator *cg, TR::Node *node,
    if (operandBits > 32 && shiftMask != 0 && ((shiftMask) & 1) == 0)
       return false;
 
-   return performTransformation(cg->comp(), "O^O MASK/SHIFT MERGING: combining shift n%dn and mask n%dn into one operation\n", node->getGlobalIndex(), lhs->getGlobalIndex());
+   return performTransformation(cg->comp(), "%scombining shift n%dn and mask n%dn into one operation\n", OPT_DETAILS_MASK_SHIFT_MERGING, node->getGlobalIndex(), lhs->getGlobalIndex());
    }
 
 static TR::Register *integerShiftRight(TR::Node *node, uint32_t operandSize, bool isUnsigned, TR::CodeGenerator *cg)

@@ -57,6 +57,7 @@
 #include "optimizer/OMRSimplifierHelpers.hpp"
 
 #define OPT_DETAILS "O^O ORDER BLOCKS: "
+#define OPT_DETAILS_BLOCK_SHUFFLING "O^O BLOCK SHUFFLING: "
 
 // statistics collectors
 static unsigned numberOfReorderings = 0;
@@ -2369,12 +2370,12 @@ int32_t TR_BlockShuffling::perform()
 
 void TR_BlockShuffling::scramble(TR::Block **blocks)
    {
-   if (!performTransformation(comp(), "O^O BLOCK SHUFFLING: Performing scramble shuffle\n"))
+   if (!performTransformation(comp(), "%sPerforming scramble shuffle\n", OPT_DETAILS_BLOCK_SHUFFLING))
       return;
    for (int32_t location = 0; location < _numBlocks; location++)
       {
       int32_t toMove = randomInt(location, _numBlocks-1);
-      if (performTransformation(comp(), "O^O BLOCK SHUFFLING:   move to [%3d] block_%d\n", location, blocks[toMove]->getNumber()))
+      if (performTransformation(comp(), "%smove to [%3d] block_%d\n", OPT_DETAILS_BLOCK_SHUFFLING, location, blocks[toMove]->getNumber()))
          swap(blocks, toMove, location);
       }
    }
@@ -2389,7 +2390,7 @@ void TR_BlockShuffling::riffle(TR::Block **blocks)
       split += randomInt(_numBlocks-1);
    split /= i;
 
-   if (!performTransformation(comp(), "O^O BLOCK SHUFFLING: Performing riffle shuffle, splitting at #%d/%d = block_%d\n", split, _numBlocks, blocks[split]->getNumber()))
+   if (!performTransformation(comp(), "%sPerforming riffle shuffle, splitting at #%d/%d = block_%d\n", OPT_DETAILS_BLOCK_SHUFFLING, split, _numBlocks, blocks[split]->getNumber()))
       return;
 
    // It's hard to merge in-place; let's keep it simple.
@@ -2411,12 +2412,12 @@ void TR_BlockShuffling::riffle(TR::Block **blocks)
       int32_t decision = randomInt(upper-split, _numBlocks-lower-1);
       if (decision < 0)
          {
-         if (performTransformation(comp(), "O^O BLOCK SHUFFLING:   move to [%3d] upper (%3d) block_%d\n", target, upper, originalBlocks[upper]->getNumber()))
+         if (performTransformation(comp(), "%smove to [%3d] upper (%3d) block_%d\n", OPT_DETAILS_BLOCK_SHUFFLING, target, upper, originalBlocks[upper]->getNumber()))
             blocks[target++] = originalBlocks[upper++];
          }
       else
          {
-         if (performTransformation(comp(), "O^O BLOCK SHUFFLING:   move to [%3d] lower (%3d) block_%d\n", target, lower, originalBlocks[lower]->getNumber()))
+         if (performTransformation(comp(), "%smove to [%3d] lower (%3d) block_%d\n", OPT_DETAILS_BLOCK_SHUFFLING, target, lower, originalBlocks[lower]->getNumber()))
             blocks[target++] = originalBlocks[lower++];
          }
       }
@@ -2424,12 +2425,12 @@ void TR_BlockShuffling::riffle(TR::Block **blocks)
 
 void TR_BlockShuffling::reverse(TR::Block **blocks)
    {
-   if (!performTransformation(comp(), "O^O BLOCK SHUFFLING: Reversing blocks\n"))
+   if (!performTransformation(comp(), "%sReversing blocks\n", OPT_DETAILS_BLOCK_SHUFFLING))
       return;
 
    int32_t upper, lower;
    for (upper=0, lower=_numBlocks-1; upper < lower; upper++, lower--)
-      if (performTransformation(comp(), "O^O BLOCK SHUFFLING:   swap [%3d] and [%3d] (block_%d and block_%d)\n", upper, lower, blocks[upper]->getNumber(), blocks[lower]->getNumber()))
+      if (performTransformation(comp(), "%sswap [%3d] and [%3d] (block_%d and block_%d)\n", OPT_DETAILS_BLOCK_SHUFFLING, upper, lower, blocks[upper]->getNumber(), blocks[lower]->getNumber()))
          swap(blocks, upper, lower);
    }
 

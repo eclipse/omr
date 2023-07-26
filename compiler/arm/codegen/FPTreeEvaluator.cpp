@@ -37,6 +37,8 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 
+#define OPT_DETAILS "O^O FP Tree Evaluator: "
+
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
 // Helpers
 static bool noFPRA = false; // The current RA *does* seem to assign FP regs.  Shall we change this to false?
@@ -1636,7 +1638,7 @@ TR::Register *OMR::ARM::TreeEvaluator::faddEvaluator(TR::Node *node, TR::CodeGen
    TR::Register *result = NULL;
    if (((isFPStrictMul(node->getFirstChild(), comp) && (node->getSecondChild()->getReferenceCount() == 1)) ||
         (isFPStrictMul(node->getSecondChild(), comp) && (node->getFirstChild()->getReferenceCount() == 1))) &&
-         performTransformation(comp, "O^O Changing [%p] to fmacs\n", node))
+         performTransformation(comp, "%sChanging [%p] to fmacs\n", OPT_DETAILS, node))
       {
       result = generateFusedMultiplyAdd(node, TR::InstOpCode::fmacs, cg);
       }
@@ -1654,7 +1656,7 @@ TR::Register *OMR::ARM::TreeEvaluator::daddEvaluator(TR::Node *node, TR::CodeGen
    TR::Compilation *comp = cg->comp();
    if (((isFPStrictMul(node->getFirstChild(), comp) && (node->getSecondChild()->getReferenceCount() == 1)) ||
         (isFPStrictMul(node->getSecondChild(), comp) && (node->getFirstChild()->getReferenceCount() == 1))) &&
-         performTransformation(comp, "O^O Changing [%p] to fmacd\n", node))
+         performTransformation(comp, "%sChanging [%p] to fmacd\n", OPT_DETAILS, node))
       {
       result = generateFusedMultiplyAdd(node, TR::InstOpCode::fmacd, cg);
       }
@@ -1672,13 +1674,13 @@ TR::Register *OMR::ARM::TreeEvaluator::dsubEvaluator(TR::Node *node, TR::CodeGen
    TR::Register *result = NULL;
    if (isFPStrictMul(node->getFirstChild(), comp) &&
       (node->getSecondChild()->getReferenceCount() == 1) &&
-       performTransformation(comp, "O^O Changing [%p] to fmscd\n",node))
+       performTransformation(comp, "%sChanging [%p] to fmscd\n", OPT_DETAILS, node))
       {
       result = generateFusedMultiplyAdd(node, TR::InstOpCode::fmscd, cg);
       }
    else if (isFPStrictMul(node->getSecondChild(), comp) &&
       (node->getFirstChild()->getReferenceCount() == 1) &&
-       performTransformation(comp, "O^O Changing [%p] to fnmacd\n",node))
+       performTransformation(comp, "%sChanging [%p] to fnmacd\n", OPT_DETAILS, node))
       {
       result = generateFusedMultiplyAdd(node, TR::InstOpCode::fnmacd, cg);
       }
@@ -1696,13 +1698,13 @@ TR::Register *OMR::ARM::TreeEvaluator::fsubEvaluator(TR::Node *node, TR::CodeGen
    TR::Register *result = NULL;
    if (isFPStrictMul(node->getFirstChild(), comp) &&
       (node->getSecondChild()->getReferenceCount() == 1) &&
-       performTransformation(comp, "O^O Changing [%p] to fmscs\n",node))
+       performTransformation(comp, "%sChanging [%p] to fmscs\n", OPT_DETAILS, node))
       {
       result = generateFusedMultiplyAdd(node, TR::InstOpCode::fmscs, cg);
       }
    else if (isFPStrictMul(node->getSecondChild(), comp) &&
       (node->getFirstChild()->getReferenceCount() == 1) &&
-       performTransformation(comp, "O^O Changing [%p] to fnmacs\n",node))
+       performTransformation(comp, "%sChanging [%p] to fnmacs\n", OPT_DETAILS, node))
       {
       result = generateFusedMultiplyAdd(node, TR::InstOpCode::fnmacs, cg);
       }
@@ -1773,7 +1775,7 @@ TR::Register *OMR::ARM::TreeEvaluator::fnegEvaluator(TR::Node *node, TR::CodeGen
          firstChild->getSecondChild()->getReferenceCount() == 1) ||
          (isFPStrictMul(firstChild->getSecondChild(), comp) &&
          firstChild->getFirstChild()->getReferenceCount() == 1)) &&
-         performTransformation(comp, "O^O Changing [%p] to fnmscs\n", node))
+         performTransformation(comp, "%sChanging [%p] to fnmscs\n", OPT_DETAILS, node))
          {
          result = generateFusedMultiplyAdd(node, TR::InstOpCode::fnmscs, cg);
          firstChild->unsetRegister(); //unset as the first child isn't the result node
@@ -1786,7 +1788,7 @@ TR::Register *OMR::ARM::TreeEvaluator::fnegEvaluator(TR::Node *node, TR::CodeGen
    else if (isFPStrictMul(firstChild, comp) &&
       firstChild->getReferenceCount() < 2 &&
       !firstChild->getRegister() &&
-      performTransformation(comp, "O^O Changing [%p] to fnmuls\n", node))
+      performTransformation(comp, "%sChanging [%p] to fnmuls\n", OPT_DETAILS, node))
       {
       // fneg(node) -> fmul(firstChild)
       TR::Register *floatTrgReg = cg->allocateSinglePrecisionRegister();
@@ -1829,7 +1831,7 @@ TR::Register *OMR::ARM::TreeEvaluator::dnegEvaluator(TR::Node *node, TR::CodeGen
          firstChild->getSecondChild()->getReferenceCount() == 1) ||
          (isFPStrictMul(firstChild->getSecondChild(), comp) &&
          firstChild->getFirstChild()->getReferenceCount() == 1)) &&
-         performTransformation(comp, "O^O Changing [%p] to fnmscd\n", node))
+         performTransformation(comp, "%sChanging [%p] to fnmscd\n", OPT_DETAILS, node))
          {
          result = generateFusedMultiplyAdd(node, TR::InstOpCode::fnmscd, cg);
          firstChild->unsetRegister(); //unset as the first child isn't the result node
@@ -1842,7 +1844,7 @@ TR::Register *OMR::ARM::TreeEvaluator::dnegEvaluator(TR::Node *node, TR::CodeGen
    else if (isFPStrictMul(firstChild, comp) &&
       firstChild->getReferenceCount() < 2 &&
       !firstChild->getRegister() &&
-      performTransformation(comp, "O^O Changing [%p] to fnmuld\n", node))
+      performTransformation(comp, "%sChanging [%p] to fnmuld\n", OPT_DETAILS, node))
       {
       // fneg(node) -> fmul(firstChild)
       TR::Register *doubleTrgReg = cg->allocateRegister(TR_FPR);

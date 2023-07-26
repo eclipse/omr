@@ -2063,9 +2063,9 @@ bool TR_LoopStrider::examineTreeForInductionVariableUse(TR::Block *loopInvariant
                examineOpCodesForInductionVariableUse(node, parent, childNum, index, originalNode, replacingNode, linearTerm, mulTerm, newSymbolReference, loopInvariantBlock, pinningArrayPointer, differenceInAdditiveConstants, isInternalPointer, downcastNode, usingAladd);
 
 
-               dumpOptDetails(comp(), "O^O INDUCTION VARIABLE ANALYSIS: (add/sub) Replaced node : %p "
+               dumpOptDetails(comp(), "%s(add/sub) Replaced node : %p "
                               "to (%s) by load of symbol #%d\n",
-                              node, comp()->getDebug()->getName(node->getOpCodeValue()),
+                              OPT_DETAILS, node, comp()->getDebug()->getName(node->getOpCodeValue()),
                               (*newSymbolReference)->getReferenceNumber());
                }
             }
@@ -2181,9 +2181,9 @@ bool TR_LoopStrider::examineTreeForInductionVariableUse(TR::Block *loopInvariant
 
          examineOpCodesForInductionVariableUse(node, parent, childNum, index, originalNode, replacingNode, linearTerm, mulTerm, newSymbolReference, loopInvariantBlock, pinningArrayPointer, differenceInAdditiveConstants, isInternalPointer, downcastNode, usingAladd);
 
-         dumpOptDetails(comp(), "O^O INDUCTION VARIABLE ANALYSIS: (mul/shl) Replaced node : "
+         dumpOptDetails(comp(), "%s(mul/shl) Replaced node : "
                         "%p to (%s) by load of symbol #%d\n",
-                        node, comp()->getDebug()->getName(node->getOpCodeValue()),
+                        OPT_DETAILS, node, comp()->getDebug()->getName(node->getOpCodeValue()),
                         (*newSymbolReference)->getReferenceNumber());
          }
       }

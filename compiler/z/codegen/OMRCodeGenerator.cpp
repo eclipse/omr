@@ -1595,7 +1595,7 @@ OMR::Z::CodeGenerator::prepareRegistersForAssignment()
       // Emit dummy Constant Data Snippets to force literal pool access to require long displacements
       if (self()->comp()->getOption(TR_Randomize))
          {
-         if (randomizer.randomBoolean(300) && performTransformation(self()->comp(),"O^O Random Codegen - Added 6000 dummy slots to  Literal Pool frame to test  Literal Pool displacement.\n"))
+         if (randomizer.randomBoolean(300) && performTransformation(self()->comp(),"%sRandom Codegen - Added 6000 dummy slots to  Literal Pool frame to test  Literal Pool displacement.\n", OPT_DETAILS))
             numDummySnippets = 6000;
          }
 
@@ -4030,8 +4030,8 @@ bool OMR::Z::CodeGenerator::isActiveCompareCC(TR::InstOpCode::Mnemonic opcd, TR:
          }
 
       if (opcd == ccInst->getOpCodeValue() && tReg == ccTgtReg &&  sReg == ccSrcReg &&
-          performTransformation(self()->comp(), "O^O isActiveCompareCC: RR Compare Op [%s\t %s, %s] can reuse CC from ccInstr [%p]\n",
-             ccInst->getOpCode().getMnemonicName(), self()->getDebug()->getName(tReg),self()->getDebug()->getName(sReg), ccInst))
+          performTransformation(self()->comp(), "%sRR Compare Op [%s\t %s, %s] can reuse CC from ccInstr [%p]\n",
+             OPT_DETAILS, ccInst->getOpCode().getMnemonicName(), self()->getDebug()->getName(tReg),self()->getDebug()->getName(sReg), ccInst))
          {
          return true;
          }
@@ -4045,8 +4045,8 @@ bool OMR::Z::CodeGenerator::isActiveCompareCC(TR::InstOpCode::Mnemonic opcd, TR:
 bool OMR::Z::CodeGenerator::isActiveArithmeticCC(TR::Register* tstReg)
    {
    if (self()->hasCCInfo() && self()->hasCCSigned() && !self()->hasCCOverflow() && !self()->hasCCCarry() &&
-         performTransformation(self()->comp(), "O^O Arithmetic CC: CCInfo(%d) CCSigned(%d) CCOverflow(%d) CCCarry(%d)\n",
-            self()->hasCCInfo(), self()->hasCCSigned(), self()->hasCCOverflow(), self()->hasCCCarry())
+         performTransformation(self()->comp(), "%sArithemtic op CC result matches CC of a compare immediate op\n",
+            OPT_DETAILS)
       )
       {
       TR::Instruction* inst = self()->ccInstruction();
@@ -4065,7 +4065,7 @@ bool OMR::Z::CodeGenerator::isActiveLogicalCC(TR::Node* ccNode, TR::Register* ts
 
    if (self()->hasCCInfo() && self()->hasCCZero() && !self()->hasCCOverflow() &&
        (TR::ILOpCode::isEqualCmp(op) || TR::ILOpCode::isNotEqualCmp(op)) &&
-       performTransformation(self()->comp(), "O^O Logical CC Info: CCInfo(%d) CCZero(%d) CCOverflow(%d)\n", self()->hasCCInfo(), self()->hasCCZero(), self()->hasCCOverflow())
+       performTransformation(self()->comp(), "%sCC (CCInfo(%d) CCZero(%d) CCOverflow(%d)) can be reused from logical instruction [%p]\n", OPT_DETAILS, self()->hasCCInfo(), self()->hasCCZero(), self()->hasCCOverflow(), self()->ccInstruction())
       )
       {
       TR::Instruction* inst = self()->ccInstruction();

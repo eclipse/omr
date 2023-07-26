@@ -56,6 +56,23 @@
 #include "codegen/InstOpCode.hpp"
 #include "env/CompilerEnv.hpp"
 
+#define OPT_DETAILS "O^O Binary Evaluator: "
+#define OPT_DETAILS_ANALYZE_ADD_FOR_LEA "O^O analyseAddForLEA: "
+#define OPT_DETAILS_BADD_EVALUATOR "O^O BaddEvaluator: "
+#define OPT_DETAILS_SADD_EVALUATOR "O^O SaddEvaluator: "
+#define OPT_DETAILS_INTEGER_SUB_EVALUATOR "O^O IntegerSubEvaluator: "
+#define OPT_DETAILS_BSUB_EVALUATOR "O^O BSUBEvaluator: "
+#define OPT_DETAILS_SSUB_EVALUATOR "O^O SSUBEvaluator: "
+#define OPT_DETAILS_GENERATE_MEMORY_SHIFT "O^O GenerateMemoryShift: "
+#define OPT_DETAILS_INTEGER_SHL_EVALUATOR "O^O IntegerShlEvaluator: "
+#define OPT_DETAILS_BSHL_EVALUATOR "O^O BSHLEvaluator: "
+#define OPT_DETAILS_SSHL_EVALUATOR "O^O SSHLEvaluator: "
+#define OPT_DETAILS_BSHR_EVALUATOR "O^O BSHREvaluator: "
+#define OPT_DETAILS_SSHR_EVALUATOR "O^O SSHREvaluator: "
+#define OPT_DETAILS_BUSHR_EVALUATOR "O^O BUSHREvaluator: "
+#define OPT_DETAILS_SUSHR_EVALUATOR "O^O SUSHREvaluator: "
+#define OPT_DETAILS_LOGICAL_EVALUATOR "O^O LogicalEvaluator: "
+
 extern TR::Register *intOrLongClobberEvaluate(TR::Node *node, bool nodeIs64Bit, TR::CodeGenerator *cg);
 
 ///////////////////
@@ -225,7 +242,7 @@ bool OMR::X86::TreeEvaluator::analyseSubForLEA(TR::Node *node, TR::CodeGenerator
 
 bool OMR::X86::TreeEvaluator::analyseAddForLEA(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (!performTransformation(cg->comp(), "O^O analyseAddForLEA\n"))
+   if (!performTransformation(cg->comp(), "%sanalyseAddForLEA\n", OPT_DETAILS))
         return false;
 
    bool                 nodeIs64Bit    = TR::TreeEvaluator::getNodeIs64Bit(node, cg);
@@ -756,7 +773,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerAddEvaluator(TR::Node *node, TR::C
            (comp->useCompressedPointers() &&
            (constValue == 0) &&
             firstChild->getReferenceCount() > 1 && !isMemOp))             &&
-            performTransformation(comp, "O^O analyseAddForLEA: checking that second node is a memory reference %x\n", constValue))
+            performTransformation(comp, "%schecking that second node is a memory reference %x\n", OPT_DETAILS_ANALYZE_ADD_FOR_LEA, constValue))
          {
          if (!isMemOp)
             targetRegister = cg->evaluate(firstChild);
@@ -1007,7 +1024,7 @@ TR::Register *OMR::X86::TreeEvaluator::baddEvaluator(TR::Node *node, TR::CodeGen
 
    TR::Register * testRegister = secondChild->getRegister();
    if (secondChild->getOpCodeValue() == TR::bconst &&
-       testRegister == NULL && performTransformation(comp, "O^O BaddEvaluator: checking that the store has not happened yet. Target register: %x\n", testRegister))
+       testRegister == NULL && performTransformation(comp, "%schecking that the store has not happened yet. Target register: %x\n", OPT_DETAILS_BADD_EVALUATOR, testRegister))
       {
       int32_t value  = secondChild->getByte();
       if (!isMemOp)
@@ -1133,7 +1150,7 @@ TR::Register *OMR::X86::TreeEvaluator::saddEvaluator(TR::Node *node, TR::CodeGen
    TR::Register * testRegister = secondChild->getRegister();
    if (secondChild->getOpCodeValue() == TR::sconst &&
        testRegister == NULL         &&
-       performTransformation(comp, "O^O SaddEvaluator: checking that the store has not happened yet. Target register: %x\n", testRegister))
+       performTransformation(comp, "%schecking that the store has not happened yet. Target register: %x\n", OPT_DETAILS_SADD_EVALUATOR, testRegister))
       {
       int32_t value  = secondChild->getShortInt();
       if (!isMemOp)
@@ -1285,7 +1302,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerSubEvaluator(TR::Node *node, TR::C
    if (secondChild->getOpCode().isLoadConst() &&
        testRegister == NULL     &&
        TR::TreeEvaluator::constNodeValueIs32BitSigned(secondChild, &constValue, cg) &&
-       performTransformation(comp, "O^O IntegerSubEvaluator: register is not NULL, or second operand is not a 32 bit constant. Register value: %x\n", testRegister))
+       performTransformation(comp, "%sregister is not NULL, or second operand is not a 32 bit constant. Register value: %x\n", OPT_DETAILS_INTEGER_SUB_EVALUATOR, testRegister))
       {
       if (!computesCarry && TR::TreeEvaluator::analyseSubForLEA(node, cg))
          {
@@ -1431,7 +1448,7 @@ TR::Register *OMR::X86::TreeEvaluator::bsubEvaluator(TR::Node *node, TR::CodeGen
    TR::Register * testRegister = secondChild->getRegister();
    if (secondChild->getOpCodeValue() == TR::bconst &&
        testRegister == NULL                       &&
-       performTransformation(comp, "O^O BSUBEvaluator: checking that the store has not happened yet. Target register:  %x\n", testRegister))
+       performTransformation(comp, "%schecking that the store has not happened yet. Target register:  %x\n", OPT_DETAILS_BSUB_EVALUATOR, testRegister))
       {
       int32_t value = secondChild->getByte();
       if (!isMemOp)
@@ -1554,7 +1571,7 @@ TR::Register *OMR::X86::TreeEvaluator::ssubEvaluator(TR::Node *node, TR::CodeGen
    TR::Register * testRegister = secondChild->getRegister();
    if (secondChild->getOpCodeValue() == TR::sconst &&
        testRegister  == NULL         &&
-       performTransformation(comp, "O^O SSUBEvaluator: checking that the store has not happened yet. Target register:  %x\n", testRegister))
+       performTransformation(comp, "%schecking that the store has not happened yet. Target register:  %x\n", OPT_DETAILS_SSUB_EVALUATOR, testRegister))
       {
       int32_t value = secondChild->getShortInt();
       if (!isMemOp)
@@ -2608,7 +2625,7 @@ TR::X86MemInstruction  *OMR::X86::TreeEvaluator::generateMemoryShift(TR::Node *n
       }
 
    bool loadConstant = secondChild->getOpCode().isLoadConst();
-   if (loadConstant && performTransformation(comp, "O^O GenerateMemoryShift: load is not constant %d\n", loadConstant))
+   if (loadConstant && performTransformation(comp, "%sload is not constant %d\n", OPT_DETAILS_GENERATE_MEMORY_SHIFT, loadConstant))
       {
       intptr_t shiftAmount = TR::TreeEvaluator::integerConstNodeValue(secondChild, cg) & TR::TreeEvaluator::shiftMask(nodeIs64Bit);
       if (shiftAmount != 0)
@@ -2702,7 +2719,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerShlEvaluator(TR::Node *node, TR::C
    else if (shiftAmountNode->getOpCode().isLoadConst()  &&
             (shiftAmount = TR::TreeEvaluator::integerConstNodeValue(shiftAmountNode, cg) & TR::TreeEvaluator::shiftMask(nodeIs64Bit),
              shiftAmount > 0 && shiftAmount <= 3)       &&
-             performTransformation(comp, "O^O IntegerShlEvaluator: replace shift with lea\n"))
+             performTransformation(comp, "%sreplace shift with lea\n", OPT_DETAILS_INTEGER_SHL_EVALUATOR))
       {
       // Turn small shift into LEA
       //
@@ -2844,7 +2861,7 @@ TR::Register *OMR::X86::TreeEvaluator::bshlEvaluator(TR::Node *node, TR::CodeGen
       }
 
    TR::ILOpCodes testOpCode = secondChild->getOpCodeValue();
-   if (testOpCode == TR::bconst && performTransformation(comp, "O^O BSHLEvaluator: second child is not an 8-bit signed, two's complement number: %x\n", testOpCode))
+   if (testOpCode == TR::bconst && performTransformation(comp, "%ssecond child is not an 8-bit signed, two's complement number: %x\n", OPT_DETAILS_BSHL_EVALUATOR, testOpCode))
       {
       int32_t value = secondChild->getByte();
       if (isMemOp)
@@ -2954,7 +2971,7 @@ TR::Register *OMR::X86::TreeEvaluator::sshlEvaluator(TR::Node *node, TR::CodeGen
       }
 
    TR::ILOpCodes testOpcode = secondChild->getOpCodeValue();
-   if (testOpcode == TR::iconst && performTransformation(comp, "O^O SSHLEvaluator: second child is not a 16-bit integer constant: %x\n", testOpcode))
+   if (testOpcode == TR::iconst && performTransformation(comp, "%ssecond child is not a 16-bit integer constant: %x\n", OPT_DETAILS_SSHL_EVALUATOR, testOpcode))
       {
       int32_t value = secondChild->getInt();
       if (isMemOp)
@@ -3062,7 +3079,7 @@ TR::Register *OMR::X86::TreeEvaluator::bshrEvaluator(TR::Node *node, TR::CodeGen
       }
 
    TR::ILOpCodes testOpcode = secondChild->getOpCodeValue();
-   if (testOpcode == TR::bconst && performTransformation(comp, "O^O BSHREvaluator: second child is not an 8-bit signed Two's complement opcode %x\n", testOpcode))
+   if (testOpcode == TR::bconst && performTransformation(comp, "%ssecond child is not an 8-bit signed Two's complement opcode %x\n", OPT_DETAILS_BSHR_EVALUATOR, testOpcode))
       {
       int32_t value = secondChild->getByte();
       if (value != 0)
@@ -3154,7 +3171,7 @@ TR::Register *OMR::X86::TreeEvaluator::sshrEvaluator(TR::Node *node, TR::CodeGen
       }
 
    TR::ILOpCodes testOpcode = secondChild->getOpCodeValue();
-   if (testOpcode == TR::iconst && performTransformation(comp, "O^O SSHREvaluator: second child is not a 16-bit signed two's complement number %x\n", testOpcode))
+   if (testOpcode == TR::iconst && performTransformation(comp, "%ssecond child is not a 16-bit signed two's complement number %x\n", OPT_DETAILS_SSHR_EVALUATOR, testOpcode))
       {
       int32_t value = secondChild->getInt();
       if (value != 0)
@@ -3237,7 +3254,7 @@ TR::Register *OMR::X86::TreeEvaluator::bushrEvaluator(TR::Node *node, TR::CodeGe
          }
       }
    else if (testOpcode1 == TR::bconst &&
-            performTransformation(comp, "O^O BUSHREvaluator: first child is not an 8-bit signed two's complement, or an 8 bit unsigned %x\n", testOpcode1))
+            performTransformation(comp, "%sfirst child is not an 8-bit signed two's complement, or an 8 bit unsigned %x\n", OPT_DETAILS_BUSHR_EVALUATOR, testOpcode1))
       {
       targetRegister = cg->allocateRegister();
       int32_t value = static_cast<int32_t>(firstChild->get64bitIntegralValue());
@@ -3249,7 +3266,7 @@ TR::Register *OMR::X86::TreeEvaluator::bushrEvaluator(TR::Node *node, TR::CodeGe
       }
 
    if (testOpcode2 == TR::bconst &&
-       performTransformation(comp, "O^O BUSHREvaluator: first child is not an 8-bit signed two's complement, or an 8 bit unsigned %x\n", testOpcode2))
+       performTransformation(comp, "%sfirst child is not an 8-bit signed two's complement, or an 8 bit unsigned %x\n", OPT_DETAILS_BUSHR_EVALUATOR, testOpcode2))
       {
       int32_t value = static_cast<int32_t>(secondChild->get64bitIntegralValue());
 
@@ -3339,7 +3356,7 @@ TR::Register *OMR::X86::TreeEvaluator::sushrEvaluator(TR::Node *node, TR::CodeGe
       }
 
    TR::ILOpCodes testOpcode = secondChild->getOpCodeValue();
-   if (testOpcode == TR::iconst && performTransformation(comp, "O^O SUSHREvaluator: opcode is not a 16-bit signed two's complement %x\n", testOpcode))
+   if (testOpcode == TR::iconst && performTransformation(comp, "%sopcode is not a 16-bit signed two's complement %x\n", OPT_DETAILS_SUSHR_EVALUATOR, testOpcode))
       {
       int32_t value = secondChild->getInt();
       if (isMemOp)
@@ -3443,7 +3460,7 @@ TR::Register *OMR::X86::TreeEvaluator::logicalEvaluator(TR::Node          *node,
    TR::Register * testRegister = secondChild->getRegister();
    if (secondChild->getOpCode().isLoadConst() &&
        testRegister == NULL     &&
-       performTransformation(comp, "O^O LogicalEvaluator: checking that the store has not happened yet. Target register: %x\n", testRegister))
+       performTransformation(comp, "%schecking that the store has not happened yet. Target register: %x\n", OPT_DETAILS_LOGICAL_EVALUATOR, testRegister))
       {
       switch (secondChild->getDataType())
          {
@@ -3494,7 +3511,7 @@ TR::Register *OMR::X86::TreeEvaluator::logicalEvaluator(TR::Node          *node,
    if (secondChild->getOpCode().isLoadConst() &&
        testRegister == NULL     &&
        IS_32BIT_SIGNED(constValue)            &&
-       performTransformation(comp, "O^O checking that the store has not happened yet. Target register: %x\n", testRegister))
+       performTransformation(comp, "%schecking that the store has not happened yet. Target register: %x\n", OPT_DETAILS, testRegister))
       {
       if (!isMemOp && node->getOpCode().isAnd()
           && !firstChild->getRegister()

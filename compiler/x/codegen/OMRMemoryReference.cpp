@@ -55,6 +55,8 @@
 #include "x/codegen/X86Instruction.hpp"
 #include "codegen/InstOpCode.hpp"
 
+#define OPT_DETAILS "O^O OMR Memory Reference: "
+
 class TR_OpaqueClassBlock;
 class TR_ScratchRegisterManager;
 namespace TR { class LabelSymbol; }
@@ -1169,7 +1171,7 @@ OMR::X86::EnlargementResult OMR::X86::MemoryReference::enlarge(TR::CodeGenerator
       if (potentialPatchGrowth > 0 &&
           (potentialPatchGrowth >= requestedEnlargementSize || allowPartialEnlargement) &&
           potentialEncodingGrowth <= maxEnlargementSize &&
-          performTransformation(cg->comp(), "O^O Enlarging memory reference by %d bytes by forcing wide displacement - allowpartial was %d", potentialPatchGrowth, allowPartialEnlargement))
+          performTransformation(cg->comp(), "%sEnlarging memory reference by %d bytes by forcing wide displacement - allowpartial was %d", OPT_DETAILS, potentialPatchGrowth, allowPartialEnlargement))
          {
          return OMR::X86::EnlargementResult(potentialPatchGrowth, potentialEncodingGrowth);
          }

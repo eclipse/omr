@@ -69,6 +69,8 @@
 #include "env/VMJ9.h"
 #endif
 
+#define OPT_DETAILS "O^O X86 Binary Encoding: "
+
 class TR_OpaqueClassBlock;
 class TR_OpaqueMethodBlock;
 
@@ -1521,7 +1523,7 @@ TR::X86RegInstruction::enlarge(int32_t requestedEnlargementSize, int32_t maxEnla
    TR::Compilation *comp = cg()->comp();
    if (comp->target().is64Bit()
       && !getOpCode().info().hasMandatoryPrefix()
-      && performTransformation(comp, "O^O Enlarging instruction %p by %d bytes by repeating the REX prefix\n", this, enlargementSize))
+      && performTransformation(comp, "%sEnlarging instruction %p by %d bytes by repeating the REX prefix\n", OPT_DETAILS, this, enlargementSize))
       {
       setRexRepeatCount(enlargementSize);
       setEstimatedBinaryLength(getEstimatedBinaryLength() + enlargementSize);

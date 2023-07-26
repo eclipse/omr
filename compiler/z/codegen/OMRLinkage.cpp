@@ -92,6 +92,8 @@
 #include "env/VMJ9.h"
 #endif
 
+#define OPT_DETAILS "O^O OMR Linkage"
+
 extern TR::Instruction* generateS390ImmToRegister(TR::CodeGenerator * cg, TR::Node * node, TR::Register * targetRegister,
    intptr_t value, TR::Instruction * cursor);
 extern bool storeHelperImmediateInstruction(TR::Node * valueChild, TR::CodeGenerator * cg, bool isReversed, TR::InstOpCode::Mnemonic op, TR::Node * node, TR::MemoryReference * mf);
@@ -308,7 +310,7 @@ OMR::Z::Linkage::removeOSCOnSavedArgument(TR::Instruction* instr, TR::Register* 
             // Replace if we have a new instruction
             //
             if (newInst &&
-                performTransformation(self()->comp(), "O^O : Prolog peeking removing [%p]\n", current) )
+                performTransformation(self()->comp(), "%sProlog peeking removing [%p]\n", OPT_DETAILS, current) )
                {
                self()->cg()->replaceInst(current, newInst);
                current = newInst;

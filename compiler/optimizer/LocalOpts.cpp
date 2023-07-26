@@ -111,6 +111,9 @@
 #include "runtime/RuntimeAssumptions.hpp"
 #endif
 
+#define OPT_DETAILS_PROFILED_NODE_VERSIONING "O^O PROFILED NODE VERSIONING: "
+#define OPT_DETAILS_BLOCK_EXTENSION "O^O BLOCK EXTENSION: "
+
 extern void createGuardSiteForRemovedGuard(TR::Compilation *comp, TR::Node* ifNode);
 
 // basic blocks peephole optimization.
@@ -4174,7 +4177,8 @@ int32_t TR_ProfiledNodeVersioning::perform()
                      profiledSize += spread;
                      }
 
-                  if (doProfiling && performTransformation(comp(), "O^O PROFILED NODE VERSIONING: Versioning %s %s, size %s %d %.01f%%\n",
+                  if (doProfiling && performTransformation(comp(), "%sVersioning %s %s, size %s %d %.01f%%\n",
+                                                             OPT_DETAILS_PROFILED_NODE_VERSIONING,
                                                              node->getOpCode().getName(),
                                                              getDebug()->getName(node),
                                                              (numDifferentSizes == 1)? "==" : "<=",
@@ -9212,7 +9216,7 @@ int32_t TR_TrivialBlockExtension::performOnBlock(TR::Block *block)
          }
       else
          {
-         if (performTransformation(comp(), "O^O BLOCK EXTENSION: Mark block_%d as an extension of block_%d\n", block->getNumber(), pred->getNumber()))
+         if (performTransformation(comp(), "%sMark block_%d as an extension of block_%d\n", OPT_DETAILS_BLOCK_EXTENSION, block->getNumber(), pred->getNumber()))
             block->setIsExtensionOfPreviousBlock();
          }
       }

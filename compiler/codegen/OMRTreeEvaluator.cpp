@@ -51,6 +51,8 @@
 #include "infra/TreeServices.hpp"
 #include "ras/Debug.hpp"
 
+#define OPT_DETAILS "O^O OMR Tree Evaluator: "
+
 TR::Register *
 OMR::TreeEvaluator::brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -759,7 +761,7 @@ void OMR::TreeEvaluator::evaluateNodesWithFutureUses(TR::Node *node, TR::CodeGen
       else
          {
          if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "O^O pre-evaluating escaping commoned subtree %p\n", node);
+            traceMsg(comp, "%spre-evaluating escaping commoned subtree %p\n", OPT_DETAILS, node);
 
          (void)cg->evaluate(node);
 

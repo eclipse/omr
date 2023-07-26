@@ -81,6 +81,10 @@
 #include "z/codegen/S390Register.hpp"
 #endif
 #endif
+
+#define OPT_DETAILS "O^O NODE FLAGS: "
+#define OPT_DETAILS_LAZY_CLOBBERING "O^O LAZY CLOBBERING: "
+
 /**
  * Node constructors and create functions
  */
@@ -4017,7 +4021,7 @@ OMR::Node::setSignExtendTo32BitAtSource(bool v)
    {
    TR::Compilation* c = TR::comp();
    TR_ASSERT(self()->getOpCode().isLoadVar(), "Can only call this for variable loads\n");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting signExtendedTo32BitAtSource flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting signExtendedTo32BitAtSource flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       _flags.set(signExtendTo32BitAtSource, v);
       }
@@ -4028,7 +4032,7 @@ OMR::Node::setSignExtendTo64BitAtSource(bool v)
    {
    TR::Compilation* c = TR::comp();
    TR_ASSERT(self()->getOpCode().isLoadVar(), "Can only call this for variable loads\n");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting signExtendedTo64BitAtSource flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting signExtendedTo64BitAtSource flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       _flags.set(signExtendTo64BitAtSource, v);
       }
@@ -4051,7 +4055,7 @@ OMR::Node::setZeroExtendTo32BitAtSource(bool v)
    {
    TR::Compilation* c = TR::comp();
    TR_ASSERT(self()->getOpCode().isLoadVar(), "Can only call this for variable loads\n");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting zeroExtendTo32BitAtSource flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting zeroExtendTo32BitAtSource flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       _flags.set(zeroExtendTo32BitAtSource, v);
       }
@@ -4062,7 +4066,7 @@ OMR::Node::setZeroExtendTo64BitAtSource(bool v)
    {
    TR::Compilation* c = TR::comp();
    TR_ASSERT(self()->getOpCode().isLoadVar(), "Can only call this for variable loads\n");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting zeroExtendTo64BitAtSource flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting zeroExtendTo64BitAtSource flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       _flags.set(zeroExtendTo64BitAtSource, v);
       }
@@ -5242,7 +5246,7 @@ void
 OMR::Node::setIsZero(bool v)
    {
    TR::Compilation * c = TR::comp();
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting nodeIsZero flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting nodeIsZero flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(nodeIsZero, v);
    }
 
@@ -5256,7 +5260,7 @@ void
 OMR::Node::setIsNonZero(bool v)
    {
    TR::Compilation * c = TR::comp();
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting nodeIsNonZero flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting nodeIsNonZero flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(nodeIsNonZero, v);
    }
 
@@ -5271,7 +5275,7 @@ OMR::Node::setIsNull(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() != TR::loadaddr, "Can't call this for loadaddr");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting null flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting null flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(nodeIsNull, v);
    }
 
@@ -5290,7 +5294,7 @@ OMR::Node::setIsNonNull(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(v || self()->getOpCodeValue() != TR::loadaddr, "Can't call this for loadaddr");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting nonNull flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting nonNull flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(nodeIsNonNull, v);
    }
 
@@ -5307,7 +5311,7 @@ OMR::Node::setPointsToNull(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::loadaddr, "Can only call this for loadaddr");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting nodePointsToNull flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting nodePointsToNull flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(nodePointsToNull, v);
    }
 
@@ -5328,7 +5332,7 @@ OMR::Node::setPointsToNonNull(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::loadaddr, "Can only call this for loadaddr");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting nodePointsToNull flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting nodePointsToNull flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(nodePointsToNonNull, v);
    }
 
@@ -5363,7 +5367,7 @@ OMR::Node::setIsInvalid8BitGlobalRegister(bool v)
    {
    TR::Compilation * c = TR::comp();
 #if defined(TR_HOST_X86)
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting invalid8BitGlobalRegister flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting invalid8BitGlobalRegister flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(invalid8BitGlobalRegister, v);
 #endif
    }
@@ -5378,7 +5382,7 @@ void
 OMR::Node::setDirectMemoryUpdate(bool v)
    {
    TR::Compilation * c = TR::comp();
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting directMemoryUpdate flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting directMemoryUpdate flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(directMemoryUpdate, v);
    }
 
@@ -5392,7 +5396,7 @@ void
 OMR::Node::setIsProfilingCode()
    {
    TR::Compilation * c = TR::comp();
-   if (performNodeTransformation1(c, "O^O NODE FLAGS: Setting profilingCode flag on node %p\n", self()))
+   if (performNodeTransformation2(c, "%sSetting profilingCode flag on node %p\n", OPT_DETAILS, self()))
       _flags.set(profilingCode);
    }
 
@@ -5420,7 +5424,7 @@ void
 OMR::Node::setIsNonNegative(bool v)
    {
    TR::Compilation * c = TR::comp();
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting nodeIsNonNegative flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting nodeIsNonNegative flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(nodeIsNonNegative, v);
    }
 
@@ -5434,7 +5438,7 @@ void
 OMR::Node::setIsNonPositive(bool v)
    {
    TR::Compilation * c = TR::comp();
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting nodeIsNonPositive flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting nodeIsNonPositive flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(nodeIsNonPositive, v);
    }
 
@@ -5470,7 +5474,7 @@ OMR::Node::setCannotOverflow(bool v)
    TR::Compilation * c = TR::comp();
    TR_ASSERT(!self()->getOpCode().isIf(), "assertion failure");
    TR_ASSERT(self()->getOpCodeValue() != TR::PassThrough, "can't set cannotOverflow on PassThrough\n");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting cannotOverflow flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting cannotOverflow flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(cannotOverFlow, v);
    }
 
@@ -5493,7 +5497,7 @@ OMR::Node::setIsSafeToSkipTableBoundCheck(bool b)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::table, "assertion failure");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting canSkipTableBoundCheck flag on node %p to %d\n", self(), b))
+   if (performNodeTransformation3(c, "%sSetting canSkipTableBoundCheck flag on node %p to %d\n", OPT_DETAILS, self(), b))
       _flags.set(canSkipTableBoundCheck, b);
    }
 
@@ -5516,7 +5520,7 @@ OMR::Node::setNOPLongStore(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isStore() && self()->getType().isInt64(), "Opcode must be long store");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting NOPLongStore flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting NOPLongStore flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(NOPLongStore, v);
    }
 
@@ -5544,7 +5548,7 @@ OMR::Node::setStoredValueIsIrrelevant(bool v)
    TR_ASSERT((self()->getOpCode().isStore() && self()->getSymbolReference()->getSymbol()->isAutoOrParm()), "Opcode must be store to a stack slot");
    if (self()->getOpCode().isStore() && self()->getSymbolReference()->getSymbol()->isAutoOrParm())
       {
-      if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting StoredValueIsIrrelevant flag on node %p to %d\n", self(), v))
+      if (performNodeTransformation3(c, "%sSetting StoredValueIsIrrelevant flag on node %p to %d\n", OPT_DETAILS, self(), v))
          _flags.set(StoredValueIsIrrelevant, v);
       }
    }
@@ -5568,7 +5572,7 @@ OMR::Node::setHeapificationStore(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT((self()->getOpCodeValue() == TR::astore), "Opcode must be astore");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting HeapificationStore flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting HeapificationStore flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(HeapificationStore, v);
    }
 
@@ -5590,7 +5594,7 @@ OMR::Node::setHeapificationAlloc(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isNew(), "Opcode must be isNew");
-   if (performNodeTransformation2(c,"O^O NODE FLAGS: Setting HeapificationAlloc flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c,"%sSetting HeapificationAlloc flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(HeapificationAlloc, v);
    }
 
@@ -5612,7 +5616,7 @@ OMR::Node::setIdentityless(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isNew(), "Opcode must be isNew");
-   if (performNodeTransformation2(c,"O^O NODE FLAGS: Setting Identityless flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c,"%sSetting Identityless flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(Identityless, v);
    }
 
@@ -5635,7 +5639,7 @@ OMR::Node::setLiveMonitorInitStore(bool v)
    TR::Compilation * c = TR::comp();
    TR_ASSERT((self()->getOpCodeValue() == TR::astore), "Opcode must be astore");
    if (self()->getOpCode().hasSymbolReference() && self()->getSymbol()->holdsMonitoredObject() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting liveMonitorInitStore flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting liveMonitorInitStore flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(liveMonitorInitStore, v);
    }
 
@@ -5656,7 +5660,7 @@ OMR::Node::setUseSignExtensionMode(bool b)
    {
    TR::Compilation * c = TR::comp();
    if (self()->getOpCode().isLoadVar() && self()->getType().isInt32() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting useSignExtensionMode flag on node %p to %d\n", self(), b))
+       performNodeTransformation3(c, "%sSetting useSignExtensionMode flag on node %p to %d\n", OPT_DETAILS, self(), b))
       {
       _flags.set(SignExtensionMode, b);
       }
@@ -5674,7 +5678,7 @@ OMR::Node::setHasFoldedImplicitNULLCHK(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isBndCheck() || self()->getOpCode().isSpineCheck(), "assertion failure");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting foldedImplicitNULLCHK flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting foldedImplicitNULLCHK flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(foldedImplicitNULLCHK, v);
    }
 
@@ -5700,7 +5704,7 @@ OMR::Node::setThrowInsertedByOSR(bool v)
    TR_ASSERT((self()->getOpCodeValue() == TR::athrow), "Opcode must be athrow");
    if (c->getOption(TR_EnableOSR) && (self()->getOpCodeValue() == TR::athrow))
       {
-      if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting ThrowInsertedByOSR flag on node %p to %d\n", self(), v))
+      if (performNodeTransformation3(c, "%sSetting ThrowInsertedByOSR flag on node %p to %d\n", OPT_DETAILS, self(), v))
          _flags.set(ThrowInsertedByOSR, v);
       }
    }
@@ -5724,7 +5728,7 @@ void
 OMR::Node::setIsTheVirtualCallNodeForAGuardedInlinedCall()
    {
    TR::Compilation * c = TR::comp();
-   if (performNodeTransformation1(c, "O^O NODE FLAGS: Setting virtualCallNodeForAGuardedInlinedCall flag on node %p\n", self()))
+   if (performNodeTransformation2(c, "%sSetting virtualCallNodeForAGuardedInlinedCall flag on node %p\n", OPT_DETAILS, self()))
       _flags.set(virtualCallNodeForAGuardedInlinedCall);
    }
 
@@ -5768,7 +5772,7 @@ OMR::Node::setDontTransformArrayCopyCall()
    TR_ASSERT(self()->isArrayCopyCall(), "attempt to set transformArrayCopyCall flag not an arraycopy call");
    if (self()->isArrayCopyCall())
       {
-      if (performNodeTransformation1(c, "O^O NODE FLAGS: Setting dontTransformArrayCopyCall flag on node %p\n", self()))
+      if (performNodeTransformation2(c, "%sSetting dontTransformArrayCopyCall flag on node %p\n", OPT_DETAILS, self()))
          _flags.set(dontTransformArrayCopyCall);
       }
 
@@ -5792,7 +5796,7 @@ OMR::Node::setNodeIsRecognizedArrayCopyCall(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::call, "Opcode must be vcall to arraycopy");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting nodeIsRecognizedArrayCopyCall flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting nodeIsRecognizedArrayCopyCall flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(nodeIsRecognizedArrayCopyCall, v);
    }
 
@@ -5814,7 +5818,7 @@ OMR::Node::setDesynchronizeCall(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isCall(), "Opcode must be a call");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting desynchronizeCall flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting desynchronizeCall flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(desynchronizeCall, v);
    }
 
@@ -5868,7 +5872,7 @@ OMR::Node::setContainsCompressionSequence(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCode().isAdd() || self()->getOpCode().isSub() || self()->getOpCode().isShift(), "Opcode must be an add/sub/shift");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting isCompressionSequence flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting isCompressionSequence flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(isCompressionSequence, v);
    }
 
@@ -5893,7 +5897,7 @@ OMR::Node::setIsInternalPointer(bool v)
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCode().hasPinningArrayPointer() || self()->getOpCode().isArrayRef(),
              "Opcode must be one that can have a pinningArrayPointer or must be an array reference");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting internalPointer flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting internalPointer flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(internalPointer, v);
    }
 
@@ -5909,7 +5913,7 @@ OMR::Node::setArrayTRT(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraytranslateAndTest, "Opcode must be arraytranslateAndTest");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting arrayTRT flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting arrayTRT flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(arrayTRT, v);
    }
 
@@ -5931,7 +5935,7 @@ OMR::Node::setCharArrayTRT(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraytranslateAndTest, "Opcode must be arraytranslateAndTest");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting charArrayTRT flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting charArrayTRT flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(charArrayTRT, v);
    }
 
@@ -5953,7 +5957,7 @@ OMR::Node::setSourceIsByteArrayTranslate(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraytranslate, "Opcode must be arraytranslate");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting sourceIsByteArrayTranslate flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting sourceIsByteArrayTranslate flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(sourceIsByteArrayTranslate, v);
    }
 
@@ -5975,7 +5979,7 @@ OMR::Node::setTargetIsByteArrayTranslate(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraytranslate, "Opcode must be arraytranslate");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting targetIsByteArrayTranslate flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting targetIsByteArrayTranslate flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(targetIsByteArrayTranslate, v);
    }
 
@@ -6057,7 +6061,7 @@ OMR::Node::setTermCharNodeIsHint(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraytranslate, "Opcode must be arraytranslate");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting termCharNodeIsHint flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting termCharNodeIsHint flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(termCharNodeIsHint, v);
    }
 
@@ -6079,7 +6083,7 @@ OMR::Node::setSourceCellIsTermChar(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraytranslate, "Opcode must be arraytranslate");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting sourceCellIsTermChar flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting sourceCellIsTermChar flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(sourceCellIsTermChar, v);
    }
 
@@ -6101,7 +6105,7 @@ OMR::Node::setTableBackedByRawStorage(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraytranslate, "Opcode must be arraytranslate");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting tableBackedByRawStorage flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting tableBackedByRawStorage flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(tableBackedByRawStorage, v);
    }
 
@@ -6123,7 +6127,7 @@ OMR::Node::setArrayCmpLen(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraycmp, "Opcode must be arraycmp");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting arrayCmpLen flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting arrayCmpLen flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(arrayCmpLen, v);
    }
 
@@ -6145,7 +6149,7 @@ OMR::Node::setArrayCmpSign(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraycmp, "Opcode must be arraycmp");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting arrayCmpSign flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting arrayCmpSign flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(arrayCmpSign, v);
    }
 
@@ -6169,12 +6173,12 @@ OMR::Node::setHalfWordElementArrayCopy(bool v)
    TR_ASSERT(self()->getOpCodeValue() == TR::arraycopy, "Opcode must be arraycopy");
    if (v)
       {
-      if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting halfWordElementArrayCopy flag on node %p to %d\n", self(), v))
+      if (performNodeTransformation3(c, "%sSetting halfWordElementArrayCopy flag on node %p to %d\n", OPT_DETAILS, self(), v))
          _flags.setValue(arraycopyElementSizeMask, arraycopyElementSize2);
       }
    else
       {
-      if (self()->isHalfWordElementArrayCopy() && performNodeTransformation2(c, "O^O NODE FLAGS: Setting halfWordElementArrayCopy flag on node %p to %d\n", self(), v))
+      if (self()->isHalfWordElementArrayCopy() && performNodeTransformation3(c, "%sSetting halfWordElementArrayCopy flag on node %p to %d\n", OPT_DETAILS, self(), v))
          _flags.setValue(arraycopyElementSizeMask, arraycopyElementSizeUnknown);
       }
    }
@@ -6199,12 +6203,12 @@ OMR::Node::setWordElementArrayCopy(bool v)
    TR_ASSERT(self()->getOpCodeValue() == TR::arraycopy, "Opcode must be arraycopy");
    if (v)
       {
-      if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting wordElementArrayCopy flag on node %p to %d\n", self(), v))
+      if (performNodeTransformation3(c, "%sSetting wordElementArrayCopy flag on node %p to %d\n", OPT_DETAILS, self(), v))
          _flags.setValue(arraycopyElementSizeMask, arraycopyElementSize4);
       }
    else
       {
-      if (self()->isWordElementArrayCopy() && performNodeTransformation2(c, "O^O NODE FLAGS: Setting wordElementArrayCopy flag on node %p to %d\n", self(), v))
+      if (self()->isWordElementArrayCopy() && performNodeTransformation3(c, "%sSetting wordElementArrayCopy flag on node %p to %d\n", OPT_DETAILS, self(), v))
          _flags.setValue(arraycopyElementSizeMask, arraycopyElementSizeUnknown);
       }
    }
@@ -6230,14 +6234,14 @@ OMR::Node::setForwardArrayCopy(bool v)
    bool wasRarePathForwardArrayCopy = self()->isRarePathForwardArrayCopy();
    if (v)
       {
-      if (!wasRarePathForwardArrayCopy && performNodeTransformation2(c, "O^O NODE FLAGS: Setting forwardArrayCopy flag on node %p to %d\n", self(), v))
+      if (!wasRarePathForwardArrayCopy && performNodeTransformation3(c, "%sSetting forwardArrayCopy flag on node %p to %d\n", OPT_DETAILS, self(), v))
          _flags.setValue(arraycopyDirectionMask, arraycopyDirectionForward);
       TR_ASSERT(self()->isForwardArrayCopy() && !self()->isBackwardArrayCopy(), "assertion failure");
       TR_ASSERT(wasRarePathForwardArrayCopy == self()->isRarePathForwardArrayCopy(), "setForwardArrayCopy should not modify isRarePathForwardArrayCopy");
       }
    else
       {
-      if (!self()->isBackwardArrayCopy() && performNodeTransformation2(c, "O^O NODE FLAGS: Setting forwardArrayCopy flag on node %p to %d\n", self(), v))
+      if (!self()->isBackwardArrayCopy() && performNodeTransformation3(c, "%sSetting forwardArrayCopy flag on node %p to %d\n", OPT_DETAILS, self(), v))
          _flags.setValue(arraycopyDirectionMask, arraycopyDirectionUnknown);
       TR_ASSERT(!self()->isForwardArrayCopy(), "assertion failure");
       }
@@ -6263,13 +6267,13 @@ OMR::Node::setBackwardArrayCopy(bool v)
    TR_ASSERT(self()->getOpCodeValue() == TR::arraycopy, "Opcode must be arraycopy");
    if (v)
       {
-      if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting backwardArrayCopy flag on node %p to %d\n", self(), v))
+      if (performNodeTransformation3(c, "%sSetting backwardArrayCopy flag on node %p to %d\n", OPT_DETAILS, self(), v))
          _flags.setValue(arraycopyDirectionMask, arraycopyDirectionBackward);
       TR_ASSERT(self()->isBackwardArrayCopy() && !self()->isForwardArrayCopy() && !self()->isRarePathForwardArrayCopy(), "assertion failure");
       }
    else
       {
-      if (self()->isBackwardArrayCopy() && performNodeTransformation2(c, "O^O NODE FLAGS: Setting backwardArrayCopy flag on node %p to %d\n", self(), v))
+      if (self()->isBackwardArrayCopy() && performNodeTransformation3(c, "%sSetting backwardArrayCopy flag on node %p to %d\n", OPT_DETAILS, self(), v))
          _flags.setValue(arraycopyDirectionMask, arraycopyDirectionUnknown);
       TR_ASSERT(!self()->isBackwardArrayCopy(), "assertion failure");
       }
@@ -6294,7 +6298,7 @@ OMR::Node::setRarePathForwardArrayCopy(bool v)
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraycopy, "Opcode must be arraycopy");
    bool wasForwardArrayCopy = self()->isForwardArrayCopy();
-   if (v != self()->isRarePathForwardArrayCopy() && performNodeTransformation2(c, "O^O NODE FLAGS: Setting rarePathForwardArrayCopy flag on node %p to %d\n", self(), v))
+   if (v != self()->isRarePathForwardArrayCopy() && performNodeTransformation3(c, "%sSetting rarePathForwardArrayCopy flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.setValue(arraycopyDirectionMask, v ? arraycopyDirectionForwardRarePath : arraycopyDirectionUnknown);
    if (v)
       TR_ASSERT(self()->isRarePathForwardArrayCopy() && self()->isForwardArrayCopy() && !self()->isBackwardArrayCopy(), "assertion failure");
@@ -6320,7 +6324,7 @@ OMR::Node::setNoArrayStoreCheckArrayCopy(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::arraycopy, "Opcode must be arraycopy");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting noArrayStoreCheckArrayCopy flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting noArrayStoreCheckArrayCopy flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(noArrayStoreCheckArrayCopy, v);
    }
 
@@ -6359,7 +6363,7 @@ OMR::Node::setXorBitOpMem(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::bitOpMem, "Opcode must be bitOpMem");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting XOR flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting XOR flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.setValue(bitOpMemOPMASK, bitOpMemXOR);
    }
 
@@ -6382,7 +6386,7 @@ OMR::Node::setOrBitOpMem(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::bitOpMem, "Opcode must be bitOpMem");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting OR flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting OR flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.setValue(bitOpMemOPMASK, bitOpMemOR);
    }
 
@@ -6405,7 +6409,7 @@ OMR::Node::setAndBitOpMem(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::bitOpMem, "Opcode must be bitOpMem");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting AND flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting AND flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.setValue(bitOpMemOPMASK, bitOpMemAND);
    }
 
@@ -6428,7 +6432,7 @@ OMR::Node::setArrayChkPrimitiveArray1(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::ArrayCHK, "Opcode must be ArrayCHK");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting arrayChkPrimitiveArray1 flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting arrayChkPrimitiveArray1 flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(arrayChkPrimitiveArray1, v);
    }
 
@@ -6450,7 +6454,7 @@ OMR::Node::setArrayChkReferenceArray1(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::ArrayCHK, "Opcode must be ArrayCHK");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting arrayChkReferenceArray1 flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting arrayChkReferenceArray1 flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(arrayChkReferenceArray1, v);
    }
 
@@ -6472,7 +6476,7 @@ OMR::Node::setArrayChkPrimitiveArray2(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::ArrayCHK, "Opcode must be ArrayCHK");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting arrayChkPrimitiveArray2 flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting arrayChkPrimitiveArray2 flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(arrayChkPrimitiveArray2, v);
    }
 
@@ -6494,7 +6498,7 @@ OMR::Node::setArrayChkReferenceArray2(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::ArrayCHK, "Opcode must be ArrayCHK");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting arrayChkReferenceArray2 flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting arrayChkReferenceArray2 flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(arrayChkReferenceArray2, v);
    }
 
@@ -6552,7 +6556,7 @@ OMR::Node::setIsHeapObjectWrtBar(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isWrtBar(), "Opcode must be wrtbar");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting heapObjectWrtBar flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting heapObjectWrtBar flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(heapObjectWrtBar, v);
    }
 
@@ -6574,7 +6578,7 @@ OMR::Node::setIsNonHeapObjectWrtBar(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isWrtBar(), "Opcode must be wrtbar");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting nonHeapObjectWrtBar flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting nonHeapObjectWrtBar flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(nonHeapObjectWrtBar, v);
    }
 
@@ -6611,7 +6615,7 @@ OMR::Node::setNeedsSignExtension(bool b)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::iRegStore || self()->getOpCode().isStore(), "assertion failure");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting needsSignExtension flag on node %p to %d\n", self(), b))
+   if (performNodeTransformation3(c, "%sSetting needsSignExtension flag on node %p to %d\n", OPT_DETAILS, self(), b))
       _flags.set(NeedsSignExtension, b);
    }
 
@@ -6627,7 +6631,7 @@ OMR::Node::setSkipSignExtension(bool b)
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::iRegLoad || self()->getOpCodeValue() == TR::iadd || self()->getOpCodeValue() == TR::isub ||
              self()->getOpCode().isLoad(), "assertion failure");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting skipSignExtension flag on node %p to %d\n", self(), b))
+   if (performNodeTransformation3(c, "%sSetting skipSignExtension flag on node %p to %d\n", OPT_DETAILS, self(), b))
       _flags.set(SkipSignExtension, b);
    }
 
@@ -6662,7 +6666,7 @@ OMR::Node::setIsDontMoveUnderBranch(bool v)
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isLoadReg() || self()->getOpCode().isLoadVarDirect(), "assertion failure");
    if (self()->getOpCode().isLoadVarDirect() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting dontMoveUnderBranch flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting dontMoveUnderBranch flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       _flags.set(dontMoveUnderBranch, v);
       }
@@ -6692,7 +6696,7 @@ OMR::Node::setIsNodeCreatedByPRE()
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->canChkNodeCreatedByPRE(), "Unexpected opcode %s in setIsNodeCreatedByPRE()",self()->getOpCode().getName());
-   if (performNodeTransformation1(c, "O^O NODE FLAGS: Setting nodeCreatedByPRE flag on node %p\n", self()))
+   if (performNodeTransformation2(c, "%sSetting nodeCreatedByPRE flag on node %p\n", OPT_DETAILS, self()))
       _flags.set(nodeCreatedByPRE);
    }
 
@@ -6701,7 +6705,7 @@ OMR::Node::resetIsNodeCreatedByPRE()
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->canChkNodeCreatedByPRE(), "Unexpected opcode %s in resetIsNodeCreatedByPRE()",self()->getOpCode().getName());
-   if (performNodeTransformation1(c,"ReO^O NODE FLAGS: Setting nodeCreatedByPRE flag on node %p\n", self()))
+   if (performNodeTransformation2(c,"%sSetting nodeCreatedByPRE flag on node %p\n", OPT_DETAILS, self()))
       _flags.reset(nodeCreatedByPRE);
    }
 
@@ -6742,7 +6746,7 @@ OMR::Node::setIsMaxLoopIterationGuard(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCode().isIf(), "assertion failure");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting maxLoopIterationGuard flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting maxLoopIterationGuard flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(maxLoopIterationGuard, v);
    }
 
@@ -6834,7 +6838,7 @@ OMR::Node::setSwappedChildren(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCode().isIf(), "assertion failure");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting swappedChildren flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting swappedChildren flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(swappedChildren, v);
    }
 
@@ -6848,7 +6852,7 @@ void
 OMR::Node::setIsVersionableIfWithMaxExpr(TR::Compilation * c)
    {
    TR_ASSERT(self()->getOpCode().isIf(), "assertion failure");
-   if (performNodeTransformation1(c, "O^O NODE FLAGS: Setting versionIfWithMaxExpr flag on node %p\n", self()))
+   if (performNodeTransformation2(c, "%sSetting versionIfWithMaxExpr flag on node %p\n", OPT_DETAILS, self()))
       _flags.set(versionIfWithMaxExpr);
    }
 
@@ -6862,7 +6866,7 @@ void
 OMR::Node::setIsVersionableIfWithMinExpr(TR::Compilation * c)
    {
    TR_ASSERT(self()->getOpCode().isIf(), "assertion failure");
-   if (performNodeTransformation1(c, "O^O NODE FLAGS: Setting versionIfWithMinExpr flag on node %p\n", self()))
+   if (performNodeTransformation2(c, "%sSetting versionIfWithMinExpr flag on node %p\n", OPT_DETAILS, self()))
       _flags.set(versionIfWithMinExpr);
    }
 
@@ -6878,7 +6882,7 @@ OMR::Node::setStoreAlreadyEvaluated(bool b)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isStore(), "assertion failure");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting storeAlreadyEvaluated flag on node %p to %d\n", self(), b))
+   if (performNodeTransformation3(c, "%sSetting storeAlreadyEvaluated flag on node %p to %d\n", OPT_DETAILS, self(), b))
       _flags.set(storeAlreadyEvaluated, b);
    }
 
@@ -6900,7 +6904,7 @@ OMR::Node::setSeenRealReference(bool b)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCode().isLoadReg(), "assertion failure");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting seenRealReference flag on node %p to %d\n", self(), b))
+   if (performNodeTransformation3(c, "%sSetting seenRealReference flag on node %p to %d\n", OPT_DETAILS, self(), b))
       _flags.set(SeenRealReference, b);
    }
 
@@ -6922,7 +6926,7 @@ OMR::Node::setNormalizeNanValues(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::fbits2i || self()->getOpCodeValue() == TR::dbits2l, "Opcode must be fbits2i or dbits2l");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting mustNormalizeNanValues flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting mustNormalizeNanValues flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(mustNormalizeNanValues, v);
    }
 
@@ -6944,7 +6948,7 @@ OMR::Node::setIsHighWordZero(bool b)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getType().isInt64()  || self()->getType().isAddress(), "Can only call this for a long or address opcode\n");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting highWordZero flag on node %p to %d\n", self(), b))
+   if (performNodeTransformation3(c, "%sSetting highWordZero flag on node %p to %d\n", OPT_DETAILS, self(), b))
       _flags.set(highWordZero, b);
    }
 
@@ -6966,7 +6970,7 @@ OMR::Node::setUnsigned(bool b)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(!self()->getType().isInt64(), "can only be used for nonlong opcodes");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting unsigned flag on node %p to %d\n", self(), b))
+   if (performNodeTransformation3(c, "%sSetting unsigned flag on node %p to %d\n", OPT_DETAILS, self(), b))
       _flags.set(Unsigned, b);
    }
 
@@ -6989,7 +6993,7 @@ OMR::Node::setIsClassPointerConstant(bool b)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT((self()->getOpCodeValue() == TR::aconst), "Can only call this for aconst\n");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting classPointerConstant flag on node %p to %d\n", self(), b))
+   if (performNodeTransformation3(c, "%sSetting classPointerConstant flag on node %p to %d\n", OPT_DETAILS, self(), b))
       _flags.set(classPointerConstant, b);
    }
 
@@ -7012,7 +7016,7 @@ OMR::Node::setIsMethodPointerConstant(bool b)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT((self()->getOpCodeValue() == TR::aconst), "Can only call this for aconst\n");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting methodPointerConstant flag on node %p to %d\n", self(), b))
+   if (performNodeTransformation3(c, "%sSetting methodPointerConstant flag on node %p to %d\n", OPT_DETAILS, self(), b))
       _flags.set(methodPointerConstant, b);
    }
 
@@ -7033,7 +7037,7 @@ OMR::Node::setUnneededIALoad(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::aloadi, "Can only call this for iaload");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting unneededIALoad flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting unneededIALoad flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(unneededIALoad, v);
    }
 
@@ -7051,7 +7055,7 @@ OMR::Node::setSkipSync(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::monexit || self()->getOpCodeValue() == TR::monent, "Opcode must be monexit/monent");
-   if (performTransformation(c, "O^O NODE FLAGS: Setting skipSync flag on node %p to %d\n", self(), v))
+   if (performTransformation(c, "%sSetting skipSync flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(skipSync, v);
    }
 
@@ -7073,7 +7077,7 @@ OMR::Node::setStaticMonitor(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit, "Opcode must be monent or monexit");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting staticMonitor flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting staticMonitor flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(staticMonitor, v);
    }
 
@@ -7095,7 +7099,7 @@ OMR::Node::setSyncMethodMonitor(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit, "Opcode must be monent or monexit");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting syncMethodMonitor flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting syncMethodMonitor flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(syncMethodMonitor, v);
    }
 
@@ -7117,7 +7121,7 @@ OMR::Node::setReadMonitor(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit, "Opcode must be monent or monexit");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting readMonitor flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting readMonitor flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(readMonitor, v);
    }
 
@@ -7139,7 +7143,7 @@ OMR::Node::setLocalObjectMonitor(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::monent || self()->getOpCodeValue() == TR::monexit, "Opcode must be monent or monexit");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting localObjectMonitor flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting localObjectMonitor flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(localObjectMonitor, v);
    }
 
@@ -7198,7 +7202,7 @@ OMR::Node::setAllocationCanBeRemoved(bool v)
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::New || self()->getOpCodeValue() == TR::newarray ||
              self()->getOpCodeValue() == TR::anewarray || self()->getOpCodeValue() == TR::newvalue, "Opcode must be new, newarray, anewarray, or newvalue");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting allocationCanBeRemoved flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting allocationCanBeRemoved flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(allocationCanBeRemoved, v);
    }
 
@@ -7232,7 +7236,7 @@ OMR::Node::setCanSkipZeroInitialization(bool v)
              self()->getOpCodeValue() == TR::variableNewArray || self()->getOpCodeValue() == TR::variableNew ||
              self()->getOpCodeValue() == TR::multianewarray,
              "Opcode must be newarray or anewarray");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting skipZeroInit flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting skipZeroInit flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(skipZeroInit, v);
    }
 
@@ -7273,7 +7277,7 @@ OMR::Node::setCannotTrackLocalUses(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::loadaddr, "Opcode must be loadaddr");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting cannotTrack flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting cannotTrack flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(cantTrackLocalUses, v);
    }
 
@@ -7295,7 +7299,7 @@ OMR::Node::setEscapesInColdBlock(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::loadaddr, "Opcode must be loadaddr");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting escapesInColdBlock flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting escapesInColdBlock flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(coldBlockEscape, v);
    }
 
@@ -7318,7 +7322,7 @@ OMR::Node::setCannotTrackLocalStringUses(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::loadaddr, "Opcode must be loadaddr (flag shared on PLX)");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting cannotTrackString flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting cannotTrackString flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(cantTrackLocalStringUses, v);
    }
 
@@ -7340,7 +7344,7 @@ OMR::Node::setOmitSync(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT((self()->getOpCodeValue() == TR::allocationFence) || (self()->getOpCodeValue() == TR::fullFence), "Opcode must be TR::allocationFence or TR::fullFence");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting omitSync flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting omitSync flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(omitSync, v);
    }
 
@@ -7362,7 +7366,7 @@ OMR::Node::setSimpleDivCheck(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT((self()->getOpCode().isDiv() || self()->getOpCode().isRem()), "Opcode must be div/rem");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting simpleDivCheck flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting simpleDivCheck flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(simpleDivCheck, v);
    }
 
@@ -7384,7 +7388,7 @@ OMR::Node::setNormalizedShift(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT((self()->getOpCode().isLeftShift() || self()->getOpCode().isRightShift() || self()->getOpCode().isRotate()), "Opcode must be shl or shr");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting normalizedShift flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting normalizedShift flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(normalizedShift, v);
    }
 
@@ -7405,7 +7409,7 @@ OMR::Node::setIsFPStrictCompliant(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT((self()->getOpCode().isMul()), "Opcode must be multiply");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting resultFPStrictCompliant flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting resultFPStrictCompliant flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(resultFPStrictCompliant, v);
    }
 
@@ -7420,7 +7424,7 @@ OMR::Node::setUnneededConversion(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT((self()->getOpCode().isConversion()), "Opcode must be a conv");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting unneededConversion flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting unneededConversion flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(unneededConv, v);
    }
 
@@ -7442,7 +7446,7 @@ void
 OMR::Node::oneParentSupportsLazyClobber(TR::Compilation * comp)
    {
    if (self()->getOpCode().isConversion() && self()->getReferenceCount() <= 1
-      && performTransformation(comp, "O^O LAZY CLOBBERING: setParentSupportsLazyClobber(%s)\n", comp->getDebug()->getName(self())))
+      && performTransformation(comp, "%ssetParentSupportsLazyClobber(%s)\n", OPT_DETAILS_LAZY_CLOBBERING, comp->getDebug()->getName(self())))
       self()->setParentSupportsLazyClobber(true);
    }
 
@@ -7549,7 +7553,7 @@ OMR::Node::setAlignTLHAlloc(bool v)
    {
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getOpCodeValue() == TR::New, "Opcode value must be TR::New");
-   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting align on TLH flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(c, "%sSetting align on TLH flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(alignTLHAlloc, v);
    }
 

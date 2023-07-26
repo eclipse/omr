@@ -52,6 +52,8 @@
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
 
+#define OPT_DETAILS "O^O BinaryCommunicativeAnalyser: "
+
 void
 TR_S390BinaryCommutativeAnalyser::remapInputs(TR::Node * firstChild, TR::Register *firstRegister,
                                               TR::Node * secondChild, TR::Register *secondRegister,
@@ -383,7 +385,8 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
             TR::InstOpCode opcTmp = TR::InstOpCode(regToRegOpCode);
             if ( opcTmp.setsCompareFlag() && comp->getOption(TR_EnableEBBCCInfo) &&
                  cg()->isActiveCompareCC(regToRegOpCode, firstRegister, secondRegister) &&
-                 performTransformation(comp, "O^O BinaryCommunicativeAnalyser case 3 RR Compare [%s\t %s, %s]: reuse CC from ccInst [%p].",
+                 performTransformation(comp, "%scase 3 RR Compare [%s\t %s, %s] reuse CC from ccInst [%p].",
+                                       OPT_DETAILS,
                                        ccInst->getOpCode().getMnemonicName(),
                                        debugObj->getName(firstRegister),
                                        debugObj->getName(secondRegister),
@@ -393,7 +396,8 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
                }
             else if (opcTmp.setsCompareFlag() && comp->getOption(TR_EnableEBBCCInfo) &&
                      cg()->isActiveCompareCC(regToRegOpCode, secondRegister, firstRegister) &&
-                     performTransformation(comp, "O^O BinaryCommunicativeAnalyser case 4 RR Compare [%s\t %s, %s]: reuse CC from ccInst [%p].",
+                     performTransformation(comp, "%scase 4 RR Compare [%s\t %s, %s] reuse CC from ccInst [%p].",
+                                           OPT_DETAILS,
                                            ccInst->getOpCode().getMnemonicName(),
                                            debugObj->getName(firstRegister),
                                            debugObj->getName(secondRegister),
@@ -429,13 +433,13 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
          TR::InstOpCode opcTmp = TR::InstOpCode(regToRegOpCode);
          if ( opcTmp.setsCompareFlag() && comp->getOption(TR_EnableEBBCCInfo) &&
               cg()->isActiveCompareCC(regToRegOpCode, firstRegister, secondRegister) &&
-              performTransformation(comp, "O^O BinaryCommunicativeAnalyser case 5 RR Compare [%s\t %s, %s]: reuse CC from ccInst [%p].", ccInst->getOpCode().getMnemonicName(), debugObj->getName(firstRegister),debugObj->getName(secondRegister),ccInst) )
+              performTransformation(comp, "%scase 5 RR Compare [%s\t %s, %s] reuse CC from ccInst [%p].", OPT_DETAILS, ccInst->getOpCode().getMnemonicName(), debugObj->getName(firstRegister),debugObj->getName(secondRegister),ccInst) )
             {
             nodeReg = firstRegister; // CCInfo already exists; don't generate compare op any more;
             }
          else if (opcTmp.setsCompareFlag() && comp->getOption(TR_EnableEBBCCInfo) &&
                   cg()->isActiveCompareCC(regToRegOpCode, secondRegister, firstRegister) &&
-                  performTransformation(comp, "O^O BinaryCommunicativeAnalyser case 6 RR Compare [%s\t %s, %s]: reuse CC from ccInst [%p].", ccInst->getOpCode().getMnemonicName(), debugObj->getName(firstRegister),debugObj->getName(secondRegister),ccInst) )
+                  performTransformation(comp, "%scase 6 RR Compare [%s\t %s, %s] reuse CC from ccInst [%p].", OPT_DETAILS, ccInst->getOpCode().getMnemonicName(), debugObj->getName(firstRegister),debugObj->getName(secondRegister),ccInst) )
             {
             nodeReg = secondRegister;
             notReversedOperands(); // CCInfo already exists; don't generate compare op any more;

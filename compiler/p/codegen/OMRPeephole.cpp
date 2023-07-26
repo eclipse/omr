@@ -27,6 +27,8 @@
 #include "codegen/Instruction.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 
+#define OPT_DETAILS "O^O PPC PEEPHOLE: "
+
 static bool
 isWAWOrmrPeepholeCandidateInstr(TR::Instruction *instr)
    {
@@ -172,7 +174,7 @@ OMR::Power::Peephole::tryToReduceCompareToRecordForm()
          {
          if (current->getOpCode().isRecordForm())
             {
-            if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove redundant compare immediate %p.\n", cmpiInstruction))
+            if (performTransformation(self()->comp(), "%sRemove redundant compare immediate %p.\n", OPT_DETAILS, cmpiInstruction))
                {
                cmpiInstruction->remove();
                return true;
@@ -198,7 +200,7 @@ OMR::Power::Peephole::tryToReduceCompareToRecordForm()
                   if (inst->getSourceImmediate() == 0 &&
                       (inst->getMask()&0xffff0000) == 0)
                      {
-                     if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Change %p to andi_r, remove compare immediate %p.\n", current, cmpiInstruction))
+                     if (performTransformation(self()->comp(), "%sChange %p to andi_r, remove compare immediate %p.\n", OPT_DETAILS, current, cmpiInstruction))
                         {
                         generateTrg1Src1ImmInstruction(self()->cg(), TR::InstOpCode::andi_r, inst->getNode(), inst->getPrimaryTargetRegister(), inst->getSourceRegister(0),cmpiTargetReg, inst->getMask(), current);
 
@@ -218,7 +220,7 @@ OMR::Power::Peephole::tryToReduceCompareToRecordForm()
                   else if (inst->getSourceImmediate() == 0 &&
                       (inst->getMask()&0x0000ffff) == 0)
                      {
-                     if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Change %p to andis_r, remove compare immediate %p.\n", current, cmpiInstruction))
+                     if (performTransformation(self()->comp(), "%sChange %p to andis_r, remove compare immediate %p.\n", OPT_DETAILS, current, cmpiInstruction))
                         {
                         generateTrg1Src1ImmInstruction(self()->cg(), TR::InstOpCode::andis_r, inst->getNode(), inst->getPrimaryTargetRegister(), inst->getSourceRegister(0), cmpiTargetReg, ((uint32_t)inst->getMask()) >> 16, current);
 
@@ -238,7 +240,7 @@ OMR::Power::Peephole::tryToReduceCompareToRecordForm()
                   }
                }
             // change the opcode to get record form
-            if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Change %p to record form, remove compare immediate %p.\n", current, cmpiInstruction))
+            if (performTransformation(self()->comp(), "%sChange %p to record form, remove compare immediate %p.\n", OPT_DETAILS, current, cmpiInstruction))
                {
                current->setOpCodeValue(current->getRecordFormOpCode());
                cmpiInstruction->remove();
@@ -333,14 +335,14 @@ OMR::Power::Peephole::tryToRemoveRedundantLoadAfterStore()
       // and replace lwz with rlwinm, rX, rX, 0, 0xffffffff
       if (loadInstruction->getOpCodeValue() == TR::InstOpCode::lwz)
          {
-         if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Replace lwz " POINTER_PRINTF_FORMAT " with rlwinm after store " POINTER_PRINTF_FORMAT ".\n", loadInstruction, storeInstruction))
+         if (performTransformation(self()->comp(), "%sReplace lwz " POINTER_PRINTF_FORMAT " with rlwinm after store " POINTER_PRINTF_FORMAT ".\n", OPT_DETAILS, loadInstruction, storeInstruction))
             {
             generateTrg1Src1Imm2Instruction(self()->cg(), TR::InstOpCode::rlwinm, loadInstruction->getNode(), trgReg, srcReg, 0, 0xffffffff, storeInstruction);
             loadInstruction->remove();
             return true;
             }
          }
-      else if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove redundant load " POINTER_PRINTF_FORMAT " after store " POINTER_PRINTF_FORMAT ".\n", loadInstruction, storeInstruction))
+      else if (performTransformation(self()->comp(), "%sRemove redundant load " POINTER_PRINTF_FORMAT " after store " POINTER_PRINTF_FORMAT ".\n", OPT_DETAILS, loadInstruction, storeInstruction))
          {
          loadInstruction->remove();
          return true;
@@ -361,14 +363,14 @@ OMR::Power::Peephole::tryToRemoveRedundantLoadAfterStore()
    // and then the mr peephole should run on the resulting mr
    if (loadInstruction->getOpCodeValue() == TR::InstOpCode::lwz)
       {
-      if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Replace redundant load " POINTER_PRINTF_FORMAT " after store " POINTER_PRINTF_FORMAT " with rlwinm.\n", loadInstruction, storeInstruction))
+      if (performTransformation(self()->comp(), "%sReplace redundant load " POINTER_PRINTF_FORMAT " after store " POINTER_PRINTF_FORMAT " with rlwinm.\n", OPT_DETAILS, loadInstruction, storeInstruction))
          {
          generateTrg1Src1Imm2Instruction(self()->cg(), TR::InstOpCode::rlwinm, loadInstruction->getNode(), trgReg, srcReg, 0, 0xffffffff, storeInstruction);
          loadInstruction->remove();
          return true;
          }
       }
-   else if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Replace redundant load " POINTER_PRINTF_FORMAT " after store " POINTER_PRINTF_FORMAT " with mr.\n", loadInstruction, storeInstruction))
+   else if (performTransformation(self()->comp(), "%sReplace redundant load " POINTER_PRINTF_FORMAT " after store " POINTER_PRINTF_FORMAT " with mr.\n", OPT_DETAILS, loadInstruction, storeInstruction))
       {
       generateTrg1Src1Instruction(self()->cg(), TR::InstOpCode::mr, loadInstruction->getNode(), trgReg, srcReg, storeInstruction);
       loadInstruction->remove();
@@ -394,7 +396,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
 
    if (mrTargetReg == mrSourceReg)
       {
-      if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove redundant mr %p.\n", mrInstruction))
+      if (performTransformation(self()->comp(), "%sRemove redundant mr %p.\n", OPT_DETAILS, mrInstruction))
          {
          mrInstruction->remove();
          return true;
@@ -425,7 +427,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
           current->getSourceRegister(0) == mrTargetReg &&
           current->getTargetRegister(0) == mrSourceReg)
          {
-         if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove mr copyback %p.\n", current))
+         if (performTransformation(self()->comp(), "%sRemove mr copyback %p.\n", OPT_DETAILS, current))
             {
             current->remove();
             extendWindow = true;
@@ -465,7 +467,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
             {
             if (toRealRegister(mrSourceReg)->getRegisterNumber() == TR::RealRegister::gr0)
                all_mr_source_uses_rewritten = false;
-            else if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite base register %p.\n", current))
+            else if (performTransformation(self()->comp(), "%sRewrite base register %p.\n", OPT_DETAILS, current))
                {
                memRef->setBaseRegister(mrSourceReg);
                extendWindow = true;
@@ -476,7 +478,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
             }
          if (memRef->getIndexRegister() == mrTargetReg)
             {
-            if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite index register %p.\n", current))
+            if (performTransformation(self()->comp(), "%sRewrite index register %p.\n", OPT_DETAILS, current))
                {
                memRef->setIndexRegister(mrSourceReg);
                extendWindow = true;
@@ -488,7 +490,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
          if (current->getKind() == OMR::Instruction::IsMemSrc1 &&
              ((TR::PPCMemSrc1Instruction *)current)->getSourceRegister() == mrTargetReg)
             {
-            if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite store source register %p.\n", current))
+            if (performTransformation(self()->comp(), "%sRewrite store source register %p.\n", OPT_DETAILS, current))
                {
                ((TR::PPCMemSrc1Instruction *)current)->setSourceRegister(mrSourceReg);
                extendWindow = true;
@@ -510,7 +512,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                TR::PPCSrc1Instruction *inst = (TR::PPCSrc1Instruction *)current;
                if (inst->getSource1Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Src1 source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Src1 source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource1Register(mrSourceReg);
                      extendWindow = true;
@@ -526,7 +528,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                TR::PPCTrg1Src1Instruction *inst = (TR::PPCTrg1Src1Instruction *)current;
                if (inst->getSource1Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Trg1Src1 source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Trg1Src1 source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource1Register(mrSourceReg);
                      extendWindow = true;
@@ -547,7 +549,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                        current->getOpCodeValue() == TR::InstOpCode::addi2 ||
                        current->getOpCodeValue() == TR::InstOpCode::addis))
                      all_mr_source_uses_rewritten = false;
-                  else if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Trg1Src1Imm source register %p.\n", current))
+                  else if (performTransformation(self()->comp(), "%sRewrite Trg1Src1Imm source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource1Register(mrSourceReg);
                      extendWindow = true;
@@ -563,7 +565,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                TR::PPCTrg1Src1Imm2Instruction *inst = (TR::PPCTrg1Src1Imm2Instruction *)current;
                if (inst->getSource1Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Trg1Src1Imm2 source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Trg1Src1Imm2 source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource1Register(mrSourceReg);
                      extendWindow = true;
@@ -583,7 +585,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                TR::PPCSrc2Instruction *inst = (TR::PPCSrc2Instruction *)current;
                if (inst->getSource1Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Src2 1st source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Src2 1st source register %p.\n", OPT_DETAILS, urrent))
                      {
                      inst->setSource1Register(mrSourceReg);
                      extendWindow = true;
@@ -594,7 +596,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                   }
                if (inst->getSource2Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Src2 2nd source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Src2 2nd source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource2Register(mrSourceReg);
                      extendWindow = true;
@@ -615,7 +617,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                TR::PPCTrg1Src2Instruction *inst = (TR::PPCTrg1Src2Instruction *)current;
                if (inst->getSource1Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Trg1Src2 1st source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Trg1Src2 1st source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource1Register(mrSourceReg);
                      extendWindow = true;
@@ -626,7 +628,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                   }
                if (inst->getSource2Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Trg1Src2 2nd source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Trg1Src2 2nd source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource2Register(mrSourceReg);
                      extendWindow = true;
@@ -642,7 +644,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                TR::PPCTrg1Src3Instruction *inst = (TR::PPCTrg1Src3Instruction *)current;
                if (inst->getSource1Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Trg1Src3 1st source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Trg1Src3 1st source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource1Register(mrSourceReg);
                      extendWindow = true;
@@ -653,7 +655,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                   }
                if (inst->getSource2Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Trg1Src3 2nd source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Trg1Src3 2nd source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource2Register(mrSourceReg);
                      extendWindow = true;
@@ -664,7 +666,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                   }
                if (inst->getSource3Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Trg1Src3 3nd source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Trg1Src3 3nd source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource3Register(mrSourceReg);
                      extendWindow = true;
@@ -680,7 +682,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                TR::PPCTrg1Src2ImmInstruction *inst = (TR::PPCTrg1Src2ImmInstruction *)current;
                if (inst->getSource1Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Trg1Src2Imm 1st source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Trg1Src2Imm 1st source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource1Register(mrSourceReg);
                      extendWindow = true;
@@ -691,7 +693,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
                   }
                if (inst->getSource2Register() == mrTargetReg)
                   {
-                  if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Rewrite Trg1Src2Imm 2nd source register %p.\n", current))
+                  if (performTransformation(self()->comp(), "%sRewrite Trg1Src2Imm 2nd source register %p.\n", OPT_DETAILS, current))
                      {
                      inst->setSource2Register(mrSourceReg);
                      extendWindow = true;
@@ -712,7 +714,7 @@ OMR::Power::Peephole::tryToRemoveRedundantMoveRegister()
          {
          // having rewritten all uses of mrTargetReg, the mr can be removed
          if (!inEBB && all_mr_source_uses_rewritten &&
-             performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove mr %p when target redefined at %p.\n", mrInstruction, current))
+             performTransformation(self()->comp(), "%sRemove mr %p when target redefined at %p.\n", OPT_DETAILS, mrInstruction, current))
             {
             // Adjust any register maps that will be invalidated by the removal
             if (!stackMaps.empty())
@@ -817,7 +819,7 @@ OMR::Power::Peephole::tryToRemoveRedundantSync(int32_t window)
 
       if (removeFirst)
          {
-         if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove redundant syncronization instruction %p.\n", first))
+         if (performTransformation(self()->comp(), "%sRemove redundant syncronization instruction %p.\n", OPT_DETAILS, first))
             {
             self()->cg()->generateNop(first->getNode(), first->getPrev(), TR_NOPStandard);
             first->remove();
@@ -826,7 +828,7 @@ OMR::Power::Peephole::tryToRemoveRedundantSync(int32_t window)
          }
       else if(removeNext)
          {
-         if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove redundant syncronization instruction %p.\n", instructionCursor->getNext()))
+         if (performTransformation(self()->comp(), "%sRemove redundant syncronization instruction %p.\n", OPT_DETAILS, instructionCursor->getNext()))
             {
             self()->cg()->generateNop(instructionCursor->getNext()->getNode(), instructionCursor, TR_NOPStandard);
             instructionCursor->getNext()->getNext()->remove();
@@ -902,7 +904,7 @@ OMR::Power::Peephole::tryToRemoveRedundantWriteAfterWrite()
             bool isConstData = self()->cg()->checkAndFetchRequestor(cursor, q);
             if (isConstData)
                {
-               if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove dead instrcution group from WAW %p -> %p.\n", cursor, current))
+               if (performTransformation(self()->comp(), "%sRemove dead instrcution group from WAW %p -> %p.\n", OPT_DETAILS, cursor, current))
                   {
                   for (int32_t i = 0; i < 4; i++)
                      {
@@ -914,7 +916,7 @@ OMR::Power::Peephole::tryToRemoveRedundantWriteAfterWrite()
                }
             else
                {
-               if (performTransformation(self()->comp(), "O^O PPC PEEPHOLE: Remove dead instrcution from WAW %p -> %p.\n", cursor, current))
+               if (performTransformation(self()->comp(), "%sRemove dead instrcution from WAW %p -> %p.\n", OPT_DETAILS, cursor, current))
                   {
                   cursor->remove();
                   return true;
@@ -1008,7 +1010,7 @@ OMR::Power::Peephole::tryToSwapTrapAndLoad()
                      }
                   }
                }
-            if (performTransformation(self()->cg()->self()->comp(), "O^O PPC PEEPHOLE: Swap trap %p and load %p instructions.\n", trap, load))
+            if (performTransformation(self()->cg()->self()->comp(), "%sSwap trap %p and load %p instructions.\n", OPT_DETAILS, trap, load))
                {
                if (i > 0)
                   {

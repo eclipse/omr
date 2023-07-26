@@ -74,6 +74,9 @@
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/Runtime.hpp"
 
+#define OPT_DETAILS_EVALUATE_INT_COMPARE_TO_CONDITION_REGISTER "O^O evaluateIntCompareToConditionRegister: "
+#define OPT_DETAILS_CHECK_SELECT_REVERSE "O^O checkSelectReverse: "
+
 static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg);
 static void switchDispatch(TR::Node *node, bool fromTableEval, TR::CodeGenerator *cg);
 static bool isGlDepsUnBalanced(TR::Node *node, TR::CodeGenerator *cg);
@@ -745,7 +748,8 @@ bool evaluateThreeWayIntCompareToConditionRegister(
       (firstReg->containsInternalPointer() || registerRecentlyWritten(firstReg, 4, cg)) &&
       performTransformation(
          cg->comp(),
-         "O^O evaluateIntCompareToConditionRegister: flipping order of compare operands (n%dn, n%dn) while evaluating n%dn to avoid P6 FXU reject",
+         "%sflipping order of compare operands (n%dn, n%dn) while evaluating n%dn to avoid P6 FXU reject",
+         OPT_DETAILS_EVALUATE_INT_COMPARE_TO_CONDITION_REGISTER,
          firstChild->getGlobalIndex(),
          secondChild->getGlobalIndex(),
          node->getGlobalIndex()
@@ -1047,7 +1051,7 @@ CompareCondition evaluateToConditionRegister(TR::Register *condReg, TR::Node *no
       auto compareInfo = getCompareInfo(condNode->getOpCode());
 
       if (compareInfo.type != TR::DataTypes::NoType &&
-          performTransformation(cg->comp(), "O^O evaluateToConditionRegister: evaluating n%dn directly to a condition register\n", condNode->getGlobalIndex()))
+          performTransformation(cg->comp(), "%sevaluating n%dn directly to a condition register\n", OPT_DETAILS_EVALUATE_INT_COMPARE_TO_CONDITION_REGISTER, condNode->getGlobalIndex()))
          {
          auto cond = evaluateCompareToConditionRegister(condReg, condNode, condNode->getFirstChild(), condNode->getSecondChild(), compareInfo, cg);
 
@@ -1649,7 +1653,7 @@ bool checkSelectReverse(TR::CodeGenerator *cg, TR::Node *node, TR::Node *&trueNo
    cg->evaluate(falseNode);
 
    if (!disableSelectReverse && !cg->canClobberNodesRegister(trueNode) && cg->canClobberNodesRegister(falseNode) &&
-       performTransformation(cg->comp(), "O^O checkSelectReverse: reversing condition on n%dn to avoid a register shuffle\n", node->getGlobalIndex()))
+       performTransformation(cg->comp(), "%sreversing condition on n%dn to avoid a register shuffle\n", OPT_DETAILS_CHECK_SELECT_REVERSE, node->getGlobalIndex()))
       {
       TR::Node *tmpNode = trueNode;
       trueNode = falseNode;

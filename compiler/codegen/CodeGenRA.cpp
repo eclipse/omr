@@ -76,7 +76,8 @@
 #include "optimizer/Structure.hpp"
 #include "ras/Debug.hpp"
 
-#define OPT_DETAILS "O^O CODE GENERATION: "
+#define OPT_DETAILS "O^O CODE GENERATION REGISTER ALLOCATION: "
+#define OPT_DETAILS_GLOBAL_REGISTER_ALLOCATION "O^O GLOBAL REGISTER ALLOCATION: "
 
 #define NUM_REGS_USED_BY_COMPLEX_OPCODES 3
 
@@ -490,7 +491,7 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
          }
 
      if (
-         (spill && self()->comp()->getOption(TR_TraceRA) && !performTransformation(self()->comp(), "O^O SPILL TEMPS: Reuse spill temp %s\n", self()->getDebug()->getName(spill->getSymbolReference()))))
+         (spill && self()->comp()->getOption(TR_TraceRA) && !performTransformation(self()->comp(), "%sReuse spill temp %s\n", OPT_DETAILS, self()->getDebug()->getName(spill->getSymbolReference()))))
        {
        // Discard the spill temp we popped and never use it again; allocate a
        // new one instead, and later, where we would have returned this spill
@@ -535,7 +536,7 @@ OMR::CodeGenerator::allocateSpill(int32_t dataSize, bool containsCollectedRefere
       //
       if (  offset == NULL
          || spill->secondHalfIsOccupied()
-            || !performTransformation(self()->comp(), "O^O HALF-SLOT SPILLS: Use second half of %s\n", self()->getDebug()->getName(spill->getSymbolReference())))
+            || !performTransformation(self()->comp(), "%sUse second half of %s\n", OPT_DETAILS, self()->getDebug()->getName(spill->getSymbolReference())))
          {
          spill->setFirstHalfIsOccupied();
          }
@@ -2627,7 +2628,7 @@ OMR::CodeGenerator::simulateTreeEvaluation(TR::Node *node, TR_RegisterPressureSt
             {
             self()->getNumberOfTemporaryRegistersUsedByCall(node, state, numGPRTemporaries, numFPRTemporaries, numVRFTemporaries);
             if ((numGPRTemporaries >= 1 || numFPRTemporaries >= 1 || numVRFTemporaries >= 1)
-               && (self()->comp()->getOption(TR_TraceRegisterPressureDetails) && !performTransformation(self()->comp(), "O^O GLOBAL REGISTER ALLOCATION: Call %p has %d GPR and %d FPR and VRF %d dummy registers\n", node, numGPRTemporaries, numFPRTemporaries, numVRFTemporaries)))
+               && (self()->comp()->getOption(TR_TraceRegisterPressureDetails) && !performTransformation(self()->comp(), "%sCall %p has %d GPR and %d FPR and VRF %d dummy registers\n", OPT_DETAILS_GLOBAL_REGISTER_ALLOCATION, node, numGPRTemporaries, numFPRTemporaries, numVRFTemporaries)))
                {
                numGPRTemporaries = 0;
                numFPRTemporaries = 0;

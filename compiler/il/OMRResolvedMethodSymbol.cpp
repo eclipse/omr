@@ -70,6 +70,7 @@
 #include "runtime/Runtime.hpp"
 #include "infra/SimpleRegex.hpp"
 
+#define OPT_DETAILS "O^O IL Resolved Method Symbol: "
 
 TR::ResolvedMethodSymbol *
 OMR::ResolvedMethodSymbol::self()
@@ -415,7 +416,7 @@ OMR::ResolvedMethodSymbol::genInduceOSRCallNode(TR::TreeTop* insertionPoint,
    TR::Node *refNode = insertionPoint->getNode();
 
    if (self()->comp()->getOption(TR_TraceOSR))
-     traceMsg(self()->comp(), "O^O OSR: Inject induceOSR call for [%p] at %3d:%d\n", refNode, refNode->getInlinedSiteIndex(), refNode->getByteCodeIndex());
+     traceMsg(self()->comp(), "%sInject induceOSR call for [%p] at %3d:%d\n", OPT_DETAILS, refNode, refNode->getInlinedSiteIndex(), refNode->getByteCodeIndex());
 
    TR::Block * firstHalfBlock = insertionPoint->getEnclosingBlock();
    if (shouldSplitBlock)

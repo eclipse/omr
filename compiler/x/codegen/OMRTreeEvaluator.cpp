@@ -79,6 +79,8 @@
 #include "x/codegen/SubtractAnalyser.hpp"
 #include "x/codegen/X86OpcodeTable.hpp"
 
+#define OPT_DETAILS_LAZY_CLOBBERING "O^O LAZY CLOBBERING: "
+
 class TR_OpaqueClassBlock;
 class TR_OpaqueMethodBlock;
 
@@ -3498,7 +3500,8 @@ TR::Register *OMR::X86::TreeEvaluator::conversionAnalyser(TR::Node          *nod
       if ( node->parentSupportsLazyClobber()
          && registerToRegisterOp == TR::InstOpCode::MOVZXReg8Reg4
          && sourceRegister->areUpperBitsZero()
-         && performTransformation(comp, "O^O LAZY CLOBBERING: reuse register %s from %s for %s\n",
+         && performTransformation(comp, "%sreuse register %s from %s for %s\n",
+               OPT_DETAILS_LAZY_CLOBBERING,
                cg->getDebug()->getName(sourceRegister),
                cg->getDebug()->getName(child),
                cg->getDebug()->getName(node)

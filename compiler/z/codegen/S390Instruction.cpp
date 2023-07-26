@@ -76,6 +76,8 @@
 #include "z/codegen/S390Instruction.hpp"
 #include "z/codegen/S390OutOfLineCodeSection.hpp"
 
+#define OPT_DETAILS_CODE_GENERATION "O^O CODE GENERATION: "
+
 void
 TR::S390RSInstruction::generateAdditionalSourceRegisters(TR::Register * fReg, TR::Register *lReg)
    {
@@ -5538,7 +5540,7 @@ TR::S390VirtualGuardNOPInstruction::generateBinaryEncoding()
    // If we scanned ahead and see that the estimated binary length is zero (i.e. return point of slow path is right after the guard -
    // methodEnter/Exit is an example of such) we'll just generate the NOP branch.
    if (performEmptyPatch && (sumEstimatedBinaryLength > 0) &&
-       performTransformation(comp, "O^O CODE GENERATION: Generating empty patch for guard node %p\n", getNode()))
+       performTransformation(comp, "%sGenerating empty patch for guard node %p\n", OPT_DETAILS_CODE_GENERATION, getNode()))
       {
       doRelocation = false;
 

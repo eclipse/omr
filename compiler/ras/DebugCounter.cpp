@@ -53,6 +53,7 @@
 #include <malloc.h> // alloca on Windows
 #endif
 
+#define OPT_DETAILS "O^O DEBUG COUNTER: "
 
 void
 TR::DebugCounter::prependDebugCounterBump(TR::Compilation *comp, TR::TreeTop *nextTreeTop, TR::DebugCounterBase *counter, int32_t delta)
@@ -126,7 +127,7 @@ TR::DebugCounter::getDebugCounter(TR::Compilation *comp, const char *name, int8_
       staticCounter->increment(staticDelta);
       }
    if (comp->getOptions()->dynamicDebugCounterIsEnabled(name, fidelity)
-      && performTransformation(comp, "O^O DEBUG COUNTER: '%s'\n", name))
+      && performTransformation(comp, "%s'%s'\n", OPT_DETAILS, name))
       {
       return comp->getPersistentInfo()->getDynamicCounters()->getCounter(comp, name, fidelity);
       }

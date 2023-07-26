@@ -37,6 +37,8 @@
 #include "infra/IGNode.hpp"
 #include "infra/InterferenceGraph.hpp"
 
+#define OPT_DETAILS "O^O COMPACT LOCALS: "
+
 typedef bool (*localSizeTestMethod) (uint32_t size);
 static bool isLocalSize4Byte(uint32_t size)
    {
@@ -148,7 +150,7 @@ void OMR::ARM64::Linkage::mapCompactedStack(TR::ResolvedMethodSymbol *method)
                }
             else
                {
-               performSharing = performTransformation(comp, "O^O COMPACT LOCALS: Sharing slot for local %p\n", localCursor);
+               performSharing = performTransformation(comp, "%sSharing slot for local %p\n", OPT_DETAILS, localCursor);
 
                if (performSharing)
                   localCursor->setOffset(colourToOffsetMap[colour]);
@@ -255,7 +257,7 @@ void OMR::ARM64::Linkage::mapCompactedStack(TR::ResolvedMethodSymbol *method)
                   else  // share local with already mapped stack slot
                      {
                      if (comp->getOption(TR_TraceCG))
-                        traceMsg(comp, "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n", localCursor, colour);
+                        traceMsg(comp, "%sSharing slot for local %p (colour = %d)\n", OPT_DETAILS, localCursor, colour);
 
                      localCursor->setOffset(colourToOffsetMap[colour]);
                      }

@@ -81,6 +81,8 @@
 #include "z/codegen/S390Register.hpp"
 #endif
 
+#define OPT_DETAILS_CODE_GENERATION "O^O CODE GENERATION: "
+
 extern TR::Instruction *
 generateS390PackedCompareAndBranchOps(TR::Node * node,
                                       TR::CodeGenerator * cg,
@@ -1296,7 +1298,7 @@ OMR::Z::TreeEvaluator::icmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             firstChild->getSecondChild()->getOpCodeValue() == TR::iconst &&
             secondChild->getOpCodeValue() == TR::iconst &&
             secondChild->getInt() == 0 &&
-            performTransformation(cg->comp(), "O^O CODE GENERATION:  ===>   Use RXSBG to perform icmpeq  <==\n"))
+            performTransformation(cg->comp(), "%s===>   Use RXSBG to perform icmpeq  <==\n", OPT_DETAILS_CODE_GENERATION))
          {
          int64_t val1 = node->getFirstChild()->getSecondChild()->getInt();
          if ((val1 & (val1 - 1)) == 0)
@@ -1341,7 +1343,7 @@ OMR::Z::TreeEvaluator::icmpltEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    if (!node->getOpCode().isUnsignedCompare() &&
        firstChild->getReferenceCount() == 1 && firstChild->isNonNegative() && secondChild->isNonNegative() &&
-       performTransformation(cg->comp(), "O^O CODE GENERATION:  ===>   Use SR/SRL to perform icmplt  <==\n"))
+       performTransformation(cg->comp(), "%s===>   Use SR/SRL to perform icmplt  <==\n", OPT_DETAILS_CODE_GENERATION))
       {
       // Even if 1st child refcount is 1, the register may be shared with other nodes and still be live.
       // gprClobberEvaluate will do the right thing.
@@ -1380,7 +1382,7 @@ OMR::Z::TreeEvaluator::icmpgtEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    if (!node->getOpCode().isUnsignedCompare() &&
        secondChild->getReferenceCount()==1 && firstChild->isNonNegative() && secondChild->isNonNegative() &&
-       performTransformation(cg->comp(), "O^O CODE GENERATION:  ===>   Use SR/SRL to perform icmpgt  <==\n"))
+       performTransformation(cg->comp(), "%s===>   Use SR/SRL to perform icmpgt  <==\n", OPT_DETAILS_CODE_GENERATION))
       {
       TR::Register * firstReg = cg->evaluate(firstChild);
       // Even if 2nd child refcount is 1, the register may be shared with other nodes and still be live.

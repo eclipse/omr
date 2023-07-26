@@ -86,6 +86,8 @@
 #define S390_REGISTER_PRESERVED_WEIGHT              0x00000002
 #define S390_REGISTER_PAIR_SIBLING                  0x00008000
 
+#define OPT_DETAILS_RANDOM_CODEGEN "0^0 S390 Machine Codegen: "
+
 ////////////////////////////////////////////////////////////////////////////////
 // OMR::Z::Machine memeber functions
 ////////////////////////////////////////////////////////////////////////////////
@@ -2031,7 +2033,7 @@ OMR::Z::Machine::findBestFreeRegister(TR::Instruction   *currentInstruction,
             randomPreference = self()->cg()->randomizer.randomInt(TR::RealRegister::GPR1,TR::RealRegister::LastGPR);
             }
          }
-       if (preference != randomPreference && performTransformation(comp,"O^O Random Codegen - Randomizing Preference from: %d to: %d\n", preference, randomPreference))
+       if (preference != randomPreference && performTransformation(comp,"%sRandomizing Preference from: %d to: %d\n", OPT_DETAILS_RANDOM_CODEGEN, preference, randomPreference))
          {
          preference = randomPreference;
          }
@@ -2045,7 +2047,7 @@ OMR::Z::Machine::findBestFreeRegister(TR::Instruction   *currentInstruction,
       if (comp->getOption(TR_Randomize))
          {
          randomInterference = self()->cg()->randomizer.randomInt(0, 65535);
-         if (performTransformation(comp , "O^O Random Codegen - Randomizing Interference for %s: Original=%x Random=%x\n" , self()->cg()->getDebug()->getName(virtualReg) , interference , randomInterference))
+         if (performTransformation(comp , "%sRandomizing Interference for %s: Original=%x Random=%x\n" , OPT_DETAILS_RANDOM_CODEGEN, self()->cg()->getDebug()->getName(virtualReg) , interference , randomInterference))
             {
             interference = randomInterference;
             }
@@ -2322,7 +2324,7 @@ OMR::Z::Machine::findBestFreeRegister(TR::Instruction   *currentInstruction,
          if (comp->getOption(TR_Randomize))
             {
             randomWeight = self()->cg()->randomizer.randomInt(0, 0xFFF);
-            if (performTransformation(comp, "O^O Random Codegen - Randomizing Weight for %s, Original bestWeightSoFar: %x randomized to: %x\n", self()->cg()->getDebug()->getName(_registerFile[i]), bestWeightSoFar, randomWeight))
+            if (performTransformation(comp, "%sRandomizing Weight for %s, Original bestWeightSoFar: %x randomized to: %x\n", OPT_DETAILS_RANDOM_CODEGEN, self()->cg()->getDebug()->getName(_registerFile[i]), bestWeightSoFar, randomWeight))
                {
                bestWeightSoFar =  randomWeight;
                }
