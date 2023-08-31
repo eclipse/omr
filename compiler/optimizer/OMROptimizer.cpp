@@ -155,10 +155,8 @@ const OptimizationStrategy reorderArrayIndexOpts[] =
 
 const OptimizationStrategy cheapObjectAllocationOpts[] =
    {
-   { eachEscapeAnalysisPassGroup, IfEAOpportunitiesAndNotOptServer    },
    { explicitNewInitialization, IfNews      }, // do before local dead store
     // basicBlockHoisting,                     // merge block into pred and prepare for local dead store
-   { localDeadStoreElimination              }, // remove local/parm/some field stores
    { endGroup                               }
    };
 
@@ -191,16 +189,12 @@ const OptimizationStrategy cheapGlobalValuePropagationOpts[] =
    { treeSimplification,          IfOptServer }, // for WAS trace folding
    { localCSE,                    IfEnabledAndOptServer }, // for WAS trace folding
    { treeSimplification,          IfEnabledAndOptServer }, // for WAS trace folding
-   { globalValuePropagation,      IfMoreThanOneBlock },
-   { localValuePropagation,       IfOneBlock },
+   { globalValuePropagation,      IfLoopsMarkLastRun },
    { treeSimplification,          IfEnabled },
    { cheapObjectAllocationGroup             },
-   { globalValuePropagation,      IfEnabled }, // if inlined a call or an object
    { treeSimplification,          IfEnabled },
    { catchBlockRemoval,           IfEnabled }, // if checks were removed
    { osrExceptionEdgeRemoval                }, // most inlining is done by now
-   { redundantMonitorElimination, IfMonitors }, // performed if method has monitors
-   { redundantMonitorElimination, IfEnabledAndMonitors }, // performed if method has monitors
    { globalValuePropagation,      IfEnabledAndMoreThanOneBlockMarkLastRun}, // mark monitors requiring sync
    { virtualGuardTailSplitter,    IfEnabled }, // merge virtual guards
    { CFGSimplification                    },
