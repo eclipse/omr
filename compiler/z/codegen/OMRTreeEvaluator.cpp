@@ -8487,36 +8487,56 @@ OMR::Z::TreeEvaluator::inlineNumberOfTrailingZeros(TR::Node *node, TR::CodeGener
    {
    TR_ASSERT(node->getNumChildren()==1, "Wrong number of children in inlineNumberOfTrailingZeros");
    TR::Node *argNode = node->getFirstChild();
-   TR::Register *argReg = cg->evaluate(argNode);
+   TR::Register *argReg = NULL;
    TR::Register *tempReg = cg->allocateRegister();
    TR::Register *returnReg = NULL;
    bool isLong = (subfconst == 64);
+   static const bool disableTrailZeroZNext = feGetEnv("TR_disableTrailZeroZNext") != NULL;
+   static const bool canEmulateCTZG = TR::InstOpCode(TR::InstOpCode::CTZG).isEmulatable();
 
-   // Use identity x & -x to isolate the rightmost 1-bit (eg. 10110100 => 00000100)
-   // generate x & -x
-   generateRRInstruction(cg, TR::InstOpCode::LCGR, node, tempReg, argReg);
-   generateRRInstruction(cg, TR::InstOpCode::NGR, node, tempReg, argReg);
+   if ((cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT) || canEmulateCTZG) && !disableTrailZeroZNext)
+      {
+      argReg = cg->gprClobberEvaluate(argNode);
+      if (!(isLong))
+         {
+         // If input is 32-bit and value is 0, then OR first half of register with the
+         // below mask to get result of 32 by the CTZG instruction.
+         generateRILInstruction(cg, TR::InstOpCode::OIHF, node, argReg, 0xFFFFFFFF);
+         }
+      // In both the 64-bit and 32-bit case, the number will be right aligned.
+      generateRREInstruction(cg, TR::InstOpCode::CTZG, node, tempReg, argReg);
+      returnReg = tempReg;
+      node->setRegister(tempReg);
+      }
+   else
+      {
+      argReg = cg->evaluate(argNode);
+      // Use identity x & -x to isolate the rightmost 1-bit (eg. 10110100 => 00000100)
+      // generate x & -x
+      generateRRInstruction(cg, TR::InstOpCode::LCGR, node, tempReg, argReg);
+      generateRRInstruction(cg, TR::InstOpCode::NGR, node, tempReg, argReg);
 
-   // Use FLOGR to count leading zeros, and xor from 63 to get trailing zeroes (FLOGR counts on the full 64 bit register)
-   TR::Register *highReg = cg->allocateRegister();
-   TR::Register *flogrRegPair = cg->allocateConsecutiveRegisterPair(tempReg, highReg);
+      // Use FLOGR to count leading zeros, and xor from 63 to get trailing zeroes (FLOGR counts on the full 64 bit register)
+      TR::Register *highReg = cg->allocateRegister();
+      TR::Register *flogrRegPair = cg->allocateConsecutiveRegisterPair(tempReg, highReg);
 
-   // Java needs to return 64/32 if no one bit found
-   // This helps that case
-   if (!isLong)
-      generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, tempReg, 32);
+      // Java needs to return 64/32 if no one bit found
+      // This helps that case
+      if (!isLong)
+         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, tempReg, 32);
 
-   generateRIInstruction(cg, TR::InstOpCode::AGHI, node, tempReg, -1);
+      generateRIInstruction(cg, TR::InstOpCode::AGHI, node, tempReg, -1);
 
-   // CLZ
-   generateRREInstruction(cg, TR::InstOpCode::FLOGR, node, flogrRegPair, tempReg);
+      // CLZ
+      generateRREInstruction(cg, TR::InstOpCode::FLOGR, node, flogrRegPair, tempReg);
 
-   generateRIInstruction(cg, TR::InstOpCode::AGHI, node, highReg, -subfconst);
-   generateRRInstruction(cg, TR::InstOpCode::LCR, node, highReg, highReg);
+      generateRIInstruction(cg, TR::InstOpCode::AGHI, node, highReg, -subfconst);
+      generateRRInstruction(cg, TR::InstOpCode::LCR, node, highReg, highReg);
 
-   node->setRegister(highReg);
-   returnReg = highReg;
-   cg->stopUsingRegister(flogrRegPair);
+      node->setRegister(highReg);
+      returnReg = highReg;
+      cg->stopUsingRegister(flogrRegPair);
+      }
 
    cg->decReferenceCount(argNode);
    cg->stopUsingRegister(argReg);
@@ -8594,29 +8614,63 @@ OMR::Z::TreeEvaluator::inlineNumberOfLeadingZeros(TR::Node *node, TR::CodeGenera
    TR::Node *argNode = node->getChild(0);
    TR::Register *argReg = cg->gprClobberEvaluate(argNode);
    TR::Register *returnReg = NULL;
+   static const bool disableLeadZeroZNext = feGetEnv("TR_disableLeadZeroZNext") != NULL;
+   static const bool canEmulateCLZG = TR::InstOpCode(TR::InstOpCode::CLZG).isEmulatable();
 
-   if (!isLong)
+   if ((cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT) || canEmulateCLZG) && !disableLeadZeroZNext)
       {
-      TR::Register *tempReg = cg->allocateRegister();
-
-      // 32 bit number: shift left by 32 bits and count from there
-      generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, argReg, 32);
-
-      // Java methods need to return 32 if no one bit is found
-      // Hack by setting the 32nd bit to 1, which doesn't affect anything except when the input is 0
-      generateRIInstruction(cg, TR::InstOpCode::OILH, node, tempReg, 0x8000);
-
-      cg->stopUsingRegister(argReg);
-      argReg = tempReg;
+      // The leading zeros instruction assumes input data to be 64-bit. So we left shift it to zero out the
+      // invalid higher order bits if the data type is initially smaller than 64-bits.
+      TR::DataType childType = argNode->getDataType();
+      if (childType == TR::Int32)
+         {
+         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, argReg, argReg, 32);
+         // Set the 32nd bit to 1. This will ensure the max number of leading zeros for a TR::Int32 will be 32.
+        generateRIInstruction(cg, TR::InstOpCode::OILH, node, argReg, 0x8000);
+         }
+      else if (childType == TR::Int16)
+         {
+         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, argReg, argReg, 48);
+         // Set the 16th bit to 1. This will ensure the max number of leading zeros for a TR::Int16 will be 16.
+        generateRIInstruction(cg, TR::InstOpCode::OIHL, node, argReg, 0x8000);
+         }
+      else if (childType == TR::Int8)
+         {
+         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, argReg, argReg, 56);
+         // Set the 8th bit to 1. This will ensure the max number of leading zeros for a TR::Int8 will be 8.
+        generateRIInstruction(cg, TR::InstOpCode::OIHH, node, argReg, 0x80);
+         }
+      // Now count the number of leading zeros.
+      returnReg = cg->allocateRegister();
+      generateRREInstruction(cg, TR::InstOpCode::CLZG, node, returnReg, argReg);
+      node->setRegister(returnReg);
+      return returnReg;
       }
+   else
+      {
+      if (!isLong)
+         {
+         TR::Register *tempReg = cg->allocateRegister();
 
-   TR::Register *lowReg = cg->allocateRegister();
-   TR::Register *flogrReg = cg->allocateConsecutiveRegisterPair(lowReg, argReg);
-   generateRREInstruction(cg, TR::InstOpCode::FLOGR, node, flogrReg, argReg);
+         // 32 bit number: shift left by 32 bits and count from there
+         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, argReg, 32);
 
-   returnReg = flogrReg->getHighOrder();
-   node->setRegister(flogrReg->getHighOrder());
-   cg->stopUsingRegister(flogrReg);
+         // Java methods need to return 32 if no one bit is found
+         // Hack by setting the 32nd bit to 1, which doesn't affect anything except when the input is 0
+         generateRIInstruction(cg, TR::InstOpCode::OILH, node, tempReg, 0x8000);
+
+         cg->stopUsingRegister(argReg);
+         argReg = tempReg;
+         }
+
+      TR::Register *lowReg = cg->allocateRegister();
+      TR::Register *flogrReg = cg->allocateConsecutiveRegisterPair(lowReg, argReg);
+      generateRREInstruction(cg, TR::InstOpCode::FLOGR, node, flogrReg, argReg);
+
+      returnReg = flogrReg->getHighOrder();
+      node->setRegister(flogrReg->getHighOrder());
+      cg->stopUsingRegister(flogrReg);
+      }
 
    cg->stopUsingRegister(argReg);
    cg->decReferenceCount(argNode);

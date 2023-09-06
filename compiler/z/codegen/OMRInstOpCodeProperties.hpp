@@ -16073,7 +16073,8 @@
    /* .format      = */ RRE_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_Is64Bit |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16085,7 +16086,8 @@
    /* .format      = */ RRE_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_Is64Bit |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
