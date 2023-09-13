@@ -1172,6 +1172,14 @@ bool OMR::X86::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::CPU *cpu, TR::ILO
             default:
                return false;
          }
+      case TR::vnotz:
+      case TR::vmnotz:
+         if (cpu->supportsFeature(OMR_FEATURE_X86_AVX512F) && cpu->supportsFeature(OMR_FEATURE_X86_AVX512CD))
+            {
+            if (et == TR::Int64 && cpu->supportsFeature(OMR_FEATURE_X86_AVX512BW))
+               return true;
+            }
+         return false;
       case TR::vload:
       case TR::vloadi:
       case TR::vstore:

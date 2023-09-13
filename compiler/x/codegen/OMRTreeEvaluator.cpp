@@ -7095,13 +7095,108 @@ OMR::X86::TreeEvaluator::mcompressEvaluator(TR::Node *node, TR::CodeGenerator *c
 TR::Register*
 OMR::X86::TreeEvaluator::vnotzEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   TR::DataType et = node->getDataType().getVectorElementType();
+   TR::VectorLength vl = node->getDataType().getVectorLength();
+
+   TR::Node *leftChild = node->getFirstChild();
+   TR::Node *maskChild = NULL;
+
+   TR::Register *leftReg = cg->evaluate(leftChild);
+   TR::Register *maskReg = maskChild == NULL ? NULL : cg->evaluate(leftChild);
+
+   TR_ASSERT_FATAL(et == TR::Int32 || et == TR::Int64, "Number of trailing zeros is only supported for Int32/Int64");
+
+   TR::InstOpCode xorOpcode = TR::InstOpCode::PXORRegReg;
+   TR::InstOpCode andOpcode = TR::InstOpCode::PANDRegReg;
+   TR::InstOpCode orOpcode = TR::InstOpCode::PORRegReg;
+   TR::InstOpCode lzCount = et == TR::Int32 ? TR::InstOpCode::VPLZCNTDRegMaskReg : TR::InstOpCode::VPLZCNTQRegMaskReg;
+   TR::InstOpCode movOpcode = TR::InstOpCode::MOVDQURegReg;
+   TR::InstOpCode subOpcode = et == TR::Int32 ? TR::InstOpCode::PSUBDRegReg : TR::InstOpCode::PSUBQRegReg;
+   TR::InstOpCode cmpOpcode = et == TR::Int32 ? TR::InstOpCode::PCMPEQDRegReg : TR::InstOpCode::PCMPEQQRegReg;
+   int32_t bits = et == TR::Int32 ? 32 : 64;
+
+   OMR::X86::Encoding movEncoding = movOpcode.getSIMDEncoding(&cg->comp()->target().cpu, vl);
+   OMR::X86::Encoding xorEncoding = xorOpcode.getSIMDEncoding(&cg->comp()->target().cpu, vl);
+   OMR::X86::Encoding andEncoding = andOpcode.getSIMDEncoding(&cg->comp()->target().cpu, vl);
+   OMR::X86::Encoding orEncoding = orOpcode.getSIMDEncoding(&cg->comp()->target().cpu, vl);
+   OMR::X86::Encoding subEncoding = subOpcode.getSIMDEncoding(&cg->comp()->target().cpu, vl);
+   OMR::X86::Encoding lzEncoding = lzCount.getSIMDEncoding(&cg->comp()->target().cpu, vl);
+   OMR::X86::Encoding cmpEncoding = cmpOpcode.getSIMDEncoding(&cg->comp()->target().cpu, vl);
+
+   TR_ASSERT_FATAL(movEncoding != OMR::X86::Bad, "No encoding method for movdqu");
+   TR_ASSERT_FATAL(xorEncoding != OMR::X86::Bad, "No encoding method for pxor");
+   TR_ASSERT_FATAL(andEncoding != OMR::X86::Bad, "No encoding method for pand");
+   TR_ASSERT_FATAL(orEncoding != OMR::X86::Bad, "No encoding method for por");
+   TR_ASSERT_FATAL(subEncoding != OMR::X86::Bad, "No encoding method for psub");
+   TR_ASSERT_FATAL(lzEncoding != OMR::X86::Bad, "No encoding method for vplzcnt");
+   TR_ASSERT_FATAL(cmpEncoding != OMR::X86::Bad, "No encoding method for pcmpeq");
+
+   // TZ = (x == 0) ? 32 : 31 - LZ( (x - 1) XOR x );
+
+   TR::Register *tmpGPReg = cg->allocateRegister(TR_GPR);
+   TR::Register *vectorReg = cg->allocateRegister(TR_VRF);
+   TR::Register *vectorTmpReg = cg->allocateRegister(TR_VRF);
+   TR::Register *vectorBroadcastTmp = cg->allocateRegister(TR_VRF);
+   TR::Register *resultReg = maskReg ? cg->allocateRegister(TR_VRF) : vectorReg;
+
+   generateRegRegInstruction(movOpcode.getMnemonic(), node, vectorReg, leftReg, cg, movEncoding);
+
+   generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, node, tmpGPReg, 1, cg);
+   TR::TreeEvaluator::broadcast(node, vectorBroadcastTmp, tmpGPReg, et, vl, cg);
+
+   generateRegRegInstruction(subOpcode.getMnemonic(), node, vectorReg, vectorBroadcastTmp, cg, subEncoding);
+   generateRegRegInstruction(xorOpcode.getMnemonic(), node, vectorReg, leftReg, cg, xorEncoding);
+   generateRegRegInstruction(lzCount.getMnemonic(), node, vectorReg, vectorReg, cg, lzEncoding);
+
+   generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, node, tmpGPReg, bits - 1, cg);
+   TR::TreeEvaluator::broadcast(node, vectorBroadcastTmp, tmpGPReg, et, vl, cg);
+   generateRegRegRegInstruction(subOpcode.getMnemonic(), node, vectorReg, vectorBroadcastTmp, vectorReg, cg, subEncoding);
+
+   // vectorTmpReg = 0..0..0..0
+   generateRegRegInstruction(xorOpcode.getMnemonic(), node, vectorTmpReg, vectorTmpReg, cg, xorEncoding);
+
+   TR::Register *overwriteMaskReg = vectorTmpReg;
+
+   if (cmpEncoding >= OMR::X86::EVEX_L128)
+      {
+      overwriteMaskReg = cg->allocateRegister(TR_VMR);
+      }
+
+   generateRegRegRegInstruction(cmpOpcode.getMnemonic(), node, overwriteMaskReg, vectorTmpReg, leftReg, cg, cmpEncoding);
+
+   generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, node, tmpGPReg, bits, cg);
+   TR::TreeEvaluator::broadcast(node, vectorBroadcastTmp, tmpGPReg, et, vl, cg);
+   TR::TreeEvaluator::vectorMergeMaskHelper(node, vectorReg, vectorBroadcastTmp, overwriteMaskReg, cg);
+
+   if (maskReg)
+      {
+      generateRegRegInstruction(movOpcode.getMnemonic(), node, resultReg, leftReg, cg, movEncoding);
+      TR::TreeEvaluator::vectorMergeMaskHelper(node, resultReg, vectorReg, maskReg, cg);
+      }
+
+   cg->stopUsingRegister(tmpGPReg);
+   cg->stopUsingRegister(vectorBroadcastTmp);
+   cg->stopUsingRegister(vectorTmpReg);
+
+   if (overwriteMaskReg->getKind() == TR_VMR)
+      cg->stopUsingRegister(overwriteMaskReg);
+
+   node->setRegister(resultReg);
+   cg->decReferenceCount(leftChild);
+
+   if (maskReg)
+      {
+      cg->stopUsingRegister(vectorReg);
+      cg->decReferenceCount(maskChild);
+      }
+
+   return vectorReg;
    }
 
 TR::Register*
 OMR::X86::TreeEvaluator::vmnotzEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   return TR::TreeEvaluator::vnotzEvaluator(node, cg);
    }
 
 TR::Register*
