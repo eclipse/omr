@@ -4117,6 +4117,9 @@ TR::InstOpCode OMR::X86::TreeEvaluator::getNativeSIMDOpcode(TR::ILOpCodes opcode
          case TR::vsqrt:
             unaryOp = UnaryArithmeticSqrt;
             break;
+         case TR::vnolz:
+            unaryOp = UnaryLeadingZeroCnt;
+            break;
          default:
             return TR::InstOpCode::bad;
          }
@@ -6179,13 +6182,13 @@ OMR::X86::TreeEvaluator::vmnotzEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register*
 OMR::X86::TreeEvaluator::vnolzEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   return TR::TreeEvaluator::unaryVectorArithmeticEvaluator(node, cg);
    }
 
 TR::Register*
 OMR::X86::TreeEvaluator::vmnolzEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   return TR::TreeEvaluator::unaryVectorArithmeticEvaluator(node, cg);
    }
 
 TR::Register*
