@@ -45,6 +45,7 @@ enum ArithmeticOps : uint32_t
    NumBinaryArithmeticOps,
    UnaryArithmeticAbs,
    UnaryArithmeticSqrt,
+   UnaryLeadingZeroCnt,
    LastOp,
    NumUnaryArithmeticOps = LastOp - NumBinaryArithmeticOps + 1
    };
@@ -124,17 +125,19 @@ static const TR::InstOpCode::Mnemonic VectorBinaryArithmeticOpCodesForMem[NumBin
 static const TR::InstOpCode::Mnemonic VectorUnaryArithmeticOpCodesForReg[NumUnaryArithmeticOps][TR::NumVectorElementTypes] =
    {
    //                Int8,                          Int16,                         Int32,                         Int64,                         Float,                         Double
-   { TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad          }, // UnaryArithmeticInvalid,
-   { TR::InstOpCode::PABSBRegReg,   TR::InstOpCode::PABSWRegReg,   TR::InstOpCode::PABSDRegReg,   TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad          }, // UnaryArithmeticAbs,
-   { TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::SQRTPSRegReg,  TR::InstOpCode::SQRTPDRegReg }  // UnaryArithmeticSqrt,
+   { TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,                TR::InstOpCode::bad,                TR::InstOpCode::bad,           TR::InstOpCode::bad          }, // UnaryArithmeticInvalid,
+   { TR::InstOpCode::PABSBRegReg,   TR::InstOpCode::PABSWRegReg,   TR::InstOpCode::PABSDRegReg,        TR::InstOpCode::bad,                TR::InstOpCode::bad,           TR::InstOpCode::bad          }, // UnaryArithmeticAbs,
+   { TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,                TR::InstOpCode::bad,                TR::InstOpCode::SQRTPSRegReg,  TR::InstOpCode::SQRTPDRegReg }, // UnaryArithmeticSqrt,
+   { TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::VPLZCNTDRegMaskReg, TR::InstOpCode::VPLZCNTQRegMaskReg, TR::InstOpCode::bad,           TR::InstOpCode::bad          }  // UnaryLeadingZeroCnt,
    };
 
 static const TR::InstOpCode::Mnemonic VectorUnaryArithmeticOpCodesForMem[NumUnaryArithmeticOps][TR::NumVectorElementTypes] =
    {
    //                Int8,                          Int16,                         Int32,                         Int64,                         Float,                         Double
-   { TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad           }, // UnaryArithmeticInvalid,
-   { TR::InstOpCode::PABSBRegMem,   TR::InstOpCode::PABSWRegMem,   TR::InstOpCode::PABSDRegMem,   TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad           }, // UnaryArithmeticAbs,
-   { TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::VSQRTPSRegMem, TR::InstOpCode::VSQRTPDRegMem }  // UnaryArithmeticSqrt,
+   { TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,                TR::InstOpCode::bad,                TR::InstOpCode::bad,           TR::InstOpCode::bad           }, // UnaryArithmeticInvalid,
+   { TR::InstOpCode::PABSBRegMem,   TR::InstOpCode::PABSWRegMem,   TR::InstOpCode::PABSDRegMem,        TR::InstOpCode::bad,                TR::InstOpCode::bad,           TR::InstOpCode::bad           }, // UnaryArithmeticAbs,
+   { TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::bad,                TR::InstOpCode::bad,                TR::InstOpCode::VSQRTPSRegMem, TR::InstOpCode::VSQRTPDRegMem }, // UnaryArithmeticSqrt,
+   { TR::InstOpCode::bad,           TR::InstOpCode::bad,           TR::InstOpCode::VPLZCNTDRegMaskMem, TR::InstOpCode::VPLZCNTQRegMaskMem, TR::InstOpCode::bad,           TR::InstOpCode::bad           }  // UnaryLeadingZeroCnt,
    };
 
 #endif
