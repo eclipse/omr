@@ -3774,6 +3774,59 @@ TR::S390VRIiInstruction::generateBinaryEncoding()
 
 /** \details
  *
+ * VRI-k generate binary encoding for VRI-k instruction format
+ */
+uint8_t *
+TR::S390VRIkInstruction::generateBinaryEncoding()
+   {
+   // Error Checking
+   TR_ASSERT(getRegisterOperand(1) != NULL, "First Operand should not be NULL!");
+   TR_ASSERT(getRegisterOperand(2) != NULL, "2nd Operand should not be NULL!");
+   TR_ASSERT(getRegisterOperand(3) != NULL, "3rd Operand should not be NULL!");
+   TR_ASSERT(getRegisterOperand(4) != NULL, "4th Operand should not be NULL!");
+
+   // Generate Binary Encoding
+   uint8_t* cursor = preGenerateBinaryEncoding();
+
+   // The Immediate field
+   *(cursor + 3) |= getImmediateField5();
+
+   // Operands
+   toRealRegister(getRegisterOperand(1))->setRegister1Field(reinterpret_cast<uint32_t*>(cursor));
+   toRealRegister(getRegisterOperand(2))->setRegister2Field(reinterpret_cast<uint32_t*>(cursor));
+   toRealRegister(getRegisterOperand(3))->setRegister3Field(reinterpret_cast<uint32_t*>(cursor));
+   toRealRegister(getRegisterOperand(4))->setRegister4Field(reinterpret_cast<uint32_t*>(cursor));
+
+   return postGenerateBinaryEncoding(cursor);
+   }
+
+/** \details
+ *
+ * VRI-l generate binary encoding for VRI-l instruction format
+ */
+uint8_t *
+TR::S390VRIlInstruction::generateBinaryEncoding()
+   {
+   // Error Checking
+   TR_ASSERT(getRegisterOperand(1) != NULL, "First Operand should not be NULL!");
+   TR_ASSERT(getRegisterOperand(2) != NULL, "2nd Operand should not be NULL!");
+
+   // Generate Binary Encoding
+   uint8_t* cursor = preGenerateBinaryEncoding();
+
+   // The Immediate field
+   *(reinterpret_cast<uint32_t*>(cursor + 2)) |= static_cast<uint32_t>(getImmediateField3()) << 4;
+
+   // Operands
+   // First and second register operands for VRI-l map to second and third register fields
+   toRealRegister(getRegisterOperand(1))->setRegister2Field(reinterpret_cast<uint32_t*>(cursor));
+   toRealRegister(getRegisterOperand(2))->setRegister3Field(reinterpret_cast<uint32_t*>(cursor));
+
+   return postGenerateBinaryEncoding(cursor);
+   }
+
+/** \details
+ *
  * VRR instruction format get extended mnemonic name returns a charactor array that contains
  * the extended mnemonic names
  */

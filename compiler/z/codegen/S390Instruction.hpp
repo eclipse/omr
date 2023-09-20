@@ -4829,7 +4829,7 @@ class S390VInstruction : public S390RegInstruction
  * S390VRIInstruction Class Definition
  *
  * Vector register-and-immediate operation with extended op-code field
- * Nine subtypes: VRI-a to VRI-i
+ * Eleven subtypes: VRI-a to VRI-l (VRI-j is not implemented)
  */
 class S390VRIInstruction : public S390VInstruction
    {
@@ -5214,6 +5214,79 @@ class S390VRIiInstruction : public S390VRIInstruction
    uint8_t * generateBinaryEncoding();
    };
 
+/**
+ * VRI-k Class
+ *    ________________________________________________________
+ *   |Op Code | V1 | V2 | V3 | // |    I5   | V4 |RXB |Op Code|
+ *   |________|____|____|____|____|_________|____|____|_______|
+ *   0        8    12   16   20   24        32   36   40      47
+ */
+class S390VRIkInstruction : public S390VRIInstruction
+   {
+   public:
+   S390VRIkInstruction(
+                          TR::CodeGenerator      * cg               = NULL,
+                          TR::InstOpCode::Mnemonic          op      = TR::InstOpCode::bad,
+                          TR::Node               * n                = NULL,
+                          TR::Register           * targetReg        = NULL,
+                          TR::Register           * sourceReg2       = NULL,
+                          TR::Register           * sourceReg3       = NULL,
+                          TR::Register           * sourceReg4       = NULL,
+                          uint8_t                 constantImm4      = 0)    /* 8 bits */
+   : S390VRIInstruction(cg, op, n, targetReg, 0, constantImm4, 0, 0, 0)
+      {
+      if (getOpCode().setsOperand2())
+         useTargetRegister(sourceReg2);
+      else
+         useSourceRegister(sourceReg2);
+
+      if (getOpCode().setsOperand3())
+         useTargetRegister(sourceReg3);
+      else
+         useSourceRegister(sourceReg3);
+
+      if (getOpCode().setsOperand4())
+         useTargetRegister(sourceReg4);
+      else
+         useSourceRegister(sourceReg4);
+      }
+
+   uint8_t getImmediateField5() { return getImmediateField8(); }
+   virtual const char *description() { return "S390VRIkInstruction"; }
+   virtual Kind getKind() { return IsVRIk; }
+   uint8_t * generateBinaryEncoding();
+   };
+
+/**
+ * VRI-l Class
+ *    ________________________________________________________
+ *   |Op Code | // | V1 | V2 |        I3         |RXB |Op Code|
+ *   |________|____|____|____|___________________|____|_______|
+ *   0        8    12   16   20                  36   40      47
+ */
+class S390VRIlInstruction : public S390VRIInstruction
+   {
+   public:
+   S390VRIlInstruction(
+                          TR::CodeGenerator      * cg               = NULL,
+                          TR::InstOpCode::Mnemonic          op      = TR::InstOpCode::bad,
+                          TR::Node               * n                = NULL,
+                          TR::Register           * targetReg        = NULL,
+                          TR::Register           * sourceReg        = NULL,
+                          uint16_t                 constantImm3     = 0)    /* 16 bits */
+   : S390VRIInstruction(cg, op, n, targetReg, constantImm3, 0, 0, 0, 0)
+      {
+      if (getOpCode().setsOperand2())
+         useTargetRegister(sourceReg);
+      else
+         useSourceRegister(sourceReg);
+      }
+
+   uint16_t getImmediateField3() { return getImmediateField16(); }
+   virtual const char *description() { return "S390VRIlInstruction"; }
+   virtual Kind getKind() { return IsVRIl; }
+   uint8_t * generateBinaryEncoding();
+   };
 
 /**
  * S390VRRInstruction Class Definition

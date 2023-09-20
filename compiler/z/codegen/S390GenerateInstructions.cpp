@@ -664,7 +664,7 @@ generateRXInstruction(TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op, TR::N
       }
    else
       {
-      TR_ASSERT_FATAL(instructionFormat == RXYa_FORMAT, "Mnemonic (%s) is incorrectly used as an RXY instruction", TR::InstOpCode::metadata[op].name);
+      TR_ASSERT_FATAL(instructionFormat == RXYa_FORMAT || instructionFormat == RXYc_FORMAT, "Mnemonic (%s) is incorrectly used as an RXY instruction", TR::InstOpCode::metadata[op].name);
 
       result = preced != NULL ?
          new (INSN_HEAP) TR::S390RXYInstruction(op, n, treg, mf, preced, cg) :
@@ -1777,6 +1777,13 @@ generateVRIiInstruction(
 #endif
 
    return instr;
+   }
+
+TR::Instruction *
+generateVRIkInstruction(TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register * targetReg, TR::Register * sourceReg2,
+                        TR::Register * sourceReg3, TR::Register * sourceReg4, uint8_t constantImm5 /* 8 bit */)
+   {
+   return new (INSN_HEAP) TR::S390VRIkInstruction(cg, op, n, targetReg, sourceReg2, sourceReg3, sourceReg4, constantImm5);
    }
 
 /****** VRR ******/

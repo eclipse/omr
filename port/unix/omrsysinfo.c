@@ -1614,7 +1614,10 @@ omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessor
 		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_TE))
 #endif /* defined(J9ZOS390) */
 		{
-			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_TRANSACTIONAL_EXECUTION_FACILITY);
+			if (!omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_INEFFECTIVE_NONCONSTRAINED_TRANSACTION_FACILITY))
+			{
+				omrsysinfo_set_feature(desc, OMR_FEATURE_S390_TRANSACTIONAL_EXECUTION_FACILITY);
+			}
 
 			if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_CONSTRAINED_TRANSACTIONAL_EXECUTION_FACILITY)) {
 #if defined(J9ZOS390)
@@ -1784,6 +1787,46 @@ omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessor
 		}
 	}
 
+   /* zNext facility and processor detection */
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_4)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_4);
+
+		desc->processor = OMR_PROCESSOR_S390_ZNEXT;
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_3)) {
+#if defined(J9ZOS390)
+		if (omrsysinfo_get_s390_zos_supports_vector_extension_facility())
+#elif defined(LINUX) && !defined(J9ZTPF) /* defined(J9ZOS390) */
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_VXRS))
+#endif /* defined(LINUX) && !defined(J9ZTPF) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_3);
+
+			desc->processor = OMR_PROCESSOR_S390_ZNEXT;
+		}
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_PLO_EXTENSION)) {
+		omrsysinfo_set_feature(desc, OMR_FEATURE_S390_PLO_EXTENSION);
+
+		desc->processor = OMR_PROCESSOR_S390_ZNEXT;
+	}
+
+	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_3)) {
+#if defined(J9ZOS390)
+		if (omrsysinfo_get_s390_zos_supports_vector_extension_facility())
+#elif defined(LINUX) && !defined(J9ZTPF) /* defined(J9ZOS390) */
+		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_VXRS))
+#endif /* defined(LINUX) && !defined(J9ZTPF) */
+		{
+			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_3);
+
+			desc->processor = OMR_PROCESSOR_S390_ZNEXT;
+		}
+	}
+
 	/* Set Side Effect Facility without setting GP12. This is because
 	 * this GP12-only STFLE bit can also be enabled on zEC12 (GP10)
 	 */
@@ -1872,6 +1915,14 @@ omrsysinfo_get_s390_processor_feature_name(uint32_t feature)
 		return "vec_pde";
 	case OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2:
 		return "vec_pde2";
+	case OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_4:
+		return "mi_e4";
+	case OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_3:
+		return "vec_e4";
+	case OMR_FEATURE_S390_PLO_EXTENSION:
+		return "plo";
+	case OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_3:
+		return "vec_pde3";
 	default:
 		return "null";
 	}
