@@ -1033,13 +1033,11 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
 
    static TR::Register *arraycmpHelper(TR::Node *node,
                                       TR::CodeGenerator *cg,
-                                      bool isWideChar,
                                       bool isEqualCmp = false,
                                       int32_t cmpValue = 0,
                                       TR::LabelSymbol *compareTarget = NULL,
                                       TR::Node *ificmpNode = NULL,
                                       bool needResultReg = true,
-                                      bool return102 = false,
                                       TR::InstOpCode::S390BranchCondition *returnCond = NULL);
    static TR::Register *arraycmpSIMDHelper(TR::Node *node,
                                       TR::CodeGenerator *cg,

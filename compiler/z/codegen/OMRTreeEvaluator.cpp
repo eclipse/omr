@@ -5025,13 +5025,11 @@ generateS390CompareAndBranchOpsHelper(TR::Node * node, TR::CodeGenerator * cg, T
 
                TR::TreeEvaluator::arraycmpHelper(nonConstNode,
                      cg,
-                     false,      //isWideChar
                      isEqualCmp, //isEqualCmp
                      0,          //cmpValue.
                      NULL,       //compareTarget
                      NULL,       //ificmpNode
                      false,      //needResultReg
-                     true,       //return102
                      &newBranchOpCond);
 
                testRegister = NULL;
@@ -10416,9 +10414,7 @@ void setStartInternalControlFlow(TR::CodeGenerator * cg, TR::Node * node, TR::In
 
 /**
  * ArraycmpHelper is extended based on inlineMemcmpEvaluator to handle both memcmp and arraycmp.
- * The differences are
- * 1. return102: false by default - return -1/0/1 for memcmpEvaluator, otherwise 1/0/2 for arraycmpEvaluator.
- * 2. Allow no result register returned and no branch target taken if compareTarget is NULL and needResultReg is false.
+ * The difference is that it allows no result register returned and no branch target taken if compareTarget is NULL and needResultReg is false.
  * Notice that
  * 1. it handles neither arraycmpSign nor arraycmpLen
  * 2. Whether it is if-folding is considered first, then whether or not it needs a result register.
@@ -10427,22 +10423,20 @@ void setStartInternalControlFlow(TR::CodeGenerator * cg, TR::Node * node, TR::In
 TR::Register *
 OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
                                          TR::CodeGenerator *cg,
-                                         bool isWideChar,
                                          bool isEqualCmp,
                                          int32_t cmpValue,
                                          TR::LabelSymbol *compareTarget,
                                          TR::Node *ificmpNode,
                                          bool needResultReg,
-                                         bool return102,
                                          TR::InstOpCode::S390BranchCondition *returnCond)
    {
    TR::Compilation *comp = cg->comp();
 
-   if (TR::isJ9() && !comp->getOption(TR_DisableSIMDArrayCompare) && cg->getSupportsVectorRegisters() && !isWideChar)
+   if (TR::isJ9() && !comp->getOption(TR_DisableSIMDArrayCompare) && cg->getSupportsVectorRegisters())
       {
       // An empirical study has showed that CLC is faster for all array sizes if the number of bytes to copy is known to be constant
       if (!node->getChild(2)->getOpCode().isLoadConst())
-          return TR::TreeEvaluator::arraycmpSIMDHelper(node, cg, compareTarget, ificmpNode, needResultReg, return102);
+          return TR::TreeEvaluator::arraycmpSIMDHelper(node, cg, compareTarget, ificmpNode, needResultReg, true/*return102*/);
       }
 
    TR::Node *source1Node = node->getChild(0);
@@ -10450,8 +10444,6 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
    TR::Node *lengthNode  = node->getChild(2);
 
    bool isFoldedIf = compareTarget != NULL;
-
-   bool ordinal = ificmpNode && ificmpNode->getOpCode().isCompareForOrder();
 
    TR::InstOpCode::S390BranchCondition ifxcmpBrCond = TR::InstOpCode::COND_NOP;
    if (isFoldedIf)
@@ -10462,9 +10454,6 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
       }
 
    bool isIfxcmpBrCondContainEqual = getMaskForBranchCondition(ifxcmpBrCond) & 0x08;
-   bool isStartInternalControlFlowSet = false;
-   bool isCondLabelNeeded = true;
-   bool isEndLabelNeeded = false;
 
    uint64_t length = 0;
    bool isConstLength = false;
@@ -10472,8 +10461,6 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
    if (lengthNode->getOpCode().isLoadConst())
       {
       length = lengthNode->getIntegerNodeValue<uint64_t>();
-      if(isWideChar)
-         length *= 2;
       if(length < 4096)
          isConstLength = true;
       }
@@ -10483,12 +10470,16 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
    TR::Register *retValReg = NULL;
    TR::Instruction *cursor = NULL;
 
+   TR::RegisterDependencyConditions *deps = getGLRegDepsDependenciesFromIfNode(cg, ificmpNode);
+
    if(!isFoldedIf && needResultReg)
+      {
       retValReg = cg->allocateRegister();
+      generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, retValReg, retValReg);
+      }
 
    if ((isConstLength && (length == 0)) || (source1Node == source2Node))
       {
-      TR::RegisterDependencyConditions *deps = getGLRegDepsDependenciesFromIfNode(cg, ificmpNode);
       if(isFoldedIf)
          {
          if (isIfxcmpBrCondContainEqual) //Branch if it is equal.
@@ -10496,15 +10487,11 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
             generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK15, node, compareTarget, deps);
             }
          }
-      else
-         {
-         if (needResultReg)
-            generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, retValReg, retValReg);
-         }
 
       cg->recursivelyDecReferenceCount(lengthNode);
       cg->processUnusedNodeDuringEvaluation(source1Node);
       cg->processUnusedNodeDuringEvaluation(source2Node);
+
       if (returnCond!=NULL)
          {
          if (isEqualCmp)
@@ -10515,585 +10502,266 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
       }
    else if (isConstLength)
       {
+      // Compare the first 8 bytes (if length > 32 and is OpenJ9), then chunks of 256 bytes (if exists) and finally the remainder.
+
+      TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(cg);
+      TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
+      TR::LabelSymbol * shortCircuitLabel = isIfxcmpBrCondContainEqual ? compareTarget : cFlowRegionEnd;
+      TR::LabelSymbol *condLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *loopBreakTarget = (ifxcmpBrCond == TR::InstOpCode::COND_BE) ? cFlowRegionEnd : condLabel;
+
+      uint32_t loopIters = 0;
+      uint32_t earlyCLCValue = 8;
+      // Threshold for when to generate a preemptive CLC to avoid pulling in 2 cache lines if the arrays differ towards the beginning
+      uint32_t earlyCLCThreshold = 32;
+
+      intptr_t compared = 0; // number of compared bytes
+
+      uint8_t numDeps = needResultReg ? 3 : 2; // baseReg1Temp baseReg2Temp result
+
+      bool earlyCLCEnabled = TR::isJ9();
+
+      TR::Register *baseReg1Temp = NULL;
+      TR::Register *baseReg2Temp = NULL;
+      TR::RegisterDependencyConditions *regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(deps, 0, numDeps, cg);
+
       if (node->getOpCode().hasSymbolReference() && node->getSymbolReference())
          {
+         baseReg1Temp = cg->allocateRegister();
          baseSource1Ref = generateS390MemoryReference(cg, node, source1Node, 0, true); // forSS=true
+         cg->genLoadAddressToRegister(baseReg1Temp, baseSource1Ref, source1Node);
+
+         baseReg2Temp = cg->allocateRegister();
          baseSource2Ref = generateS390MemoryReference(cg, node, source2Node, 0, true); // forSS=true
+         cg->genLoadAddressToRegister(baseReg2Temp, baseSource2Ref, source2Node);
          }
       else
          {
          // memcmp2 lacks a symbol reference
-         baseSource1Ref = generateS390MemoryReference(cg->evaluate(source1Node), 0, cg);
-         baseSource2Ref = generateS390MemoryReference(cg->evaluate(source2Node), 0, cg);
+         baseReg1Temp = cg->evaluate(source1Node);
+         baseReg2Temp = cg->evaluate(source2Node);
+
          cg->decReferenceCount(source1Node);
          cg->decReferenceCount(source2Node);
          }
 
-      uint32_t loopIters = (uint32_t)(length / TR_MAX_CLC_SIZE);
-      TR::Register *baseReg1Temp = NULL;
-      TR::Register *baseReg2Temp = NULL;
-
+      regDeps->addPostCondition(baseReg1Temp, TR::RealRegister::AssignAny);
+      regDeps->addPostCondition(baseReg2Temp, TR::RealRegister::AssignAny);
+      if (needResultReg)
          {
-         // if any of the to be generated CLC instructions will need a large disp then generate an LA up front
-         if (loopIters * TR_MAX_CLC_SIZE + baseSource1Ref->getOffset() > TR_MAX_SS_DISP)
-            {
-            baseReg1Temp = cg->allocateRegister();
-            cg->genLoadAddressToRegister(baseReg1Temp, baseSource1Ref, source1Node);
-            baseSource1Ref = generateS390MemoryReference(baseReg1Temp, 0, cg);
-            }
-
-         if (loopIters * TR_MAX_CLC_SIZE + baseSource2Ref->getOffset() > TR_MAX_SS_DISP)
-            {
-            baseReg2Temp = cg->allocateRegister();
-            cg->genLoadAddressToRegister(baseReg2Temp, baseSource2Ref, source2Node);
-            baseSource2Ref = generateS390MemoryReference(baseReg2Temp, 0, cg);
-            }
+         regDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
          }
 
-      TR::RegisterDependencyConditions *deps = getGLRegDepsDependenciesFromIfNode(cg, ificmpNode);
-      TR::RegisterDependencyConditions *regDeps = NULL;
+      // The control flow starts here. 
+      // 1- evaluate address nodes and jump to the short circuit label if those are equal.
+      // 2- compare the elements and set the result register based on the CLC instruction result!
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+      cFlowRegionStart->setStartInternalControlFlow();
 
-      // Counter for the number of bytes already compared
-      uint32_t compared = 0;
+      generateS390CompareAndBranchInstruction(
+         cg,
+         TR::InstOpCode::getCmpLogicalRegOpCode(),
+         node,
+         baseReg1Temp,
+         baseReg2Temp,
+         TR::InstOpCode::COND_BE,
+         shortCircuitLabel);
 
-      bool earlyCLCEnabled = TR::isJ9();
+      baseSource1Ref = generateS390MemoryReference(baseReg1Temp, compared, cg);
+      baseSource2Ref = generateS390MemoryReference(baseReg2Temp, compared, cg);
 
-      uint32_t earlyCLCValue = 8;
-
-      // Threshold for when to generate a preemptive CLC to avoid pulling in 2 cache lines if the arrays differ towards the beginning
-      uint32_t earlyCLCThreshold = 32;
-
-      isEndLabelNeeded = loopIters || needResultReg || length > (earlyCLCEnabled ? earlyCLCThreshold : TR_MAX_CLC_SIZE);
-
-      if (length <= (earlyCLCEnabled ? earlyCLCThreshold : TR_MAX_CLC_SIZE) && (isFoldedIf || !needResultReg))
-         {
-         // these are the only cases where no regDeps are needed as code will be just CLC/BRC with no internal control flow
-         regDeps = deps;
-         isCondLabelNeeded = false;
-         }
-      else
-         {
-         uint8_t numDeps = 0;
-         // typically only 1 dep is needed but up to 4 could be needed so pre-compute to save space in most cases as regdep memory must be pre-allocated
-         if (length > (earlyCLCEnabled ? earlyCLCThreshold : TR_MAX_CLC_SIZE)) // NOTE: similar logic below when actually adding to regDeps
-            {
-            if (baseSource1Ref->getIndexRegister())
-                  numDeps++;
-            if (baseSource1Ref->getBaseRegister())
-                  numDeps++;
-            if (baseSource2Ref->getIndexRegister() && (baseSource2Ref->getIndexRegister() != baseSource1Ref->getIndexRegister()))
-                  numDeps++;
-            if (baseSource2Ref->getBaseRegister() && (baseSource2Ref->getBaseRegister() != baseSource1Ref->getBaseRegister()))
-                  numDeps++;
-            }
-
-         if (isFoldedIf)
-            {
-            if (deps == NULL)
-               regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
-            else
-               regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(deps, 0, numDeps, cg);
-            }
-         else
-            {
-            if (needResultReg)
-               {
-               numDeps++; // for retValReg
-               regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
-               regDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
-               }
-            }
-
-         if (length > (earlyCLCEnabled ? earlyCLCThreshold : TR_MAX_CLC_SIZE))
-            {
-            if (baseSource1Ref->getIndexRegister())
-               regDeps->addPostConditionIfNotAlreadyInserted(baseSource1Ref->getIndexRegister(), TR::RealRegister::AssignAny);
-
-            if (baseSource1Ref->getBaseRegister())
-               regDeps->addPostConditionIfNotAlreadyInserted(baseSource1Ref->getBaseRegister(), TR::RealRegister::AssignAny);
-
-            if (baseSource2Ref->getIndexRegister() && (baseSource2Ref->getIndexRegister() != baseSource1Ref->getIndexRegister()))
-               regDeps->addPostConditionIfNotAlreadyInserted(baseSource2Ref->getIndexRegister(), TR::RealRegister::AssignAny);
-
-            if (baseSource2Ref->getBaseRegister() && (baseSource2Ref->getBaseRegister() != baseSource1Ref->getBaseRegister()))
-               regDeps->addPostConditionIfNotAlreadyInserted(baseSource2Ref->getBaseRegister(), TR::RealRegister::AssignAny);
-            }
-         }
-
-      TR::LabelSymbol *condLabel = isCondLabelNeeded ? generateLabelSymbol(cg) : NULL;
-
-      TR::LabelSymbol *endLabel = isEndLabelNeeded ? generateLabelSymbol(cg) : NULL;
-
-      if (!isFoldedIf && needResultReg)
-         generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, retValReg, retValReg);
-
+      // First compare the first 8 bytes if length > earlyCLCThreshold and is openJ9
       if (earlyCLCEnabled && length > earlyCLCThreshold)
          {
          TR::MemoryReference *source1Ref = generateS390MemoryReference(*baseSource1Ref, compared, cg);
          TR::MemoryReference *source2Ref = generateS390MemoryReference(*baseSource2Ref, compared, cg);
-
          compared = earlyCLCValue;
-
          generateSS1Instruction(cg, TR::InstOpCode::CLC, node, compared - 1, source1Ref, source2Ref);
-
-         // Recompute the number of loop iterations as we just compared 8 bytes
-         loopIters = (uint32_t)((length - compared) / TR_MAX_CLC_SIZE);
-
-         if (isFoldedIf)
-            {
-            if (ifxcmpBrCond == TR::InstOpCode::COND_MASK8)
-               setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, endLabel),
-                                           isStartInternalControlFlowSet);
-            else
-               setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, condLabel),
-                                           isStartInternalControlFlowSet);
-            }
-         else
-            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, condLabel);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, loopBreakTarget);
          }
 
-      bool isPerfectMultiple = ((length - compared) % TR_MAX_CLC_SIZE) == 0;
-
-      for (uint32_t i = 0; i < loopIters; ++i, compared += TR_MAX_CLC_SIZE)
+      // Put blocks of 256 byte clc
+      loopIters = (uint32_t)((length - compared) / TR_MAX_CLC_SIZE);
+      for (uint32_t i = 0; i < loopIters; ++i)
          {
          TR::MemoryReference *source1Ref = generateS390MemoryReference(*baseSource1Ref, compared, cg);
          TR::MemoryReference *source2Ref = generateS390MemoryReference(*baseSource2Ref, compared, cg);
 
+         compared += TR_MAX_CLC_SIZE;
+
          generateSS1Instruction(cg, TR::InstOpCode::CLC, node, TR_MAX_CLC_SIZE - 1, source1Ref, source2Ref);
 
-         if (isPerfectMultiple && (i == loopIters - 1))
-            {
-            if (isFoldedIf)
-               {
-                //generateS390BranchInstruction(cg, TR::InstOpCode::BRC, ifxcmpBrCond, node, compareTarget);
-               }
-            else
-               setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, endLabel),
-                                           isStartInternalControlFlowSet);
-            }
-         else
-            {
-            if (isFoldedIf)
-               {
-               if (ifxcmpBrCond == TR::InstOpCode::COND_MASK8)
-                  setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, endLabel),
-                                              isStartInternalControlFlowSet);
-               else
-                  setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, condLabel),
-                                              isStartInternalControlFlowSet);
-               }
-            else
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, condLabel);
-            }
+         // Put not equal branches between each CLC cycle
+         if (compared < length)
+            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, loopBreakTarget);
+
          }
 
-      if (!isPerfectMultiple)
+      // Compare the remainder
+      if (compared < length)
          {
          TR::MemoryReference *source1Ref = generateS390MemoryReference(*baseSource1Ref, compared, cg);
          TR::MemoryReference *source2Ref = generateS390MemoryReference(*baseSource2Ref, compared, cg);
 
          generateSS1Instruction(cg, TR::InstOpCode::CLC, node, length - compared - 1, source1Ref, source2Ref);
-
-         if (!isFoldedIf && needResultReg)
-            setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, endLabel),
-                                        isStartInternalControlFlowSet);
-         }
-
-      if (isCondLabelNeeded)
-         {
-         cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, condLabel);
-         if (regDeps)
-            cursor->setDependencyConditions(regDeps);
          }
 
       if (isFoldedIf)
          {
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, ifxcmpBrCond, node, compareTarget);
+         generateS390LabelInstruction(cg, TR::InstOpCode::label, node, condLabel, regDeps);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, ifxcmpBrCond, node, compareTarget);
          }
-      else
+      else if (needResultReg)
          {
-         if (needResultReg)
-            {
-            if (return102)
-               {
-               generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, 2);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, cFlowRegionEnd);
+         generateS390LabelInstruction(cg, TR::InstOpCode::label, node, condLabel);
+         generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, 2);
 
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, endLabel);
-               cursor = generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, 1);
-               }
-            else
-               {
-               generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, 1);
-
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, endLabel);
-               cursor = generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, -1);
-               }
-            }
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, cFlowRegionEnd);
+         generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, 1);
          }
 
-      TR::LabelSymbol * cFlowRegionEnd;
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, regDeps);
+      cFlowRegionEnd->setEndInternalControlFlow();
 
-      if (endLabel)
-         {
-         cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, endLabel);
-         cFlowRegionEnd = endLabel;
-         }
-      else
-         {
-         cFlowRegionEnd = generateLabelSymbol(cg);
-         cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, cursor);
-         }
-
-      if (regDeps)
-         {
-         cursor->setDependencyConditions(regDeps);
-         }
-
-      if (isStartInternalControlFlowSet)
-         {
-         cFlowRegionEnd->setEndInternalControlFlow();
-         }
-
-      if (baseReg1Temp)
-         cg->stopUsingRegister(baseReg1Temp);
-      if (baseReg2Temp)
-         cg->stopUsingRegister(baseReg2Temp);
+      cg->stopUsingRegister(baseReg1Temp);
+      cg->stopUsingRegister(baseReg2Temp);
 
       cg->decReferenceCount(lengthNode);
       }
    else
       {
       //general case
-      TR::Register *source1Reg = NULL;
-      TR::Register *source2Reg = NULL;
-      TR::Register *lengthReg = NULL;
-
-      // If it can be proven that this operation will operate
-      // within 256 bytes, we can elide the generation of the
-      // residue loop. Currently, we don't have a way to determine
-      // this, however the codegen below does understand how
-      // to do this.
-      bool maxLenIn256 = false;
-
-
-      bool lengthCanBeZero = true;
       bool lenMinusOne = false;
-      bool needs64BitOpCode = false;
+      bool useInlineExTarget = !comp->getOption(TR_DisableInlineEXTarget);
+      bool needs64BitOpCode = lengthNode ? (lengthNode->getSize() > 4) : cg->comp()->target().is64Bit();
 
       TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+      TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
+      TR::LabelSymbol *topOfLoop    = generateLabelSymbol(cg);
+      TR::LabelSymbol *bottomOfLoop = generateLabelSymbol(cg);
+      TR::LabelSymbol *outOfCompare = generateLabelSymbol(cg);
+      TR::LabelSymbol *shortCircuitLabel = isIfxcmpBrCondContainEqual ? compareTarget : cFlowRegionEnd;
+      TR::LabelSymbol *loopBreakTarget = (ifxcmpBrCond == TR::InstOpCode::COND_BE) ? cFlowRegionEnd : outOfCompare;
+      TR::LabelSymbol * EXTargetLabel; // use EX instruction to compare length % 256 at this label
 
-      TR::Register *loopCountReg = NULL;
+      TR::Register *loopCountReg = cg->allocateRegister();
+      TR::Register *source1Reg = cg->gprClobberEvaluate(source1Node);
+      TR::Register *source2Reg = cg->gprClobberEvaluate(source2Node);
+      TR::Register *lengthReg = NULL;
+      //TODO: how many to add for EX dispatch? it was `isFoldedIf ? 10 : 11` before my changes but it's too much larger!
+      int dependencyCount = needResultReg ? 5 : 4; // loopCount + source1 + source2 + length + result
+      if(!useInlineExTarget)
+         dependencyCount++; //For EX dispatch
 
-      TR::Register *lengthCopyReg = NULL;
-      TR::RegisterPair *source1Pair = NULL;
-      TR::RegisterPair *source2Pair = NULL;
+      TR::RegisterDependencyConditions *branchDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(deps, 0, dependencyCount, cg);
 
-      if (lengthNode)
+      // The control flow starts here. 
+      // 1- evaluate address nodes and jump to the short circuit label if those are equal.
+      // 2- evaluate length node and jump to the short circuit label if it is zero.
+      // 3- compare the elements and set the result register based on the CLC instruction result!
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+      cFlowRegionStart->setStartInternalControlFlow();
+      
+      // if source1Reg is equal to source2Reg, we can conclude.
+      generateS390CompareAndBranchInstruction(
+                  cg,
+                  TR::InstOpCode::getCmpLogicalRegOpCode(),
+                  node,
+                  source1Reg,
+                  source2Reg,
+                  TR::InstOpCode::COND_BE,
+                  shortCircuitLabel);
+
+      lengthReg = cg->evaluateLengthMinusOneForMemoryOps(lengthNode, true, lenMinusOne);
+
+      lenMinusOne ? generateRRInstruction(cg, TR::InstOpCode::LTR, node, lengthReg, lengthReg) //The LengthminuxOne uses "TR::iadd length, -1"
+                  : generateRIInstruction(cg, (needs64BitOpCode) ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, node, lengthReg, -1);
+
+
+      // If length - 1 is negative then length is zero and we consider zero length arrays equal!
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, shortCircuitLabel);
+
+      branchDeps->addPostCondition(source1Reg, TR::RealRegister::AssignAny);
+      branchDeps->addPostCondition(source2Reg, TR::RealRegister::AssignAny);
+      branchDeps->addPostCondition(lengthReg, TR::RealRegister::AssignAny);
+      branchDeps->addPostCondition(loopCountReg, TR::RealRegister::AssignAny);
+      if (needResultReg)
          {
-         needs64BitOpCode = lengthNode->getSize() > 4;
+         branchDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
+         }
+
+      if (needs64BitOpCode)
+         generateRSInstruction(cg, TR::InstOpCode::SRAG, node, loopCountReg, lengthReg, 8);
+      else
+         {
+         generateRRInstruction(cg, TR::InstOpCode::LR, node, loopCountReg, lengthReg);
+         generateRSInstruction(cg, TR::InstOpCode::SRA, node, loopCountReg, 8);
+         }
+
+      // if loop count is zero, we can jump to the end of the loop and compare the remainder.
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, bottomOfLoop);
+
+      TR::MemoryReference *source1MemRef = generateS390MemoryReference(source1Reg, 0, cg);
+      TR::MemoryReference *source2MemRef = generateS390MemoryReference(source2Reg, 0, cg);
+
+      if (useInlineExTarget)
+         {
+         // Inline the EXRL target so it is always in the instruction cache
+         generateS390LabelInstruction(cg, TR::InstOpCode::label, node, EXTargetLabel = generateLabelSymbol(cg));
+
+         generateSS1Instruction(cg, TR::InstOpCode::CLC, node, 0, source1MemRef, source2MemRef);
+
+         source1MemRef = generateS390MemoryReference(source1Reg, 0, cg);
+         source2MemRef = generateS390MemoryReference(source2Reg, 0, cg);
+         }
+
+      //Loop
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, topOfLoop);
+      generateSS1Instruction(cg, TR::InstOpCode::CLC, node, 255, source1MemRef, source2MemRef);
+
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, loopBreakTarget);
+
+      generateRXInstruction(cg, TR::InstOpCode::LA, node, source1Reg, generateS390MemoryReference(source1Reg, 256, cg));
+      generateRXInstruction(cg, TR::InstOpCode::LA, node, source2Reg, generateS390MemoryReference(source2Reg, 256, cg));
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCountReg, topOfLoop);
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, bottomOfLoop);
+      //Loop end
+
+      //Remainder
+      source1MemRef= generateS390MemoryReference(source1Reg, 0, cg);
+      source2MemRef= generateS390MemoryReference(source2Reg, 0, cg);
+
+      if (useInlineExTarget)
+         {
+         cursor = new (cg->trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::EXRL, node, lengthReg, EXTargetLabel, cg);
          }
       else
          {
-         needs64BitOpCode =  cg->comp()->target().is64Bit();
-         }
-
-      if (maxLenIn256)
-         {
-         source1Reg = cg->evaluate(source1Node);
-         source2Reg = cg->evaluate(source2Node);
-         lengthReg = TR::TreeEvaluator::evaluateLengthMinusOneForMemoryCmp(lengthNode, cg, true, lenMinusOne);
-
-         if (isWideChar)
-            {
-            if(needs64BitOpCode)
-               generateRSInstruction(cg, TR::InstOpCode::SLLG, node, lengthReg, lengthReg, 1);
-            else
-               generateRSInstruction(cg, TR::InstOpCode::SLL, node, lengthReg, 1);
-            }
-         }
-      else
-         {
-         if (isWideChar)
-            {
-            source1Reg = cg->gprClobberEvaluate(source1Node, true);
-            source2Reg = cg->gprClobberEvaluate(source2Node, true);
-            lengthReg = cg->gprClobberEvaluate(lengthNode, true);
-            }
-         else
-            {
-            source1Reg = cg->gprClobberEvaluate(source1Node);
-            source2Reg = cg->gprClobberEvaluate(source2Node);
-            lengthReg = cg->evaluateLengthMinusOneForMemoryOps(lengthNode, true, lenMinusOne);
-            }
-         }
-
-      TR::RegisterDependencyConditions *deps = getGLRegDepsDependenciesFromIfNode(cg, ificmpNode);
-
-      TR::RegisterDependencyConditions *branchDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(deps, 0,
-                                                                                                                     maxLenIn256 ? 5 : (isWideChar ? (isFoldedIf ? 10 : 11) : 5 + 4),
-                                                                                                                     cg);
-
-      //We could do better job in future for the known length (>=4k)
-      //Currently there are some unnecessary test/load instructions generated.
-
-      if (maxLenIn256)
-         {
-         if (!isFoldedIf && needResultReg)
-            {
-            branchDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
-            generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, retValReg, retValReg);
-            }
-
-         if (!lenMinusOne)
-            {
-            generateRIInstruction(cg, (needs64BitOpCode) ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, node, lengthReg, -1);
-            }
-
-         if (lengthCanBeZero)
-            {
-            if (lenMinusOne)
-               generateRRInstruction(cg, (needs64BitOpCode) ? TR::InstOpCode::LTGR : TR::InstOpCode::LTR, node, lengthReg, lengthReg);
-
-            //Strings of 0 length are considered equal
-            if (isFoldedIf)
-               {
-               if (isIfxcmpBrCondContainEqual)
-                  setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, compareTarget),
-                                              isStartInternalControlFlowSet);
-               else
-                  setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, cFlowRegionEnd),
-                                              isStartInternalControlFlowSet);
-               }
-            else
-               setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, cFlowRegionEnd),
-                                            isStartInternalControlFlowSet);
-            }
-
-         TR::MemoryReference *source1MemRef = generateS390MemoryReference(source1Reg, 0, cg);
-         TR::MemoryReference *source2MemRef = generateS390MemoryReference(source2Reg, 0, cg);
-
-         cursor = cg->getAppendInstruction();
-         cursor = generateSS1Instruction(cg, TR::InstOpCode::CLC, node, 0, source1MemRef, source2MemRef, cursor);
-
+         cursor = generateSS1Instruction(cg, TR::InstOpCode::CLC, node, 0, source1MemRef, source2MemRef);
          cursor = generateEXDispatch(node, cg, lengthReg, cursor, 0, branchDeps);
          }
-      else
-         {
-         if (isWideChar)
-            {
-            //This part is the orginal code that can handle all general cases including isWideChar via CLCLE/CLCLU
-            //Now it is used only for WideChar as CLC loop is prefered on other general cases
-            //Later we can use maxlength to determine a threshhold to do CLCLE
 
-            lengthCopyReg = cg->allocateRegister();
-
-            source1Pair = cg->allocateConsecutiveRegisterPair(lengthReg, source1Reg);
-
-            source2Pair = cg->allocateConsecutiveRegisterPair(lengthCopyReg, source2Reg);
-
-            branchDeps = cg->createDepsForRRMemoryInstructions(node, source1Pair, source2Pair);
-
-            //compareDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, isFoldedIf ? 6 : 7, cg);
-
-            if(!isFoldedIf && needResultReg)
-               {
-               branchDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
-               generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, retValReg, retValReg);
-               }
-
-            //cFlowRegionEnd = generateLabelSymbol(cg);
-
-            generateRRInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::LTGR : TR::InstOpCode::LTR, node, lengthReg, lengthReg);
-
-            //The following test may not be necessary as TR::InstOpCode::CLCLU/TR::InstOpCode::CLCLE does not care zero legth case?
-            if (isFoldedIf)
-               {
-               if (isIfxcmpBrCondContainEqual)
-                  setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, compareTarget),
-                                               isStartInternalControlFlowSet);
-               else
-                  setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, cFlowRegionEnd),
-                                               isStartInternalControlFlowSet);
-               }
-            else
-               setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, cFlowRegionEnd),
-                                               isStartInternalControlFlowSet);
-
-            if(isWideChar)
-               {
-               if(cg->comp()->target().is64Bit())
-                  generateRSInstruction(cg, TR::InstOpCode::SLLG, node, lengthReg, lengthReg, 1);
-               else
-                  generateRSInstruction(cg, TR::InstOpCode::SLL, node, lengthReg, 1);
-               }
-            generateRRInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::LGR : TR::InstOpCode::LR, node, lengthCopyReg, lengthReg);
-
-            TR::LabelSymbol *continueLabel = generateLabelSymbol(cg);
-            generateS390LabelInstruction(cg, TR::InstOpCode::label, node, continueLabel);
-            cursor = generateRSWithImplicitPairStoresInstruction(cg, isWideChar ? TR::InstOpCode::CLCLU : TR::InstOpCode::CLCLE, node, source1Pair, source2Pair, generateS390MemoryReference(NULL, 64, cg));
-
-            //cursor->setDependencyConditions(compareDeps);
-            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK1, node, continueLabel);
-            //cursor->setDependencyConditions(branchDeps);
-
-
-            }
-         else
-            {
-            //This part uses CLC loop to do the compare
-            //CLC loop is considered superior to CLCLE -- task 33860
-
-            if (!isFoldedIf && needResultReg)
-               {
-               branchDeps->addPostCondition(retValReg, TR::RealRegister::AssignAny);
-               generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, retValReg, retValReg);
-               }
-
-            loopCountReg = cg->allocateRegister();
-
-            if (!lenMinusOne)
-               {
-               generateRIInstruction(cg, (needs64BitOpCode) ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, node, lengthReg, -1);
-               }
-
-            if (lengthCanBeZero)
-               {
-               if (lenMinusOne)
-                  generateRRInstruction(cg, TR::InstOpCode::LTR, node, lengthReg, lengthReg); //The LengthminuxOne uses "TR::iadd length, -1"
-
-               //Strings of 0 length are considered equal
-               if (isFoldedIf)
-                  {
-                  if (isIfxcmpBrCondContainEqual)
-                    // generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, compareTarget);
-                     setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, compareTarget),
-                                                 isStartInternalControlFlowSet);
-                  else
-                     setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, cFlowRegionEnd),
-                                                 isStartInternalControlFlowSet);
-                  }
-               else
-                  setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, cFlowRegionEnd),
-                                              isStartInternalControlFlowSet);
-               }
-
-            branchDeps->addPostConditionIfNotAlreadyInserted(source1Reg, TR::RealRegister::AssignAny);
-            branchDeps->addPostConditionIfNotAlreadyInserted(source2Reg, TR::RealRegister::AssignAny);
-            branchDeps->addPostConditionIfNotAlreadyInserted(lengthReg, TR::RealRegister::AssignAny);
-            branchDeps->addPostConditionIfNotAlreadyInserted(loopCountReg, TR::RealRegister::AssignAny);
-
-            TR::LabelSymbol *topOfLoop    = generateLabelSymbol(cg);
-            TR::LabelSymbol *bottomOfLoop = generateLabelSymbol(cg);
-            TR::LabelSymbol *outOfCompare = generateLabelSymbol(cg);
-
-           if (needs64BitOpCode)
-              generateRSInstruction(cg, TR::InstOpCode::SRAG, node, loopCountReg, lengthReg, 8);
-           else
-              {
-              generateRRInstruction(cg, TR::InstOpCode::LR, node, loopCountReg, lengthReg);
-              generateRSInstruction(cg, TR::InstOpCode::SRA, node, loopCountReg, 8);
-              }
-
-            setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, bottomOfLoop),
-                                        isStartInternalControlFlowSet);
-
-            TR::MemoryReference *source1MemRef = generateS390MemoryReference(source1Reg, 0, cg);
-            TR::MemoryReference *source2MemRef = generateS390MemoryReference(source2Reg, 0, cg);
-
-            TR::LabelSymbol * EXTargetLabel;
-
-            if (!comp->getOption(TR_DisableInlineEXTarget))
-               {
-               // Inline the EXRL target so it is always in the instruction cache
-               generateS390LabelInstruction(cg, TR::InstOpCode::label, node, EXTargetLabel = generateLabelSymbol(cg));
-
-               generateSS1Instruction(cg, TR::InstOpCode::CLC, node, 0, source1MemRef, source2MemRef);
-
-               source1MemRef = generateS390MemoryReference(source1Reg, 0, cg);
-               source2MemRef = generateS390MemoryReference(source2Reg, 0, cg);
-               }
-
-            //Loop
-            generateS390LabelInstruction(cg, TR::InstOpCode::label, node, topOfLoop);
-            generateSS1Instruction(cg, TR::InstOpCode::CLC, node, 255, source1MemRef, source2MemRef);
-
-            if (isFoldedIf)
-               {
-               if (ifxcmpBrCond == TR::InstOpCode::COND_MASK8)
-                  setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, cFlowRegionEnd),
-                                              isStartInternalControlFlowSet);
-               else
-                  setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, outOfCompare),
-                                              isStartInternalControlFlowSet);
-               }
-            else
-               setStartInternalControlFlow(cg, node, generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK6, node, outOfCompare),
-                                           isStartInternalControlFlowSet);
-
-            generateRXInstruction(cg, TR::InstOpCode::LA, node, source1Reg, generateS390MemoryReference(source1Reg, 256, cg));
-            generateRXInstruction(cg, TR::InstOpCode::LA, node, source2Reg, generateS390MemoryReference(source2Reg, 256, cg));
-            generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCountReg, topOfLoop);
-            generateS390LabelInstruction(cg, TR::InstOpCode::label, node, bottomOfLoop);
-
-            //Remainder
-            source1MemRef= generateS390MemoryReference(source1Reg, 0, cg);
-            source2MemRef= generateS390MemoryReference(source2Reg, 0, cg);
-
-            if (!comp->getOption(TR_DisableInlineEXTarget))
-               {
-               cursor = new (cg->trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::EXRL, node, lengthReg, EXTargetLabel, cg);
-               }
-            else
-               {
-               cursor = generateSS1Instruction(cg, TR::InstOpCode::CLC, node, 0, source1MemRef, source2MemRef);
-               cursor = generateEXDispatch(node, cg, lengthReg, cursor, 0, branchDeps);
-               }
-
-            //Setup result
-            generateS390LabelInstruction(cg, TR::InstOpCode::label, node, outOfCompare);
-            }
-         }
+      //Setup result
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, outOfCompare);
 
       if(isFoldedIf)
          {
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, ifxcmpBrCond, node, compareTarget);
          }
-      else
+      else if (needResultReg)
          {
-         if (needResultReg)
-            {
-            if (return102)
-               {
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, cFlowRegionEnd);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, cFlowRegionEnd);
 
-               generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, 2);
+         generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, 2);
 
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, cFlowRegionEnd);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, cFlowRegionEnd);
 
-               generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, 1);
-               }
-            else
-               {
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, cFlowRegionEnd);
-
-               generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, 1);
-
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK2, node, cFlowRegionEnd);
-
-               generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, -1);
-               }
-            }
+         generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, retValReg, 1);
          }
 
-
-      TR::RegisterDependencyConditions *regDepsCopy = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(branchDeps, 0, 0, cg);
-
-      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, regDepsCopy);
-
-      if (isStartInternalControlFlowSet)
-         {
-         cFlowRegionEnd->setEndInternalControlFlow();
-         }
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, branchDeps);
+      cFlowRegionEnd->setEndInternalControlFlow();
 
       cg->decReferenceCount(lengthNode);
       cg->decReferenceCount(source1Node);
@@ -11102,40 +10770,20 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
       cg->stopUsingRegister(source1Reg);
       cg->stopUsingRegister(source2Reg);
       cg->stopUsingRegister(lengthReg);
-
-      if (!maxLenIn256)
-         {
-         if (isWideChar)
-            {
-            cg->stopUsingRegister(lengthCopyReg);
-            cg->stopUsingRegister(source1Pair);
-            cg->stopUsingRegister(source2Pair);
-            }
-         else
-            {
-            cg->stopUsingRegister(loopCountReg);
-            }
-
-         }
+      cg->stopUsingRegister(loopCountReg);
       }
 
    if (isFoldedIf)
       {
       cg->decReferenceCount(node);
-      return NULL;
       }
-   else
+   else if (needResultReg)
       {
-      if (needResultReg)
-         {
-         node->setRegister(retValReg);
-         return retValReg;
-         }
-      else
-         {
-         return NULL;
-         }
+      node->setRegister(retValReg);
+      return retValReg;
       }
+   
+   return NULL;
    }
 
 TR::Register *
@@ -11163,20 +10811,17 @@ OMR::Z::TreeEvaluator::inlineIfArraycmpEvaluator(TR::Node *node, TR::CodeGenerat
    bool isEqualCmp = (node->getOpCodeValue() == TR::ificmpeq);
    TR::LabelSymbol *compareTarget = node->getBranchDestination()->getNode()->getLabel();
    TR_ASSERT( compareTarget != NULL, "NULL compare target found in inlineIfArraycmpEvaluator");
-   bool isWide = false;
 
    TR::Register *ret;
    if (opNode->getOpCodeValue() == TR::arraycmp)
       {
       ret = TR::TreeEvaluator::arraycmpHelper(opNode,
                                               cg,
-                                              isWide,        //isWideChar
                                               isEqualCmp,    //isEqualCmp
                                               compareVal,    //cmpValue
                                               compareTarget, //compareTarget
                                               node,          //ificmpNode
-                                              false,         //needResultReg
-                                              true);         //return102
+                                              false);         //needResultReg
       }
 
    inlined = true;
@@ -11789,13 +11434,11 @@ OMR::Z::TreeEvaluator::arraycmpEvaluator(TR::Node * node, TR::CodeGenerator * cg
          resultReg = TR::TreeEvaluator::arraycmpHelper(
                            node,
                            cg,
-                           false, //isWideChar
                            true,  //isEqualCmp
                            0,     //cmpValue. It means it is equivalent to do "arraycmp(A,B) == 0"
                            NULL,  //compareTarget
                            NULL,  //ificmpNode
-                           true,  //needResultReg
-                           true); //return102
+                           true);  //needResultReg
          // node->setRegister(resultReg);
          return resultReg;
          }
@@ -11817,13 +11460,11 @@ OMR::Z::TreeEvaluator::arraycmpEvaluator(TR::Node * node, TR::CodeGenerator * cg
          resultReg = TR::TreeEvaluator::arraycmpHelper(
                         node,
                         cg,
-                        false, //isWideChar
                         true,  //isEqualCmp
                         0,     //cmpValue. It means it is equivalent to do "arraycmp(A,B) == 0"
                         NULL,  //compareTarget
                         NULL,  //ificmpNode
-                        true,  //needResultReg
-                        true); //return102
+                        true);  //needResultReg
 
          // node->setRegister(resultReg);
          return resultReg;
@@ -11885,17 +11526,29 @@ OMR::Z::TreeEvaluator::arraycmplenEvaluator(TR::Node * node, TR::CodeGenerator *
    TR::RegisterPair * firstPair = cg->allocateConsecutiveRegisterPair(firstLen, firstBaseReg);
    TR::RegisterPair * secondPair = cg->allocateConsecutiveRegisterPair(secondLen, secondBaseReg);
    TR::Register * resultReg = cg->allocateRegister();
+   TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
+   TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(cg);
    TR::Instruction * cursor;
 
-   TR::RegisterDependencyConditions * dependencies = cg->createDepsForRRMemoryInstructions(node, firstPair, secondPair);
+   TR::RegisterDependencyConditions * dependencies = cg->createDepsForRRMemoryInstructions(node, firstPair, secondPair, 2);
+   dependencies->addPostCondition(orgLen, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(resultReg, TR::RealRegister::AssignAny);
+
+   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, resultReg, orgLen);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+   cFlowRegionStart->setStartInternalControlFlow();
+
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalRegOpCode(), node, firstBaseReg, secondBaseReg, TR::InstOpCode::COND_BE, cFlowRegionEnd);
 
    generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, firstLen, orgLen);
    generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, secondLen, orgLen);
    cursor = generateRRInstruction(cg, TR::InstOpCode::CLCL, node, firstPair, secondPair);
 
-   generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, resultReg, orgLen);
    cursor = generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, resultReg, firstLen);
 
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
+   cFlowRegionEnd->setEndInternalControlFlow();
 
    cg->stopUsingRegister(firstPair);
    cg->stopUsingRegister(secondPair);
@@ -11905,12 +11558,9 @@ OMR::Z::TreeEvaluator::arraycmplenEvaluator(TR::Node * node, TR::CodeGenerator *
    cg->stopUsingRegister(secondLen);
    cg->stopUsingRegister(orgLen);
 
-
    cg->decReferenceCount(elemsExpr);
    cg->decReferenceCount(firstBaseAddr);
    cg->decReferenceCount(secondBaseAddr);
-   cursor->setDependencyConditions(dependencies);
-
 
    node->setRegister(resultReg);
    return resultReg;
@@ -15783,17 +15433,33 @@ OMR::Z::TreeEvaluator::arraycmpSIMDHelper(TR::Node *node,
    TR::Register * vectorOutputReg = cg->allocateRegister(TR_VRF);
    TR::Register * resultReg = needResultReg ? cg->allocateRegister() : NULL;
 
-   // VLL uses lastByteIndexReg as the highest 0-based index to load, which is length - 1
-   generateRILInstruction(cg, TR::InstOpCode::getSubtractLogicalImmOpCode(), node, lastByteIndexReg, 1);
-   if(needResultReg && isArrayCmpLen)
-      generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, resultReg, lastByteIndexReg);
+   if(needResultReg)
+      {
+         if(isArrayCmpLen)
+            generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, resultReg, lastByteIndexReg);
+         else
+            generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, resultReg, resultReg);
+      }
 
    TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
    TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(cg);
    TR::LabelSymbol * mismatch = generateLabelSymbol(cg);
 
+   // In certain cases we can branch directly so we must set up the correct global register dependencies
+   TR::RegisterDependencyConditions* compareTargetRDC = getGLRegDepsDependenciesFromIfNode(cg, ificmpNode);
+
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
    cFlowRegionStart->setStartInternalControlFlow();
+
+   // Short circuit if the source addresses are equal
+   if(isFoldedIf && isIfxcmpBrCondContainEqual)
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLR, node, firstAddrReg, secondAddrReg, TR::InstOpCode::COND_BE, compareTarget, compareTargetRDC);
+   else
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLR, node, firstAddrReg, secondAddrReg, TR::InstOpCode::COND_BE, cFlowRegionEnd);
+
+
+   // VLL uses lastByteIndexReg as the highest 0-based index to load, which is length - 1
+   generateRILInstruction(cg, TR::InstOpCode::getSubtractLogicalImmOpCode(), node, lastByteIndexReg, 1);
 
    // Vector is filled with data in memory in [addr,addr+min(15,numBytesLeft)]
    generateVRSbInstruction(cg, TR::InstOpCode::VLL  , node, vectorFirstInputReg , lastByteIndexReg, generateS390MemoryReference(firstAddrReg , 0, cg));
@@ -15812,25 +15478,11 @@ OMR::Z::TreeEvaluator::arraycmpSIMDHelper(TR::Node *node,
    //Branch if the number of bytes left is not negative
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK3, node, cFlowRegionStart);
 
-   // In certain cases we can branch directly so we must set up the correct global register dependencies
-   TR::RegisterDependencyConditions* compareTargetRDC = getGLRegDepsDependenciesFromIfNode(cg, ificmpNode);
-
    // Arrays are equal
-   if(isFoldedIf)
-      {
-      if(isIfxcmpBrCondContainEqual)
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, compareTarget, compareTargetRDC);
-      else
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
-      }
-   else if(needResultReg)
-      {
-      if(isArrayCmpLen)
-         generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, resultReg, 1);//Return length of the arrays, which is resultReg += 1
-      else
-         generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, resultReg, resultReg);//Return zero to indicate equal
+   if(isFoldedIf && isIfxcmpBrCondContainEqual)
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, compareTarget, compareTargetRDC);
+   else
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
-      }
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, mismatch);
 
@@ -15843,8 +15495,9 @@ OMR::Z::TreeEvaluator::arraycmpSIMDHelper(TR::Node *node,
       if(isArrayCmpLen)
          {
          // Return 0-based index of first non-matching element
-         // resultReg - lastByteIndexReg = number of elements compared before the last loop
+         // (resultReg - 1) - lastByteIndexReg = number of elements compared before the last loop
          // vectorOutputReg contains the 0-based index of the first non-matching element (index is its position in the vector)
+         generateRILInstruction(cg, TR::InstOpCode::getSubtractLogicalImmOpCode(), node, resultReg, 1);
          generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, resultReg, lastByteIndexReg);
          generateVRScInstruction(cg, TR::InstOpCode::VLGV/*B*/, node, lastByteIndexReg, vectorOutputReg, generateS390MemoryReference(7, cg), 0);
          generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, resultReg, lastByteIndexReg);
@@ -15873,7 +15526,6 @@ OMR::Z::TreeEvaluator::arraycmpSIMDHelper(TR::Node *node,
             }
          }
       }
-
 
    int numConditions = 8;
    TR::RegisterDependencyConditions * dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numConditions, cg);

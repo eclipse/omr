@@ -1488,7 +1488,6 @@ MemCmpVarLenMacroOp::generateInstruction(int32_t offset, int64_t length)
    return cursor;
    }
 
-
 static TR::Instruction *
 generateCmpResult(TR::CodeGenerator * cg, TR::Node * rootNode, TR::Register * dstReg, TR::Register * srcReg, TR::Register * resultReg,
    TR::LabelSymbol * falseLabel, TR::LabelSymbol * trueLabel, TR::LabelSymbol * doneLabel)
@@ -1653,6 +1652,11 @@ MemCmpVarLenSignMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, TR
    _litReg = NULL;
 
    if(cursorBefore == NULL) cursorBefore = _cg->getAppendInstruction();
+
+   // Jump to done and return zero if src == dst
+   generateRRFInstruction(_cg, TR::InstOpCode::getSubtractThreeRegOpCode(), _rootNode, _resultReg, srcReg, dstReg);
+   generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRZ, _rootNode, _doneLabel);
+
    generateLoop();
    setInRemainder(true);
    generateRemainder();
@@ -1702,6 +1706,11 @@ MemCmpConstLenSignMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, 
    TR::Compilation *comp = _cg->comp();
 
    if(cursorBefore == NULL) cursorBefore = _cg->getAppendInstruction();
+
+   // Jump to done and return zero if src == dst
+   generateRRFInstruction(_cg, TR::InstOpCode::getSubtractThreeRegOpCode(), _rootNode, _resultReg, srcReg, dstReg);
+   generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRZ, _rootNode, _doneLabel);
+
    generateLoop();
    setInRemainder(true);
    generateRemainder();
