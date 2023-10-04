@@ -684,7 +684,7 @@ Port::omrfile_stat(const char *path, unsigned int flags, struct J9FileStat *buf)
 	if (statfs(path, &statfsbuf)) {
 		return RC_FAILED;
 	}
-	switch (statfsbuf.f_type) {
+	switch ((unsigned long)(statfsbuf.f_type)) {
 	/* Detect remote filesystem types */
 	case 0x6969: /* NFS_SUPER_MAGIC */
 	case 0x517B: /* SMB_SUPER_MAGIC */
