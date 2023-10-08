@@ -96,7 +96,7 @@ It uses `mmap` (or equivalent) to allocate `TR::MemorySegment`s.
 It does not free memory when requested; instead it changes the 
 permission on the freed memory. The purpose of this is to help 
 debug memory corruption issues. It uses `TR::RawAllocator` for 
-all its internal memory mangement requirements. The compiler 
+all its internal memory management requirements. The compiler 
 will use this Low Level Allocator when the 
 `TR_EnableScratchMemoryDebugging` option is enabled.
 
@@ -180,7 +180,7 @@ It contains an automatic conversion (which wraps it in a
 #### TR::Allocator
 `TR::Allocator` is an allocator provided by the CS2 library. 
 Use of `TR:Allocator` is strongly discouraged; it only exists for 
-legacy purposes. It will quite likley be removed in the 
+legacy purposes. It will quite likely be removed in the 
 future. It contains an automatic conversion (which wraps it in a 
 `TR::typed_allocator`) for ease of use with STL containers.
 
