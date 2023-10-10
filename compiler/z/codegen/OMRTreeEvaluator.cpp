@@ -11862,9 +11862,9 @@ OMR::Z::TreeEvaluator::arraycmplenEvaluator(TR::Node * node, TR::CodeGenerator *
 
    if (TR::isJ9() && !comp->getOption(TR_DisableSIMDArrayCompare) && cg->getSupportsVectorRegisters())
       {
-      // An empirical study has showed that CLC is faster for all array sizes if the number of bytes to copy is known to be constant
+      // An empirical study has showed that CLC is faster for all array sizes if the number of bytes to compare is known to be constant
       if (!node->getChild(2)->getOpCode().isLoadConst())
-         return TR::TreeEvaluator::arraycmpSIMDHelper(node, cg, NULL, NULL, true, !node->isArrayCmpSign()/*return102*/, true);
+         return TR::TreeEvaluator::arraycmpSIMDHelper(node, cg, NULL, NULL, true, false, true);
       }
 
    TR::Node * firstBaseAddr = node->getFirstChild();
