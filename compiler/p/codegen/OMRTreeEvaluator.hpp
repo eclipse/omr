@@ -703,7 +703,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *GlRegDepsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *passThroughEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *setmemoryEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *setmemoryEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool arrayCheckNeeded);
    static TR::Register *arraysetEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *arraytranslateEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *arraytranslateAndTestEvaluator(TR::Node *node, TR::CodeGenerator *cg);

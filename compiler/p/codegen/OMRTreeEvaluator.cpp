@@ -5910,20 +5910,36 @@ inline void generateLoadJ9Class(TR::Node* node, TR::Register* j9classReg, TR::Re
    TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, j9classReg);
    }
 
-TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool arrayCheckNeeded)
    {
    TR::Compilation *comp = cg->comp();
+   TR::Node             *dstBaseAddrNode, *dstOffsetNode, *dstAddrNode, *lengthNode, *valueNode;
 
-   TR::Node *dstBaseAddrNode = node->getChild(0);
-   TR::Node *dstOffsetNode = node->getChild(1);
-   TR::Node *lengthNode = node->getChild(2);
-   TR::Node *valueNode = node->getChild(3);
+   // IL tree structure depends on whether or not it's been determined that a runtime arrayCHK is needed
+   if (arrayCheckNeeded)
+   {
+      dstBaseAddrNode = node->getChild(0);
+      dstOffsetNode = node->getChild(1);
+      dstAddrNode = NULL;
+      lengthNode = node->getChild(2);
+      valueNode = node->getChild(3);
+   }
+   else
+   {
+      dstBaseAddrNode = NULL;
+      dstOffsetNode = NULL;
+      dstAddrNode = node->getChild(0);
+      lengthNode = node->getChild(1);
+      valueNode = node->getChild(2);
+   }
 
-   TR::Register         *dstBaseAddrReg, *dstOffsetReg, *lengthReg, *valueReg;
-   bool stopUsingCopyReg1, stopUsingCopyReg2, stopUsingCopyReg3 = false, stopUsingCopyReg4 = false;
+   TR::Register         *dstBaseAddrReg, *dstOffsetReg, *dstAddrReg, *lengthReg, *valueReg;
 
-   stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyReg(dstBaseAddrNode, dstBaseAddrReg, cg);
-   stopUsingCopyReg2 = TR::TreeEvaluator::stopUsingCopyReg(dstOffsetNode, dstOffsetReg, cg);
+   bool stopUsingCopyRegBase = dstBaseAddrNode ? TR::TreeEvaluator::stopUsingCopyReg(dstBaseAddrNode, dstBaseAddrReg, cg) : false;
+   bool stopUsingCopyRegOffset = dstOffsetNode ? TR::TreeEvaluator::stopUsingCopyReg(dstOffsetNode, dstOffsetReg, cg) : false;
+   bool stopUsingCopyRegAddr = dstAddrNode ? TR::TreeEvaluator::stopUsingCopyReg(dstAddrNode, dstAddrReg, cg) : false ;
+   
+   bool stopUsingCopyRegLen, stopUsingCopyRegVal;
 
    lengthReg = cg->evaluate(lengthNode);
    if (!cg->canClobberNodesRegister(lengthNode))
@@ -5931,16 +5947,16 @@ TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::
 	   TR::Register *lenCopyReg = cg->allocateRegister();
       generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, lengthNode, lenCopyReg, lengthReg);
       lengthReg = lenCopyReg;
-      stopUsingCopyReg3 = true;
+      stopUsingCopyRegLen = true;
       }
 
    valueReg = cg->evaluate(valueNode);
    if (!cg->canClobberNodesRegister(valueNode))
       {
-	  TR::Register *valCopyReg = cg->allocateRegister();
+	   TR::Register *valCopyReg = cg->allocateRegister();
       generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, valueNode, valCopyReg, valueReg);
       valueReg = valCopyReg;
-      stopUsingCopyReg4 = true;
+      stopUsingCopyRegVal = true;
       }
 
    TR::LabelSymbol * residualLabel =  generateLabelSymbol(cg);
@@ -5952,12 +5968,21 @@ TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::
    TR::LabelSymbol * label1aligned =  generateLabelSymbol(cg);
 
    TR::RegisterDependencyConditions *conditions;
-   int32_t numDeps = 7;
+   int32_t numDeps = arrayCheckNeeded ? 7 : 6;
    conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(numDeps, numDeps, cg->trMemory());
    TR::Register *cndReg = cg->allocateRegister(TR_CCR);
    TR::addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
-   TR::addDependency(conditions, dstBaseAddrReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(conditions, dstOffsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   if (arrayCheckNeeded)
+   {
+      TR::addDependency(conditions, dstBaseAddrReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      TR::addDependency(conditions, dstOffsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   }
+   else
+   {
+      TR::addDependency(conditions, dstAddrReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   }
+   
    TR::addDependency(conditions, lengthReg, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::addDependency(conditions, valueReg, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::Register * temp1Reg = cg->allocateRegister();
@@ -5967,33 +5992,12 @@ TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::
 
 
 #if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   // When using balanced GC policy with offheap allocation enabled, there are three possible cases:
-   // 1.) The object at dstBaseAddr is known to be a non-array object at compile time. In this scenario, no arrayCHK is
-   //     generated, and no adjustments are made to dstBaseAddr or dstOffset. The behavior in this case should be identical
-   //     to that under gencon GC policy.
-   // 2.) The object at dstBaseAddr is known to be an array at compile time. In this scenario, no arrayCHK is generated, but
-   //     the dstBaseAddr and dstOffset with be adjusted as needed for offheap.
-   // 3.) The type of the object at dstBaseAddr is unknown at compile time. In this scenario, a runtime arrayCHK will generated,
-   //     with two possible outcomes: if the object is an array, the dstBaseAddr and dstOffset will be adjusted, and if not,
-   //     no adjustments will be made.
 
-   //check dstBaseAddrNode type at compile time
-   int length;
-   const char *objTypeSig = dstBaseAddrNode->getSymbolReference()->getTypeSignature(length);
-
-   //generate arrayCHK in case (3) only
-   bool arrayCheckNeeded = TR::Compiler->om.isOffHeapAllocationEnabled() && comp->target().is64Bit() &&
-                           (objTypeSig == NULL || strstr(objTypeSig, "Ljava/lang/Object"));
-
-   //adjust dstBaseAddr and dstOffset in cases (2) and (3)
-   bool adjustmentNeeded = arrayCheckNeeded ||
-                           TR::Compiler->om.isOffHeapAllocationEnabled() && comp->target().is64Bit() && objTypeSig[0] == '[';
-
-   //generate array check if needed
-   TR::LabelSymbol *notArray = generateLabelSymbol(cg);
-
-   if (arrayCheckNeeded)
+   if (arrayCheckNeeded) // CASE (3)
    {
+      //generate array check if needed
+      TR::LabelSymbol *notArray = generateLabelSymbol(cg);
+
       TR::Register *dstClassInfoReg = temp1Reg;
       TR::Register *arrayFlagReg = temp2Reg;
 
@@ -6009,11 +6013,8 @@ TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::
 
       //if object is not an array (i.e.: temp1Reg & temp2Reg == 0), skip adjusting dstBaseAddr and dstOffset
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notArray, cndReg);
-   }
 
-   //adjust dstBaseAddr and dstOffset if needed
-   if (adjustmentNeeded)
-   {
+      //adjust arguments if object is array:
       //load dataAddr
       TR::MemoryReference *dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, dstBaseAddrReg, comp->fej9()->getOffsetOfContiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress());
       generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, dstBaseAddrReg, dataAddrSlotMR);
@@ -6021,16 +6022,16 @@ TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::
       //subtract array header size from offset
       int headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, dstOffsetReg, dstOffsetReg, -headerSize);
+      
+      //arrayCHK will skip to here if object is not an array
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, notArray);
+
+      //calculate dstAddr = dstBaseAddr + dstOffset
+      dstAddrReg = dstBaseAddrReg;
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, dstAddrReg, dstBaseAddrReg, dstOffsetReg);
    }
 
-   //arrayCHK will skip to here if object is not an array
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, notArray);
-
 #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
-
-   //calculate dstAddr = dstBaseAddr + dstOffset
-   TR::Register *dstAddrReg = dstBaseAddrReg;
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, dstAddrReg, dstBaseAddrReg, dstOffsetReg);
 
    // assemble the double word value from byte value
    generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwimi, node, valueReg, valueReg,  8, 0xff00);
@@ -6082,21 +6083,24 @@ TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::
 
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
 
-   if (stopUsingCopyReg1)
+   if (stopUsingCopyRegBase)
       cg->stopUsingRegister(dstBaseAddrReg);
-   if (stopUsingCopyReg2)
+   if (stopUsingCopyRegOffset)
       cg->stopUsingRegister(dstOffsetReg);
-   if (stopUsingCopyReg3)
+   if (stopUsingCopyRegAddr)
+      cg->stopUsingRegister(dstAddrReg);
+   if (stopUsingCopyRegLen)
       cg->stopUsingRegister(lengthReg);
-   if (stopUsingCopyReg4)
+   if (stopUsingCopyRegVal)
       cg->stopUsingRegister(valueReg);
 
    cg->stopUsingRegister(cndReg);
    cg->stopUsingRegister(temp1Reg);
    cg->stopUsingRegister(temp2Reg);
 
-   cg->decReferenceCount(dstBaseAddrNode);
-   cg->decReferenceCount(dstOffsetNode);
+   if (dstBaseAddrNode) cg->decReferenceCount(dstBaseAddrNode);
+   if (dstOffsetNode) cg->decReferenceCount(dstOffsetNode);
+   if (dstAddrNode) cg->decReferenceCount(dstAddrNode);
    cg->decReferenceCount(lengthNode);
    cg->decReferenceCount(valueNode);
 
