@@ -1492,6 +1492,7 @@ public:
       _edoRecompSizeThreshold = 0;
       _edoRecompSizeThresholdInStartupMode = 0;
       _catchBlockCounterThreshold = 0;
+      _idiomRecognitionFrequencyThresholdAtWarm = 0;
 
       memset(_options, 0, sizeof(_options));
       memset(_disabledOptimizations, false, sizeof(_disabledOptimizations));
@@ -1835,6 +1836,7 @@ public:
    int32_t getEdoRecompSizeThresholdInStartupMode() { return _edoRecompSizeThresholdInStartupMode; }
    int32_t getCatchBlockCounterThreshold() { return _catchBlockCounterThreshold; }
 
+   int32_t getIdiomRecognitionFrequencyThresholdAtWarm() { return _idiomRecognitionFrequencyThresholdAtWarm; }
 
 public:
 
@@ -2514,6 +2516,9 @@ protected:
    int32_t                     _edoRecompSizeThreshold; // Size threshold (in nodes) for candidates to recompilation through EDO
    int32_t                     _edoRecompSizeThresholdInStartupMode; // Size threshold (in nodes) for candidates to recompilation through EDO during startup
    int32_t                     _catchBlockCounterThreshold; // Counter threshold for catch blocks to trigger more aggresive inlining on the throw path
+
+   int32_t                     _idiomRecognitionFrequencyThresholdAtWarm; // Blocks with frequency lower than this threshold will not be considered
+                                                                          // for idiom recognition performed at warm opt level or lower
    }; // TR::Options
 
 }

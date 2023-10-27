@@ -839,8 +839,8 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
                           TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_hotFieldThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"hotMaxStaticPICSlots=", " <nnn>\tmaximum number of polymorphic inline cache slots pre-populated from profiling info for hot and above.  A negative value -N means use N times the maxStaticPICSlots setting.",
         TR::Options::set32BitSignedNumeric, offsetof(OMR::Options,_hotMaxStaticPICSlots), 0, "F%d"},
-
-
+   {"idiomRecognitionFrequencyThresholdAtWarm=", "O<nnn>\tBlocks with frequency lower than this threshold will not be considered for idiom recognition in warm level compilations",
+        TR::Options::set32BitNumeric, offsetof(OMR::Options, _idiomRecognitionFrequencyThresholdAtWarm), 10001, "F%d"},
    {"ignoreAssert",         "Ignore any failing assertions", SET_OPTION_BIT(TR_IgnoreAssert), "F"},
    {"ignoreIEEE",           "O\tallow non-IEEE compliant optimizations",  SET_OPTION_BIT(TR_IgnoreIEEERestrictions), "F"},
 #ifdef DEBUG
@@ -2823,6 +2823,8 @@ OMR::Options::jitPreProcess()
       _edoRecompSizeThreshold = TR::Compiler->target.numberOfProcessors() <= 2 ? 850 : 1100; // in number of nodes
       _edoRecompSizeThresholdInStartupMode = TR::Compiler->target.numberOfProcessors() <= 2 ? 850 : 1100; // in number of nodes
       _catchBlockCounterThreshold = 50;
+
+      _idiomRecognitionFrequencyThresholdAtWarm = 10001; // 10001 means no effect because this is larger than maximum block frequency
 
       // This call needs to stay at the end of jitPreProcess() because
       // it changes the default values for some options
@@ -5320,6 +5322,7 @@ void OMR::Options::setAggressiveThroughput()
 #ifdef J9_PROJECT_SPECIFIC
    //TR::Options::_bigAppThreshold = 3000;
 #endif
+   _idiomRecognitionFrequencyThresholdAtWarm = 0; // This will enable idiom recognition at warm opt level and below
    }
 
 
@@ -5499,6 +5502,7 @@ void OMR::Options::setDefaultsForDeterministicMode()
          }
       _edoRecompSizeThreshold = 1000000;
       _edoRecompSizeThresholdInStartupMode = 1000000;
+      _idiomRecognitionFrequencyThresholdAtWarm = 10001;
 #ifdef J9_PROJECT_SPECIFIC
       TR::Options::_veryHotSampleThreshold = 240; // 12.5 %
       TR::Options::_scorchingSampleThreshold = 120; // 25% CPU
