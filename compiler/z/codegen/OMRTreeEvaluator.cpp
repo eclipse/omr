@@ -7872,8 +7872,15 @@ OMR::Z::TreeEvaluator::axaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * targetRegister = cg->allocateRegister();
    TR::Node * firstChild = node->getFirstChild();
    TR::MemoryReference * axaddMR = generateS390MemoryReference(cg);
+   TR::InstOpCode::Mnemonic loadOp;
+   static const bool disableLXAaxaddZNext = feGetEnv("TR_disableLXAaxaddZNext") != NULL;
+   static const bool canEmulateLXA = TR::InstOpCode(TR::InstOpCode::LXAB).isEmulatable() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAH).isEmulatable() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAF).isEmulatable() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAG).isEmulatable() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAQ).isEmulatable();
 
-   axaddMR->populateAddTree(node, cg);
+   axaddMR->populateAddTree(node, cg, &loadOp, !disableLXAaxaddZNext && (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT) || canEmulateLXA));
    axaddMR->eliminateNegativeDisplacement(node, cg);
    axaddMR->enforceDisplacementLimit(node, cg, NULL);
 
@@ -7905,7 +7912,7 @@ OMR::Z::TreeEvaluator::axaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          }
       }
 
-   generateRXInstruction(cg, TR::InstOpCode::LA, node, targetRegister, axaddMR);
+   generateRXInstruction(cg, loadOp, node, targetRegister, axaddMR);
    node->setRegister(targetRegister);
 
    return targetRegister;

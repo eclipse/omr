@@ -722,8 +722,13 @@ public:
 
    int32_t arrayTranslateAndTestMinimumNumberOfIterations() { return 4; }
 
-   /** Yank the scaling opp up a tree in lowerTrees */
-   bool yankIndexScalingOp() {return true;}
+   /**
+    * Yank the scaling op up a tree in lowerTrees
+    */
+   bool yankIndexScalingOp()
+      {
+      return false;
+      }
 
    bool excludeInvariantsFromGRAEnabled();
 
