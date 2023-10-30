@@ -5935,8 +5935,13 @@ TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::
 
    TR::Register         *dstBaseAddrReg, *dstOffsetReg, *dstAddrReg, *lengthReg, *valueReg;
 
+   // if the offset is a constant value less than 16 bits, then we dont need a separate register for it
+   int headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   bool useOffsetAsImmVal = dstOffsetNode && dstOffsetNode->getOpCode().isLoadConst() && 
+                            (dstOffsetNode->getConstValue() - headerSize) >= -32768 && (dstOffsetNode->getConstValue() - headerSize) <= 32767;
+
    bool stopUsingCopyRegBase = dstBaseAddrNode ? TR::TreeEvaluator::stopUsingCopyReg(dstBaseAddrNode, dstBaseAddrReg, cg) : false;
-   bool stopUsingCopyRegOffset = dstOffsetNode ? TR::TreeEvaluator::stopUsingCopyReg(dstOffsetNode, dstOffsetReg, cg) : false;
+   bool stopUsingCopyRegOffset = dstOffsetNode && !useOffsetAsImmVal ? TR::TreeEvaluator::stopUsingCopyReg(dstOffsetNode, dstOffsetReg, cg) : false;
    bool stopUsingCopyRegAddr = dstAddrNode ? TR::TreeEvaluator::stopUsingCopyReg(dstAddrNode, dstAddrReg, cg) : false ;
    
    bool stopUsingCopyRegLen, stopUsingCopyRegVal;
@@ -5968,7 +5973,7 @@ TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::
    TR::LabelSymbol * label1aligned =  generateLabelSymbol(cg);
 
    TR::RegisterDependencyConditions *conditions;
-   int32_t numDeps = arrayCheckNeeded ? 7 : 6;
+   int32_t numDeps = !arrayCheckNeeded || useOffsetAsImmVal ? 6 : 7;
    conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(numDeps, numDeps, cg->trMemory());
    TR::Register *cndReg = cg->allocateRegister(TR_CCR);
    TR::addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
@@ -5976,13 +5981,15 @@ TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::
    if (arrayCheckNeeded)
    {
       TR::addDependency(conditions, dstBaseAddrReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      TR::addDependency(conditions, dstOffsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      
+      if (!useOffsetAsImmVal) 
+         TR::addDependency(conditions, dstOffsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
    }
    else
    {
       TR::addDependency(conditions, dstAddrReg, TR::RealRegister::NoReg, TR_GPR, cg);
    }
-   
+
    TR::addDependency(conditions, lengthReg, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::addDependency(conditions, valueReg, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::Register * temp1Reg = cg->allocateRegister();
@@ -6020,15 +6027,23 @@ TR::Register *OMR::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::
       generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, dstBaseAddrReg, dataAddrSlotMR);
 
       //subtract array header size from offset
-      int headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, dstOffsetReg, dstOffsetReg, -headerSize);
+      int newOffsetImmVal;
+
+      if (useOffsetAsImmVal)
+         newOffsetImmVal = dstOffsetNode->getConstValue() - headerSize;
+      else
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, dstOffsetReg, dstOffsetReg, -headerSize);
       
       //arrayCHK will skip to here if object is not an array
       generateLabelInstruction(cg, TR::InstOpCode::label, node, notArray);
 
       //calculate dstAddr = dstBaseAddr + dstOffset
       dstAddrReg = dstBaseAddrReg;
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, dstAddrReg, dstBaseAddrReg, dstOffsetReg);
+
+      if (useOffsetAsImmVal)
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, dstAddrReg, dstBaseAddrReg, newOffsetImmVal);
+      else
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, dstAddrReg, dstBaseAddrReg, dstOffsetReg);
    }
 
 #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
