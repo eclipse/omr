@@ -16047,7 +16047,8 @@
    /* .format      = */ RRFa_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_Is64Bit |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16059,7 +16060,8 @@
    /* .format      = */ RRFa_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_Is64Bit |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16095,7 +16097,8 @@
    /* .format      = */ RXYc_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_LongDispSupported |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16107,7 +16110,8 @@
    /* .format      = */ RXYc_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_LongDispSupported |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16119,7 +16123,8 @@
    /* .format      = */ RXYc_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_LongDispSupported |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16131,7 +16136,8 @@
    /* .format      = */ RXYc_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_LongDispSupported |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16143,7 +16149,8 @@
    /* .format      = */ RXYc_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_LongDispSupported |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16155,7 +16162,8 @@
    /* .format      = */ RXYc_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_LongDispSupported |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16167,7 +16175,8 @@
    /* .format      = */ RXYc_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_LongDispSupported |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16179,7 +16188,8 @@
    /* .format      = */ RXYc_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_LongDispSupported |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16191,7 +16201,8 @@
    /* .format      = */ RXYc_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_LongDispSupported |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {
@@ -16203,7 +16214,8 @@
    /* .format      = */ RXYc_FORMAT,
    /* .minimumALS  = */ OMR_PROCESSOR_S390_ZNEXT,
    /* .properties  = */ S390OpProp_LongDispSupported |
-                        S390OpProp_SetsOperand1
+                        S390OpProp_SetsOperand1 |
+                        S390OpProp_IsEmulatable
    },
 
    {

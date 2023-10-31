@@ -246,6 +246,12 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
 
    private:
 
+#ifdef EMULATE_ZNEXT
+   bool canEmulate() { return getOpCode().isEmulatable(); }
+#else
+   bool canEmulate() { return false; }
+#endif
+
    TR::RegisterDependencyConditions *_conditions;
 
    enum // _flags

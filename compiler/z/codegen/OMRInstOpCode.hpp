@@ -400,7 +400,7 @@ namespace Z
 #define S390OpProp_ImplicitlySetsGPR3     static_cast<uint64_t>(0x1000000000000000ull)
 #define S390OpProp_ImplicitlySetsGPR4     static_cast<uint64_t>(0x2000000000000000ull)
 #define S390OpProp_ImplicitlySetsGPR5     static_cast<uint64_t>(0x4000000000000000ull)
-// Available                              static_cast<uint64_t>(0x8000000000000000ull)
+#define S390OpProp_IsEmulatable           static_cast<uint64_t>(0x8000000000000000ull)
 
 class InstOpCode: public OMR::InstOpCode
    {
@@ -627,6 +627,7 @@ class InstOpCode: public OMR::InstOpCode
    uint64_t hasExtendedMnemonic() {return metadata[_mnemonic].properties & S390OpProp_HasExtendedMnemonic;}
    uint64_t isVectorStringOp() {return metadata[_mnemonic].properties & S390OpProp_VectorStringOp;}
    uint64_t isVectorFPOp() {return metadata[_mnemonic].properties & S390OpProp_VectorFPOp;}
+   uint64_t isEmulatable() {return metadata[_mnemonic].properties & S390OpProp_IsEmulatable;}
 
    /* Static */
    static void copyBinaryToBufferWithoutClear(uint8_t *cursor, Mnemonic i_opCode);

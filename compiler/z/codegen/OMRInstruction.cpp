@@ -86,7 +86,7 @@ OMR::Z::Instruction::Instruction(TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic
    OMR::Instruction(cg, op, node),
    CTOR_INITIALIZER_LIST
    {
-   TR_ASSERT_FATAL(cg->comp()->target().cpu.isAtLeast(_opcode.getMinimumALS()), "Processor detected (%s) does not support instruction %s\n", cg->comp()->target().cpu.getProcessorName(), _opcode.getMnemonicName());
+   TR_ASSERT_FATAL(canEmulate() || cg->comp()->target().cpu.isAtLeast(_opcode.getMinimumALS()), "Processor detected (%s) does not support instruction %s\n", cg->comp()->target().cpu.getProcessorName(), _opcode.getMnemonicName());
 
    self()->initialize();
    }
@@ -96,7 +96,7 @@ OMR::Z::Instruction::Instruction(TR::CodeGenerator*cg, TR::Instruction* precedin
    OMR::Instruction(cg, precedingInstruction, op, node),
    CTOR_INITIALIZER_LIST
    {
-   TR_ASSERT_FATAL(cg->comp()->target().cpu.isAtLeast(_opcode.getMinimumALS()), "Processor detected (%s) does not support instruction %s\n", cg->comp()->target().cpu.getProcessorName(), _opcode.getMnemonicName());
+   TR_ASSERT_FATAL(canEmulate() || cg->comp()->target().cpu.isAtLeast(_opcode.getMinimumALS()), "Processor detected (%s) does not support instruction %s\n", cg->comp()->target().cpu.getProcessorName(), _opcode.getMnemonicName());
 
    self()->initialize(precedingInstruction, true);
    }
