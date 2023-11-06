@@ -25,6 +25,7 @@
 #include "env/CompilerEnv.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "infra/Assert.hpp"
 
 const OMR::Z::InstOpCode::OpCodeMetaData OMR::Z::InstOpCode::metadata[NumOpCodes] =
    {
@@ -148,9 +149,22 @@ OMR::Z::InstOpCode::copyBinaryToBufferWithoutClear(uint8_t *cursor, TR::InstOpCo
         case VSI_FORMAT:
            cursor[5] = metadata[i_opCode].opcode[1];
            break;
-
-        default:
-           cursor[1] = metadata[i_opCode].opcode[1];
+        case E_FORMAT:
+        case IE_FORMAT:
+        case RRD_FORMAT:
+        case RRE_FORMAT:
+        case RRFa_FORMAT:
+        case RRFb_FORMAT:
+        case RRFc_FORMAT:
+        case RRFd_FORMAT:
+        case RRFe_FORMAT:
+        case S_FORMAT:
+        case SIL_FORMAT:
+        case SSE_FORMAT:
+            cursor[1] = metadata[i_opCode].opcode[1];
+            break;
+       default:
+           TR_ASSERT(0, "Invalid instruction format.\n");
            break;
        }
     }
