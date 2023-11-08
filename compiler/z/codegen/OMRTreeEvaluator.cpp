@@ -8677,6 +8677,62 @@ OMR::Z::TreeEvaluator::inlineNumberOfLeadingZeros(TR::Node *node, TR::CodeGenera
    return returnReg;
    }
 
+TR::Register*
+OMR::Z::TreeEvaluator::inlineBitCompress(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
+   {
+   TR::Node *argNode = node->getFirstChild();
+   TR::Node *maskNode = node->getSecondChild();
+   TR::Register *argReg = cg->gprClobberEvaluate(argNode);
+   TR::Register *maskReg = cg->gprClobberEvaluate(maskNode);
+   if (!isLong)
+      {
+      generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, maskReg, maskReg);
+      }
+   generateRRFInstruction(cg, TR::InstOpCode::BEXTG, node, argReg, argReg, maskReg, static_cast<uint8_t>(0));
+   generateRRFInstruction(cg, TR::InstOpCode::POPCNT, node, maskReg, maskReg, static_cast<uint8_t>(0x8), static_cast<uint8_t>(0x0), NULL);
+   generateRSInstruction(cg, TR::InstOpCode::RLLG, node, argReg, argReg, generateS390MemoryReference(maskReg, 0, cg));
+
+   node->setRegister(argReg);
+   cg->stopUsingRegister(maskReg);
+   cg->decReferenceCount(argNode);
+   cg->decReferenceCount(maskNode);
+
+   return argReg;
+   }
+
+TR::Register*
+OMR::Z::TreeEvaluator::inlineBitExpand(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
+   {
+   TR::Node *argNode = node->getFirstChild();
+   TR::Node *maskNode = node->getSecondChild();
+   TR::Register *argReg = cg->gprClobberEvaluate(argNode);
+   TR::Register *maskReg;
+   if (!isLong)
+      {
+      maskReg = cg->gprClobberEvaluate(maskNode);
+      generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, maskReg, maskReg);
+      }
+   else
+      {
+      maskReg = cg->evaluate(maskNode);
+      }
+   TR::Register *bitCountReg = cg->allocateRegister();
+
+   generateRIInstruction(cg, TR::InstOpCode::LGHI, node, bitCountReg, -1);
+   generateRRInstruction(cg, TR::InstOpCode::XGR, node, bitCountReg, maskReg);
+   generateRRFInstruction(cg, TR::InstOpCode::POPCNT, node, bitCountReg, bitCountReg, static_cast<uint8_t>(0x8), static_cast<uint8_t>(0x0), NULL);
+   generateRSInstruction(cg, TR::InstOpCode::SLLG, node, argReg, argReg, generateS390MemoryReference(bitCountReg, 0, cg));
+   generateRRFInstruction(cg, TR::InstOpCode::BDEPG, node, argReg, argReg, maskReg, static_cast<uint8_t>(0));
+
+   node->setRegister(argReg);
+   cg->stopUsingRegister(maskReg);
+   cg->stopUsingRegister(bitCountReg);
+   cg->decReferenceCount(argNode);
+   cg->decReferenceCount(maskNode);
+
+   return argReg;
+   }
+
 TR::Register *getConditionCode(TR::Node *node, TR::CodeGenerator *cg, TR::Register *programRegister)
    {
    if (!programRegister)
