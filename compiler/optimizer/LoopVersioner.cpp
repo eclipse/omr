@@ -7530,13 +7530,16 @@ void TR_LoopVersioner::buildBoundCheckComparisonsTree(
                                         TR::Node::create(boundCheckNode, TR::iconst, 0, condValue));
             numIterations = TR::Node::create(TR::iadd, 2, numIterations, extraIter);
             numIterations = TR::Node::create(TR::imul, 2, numIterations, incrJNode);
-            TR::Node *adjustMaxValue;
-            if(isIndexChildMultiplied)
-               adjustMaxValue = TR::Node::create(boundCheckNode, TR::iconst, 0, incrementJ+1);
-            else
-               adjustMaxValue = TR::Node::create(boundCheckNode, TR::iconst, 0, incrementJ);
+            int32_t adjustment = (isIndexChildMultiplied && _loopTestTree->getNode()->getOpCodeValue() != TR::ificmple) ? 1 : 0;
+            // For <= cmp, loopLimit = maxValuei
+            // For  < cmp, loopLimit = maxValuei + 1
+            // If the index is multiplied, subtract 1 from numIterations to get maxValue
+            // Unless the cmp is <=
+
+            TR::Node *adjustMaxValue = TR::Node::create(boundCheckNode, TR::iconst, 0, incrementJ + adjustment);
             TR::Node *maxValue = NULL;
             TR::ILOpCodes addOp = TR::isub;
+
             if (isLoopDrivingInductionVariable)
                {
                if (isLoopDrivingAddition)
