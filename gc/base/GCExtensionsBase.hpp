@@ -1524,7 +1524,7 @@ public:
 		, isArrayletDoubleMapAvailable(false)
 #endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 #if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
-		, isVirtualLargeObjectHeapRequested(false)
+		, isVirtualLargeObjectHeapRequested(true)
 		, isVirtualLargeObjectHeapEnabled(false)
 #endif /* defined(OMR_GC_SPARSE_HEAP_ALLOCATION) */
 		, requestedPageSize(0)

@@ -1027,15 +1027,8 @@ TraceEvent=Trc_MM_MSSSS_flip_restore_tilt_after_percolate Overhead=1 Level=1 Gro
 TraceEvent=Trc_MM_MSSSS_flip_restore_tilt_after_percolate_with_stats Overhead=1 Level=1 Group=scavenge Template="MSSSS::flip restore_tilt_after_percolate heapAlignedLastFreeEntry %zu section (%zu) aligned size %zu"
 TraceEvent=Trc_MM_MSSSS_flip_restore_tilt_after_percolate_current_status Overhead=1 Level=1 Group=scavenge Template="MSSSS::flip restore_tilt_after_percolate %sallocateSize %zu survivorSize %zu"
 
-<<<<<<< Upstream, based on Upstream/master
 TraceEvent=Trc_MM_clearheap Overhead=1 Level=1 Group=gclogger Template="clearheap with free memory size: %zu, object size: %zu"
-=======
-TraceEvent=Trc_MM_clearheap Overhead=1 Level=1 Template="clearheap with free memory size: %zu, object size: %zu"
+TraceEvent=Trc_MM_cleanUpSegmentsInAnonymousClassLoader_stats Overhead=1 Level=1 Group=gclogger Template="Anonymous classes: total: %zu, unloaded: %zu, searched ROM: %zu, found ROM fast: %zu, found ROM slow: %zu, not found ROM: %zu"
 
->>>>>>> f057482 Remove the trace point compatibility issue
 //Redefine Trc_MM_double_map_Entry to add originalDataSize and adjustedDataSize
-<<<<<<< Upstream, based on Upstream/master
-TraceEntry=Trc_MM_double_map_Entry Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. originalDataSize: %p, adjustedDataSize: %p, spine: %p, leafSize: %p leavesCount: %zu"
-=======
 TraceEntry=Trc_MM_double_map_EntryNew Overhead=1 Level=3 Group=arraylet Template="MM_IndexableObjectAllocationModel::doubleMapArraylets. originalDataSize: %p, adjustedDataSize: %p, spine: %p, leafSize: %p leavesCount: %zu"
->>>>>>> f057482 Remove the trace point compatibility issue
