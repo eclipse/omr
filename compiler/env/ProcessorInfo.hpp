@@ -194,7 +194,8 @@ inline uint32_t getFeatureFlags8Mask()
          | TR_AVX512VL
          | TR_AVX512BW
          | TR_AVX512DQ
-         | TR_AVX512CD;
+         | TR_AVX512CD
+         | TR_BMI2;
    }
 
 enum TR_X86_CPUID_ecx_eax07_ecx00
