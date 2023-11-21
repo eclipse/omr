@@ -166,30 +166,8 @@ OMR::Z::InstOpCode::copyBinaryToBufferWithoutClear(uint8_t *cursor, TR::InstOpCo
             // Write second byte of 2 byte contiguous opCode into second byte of the instruction
             cursor[1] = metadata[i_opCode].opcode[1];
             break;
-         case MII_FORMAT:
-         case RIa_FORMAT:
-         case RIb_FORMAT:
-         case RIc_FORMAT:
-         case RILa_FORMAT:
-         case RILb_FORMAT:
-         case RILc_FORMAT:
-         case RR_FORMAT:
-         case RSa_FORMAT:
-         case RSb_FORMAT:
-         case RSI_FORMAT:
-         case RXa_FORMAT:
-         case RXb_FORMAT:
-         case SI_FORMAT:
-         case SMI_FORMAT:
-         case SSa_FORMAT:
-         case SSb_FORMAT:
-         case SSc_FORMAT:
-         case SSd_FORMAT:
-         case SSe_FORMAT:
-         case SSf_FORMAT:
-            // Nothing to do since these are 1 byte opCode
-            break;
          default:
+           printf("sverma: in default case!%s\n", metadata[i_opCode].description());
            TR_ASSERT(0, "Invalid instruction format.\n");
            break;
        }
