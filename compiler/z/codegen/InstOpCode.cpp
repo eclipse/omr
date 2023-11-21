@@ -174,8 +174,6 @@ OMR::Z::InstOpCode::copyBinaryToBufferWithoutClear(uint8_t *cursor, TR::InstOpCo
          case RILb_FORMAT:
          case RILc_FORMAT:
          case RR_FORMAT:
-         case RRD_FORMAT:
-         case RRE_FORMAT:
          case RSa_FORMAT:
          case RSb_FORMAT:
          case RSI_FORMAT:
