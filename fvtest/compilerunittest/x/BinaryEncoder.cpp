@@ -567,6 +567,25 @@ TEST_P(XRegRegRegEncEncodingTest, encode) {
     ASSERT_EQ(std::get<5>(GetParam()), encodeInstruction(instr));
 }
 
+INSTANTIATE_TEST_CASE_P(RegRegRegParallelBitOpsEncTest, XRegRegRegEncEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, OMR::X86::Encoding, TRTest::BinaryInstruction>>(
+    std::make_tuple(TR::InstOpCode::PDEP4RegRegReg, TR::RealRegister::eax, TR::RealRegister::ecx, TR::RealRegister::ebx, OMR::X86::Default, "c4e273f5c3"),
+    std::make_tuple(TR::InstOpCode::PDEP4RegRegReg, TR::RealRegister::r15, TR::RealRegister::ecx, TR::RealRegister::r12, OMR::X86::Default, "c44273f5fc"),
+    std::make_tuple(TR::InstOpCode::PDEP4RegRegReg, TR::RealRegister::ecx, TR::RealRegister::r15, TR::RealRegister::ecx, OMR::X86::Default, "c4e203f5c9"),
+    std::make_tuple(TR::InstOpCode::PDEP4RegRegReg, TR::RealRegister::r12, TR::RealRegister::eax, TR::RealRegister::r12, OMR::X86::Default, "c4427bf5e4"),
+    std::make_tuple(TR::InstOpCode::PEXT4RegRegReg, TR::RealRegister::eax, TR::RealRegister::ecx, TR::RealRegister::ebx, OMR::X86::Default, "c4e272f5c3"),
+    std::make_tuple(TR::InstOpCode::PEXT4RegRegReg, TR::RealRegister::r15, TR::RealRegister::ecx, TR::RealRegister::r12, OMR::X86::Default, "c44272f5fc"),
+    std::make_tuple(TR::InstOpCode::PEXT4RegRegReg, TR::RealRegister::ecx, TR::RealRegister::r15, TR::RealRegister::ecx, OMR::X86::Default, "c4e202f5c9"),
+    std::make_tuple(TR::InstOpCode::PEXT4RegRegReg, TR::RealRegister::r12, TR::RealRegister::eax, TR::RealRegister::r12, OMR::X86::Default, "c4427af5e4"),
+    std::make_tuple(TR::InstOpCode::PDEP8RegRegReg, TR::RealRegister::eax, TR::RealRegister::ecx, TR::RealRegister::ebx, OMR::X86::Default, "c4e2f3f5c3"),
+    std::make_tuple(TR::InstOpCode::PDEP8RegRegReg, TR::RealRegister::r15, TR::RealRegister::ecx, TR::RealRegister::r12, OMR::X86::Default, "c442f3f5fc"),
+    std::make_tuple(TR::InstOpCode::PDEP8RegRegReg, TR::RealRegister::ecx, TR::RealRegister::r15, TR::RealRegister::ecx, OMR::X86::Default, "c4e283f5c9"),
+    std::make_tuple(TR::InstOpCode::PDEP8RegRegReg, TR::RealRegister::r12, TR::RealRegister::eax, TR::RealRegister::r12, OMR::X86::Default, "c442fbf5e4"),
+    std::make_tuple(TR::InstOpCode::PEXT8RegRegReg, TR::RealRegister::eax, TR::RealRegister::ecx, TR::RealRegister::ebx, OMR::X86::Default, "c4e2f2f5c3"),
+    std::make_tuple(TR::InstOpCode::PEXT8RegRegReg, TR::RealRegister::r15, TR::RealRegister::ecx, TR::RealRegister::r12, OMR::X86::Default, "c442f2f5fc"),
+    std::make_tuple(TR::InstOpCode::PEXT8RegRegReg, TR::RealRegister::ecx, TR::RealRegister::r15, TR::RealRegister::ecx, OMR::X86::Default, "c4e282f5c9"),
+    std::make_tuple(TR::InstOpCode::PEXT8RegRegReg, TR::RealRegister::r12, TR::RealRegister::eax, TR::RealRegister::r12, OMR::X86::Default, "c442faf5e4")
+)));
+
 INSTANTIATE_TEST_CASE_P(AVXRegRegRegSimdVEX128Test, XRegRegRegEncEncodingTest, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, TR::RealRegister::RegNum, TR::RealRegister::RegNum, OMR::X86::Encoding, TRTest::BinaryInstruction>>(
     std::make_tuple(TR::InstOpCode::VFMADD213PDRegRegReg, TR::RealRegister::xmm0,  TR::RealRegister::xmm1,  TR::RealRegister::xmm0,  OMR::X86::VEX_L128, "c4e2f1a8c0"),
     std::make_tuple(TR::InstOpCode::VFMADD213PSRegRegReg, TR::RealRegister::xmm1,  TR::RealRegister::xmm0,  TR::RealRegister::xmm1,  OMR::X86::VEX_L128, "c4e279a8c9"),
