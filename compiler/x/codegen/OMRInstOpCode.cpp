@@ -86,7 +86,11 @@ template <typename TBuffer> typename TBuffer::cursor_t OMR::X86::InstOpCode::OpC
 
    if (encoding == OMR::X86::Default)
       {
-      enc = comp->target().cpu.supportsAVX() ? vex_l : OMR::X86::Legacy;
+#if !defined(J9VM_OPT_JITSERVER) && !defined(J9VM_OPT_CRIU_SUPPORT)
+      static
+#endif
+      bool avxSupport = comp->target().cpu.supportsAVX();
+      enc = avxSupport ? vex_l : OMR::X86::Legacy;
       }
 
    TBuffer buffer(cursor);
@@ -103,7 +107,6 @@ template <typename TBuffer> typename TBuffer::cursor_t OMR::X86::InstOpCode::OpC
    TR::Instruction::REX rex(rexbits);
    rex.W = rex_w;
 
-   TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.supportsAVX() == TR::CodeGenerator::getX86ProcessorInfo().supportsAVX(), "supportsAVX() failed\n");
 
    if (enc != VEX_L___)
       {
