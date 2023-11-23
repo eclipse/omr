@@ -25,7 +25,6 @@
 #include "env/CompilerEnv.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "infra/Assert.hpp"
 
 const OMR::Z::InstOpCode::OpCodeMetaData OMR::Z::InstOpCode::metadata[NumOpCodes] =
    {
@@ -167,8 +166,6 @@ OMR::Z::InstOpCode::copyBinaryToBufferWithoutClear(uint8_t *cursor, TR::InstOpCo
             cursor[1] = metadata[i_opCode].opcode[1];
             break;
          default:
-           printf("sverma: in default case!%s\n", metadata[i_opCode].description());
-           TR_ASSERT(0, "Invalid instruction format.\n");
            break;
        }
     }
