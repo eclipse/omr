@@ -1786,6 +1786,27 @@ generateVRIkInstruction(TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op, TR:
    return new (INSN_HEAP) TR::S390VRIkInstruction(cg, op, n, targetReg, sourceReg2, sourceReg3, sourceReg4, constantImm5);
    }
 
+TR::Instruction *
+generateVRIlInstruction(
+                      TR::CodeGenerator        * cg,
+                      TR::InstOpCode::Mnemonic   op,
+                      TR::Node                 * n,
+                      TR::Register             * sourceReg1,
+                      TR::Register             * sourceReg2,
+                      uint16_t                   constantImm3)  /* 16 bits  */
+   {
+   TR::Instruction* instr =  new (INSN_HEAP) TR::S390VRIlInstruction(cg, op, n, sourceReg1, sourceReg2, constantImm3);
+
+#ifdef J9_PROJECT_SPECIFIC
+   if (op == TR::InstOpCode::VTZ)
+      {
+      generateS390DAAExceptionRestoreSnippet(cg, n, instr, op, false);
+      }
+#endif
+
+   return instr;
+   }
+
 /****** VRR ******/
 TR::Instruction *
 generateVRRaInstruction(TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op, TR::Node * n, TR::Register * targetReg, TR::Register * sourceReg2,

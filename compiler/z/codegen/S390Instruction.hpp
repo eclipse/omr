@@ -5271,15 +5271,12 @@ class S390VRIlInstruction : public S390VRIInstruction
                           TR::CodeGenerator      * cg               = NULL,
                           TR::InstOpCode::Mnemonic          op      = TR::InstOpCode::bad,
                           TR::Node               * n                = NULL,
-                          TR::Register           * targetReg        = NULL,
-                          TR::Register           * sourceReg        = NULL,
+                          TR::Register           * sourceReg1        = NULL,
+                          TR::Register           * sourceReg2        = NULL,
                           uint16_t                 constantImm3     = 0)    /* 16 bits */
-   : S390VRIInstruction(cg, op, n, targetReg, constantImm3, 0, 0, 0, 0)
+   : S390VRIInstruction(cg, op, n, sourceReg1, constantImm3, 0, 0, 0, 0)
       {
-      if (getOpCode().setsOperand2())
-         useTargetRegister(sourceReg);
-      else
-         useSourceRegister(sourceReg);
+      useSourceRegister(sourceReg2);
       }
 
    uint16_t getImmediateField3() { return getImmediateField16(); }

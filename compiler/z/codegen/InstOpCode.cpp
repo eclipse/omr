@@ -130,6 +130,7 @@ OMR::Z::InstOpCode::copyBinaryToBufferWithoutClear(uint8_t *cursor, TR::InstOpCo
         case VRIg_FORMAT:
         case VRIh_FORMAT:
         case VRIi_FORMAT:
+        case VRIl_FORMAT:
         case VRRa_FORMAT:
         case VRRb_FORMAT:
         case VRRc_FORMAT:

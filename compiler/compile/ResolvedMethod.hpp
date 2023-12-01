@@ -179,10 +179,12 @@ public:
    bool isDAAWrapperMethod();
    bool isDAAMarshallingWrapperMethod();
    bool isDAAPackedDecimalWrapperMethod();
+   bool isDAAExternalDecimalWrapperMethod();
 
    bool isDAAIntrinsicMethod();
    bool isDAAMarshallingIntrinsicMethod();
    bool isDAAPackedDecimalIntrinsicMethod();
+   bool isDAAExternalDecimalIntrinsicMethod();
 
    virtual void setMethodHandleLocation(uintptr_t *location);
    virtual uintptr_t *getMethodHandleLocation();

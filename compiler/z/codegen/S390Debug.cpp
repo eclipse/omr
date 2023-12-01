@@ -324,6 +324,7 @@ TR_Debug::printz(TR::FILE *pOutFile, TR::Instruction * instr)
       case TR::Instruction::IsVRIg:
       case TR::Instruction::IsVRIh:
       case TR::Instruction::IsVRIi:
+      case TR::Instruction::IsVRIl:
             print(pOutFile, (TR::S390VRIInstruction *) instr);
          break;
       case TR::Instruction::IsVRRa:
@@ -2757,7 +2758,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390VRIInstruction * instr)
          break;
       case TR::Instruction::IsVRIl:
          trfprintf(pOutFile, ",0x%x",
-               maskHalf(static_cast<TR::S390VRIkInstruction*>(instr)->getImmediateField5()));
+               maskHalf(static_cast<TR::S390VRIlInstruction*>(instr)->getImmediateField3()));
          break;
       default:
          TR_ASSERT(false, "Unknown VRI type");

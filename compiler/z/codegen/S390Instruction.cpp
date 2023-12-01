@@ -3815,7 +3815,7 @@ TR::S390VRIlInstruction::generateBinaryEncoding()
    uint8_t* cursor = preGenerateBinaryEncoding();
 
    // The Immediate field
-   *(reinterpret_cast<uint32_t*>(cursor + 2)) |= static_cast<uint32_t>(getImmediateField3()) << 4;
+   *(reinterpret_cast<uint32_t*>(cursor + 2)) |= static_cast<uint32_t>(getImmediateField3()) << 12;
 
    // Operands
    // First and second register operands for VRI-l map to second and third register fields

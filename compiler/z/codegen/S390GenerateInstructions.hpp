@@ -1069,6 +1069,14 @@ TR::Instruction * generateVRIkInstruction(
                       TR::Register           * sourceReg4,
                       uint8_t                 constantImm5); /* 8 bits  */
 
+TR::Instruction * generateVRIlInstruction(
+                      TR::CodeGenerator    * cg,
+                      TR::InstOpCode::Mnemonic   op,
+                      TR::Node               * n,
+                      TR::Register           * sourceReg1,
+                      TR::Register           * sourceReg2,
+                      uint16_t                constantImm3);   /* 16 bits  */
+
 /****** VRR ******/
 TR::Instruction * generateVRRaInstruction(
                       TR::CodeGenerator     * cg         ,
