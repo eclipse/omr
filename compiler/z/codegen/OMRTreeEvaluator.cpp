@@ -7874,11 +7874,11 @@ OMR::Z::TreeEvaluator::axaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::MemoryReference * axaddMR = generateS390MemoryReference(cg);
    TR::InstOpCode::Mnemonic loadOp;
    static const bool disableLXAaxaddZNext = feGetEnv("TR_disableLXAaxaddZNext") != NULL;
-   static const bool canEmulateLXA = TR::InstOpCode(TR::InstOpCode::LXAB).isEmulatable() &&
-                                     TR::InstOpCode(TR::InstOpCode::LXAH).isEmulatable() &&
-                                     TR::InstOpCode(TR::InstOpCode::LXAF).isEmulatable() &&
-                                     TR::InstOpCode(TR::InstOpCode::LXAG).isEmulatable() &&
-                                     TR::InstOpCode(TR::InstOpCode::LXAQ).isEmulatable();
+   static const bool canEmulateLXA = TR::InstOpCode(TR::InstOpCode::LXAB).canEmulate() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAH).canEmulate() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAF).canEmulate() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAG).canEmulate() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAQ).canEmulate();
 
    axaddMR->populateAddTree(node, cg, &loadOp, !disableLXAaxaddZNext && (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT) || canEmulateLXA));
    axaddMR->eliminateNegativeDisplacement(node, cg);
@@ -8492,7 +8492,7 @@ OMR::Z::TreeEvaluator::inlineNumberOfTrailingZeros(TR::Node *node, TR::CodeGener
    TR::Register *returnReg = NULL;
    bool isLong = (subfconst == 64);
    static const bool disableTrailZeroZNext = feGetEnv("TR_disableTrailZeroZNext") != NULL;
-   static const bool canEmulateCTZG = TR::InstOpCode(TR::InstOpCode::CTZG).isEmulatable();
+   static const bool canEmulateCTZG = TR::InstOpCode(TR::InstOpCode::CTZG).canEmulate();
 
    if ((cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT) || canEmulateCTZG) && !disableTrailZeroZNext)
       {
@@ -8615,7 +8615,7 @@ OMR::Z::TreeEvaluator::inlineNumberOfLeadingZeros(TR::Node *node, TR::CodeGenera
    TR::Register *argReg = cg->gprClobberEvaluate(argNode);
    TR::Register *returnReg = NULL;
    static const bool disableLeadZeroZNext = feGetEnv("TR_disableLeadZeroZNext") != NULL;
-   static const bool canEmulateCLZG = TR::InstOpCode(TR::InstOpCode::CLZG).isEmulatable();
+   static const bool canEmulateCLZG = TR::InstOpCode(TR::InstOpCode::CLZG).canEmulate();
 
    if ((cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT) || canEmulateCLZG) && !disableLeadZeroZNext)
       {

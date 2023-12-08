@@ -628,6 +628,14 @@ class InstOpCode: public OMR::InstOpCode
    uint64_t isVectorStringOp() {return metadata[_mnemonic].properties & S390OpProp_VectorStringOp;}
    uint64_t isVectorFPOp() {return metadata[_mnemonic].properties & S390OpProp_VectorFPOp;}
    uint64_t isEmulatable() {return metadata[_mnemonic].properties & S390OpProp_IsEmulatable;}
+   bool canEmulate()
+   {
+#ifdef EMULATE_ZNEXT
+      return isEmulatable();
+#else
+      return false;
+#endif
+   }
 
    /* Static */
    static void copyBinaryToBufferWithoutClear(uint8_t *cursor, Mnemonic i_opCode);

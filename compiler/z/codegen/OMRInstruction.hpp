@@ -243,14 +243,7 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
    void setWillBePatched() { _index |= WillBePatched; }
    virtual const char *description() { return "S390"; }
 
-
    private:
-
-#ifdef EMULATE_ZNEXT
-   bool canEmulate() { return getOpCode().isEmulatable(); }
-#else
-   bool canEmulate() { return false; }
-#endif
 
    TR::RegisterDependencyConditions *_conditions;
 
