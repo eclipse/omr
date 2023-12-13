@@ -101,6 +101,19 @@ struct make_signed<unsigned long long int>
    typedef signed long long int type;
    };
 
+/*
+ * Poor man's version of std::is_same - see comment above.
+ */
+template<class T, class U>
+struct is_same
+   {
+   static const bool value = false;
+   };
+template<class T>
+struct is_same<T, T>
+   {
+   static const bool value = true;
+   };
 template <typename In, typename Out>
 inline Out reinterpret_as(const In value)
    {
@@ -245,7 +258,7 @@ inline void format(char* dst, size_t size, const char *fmt, V value, Rest... res
             switch (*fmt) {
             case 's':
                {
-               if (!(std::is_same<const char *, V>::value || std::is_same<char *, V>::value))
+               if (!(Tril::is_same<const char *, V>::value || Tril::is_same<char *, V>::value))
                   throw std::runtime_error("%s conversion specified but given value is not of a string type");
 
                consumed = std::snprintf(dst, size, "%s", value);
