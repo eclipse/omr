@@ -183,6 +183,45 @@ struct is_integral<unsigned long long int>
    static const bool value = true;
    };
 
+/*
+ * Poor man's version of std::is_unsigned - see comment above.
+ */
+template<typename T>
+struct is_unsigned
+   {
+   static const bool value = false;
+   };
+
+template<>
+struct is_unsigned<unsigned char>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_unsigned<unsigned short>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_unsigned<unsigned int>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_unsigned<unsigned long int>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_unsigned<unsigned long long int>
+   {
+   static const bool value = true;
+   };
+
 
 template <typename In, typename Out>
 inline Out reinterpret_as(const In value)
@@ -357,7 +396,7 @@ inline void format(char* dst, size_t size, const char *fmt, V value, Rest... res
                {
                if (!Tril::is_integral<V>::value)
                   throw std::runtime_error("%u conversion specified but given value is not of an integral type");
-               if (!std::is_unsigned<V>::value)
+               if (!Tril::is_unsigned<V>::value)
                   throw std::runtime_error("%u conversion specified but given value is not of an unsigned type");
 
                consumed = std::snprintf(dst, size, "%" OMR_PRIu64, (uint64_t)value);
