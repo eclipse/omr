@@ -222,6 +222,26 @@ struct is_unsigned<unsigned long long int>
    static const bool value = true;
    };
 
+/*
+ * Poor man's version of std::is_pointer - see comment above.
+ */
+template<typename T>
+struct is_pointer
+   {
+   static const bool value = false;
+   };
+
+template<typename T>
+struct is_pointer<T*>
+   {
+   static const bool value = true;
+   };
+
+template<typename T>
+struct is_pointer<T* const>
+   {
+   static const bool value = true;
+   };
 
 template <typename In, typename Out>
 inline Out reinterpret_as(const In value)
@@ -406,7 +426,7 @@ inline void format(char* dst, size_t size, const char *fmt, V value, Rest... res
             case 'X':
             case 'p':
                {
-               if (!std::is_pointer<V>::value)
+               if (!Tril::is_pointer<V>::value)
                   throw std::runtime_error("%X / %p conversion specified but given value is not of a pointer type");
 
                consumed = std::snprintf(dst, size, "%" OMR_PRIXPTR, (uintptr_t)value);
