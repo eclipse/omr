@@ -277,6 +277,15 @@ public:
 	uintptr_t getAllocatedSizeInsideTLH() { return 0; }
 #endif /* OMR_GC_THREAD_LOCAL_HEAP */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * Reinitialize the env's language specific structures.
+	 *
+	 * @return boolean indicating whether the thread env was successfully reinitialized.
+	 */
+	bool reinitializeForRestore() { return true; }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	MM_EnvironmentDelegate()
 		: _env(NULL)
 	{ }

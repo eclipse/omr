@@ -51,20 +51,20 @@
 #endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 
 void
-MM_Configuration::kill(MM_EnvironmentBase* env)
+MM_Configuration::kill(MM_EnvironmentBase *env)
 {
 	tearDown(env);
 	env->getForge()->free(this);
 }
 
 bool
-MM_Configuration::initialize(MM_EnvironmentBase* env)
+MM_Configuration::initialize(MM_EnvironmentBase *env)
 {
 	bool result = false;
 
 	if (initializeRegionSize(env) && initializeArrayletLeafSize(env)) {
 		if (_delegate.initialize(env, _writeBarrierType, _allocationType)) {
-			MM_GCExtensionsBase* extensions = env->getExtensions();
+			MM_GCExtensionsBase *extensions = env->getExtensions();
 			/* excessivegc is enabled by default */
 			if (!extensions->excessiveGCEnabled._wasSpecified) {
 				extensions->excessiveGCEnabled._valueSpecified = true;
@@ -82,14 +82,14 @@ MM_Configuration::initialize(MM_EnvironmentBase* env)
 }
 
 void
-MM_Configuration::tearDown(MM_EnvironmentBase* env)
+MM_Configuration::tearDown(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase* extensions = env->getExtensions();
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 
 	/* DefaultMemorySpace needs to be killed before
 	 * ext->heap is freed in MM_Configuration::tearDown. */
 	if (NULL != extensions->heap) {
-		MM_MemorySpace* modronMemorySpace = extensions->heap->getDefaultMemorySpace();
+		MM_MemorySpace *modronMemorySpace = extensions->heap->getDefaultMemorySpace();
 		if  (NULL != modronMemorySpace) {
 			modronMemorySpace->kill(env);
 		}
@@ -150,10 +150,10 @@ MM_Configuration::tearDown(MM_EnvironmentBase* env)
  * Destroy Garbage Collectors
  */
 void
-MM_Configuration::destroyCollectors(MM_EnvironmentBase* env)
+MM_Configuration::destroyCollectors(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase* extensions = env->getExtensions();
-	MM_Collector* collector = extensions->getGlobalCollector();
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+	MM_Collector *collector = extensions->getGlobalCollector();
 
 	if (NULL != collector) {
 		collector->kill(env);
@@ -170,9 +170,9 @@ MM_Configuration::destroyCollectors(MM_EnvironmentBase* env)
  * @return env The newly allocated env or NULL
  */
 MM_EnvironmentBase*
-MM_Configuration::createEnvironment(MM_GCExtensionsBase* extensions, OMR_VMThread* omrVMThread)
+MM_Configuration::createEnvironment(MM_GCExtensionsBase *extensions, OMR_VMThread *omrVMThread)
 {
-	MM_EnvironmentBase* env = allocateNewEnvironment(extensions, omrVMThread);
+	MM_EnvironmentBase *env = allocateNewEnvironment(extensions, omrVMThread);
 	if (NULL != env) {
 		if (!initializeEnvironment(env)) {
 			env->kill();
@@ -191,7 +191,7 @@ MM_Configuration::createEnvironment(MM_GCExtensionsBase* extensions, OMR_VMThrea
  * @param env The environment to initialize
  */
 bool
-MM_Configuration::initializeEnvironment(MM_EnvironmentBase* env)
+MM_Configuration::initializeEnvironment(MM_EnvironmentBase *env)
 {
 	bool result = false;
 
@@ -221,15 +221,15 @@ MM_Configuration::initializeEnvironment(MM_EnvironmentBase* env)
 }
 
 void
-MM_Configuration::defaultMemorySpaceAllocated(MM_GCExtensionsBase* extensions, void* defaultMemorySpace)
+MM_Configuration::defaultMemorySpaceAllocated(MM_GCExtensionsBase *extensions, void *defaultMemorySpace)
 {
 	/* do nothing */
 }
 
 MM_Heap*
-MM_Configuration::createHeap(MM_EnvironmentBase* env, uintptr_t heapBytesRequested)
+MM_Configuration::createHeap(MM_EnvironmentBase *env, uintptr_t heapBytesRequested)
 {
-	MM_GCExtensionsBase* extensions = env->getExtensions();
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 
 	if (NULL == extensions->memoryManager) {
 		extensions->memoryManager = MM_MemoryManager::newInstance(env);
@@ -245,7 +245,7 @@ MM_Configuration::createHeap(MM_EnvironmentBase* env, uintptr_t heapBytesRequest
 		}
 	}
 
-	MM_Heap* heap = createHeapWithManager(env, heapBytesRequested, extensions->heapRegionManager);
+	MM_Heap *heap = createHeapWithManager(env, heapBytesRequested, extensions->heapRegionManager);
 	if (NULL != heap) {
 		if (!heap->initializeHeapRegionManager(env, extensions->heapRegionManager)) {
 			heap->kill(env);
@@ -276,10 +276,10 @@ MM_Configuration::createHeap(MM_EnvironmentBase* env, uintptr_t heapBytesRequest
 }
 
 bool
-MM_Configuration::initializeRunTimeObjectAlignmentAndCRShift(MM_EnvironmentBase* env, MM_Heap* heap)
+MM_Configuration::initializeRunTimeObjectAlignmentAndCRShift(MM_EnvironmentBase *env, MM_Heap *heap)
 {
-	MM_GCExtensionsBase* extensions = env->getExtensions();
-	OMR_VM* omrVM = env->getOmrVM();
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+	OMR_VM *omrVM = env->getOmrVM();
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 	if (env->compressObjectReferences()) {
@@ -334,7 +334,7 @@ MM_Configuration::initializeRunTimeObjectAlignmentAndCRShift(MM_EnvironmentBase*
 }
 
 void
-MM_Configuration::prepareParameters(OMR_VM* omrVM,
+MM_Configuration::prepareParameters(OMR_VM *omrVM,
 									uintptr_t minimumSpaceSize,
 									uintptr_t minimumNewSpaceSize,
 									uintptr_t initialNewSpaceSize,
@@ -344,10 +344,10 @@ MM_Configuration::prepareParameters(OMR_VM* omrVM,
 									uintptr_t maximumTenureSpaceSize,
 									uintptr_t memoryMax,
 									uintptr_t tenureFlags,
-									MM_InitializationParameters* parameters)
+									MM_InitializationParameters *parameters)
 {
-	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(omrVM);
-	MM_Heap* heap = extensions->heap;
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVM);
+	MM_Heap *heap = extensions->heap;
 	uintptr_t alignment = getAlignment(extensions, _alignmentType);
 
 	uintptr_t maximumHeapSize = MM_Math::roundToFloor(alignment, heap->getMaximumMemorySize());
@@ -381,7 +381,7 @@ MM_Configuration::prepareParameters(OMR_VM* omrVM,
 }
 
 uintptr_t
-MM_Configuration::getAlignment(MM_GCExtensionsBase* extensions, MM_AlignmentType type)
+MM_Configuration::getAlignment(MM_GCExtensionsBase *extensions, MM_AlignmentType type)
 {
 	uintptr_t result = 0;
 
@@ -399,10 +399,10 @@ MM_Configuration::getAlignment(MM_GCExtensionsBase* extensions, MM_AlignmentType
 }
 
 bool
-MM_Configuration::initializeRegionSize(MM_EnvironmentBase* env)
+MM_Configuration::initializeRegionSize(MM_EnvironmentBase *env)
 {
 	bool result = true;
-	MM_GCExtensionsBase* extensions = env->getExtensions();
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 	uintptr_t regionSize = extensions->regionSize;
 	if (0 == regionSize) {
 		regionSize = _defaultRegionSize;
@@ -422,10 +422,10 @@ MM_Configuration::initializeRegionSize(MM_EnvironmentBase* env)
 }
 
 bool
-MM_Configuration::initializeArrayletLeafSize(MM_EnvironmentBase* env)
+MM_Configuration::initializeArrayletLeafSize(MM_EnvironmentBase *env)
 {
 	bool result = true;
-	OMR_VM* omrVM = env->getOmrVM();
+	OMR_VM *omrVM = env->getOmrVM();
 	if (UDATA_MAX != _defaultArrayletLeafSize) {
 		uintptr_t arrayletLeafSize = (0 != _defaultArrayletLeafSize) ? _defaultArrayletLeafSize : env->getExtensions()->regionSize;
 		uintptr_t shift = calculatePowerOfTwoShift(env, arrayletLeafSize);
@@ -443,9 +443,9 @@ MM_Configuration::initializeArrayletLeafSize(MM_EnvironmentBase* env)
 }
 
 void
-MM_Configuration::initializeGCThreadCount(MM_EnvironmentBase* env)
+MM_Configuration::initializeGCThreadCount(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase* extensions = env->getExtensions();
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 
 	if (!extensions->gcThreadCountForced) {
 		extensions->gcThreadCount = supportedGCThreadCount(env);
@@ -453,7 +453,7 @@ MM_Configuration::initializeGCThreadCount(MM_EnvironmentBase* env)
 }
 
 uintptr_t
-MM_Configuration::supportedGCThreadCount(MM_EnvironmentBase* env)
+MM_Configuration::supportedGCThreadCount(MM_EnvironmentBase *env)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 	uintptr_t threadCount = omrsysinfo_get_number_CPUs_by_type(OMRPORT_CPU_TARGET);
@@ -467,9 +467,9 @@ MM_Configuration::supportedGCThreadCount(MM_EnvironmentBase* env)
 }
 
 void
-MM_Configuration::initializeGCParameters(MM_EnvironmentBase* env)
+MM_Configuration::initializeGCParameters(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase* extensions = env->getExtensions();
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 	
 	/* TODO 108399: May need to adjust -Xmn*, -Xmo* values here if not fully specified on startup options */
 
@@ -515,22 +515,22 @@ MM_Configuration::initializeGCParameters(MM_EnvironmentBase* env)
 }
 
 bool
-MM_Configuration::initializeNUMAManager(MM_EnvironmentBase* env)
+MM_Configuration::initializeNUMAManager(MM_EnvironmentBase *env)
 {
 	return env->getExtensions()->_numaManager.recacheNUMASupport(env);
 }
 
 MM_ParallelDispatcher *
-MM_Configuration::createParallelDispatcher(MM_EnvironmentBase* env, omrsig_handler_fn handler, void* handler_arg, uintptr_t defaultOSStackSize)
+MM_Configuration::createParallelDispatcher(MM_EnvironmentBase *env, omrsig_handler_fn handler, void *handler_arg, uintptr_t defaultOSStackSize)
 {
 	return MM_ParallelDispatcher::newInstance(env, handler, handler_arg, defaultOSStackSize);
 }
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 bool
-MM_Configuration::reinitializeForRestore(MM_EnvironmentBase* env)
+MM_Configuration::reinitializeForRestore(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase* extensions = env->getExtensions();
+	MM_GCExtensionsBase *extensions = env->getExtensions();
 
 	/* The initialization of the GC thread count can only happen if it is not enforced by the user. */
 	initializeGCThreadCount(env);
@@ -545,6 +545,19 @@ MM_Configuration::reinitializeForRestore(MM_EnvironmentBase* env)
 			extensions->gcThreadCount);
 
 	initializeGCParameters(env);
+
+	if (!_delegate.reinitializeForRestore(env)) {
+		return false;
+	}
+
+	OMR_VMThread *walkThread = NULL;
+	GC_OMRVMThreadListIterator threadListIterator(env->getOmrVM());
+	while (NULL != (walkThread = threadListIterator.nextOMRVMThread())) {
+		MM_EnvironmentBase *walkEnv = MM_EnvironmentBase::getEnvironment(walkThread);
+		if (!walkEnv->reinitializeForRestore()) {
+			return false;
+		}
+	}
 
 	return true;
 }

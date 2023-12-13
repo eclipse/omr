@@ -689,6 +689,15 @@ public:
 	MMINLINE MM_HeapRegionQueue *getRegionLocalFull() const { return _regionLocalFull; }
 #endif /* OMR_GC_SEGREGATED_HEAP */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * Reinitialize the env's language specific object buffers based on the the number of restore GC threads.
+	 *
+	 * @return boolean indicating whether thread buffers were reinitialized successfully.
+	 */
+	MMINLINE bool reinitializeForRestore() { return _delegate.reinitializeForRestore(this); }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	/**
 	 * Create an EnvironmentBase object.
 	 */
