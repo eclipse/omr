@@ -114,6 +114,76 @@ struct is_same<T, T>
    {
    static const bool value = true;
    };
+/*
+ * Poor man's version of std::is_integral - see comment above.
+ */
+template<typename T>
+struct is_integral
+   {
+   static const bool value = false;
+   };
+
+template<>
+struct is_integral<signed char>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_integral<unsigned char>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_integral<signed short>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_integral<unsigned short>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_integral<signed int>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_integral<unsigned int>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_integral<signed long int>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_integral<unsigned long int>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_integral<signed long long int>
+   {
+   static const bool value = true;
+   };
+
+template<>
+struct is_integral<unsigned long long int>
+   {
+   static const bool value = true;
+   };
+
+
 template <typename In, typename Out>
 inline Out reinterpret_as(const In value)
    {
@@ -267,7 +337,7 @@ inline void format(char* dst, size_t size, const char *fmt, V value, Rest... res
 
             case 'd':
                {
-               if (! std::is_integral<V>::value)
+               if (! Tril::is_integral<V>::value)
                   throw std::runtime_error("%d conversion specified but given value is not of an integral type");
 
                /*
@@ -285,7 +355,7 @@ inline void format(char* dst, size_t size, const char *fmt, V value, Rest... res
 
             case 'u':
                {
-               if (!std::is_integral<V>::value)
+               if (!Tril::is_integral<V>::value)
                   throw std::runtime_error("%u conversion specified but given value is not of an integral type");
                if (!std::is_unsigned<V>::value)
                   throw std::runtime_error("%u conversion specified but given value is not of an unsigned type");
