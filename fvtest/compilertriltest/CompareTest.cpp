@@ -54,7 +54,7 @@ TEST_P(Int32Compare, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120,
+    Tril::format(inputTrees, 120,
        "(method return=Int32 "
          "(block "
            "(ireturn "
@@ -80,7 +80,7 @@ TEST_P(Int32Compare, UsingRhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120,
+    Tril::format(inputTrees, 120,
        "(method return=Int32 args=[Int32] "
          "(block "
            "(ireturn "
@@ -106,7 +106,7 @@ TEST_P(Int32Compare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120,
+    Tril::format(inputTrees, 120,
        "(method return=Int32 args=[Int32, Int32] "
          "(block "
            "(ireturn "
@@ -161,7 +161,7 @@ TEST_P(UInt32Compare, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120,
+    Tril::format(inputTrees, 120,
        "(method return=Int32 "
          "(block "
            "(ireturn "
@@ -187,7 +187,7 @@ TEST_P(UInt32Compare, UsingRhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120,
+    Tril::format(inputTrees, 120,
        "(method return=Int32 args=[Int32] "
          "(block "
            "(ireturn "
@@ -213,7 +213,7 @@ TEST_P(UInt32Compare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[120] = {0};
-    std::snprintf(inputTrees, 120,
+    Tril::format(inputTrees, 120,
        "(method return=Int32 args=[Int32, Int32] "
          "(block "
            "(ireturn "
@@ -278,7 +278,7 @@ TEST_P(Int64Compare, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
        "(method return=Int32 "
          "(block "
            "(ireturn "
@@ -304,7 +304,7 @@ TEST_P(Int64Compare, UsingRhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
        "(method return=Int32 args=[Int64] "
          "(block "
            "(ireturn "
@@ -330,7 +330,7 @@ TEST_P(Int64Compare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
        "(method return=Int32 args=[Int64, Int64] "
          "(block "
            "(ireturn "
@@ -387,7 +387,7 @@ TEST_P(UInt64Compare, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
        "(method return=Int32 "
          "(block "
            "(ireturn "
@@ -413,7 +413,7 @@ TEST_P(UInt64Compare, UsingRhsConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
        "(method return=Int32 args=[Int64] "
          "(block "
            "(ireturn "
@@ -439,7 +439,7 @@ TEST_P(UInt64Compare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
        "(method return=Int32 args=[Int64, Int64] "
          "(block "
            "(ireturn "
@@ -503,7 +503,7 @@ TEST_P(Int32IfCompare, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 "
           "(block "
             "(%s target=b1 (iconst %d) (iconst %d))) "
@@ -531,7 +531,7 @@ TEST_P(Int32IfCompare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 args=[Int32, Int32] "
           "(block "
             "(%s target=b1 (iload parm=0) (iload parm=1))) "
@@ -588,7 +588,7 @@ TEST_P(UInt32IfCompare, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 "
           "(block "
             "(%s target=b1 (iconst %d) (iconst %d))) "
@@ -616,7 +616,7 @@ TEST_P(UInt32IfCompare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 args=[Int32, Int32] "
           "(block "
             "(%s target=b1 (iload parm=0) (iload parm=1))) "
@@ -679,7 +679,7 @@ TEST_P(Int64IfCompare, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 "
           "(block "
             "(%s target=b1 (lconst %" OMR_PRId64 ") (lconst %" OMR_PRId64 "))) "
@@ -707,7 +707,7 @@ TEST_P(Int64IfCompare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 args=[Int64, Int64] "
           "(block "
             "(%s target=b1 (lload parm=0) (lload parm=1))) "
@@ -764,7 +764,7 @@ TEST_P(UInt64IfCompare, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 "
           "(block "
             "(%s target=b1 (lconst %" OMR_PRIu64 ") (lconst %" OMR_PRIu64 "))) "
@@ -792,7 +792,7 @@ TEST_P(UInt64IfCompare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 args=[Int64, Int64] "
           "(block "
             "(%s target=b1 (lload parm=0) (lload parm=1))) "
@@ -899,7 +899,7 @@ TEST_P(FloatCompare, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, 1024,
+    Tril::format(inputTrees, 1024,
        "(method return=Int32 "
          "(block "
            "(ireturn "
@@ -930,7 +930,7 @@ TEST_P(FloatCompare, UsingRhsConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, 1024,
+    Tril::format(inputTrees, 1024,
        "(method return=Int32 args=[Float] "
          "(block "
            "(ireturn "
@@ -956,7 +956,7 @@ TEST_P(FloatCompare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
        "(method return=Int32 args=[Float, Float] "
          "(block "
            "(ireturn "
@@ -1057,7 +1057,7 @@ TEST_P(DoubleCompare, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, 1024,
+    Tril::format(inputTrees, 1024,
        "(method return=Int32 "
          "(block "
            "(ireturn "
@@ -1088,7 +1088,7 @@ TEST_P(DoubleCompare, UsingRhsConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, 1024,
+    Tril::format(inputTrees, 1024,
        "(method return=Int32 args=[Double] "
          "(block "
            "(ireturn "
@@ -1114,7 +1114,7 @@ TEST_P(DoubleCompare, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
        "(method return=Int32 args=[Double, Double] "
          "(block "
            "(ireturn "
@@ -1202,7 +1202,7 @@ TEST_P(FloatIfCompare, UsingConst) {
     }
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 "
           "(block "
             "(%s target=b1 (fconst %f) (fconst %f))) "
@@ -1236,7 +1236,7 @@ TEST_P(FloatIfCompare, UsingLoadParam) {
     }
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 args=[Float, Float] "
           "(block "
             "(%s target=b1 (fload parm=0) (fload parm=1))) "
@@ -1324,7 +1324,7 @@ TEST_P(DoubleIfCompare, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, 1024,
+    Tril::format(inputTrees, 1024,
         "(method return=Int32 "
           "(block "
             "(%s target=b1 (dconst %f) (dconst %f))) "
@@ -1358,7 +1358,7 @@ TEST_P(DoubleIfCompare, UsingLoadParam) {
     }
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 args=[Double, Double] "
           "(block "
             "(%s target=b1 (dload parm=0) (dload parm=1))) "
@@ -1443,7 +1443,7 @@ TEST_P(FloatCompareOrUnordered, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, 1024,
+    Tril::format(inputTrees, 1024,
        "(method return=Int32 "
          "(block "
            "(ireturn "
@@ -1476,7 +1476,7 @@ TEST_P(FloatCompareOrUnordered, UsingRhsConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, 1024,
+    Tril::format(inputTrees, 1024,
        "(method return=Int32 args=[Float] "
          "(block "
            "(ireturn "
@@ -1504,7 +1504,7 @@ TEST_P(FloatCompareOrUnordered, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
        "(method return=Int32 args=[Float, Float] "
          "(block "
            "(ireturn "
@@ -1587,7 +1587,7 @@ TEST_P(DoubleCompareOrUnordered, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, 1024,
+    Tril::format(inputTrees, 1024,
        "(method return=Int32 "
          "(block "
            "(ireturn "
@@ -1620,7 +1620,7 @@ TEST_P(DoubleCompareOrUnordered, UsingRhsConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, 1024,
+    Tril::format(inputTrees, 1024,
        "(method return=Int32 args=[Double] "
          "(block "
            "(ireturn "
@@ -1648,7 +1648,7 @@ TEST_P(DoubleCompareOrUnordered, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
        "(method return=Int32 args=[Double, Double] "
          "(block "
            "(ireturn "
@@ -1733,7 +1733,7 @@ TEST_P(FloatIfCompareOrUnordered, UsingConst) {
     }
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 "
           "(block "
             "(%s target=b1 (fconst %f) (fconst %f))) "
@@ -1764,7 +1764,7 @@ TEST_P(FloatIfCompareOrUnordered, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 args=[Float, Float] "
           "(block "
             "(%s target=b1 (fload parm=0) (fload parm=1))) "
@@ -1850,7 +1850,7 @@ TEST_P(DoubleIfCompareOrUnordered, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, 1024,
+    Tril::format(inputTrees, 1024,
         "(method return=Int32 "
           "(block "
             "(%s target=b1 (dconst %f) (dconst %f))) "
@@ -1881,7 +1881,7 @@ TEST_P(DoubleIfCompareOrUnordered, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32 args=[Double, Double] "
           "(block "
             "(%s target=b1 (dload parm=0) (dload parm=1))) "
