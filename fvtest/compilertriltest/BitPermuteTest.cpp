@@ -141,7 +141,7 @@ TEST_P(lBitPermuteTest, ConstAddressLengthTest)
    auto param = to_struct(GetParam());
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Int64]  "
       " (block                            "
       "  (lreturn                         "
@@ -173,7 +173,7 @@ TEST_P(lBitPermuteTest, ConstAddressTest)
    auto param = to_struct(GetParam());
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Int64, Int32]  "
       " (block                                   "
       "  (lreturn                                "
@@ -204,7 +204,7 @@ TEST_P(lBitPermuteTest, NoConstTest)
    auto param = to_struct(GetParam());
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Int64, Address, Int32]  "
       " (block                                            "
       "  (lreturn                                         "
@@ -240,7 +240,7 @@ TEST_P(iBitPermuteTest, ConstAddressLengthTest)
       maskedIndices[i] = param.arrayAddress[i] & 0x1F;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int32]  "
       " (block                            "
       "  (ireturn                         "
@@ -276,7 +276,7 @@ TEST_P(iBitPermuteTest, ConstAddressTest)
       maskedIndices[i] = param.arrayAddress[i] & 0x1F;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int32, Int32]  "
       " (block                                   "
       "  (ireturn                                "
@@ -311,7 +311,7 @@ TEST_P(iBitPermuteTest, NoConstTest)
       maskedIndices[i] = param.arrayAddress[i] & 0x1F;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int32, Address, Int32]  "
       " (block                                            "
       "  (ireturn                                         "
@@ -347,7 +347,7 @@ TEST_P(sBitPermuteTest, ConstAddressLengthTest)
       maskedIndices[i] = param.arrayAddress[i] & 0xF;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int16]  "
       " (block                            "
       "  (ireturn                         "
@@ -384,7 +384,7 @@ TEST_P(sBitPermuteTest, ConstAddressTest)
       maskedIndices[i] = param.arrayAddress[i] & 0xF;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int16, Int32]  "
       " (block                                   "
       "  (ireturn                                "
@@ -420,7 +420,7 @@ TEST_P(sBitPermuteTest, NoConstTest)
       maskedIndices[i] = param.arrayAddress[i] & 0xF;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int16, Address, Int32]  "
       " (block                                            "
       "  (ireturn                                         "
@@ -457,7 +457,7 @@ TEST_P(bBitPermuteTest, ConstAddressLengthTest)
       maskedIndices[i] = param.arrayAddress[i] & 0x7;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int8] "
       " (block                          "
       "  (ireturn                       "
@@ -494,7 +494,7 @@ TEST_P(bBitPermuteTest, ConstAddressTest)
       maskedIndices[i] = param.arrayAddress[i] & 0x7;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int8, Int32] "
       " (block                                 "
       "  (ireturn                              "
@@ -530,7 +530,7 @@ TEST_P(bBitPermuteTest, NoConstTest)
       maskedIndices[i] = param.arrayAddress[i] & 0x7;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Int8, Address, Int32] "
       " (block                                          "
       "  (ireturn                                       "
