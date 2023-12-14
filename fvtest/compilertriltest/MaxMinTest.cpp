@@ -78,7 +78,7 @@ TEST_P(Int32MaxMin, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[150] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32"
         "  (block"
         "    (ireturn"
@@ -105,7 +105,7 @@ TEST_P(Int32MaxMin, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[150] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -139,7 +139,7 @@ TEST_P(Int64MaxMin, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[150] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -166,7 +166,7 @@ TEST_P(Int64MaxMin, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[150] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int64, Int64]"
         "  (block"
         "    (lreturn"
@@ -208,7 +208,7 @@ TEST_P(FloatMaxMin, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Float"
         "  (block"
         "    (freturn"
@@ -243,7 +243,7 @@ TEST_P(FloatMaxMin, UsingLoadParam) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Float args=[Float, Float]"
         "  (block"
         "    (freturn"
@@ -286,7 +286,7 @@ TEST_P(DoubleMaxMin, UsingConst) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Double"
         "  (block"
         "    (dreturn"
@@ -322,7 +322,7 @@ TEST_P(DoubleMaxMin, UsingLoadParam) {
     }
 
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Double args=[Double, Double]"
         "  (block"
         "    (dreturn"
