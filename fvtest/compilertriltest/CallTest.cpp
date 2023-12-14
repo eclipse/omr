@@ -37,8 +37,8 @@ TEST_F(CallTest, icallOracle) {
     SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
     char inputTrees[200] = {0};
-    const auto format_string = "(method return=Int32 args=[Int32] (block (ireturn (icall address=0x%jX args=[Int32] (iload parm=0)) )  ))";
-    std::snprintf(inputTrees, 200, format_string, reinterpret_cast<uintmax_t>(&oracleBoracle));
+    const auto format_string = "(method return=Int32 args=[Int32] (block (ireturn (icall address=0x%X args=[Int32] (iload parm=0)) )  ))";
+    Tril::format(inputTrees, 200, format_string, &oracleBoracle);
     auto trees = parseString(inputTrees);
 
     ASSERT_NOTNULL(trees) << "Trees failed to parse\n" << inputTrees;
