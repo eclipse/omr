@@ -31,6 +31,76 @@
 namespace Tril
 {
 
+/*
+ * Following is poor man's version of std::make_signed which is used below
+ * in reinterpret_as_signed(). We cannot use std::make_signed() as the XLC
+ * compiler used at a time on AIX and ZOS does not support it. Once XLC start
+ * supporting it, the below make_signed can be removed in favour of
+ * std::make_signed.
+ */
+template<typename T>
+struct make_signed;
+
+template<>
+struct make_signed<signed char>
+   {
+   typedef signed char type;
+   };
+
+template<>
+struct make_signed<unsigned char>
+   {
+   typedef signed char type;
+   };
+
+template<>
+struct make_signed<signed short>
+   {
+   typedef signed short type;
+   };
+
+template<>
+struct make_signed<unsigned short>
+   {
+   typedef signed short type;
+   };
+
+template<>
+struct make_signed<signed int>
+   {
+   typedef signed int type;
+   };
+
+template<>
+struct make_signed<unsigned int>
+   {
+   typedef signed int type;
+   };
+
+template<>
+struct make_signed<signed long int>
+   {
+   typedef signed long int type;
+   };
+
+template<>
+struct make_signed<unsigned long int>
+   {
+   typedef signed long int type;
+   };
+
+template<>
+struct make_signed<signed long long int>
+   {
+   typedef signed long long int type;
+   };
+
+template<>
+struct make_signed<unsigned long long int>
+   {
+   typedef signed long long int type;
+   };
+
 template <typename In, typename Out>
 inline Out reinterpret_as(const In value)
    {
@@ -45,9 +115,9 @@ inline Out reinterpret_as(const In value)
 
 
 template <typename U>
-inline typename std::make_signed<U>::type reinterpret_as_signed(const U value)
+inline typename Tril::make_signed<U>::type reinterpret_as_signed(const U value)
    {
-   typedef typename std::make_signed<U>::type S;
+   typedef typename Tril::make_signed<U>::type S;
    return reinterpret_as<U, S>(value);
    }
 
