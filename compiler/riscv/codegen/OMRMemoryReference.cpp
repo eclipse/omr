@@ -78,13 +78,12 @@ OMR::RV::MemoryReference::MemoryReference(
 
 OMR::RV::MemoryReference::MemoryReference(
       TR::Node *rootLoadOrStore,
-      uint32_t len,
       TR::CodeGenerator *cg) :
    _baseRegister(NULL),
    _baseNode(NULL),
    _unresolvedSnippet(NULL),
    _flag(0),
-   _length(len),
+   _length(rootLoadOrStore->getSize()),
    _scale(0),
    _offset(0),
    _symbolReference(rootLoadOrStore->getSymbolReference())
@@ -132,13 +131,12 @@ OMR::RV::MemoryReference::MemoryReference(
 OMR::RV::MemoryReference::MemoryReference(
       TR::Node *node,
       TR::SymbolReference *symRef,
-      uint32_t len,
       TR::CodeGenerator *cg) :
    _baseRegister(NULL),
    _baseNode(NULL),
    _unresolvedSnippet(NULL),
    _flag(0),
-   _length(len),
+   _length(0),
    _scale(0),
    _offset(0),
    _symbolReference(symRef)

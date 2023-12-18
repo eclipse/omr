@@ -104,20 +104,18 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReference
 
    /**
     * @brief Constructor
-    * @param[in] node : load or store node
-    * @param[in] len : length
+    * @param[in] rootLoadOrStore : load or store node
     * @param[in] cg : CodeGenerator object
     */
-   MemoryReference(TR::Node *node, uint32_t len, TR::CodeGenerator *cg);
+   MemoryReference(TR::Node *rootLoadOrStore, TR::CodeGenerator *cg);
 
    /**
     * @brief Constructor
     * @param[in] node : node
     * @param[in] symRef : symbol reference
-    * @param[in] len : length
     * @param[in] cg : CodeGenerator object
     */
-   MemoryReference(TR::Node *node, TR::SymbolReference *symRef, uint32_t len, TR::CodeGenerator *cg);
+   MemoryReference(TR::Node *node, TR::SymbolReference *symRef, TR::CodeGenerator *cg);
 
    /**
     * @brief Gets base register
