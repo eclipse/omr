@@ -50,8 +50,8 @@
 #ifndef OMR_ZOS
 #  define OMR_ZOS     204
 #endif
-#ifndef OMR_OSX
-#  define OMR_OSX     205
+#ifndef OMR_MACOS
+#  define OMR_MACOS     205
 #endif
 #ifndef OMR_BSD
 #  define OMR_BSD     206
@@ -109,7 +109,7 @@
 #elif defined(__MVS__)
 #  define HOST_OS OMR_ZOS
 #elif defined(__APPLE__) && defined(__MACH__)
-#  define HOST_OS OMR_OSX
+#  define HOST_OS OMR_MACOS
 #elif defined(OMR_OS_BSD)
 #  define HOST_OS OMR_BSD
 #else
