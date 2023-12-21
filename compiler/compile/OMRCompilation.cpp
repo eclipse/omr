@@ -954,7 +954,7 @@ int32_t OMR::Compilation::compile()
          }
       }
 
-   self()->setGetImplInlineable(self()->fej9()->isGetImplInliningSupported());
+   self()->setGetImplAndRefersToInlineable(self()->fej9()->isGetImplAndRefersToInliningSupported());
 #endif
 
    if (self()->getOption(TR_BreakBeforeCompile))
