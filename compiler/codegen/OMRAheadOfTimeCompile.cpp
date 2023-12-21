@@ -38,6 +38,7 @@
 #include "infra/List.hpp"
 #include "ras/Debug.hpp"
 #include "env/CompilerEnv.hpp"
+#include "runtime/TRRelocationRecord.hpp"
 
 namespace TR { class SymbolReference; }
 
@@ -114,6 +115,28 @@ void OMR::AheadOfTimeCompile::traceRelocationOffsets(uint8_t *&cursor, int32_t o
       cursor += offsetSize;
       }
    }
+
+
+uint8_t*
+OMR::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
+   {
+   TR_UNIMPLEMENTED();
+   return 0;
+   }
+
+
+void
+OMR::AheadOfTimeCompile::processRelocations()
+   {
+   TR_UNIMPLEMENTED();
+   }
+
+uint8_t *
+OMR::AheadOfTimeCompile::initializeCommonRelocationHeader(TR::IteratedExternalRelocation *relocation, TR::RelocationRecord *reloRecord)
+   {
+   TR_UNIMPLEMENTED();
+   }
+
 
 void createGuardSiteForRemovedGuard(TR::Compilation *comp, TR::Node *ifNode)
    {

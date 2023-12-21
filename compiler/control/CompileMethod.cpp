@@ -61,6 +61,8 @@
 #include "omrformatconsts.h"
 #include "runtime/CodeCacheManager.hpp"
 #include "control/CompilationController.hpp"
+#include "runtime/TRRelocationRecord.hpp"
+#include "codegen/AheadOfTimeCompile.hpp"
 
 static void
 writePerfToolEntry(void *start, uint32_t size, const char *name)
@@ -331,7 +333,11 @@ compileMethodFromDetails(
    TR_ASSERT(TR::comp() == NULL, "there seems to be a current TLS TR::Compilation object %p for this thread. At this point there should be no current TR::Compilation object", TR::comp());
    TR::Compilation compiler(0, omrVMThread, &fe, &compilee, request, options, dispatchRegion, &trMemory, plan);
    TR_ASSERT(TR::comp() == &compiler, "the TLS TR::Compilation object %p for this thread does not match the one %p just created.", TR::comp(), &compiler);
-
+   if (compiler.compileRelocatableCode())
+      {
+      compiler.setReloRuntime(TR::Compiler->aotLoadStoreDriver->getRelocationRuntime());
+      compiler.cg()->getAheadOfTimeCompile()->setReloRuntime(compiler.aotReloRuntime());
+      }
    try
       {
       //fprintf(stderr,"loading JIT debug\n");
@@ -426,6 +432,16 @@ compileMethodFromDetails(
                                   startPC,
                                   translationTime/1000,
                                   translationTime%1000);
+         if (compiler.compileRelocatableCode())
+            {
+            const char* methodName = compilee.externalName(&trMemory);
+            TR::Compiler->aotLoadStoreDriver->createAndRegisterAOTMethodHeader(
+                        methodName,
+                        startPC,
+                        compiler.cg()->getCodeLength(),
+                        reinterpret_cast<TR::RelocationRecordBinaryTemplate*>(compiler.cg()->getAheadOfTimeCompile()->getRelocationData()),
+                        compiler.cg()->getAheadOfTimeCompile()->getSizeOfAOTRelocations());
+            }
          }
       else /* of rc == COMPILATION_SUCCEEDED */
          {

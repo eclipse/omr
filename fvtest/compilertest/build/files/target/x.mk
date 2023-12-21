@@ -33,6 +33,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/x/codegen/HelperCallSnippet.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/IA32LinkageUtils.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/IntegerMultiplyDecomposer.cpp \
+    $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRAheadOfTimeCompile.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRMemoryReference.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OMRInstOpCode.cpp \
     $(JIT_OMR_DIRTY_DIR)/x/codegen/OutlinedInstructions.cpp \

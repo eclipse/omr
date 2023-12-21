@@ -40,13 +40,14 @@ class TR_Debug;
 namespace TR { class ExternalRelocation; }
 namespace TR { class IteratedExternalRelocation; }
 namespace TR { class AheadOfTimeCompile; }
-
+namespace TR { class RelocationRecord; }
+namespace TR { class RelocationRuntime;}
 namespace OMR
 {
 
 class OMR_EXTENSIBLE AheadOfTimeCompile
    {
-   public:
+public:
 
    TR_ALLOC(TR_Memory::AheadOfTimeCompile)
 
@@ -55,13 +56,12 @@ class OMR_EXTENSIBLE AheadOfTimeCompile
         _relocationData(NULL),
         _aotRelocationKindToHeaderSizeMap(headerSizeMap)
    {}
-   
-   TR::AheadOfTimeCompile * self();
 
    TR::Compilation * comp()     { return _comp; }
    TR_Debug *   getDebug();
    TR_Memory *      trMemory();
-
+   TR::RelocationRuntime *setReloRuntime(TR::RelocationRuntime *r){ return (_reloRuntime=r);}
+   TR::RelocationRuntime *reloRuntime(){ return _reloRuntime;}
    TR_LinkHead<TR::IteratedExternalRelocation>& getAOTRelocationTargets() {return _aotRelocationTargets;}
 
    uint32_t getSizeOfAOTRelocations()             {return _sizeOfAOTRelocations;}
@@ -71,6 +71,8 @@ class OMR_EXTENSIBLE AheadOfTimeCompile
    uint8_t *getRelocationData()           {return _relocationData;}
    uint8_t *setRelocationData(uint8_t *p) {return (_relocationData = p);}
 
+   // In future, the relocation header size data will be collected from
+   // relocation records directly
    uint32_t getSizeOfAOTRelocationHeader(TR_ExternalRelocationTargetKind k)
       {
       return _aotRelocationKindToHeaderSizeMap[k];
@@ -81,10 +83,24 @@ class OMR_EXTENSIBLE AheadOfTimeCompile
       return (_aotRelocationKindToHeaderSizeMap = p);
       }
 
-   virtual void     processRelocations() = 0;
-   virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation) = 0;
+   /**
+    * @brief This function should be used for creating relocations.
+    * As relocations are architecture-specific, please refer to
+    * OMR::X86::AheadOfTimeCompilation for hints on specific implementation
+    */
+   void     processRelocations();
 
-   // virtual void dumpRelocationData() = 0;
+   /**
+    * @brief "Initializes the common fields in the raw relocation record header. It then delegates
+    *        to initializePlatformSpecificAOTRelocationHeader which must be implemented on all
+    *        platforms that support AOT."
+    *        source: https://github.com/eclipse-openj9/openj9/blob/master/runtime/compiler/codegen/J9AheadOfTimeCompile.hpp
+    *
+    * @param relocation pointer to the iterated external relocation
+    * @return pointer into the buffer right after the fields of the header (ie the offsets section)
+    */
+   uint8_t* initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
+
    void dumpRelocationData() {}
 
    void traceRelocationOffsets(uint8_t *&cursor, int32_t offsetSize, const uint8_t *endOfCurrentRecord, bool isOrderedPair);
@@ -94,15 +110,33 @@ class OMR_EXTENSIBLE AheadOfTimeCompile
     * it into an IteratedExternalRelocation.
     */
    static void interceptAOTRelocation(TR::ExternalRelocation *relocation) { }
+   static const size_t SIZEPOINTER = sizeof(uintptr_t);
 
-   private:
+protected:
+
+   TR::AheadOfTimeCompile * self();
+
+   /**
+    * @brief "Initialization of relocation record headers for whom data for the fields are acquired
+    *        in a manner that is common on all platforms"
+    *        source: https://github.com/eclipse-openj9/openj9/blob/master/runtime/compiler/codegen/J9AheadOfTimeCompile.hpp
+    *
+    * @param relocation pointer to the iterated external relocation
+    * @param reloTarget pointer to the TR_RelocationTarget object
+    * @param reloRecord pointer to the associated TR_RelocationRecord API object
+    * @param kind the TR_ExternalRelocationTargetKind enum value
+    */
+   uint8_t *initializeCommonRelocationHeader(TR::IteratedExternalRelocation *relocation,TR::RelocationRecord* );
+
+private:
    TR::Compilation *                           _comp;
    TR_LinkHead<TR::IteratedExternalRelocation> _aotRelocationTargets;
    uint32_t                                   _sizeOfAOTRelocations;
    uint8_t                                   *_relocationData;
    uint32_t                                  *_aotRelocationKindToHeaderSizeMap;
+   TR::RelocationRuntime                     *_reloRuntime;
    };
 
 }
 
-#endif
+#endif // ifndef OMR_AHEADOFTIMECOMPILE_INCL

@@ -43,6 +43,7 @@ namespace OMR { typedef OMR::CompilerEnv CompilerEnvConnector; }
 #include "env/VMEnv.hpp"
 #include "env/VMMethodEnv.hpp"
 #include "env/TRMemory.hpp"
+#include "env/AOTLoadStoreDriver.hpp"
 
 namespace TR { class CompilerEnv; }
 
@@ -98,6 +99,10 @@ public:
    // Debug environment for the compiler.  This is not thread safe.
    //
    TR::DebugEnv debug;
+
+   // Reference to the Ahead of Time compiler infrastructure in OMR
+   //
+   TR::AOTLoadStoreDriver* aotLoadStoreDriver;
 
    bool isInitialized() { return _initialized; }
 
