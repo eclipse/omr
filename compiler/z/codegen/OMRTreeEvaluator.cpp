@@ -5025,11 +5025,13 @@ generateS390CompareAndBranchOpsHelper(TR::Node * node, TR::CodeGenerator * cg, T
 
                TR::TreeEvaluator::arraycmpHelper(nonConstNode,
                      cg,
+                     false,
                      isEqualCmp, //isEqualCmp
                      0,          //cmpValue.
                      NULL,       //compareTarget
                      NULL,       //ificmpNode
                      false,      //needResultReg
+                     true,
                      &newBranchOpCond);
 
                testRegister = NULL;
@@ -10423,11 +10425,13 @@ void setStartInternalControlFlow(TR::CodeGenerator * cg, TR::Node * node, TR::In
 TR::Register *
 OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
                                          TR::CodeGenerator *cg,
+                                         bool isWideChar,
                                          bool isEqualCmp,
                                          int32_t cmpValue,
                                          TR::LabelSymbol *compareTarget,
                                          TR::Node *ificmpNode,
                                          bool needResultReg,
+                                         bool return102,
                                          TR::InstOpCode::S390BranchCondition *returnCond)
    {
    TR::Compilation *comp = cg->comp();
@@ -10817,11 +10821,13 @@ OMR::Z::TreeEvaluator::inlineIfArraycmpEvaluator(TR::Node *node, TR::CodeGenerat
       {
       ret = TR::TreeEvaluator::arraycmpHelper(opNode,
                                               cg,
+                                              false,
                                               isEqualCmp,    //isEqualCmp
                                               compareVal,    //cmpValue
                                               compareTarget, //compareTarget
                                               node,          //ificmpNode
-                                              false);         //needResultReg
+                                              false,
+                                              true);         //needResultReg
       }
 
    inlined = true;
@@ -11434,10 +11440,12 @@ OMR::Z::TreeEvaluator::arraycmpEvaluator(TR::Node * node, TR::CodeGenerator * cg
          resultReg = TR::TreeEvaluator::arraycmpHelper(
                            node,
                            cg,
+                           false,
                            true,  //isEqualCmp
                            0,     //cmpValue. It means it is equivalent to do "arraycmp(A,B) == 0"
                            NULL,  //compareTarget
                            NULL,  //ificmpNode
+                           true,
                            true);  //needResultReg
          // node->setRegister(resultReg);
          return resultReg;
@@ -11460,10 +11468,12 @@ OMR::Z::TreeEvaluator::arraycmpEvaluator(TR::Node * node, TR::CodeGenerator * cg
          resultReg = TR::TreeEvaluator::arraycmpHelper(
                         node,
                         cg,
+                        false,
                         true,  //isEqualCmp
                         0,     //cmpValue. It means it is equivalent to do "arraycmp(A,B) == 0"
                         NULL,  //compareTarget
                         NULL,  //ificmpNode
+                        true,
                         true);  //needResultReg
 
          // node->setRegister(resultReg);
