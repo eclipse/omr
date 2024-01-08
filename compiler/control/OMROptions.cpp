@@ -2727,8 +2727,8 @@ OMR::Options::jitPreProcess()
          self()->setOption(TR_DisableZNext);
          }
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_S390)
-      // Dual TLH disabled on default on X and Z
+#if defined(TR_HOST_S390)
+      // Dual TLH disabled on default on Z
       self()->setOption(TR_DisableDualTLH);
 #endif
 
