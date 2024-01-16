@@ -130,6 +130,8 @@ public:
    bool getSupportsHardwareRound() { return false; }
    bool getSupportsHardwareCopySign() { return false; }
    bool hasPopulationCountInstruction() { return false; }
+   bool hasBitCompressInstruction() { return false; }
+   bool hasBitExpandInstruction() { return false; }
    bool supportsDecimalFloatingPoint() { return false; }
    bool hasFPU() { return true; }
 

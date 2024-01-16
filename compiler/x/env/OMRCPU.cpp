@@ -165,6 +165,24 @@ OMR::X86::CPU::supportsTransactionalMemoryInstructions()
    }
 
 bool
+OMR::X86::CPU::hasBitCompressInstruction()
+   {
+   if (TR::Compiler->omrPortLib == NULL)
+      return TR::CodeGenerator::getX86ProcessorInfo().supportsBMI2();
+
+   return self()->supportsFeature(OMR_FEATURE_X86_BMI2);
+   }
+
+bool
+OMR::X86::CPU::hasBitExpandInstruction()
+   {
+   if (TR::Compiler->omrPortLib == NULL)
+      return TR::CodeGenerator::getX86ProcessorInfo().supportsBMI2();
+
+   return self()->supportsFeature(OMR_FEATURE_X86_BMI2);
+   }
+
+bool
 OMR::X86::CPU::isGenuineIntel()
    {
    if (TR::Compiler->omrPortLib == NULL)

@@ -220,6 +220,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *overflowCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ibyteswapEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *bitpermuteEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *compressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *expandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *PrefetchEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *BBStartEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *BBEndEvaluator(TR::Node *node, TR::CodeGenerator *cg);
