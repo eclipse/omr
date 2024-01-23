@@ -33,11 +33,11 @@ int32_t ineg(int32_t l) {
     return -l;
 }
 
-int32_t iabs(int32_t l) { 
-   if (l >= 0) 
+int32_t iabs(int32_t l) {
+   if (l >= 0)
       return l;
-   else 
-      return -1 * l; 
+   else
+      return -1 * l;
 }
 
 int32_t ibyteswap(int32_t l) {
@@ -45,18 +45,6 @@ int32_t ibyteswap(int32_t l) {
          | ((l <<  8) & 0x00ff0000)
          | ((l >>  8) & 0x0000ff00)
          | ((l >> 24) & 0x000000ff);
-}
-
-int32_t ior(int32_t l, int32_t r) {
-    return l | r;
-}
-
-int32_t iand(int32_t l, int32_t r) {
-    return l & r;
-}
-
-int32_t ixor(int32_t l, int32_t r) {
-    return l ^ r;
 }
 
 int64_t lbyteswap(int64_t l) {
@@ -70,20 +58,23 @@ int64_t lbyteswap(int64_t l) {
          | ((l >> 56) & 0x00000000000000ff);
 }
 
-int64_t lor(int64_t l, int64_t r) {
+int64_t lneg(int64_t l) {
+    return l == INT64_MIN ? INT64_MIN : -l;
+}
+
+template <typename int_t>
+int_t or_(int_t l, int_t r) {
     return l | r;
 }
 
-int64_t land(int64_t l, int64_t r) {
+template <typename int_t>
+int_t and_(int_t l, int_t r) {
     return l & r;
 }
 
-int64_t lxor(int64_t l, int64_t r) {
+template <typename int_t>
+int_t xor_(int_t l, int_t r) {
     return l ^ r;
-}
-
-int64_t lneg(int64_t l) {
-    return l == INT64_MIN ? INT64_MIN : -l;
 }
 
 class Int16LogicalUnary : public TRTest::UnaryOpTest<int16_t> {};
@@ -159,7 +150,7 @@ INSTANTIATE_TEST_CASE_P(LogicalTest, Int16LogicalUnary, ::testing::Combine(
         std::tuple<const char*, int16_t(*)(int16_t)>("sbyteswap", sbyteswap)
         )));
 
-class Int32LogicalUnary : public TRTest::UnaryOpTest<int32_t> {}; 
+class Int32LogicalUnary : public TRTest::UnaryOpTest<int32_t> {};
 
 TEST_P(Int32LogicalUnary, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
@@ -216,6 +207,133 @@ INSTANTIATE_TEST_CASE_P(LogicalTest, Int32LogicalUnary, ::testing::Combine(
         std::tuple<const char*, int32_t(*)(int32_t)>("iabs", iabs)
     )));
 
+class Int8LogicalBinary : public TRTest::BinaryOpTest<int8_t> {};
+
+TEST_P(Int8LogicalBinary, UsingConst) {
+    auto param = TRTest::to_struct(GetParam());
+
+    char inputTrees[160] = {0};
+    std::snprintf(inputTrees, 160,
+        "(method return=Int8"
+        "  (block"
+        "    (ireturn"
+        "      (b2i"
+        "        (%s"
+        "          (bconst %" OMR_PRId8 ")"
+        "          (bconst %" OMR_PRId8 ") ) ) ) ) )",
+        param.opcode.c_str(), param.lhs, param.rhs);
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<int8_t (*)(void)>();
+    volatile auto exp = param.oracle(param.lhs, param.rhs);
+    volatile auto act = entry_point();
+    ASSERT_EQ(exp, act);
+}
+
+TEST_P(Int8LogicalBinary, UsingLoadParam) {
+    auto param = TRTest::to_struct(GetParam());
+
+    char inputTrees[160] = {0};
+    std::snprintf(inputTrees, 160,
+        "(method return=Int8 args=[Int8, Int8]"
+        "  (block"
+        "    (ireturn"
+        "      (b2i"
+        "        (%s"
+        "          (bload parm=0)"
+        "          (bload parm=1) ) ) ) ) )",
+        param.opcode.c_str());
+
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<int8_t (*)(int8_t, int8_t)>();
+    ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
+}
+
+INSTANTIATE_TEST_CASE_P(LogicalTest, Int8LogicalBinary, ::testing::Combine(
+    ::testing::ValuesIn(TRTest::const_value_pairs<int8_t,int8_t>()),
+    ::testing::Values(
+        std::tuple<const char*, int8_t(*)(int8_t, int8_t)>("bor", or_),
+        std::tuple<const char*, int8_t(*)(int8_t, int8_t)>("band", and_),
+        std::tuple<const char*, int8_t(*)(int8_t, int8_t)>("bxor", xor_)
+   )));
+
+
+class Int16LogicalBinary : public TRTest::BinaryOpTest<int16_t> {};
+
+TEST_P(Int16LogicalBinary, UsingConst) {
+    auto param = TRTest::to_struct(GetParam());
+
+    char inputTrees[160] = {0};
+    std::snprintf(inputTrees, 160,
+        "(method return=Int16"
+        "  (block"
+        "    (ireturn"
+        "      (s2i"
+        "        (%s"
+        "          (sconst %" OMR_PRId16 ")"
+        "          (sconst %" OMR_PRId16 ") ) ) ) ) )",
+        param.opcode.c_str(), param.lhs, param.rhs);
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<int16_t (*)(void)>();
+    volatile auto exp = param.oracle(param.lhs, param.rhs);
+    volatile auto act = entry_point();
+    ASSERT_EQ(exp, act);
+}
+
+TEST_P(Int16LogicalBinary, UsingLoadParam) {
+    auto param = TRTest::to_struct(GetParam());
+
+    char inputTrees[160] = {0};
+    std::snprintf(inputTrees, 160,
+        "(method return=Int16 args=[Int16, Int16]"
+        "  (block"
+        "    (ireturn"
+        "      (s2i"
+        "        (%s"
+        "          (sload parm=0)"
+        "          (sload parm=1) ) ) ) ) )",
+        param.opcode.c_str());
+
+    auto trees = parseString(inputTrees);
+
+    ASSERT_NOTNULL(trees);
+
+    Tril::DefaultCompiler compiler(trees);
+
+    ASSERT_EQ(0, compiler.compile()) << "Compilation failed unexpectedly\n" << "Input trees: " << inputTrees;
+
+    auto entry_point = compiler.getEntryPoint<int16_t (*)(int16_t, int16_t)>();
+    ASSERT_EQ(param.oracle(param.lhs, param.rhs), entry_point(param.lhs, param.rhs));
+}
+
+INSTANTIATE_TEST_CASE_P(LogicalTest, Int16LogicalBinary, ::testing::Combine(
+    ::testing::ValuesIn(TRTest::const_value_pairs<int16_t,int16_t>()),
+    ::testing::Values(
+        std::tuple<const char*, int16_t(*)(int16_t, int16_t)>("sor", or_),
+        std::tuple<const char*, int16_t(*)(int16_t, int16_t)>("sand", and_),
+        std::tuple<const char*, int16_t(*)(int16_t, int16_t)>("sxor", xor_)
+   )));
+
 class Int32LogicalBinary : public TRTest::BinaryOpTest<int32_t> {};
 
 TEST_P(Int32LogicalBinary, UsingConst) {
@@ -258,9 +376,9 @@ TEST_P(Int32LogicalBinary, UsingLoadParam) {
 INSTANTIATE_TEST_CASE_P(LogicalTest, Int32LogicalBinary, ::testing::Combine(
     ::testing::ValuesIn(TRTest::const_value_pairs<int32_t,int32_t>()),
     ::testing::Values(
-        std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ior", ior),
-        std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("iand", iand),
-        std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ixor", ixor)
+        std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ior", or_),
+        std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("iand", and_),
+        std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ixor", xor_)
     )));
 
 class Int64LogicalBinary : public TRTest::BinaryOpTest<int64_t> {};
@@ -269,7 +387,7 @@ TEST_P(Int64LogicalBinary, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160, 
+    std::snprintf(inputTrees, 160,
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -295,13 +413,13 @@ TEST_P(Int64LogicalBinary, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160, 
+    std::snprintf(inputTrees, 160,
         "(method return=Int64 args=[Int64, Int64]"
         "  (block"
         "    (lreturn"
         "      (%s"
         "        (lload parm=0)"
-        "        (lload parm=1) ) ) ) )", 
+        "        (lload parm=1) ) ) ) )",
         param.opcode.c_str());
 
     auto trees = parseString(inputTrees);
@@ -317,14 +435,14 @@ TEST_P(Int64LogicalBinary, UsingLoadParam) {
 }
 
 INSTANTIATE_TEST_CASE_P(LogicalTest, Int64LogicalBinary, ::testing::Combine(
-	::testing::ValuesIn(TRTest::const_value_pairs<int64_t,int64_t>()),
-	::testing::Values(
-		std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lor", lor),
-		std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("land", land),
-		std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lxor", lxor)
+    ::testing::ValuesIn(TRTest::const_value_pairs<int64_t,int64_t>()),
+    ::testing::Values(
+        std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lor", or_),
+        std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("land", and_),
+        std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lxor", xor_)
    )));
 
-                
+
 class Int64LogicalUnary : public TRTest::UnaryOpTest<int64_t> {};
 
 TEST_P(Int64LogicalUnary, UsingConst) {
