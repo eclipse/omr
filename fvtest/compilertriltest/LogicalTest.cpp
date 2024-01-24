@@ -23,6 +23,7 @@
 #include "OpCodeTest.hpp"
 #include "default_compiler.hpp"
 #include "omrformatconsts.h"
+#include <limits>
 
 int16_t sbyteswap(int16_t l) {
     return ((l << 8) & 0xff00)
@@ -75,6 +76,36 @@ int_t and_(int_t l, int_t r) {
 template <typename int_t>
 int_t xor_(int_t l, int_t r) {
     return l ^ r;
+}
+
+template <typename int_t>
+static inline int_t compressbits(int_t src, int_t mask) {
+    int_t res = 0;
+    int k = 0;
+    const int_t sign_mask = ~std::numeric_limits<int_t>::min();
+    while (mask) {
+        if (mask & 1) {
+            res |= (src & 1) << k;
+            k++;
+        }
+        mask = (mask >> 1) & sign_mask;
+        src = (src >> 1) & sign_mask;
+    }
+    return res;
+}
+
+template <typename int_t>
+static inline int_t expandbits(int_t src, int_t mask) {
+    int_t res = 0;
+    const int_t sign_mask = ~std::numeric_limits<int_t>::min();
+    for (int n = 0; mask; n++) {
+        if (mask & 1) {
+            res |= (src & 1) << n;
+            src = (src >> 1) & sign_mask;
+        }
+        mask = (mask >> 1) & sign_mask;
+    }
+    return res;
 }
 
 class Int16LogicalUnary : public TRTest::UnaryOpTest<int16_t> {};
@@ -212,6 +243,10 @@ class Int8LogicalBinary : public TRTest::BinaryOpTest<int8_t> {};
 TEST_P(Int8LogicalBinary, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);
+    SKIP_IF(param.opcode == "bcompressbits" && !cpu.hasBitCompressInstruction(), MissingImplementation);
+    SKIP_IF(param.opcode == "bexpandbits" && !cpu.hasBitExpandInstruction(), MissingImplementation);
+
     char inputTrees[160] = {0};
     std::snprintf(inputTrees, 160,
         "(method return=Int8"
@@ -238,6 +273,10 @@ TEST_P(Int8LogicalBinary, UsingConst) {
 
 TEST_P(Int8LogicalBinary, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
+
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);
+    SKIP_IF(param.opcode == "bcompressbits" && !cpu.hasBitCompressInstruction(), MissingImplementation);
+    SKIP_IF(param.opcode == "bexpandbits" && !cpu.hasBitExpandInstruction(), MissingImplementation);
 
     char inputTrees[160] = {0};
     std::snprintf(inputTrees, 160,
@@ -267,7 +306,9 @@ INSTANTIATE_TEST_CASE_P(LogicalTest, Int8LogicalBinary, ::testing::Combine(
     ::testing::Values(
         std::tuple<const char*, int8_t(*)(int8_t, int8_t)>("bor", or_),
         std::tuple<const char*, int8_t(*)(int8_t, int8_t)>("band", and_),
-        std::tuple<const char*, int8_t(*)(int8_t, int8_t)>("bxor", xor_)
+        std::tuple<const char*, int8_t(*)(int8_t, int8_t)>("bxor", xor_),
+        std::tuple<const char*, int8_t(*)(int8_t, int8_t)>("bcompressbits", compressbits),
+        std::tuple<const char*, int8_t(*)(int8_t, int8_t)>("bexpandbits", expandbits)
    )));
 
 
@@ -275,6 +316,10 @@ class Int16LogicalBinary : public TRTest::BinaryOpTest<int16_t> {};
 
 TEST_P(Int16LogicalBinary, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
+
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);
+    SKIP_IF(param.opcode == "scompressbits" && !cpu.hasBitCompressInstruction(), MissingImplementation);
+    SKIP_IF(param.opcode == "sexpandbits" && !cpu.hasBitExpandInstruction(), MissingImplementation);
 
     char inputTrees[160] = {0};
     std::snprintf(inputTrees, 160,
@@ -302,6 +347,10 @@ TEST_P(Int16LogicalBinary, UsingConst) {
 
 TEST_P(Int16LogicalBinary, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
+
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);
+    SKIP_IF(param.opcode == "scompressbits" && !cpu.hasBitCompressInstruction(), MissingImplementation);
+    SKIP_IF(param.opcode == "sexpandbits" && !cpu.hasBitExpandInstruction(), MissingImplementation);
 
     char inputTrees[160] = {0};
     std::snprintf(inputTrees, 160,
@@ -331,13 +380,19 @@ INSTANTIATE_TEST_CASE_P(LogicalTest, Int16LogicalBinary, ::testing::Combine(
     ::testing::Values(
         std::tuple<const char*, int16_t(*)(int16_t, int16_t)>("sor", or_),
         std::tuple<const char*, int16_t(*)(int16_t, int16_t)>("sand", and_),
-        std::tuple<const char*, int16_t(*)(int16_t, int16_t)>("sxor", xor_)
+        std::tuple<const char*, int16_t(*)(int16_t, int16_t)>("sxor", xor_),
+        std::tuple<const char*, int16_t(*)(int16_t, int16_t)>("scompressbits", compressbits),
+        std::tuple<const char*, int16_t(*)(int16_t, int16_t)>("sexpandbits", expandbits)
    )));
 
 class Int32LogicalBinary : public TRTest::BinaryOpTest<int32_t> {};
 
 TEST_P(Int32LogicalBinary, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
+
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);
+    SKIP_IF(param.opcode == "icompressbits" && !cpu.hasBitCompressInstruction(), MissingImplementation);
+    SKIP_IF(param.opcode == "iexpandbits" && !cpu.hasBitExpandInstruction(), MissingImplementation);
 
     char inputTrees[120] = {0};
     std::snprintf(inputTrees, 120, "(method return=Int32 (block (ireturn (%s (iconst %d) (iconst %d)) )))", param.opcode.c_str(), param.lhs, param.rhs);
@@ -357,6 +412,10 @@ TEST_P(Int32LogicalBinary, UsingConst) {
 
 TEST_P(Int32LogicalBinary, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
+
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);
+    SKIP_IF(param.opcode == "icompressbits" && !cpu.hasBitCompressInstruction(), MissingImplementation);
+    SKIP_IF(param.opcode == "iexpandbits" && !cpu.hasBitExpandInstruction(), MissingImplementation);
 
     char inputTrees[120] = {0};
     std::snprintf(inputTrees, 120, "(method return=Int32 args=[Int32, Int32] (block (ireturn (%s (iload parm=0) (iload parm=1)) )))", param.opcode.c_str());
@@ -378,13 +437,19 @@ INSTANTIATE_TEST_CASE_P(LogicalTest, Int32LogicalBinary, ::testing::Combine(
     ::testing::Values(
         std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ior", or_),
         std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("iand", and_),
-        std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ixor", xor_)
+        std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("ixor", xor_),
+        std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("icompressbits", compressbits),
+        std::tuple<const char*, int32_t(*)(int32_t, int32_t)>("iexpandbits", expandbits)
     )));
 
 class Int64LogicalBinary : public TRTest::BinaryOpTest<int64_t> {};
 
 TEST_P(Int64LogicalBinary, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
+
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);
+    SKIP_IF(param.opcode == "lcompressbits" && !cpu.hasBitCompressInstruction(), MissingImplementation);
+    SKIP_IF(param.opcode == "lexpandbits" && !cpu.hasBitExpandInstruction(), MissingImplementation);
 
     char inputTrees[160] = {0};
     std::snprintf(inputTrees, 160,
@@ -411,6 +476,10 @@ TEST_P(Int64LogicalBinary, UsingConst) {
 
 TEST_P(Int64LogicalBinary, UsingLoadParam) {
     auto param = TRTest::to_struct(GetParam());
+
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);
+    SKIP_IF(param.opcode == "lcompressbits" && !cpu.hasBitCompressInstruction(), MissingImplementation);
+    SKIP_IF(param.opcode == "lexpandbits" && !cpu.hasBitExpandInstruction(), MissingImplementation);
 
     char inputTrees[160] = {0};
     std::snprintf(inputTrees, 160,
@@ -439,7 +508,9 @@ INSTANTIATE_TEST_CASE_P(LogicalTest, Int64LogicalBinary, ::testing::Combine(
     ::testing::Values(
         std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lor", or_),
         std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("land", and_),
-        std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lxor", xor_)
+        std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lxor", xor_),
+        std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lcompressbits", compressbits),
+        std::tuple<const char*, int64_t(*)(int64_t, int64_t)>("lexpandbits", expandbits)
    )));
 
 
