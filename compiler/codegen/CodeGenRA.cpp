@@ -2829,7 +2829,7 @@ OMR::CodeGenerator::simulateNodeEvaluation(TR::Node *node, TR_RegisterPressureSt
    // don't properly account for cases where one child's result must live
    // across the evaluation of another child.
    //
-   char *tag = NULL;
+   const char *tag = NULL;
    if (  nodeGotFoldedIntoMemref(node, state, self())
       && self()->simulatedNodeState(node)._willBeRematerialized == 0 // remat nodes have already had their children incremented, so we must decrement them
       ){

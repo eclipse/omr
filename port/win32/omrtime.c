@@ -29,7 +29,6 @@
 void shutdown_timer(void);
 int32_t init_timer(void);
 
-#define OMRTIME_NANOSECONDS_PER_SECOND ((long double) 1000000000)
 #define UNIX_EPOCH_TIME_DELTA J9CONST_I64(116444736000000000)
 /**
  * Query OS for timestamp.
@@ -178,12 +177,12 @@ omrtime_nano_time(struct OMRPortLibrary *portLibrary)
 		ticks = (int64_t)GetTickCount();
 	}
 
-	if (PPG_time_hiresClockFrequency == OMRTIME_NANOSECONDS_PER_SECOND) {
+	if (OMRPORT_TIME_DELTA_IN_NANOSECONDS == PPG_time_hiresClockFrequency) {
 		nanos = ticks;
-	} else if (PPG_time_hiresClockFrequency < OMRTIME_NANOSECONDS_PER_SECOND) {
-		nanos = (int64_t)(ticks * (OMRTIME_NANOSECONDS_PER_SECOND / PPG_time_hiresClockFrequency));
+	} else if (PPG_time_hiresClockFrequency < OMRPORT_TIME_DELTA_IN_NANOSECONDS) {
+		nanos = (int64_t)(ticks * ((long double)OMRPORT_TIME_DELTA_IN_NANOSECONDS / PPG_time_hiresClockFrequency));
 	} else {
-		nanos = (int64_t)(ticks / (PPG_time_hiresClockFrequency / OMRTIME_NANOSECONDS_PER_SECOND));
+		nanos = (int64_t)(ticks / (PPG_time_hiresClockFrequency / (long double)OMRPORT_TIME_DELTA_IN_NANOSECONDS));
 	}
 
 	return nanos;

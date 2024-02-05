@@ -18,7 +18,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-#ifdef J9ZTPF
+#ifdef OMRZTPF
 #define __TPF_DO_NOT_MAP_ATOE_REMOVE
 #endif
 
@@ -319,7 +319,7 @@ TR_InlinerBase::setInlineThresholds(TR::ResolvedMethodSymbol *callerSymbol)
 
    _callerWeightLimit -= size;
 
-   _nodeCountThreshold = 16000;
+   _nodeCountThreshold = comp()->getOption(TR_NotCompileTimeSensitive) ? 16000: 3000;
    _methodInWarmBlockByteCodeSizeThreshold = _methodByteCodeSizeThreshold = 155;
    _methodInColdBlockByteCodeSizeThreshold = 30;
    _maxInliningCallSites = 4095;
@@ -707,11 +707,11 @@ OMR_InlinerPolicy::inlineRecognizedMethod(TR::RecognizedMethod method)
 
 // only dumbinliner uses this and includes checking for variable initialization
 bool
-TR_DumbInliner::tryToInline(char *message, TR_CallTarget *calltarget)
+TR_DumbInliner::tryToInline(const char *message, TR_CallTarget *calltarget)
    {
    TR_ResolvedMethod *method = calltarget->_calleeSymbol->getResolvedMethod();
 
-   if (getPolicy()->tryToInline(calltarget,NULL,true))
+   if (getPolicy()->tryToInline(calltarget, NULL, true))
       {
       if (comp()->trace(OMR::inlining))
          traceMsg(comp(), "tryToInline pattern matched; %s for %s\n", message, method->signature(comp()->trMemory()));
@@ -4258,11 +4258,11 @@ void TR_InlinerBase::applyPolicyToTargets(TR_CallStack *callStack, TR_CallSite *
 
 static bool traceIfMatchesPattern(TR::Compilation* comp)
    {
-   static char* cRegex = feGetEnv ("TR_printIfRegex");
+   static const char *cRegex = feGetEnv ("TR_printIfRegex");
 
    if (cRegex && comp->getOptions() && comp->getOptions()->getDebug())
       {
-      static TR::SimpleRegex * regex = TR::SimpleRegex::create(cRegex);
+      static TR::SimpleRegex *regex = TR::SimpleRegex::create(cRegex);
       if (TR::SimpleRegex::match(regex, comp->signature(), false))
          {
          return true;
@@ -5729,7 +5729,7 @@ TR_CallSite::calleeClass()
       TR::StackMemoryRegion stackMemoryRegion(*_comp->trMemory());
 
       int32_t len = _interfaceMethod->classNameLength();
-      char * s = TR::Compiler->cls.classNameToSignature(_interfaceMethod->classNameChars(), len, _comp, stackAlloc);
+      char *s = TR::Compiler->cls.classNameToSignature(_interfaceMethod->classNameChars(), len, _comp, stackAlloc);
       TR_OpaqueClassBlock *result = _comp->fe()->getClassFromSignature(s, len, _callerResolvedMethod, true);
 
       return result;
@@ -6152,7 +6152,7 @@ const char * TR_InlinerTracer::getGuardTypeString(TR_VirtualGuardSelection *guar
       return "???Test";
    }
 
-TR_InlinerDelimiter::TR_InlinerDelimiter(TR_InlinerTracer *tracer, char * tag)
+TR_InlinerDelimiter::TR_InlinerDelimiter(TR_InlinerTracer *tracer, const char *tag)
    :_tracer(tracer),_tag(tag)
    {
    debugTrace(tracer,"<%s>",_tag);

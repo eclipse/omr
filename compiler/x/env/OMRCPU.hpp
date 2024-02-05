@@ -67,6 +67,7 @@ public:
    uint32_t getX86ProcessorFeatureFlags();
    uint32_t getX86ProcessorFeatureFlags2();
    uint32_t getX86ProcessorFeatureFlags8();
+   uint32_t getX86ProcessorFeatureFlags10();
 
    bool getSupportsHardwareSQRT();
 

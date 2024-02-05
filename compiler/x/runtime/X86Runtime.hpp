@@ -84,7 +84,8 @@ inline bool jitGetCPUID(TR_X86CPUIDBuffer* pBuffer)
       pBuffer->_featureFlags2      = CPUInfo[ECX];
       // EAX = 7, ECX = 0
       cpuidex(CPUInfo, 7, 0);
-      pBuffer->_featureFlags8 = CPUInfo[EBX];
+      pBuffer->_featureFlags8      = CPUInfo[EBX];
+      pBuffer->_featureFlags10     = CPUInfo[ECX];
 
       // Check for XSAVE
       if(pBuffer->_featureFlags2 & TR_OSXSAVE)

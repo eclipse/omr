@@ -102,7 +102,7 @@ TR_Debug::findOrCreateFilters(bool loadLimit)
    }
 
 TR_FilterBST *
-TR_Debug::addFilter(char * & filterString, int32_t scanningExclude, int32_t optionSetIndex, int32_t lineNum, TR::CompilationFilters * anyFilters)
+TR_Debug::addFilter(const char *& filterString, int32_t scanningExclude, int32_t optionSetIndex, int32_t lineNum, TR::CompilationFilters * anyFilters)
    {
    uint32_t filterType = scanningExclude ? TR_FILTER_EXCLUDE_NAME_ONLY : TR_FILTER_NAME_ONLY;
 
@@ -115,7 +115,7 @@ TR_Debug::addFilter(char * & filterString, int32_t scanningExclude, int32_t opti
    int32_t nameLength;
    if (*filterString == '{')
       {
-      char *filterCursor = filterString;
+      const char *filterCursor = filterString;
       filterType = scanningExclude ? TR_FILTER_EXCLUDE_REGEX : TR_FILTER_REGEX;
       filterBST->setFilterType(filterType);
 
@@ -184,7 +184,7 @@ TR_Debug::addFilter(char * & filterString, int32_t scanningExclude, int32_t opti
    }
 
 TR_FilterBST *
-TR_Debug::addFilter(char * & filterString, int32_t scanningExclude, int32_t optionSetIndex, int32_t lineNum, bool loadLimit)
+TR_Debug::addFilter(const char *& filterString, int32_t scanningExclude, int32_t optionSetIndex, int32_t lineNum, bool loadLimit)
    {
    if (loadLimit)
       {
@@ -254,7 +254,7 @@ TR_Debug::scanInlineFilters(FILE * inlineFile, int32_t & lineNumber, TR::Compila
          }
       else if (includeFlag == '+' || includeFlag == '-')
          {
-         char *p = limitReadBuffer+1;
+         const char *p = limitReadBuffer + 1;
          int32_t optionSet;
          if (*p >= '0' && *p <= '9')
             optionSet = *(p++) - '0';
@@ -322,12 +322,12 @@ TR_Debug::scanInlineFilters(FILE * inlineFile, int32_t & lineNumber, TR::Compila
  *     The unmodified parameter option if there is a problem with the file, aborting JIT initialization.
  *     Otherwise a pointer to the next comma or NULL.
  */
-char *
-TR_Debug::inlinefileOption(char *option, void *base, TR::OptionTable *entry, TR::Options * cmdLineOptions)
+const char *
+TR_Debug::inlinefileOption(const char *option, void *base, TR::OptionTable *entry, TR::Options *cmdLineOptions)
    {
-   char *endOpt = option;
-   char *name = option;
-   char *fail = option;
+   const char *endOpt = option;
+   const char *name = option;
+   const char *fail = option;
 
    // move to the end of this option
    for (; *endOpt && *endOpt != ','; endOpt++)
@@ -406,12 +406,12 @@ TR_Debug::inlinefileOption(char *option, void *base, TR::OptionTable *entry, TR:
  *     The unmodified parameter option if there is a problem with the file, aborting JIT initialization.
  *     Otherwise a pointer to the next comma or NULL.
  */
-char *
-TR_Debug::limitfileOption(char *option, void *base, TR::OptionTable *entry, TR::Options * cmdLineOptions, bool loadLimit, TR_PseudoRandomNumbersListElement **pseudoRandomListHeadPtr)
+const char *
+TR_Debug::limitfileOption(const char *option, void *base, TR::OptionTable *entry, TR::Options * cmdLineOptions, bool loadLimit, TR_PseudoRandomNumbersListElement **pseudoRandomListHeadPtr)
    {
-   char *endOpt = option;
-   char *name = option;
-   char *fail = option;
+   const char *endOpt = option;
+   const char *name = option;
+   const char *fail = option;
 
    bool range = false;
    if (*endOpt == '(')
@@ -470,7 +470,7 @@ TR_Debug::limitfileOption(char *option, void *base, TR::OptionTable *entry, TR::
          char includeFlag = limitReadBuffer[0];
          if (strncmp(limitReadBuffer,"-precompileMethod",17) == 0)
             {
-            char *p = limitReadBuffer+18;
+            const char *p = limitReadBuffer + 18;
             if (!addFilter(p, 0, 0, lineNumber, loadLimit))
                {
                limitFileError = true;
@@ -479,7 +479,7 @@ TR_Debug::limitfileOption(char *option, void *base, TR::OptionTable *entry, TR::
             }
          else if (strncmp(limitReadBuffer,"-noprecompileMethod",19) == 0)
             {
-            char *p = limitReadBuffer+20;
+            const char *p = limitReadBuffer + 20;
             if (!addFilter(p, 1, 0, lineNumber, loadLimit))
                {
                limitFileError = true;
@@ -488,7 +488,7 @@ TR_Debug::limitfileOption(char *option, void *base, TR::OptionTable *entry, TR::
             }
          else if (includeFlag == '+' || includeFlag == '-')
             {
-            char *p = limitReadBuffer+1;
+            const char *p = limitReadBuffer + 1;
             int32_t optionSet;
             if (*p >= '0' && *p <= '9')
                optionSet = *(p++) - '0';
@@ -611,10 +611,10 @@ TR_Debug::limitfileOption(char *option, void *base, TR::OptionTable *entry, TR::
    return endOpt;
    }
 
-char *
-TR_Debug::limitOption(char *option, void *base, TR::OptionTable *entry, TR::Options * cmdLineOptions, TR::CompilationFilters *&filters)
+const char *
+TR_Debug::limitOption(const char *option, void *base, TR::OptionTable *entry, TR::Options * cmdLineOptions, TR::CompilationFilters *&filters)
    {
-   char *p = option;
+   const char *p = option;
 
    filters = findOrCreateFilters(filters);
    TR_FilterBST *filter = addFilter(p, static_cast<int32_t>(entry->parm1), 0, 0, filters);
@@ -651,7 +651,7 @@ TR_Debug::limitOption(char *option, void *base, TR::OptionTable *entry, TR::Opti
       // If an option subset was found, save the information for later
       // processing
       //
-      char *startOptString = ++p;
+      const char *startOptString = ++p;
       int32_t parenNest = 1;
       for (; *p; p++)
          {
@@ -682,8 +682,8 @@ TR_Debug::limitOption(char *option, void *base, TR::OptionTable *entry, TR::Opti
    return p;
    }
 
-char *
-TR_Debug::limitOption(char *option, void *base, TR::OptionTable *entry, TR::Options * cmdLineOptions, bool loadLimit)
+const char *
+TR_Debug::limitOption(const char *option, void *base, TR::OptionTable *entry, TR::Options * cmdLineOptions, bool loadLimit)
    {
    if (loadLimit)
       {
@@ -931,7 +931,7 @@ TR_Debug::printFilterTree(TR_FilterBST *root)
    }
 
 int32_t
-TR_Debug::scanFilterName(char *string, TR_FilterBST *filter)
+TR_Debug::scanFilterName(const char *string, TR_FilterBST *filter)
    {
    // help for OMR parsing
    bool seenFileName = false;
@@ -941,11 +941,11 @@ TR_Debug::scanFilterName(char *string, TR_FilterBST *filter)
    // Walk the filter to determine the type.
    //
    //TR_VerboseLog::writeLine("filterName: %s", string);
-   char *nameChars = NULL;
+   const char *nameChars = NULL;
    int32_t nameLen = 0;
-   char *classChars = NULL;
+   const char *classChars = NULL;
    int32_t classLen = 0;
-   char *signatureChars = string;
+   const char *signatureChars = string;
    int32_t signatureLen = 0;
    char  filterType = filter->getFilterType();
    if (*string == '/' || *string == '.') // hack that works for linux
@@ -1027,7 +1027,7 @@ TR_Debug::scanFilterName(char *string, TR_FilterBST *filter)
    if (omrPattern)
       {
       // need to swap name and signature, since name is currently the line number
-      char *tempChars = nameChars;
+      const char *tempChars = nameChars;
       int32_t tempLen = nameLen;
       nameChars = signatureChars;
       nameLen = signatureLen;

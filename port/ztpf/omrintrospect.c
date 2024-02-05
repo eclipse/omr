@@ -885,7 +885,7 @@ resume_all_preempted(struct PlatformWalkData *data)
 
 
 int  __attribute__((optimize(0)))
-J9ZTPF_getcontext( void *region )
+OMRZTPF_getcontext( void *region )
 {
         register char *rgn asm("r2") = (char *)region;
         /*
@@ -997,7 +997,7 @@ setup_native_thread(J9ThreadWalkState *state, thread_context *sigContext, int he
 			memcpy(state->current_thread->context, ((OMRUnixSignalInfo*)sigContext)->platformSignalInfo.context, size);
 		} else if (state->current_thread->thread_id == omrthread_get_ras_tid()) {
 			/* return context for current thread */
-			J9ZTPF_getcontext((ucontext_t*)state->current_thread->context);
+			OMRZTPF_getcontext((ucontext_t*)state->current_thread->context);
 		} else {
 			memcpy(state->current_thread->context, (void*)data->thread->context, size);
 		}

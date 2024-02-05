@@ -1002,7 +1002,7 @@ void TR_OrderBlocks::addRemainingSuccessorsToListHWProfile(TR::CFGNode *block, T
 // pattern: block has goto to fall-through block
 //   block assumed to end in a goto
 // returns TRUE if the pattern was found and replaced
-bool TR_OrderBlocks::peepHoleGotoToFollowing(TR::CFG *cfg, TR::Block *block, TR::Block *followingBlock, char *title)
+bool TR_OrderBlocks::peepHoleGotoToFollowing(TR::CFG *cfg, TR::Block *block, TR::Block *followingBlock, const char *title)
    {
    // pattern: block has goto to fall-through block
    TR::Node *gotoNode = block->getLastRealTreeTop()->getNode();
@@ -1024,7 +1024,7 @@ bool TR_OrderBlocks::peepHoleGotoToFollowing(TR::CFG *cfg, TR::Block *block, TR:
 // pattern: block contains goto to a block that only contains a goto
 //   block assumed to end in a goto
 // returns TRUE if the pattern was found and replaced
-bool TR_OrderBlocks::peepHoleGotoToGoto(TR::CFG *cfg, TR::Block *block, TR::Node *gotoNode, TR::Block *destOfGoto, char *title,
+bool TR_OrderBlocks::peepHoleGotoToGoto(TR::CFG *cfg, TR::Block *block, TR::Node *gotoNode, TR::Block *destOfGoto, const char *title,
                                         TR::BitVector &skippedGotoBlocks)
    {
    if (comp()->getProfilingMode() == JitProfiling)
@@ -1066,7 +1066,7 @@ bool TR_OrderBlocks::peepHoleGotoToGoto(TR::CFG *cfg, TR::Block *block, TR::Node
 // pattern: block contains a goto to an empty block
 //   block assumed to end in a goto
 // returns TRUE if the pattern was found and replaced
-bool TR_OrderBlocks::peepHoleGotoToEmpty(TR::CFG *cfg, TR::Block *block, TR::Node *gotoNode, TR::Block *destOfGoto, char *title)
+bool TR_OrderBlocks::peepHoleGotoToEmpty(TR::CFG *cfg, TR::Block *block, TR::Node *gotoNode, TR::Block *destOfGoto, const char *title)
    {
    if (comp()->getProfilingMode() == JitProfiling)
       return false;
@@ -1098,7 +1098,7 @@ bool TR_OrderBlocks::peepHoleGotoToEmpty(TR::CFG *cfg, TR::Block *block, TR::Nod
    return false;
    }
 
-static bool peepHoleGotoToLoopHeader(TR::CFG *cfg, TR::Block *block, TR::Block *dest, char *title)
+static bool peepHoleGotoToLoopHeader(TR::CFG *cfg, TR::Block *block, TR::Block *dest, const char *title)
    {
    // try to peephole the following:
    // dest:      loopHeader
@@ -1162,7 +1162,7 @@ static bool peepHoleGotoToLoopHeader(TR::CFG *cfg, TR::Block *block, TR::Block *
 // assume block->endsInGoto()
 // returns TRUE if block was removed
 //   currently always returns false because this code can't remove block itself
-void TR_OrderBlocks::peepHoleGotoBlock(TR::CFG *cfg, TR::Block *block, char *title)
+void TR_OrderBlocks::peepHoleGotoBlock(TR::CFG *cfg, TR::Block *block, const char *title)
    {
    TR_ASSERT(block->endsInGoto(), "peepHoleGotoBlock called on block that doesn't end in a goto!");
    bool madeAChange;
@@ -1215,7 +1215,7 @@ void TR_OrderBlocks::removeRedundantBranch(TR::CFG *cfg, TR::Block *block, TR::N
    }
 
 
-bool TR_OrderBlocks::peepHoleBranchToLoopHeader(TR::CFG *cfg, TR::Block *block, TR::Block *fallThrough, TR::Block *dest, char *title)
+bool TR_OrderBlocks::peepHoleBranchToLoopHeader(TR::CFG *cfg, TR::Block *block, TR::Block *fallThrough, TR::Block *dest, const char *title)
    {
    bool success = false;
    TR_Structure *destStructure = dest->getStructureOf();
@@ -1254,9 +1254,9 @@ bool TR_OrderBlocks::peepHoleBranchToLoopHeader(TR::CFG *cfg, TR::Block *block, 
    }
 
 // apply peephole optimizations to blocks that end in a branch and branch around a single goto
-void TR_OrderBlocks::peepHoleBranchAroundSingleGoto(TR::CFG *cfg, TR::Block *block, char *title)
+void TR_OrderBlocks::peepHoleBranchAroundSingleGoto(TR::CFG *cfg, TR::Block *block, const char *title)
    {
-   TR_ASSERT(block->endsInBranch(), "peepHoleBranchBlock called on block that doesn't end in a branch!");
+   TR_ASSERT(block->endsInBranch(), "peepHoleBranchAroundSingleGoto called on block that doesn't end in a branch!");
    TR::Node *branchNode = block->getLastRealTreeTop()->getNode();
    TR::TreeTop *takenEntry = branchNode->getBranchDestination();
    TR::Block *takenBlock = takenEntry->getNode()->getBlock();
@@ -1328,7 +1328,7 @@ void TR_OrderBlocks::peepHoleBranchAroundSingleGoto(TR::CFG *cfg, TR::Block *blo
 // apply peephole optimizations to blocks that end in a branch
 // no looping here because there are only two possible optimizations done but we know which order to try them in
 // assume block->endsInBranch()
-void TR_OrderBlocks::peepHoleBranchBlock(TR::CFG *cfg, TR::Block *block, char *title)
+void TR_OrderBlocks::peepHoleBranchBlock(TR::CFG *cfg, TR::Block *block, const char *title)
    {
    TR_ASSERT(block->endsInBranch(), "peepHoleBranchBlock called on block that doesn't end in a branch!");
    TR::Node *branchNode = block->getLastRealTreeTop()->getNode();
@@ -1400,7 +1400,7 @@ void TR_OrderBlocks::peepHoleBranchBlock(TR::CFG *cfg, TR::Block *block, char *t
    }
 
 // look for a branch with taken block same as fall-through block
-bool TR_OrderBlocks::peepHoleBranchToFollowing(TR::CFG *cfg, TR::Block *block, TR::Block *followingBlock, char *title)
+bool TR_OrderBlocks::peepHoleBranchToFollowing(TR::CFG *cfg, TR::Block *block, TR::Block *followingBlock, const char *title)
    {
    TR_ASSERT(block->endsInBranch(), "peepHoleBranchToFollowing called on block that doesn't end in a branch!");
    TR::Node *branchNode = block->getLastRealTreeTop()->getNode();
@@ -1419,7 +1419,7 @@ bool TR_OrderBlocks::peepHoleBranchToFollowing(TR::CFG *cfg, TR::Block *block, T
    return false;
    }
 
-void TR_OrderBlocks::removeEmptyBlock(TR::CFG *cfg, TR::Block *block, char *title)
+void TR_OrderBlocks::removeEmptyBlock(TR::CFG *cfg, TR::Block *block, const char *title)
    {
    TR_ASSERT(block->getExceptionPredecessors().empty(), "removeEmpty block doesn't deal with empty catch blocks properly");
 
@@ -1487,7 +1487,7 @@ void TR_OrderBlocks::removeEmptyBlock(TR::CFG *cfg, TR::Block *block, char *titl
 // apply a small set of transformations to try to clean up blocks before ordering
 //  repeatedly apply these transformations until none apply
 //  returns TRUE if block still exists after peepholing
-bool TR_OrderBlocks::doPeepHoleBlockCorrections(TR::Block *block, char *title)
+bool TR_OrderBlocks::doPeepHoleBlockCorrections(TR::Block *block, const char *title)
    {
    TR::CFG *cfg             = comp()->getFlowGraph();
 
@@ -1557,7 +1557,7 @@ bool TR_OrderBlocks::doPeepHoleBlockCorrections(TR::Block *block, char *title)
 
 // go through the blocks looking for peephole optimization opportunities
 // return TRUE if blocks were removed during the analysis
-bool TR_OrderBlocks::lookForPeepHoleOpportunities(char *title)
+bool TR_OrderBlocks::lookForPeepHoleOpportunities(const char *title)
    {
    static bool doPeepHoling=(feGetEnv("TR_noBlockOrderPeepholing") == NULL);
    if (!doPeepHoling)
@@ -1586,7 +1586,7 @@ bool TR_OrderBlocks::lookForPeepHoleOpportunities(char *title)
       TR::TreeTop *nextBlockTT = block->getExit()->getNextTreeTop();
       if (trace()) traceMsg(comp(), "\tBlock %d:\n", block->getNumber());
 
-      bool blockStillExists = doPeepHoleBlockCorrections(block,title);
+      bool blockStillExists = doPeepHoleBlockCorrections(block, title);
       tt = nextBlockTT;
       if (!blockStillExists)
          blocksWereRemoved = true;
@@ -2198,9 +2198,9 @@ void checkOrderingConsistency(TR::Compilation *comp)
          {
          if (seenColdBlock)
             {
-            char *fmt= "Non-cold block_%d found after a cold block in method %s\n";
+            const char *fmt = "Non-cold block_%d found after a cold block in method %s\n";
             char *buffer = (char *) comp->trMemory()->allocateStackMemory((strlen(fmt) + strlen(comp->signature()) + 15) * sizeof(char));
-            sprintf(buffer, fmt, block->getNumber(), comp->signature());
+            sprintf(buffer, const_cast<char *>(fmt), block->getNumber(), comp->signature());
             //TR_ASSERT(0, buffer);
             }
          }
@@ -2248,7 +2248,7 @@ void checkOrderingConsistency(TR::Compilation *comp)
    }
 
 
-void TR_BlockOrderingOptimization::dumpBlockOrdering(TR::TreeTop *tt, char *title)
+void TR_BlockOrderingOptimization::dumpBlockOrdering(TR::TreeTop *tt, const char *title)
    {
    traceMsg(comp(), "%s:\n", title? title : "Block ordering");
    unsigned numberOfColdBlocks = 0;
@@ -2289,7 +2289,7 @@ void TR_BlockShuffling::traceBlocks(TR::Block **blocks)
    const int32_t BLOCKS_PER_LINE=30;
    if (trace())
       {
-      char *sep = "";
+      const char *sep = "";
       for (int32_t i = 0; i < _numBlocks; i++)
          {
          traceMsg(comp(), "%s%d", sep, blocks[i]->getNumber());

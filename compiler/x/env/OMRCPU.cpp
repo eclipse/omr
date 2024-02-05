@@ -42,7 +42,9 @@ OMR::X86::CPU::detect(OMRPortLibrary * const omrPortLib)
                                         OMR_FEATURE_X86_POPCNT, OMR_FEATURE_X86_AESNI, OMR_FEATURE_X86_OSXSAVE,
                                         OMR_FEATURE_X86_AVX, OMR_FEATURE_X86_AVX2, OMR_FEATURE_X86_FMA, OMR_FEATURE_X86_HLE,
                                         OMR_FEATURE_X86_RTM, OMR_FEATURE_X86_AVX512F, OMR_FEATURE_X86_AVX512VL,
-                                        OMR_FEATURE_X86_AVX512BW, OMR_FEATURE_X86_AVX512DQ, OMR_FEATURE_X86_AVX512CD
+                                        OMR_FEATURE_X86_AVX512BW, OMR_FEATURE_X86_AVX512DQ, OMR_FEATURE_X86_AVX512CD,
+                                        OMR_FEATURE_X86_AVX512_VBMI2, OMR_FEATURE_X86_AVX512_VPOPCNTDQ,
+                                        OMR_FEATURE_X86_AVX512_BITALG
                                         };
 
    OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
@@ -139,6 +141,15 @@ OMR::X86::CPU::getX86ProcessorFeatureFlags8()
       return self()->queryX86TargetCPUID()->_featureFlags8;
 
    return self()->_processorDescription.features[3];
+   }
+
+uint32_t
+OMR::X86::CPU::getX86ProcessorFeatureFlags10()
+   {
+   if (TR::Compiler->omrPortLib == NULL)
+      return self()->queryX86TargetCPUID()->_featureFlags10;
+
+   return self()->_processorDescription.features[4];
    }
 
 bool
@@ -388,6 +399,12 @@ OMR::X86::CPU::supports_feature_test(uint32_t feature)
          return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512DQ();
       case OMR_FEATURE_X86_AVX512CD:
          return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512CD();
+      case OMR_FEATURE_X86_AVX512_VBMI2:
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VBMI2();
+      case OMR_FEATURE_X86_AVX512_BITALG:
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512BITALG();
+      case OMR_FEATURE_X86_AVX512_VPOPCNTDQ:
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VPOPCNTDQ();
       default:
          return false;
       }
@@ -592,6 +609,15 @@ OMR::X86::CPU::supports_feature_old_api(uint32_t feature)
          break;
       case OMR_FEATURE_X86_AVX512CD:
          supported = TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512CD();
+         break;
+      case OMR_FEATURE_X86_AVX512_VBMI2:
+         supported = TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VBMI2();
+         break;
+      case OMR_FEATURE_X86_AVX512_BITALG:
+         supported = TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512BITALG();
+         break;
+      case OMR_FEATURE_X86_AVX512_VPOPCNTDQ:
+         supported = TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VPOPCNTDQ();
          break;
       case OMR_FEATURE_X86_FMA:
          supported = TR::CodeGenerator::getX86ProcessorInfo().supportsFMA();

@@ -1060,14 +1060,14 @@ omrshsem_openSemaphore(struct OMRPortLibrary *portLibrary, intptr_t fd, char *ba
 				goto failDontUnlink;
 			}
 		} else {
-#if defined(__GNUC__) || defined(AIXPPC) || defined(J9ZTPF)
+#if defined(__GNUC__) || defined(AIXPPC) || defined(OMRZTPF)
 #if defined(OSX)
 			/*Use _key for OSX*/
 			if (buf.sem_perm._key != controlinfo->ftok_key)
 #elif defined(AIXPPC)
 			/*Use .key for AIXPPC*/
 			if (buf.sem_perm.key != controlinfo->ftok_key)
-#elif defined(J9ZTPF)
+#elif defined(OMRZTPF)
 			/*Use .key for z/TPF */
 			if (buf.key != controlinfo->ftok_key)
 #elif defined(__GNUC__)

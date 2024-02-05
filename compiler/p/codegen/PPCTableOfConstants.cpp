@@ -525,7 +525,7 @@ int32_t TR_PPCTableOfConstants::lookUp(TR::SymbolReference *symRef, TR::CodeGene
 
       if (sym->isClassObject())
          {
-         int8_t *className;
+         const char *className;
          if (sym->addressIsCPIndexOfStatic())
             {
             struct TR_tocHashEntry st2cEntry;
@@ -541,16 +541,16 @@ int32_t TR_PPCTableOfConstants::lookUp(TR::SymbolReference *symRef, TR::CodeGene
             }
          else
             {
-            className = (int8_t *)TR::Compiler->cls.classNameChars(comp, symRef, nlen);
+            className = TR::Compiler->cls.classNameChars(comp, symRef, nlen);
             }
 
-         TR_ASSERT(className!=NULL, "Class object name is expected");
+         TR_ASSERT(className != NULL, "Class object name is expected");
 
          if (nlen >= 1024)
             {
             name = (int8_t *)cg->trMemory()->allocateHeapMemory(nlen+1);
             }
-         strncpy((char *)name, (char *)className, nlen);
+         strncpy((char *)name, className, nlen);
          name[nlen] = 0;
          }
       else

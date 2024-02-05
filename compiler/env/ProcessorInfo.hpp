@@ -42,6 +42,7 @@ struct TR_X86CPUIDBuffer
       uint32_t l3;
       } _cacheDescription;
    uint32_t _featureFlags8;
+   uint32_t _featureFlags10;
    };
 
 enum TR_X86ProcessorVendors
@@ -51,7 +52,7 @@ enum TR_X86ProcessorVendors
    TR_UnknownVendor                 = 0x04
    };
 
-enum TR_X86ProcessorFeatures
+enum TR_X86_CPUID_edx_eax01
    {
    TR_BuiltInFPU                    = 0x00000001,
    TR_VirtualModeExtension          = 0x00000002,
@@ -98,7 +99,7 @@ inline uint32_t getFeatureFlagsMask()
          | TR_SSE2;
    }
 
-enum TR_X86ProcessorFeatures2
+enum TR_X86_CPUID_ecx_eax01
    {
    TR_SSE3                          = 0x00000001,
    TR_CLMUL                         = 0x00000002,
@@ -147,7 +148,7 @@ inline uint32_t getFeatureFlags2Mask()
          | TR_FMA;
    }
 
-enum TR_X86ProcessorFeatures8
+enum TR_X86_CPUID_ebx_eax07_ecx00
    {
    TR_FSGSBASE                = 0x00000001,
    TR_IA32_TSC_ADJUST         = 0x00000002,
@@ -194,6 +195,50 @@ inline uint32_t getFeatureFlags8Mask()
          | TR_AVX512DQ
          | TR_AVX512CD;
    }
+
+enum TR_X86_CPUID_ecx_eax07_ecx00
+   {
+   TR_PREFETCHWT1         = 0x00000001,
+   TR_AVX512_VBMI         = 0x00000002,
+   TR_UMIP                = 0x00000004,
+   TR_PKU                 = 0x00000008,
+   TR_OSPKE               = 0x00000010,
+   TR_WAITPKG             = 0x00000020,
+   TR_AVX512_VBMI2        = 0x00000040,
+   TR_CET_SS              = 0x00000080,
+   TR_GFNI                = 0x00000100,
+   TR_VAES                = 0x00000200,
+   TR_VPCLMULQDQ          = 0x00000400,
+   TR_AVX512_VNNI         = 0x00000800,
+   TR_AVX512_BITALG       = 0x00001000,
+   TR_TME_EN              = 0x00002000,
+   TR_AVX512_VPOPCNTDQ    = 0x00004000,
+   // Reserved by Intel   = 0x00008000,
+   TR_LA57                = 0x00010000,
+   TR_MAWAU_0             = 0x00020000,
+   TR_MAWAU_1             = 0x00040000,
+   TR_MAWAU_2             = 0x00080000,
+   TR_MAWAU_3             = 0x00100000,
+   TR_MAWAU_4             = 0x00200000,
+   TR_RDPID               = 0x00400000,
+   TR_KL                  = 0x00800000,
+   TR_BUS_LOCK_DETECT     = 0x01000000,
+   TR_CLDEMOTE            = 0x02000000,
+   // Reserved by Intel   = 0x04000000,
+   TR_MOVDIRI             = 0x08000000,
+   TR_MOVDIR64B           = 0x10000000,
+   TR_ENQCMD              = 0x20000000,
+   TR_SGX_LC              = 0x40000000,
+   TR_PKS                 = 0x80000000,
+   };
+
+inline uint32_t getFeatureFlags10Mask()
+   {
+   return  TR_AVX512_VBMI2
+         | TR_AVX512_BITALG
+         | TR_AVX512_VPOPCNTDQ;
+   }
+
 
 enum TR_ProcessorDescription
    {

@@ -269,7 +269,7 @@ void TR::ValidateLivenessBoundaries::updateNodeState(TR::Node *node,
       if (!liveNodes.isEmpty())
          {
          traceMsg(comp(), "    -- Live nodes: {");
-         char *separator = "";
+         const char *separator = "";
          for (TR::LiveNodeWindow::Iterator lnwi(liveNodes); lnwi.currentNode(); ++lnwi)
             {
             traceMsg(comp(), "%sn%dn", separator,

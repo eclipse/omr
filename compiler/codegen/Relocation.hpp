@@ -424,17 +424,17 @@ class ExternalRelocation : public TR::Relocation
    virtual bool isExternalRelocation() { return true; }
 
    static const char *getName(TR_ExternalRelocationTargetKind k) {return _externalRelocationTargetKindNames[k];}
-   static uintptr_t    getGlobalValue(uint32_t g)
+   static uintptr_t   getGlobalValue(uint32_t g)
          {
          TR_ASSERT(g >= 0 && g < TR_NumGlobalValueItems, "invalid index for global item");
          return _globalValueList[g];
          }
-   static void         setGlobalValue(uint32_t g, uintptr_t v)
+   static void        setGlobalValue(uint32_t g, uintptr_t v)
          {
          TR_ASSERT(g >= 0 && g < TR_NumGlobalValueItems, "invalid index for global item");
          _globalValueList[g] = v;
          }
-   static char *       nameOfGlobal(uint32_t g)
+   static const char *nameOfGlobal(uint32_t g)
          {
          TR_ASSERT(g >= 0 && g < TR_NumGlobalValueItems, "invalid index for global item");
          return _globalValueNames[g];
@@ -443,12 +443,12 @@ class ExternalRelocation : public TR::Relocation
    private:
    uint8_t                         *_targetAddress;
    uint8_t                         *_targetAddress2;
-   TR::IteratedExternalRelocation   *_relocationRecord;
+   TR::IteratedExternalRelocation  *_relocationRecord;
    TR_ExternalRelocationTargetKind  _kind;
    static const char               *_externalRelocationTargetKindNames[TR_NumExternalRelocationKinds];
    static uintptr_t                 _globalValueList[TR_NumGlobalValueItems];
    static uint8_t                   _globalValueSizeList[TR_NumGlobalValueItems];
-   static char                     *_globalValueNames[TR_NumGlobalValueItems];
+   static const char                *_globalValueNames[TR_NumGlobalValueItems];
    };
 
 class ExternalOrderedPair32BitRelocation: public TR::ExternalRelocation

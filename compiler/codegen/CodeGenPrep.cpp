@@ -806,7 +806,7 @@ OMR::CodeGenerator::insertDebugCounters()
             else
                {
                int32_t length;
-               char *className = TR::Compiler->cls.classNameChars(self()->comp(), (TR_OpaqueClassBlock*)classChild->getSymbol()->castToStaticSymbol()->getStaticAddress(), length);
+               const char *className = TR::Compiler->cls.classNameChars(self()->comp(), (TR_OpaqueClassBlock*)classChild->getSymbol()->castToStaticSymbol()->getStaticAddress(), length);
                TR::DebugCounter::prependDebugCounter(self()->comp(), TR::DebugCounter::debugCounterName(self()->comp(),
                   "allocations/%s/(%.*s)", opName, length, className
                   ), tt);

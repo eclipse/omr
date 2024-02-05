@@ -463,11 +463,11 @@ public:
    virtual int32_t         findLogFile(const char *logFileName, TR::Options *aotCmdLineOptions, TR::Options *jitCmdLineOptions, TR::Options **optionsArray, int32_t arraySize);
    virtual void            dumpOptionHelp(TR::OptionTable *jitOptions, TR::OptionTable *feOptions, TR::SimpleRegex *nameFilter);
 
-   static void dumpOptions(char *optionsType, char *options, char *envOptions, TR::Options *cmdLineOptions, TR::OptionTable *jitOptions, TR::OptionTable *feOptions, void *, TR_FrontEnd *);
-   virtual char *          limitfileOption(char *, void *, TR::OptionTable *, TR::Options *, bool loadLimit, TR_PseudoRandomNumbersListElement **pseudoRandomListHeadPtr = 0);
-   virtual char *          inlinefileOption(char *, void *, TR::OptionTable *, TR::Options *);
-   virtual char *          limitOption(char *, void *, TR::OptionTable *, TR::Options *, bool loadLimit);
-   char *                  limitOption(char *, void *, TR::OptionTable *, TR::Options *, TR::CompilationFilters * &);
+   static void dumpOptions(const char *optionsType, const char *options, const char *envOptions, TR::Options *cmdLineOptions, TR::OptionTable *jitOptions, TR::OptionTable *feOptions, void *, TR_FrontEnd *);
+   virtual const char *    limitfileOption(const char *, void *, TR::OptionTable *, TR::Options *, bool loadLimit, TR_PseudoRandomNumbersListElement **pseudoRandomListHeadPtr = 0);
+   virtual const char *    inlinefileOption(const char *, void *, TR::OptionTable *, TR::Options *);
+   virtual const char *    limitOption(const char *, void *, TR::OptionTable *, TR::Options *, bool loadLimit);
+   const char *            limitOption(const char *, void *, TR::OptionTable *, TR::Options *, TR::CompilationFilters * &);
    virtual int32_t *       loadCustomStrategy(char *optFileName);
    virtual bool            methodCanBeCompiled(TR_Memory *mem, TR_ResolvedMethod *, TR_FilterBST * &);
    virtual bool            methodCanBeRelocated(TR_Memory *mem, TR_ResolvedMethod *, TR_FilterBST * &);
@@ -481,10 +481,10 @@ public:
    virtual void            clearFilters(TR::CompilationFilters *);
    void                    clearFilters(bool loadLimit);
    virtual bool            scanInlineFilters(FILE *, int32_t &, TR::CompilationFilters *);
-   virtual TR_FilterBST *  addFilter(char * &, int32_t, int32_t, int32_t, TR::CompilationFilters *);
-   virtual TR_FilterBST *  addFilter(char * &, int32_t, int32_t, int32_t, bool loadLimit);
+   virtual TR_FilterBST *  addFilter(const char *&, int32_t, int32_t, int32_t, TR::CompilationFilters *);
+   virtual TR_FilterBST *  addFilter(const char *&, int32_t, int32_t, int32_t, bool loadLimit);
    virtual TR_FilterBST *  addExcludedMethodFilter(bool loadLimit);
-   virtual int32_t         scanFilterName(char *, TR_FilterBST *);
+   virtual int32_t         scanFilterName(const char *, TR_FilterBST *);
    virtual void            printFilters(TR::CompilationFilters *);
    virtual void            printFilters();
    virtual void            print(TR_FilterBST * filter);

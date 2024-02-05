@@ -50,16 +50,16 @@
 #define DEFAULT_OPTION_LINE_WIDTH  80
 
 static char  optionCategories[] = {' ','C','O','L','D','R','I','M',0}; // Must match categories[] in codegen.dev/Options.cpp
-static char *optionCategoryNames[] = {"\nGeneral options:\n",
-                                      "\nCode generation options:\n",
-                                      "\nOptimization options:\n",
-                                      "\nLogging and display options:\n",
-                                      "\nDebugging options:\n",
-                                      "\nRecompilation and profiling options:\n",
-                                      "\nInternal options:\n",
-                                      "\nOther options:\n",
-                                      0 // Fail quickly if we run past the end of this array
-                                      };
+static const char *optionCategoryNames[] = {"\nGeneral options:\n",
+                                            "\nCode generation options:\n",
+                                            "\nOptimization options:\n",
+                                            "\nLogging and display options:\n",
+                                            "\nDebugging options:\n",
+                                            "\nRecompilation and profiling options:\n",
+                                            "\nInternal options:\n",
+                                            "\nOther options:\n",
+                                            0 // Fail quickly if we run past the end of this array
+                                           };
 
 
 
@@ -280,9 +280,9 @@ void TR_Debug::dumpOptionHelp(TR::OptionTable * firstOjit, TR::OptionTable * fir
 
 void
 TR_Debug::dumpOptions(
-      char *optionsType,
-      char *options,
-      char *envOptions,
+      const char *optionsType,
+      const char *options,
+      const char *envOptions,
       TR::Options *cmdLineOptions,
       TR::OptionTable *ojit,
       TR::OptionTable *ofe,
@@ -493,7 +493,7 @@ TR_Debug::dumpOptions(
             //since java uses different function, we need to check for that to get our verbose options printed
             TR_VerboseLog::write("{");
             base = (char*)cmdLineOptions;
-            char *sep = "";
+            const char *sep = "";
             for (int i=0; i < TR_NumVerboseOptions; i++)
                {
                TR_VerboseFlags flag = (TR_VerboseFlags)i;

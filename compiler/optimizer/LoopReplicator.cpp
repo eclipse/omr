@@ -65,7 +65,7 @@ TR_LoopReplicator::TR_LoopReplicator(TR::OptimizationManager *manager)
 
 
 //Add static debug counter for a given replication failure
-static void countReplicationFailure(char *failureReason, int32_t regionNum)
+static void countReplicationFailure(const char *failureReason, int32_t regionNum)
    {
    TR::Compilation *comp = TR::comp();
 

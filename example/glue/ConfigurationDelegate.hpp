@@ -175,6 +175,18 @@ public:
 	 */
 	MM_GCPolicy getGCPolicy() { return _gcPolicy; }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * If checkpointGCthreadCount is specified by the user, it is verified
+	 * to be not larger than the number of gc threads, and throw a warning
+	 * if larger; if it is not specified by the user, it is adjusted to match
+	 * the number of gc threads.
+	 *
+	 * @param[in] env The environment for the calling thread
+	 */
+	void checkPointGCThreadCountVerifyAndAdjust(MM_EnvironmentBase *env) {}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	/**
 	 * Constructor.
 	 * @param gcPolicy The GC policy preselected for the GC configuration.

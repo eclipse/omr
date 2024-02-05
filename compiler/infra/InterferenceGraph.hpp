@@ -144,9 +144,9 @@ class TR_InterferenceGraph : public TR_IGBase
    IGNodeColour findMinimumChromaticNumber();
 
 #ifdef DEBUG
-   void dumpIG(char *msg = NULL);
+   void dumpIG(const char *msg = NULL);
 #else
-   void dumpIG(char *msg = NULL) {}
+   void dumpIG(const char *msg = NULL) {}
 #endif
    };
 #endif

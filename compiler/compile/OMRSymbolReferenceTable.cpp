@@ -151,6 +151,26 @@ OMR::SymbolReferenceTable::findOrCreateContiguousArraySizeSymbolRef()
    return element(contiguousArraySizeSymbol);
    }
 
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findOrCreateContiguousArrayDataAddrFieldShadowSymRef()
+   {
+   if (!element(contiguousArrayDataAddrFieldSymbol))
+      {
+      TR::Symbol * sym = TR::Symbol::createShadow(trHeapMemory(), TR::Address);
+      sym->setContiguousArrayDataAddrFieldSymbol();
+      element(contiguousArrayDataAddrFieldSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), contiguousArrayDataAddrFieldSymbol, sym);
+      element(contiguousArrayDataAddrFieldSymbol)->setOffset(TR::Compiler->om.offsetOfContiguousDataAddrField());
+      }
+   return element(contiguousArrayDataAddrFieldSymbol);
+   }
+#endif // defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findContiguousArrayDataAddrFieldShadowSymRef()
+   {
+   return element(contiguousArrayDataAddrFieldSymbol);
+   }
 
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findOrCreateVftSymbolRef()
@@ -712,11 +732,12 @@ OMR::SymbolReferenceTable::createKnownStaticDataSymbolRef(void *dataAddress, TR:
 TR::SymbolReference *
 OMR::SymbolReferenceTable::createKnownStaticReferenceSymbolRef(void *dataAddress, TR::KnownObjectTable::Index knownObjectIndex)
    {
-   char *name = "<known-static-reference>";
+   const char *name = "<known-static-reference>";
    if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
       {
-      name = (char*)trMemory()->allocateMemory(25, heapAlloc);
-      sprintf(name, "<known-obj%d>", knownObjectIndex);
+      char *nameBuffer = (char *)trMemory()->allocateMemory(25, heapAlloc);
+      sprintf(nameBuffer, "<known-obj%d>", knownObjectIndex);
+      name = nameBuffer;
       }
    TR::StaticSymbol * sym = TR::StaticSymbol::createNamed(trHeapMemory(), TR::Address, dataAddress,name);
    return TR::SymbolReference::create(self(), sym, knownObjectIndex);
@@ -950,7 +971,7 @@ OMR::SymbolReferenceTable::findOrCreateMonitorEntrySymbolRef(TR::ResolvedMethodS
  */
 
 TR::SymbolReference *
-OMR::SymbolReferenceTable::methodSymRefFromName(TR::ResolvedMethodSymbol * owningMethodSymbol, char *className, char *methodName, char *methodSignature, TR::MethodSymbol::Kinds kind, int32_t cpIndex)
+OMR::SymbolReferenceTable::methodSymRefFromName(TR::ResolvedMethodSymbol * owningMethodSymbol, const char *className, const char *methodName, const char *methodSignature, TR::MethodSymbol::Kinds kind, int32_t cpIndex)
    {
    // Check _methodsBySignature to see if we've already created a symref for this one
    //
@@ -2151,6 +2172,7 @@ const char *OMR::SymbolReferenceTable::_commonNonHelperSymbolNames[] =
    "<osrScratchBuffer>",
    "<osrFrameIndex>",
    "<osrReturnAddress>",
+   "<contiguousArrayDataAddrField>",
    "<potentialOSRPointHelper>",
    "<osrFearPointHelper>",
    "<eaEscapeHelper>",

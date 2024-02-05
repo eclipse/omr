@@ -183,6 +183,16 @@ ifeq (1,$(OMR_DEBUG))
   endif
 endif
 
+ifneq (,$(findstring -gdwarf-, $(GLOBAL_CFLAGS) $(GLOBAL_CXXFLAGS)))
+  # Don't override if '-gdwarf-N' is already specified.
+else ifeq (gcc,$(OMR_TOOLCHAIN))
+  # Tell gcc to use DWARF version 4, not 5 (which is the default for compiler
+  # versions 11+). All GNU compiler versions, that might reasonably be used,
+  # understand this option, so this doesn't need to check the compiler version.
+  GLOBAL_CFLAGS   += -gdwarf-4
+  GLOBAL_CXXFLAGS += -gdwarf-4
+endif
+
 #-- Add Platform flags
 ifeq (x86,$(OMR_HOST_ARCH))
   ifeq (1,$(OMR_ENV_DATA64))

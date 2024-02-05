@@ -148,6 +148,7 @@ class SymbolReferenceTable
       osrScratchBufferSymbol,    //osrScratchBuffer slot on  j9vmthread
       osrFrameIndexSymbol,       // osrFrameIndex slot on j9vmthread
       osrReturnAddressSymbol,       // osrFrameIndex slot on j9vmthread
+      contiguousArrayDataAddrFieldSymbol, // dataAddr field symbol used to track data portion of the array
 
       /** \brief
        *
@@ -720,7 +721,7 @@ class SymbolReferenceTable
 
    int32_t getNumInternalPointers() { return _numInternalPointers; }
 
-   TR::SymbolReference * methodSymRefFromName(TR::ResolvedMethodSymbol *owningMethodSymbol, char *className, char *methodName, char *signature, TR::MethodSymbol::Kinds kind, int32_t cpIndex=-1);
+   TR::SymbolReference *methodSymRefFromName(TR::ResolvedMethodSymbol *owningMethodSymbol, const char *className, const char *methodName, const char *signature, TR::MethodSymbol::Kinds kind, int32_t cpIndex=-1);
 
    TR::SymbolReference *createSymbolReference(TR::Symbol *sym, intptr_t o = 0);
 
@@ -803,6 +804,10 @@ class SymbolReferenceTable
    TR::SymbolReference * findOrCreateTemporaryWithKnowObjectIndex(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::KnownObjectTable::Index knownObjectIndex);
    TR::SymbolReference * findOrCreateThisRangeExtensionSymRef(TR::ResolvedMethodSymbol *owningMethodSymbol = 0);
    TR::SymbolReference * findOrCreateContiguousArraySizeSymbolRef();
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   TR::SymbolReference * findOrCreateContiguousArrayDataAddrFieldShadowSymRef();
+#endif // defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   TR::SymbolReference * findContiguousArrayDataAddrFieldShadowSymRef();
    TR::SymbolReference * findOrCreateNewArrayNoZeroInitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateNewObjectSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateNewObjectNoZeroInitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);

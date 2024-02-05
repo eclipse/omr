@@ -427,6 +427,19 @@ OMR::Symbol::isArrayShadowSymbol()
    return self()->isShadow() && _flags.testAny(ArrayShadow);
    }
 
+
+void
+OMR::Symbol::setContiguousArrayDataAddrFieldSymbol()
+   {
+   _flags.set(contiguousArrayDataAddrField);
+   }
+
+bool
+OMR::Symbol::isContiguousArrayDataAddrFieldSymbol()
+   {
+   return _flags.testAny(contiguousArrayDataAddrField);
+   }
+
 bool
 OMR::Symbol::isRecognizedShadow()
    {

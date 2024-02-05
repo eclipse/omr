@@ -680,15 +680,15 @@ Port::omrfile_stat(const char *path, unsigned int flags, struct J9FileStat *buf)
 	buf->ownerUid = statbuf.st_uid;
 	buf->ownerGid = statbuf.st_gid;
 
-#if (defined(LINUX) && !defined(J9ZTPF)) || defined(OSX)
+#if (defined(LINUX) && !defined(OMRZTPF)) || defined(OSX)
 	if (statfs(path, &statfsbuf)) {
 		return RC_FAILED;
 	}
-	switch (statfsbuf.f_type) {
+	switch ((unsigned int)statfsbuf.f_type) {
 	/* Detect remote filesystem types */
-	case 0x6969: /* NFS_SUPER_MAGIC */
-	case 0x517B: /* SMB_SUPER_MAGIC */
-	case 0xFF534D42: /* CIFS_MAGIC_NUMBER */
+	case 0x6969u: /* NFS_SUPER_MAGIC */
+	case 0x517Bu: /* SMB_SUPER_MAGIC */
+	case 0xFF534D42u: /* CIFS_MAGIC_NUMBER */
 		buf->isRemote = 1;
 		break;
 	default:

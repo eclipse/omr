@@ -363,6 +363,12 @@ MM_VerboseHandlerOutput::outputInitializedStanza(MM_EnvironmentBase *env, MM_Ver
 
 	buffer->formatAndOutput(env, 1, "<system>");
 	buffer->formatAndOutput(env, 2, "<attribute name=\"physicalMemory\" value=\"%llu\" />", omrsysinfo_get_physical_memory());
+	buffer->formatAndOutput(env, 2, "<attribute name=\"addressablePhysicalMemory\" value=\"%llu\" />", omrsysinfo_get_addressable_physical_memory());
+	bool containerLimitSet = false;
+	if (OMR_CGROUP_SUBSYSTEM_MEMORY == omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_MEMORY)) {
+		containerLimitSet = omrsysinfo_cgroup_is_memlimit_set();
+	}
+	buffer->formatAndOutput(env, 2, "<attribute name=\"container memory limit set\" value=\"%s\" />", containerLimitSet ? "true" : "false");
 	buffer->formatAndOutput(env, 2, "<attribute name=\"numCPUs\" value=\"%zu\" />", omrsysinfo_get_number_CPUs_by_type(OMRPORT_CPU_ONLINE));
 	buffer->formatAndOutput(env, 2, "<attribute name=\"numCPUs active\" value=\"%zu\" />", omrsysinfo_get_number_CPUs_by_type(OMRPORT_CPU_TARGET));
 	buffer->formatAndOutput(env, 2, "<attribute name=\"architecture\" value=\"%s\" />", omrsysinfo_get_CPU_architecture());

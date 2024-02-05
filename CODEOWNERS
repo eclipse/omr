@@ -28,16 +28,19 @@
 *.yml @charliegracie
 
 # CMake
-*.cmake @youngar @charliegracie @rwy0717
-/cmake/ @youngar @charliegracie @rwy0717
-**/CMakeLists.txt @youngar @charliegracie @rwy0717
+*.cmake @youngar @charliegracie
+/cmake/ @youngar @charliegracie
+**/CMakeLists.txt @youngar @charliegracie
 
 # GC
-/gc/ @charliegracie @youngar @rwy0717
-/glue/ @charliegracie @youngar @rwy0717
+/gc/ @charliegracie @youngar
+/glue/ @charliegracie @youngar
 
 # Compiler
 /compiler/ @0xdaryl @mstoodle
+/compiler/control/ @dsouzai
+/compiler/env/ @dsouzai
+/compiler/runtime/ @dsouzai
 /compiler/optimizer/ @vijaysun-omr
 /compiler/il/ @vijaysun-omr @Leonardo2718
 /compiler/arm/ @0xdaryl @knn-k
@@ -50,13 +53,13 @@
 /compiler/ilgen @mstoodle @Leonardo2718
 
 # Port Library
-/port/ @charliegracie @youngar @rwy0717 @babsingh
+/port/ @charliegracie @youngar @babsingh
 
 # Thread Library
-/thread/ @charliegracie @youngar @rwy0717 @babsingh
+/thread/ @charliegracie @youngar @babsingh
 
 # OMR Core Utilities
-/include_core/OMR/ @youngar @charliegracie @Leonardo2718 @rwy0717 @babsingh
+/include_core/OMR/ @youngar @charliegracie @Leonardo2718 @babsingh
 
 # Tril and Testing
 /fvtest/tril/ @Leonardo2718 @fjeremic @0xdaryl

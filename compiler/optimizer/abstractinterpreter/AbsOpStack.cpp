@@ -55,7 +55,7 @@ void TR::AbsOpStack::merge(const TR::AbsOpStack* other, TR::Region& region)
 void TR::AbsOpStack::print(TR::Compilation* comp) const
    {
    traceMsg(comp, "Contents of Abstract Operand Stack:\n");
-   
+
    const size_t stackSize = size();
 
    if (stackSize == 0)
@@ -63,16 +63,16 @@ void TR::AbsOpStack::print(TR::Compilation* comp) const
       traceMsg(comp, "<empty>\n\n");
       return;
       }
-   
+
    traceMsg(comp, "<top>\n");
 
-   for (size_t i = 0; i < stackSize; i++) 
+   for (size_t i = 0; i < stackSize; i++)
       {
       TR::AbsValue *value = _container[stackSize - i -1 ];
       traceMsg(comp, "S[%d] = ", stackSize - i - 1);
       if (value)
          value->print(comp);
-      else 
+      else
          traceMsg(comp, "Uninitialized");
       traceMsg(comp, "\n");
       }

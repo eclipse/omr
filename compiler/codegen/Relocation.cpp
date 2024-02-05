@@ -497,7 +497,7 @@ uintptr_t TR::ExternalRelocation::_globalValueList[TR_NumGlobalValueItems] =
    0           // TR_HeapSizeForBarrierRange0
    };
 
-char *TR::ExternalRelocation::_globalValueNames[TR_NumGlobalValueItems] =
+const char *TR::ExternalRelocation::_globalValueNames[TR_NumGlobalValueItems] =
    {
    "not used (0)",
    "TR_CountForRecompile (1)",

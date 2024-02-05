@@ -156,8 +156,8 @@ public:
    int32_t flagValueForArrayCheck(TR::Compilation *comp) { return 0; }
    int32_t flagValueForFinalizerCheck(TR::Compilation *comp) { return 0; }
 
-   char *classNameChars(TR::Compilation *, TR::SymbolReference *symRef, int32_t & length);
-   char *classNameChars(TR::Compilation *, TR_OpaqueClassBlock * clazz, int32_t & length) { return NULL; }
+   const char *classNameChars(TR::Compilation *, TR::SymbolReference *symRef, int32_t &length);
+   const char *classNameChars(TR::Compilation *, TR_OpaqueClassBlock *clazz, int32_t &length) { return NULL; }
 
    char *classSignature_DEPRECATED(TR::Compilation *comp, TR_OpaqueClassBlock * clazz, int32_t & length, TR_Memory *) { return NULL; }
    char *classSignature(TR::Compilation *comp, TR_OpaqueClassBlock * clazz, TR_Memory *) { return NULL; }

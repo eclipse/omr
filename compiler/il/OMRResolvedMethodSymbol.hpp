@@ -263,13 +263,15 @@ public:
    bool canReplaceWithHWInstr()              { return _properties.testAny(CanReplaceWithHWInstr); }
    void setCanReplaceWithHWInstr(bool b)     { _properties.set(CanReplaceWithHWInstr,b); }
 
-   bool skipNullChecks()                     { return _properties.testAny(CanSkipNullChecks); }
-   bool skipBoundChecks()                    { return _properties.testAny(CanSkipBoundChecks); }
-   bool skipCheckCasts()                     { return _properties.testAny(CanSkipCheckCasts); }
-   bool skipDivChecks()                      { return _properties.testAny(CanSkipDivChecks); }
-   bool skipArrayStoreChecks()               { return _properties.testAny(CanSkipArrayStoreChecks); }
-   bool skipChecksOnArrayCopies()            { return _properties.testAny(CanSkipChecksOnArrayCopies); }
-   bool skipZeroInitializationOnNewarrays()  { return _properties.testAny(CanSkipZeroInitializationOnNewarrays); }
+   bool skipNullChecks()                           { return _properties.testAny(CanSkipNullChecks); }
+   bool skipBoundChecks()                          { return _properties.testAny(CanSkipBoundChecks); }
+   bool skipCheckCasts()                           { return _properties.testAny(CanSkipCheckCasts); }
+   bool skipDivChecks()                            { return _properties.testAny(CanSkipDivChecks); }
+   bool skipArrayStoreChecks()                     { return _properties.testAny(CanSkipArrayStoreChecks); }
+   bool skipNonNullableArrayNullStoreCheck()       { return _properties.testAny(CanSkipNonNullableArrayNullStoreCheck); }
+   bool skipFlattenableArrayElementNonHelperCall() { return _properties.testAny(CanSkipFlattenableArrayElementNonHelperCall); }
+   bool skipChecksOnArrayCopies()                  { return _properties.testAny(CanSkipChecksOnArrayCopies); }
+   bool skipZeroInitializationOnNewarrays()        { return _properties.testAny(CanSkipZeroInitializationOnNewarrays); }
 
    bool hasSnapshots()                       { return _properties.testAny(HasSnapshots); }
    void setHasSnapshots(bool v=true)         { _properties.set(HasSnapshots,v); }
@@ -328,23 +330,24 @@ public:
 protected:
    enum Properties
       {
-      CanSkipNullChecks                         = 1 << 0,
-      CanSkipBoundChecks                        = 1 << 1,
-      CanSkipCheckCasts                         = 1 << 2,
-      CanSkipDivChecks                          = 1 << 3,
-      CanSkipChecksOnArrayCopies                = 1 << 4,
-      CanSkipZeroInitializationOnNewarrays      = 1 << 5,
-      CanSkipArrayStoreChecks                   = 1 << 6,
-      HasSnapshots                              = 1 << 7,
-      // AVAILABLE                              = 1 << 8,
-      CanDirectNativeCall                       = 1 << 9,
-      CanReplaceWithHWInstr                     = 1 << 10,
-      IsSideEffectFree                          = 1 << 12,
-      IsLeaf                                    = 1 << 13,
-      FoundThrow                                = 1 << 14,
-      HasExceptionHandlers                      = 1 << 15,
-      MayHaveVirtualCallProfileInfo             = 1 << 16,
-      AggressivelyInlineThrows                  = 1 << 18,
+      CanSkipNullChecks                           = 1 << 0,
+      CanSkipBoundChecks                          = 1 << 1,
+      CanSkipCheckCasts                           = 1 << 2,
+      CanSkipDivChecks                            = 1 << 3,
+      CanSkipChecksOnArrayCopies                  = 1 << 4,
+      CanSkipZeroInitializationOnNewarrays        = 1 << 5,
+      CanSkipArrayStoreChecks                     = 1 << 6,
+      HasSnapshots                                = 1 << 7,
+      CanSkipNonNullableArrayNullStoreCheck       = 1 << 8,
+      CanDirectNativeCall                         = 1 << 9,
+      CanReplaceWithHWInstr                       = 1 << 10,
+      CanSkipFlattenableArrayElementNonHelperCall = 1 << 11,
+      IsSideEffectFree                            = 1 << 12,
+      IsLeaf                                      = 1 << 13,
+      FoundThrow                                  = 1 << 14,
+      HasExceptionHandlers                        = 1 << 15,
+      MayHaveVirtualCallProfileInfo               = 1 << 16,
+      AggressivelyInlineThrows                    = 1 << 18,
       LastProperty = AggressivelyInlineThrows,
       };
 

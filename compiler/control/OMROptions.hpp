@@ -96,7 +96,7 @@ enum TR_CompilationOptions
    TR_MimicInterpreterFrameShape = 0x00008000,
 
    TR_TraceBC                    = 0x00010000,
-   TR_TraceBIIDTGen              = 0x00020000,
+   // Available                  = 0x00020000,
    TR_TraceTrees                 = 0x00040000,
    TR_TraceCG                    = 0x00080000,
    TR_TraceAliases               = 0x00100000,
@@ -302,7 +302,7 @@ enum TR_CompilationOptions
    TR_DisableDelayRelocationForAOTCompilations   = 0x00000200 + 7,
    TR_DisableRecompDueToInlinedMethodRedefinition = 0x00000400 + 7,
    TR_DisableLoopReplicatorColdSideEntryCheck = 0x00000800 + 7,
-   // Available                           = 0x00001000 + 7,
+   TR_NotCompileTimeSensitive             = 0x00001000 + 7, // Can afford to spend more time compiling
    TR_DontDowgradeToColdDuringGracePeriod = 0x00002000 + 7,
    TR_EnableRecompilationPushing          = 0x00004000 + 7,
    TR_EnableJCLInline                     = 0x00008000 + 7, // enable JCL Integer and Long methods inline
@@ -463,11 +463,11 @@ enum TR_CompilationOptions
    TR_DisableStringBuilderTransformer         = 0x00200000 + 12,
    TR_TraceILGen                              = 0x00400000 + 12,
    TR_DisableSharedCacheHints                 = 0x00800000 + 12,
-   // Available                               = 0x01000000 + 12,
-   // Available                               = 0x02000000 + 12,
-   // Available                               = 0x04000000 + 12,
-   // Available                               = 0x08000000 + 12,
-   // Available                               = 0x10000000 + 12,
+   TR_EnableBenefitInliner                    = 0x01000000 + 12,
+   TR_TraceAbstractInterpretation             = 0x02000000 + 12,
+   TR_TraceBIIDTGen                           = 0x04000000 + 12,
+   TR_TraceBIProposal                         = 0x08000000 + 12,
+   TR_TraceBISummary                          = 0x10000000 + 12,
    // Available                               = 0x20000000 + 12,
    // Available                               = 0x40000000 + 12,
    TR_DisableAOTInstanceFieldResolution       = 0x80000000 + 12,
@@ -1518,27 +1518,27 @@ public:
    static void       setIsFullyInitialized()           { _fullyInitialized = true; }
    static bool       isFullyInitialized()              { return _fullyInitialized; }
 
-   static TR::OptionSet * findOptionSet(TR_Memory *, int32_t index, int32_t lineNum, TR_ResolvedMethod *, TR_Hotness, bool);
-   static TR::OptionSet * findOptionSet(TR_Memory *, TR_ResolvedMethod *, bool);
-   static TR::OptionSet * findOptionSet(int32_t index, int32_t lineNum, const char *, TR_Hotness, bool);
+   static TR::OptionSet *findOptionSet(TR_Memory *, int32_t index, int32_t lineNum, TR_ResolvedMethod *, TR_Hotness, bool);
+   static TR::OptionSet *findOptionSet(TR_Memory *, TR_ResolvedMethod *, bool);
+   static TR::OptionSet *findOptionSet(int32_t index, int32_t lineNum, const char *, TR_Hotness, bool);
 
-   static char       *getDefaultOptions();
-   static char       *validateOptions(void *feBase, TR_FrontEnd *fe);
-   static char       *processOptionsJIT(char *jitOptions, void *feBase, TR_FrontEnd *fe);
-   static char       *processOptionsAOT(char *aotOptions, void *feBase, TR_FrontEnd *fe);
-   static char       *processOptions(char *options, char *envOptions, void *feBase, TR_FrontEnd *fe, TR::Options *cmdLineOptions);
-   static char       *latePostProcessJIT(void *jitConfig);
-   static char       *latePostProcessAOT(void *jitConfig);
-   static char       *latePostProcess(TR::Options *options, void *jitConfig, bool isAOT);
-   static char       *processOptions(char *options, char *moreOptions, TR::Options *cmdLineOptions);
+   static const char  *getDefaultOptions();
+   static char        *validateOptions(void *feBase, TR_FrontEnd *fe);
+   static const char  *processOptionsJIT(const char *jitOptions, void *feBase, TR_FrontEnd *fe);
+   static const char  *processOptionsAOT(const char *aotOptions, void *feBase, TR_FrontEnd *fe);
+   static const char  *processOptions(const char *options, const char *envOptions, void *feBase, TR_FrontEnd *fe, TR::Options *cmdLineOptions);
+   static const char  *latePostProcessJIT(void *jitConfig);
+   static const char  *latePostProcessAOT(void *jitConfig);
+   static const char  *latePostProcess(TR::Options *options, void *jitConfig, bool isAOT);
+   static const char  *processOptions(const char *options, const char *moreOptions, TR::Options *cmdLineOptions);
    static TR::Options *getCmdLineOptions();
    static TR::Options *getAOTCmdLineOptions();
-   static void        setAOTCmdLineOptions(TR::Options *options);
+   static void         setAOTCmdLineOptions(TR::Options *options);
    static TR::Options *getJITCmdLineOptions();
-          void        saveOptionSet(TR::OptionSet *o);
-          void        mergePostRestoreOptionSets();
-          bool        hasOptionSets() {return _optionSets != NULL;}
-   char*              setCounts();
+          void         saveOptionSet(TR::OptionSet *o);
+          void         mergePostRestoreOptionSets();
+          bool         hasOptionSets() {return _optionSets != NULL;}
+          const char  *setCounts();
 
    static bool     useCompressedPointers();
 
@@ -1546,7 +1546,7 @@ public:
    void            setLogFile(TR::FILE * f)  {_logFile = f;}
    char *          getLogFileName()      {return _logFileName;}
 
-   char *          getBlockShufflingSequence(){ return _blockShufflingSequence; }
+   char *    getBlockShufflingSequence(){ return _blockShufflingSequence; }
 
    int32_t         getRandomSeed(){ return _randomSeed; }
 
@@ -1593,7 +1593,7 @@ public:
    static void  setVerboseOption(TR_VerboseFlags op)     { _verboseOptionFlags.set(op); }
    static void  setVerboseOptions(uint64_t mask)         { _verboseOptionFlags.maskWord(0, mask); }
    static void  resetVerboseOption(TR_VerboseFlags op)   { _verboseOptionFlags.reset(op); }
-   static char *getVerboseOptionName(TR_VerboseFlags op) { return _verboseOptionNames[op]; }
+   static const char *getVerboseOptionName(TR_VerboseFlags op) { return _verboseOptionNames[op]; }
    static bool  isAnyVerboseOptionSet()                  { return !_verboseOptionFlags.isEmpty(); }
    static bool  isAnyVerboseOptionSet(TR_VerboseFlags op1);
    static bool  isAnyVerboseOptionSet(TR_VerboseFlags op1, TR_VerboseFlags op2);
@@ -2004,7 +2004,7 @@ public:
    static TR_Hotness getInitialHotnessLevel(bool methodHasLoops);
 
    bool getOptLevelDowngraded() const { return _optLevelDowngraded; }
-   static char *getCompilationStrategyName() { return _compilationStrategyName; }
+   static const char *getCompilationStrategyName() { return _compilationStrategyName; }
 
 /**   \brief Returns a threshold on the profiling method invocations to trip recompilation
  */
@@ -2029,7 +2029,7 @@ public:
     *
     * \return pointer to the end of the options string if success, or to the invalid option
     */
-   static char *processOptionSetPostRestore(void *jitConfig, char *options, TR::Options *optBase, bool isAOT);
+   static const char *processOptionSetPostRestore(void *jitConfig, const char *options, TR::Options *optBase, bool isAOT);
 
 protected:
    void  jitPreProcess();
@@ -2086,11 +2086,11 @@ private:
 
    static bool compareOptionsForBinarySearch(const TR::OptionTable &a, const TR::OptionTable &b);
 
-   static char *processOptionSet(char *options, char *envOptions, TR::Options *jitBase, bool isAOT);
-   static char *processOptionSet(char *options, char *envOptions, TR::OptionSet *optionSet);
-   static char *processOptionSet(char *options, TR::OptionSet *optionSet, void *jitBase, bool isAOT);
-   static char *processOption(char *option, TR::OptionTable *table, void *base, int32_t numEntries, TR::OptionSet *optionSet);
-          void  printOptions(char *options, char *envOptions);
+   static const char *processOptionSet(const char *options, const char *envOptions, TR::Options *jitBase, bool isAOT);
+   static const char *processOptionSet(const char *options, const char *envOptions, TR::OptionSet *optionSet);
+   static const char *processOptionSet(const char *options, TR::OptionSet *optionSet, void *jitBase, bool isAOT);
+   static const char *processOption(const char *option, TR::OptionTable *table, void *base, int32_t numEntries, TR::OptionSet *optionSet);
+          void  printOptions(const char *options, const char *envOptions);
 
           bool  showOptionsInEffect();
           bool  showPID();
@@ -2114,54 +2114,54 @@ private:
 
    // Set bit(s) defined by "mask" at offset "offset" from the base
    //
-   static char *setBit(char *option, void *base, TR::OptionTable *entry);
+   static const char *setBit(const char *option, void *base, TR::OptionTable *entry);
 
    // Set verbose bits
    //
-   static char *setVerboseBits(char *option, void *base, TR::OptionTable *entry);
-   static char *setVerboseBitsInJitPrivateConfig(char *option, void *base, TR::OptionTable *entry);
+   static const char *setVerboseBits(const char *option, void *base, TR::OptionTable *entry);
+   static const char *setVerboseBitsInJitPrivateConfig(const char *option, void *base, TR::OptionTable *entry);
    // Helper method used by the two methods above
-   static char *setVerboseBitsHelper(char *option, VerboseOptionFlagArray *verboseOptionFlags, uintptr_t defaultVerboseFlags);
+   static const char *setVerboseBitsHelper(const char *option, VerboseOptionFlagArray *verboseOptionFlags, uintptr_t defaultVerboseFlags);
 
    //set hot field reduction algorithm for dynamicBreadthFirstScanOrdering
    //
-   static char *setHotFieldReductionAlgorithm(char *option, void *base, TR::OptionTable *entry);
+   static const char *setHotFieldReductionAlgorithm(const char *option, void *base, TR::OptionTable *entry);
 
    // Set samplingjprofiling bits
    //
-   static char *setSamplingJProfilingBits(char* option, void *base, TR::OptionTable *entry);
+   static const char *setSamplingJProfilingBits(const char* option, void *base, TR::OptionTable *entry);
 
    // Reset bit(s) defined by "mask" at offset "offset" from the base
    //
-   static char *resetBit(char *option, void *base, TR::OptionTable *entry);
+   static const char *resetBit(const char *option, void *base, TR::OptionTable *entry);
 
    // Set (pointer-sized) word at offset "offset" from the base to "value"
    //
-   static char *setValue(char *option, void *base, TR::OptionTable *entry);
+   static const char *setValue(const char *option, void *base, TR::OptionTable *entry);
 
    // Set 32-bit word at offset "offset" from the base to "value"
    //
-   static char *set32BitValue(char *option, void *base, TR::OptionTable *entry);
+   static const char *set32BitValue(const char *option, void *base, TR::OptionTable *entry);
 
    // Disable an optimization
    //
-   static char *disableOptimization(char *option, void *base, TR::OptionTable *entry);
-   static char *enableOptimization(char *option, void *base, TR::OptionTable *entry);
+   static const char *disableOptimization(const char *option, void *base, TR::OptionTable *entry);
+   static const char *enableOptimization(const char *option, void *base, TR::OptionTable *entry);
 
    // Trace an optimization
    //
-   static char *traceOptimization(char *option, void *base, TR::OptionTable *entry);
-   static char *dontTraceOptimization(char *option, void *base, TR::OptionTable *entry);
+   static const char *traceOptimization(const char *option, void *base, TR::OptionTable *entry);
+   static const char *dontTraceOptimization(const char *option, void *base, TR::OptionTable *entry);
 
    // Scan the option for a numeric value and set word at offset "offset"
    // from the base to that value. That "word" is of 32bit or 64bit, depending on JIT.
    //
-   static char *setNumeric(char *option, void *base, TR::OptionTable *entry);
+   static const char *setNumeric(const char *option, void *base, TR::OptionTable *entry);
 
    // Scan the option for a numeric value and set 32bit word at offset "offset"
    // from the base to that value.
    //
-   static char *set32BitNumeric(char *option, void *base, TR::OptionTable *entry);
+   static const char *set32BitNumeric(const char *option, void *base, TR::OptionTable *entry);
 
   /**
    * \brief Option processing function for 32 bit numeric fields stored in JitConfig
@@ -2175,53 +2175,53 @@ private:
    *                     32-bit that needs to be set
    * \return A pointer to the option parameter
    */
-   static char *set32BitNumericInJitConfig(char *option, void *base, TR::OptionTable *entry);
+   static const char *set32BitNumericInJitConfig(const char *option, void *base, TR::OptionTable *entry);
 
    // Scan the option for a hexadecimal value and set 32bit word at offset "offset"
    // from the base to that value.
    //
-   static char *set32BitHexadecimal(char *option, void *base, TR::OptionTable *entry);
+   static const char *set32BitHexadecimal(const char *option, void *base, TR::OptionTable *entry);
 
    // Scan the option for a numeric value and set 32bit word at offset "offset"
    // from the 'private' base (derived from the 'base' passed in) to that value.
    //
-   static char *setStaticNumericKBAdjusted(char *option, void *base, TR::OptionTable *entry);
+   static const char *setStaticNumericKBAdjusted(const char *option, void *base, TR::OptionTable *entry);
 
    // Scan the option for a string and set the value at offset "offset"
    // from the 'private' base (derived from the 'base' passed in) to that value.
    //
-   static char *setStringForPrivateBase(char *option, void *base, TR::OptionTable *entry);
+   static const char *setStringForPrivateBase(const char *option, void *base, TR::OptionTable *entry);
 
    // Scan the option for a (possibly negative) numeric value and set 32bit
    // word at offset "offset" from the base to that value.
    //
-   static char *set32BitSignedNumeric(char *option, void *base, TR::OptionTable *entry);
+   static const char *set32BitSignedNumeric(const char *option, void *base, TR::OptionTable *entry);
 
    // Scan the option for a (possibly negative) numeric value and set 32bit
    // word at offset "offset" from the base to that value.
    //
-   static char *set64BitSignedNumeric(char *option, void *base, TR::OptionTable *entry);
+   static const char *set64BitSignedNumeric(const char *option, void *base, TR::OptionTable *entry);
 
    // Scan the option for a numeric value and set word at parm1 to that value
    //
-   static char *setStaticNumeric(char *option, void *base, TR::OptionTable *entry);
+   static const char *setStaticNumeric(const char *option, void *base, TR::OptionTable *entry);
 
    // Scan the option for a hexadecimal value and set word at parm1 to that value
    //
-   static char *setStaticHexadecimal(char *option, void *base, TR::OptionTable *entry);
+   static const char *setStaticHexadecimal(const char *option, void *base, TR::OptionTable *entry);
 
    // Set word at parm1 to 32-bit value at parm2
    //
-   static char *setStatic32BitValue(char *option, void *base, TR::OptionTable *entry);
+   static const char *setStatic32BitValue(const char *option, void *base, TR::OptionTable *entry);
 
    // Set bool at parm1 to value at parm2
    //
-   static char *setStaticBool(char *option, void *base, TR::OptionTable *entry);
+   static const char *setStaticBool(const char *option, void *base, TR::OptionTable *entry);
 
    // Scan the option for a string value and copy the string to the address
    // given by entry->parm1
    //
-   static char *setStaticString(char *option, void *base, TR::OptionTable *entry);
+   static const char *setStaticString(const char *option, void *base, TR::OptionTable *entry);
 
    /**
    * \brief Option processing function for strings
@@ -2236,7 +2236,7 @@ private:
    *                     string field that needs to be set
    * \return A pointer to the option parameter
    */
-   static char *setString(char *option, void *base, TR::OptionTable *entry);
+   static const char *setString(const char *option, void *base, TR::OptionTable *entry);
 
    /**
    * \brief Option processing function for string fields stored in JitConfig
@@ -2250,47 +2250,47 @@ private:
    *                     field (a char pointer) that needs to be set
    * \return A pointer to the option parameter
    */
-   static char *setStringInJitConfig(char *option, void *base, TR::OptionTable *entry);
+   static const char *setStringInJitConfig(const char *option, void *base, TR::OptionTable *entry);
 
 
    // Add "debugString" to the JIT debug strings
    //
-   static char *setDebug(char *option, void *, TR::OptionTable *entry);
+   static const char *setDebug(const char *option, void *, TR::OptionTable *entry);
 
-   static char *setRegex(char *option, void *, TR::OptionTable *entry);
-   static char *setStaticRegex(char *option, void *, TR::OptionTable *entry);
+   static const char *setRegex(const char *option, void *, TR::OptionTable *entry);
+   static const char *setStaticRegex(const char *option, void *, TR::OptionTable *entry);
 
    // Set address enumeration bits
    //
-   static char *setAddressEnumerationBits(char *option, void *base, TR::OptionTable *entry);
+   static const char *setAddressEnumerationBits(const char *option, void *base, TR::OptionTable *entry);
 
    // Set bits from a set of string options
    //
-   typedef struct { char *bitName; int32_t bitValue; } TR_OptionStringToBit;
+   typedef struct { const char *bitName; int32_t bitValue; } TR_OptionStringToBit;
    private:
    static TR_OptionStringToBit _optionStringToBitMapping[];
    public:
-   static char *setBitsFromStringSet(char *option, void *base, TR::OptionTable *entry);
-   static char *clearBitsFromStringSet(char *option, void *base, TR::OptionTable *entry);
+   static const char *setBitsFromStringSet(const char *option, void *base, TR::OptionTable *entry);
+   static const char *clearBitsFromStringSet(const char *option, void *base, TR::OptionTable *entry);
 
-   static char *configureOptReporting(char *option, void *base, TR::OptionTable *entry);
+   static const char *configureOptReporting(const char *option, void *base, TR::OptionTable *entry);
 
    // Option processing helper functions
    //
-   static int64_t getNumericValue(char * &option);
+   static int64_t getNumericValue(const char *&option);
 
    // Display help information
    //
-   static char *helpOption(char *option, void *, TR::OptionTable *entry);
+   static const char *helpOption(const char *option, void *, TR::OptionTable *entry);
 
-   static char *limitOption(char *option, void *, TR::OptionTable *entry);
-   static char *inlinefileOption(char *option, void *, TR::OptionTable *entry);
-   static char *limitfileOption(char *option, void *, TR::OptionTable *entry);
-   static char *versionOption(char *option, void *, TR::OptionTable *entry);
+   static const char *limitOption(const char *option, void *, TR::OptionTable *entry);
+   static const char *inlinefileOption(const char *option, void *, TR::OptionTable *entry);
+   static const char *limitfileOption(const char *option, void *, TR::OptionTable *entry);
+   static const char *versionOption(const char *option, void *, TR::OptionTable *entry);
 
-   static char *breakOnLoad(char *option, void *, TR::OptionTable *entry);
-   static char *setCount(char *option, void *base, TR::OptionTable *entry);
-   char *getDefaultCountString();
+   static const char *breakOnLoad(const char *option, void *, TR::OptionTable *entry);
+   static const char *setCount(const char *option, void *base, TR::OptionTable *entry);
+   const char *getDefaultCountString();
 
    bool counterIsEnabled(const char *name, int8_t fidelity, TR::SimpleRegex *nameRegex);
 
@@ -2315,9 +2315,9 @@ protected:
    static int32_t        _numJitEntries;
    static int32_t        _numVmEntries;
    static TR::OptionSet  *_currentOptionSet;
-          char *         _startOptions;
-          char *         _envOptions;
-   static char *         _compilationStrategyName;
+          const char *   _startOptions;
+          const char *   _envOptions;
+   static const char *   _compilationStrategyName;
 
    // Option flag words
    //
@@ -2338,7 +2338,7 @@ protected:
    //
    int32_t                     _optLevel;
    int32_t                     _initialOptLevel; // opt level for first time compilations
-   char *                      _countString;
+   const char *                _countString;
    int32_t                     _initialCount;
    int32_t                     _initialBCount;
    int32_t                     _initialMILCount;
@@ -2407,16 +2407,16 @@ protected:
    // If countsAreProvidedByUser, then this flag is undefined
 
    static VerboseOptionFlagArray  _verboseOptionFlags;
-   static char                   *_verboseOptionNames[TR_NumVerboseOptions];
+   static const char          *_verboseOptionNames[TR_NumVerboseOptions];
    static bool                 _quickstartDetected; // set when Quickstart was specified on the command line
 
    typedef OptionFlagArray<TR_SamplingJProfilingFlags, TR_NumSamplingJProfilingFlags> SamplingJProfilingOptionFlagArray;
    static SamplingJProfilingOptionFlagArray _samplingJProfilingOptionFlags;
-   static char                     *_samplingJProfilingOptionNames[TR_NumSamplingJProfilingFlags];
+   static const char          *_samplingJProfilingOptionNames[TR_NumSamplingJProfilingFlags];
 
    typedef OptionFlagArray<TR_ReductionAlgorithms, TR_NumReductionAlgorithms> HotFieldReductionAlgorithmArray;
    static HotFieldReductionAlgorithmArray  _hotFieldReductionAlgorithms;
-   static char                   *_hotFieldReductionAlgorithmNames[TR_NumReductionAlgorithms];
+   static const char          *_hotFieldReductionAlgorithmNames[TR_NumReductionAlgorithms];
    // Miscellaneous options
    //
    char *                      _osVersionString;
@@ -2488,7 +2488,7 @@ protected:
 
    int32_t                     _jProfilingMethodRecompThreshold;
    int32_t                     _jProfilingLoopRecompThreshold;
-   char *                      _blockShufflingSequence;
+   char *                _blockShufflingSequence;
    int32_t                     _randomSeed;
    TR_MCTLogs *                _logListForOtherCompThreads;
    static bool                 _dualLogging;    // a log file is used in two different option sets, or in

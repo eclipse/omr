@@ -156,12 +156,12 @@ class TR_InlinerDelimiter
    {
 
    public:
-   TR_InlinerDelimiter(TR_InlinerTracer * tracer, char * tag);
+   TR_InlinerDelimiter(TR_InlinerTracer *tracer, const char *tag);
    ~TR_InlinerDelimiter();
 
    protected:
-   TR_InlinerTracer * _tracer;
-   char *_tag;
+   TR_InlinerTracer *_tracer;
+   const char *_tag;
    };
 
 class TR_Inliner : public TR::Optimization
@@ -435,7 +435,7 @@ class TR_DumbInliner : public TR_InlinerBase
    public:
       TR_DumbInliner(TR::Optimizer *, TR::Optimization *, uint32_t initialSize, uint32_t dumbReductionIncrement = 5);
       virtual bool inlineCallTargets(TR::ResolvedMethodSymbol *, TR_CallStack *, TR_InnerPreexistenceInfo *);
-      bool tryToInline(char *message, TR_CallTarget *calltarget);
+      bool tryToInline(const char *message, TR_CallTarget *calltarget);
    protected:
       virtual bool analyzeCallSite(TR_CallStack *, TR::TreeTop *, TR::Node *, TR::Node *);
 

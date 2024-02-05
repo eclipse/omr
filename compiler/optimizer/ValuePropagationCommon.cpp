@@ -1093,7 +1093,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
           !comp()->getOption(TR_DisableMultiLeafArrayCopy))
          {
          TR_ResolvedMethod *caller = node->getSymbolReference()->getOwningMethod(comp());
-         char *sig = "multiLeafArrayCopy";
+         const char *sig = "multiLeafArrayCopy";
          if (caller && strncmp(caller->nameChars(), sig, strlen(sig)) == 0)
             {
             if (trace())
@@ -2562,9 +2562,9 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
          comp()->getSymRefTab()->methodSymRefFromName(
             comp()->getMethodSymbol(),
             "com/ibm/jit/JITHelpers",
-            const_cast<char*> (TR::sun_nio_cs_UTF_16_Encoder_encodeUTF16Big == rm ?
+            TR::sun_nio_cs_UTF_16_Encoder_encodeUTF16Big == rm ?
                "transformedEncodeUTF16Big" :
-               "transformedEncodeUTF16Little"),
+               "transformedEncodeUTF16Little",
             "(JJI)I",
             TR::MethodSymbol::Static
             );
@@ -3908,7 +3908,7 @@ void OMR::ValuePropagation::transformObjectCloneCall(TR::TreeTop *callTree, OMR:
 
    TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "inlineClone.location/object/(%s)", comp()->signature()), callTree);
    int32_t classNameLength;
-   char *className = TR::Compiler->cls.classNameChars(comp(), j9class, classNameLength);
+   const char *className = TR::Compiler->cls.classNameChars(comp(), j9class, classNameLength);
    TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "inlineClone.type/(%s)/(%s)/%s", className, comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness())), callTree);
 
     // Preserve children for callNode
@@ -3962,15 +3962,15 @@ void OMR::ValuePropagation::transformObjectCloneCall(TR::TreeTop *callTree, OMR:
          comp()->getSymRefTab()->methodSymRefFromName(
             comp()->getMethodSymbol(),
             "com/ibm/jit/JITHelpers",
-            const_cast<char*>("jitHelpers"),
-            const_cast<char*>("()Lcom/ibm/jit/JITHelpers;"),
+            "jitHelpers",
+            "()Lcom/ibm/jit/JITHelpers;",
             TR::MethodSymbol::Static);
    TR::SymbolReference* objCopySymRef =
          comp()->getSymRefTab()->methodSymRefFromName(
             comp()->getMethodSymbol(),
             "com/ibm/jit/JITHelpers",
-            const_cast<char*>(comp()->target().is64Bit() ? "unsafeObjectShallowCopy64" : "unsafeObjectShallowCopy32"),
-            const_cast<char*>(comp()->target().is64Bit() ? "(Ljava/lang/Object;Ljava/lang/Object;J)V" : "(Ljava/lang/Object;Ljava/lang/Object;I)V"),
+            comp()->target().is64Bit() ? "unsafeObjectShallowCopy64" : "unsafeObjectShallowCopy32",
+            comp()->target().is64Bit() ? "(Ljava/lang/Object;Ljava/lang/Object;J)V" : "(Ljava/lang/Object;Ljava/lang/Object;I)V",
             TR::MethodSymbol::Static);
    TR::Node *getHelpers = TR::Node::createWithSymRef(callNode, TR::acall, 0, helperAccessor);
    callTree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(callNode, TR::treetop, 1, getHelpers)));
@@ -4031,7 +4031,7 @@ void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, OMR::
 
    TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "inlineClone.location/array/(%s)", comp()->signature()), callTree);
    int32_t classNameLength;
-   char *className = TR::Compiler->cls.classNameChars(comp(), j9arrayClass, classNameLength);
+   const char *className = TR::Compiler->cls.classNameChars(comp(), j9arrayClass, classNameLength);
    TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "inlineClone.type/(%s)/(%s)/%s", className, comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness())), callTree);
    TR::Node *lenNode = TR::Node::create(callNode, TR::arraylength, 1, objNode);
     // Preserve children for callNode

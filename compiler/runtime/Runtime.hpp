@@ -41,7 +41,7 @@ void s390zLinux64CodeCacheParameters(int32_t *, void **, int32_t *, int32_t*);
 
 uint32_t getPPCCacheLineSize();
 
-extern void setDllSlip(char* codeStart,char* codeEnd,char* dllName, TR::Compilation *);
+extern void setDllSlip(const char *codeStart, const char *codeEnd, const char *dllName, TR::Compilation *);
 
 void initializeJitRuntimeHelperTable(char jvmpi);
 

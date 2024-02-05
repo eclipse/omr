@@ -292,6 +292,15 @@ class Simplifier : public TR::Optimization
    TR::TreeTop      *_performLowerTreeSimplifier;
    TR::Node         *_performLowerTreeNode;
    TR::list<std::pair<TR::TreeTop*, TR::Node*> > _performLowerTreeNodePairs;
+
+   /**
+    * This field is used as part of a handshake between the \ref divchkSimplifier
+    * and the integer division and remainder simplifiers.  If simplifying the
+    * child of a \c DIVCHK leaves us with a node that still must have a \c DIVCHK
+    * applied, the division or remainder simplifier will set this field to refer
+    * to that node; otherwise, it will set this field to \c NULL.
+    */
+   TR::Node         *_nodeToDivchk;
    };
 
 }

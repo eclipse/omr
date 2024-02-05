@@ -43,13 +43,10 @@ enum TR_VirtualGuardKind
    {
    TR_NoGuard,
    TR_ProfiledGuard,
-   TR_RemovedProfiledGuard,
    TR_InterfaceGuard,
-   TR_RemovedInterfaceGuard,
    TR_AbstractGuard,
    TR_HierarchyGuard,
    TR_NonoverriddenGuard,
-   TR_RemovedNonoverriddenGuard,
    TR_SideEffectGuard,
    TR_DummyGuard,
    TR_HCRGuard,

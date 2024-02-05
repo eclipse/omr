@@ -43,7 +43,7 @@
 #include "omrcfg.h"
 #include "threaddef.h"
 
-#if defined(J9ZTPF)
+#if defined(OMRZTPF)
 #define CPU_SETSIZE 4
 #define CPU_ISSET(x,y) 0
 #define CPU_SET(x,y) {}

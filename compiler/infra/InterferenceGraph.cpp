@@ -503,7 +503,7 @@ bool TR_InterferenceGraph::select()
 
 
 #ifdef DEBUG
-void TR_InterferenceGraph::dumpIG(char *msg)
+void TR_InterferenceGraph::dumpIG(const char *msg)
    {
    if (msg)
       {

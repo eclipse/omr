@@ -221,10 +221,12 @@ OMR::Optimization::anchorChildren(TR::Node *node, TR::TreeTop* anchorTree, uint3
 
    if (!hasCommonedAncestor)
       {
-      if (self()->trace())
-         traceMsg(self()->comp(),"set hasCommonedAncestor = true as %s %p has refCount %d > 1\n",
-            node->getOpCode().getName(),node,node->getReferenceCount());
       hasCommonedAncestor = (node->getReferenceCount() > 1);
+      if (self()->trace())
+         traceMsg(self()->comp(),"set hasCommonedAncestor = %s as %s %p has refCount %d %s 1\n",
+            hasCommonedAncestor ? "true" : "false",
+            node->getOpCode().getName(),node,node->getReferenceCount(),
+            hasCommonedAncestor ? ">" : "<=");
       }
 
    for (int j = node->getNumChildren()-1; j >= 0; --j)
@@ -274,7 +276,6 @@ OMR::Optimization::anchorNode(TR::Node *node, TR::TreeTop* anchorTree)
       }
    }
 
-extern void createGuardSiteForRemovedGuard(TR::Compilation *comp, TR::Node* ifNode);
 /**
  * Folds a given if in IL. This method does NOT update CFG
  * The callers should handle any updates to CFG or call
@@ -287,11 +288,6 @@ OMR::Optimization::removeOrconvertIfToGoto(TR::Node* &node, TR::Block* block, in
    // it altogether.
    // In either case the CFG must be updated to reflect the change.
    //
-
-#ifdef J9_PROJECT_SPECIFIC
-   // doesn't matter taken or untaken, if it's a profiled guard we need to make sure the AOT relocation is created
-   createGuardSiteForRemovedGuard(self()->comp(), node);
-#endif
 
    node->setVirtualGuardInfo(NULL, self()->comp());
 

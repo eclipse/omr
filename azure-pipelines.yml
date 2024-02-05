@@ -196,6 +196,7 @@ jobs:
       vmImage: 'macOS-latest'
     variables:
       CCACHE_DIR: $(Pipeline.Workspace)/ccache
+      GTEST_FILTER: -*.poll_functionality_basic:*poll_functionality_many_sockets
     steps:
       - script: |
           brew install ccache

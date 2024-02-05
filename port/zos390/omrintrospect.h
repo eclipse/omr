@@ -30,6 +30,7 @@
 
 #include <leawi.h>
 #include "edcwccwi.h"
+#import "omrgetthent.h"
 #include "omrintrospect_common.h"
 #include "omrutil.h"
 
@@ -155,83 +156,15 @@ PGTHAPTAG             EQU   X'02'      PGTHK, PTAG (NEEDS PGTHJ)
 PGTHA#LEN             EQU   *-PGTHA
 */
 #define PGTHA_ACCESS_FIRST			0
-#define PGTHA_ACCESS_CURRENT		1
 #define PGTHA_ACCESS_NEXT			2
 #define PGTHA_ACCESS_LAST			3
 
-#define PGTHA_FLAG_PROCESS_DATA		0x80
 #define PGTHA_FLAG_CONTTY			0x40
 #define PGTHA_FLAG_PATH				0x20
 #define PGTHA_FLAG_CMD_AND_ARGS		0x10
 #define PGTHA_FLAG_FILE_DATA		0x8
 #define PGTHA_FLAG_THREAD_DATA		0x4
 #define PGTHA_FLAG_PTAG				0x2 /* needs thread data */
-
-struct pgtha {
-	/* start of PGTHACONTINUE group */
-	unsigned int pid;
-	unsigned char thid[8];
-	unsigned char accesspid; /* FIRST, CURRENT or NEXT */
-	unsigned char accessthid; /* FIRST, CURRENT, NEXT or LAST */
-	/* end of PGTHACONTINUE group */
-
-	unsigned short asid;
-	unsigned char loginname[8];
-	unsigned char flag1; /* ONLY THREAD and PTAG checked if ACCESSPID==CURRENT & ACCESSTHID==NEXT */
-
-	char _padding;
-};
-
-
-/*
-PGTHB                 DSECT ,        O U T P U T - - - - - - - - - -
-PGTHBID               DS    CL4      "gthb"
-PGTHBCONTINUE         DS    0CL14    NEXT VALUE FOR PGTHACONTINUE
-PGTHBPID              DS    F        PROCESS ID
-PGTHBTHID             DS    CL8      THREAD ID
-PGTHBACCESSPID        DS    FL1      CURRENT/FIRST/NEXT
-PGTHBACCESSTHID       DS    FL1      CURRENT/FIRST/NEXT/LAST
-                      DS    FL2
-PGTHBLENUSED          DS    F        LENGTH OF OUTPUT BUFFER USED
-PGTHBLIMITC           DS    CL1      N, A
-PGTHBOFFC             DS    FL3      OFFSET OF PROCESS AREA
-PGTHBLIMITD           DS    CL1      N, A, X
-PGTHBOFFD             DS    FL3      OFFSET OF CONTTY  AREA
-PGTHBLIMITE           DS    CL1      N, A, X
-PGTHBOFFE             DS    FL3      OFFSET OF PATH    AREA
-PGTHBLIMITF           DS    CL1      N, A, X
-PGTHBOFFF             DS    FL3      OFFSET OF COMMAND AREA
-PGTHBLIMITG           DS    CL1      N, A, X
-PGTHBOFFG             DS    FL3      OFFSET OF FILE DATA AREA
-PGTHBLIMITJ           DS    CL1      N, A, V, X
-PGTHBOFFJ             DS    FL3      OFFSET OF THREAD AREA
-PGTHB#LEN             EQU   *-PGTHB
-*/
-struct pgthb {
-	char id[4];	/* "gthb" eyecatcher */
-	/* start of PGTHBCONTINUE */
-	int pid;
-	char thid[8];
-	char accesspid;
-	char accessthid;
-	/* end of PGTHBCONTINUE */
-
-	char _padding[2];
-
-	int lenused;
-	char limitc;
-	char offc[3];
-	char limitd;
-	char offd[3];
-	char limite;
-	char offe[3];
-	char limitf;
-	char offf[3];
-	char limitg;
-	char offg[3];
-	char limitj;
-	char offj[3];
-};
 
 /*
 * VALUES FOR PGTH.LIMIT. FIELDS
@@ -342,56 +275,6 @@ PGTHC#LEN             EQU   *-PGTHC
 #define PGTHC_MEM_DENOMINATION_GIGABYTE 0xC7
 #define PGTHC_MEM_DENOMINATION_TERABYTE 0xE3
 #define PGTHC_MEM_DENOMINATION_PETABYTE 0xD7
-
-struct pgthc {
-	char id[4]; /* "gthc" eyecatcher */
-	char flag1;
-	char flag2;
-	char flag3;
-
-	char _padding;
-
-	int pid;
-	int ppid;
-	int pgpid;
-	int sid;
-	int fgpid;
-	int euid;
-	int ruid;
-	int suid;
-	int egid;
-	int rgid;
-	int sgid;
-	int tsize;
-	int syscallcount;
-	int usertime;
-	int systime;
-	int starttime;
-
-	short cntoe;
-	short cntptcreated;
-	short cntthreads;
-	short asid;
-
-	char jobname[8];
-	char loginname[8];
-
-	union {
-		int value;
-		struct {
-			char value[3];
-			char demonination;
-		} tuple;
-	} memlimit;
-
-	union {
-		int value;
-		struct {
-			char value[3];
-			char demonination;
-		} tuple;
-	} memusage;
-};
 
 /*
 * USING PGTHD,Rx where Rx = ADDRESS of PGTHB + PGTHBOFFD
@@ -568,35 +451,6 @@ PGTHJ#LEN             EQU   *-PGTHJ
 #define PGTHJ_STATUS4_DETACHED		0xE5
 
 #define PGTHJ_STATUS5_FREEZE		0xC5
-struct pgthj {
-	char id[4]; /* "gthj" eyecatcher */
-	char limitj;
-	char offj[3];
-	char limitk;
-	char offk[3];
-	char thid[8];
-	char syscall[4];
-	struct tcb *tcb;
-	int ttime;
-	int wtime;
-
-	int _padding;
-
-	short semnum; /* if status2==D */
-	short semval; /* if status2==D */
-	int latchwaitpid;
-	char penmask[8];
-	char loginname[8];
-	char prevsc[5][4]; /* last 5 syscalls */
-
-	/* start of PGTHJSTATUSCHARS group */
-	char status1;
-	char status2;
-	char status3;
-	char status4;
-	char status5;
-	/* end of PGTHJSTATUSCHARS group */
-};
 
 /*
 * USING PGTHH,Rx where Rx = ADDRESS of PGTHB + PGTHJOFFK

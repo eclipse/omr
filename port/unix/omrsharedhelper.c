@@ -416,7 +416,7 @@ omr_unlinkControlFile(struct OMRPortLibrary* portLibrary, const char *controlFil
 	if (msgLen + 1 > sizeof(originalErrMsg)) {
 		msgLen = sizeof(originalErrMsg) - 1;
 	}
-	strncpy(originalErrMsg, currentErrMsg, msgLen);
+	memcpy(originalErrMsg, currentErrMsg, msgLen);
 	originalErrMsg[msgLen] = '\0';
 	if (-1 == omrfile_unlink(portLibrary, controlFile)) {
 		/* If an error occurred during unlinking, store the unlink error code in 'controlFileStatus' if available,

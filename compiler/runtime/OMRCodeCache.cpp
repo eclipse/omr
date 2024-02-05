@@ -955,7 +955,7 @@ OMR::CodeCache::addFreeBlock(void * metaData)
 bool
 OMR::CodeCache::addFreeBlock2WithCallSite(uint8_t *start,
                                         uint8_t *end,
-                                        char *file,
+                                        const char *file,
                                         uint32_t lineNumber)
    {
    TR::CodeCacheConfig &config = _manager->codeCacheConfig();

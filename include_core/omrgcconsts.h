@@ -567,9 +567,9 @@ typedef enum {
 #define METRONOME_DEFAULT_TIME_WINDOW_MICRO 60000
 #endif /* OMR_GC_REALTIME */
 
-#if defined(J9ZTPF)
+#if defined(OMRZTPF)
 #define ZTPF_MEMORY_RESERVE_RATIO .8
-#endif /* defined(J9ZTPF) */
+#endif /* defined(OMRZTPF) */
 
 /**
  * Bit geometry within header flags byte.

@@ -2669,18 +2669,31 @@ OMR::Z::TreeEvaluator::dselectEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Register *resultReg = cg->gprClobberEvaluate(trueValueNode);
    TR::Register *conditionReg = cg->evaluate(conditionNode);
    TR::Register *falseValReg = cg->evaluate(falseValueNode);
-   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z13) && node->getOpCode().isDouble())
+   if ((cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z13) && node->getOpCode().isDouble())
+    || (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z14) && node->getOpCode().isFloat()))
       {
       TR::Register *vectorSelReg = cg->allocateRegister(TR_VRF);
       TR::Register *tempReg = cg->allocateRegister(TR_FPR);
       TR::Register *vzeroReg = cg->allocateRegister(TR_VRF);
-      // Convert 32 Bit register to 64 Bit (Comparison Child of the select node is 32 bit)
-      generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, conditionReg, conditionReg);
+      if (node->getOpCode().isDouble())
+         {
+         // Convert 32 Bit register to 64 Bit for Doubles (Comparison Child of the select node is 32 bit)
+         generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, conditionReg, conditionReg);
+         }
+      else
+         {
+         // Shift left the 32 least significant bits for preserving the float representaion as the hardware only operates on the first 32 bits in a FPR
+         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, conditionReg, 32);
+         }
       // convert to floating point
       generateRRInstruction(cg, TR::InstOpCode::LDGR, node, tempReg, conditionReg);
       // generate compare with zero
       generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, vzeroReg, 0, 0);
-      generateVRRcInstruction(cg, TR::InstOpCode::VFCE, node, vectorSelReg, tempReg, vzeroReg, 1, 0, 3);
+      // Mask values used for VFCE instruction:
+      // M4 - Floating-point-format control = getVectorElementSizeMask(node->getSize()) - gets the element size mask for doubles/floats respectively
+      // M5 - Single-Element-Control = 0x8, setting bit 0 to one, controlling the operation to take place only on the zero-indexed element in the vector
+      // M6 - Condition Code Set = 0, the Condition Code is not set and remains unchanged
+      generateVRRcInstruction(cg, TR::InstOpCode::VFCE, node, vectorSelReg, tempReg, vzeroReg, 0, 0x8, getVectorElementSizeMask(node->getSize()));
       // generate select - if condition == 0, vectorSelReg will contain all 1s, so false and true are swapped
       generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, resultReg, falseValReg, resultReg, vectorSelReg);
       cg->stopUsingRegister(tempReg);

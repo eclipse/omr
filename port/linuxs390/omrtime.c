@@ -36,7 +36,6 @@
 
 #define OMRTIME_CLOCK_DELTA_ADJUSTMENT_INTERVAL_USEC J9CONST_I64(60 * 1000 * 1000)
 
-#define OMRTIME_NANOSECONDS_PER_SECOND J9CONST_I64(1000000000)
 static const clockid_t OMRTIME_NANO_CLOCK = CLOCK_MONOTONIC;
 
 extern int64_t maxprec();
@@ -121,7 +120,7 @@ omrtime_current_time_nanos(struct OMRPortLibrary *portLibrary, uintptr_t *succes
 	uint64_t nsec = 0;
 	*success = 0;
 	if (0 == clock_gettime(CLOCK_REALTIME, &ts)) {
-		nsec = ((uint64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (uint64_t)ts.tv_nsec;
+		nsec = ((uint64_t)ts.tv_sec * OMRPORT_TIME_DELTA_IN_NANOSECONDS) + (uint64_t)ts.tv_nsec;
 		*success = 1;
 	}
 	return nsec;

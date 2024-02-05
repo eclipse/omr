@@ -117,6 +117,7 @@ typedef enum {
 	UT_TREX,
 	UT_OPTERON,
 	UT_RV64G,
+	UT_ARMV8A,
 	UT_SUBTYPE_FORCE_INTEGER = INT_MAX
 } UtSubtype;
 
@@ -147,6 +148,7 @@ typedef enum {
 	UT_S390X,
 	UT_AMD64,
 	UT_RISCV,
+	UT_AARCH64,
 	UT_ARCHITECTURE_FORCE_INTEGER = INT_MAX
 } UtArchitecture;
 

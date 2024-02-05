@@ -2352,133 +2352,135 @@ TR_Debug::printLabelInstruction(TR::FILE *pOutFile, const char *opCode, TR::Labe
    print(pOutFile, label);
    }
 
-
-const char callRegName64[][5] =
-   {
-      "rax","rsi","rdx","rcx"
-   };
-
-const char callRegName32[][5] =
-   {
-      "eax","esi","edx","ecx"
-   };
-
-static const char*
-getInterpretedMethodNameHelper(TR::MethodSymbol *methodSymbol,
-                               TR::DataType     type){
-   if (methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative())
-      return "icallVMprJavaSendNativeStatic";
-
-   switch(type)
-      {
-      case TR::NoType:
-         return "interpreterVoidStaticGlue";
-      case TR::Int8:
-      case TR::Int16:
-      case TR::Int32:
-         return "interpreterIntStaticGlue";
-      case TR::Address:
-         return "interpreterLongStaticGlue";
-      case TR::Int64:
-         return "interpreterLongStaticGlue";
-      case TR::Float:
-         return "interpreterFloatStaticGlue";
-      case TR::Double:
-         return "interpreterDoubleStaticGlue";
-      default:
-         TR_ASSERT(0, "Unsupported data type: %d", type);
-         return "UNKNOWN interpreted method type";
-      }
-}
-
-
 //
 // IA32 Snippets
 //
 
 #ifdef J9_PROJECT_SPECIFIC
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86CallSnippet  * snippet)
+TR_Debug::print(TR::FILE *pOutFile, TR::X86CallSnippet *snippet)
    {
-   // *this   swipeable for debugger
    if (pOutFile == NULL)
       return;
 
-   uint8_t            *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   TR::Node            *callNode = snippet->getNode();
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   TR::Node *callNode = snippet->getNode();
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
-   TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+   TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
 
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
 
+   bool isJitInduceOSRCall = false;
+   bool isJitDispatchJ9Method = false;
+   if (methodSymbol->isHelper() && methodSymRef->isOSRInductionHelper())
+      isJitInduceOSRCall = true;
+   else if (callNode->isJitDispatchJ9MethodCall(_comp))
+      isJitDispatchJ9Method = true;
+
+   bool hasMovRegJ9Method = !isJitInduceOSRCall && !isJitDispatchJ9Method;
+
+   const char *helperName = NULL;
+   if (isJitInduceOSRCall)
+      helperName = getRuntimeHelperName(methodSymRef->getReferenceNumber());
+   else if (isJitDispatchJ9Method)
+      helperName = "j2iTransition";
+   else
+      helperName = "interpreterStaticAndSpecialGlue";
+
    if (_comp->target().is64Bit())
       {
-      int32_t   count;
-      int32_t   size = 0;
-      int32_t   offset = 8 * callNode->getNumChildren();
+      static const int slotSize = sizeof(uintptr_t);
+      static const int numArgGPRs = 4;
+      static const int numArgFPRs = 8;
+      static const char *gprStem[numArgGPRs] = { "ax", "si", "dx", "cx" };
 
-      for (count = 0; count < callNode->getNumChildren(); count++)
+      int32_t numChildren = callNode->getNumChildren();
+      int32_t firstArgIndex = 0;
+      if (isJitDispatchJ9Method)
+         firstArgIndex++; // skip the J9Method
+
+      int32_t offset = slotSize; // return address slot
+      for (int32_t i = firstArgIndex; i < numChildren; i++)
          {
-            TR::Node       *child   = callNode->getChild(count);
-            TR::DataType    type    = child->getType();
+         TR::DataType type = callNode->getChild(i)->getType();
+         offset += ((type == TR::Int64 || type == TR::Double) ? 2 : 1) * slotSize;
+         }
 
+      int32_t gprIndex = 0;
+      int32_t fprIndex = 0;
+      for (int32_t i = firstArgIndex; i < numChildren; i++)
+         {
+         if (gprIndex >= numArgGPRs && fprIndex >= numArgFPRs)
+            break;
 
-            switch (type)
-               {
-               case TR::Float:
-               case TR::Int8:
-               case TR::Int16:
-               case TR::Int32:
-                  printPrefix(pOutFile, NULL, bufferPos, 4);
-                  trfprintf(pOutFile, "mov \tdword ptr[rsp+%d], %s\t\t#save registers for interpreter call snippet",
-                                offset, callRegName32[count] );
-                  offset-=8;
-                  bufferPos+=4;
-                  break;
-               case TR::Double:
-               case TR::Address:
-               case TR::Int64:
-                  printPrefix(pOutFile, NULL, bufferPos, 5);
-                  trfprintf(pOutFile, "mov \tqword ptr[rsp+%d], %s\t\t#save registers for interpreter call snippet",
-                                offset, callRegName64[count] );
-                  offset-=8;
-                  bufferPos+=5;
-                  break;
-               default:
-                  TR_ASSERT(0, "unknown data type: %d", type);
-                  break;
-               }
+         TR::Node *child = callNode->getChild(i);
+         TR::DataType type = child->getType();
+         offset -= ((type == TR::Int64 || type == TR::Double) ? 2 : 1) * slotSize;
 
-          }
+         bool is32Bit = TR::DataType::getSize(type) <= 4;
+         bool isFpr = type.isFloatingPoint();
+         if (isFpr && fprIndex < numArgFPRs)
+            {
+            // No need to check for VEX vs. legacy encoding. These instructions
+            // are the same length either way.
+            int32_t instrSize = 6 + (offset >= 0x80 ? 3 : 0);
+            printPrefix(pOutFile, NULL, bufferPos, instrSize);
+            trfprintf(
+               pOutFile,
+               "vmovs%c\t%cword ptr [rsp+0x%x], xmm%d"
+               "\t\t# save registers for interpreter call snippet",
+               is32Bit ? 's' : 'd',
+               is32Bit ? 'd' : 'q',
+               offset,
+               fprIndex);
+
+            bufferPos += instrSize;
+            fprIndex++;
+            }
+         else if (!isFpr && gprIndex < numArgGPRs)
+            {
+            int32_t instrSize = (is32Bit ? 4 : 5) + (offset >= 0x80 ? 3 : 0);
+            printPrefix(pOutFile, NULL, bufferPos, instrSize);
+            trfprintf(
+               pOutFile,
+               "mov\t%cword ptr [rsp+0x%x], %c%s"
+               "\t\t# save registers for interpreter call snippet",
+               is32Bit ? 'd' : 'q',
+               offset,
+               is32Bit ? 'e' : 'r',
+               gprStem[gprIndex]);
+
+            bufferPos += instrSize;
+            gprIndex++;
+            }
+         }
+
+      if (hasMovRegJ9Method)
+         {
          intptr_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
-
          printPrefix(pOutFile, NULL, bufferPos, 10);
-         trfprintf(pOutFile, "mov \trdi, 0x%x\t\t# TR::InstOpCode::MOV8RegImm64",ramMethod);
-         bufferPos+=10;
+         trfprintf(pOutFile, "mov\trdi, 0x%zx\t\t# MOV8RegImm64", ramMethod);
+         bufferPos += 10;
+         }
 
-         printPrefix(pOutFile, NULL, bufferPos, 5);
-         trfprintf(pOutFile, "jmp \t%s\t\t# jump out of snippet code",
-                       getInterpretedMethodNameHelper (methodSymbol, callNode->getDataType()));
-         bufferPos+=5;
+      printPrefix(pOutFile, NULL, bufferPos, 5);
+      trfprintf(pOutFile, "jmp\t%s\t\t# jump out of snippet code", helperName);
+      bufferPos += 5;
       }
-
    else
       {
+      if (hasMovRegJ9Method)
+         {
          intptr_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
-
          printPrefix(pOutFile, NULL, bufferPos, 5);
-         trfprintf(pOutFile, "mov \tedi, 0x%x\t\t# MOV8RegImm32",ramMethod);
-         bufferPos+=5;
+         trfprintf(pOutFile, "mov\tedi, 0x%x\t\t# MOV8RegImm32", ramMethod);
+         bufferPos += 5;
+         }
 
-         printPrefix(pOutFile, NULL, bufferPos, 5);
-         trfprintf(pOutFile, "jmp \t%s\t\t# jump out of snippet code",
-                       getInterpretedMethodNameHelper (methodSymbol, callNode->getDataType()));
-         bufferPos+=5;
-
+      printPrefix(pOutFile, NULL, bufferPos, 5);
+      trfprintf(pOutFile, "jmp\t%s\t\t# jump out of snippet code", helperName);
+      bufferPos += 5;
       }
-
-   return;
-
    }
 
 #endif

@@ -4989,7 +4989,7 @@ void OMR::ValuePropagation::setUnreachablePath(TR::CFGEdge *edge)
 void OMR::ValuePropagation::printStructureInfo(TR_Structure *s, bool starting, bool lastTimeThrough)
    {
    traceMsg(comp(), "\n%s ", starting ? "Starting " : "Stopping ");
-   char *type;
+   const char *type;
    bool isLoop = false;
    if (s->asRegion())
       {

@@ -250,7 +250,7 @@ TR_Debug::printLoadConst(TR::Node *node, TR_PrettyPrinterString& output)
          if (node->isClassPointerConstant())
             {
             TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)node->getAddress();
-            int32_t len; char *sig = TR::Compiler->cls.classNameChars(_comp, clazz, len);
+            int32_t len; const char *sig = TR::Compiler->cls.classNameChars(_comp, clazz, len);
             if (clazz)
                {
                if (TR::Compiler->cls.isInterfaceClass(_comp, clazz))
@@ -1729,7 +1729,7 @@ TR_Debug::printNodeInfo(TR::Node * node, TR_PrettyPrinterString& output, bool pr
          {
          output.appends("   ; array type is ");
 
-         char *typeStr;
+         const char *typeStr;
          switch (node->getInt())
             {
             case 4:

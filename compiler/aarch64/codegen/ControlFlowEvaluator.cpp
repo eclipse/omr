@@ -155,6 +155,11 @@ static TR::Instruction *ificmpHelper(TR::Node *node, TR::ARM64ConditionCode cc, 
    TR::RegisterDependencyConditions *deps;
    bool secondChildNeedsRelocation = cg->profiledPointersRequireRelocation() && (secondChild->getOpCodeValue() == TR::aconst) &&
                                        (secondChild->isClassPointerConstant() || secondChild->isMethodPointerConstant());
+   TR_ResolvedMethod *method = comp->getCurrentMethod();
+   bool secondChildNeedsPicSite = (secondChild->getOpCodeValue() == TR::aconst) &&
+                                    ((secondChild->isClassPointerConstant() && cg->fe()->isUnloadAssumptionRequired(reinterpret_cast<TR_OpaqueClassBlock *>(secondChild->getAddress()), method)) ||
+                                     (node->isMethodPointerConstant() && cg->fe()->isUnloadAssumptionRequired(
+                                      cg->fe()->createResolvedMethod(cg->trMemory(), reinterpret_cast<TR_OpaqueMethodBlock *>(secondChild->getAddress()), method)->classOfMethod(), method)));
 
 #ifdef J9_PROJECT_SPECIFIC
 if (secondChildNeedsRelocation)
@@ -226,7 +231,7 @@ if (secondChildNeedsRelocation)
          }
       }
 
-   if ((!secondChildNeedsRelocation) && secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)
+   if ((!secondChildNeedsRelocation) && (!secondChildNeedsPicSite) && secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL)
       {
       int64_t value = is64bit ? secondChild->getLongInt() : secondChild->getInt();
       if (constantIsUnsignedImm12(value) || constantIsUnsignedImm12(-value) ||

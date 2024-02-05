@@ -1152,6 +1152,9 @@ public:
    bool isInternalPointer();
    void setIsInternalPointer(bool v);
 
+   // Flag used by TR::aloadi
+   bool isDataAddrPointer();
+
    // Flags used by TR::arraytranslate and TR::arraytranslateAndTest
    bool isArrayTRT();
    void setArrayTRT(bool v);

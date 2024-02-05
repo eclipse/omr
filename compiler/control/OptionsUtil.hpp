@@ -37,7 +37,7 @@ class Options;
 
 // Shape of an option processing method
 //
-typedef char * (* OptionFunctionPtr)(char *option, void *base, OptionTable *entry);
+typedef const char * (* OptionFunctionPtr)(const char *option, void *base, OptionTable *entry);
 
 // Flags used for the msgInfo field in TR::OptionTable
 //
@@ -146,9 +146,9 @@ public:
 
    TR_ALLOC(TR_Memory::OptionSet)
 
-   OptionSet(char *s) { init(s); }
+   OptionSet(const char *s) { init(s); }
 
-   void init(char *s) { _optionString = s; _next = 0; _methodRegex = 0; _optLevelRegex = 0; _start=0; _end=0; _options = NULL; }
+   void init(const char *s) { _optionString = s; _next = 0; _methodRegex = 0; _optLevelRegex = 0; _start=0; _end=0; _options = NULL; }
 
    OptionSet *getNext() {return _next;}
 
@@ -157,7 +157,7 @@ public:
    TR::SimpleRegex *getOptLevelRegex() {return _optLevelRegex; }
    bool match(const char *s) { TR_ASSERT(false, "should be unreachable"); return false; }
    TR::Options *getOptions() {return _options;}
-   char *getOptionString() {return _optionString;}
+   const char *getOptionString() {return _optionString;}
    int32_t getStart() {return _start;}
    int32_t getEnd() {return  _end;}
 
@@ -177,7 +177,7 @@ private:
    int32_t _start;
    int32_t _end;
    TR::Options *_options;
-   char *_optionString;
+   const char *_optionString;
    };
 
 }

@@ -494,7 +494,7 @@ MM_ParallelDispatcher::adjustThreadCount(uintptr_t maxThreadCount)
 {
 	uintptr_t toReturn = maxThreadCount;
 	
-	/* Did user specify number of gc threads? */
+	/* Did user force a fixed number of gc threads? */
 	if (!_extensions->gcThreadCountForced) {
 		/* No ...Use a sensible number of threads for current heap size. Using too many 
 		 * can lead to unacceptable pause times due to insufficient parallelism. Additionally,
@@ -701,7 +701,6 @@ MM_ParallelDispatcher::contractThreadPool(MM_EnvironmentBase *env, uintptr_t new
 
 		Assert_MM_true(_threadShutdownCount == expectedThreadShutdownThread);
 
-		_extensions->gcThreadCount = newThreadCount;
 		_activeThreadCount = newThreadCount;
 		_threadCount = newThreadCount;
 		_threadCountMaximum = newThreadCount;
@@ -733,7 +732,7 @@ MM_ParallelDispatcher::expandThreadPool(MM_EnvironmentBase *env)
 
 	Trc_MM_ParallelDispatcher_expandThreadPool_params(
 			newThreadCount, _poolMaxCapacity,
-			_extensions->configuration->supportedGCThreadCount(env), preExpandThreadCount);
+			_extensions->configuration->defaultGCThreadCount(env), preExpandThreadCount);
 
 	result = reinitializeThreadPool(env, newThreadCount);
 
@@ -748,7 +747,6 @@ MM_ParallelDispatcher::expandThreadPool(MM_EnvironmentBase *env)
 				newThreadCount = _threadShutdownCount + 1;
 			}
 
-			_extensions->gcThreadCount = newThreadCount;
 			_threadCount = newThreadCount;
 			_threadCountMaximum = newThreadCount;
 		}

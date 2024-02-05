@@ -73,8 +73,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCHelperCallSnippet * snippet)
       printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Helper Call Snippet");
       }
 
-   char    *info = "";
-   int32_t  distance;
+   const char *info = "";
+   int32_t     distance;
    if (isBranchToTrampoline(snippet->getDestination(), cursor, distance))
       info = " Through trampoline";
 

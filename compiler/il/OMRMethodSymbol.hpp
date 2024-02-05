@@ -192,6 +192,8 @@ public:
    bool safeToSkipDivChecks() { return false; }
    bool safeToSkipCheckCasts() { return false; }
    bool safeToSkipArrayStoreChecks() { return false; }
+   bool safeToSkipNonNullableArrayNullStoreCheck() { return false; }
+   bool safeToSkipFlattenableArrayElementNonHelperCall() { return false; }
    bool safeToSkipZeroInitializationOnNewarrays() { return false; }
    bool safeToSkipChecksOnArrayCopies() { return false; }
 

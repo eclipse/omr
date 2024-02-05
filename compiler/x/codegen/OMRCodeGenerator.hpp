@@ -167,6 +167,9 @@ struct TR_X86ProcessorInfo
    bool supportsAVX512DQ()                 {return testFeatureFlags8(TR_AVX512DQ) && enabledXSAVE();}
    bool supportsAVX512CD()                 {return testFeatureFlags8(TR_AVX512CD) && enabledXSAVE();}
    bool supportsAVX512VL()                 {return testFeatureFlags8(TR_AVX512VL) && enabledXSAVE();}
+   bool supportsAVX512VBMI2()              {return testFeatureFlags10(TR_AVX512_VBMI2) && enabledXSAVE();}
+   bool supportsAVX512BITALG()             {return testFeatureFlags10(TR_AVX512_BITALG) && enabledXSAVE();}
+   bool supportsAVX512VPOPCNTDQ()          {return testFeatureFlags10(TR_AVX512_VPOPCNTDQ) && enabledXSAVE();}
    bool supportsBMI1()                     {return testFeatureFlags8(TR_BMI1) && enabledXSAVE();}
    bool supportsBMI2()                     {return testFeatureFlags8(TR_BMI2) && enabledXSAVE();}
    bool supportsFMA()                      {return testFeatureFlags2(TR_FMA) && enabledXSAVE();}
@@ -224,6 +227,7 @@ private:
    flags32_t  _featureFlags;   // cache feature flags for re-use
    flags32_t  _featureFlags2;  // cache feature flags 2 for re-use
    flags32_t  _featureFlags8;  // cache feature flags 8 for re-use
+   flags32_t  _featureFlags10; // cache feature flags 10 for re-use
 
    uint32_t _processorDescription;
 
@@ -302,6 +306,11 @@ private:
    bool testFeatureFlags8(uint32_t feature)
       {
       return testFlag(_featureFlags8, feature, getFeatureFlags8Mask());
+      }
+
+   bool testFeatureFlags10(uint32_t feature)
+      {
+      return testFlag(_featureFlags10, feature, getFeatureFlags10Mask());
       }
    };
 

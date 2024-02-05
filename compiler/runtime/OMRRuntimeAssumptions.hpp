@@ -243,7 +243,7 @@ class RuntimeAssumption
    virtual TR_UnloadedClassPicSite  *asUCPSite() { return 0; }
    virtual TR_RedefinedClassPicSite *asRCPSite() { return 0; }
    virtual TR_PatchJNICallSite      *asPJNICSite() { return 0; }
-   void dumpInfo(char *subclassName);
+   void dumpInfo(const char *subclassName);
    virtual void dumpInfo() = 0;
    virtual TR_RuntimeAssumptionKind getAssumptionKind() = 0;
    virtual RuntimeAssumptionCategory getAssumptionCategory() = 0;

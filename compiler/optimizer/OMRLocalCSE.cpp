@@ -1186,6 +1186,9 @@ bool OMR::LocalCSE::canBeAvailable(TR::Node *parent, TR::Node *node, TR_BitVecto
    if (node->getOpCodeValue() == TR::allocationFence)
       return false;
 
+   if (node->getOpCode().isConversion() && node->getOpCode().isRef())
+      return false;
+
    if (node->getOpCode().isLoadReg() || node->getOpCode().isStoreReg() || (node->getOpCodeValue() == TR::PassThrough && parent->getOpCodeValue() != TR::GlRegDeps) || (node->getOpCodeValue() == TR::GlRegDeps))
       return false;
 

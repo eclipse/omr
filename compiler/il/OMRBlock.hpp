@@ -502,9 +502,9 @@ class OMR_EXTENSIBLE Block : public TR::CFGNode
 
    struct StandardException
       {
-      int32_t  length;
-      char    *name;
-      uint32_t exceptions;
+      int32_t     length;
+      const char *name;
+      uint32_t    exceptions;
       };
 
    static StandardException _standardExceptions[];

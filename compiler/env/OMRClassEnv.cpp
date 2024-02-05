@@ -33,23 +33,23 @@ OMR::ClassEnv::self()
    return static_cast<TR::ClassEnv *>(this);
    }
 
-char *
-OMR::ClassEnv::classNameChars(TR::Compilation *comp, TR::SymbolReference *symRef, int32_t & len)
+const char *
+OMR::ClassEnv::classNameChars(TR::Compilation *comp, TR::SymbolReference *symRef, int32_t &len)
    {
-   char *name = "<no class name>";
+   const char *name = "<no class name>";
    len = static_cast<int32_t>(strlen(name));
    return name;
    }
 
 uintptr_t
-OMR::ClassEnv::getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassBlock* arrayClass)
+OMR::ClassEnv::getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassBlock *arrayClass)
    {
    TR_UNIMPLEMENTED();
    return 0;
    }
 
 intptr_t
-OMR::ClassEnv::getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int32_t offset)
+OMR::ClassEnv::getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, int32_t offset)
    {
    // There is no project-agnostic way to determine whether or not offset is a
    // valid VFT offset for clazz, so return 0 to be safe. If offset were valid,

@@ -92,7 +92,6 @@
 
 extern TR::Node *constrainChildren(OMR::ValuePropagation *vp, TR::Node *node);
 extern TR::Node *constrainVcall(OMR::ValuePropagation *vp, TR::Node *node);
-extern void createGuardSiteForRemovedGuard(TR::Compilation *comp, TR::Node* ifNode);
 
 static void checkForNonNegativeAndOverflowProperties(OMR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint = NULL)
    {
@@ -8989,10 +8988,6 @@ static void generateModifiedNopGuard(
 
 static void changeConditionalToGoto(OMR::ValuePropagation *vp, TR::Node *node, TR::CFGEdge *branchEdge)
    {
-#ifdef J9_PROJECT_SPECIFIC
-   createGuardSiteForRemovedGuard(vp->comp(), node);
-#endif
-
    // NOTE: No special handling is required here to deal with the possibility
    // that node is a virtual guard that has been merged with an HCR or an OSR
    // guard. It's always safe to go to the taken (cold) side.
@@ -9022,10 +9017,6 @@ static void changeConditionalToGoto(OMR::ValuePropagation *vp, TR::Node *node, T
 
 static void removeConditionalBranch(OMR::ValuePropagation *vp, TR::Node *node, TR::CFGEdge *branchEdge)
    {
-#ifdef J9_PROJECT_SPECIFIC
-   createGuardSiteForRemovedGuard(vp->comp(), node);
-#endif
-
    // If node is a virtual guard merged with an HCR or an OSR guard, then it
    // will still be possible to go to the cold side. In that case, node will
    // still be removed, but an HCR or OSR guard will be added in its place, so

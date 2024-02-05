@@ -67,13 +67,13 @@ endif
 
 # Prepend the path to the library for relative paths.
 # Absolute paths to object files must be left alone.
+# MAKEFLAGS is cleared below because it might contain '-w' which seems to
+# nullify the use of '--no-print-directory', or job-server context which
+# yields warnings that should not be mixed into the 'show-objects' output.
 OBJECTS := \
 $(foreach lib,$(OMRLIBS), \
   $(foreach object, \
-    $(shell $(MAKE) -s --no-print-directory -C $(lib) show-objects), \
+    $(shell MAKEFLAGS= $(MAKE) -s --no-print-directory -C $(lib) show-objects), \
     $(if $(filter /%,$(object)),$(object),$(lib)/$(object))))
-
-$(OBJECTS):
-	@echo $@
 
 include $(top_srcdir)/omrmakefiles/rules.mk

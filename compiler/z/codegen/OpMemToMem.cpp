@@ -1503,6 +1503,20 @@ generateCmpResult(TR::CodeGenerator * cg, TR::Node * rootNode, TR::Register * ds
    return cursor;
    }
 
+static TR::Instruction *
+generateShortCircuitInstructions(TR::CodeGenerator * cg, TR::Node * node, TR::Register * result, TR::Register * src, TR::Register * dst, TR::LabelSymbol * label)
+   {
+   TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
+   // If "src" equals "dst", "result" would be zero and jumps to "label".
+   generateRRFInstruction(cg, TR::InstOpCode::getSubtractThreeRegOpCode(), node, result, src, dst);
+   // This is the first compare and branch instruction therefore control flow starts here.
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+   cFlowRegionStart->setStartInternalControlFlow();
+   TR::Instruction * cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRZ, node, label);
+
+   return cursor;
+   }
+
 TR::Instruction *
 MemCmpVarLenMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, TR::Register* tmpReg, int32_t offset, TR::Instruction *cursor)
    {
@@ -1514,32 +1528,19 @@ MemCmpVarLenMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, TR::Re
    _offset = offset;
    _cursor = cursor;
    _litReg = NULL;
-   TR::Compilation *comp = _cg->comp();
+   TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(_cg);
 
-   if(cursorBefore == NULL) cursorBefore = _cg->getAppendInstruction();
+   generateShortCircuitInstructions(_cg, _rootNode, _resultReg, _srcReg, _dstReg, _doneLabel);
    generateLoop();
    setInRemainder(true);
    generateRemainder();
 
    _cursor = generateCmpResult(_cg, _rootNode, _dstReg, _srcReg, _resultReg, _falseLabel, _trueLabel, _doneLabel);
+
    TR::RegisterDependencyConditions * dependencies = generateDependencies();
-   _cursor->setDependencyConditions(dependencies);
-   if(_startControlFlow==NULL)
-     {
-     _startControlFlow=cursorBefore->getNext();
-     if(_startControlFlow->getOpCodeValue() == TR::InstOpCode::assocreg) _startControlFlow=_startControlFlow->getNext();
-     }
-   if(_startControlFlow != _cursor)
-     {
-      TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(_cg);
-      TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(_cg);
+   generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionEnd, dependencies);
+   cFlowRegionEnd->setEndInternalControlFlow();
 
-      generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionStart, dependencies, _startControlFlow->getPrev());
-      cFlowRegionStart->setStartInternalControlFlow();
-
-      generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionEnd, _cursor->getPrev());
-      cFlowRegionEnd->setEndInternalControlFlow();
-     }
    return _cursor;
    }
 
@@ -1556,8 +1557,15 @@ MemCmpConstLenMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, TR::
    _litReg = NULL;
    TR::Compilation *comp = _cg->comp();
 
+   if (_length == 0)
+      {
+      _cursor = generateRRInstruction(_cg, TR::InstOpCode::getXORRegOpCode(), _rootNode, _resultReg, _resultReg);
+      return _cursor;
+      }
 
-   if(cursorBefore == NULL) cursorBefore = _cg->getAppendInstruction();
+   TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(_cg);
+
+   generateShortCircuitInstructions(_cg, _rootNode, _resultReg, _srcReg, _dstReg, _doneLabel);
    generateLoop();
    setInRemainder(true);
    generateRemainder();
@@ -1565,23 +1573,8 @@ MemCmpConstLenMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, TR::
    _cursor = generateCmpResult(_cg, _rootNode, _dstReg, _srcReg, _resultReg, _falseLabel, _trueLabel, _doneLabel);
 
    TR::RegisterDependencyConditions * dependencies = generateDependencies();
-   _cursor->setDependencyConditions(dependencies);
-   if(_startControlFlow==NULL)
-     {
-     _startControlFlow=cursorBefore->getNext();
-     if(_startControlFlow->getOpCodeValue() == TR::InstOpCode::assocreg) _startControlFlow=_startControlFlow->getNext();
-     }
-   if(_startControlFlow != _cursor)
-     {
-      TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(_cg);
-      TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(_cg);
-
-      generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionStart, dependencies, _startControlFlow->getPrev());
-      cFlowRegionStart->setStartInternalControlFlow();
-
-      generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionEnd, _cursor->getPrev());
-      cFlowRegionEnd->setEndInternalControlFlow();
-     }
+   generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionEnd, dependencies);
+   cFlowRegionEnd->setEndInternalControlFlow();
 
    return _cursor;
    }
@@ -1651,31 +1644,18 @@ MemCmpVarLenSignMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, TR
    _offset = offset;
    _cursor = cursor;
    _litReg = NULL;
+   TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(_cg);
 
-   if(cursorBefore == NULL) cursorBefore = _cg->getAppendInstruction();
+   generateShortCircuitInstructions(_cg, _rootNode, _resultReg, _srcReg, _dstReg, _doneLabel);
    generateLoop();
    setInRemainder(true);
    generateRemainder();
 
    _cursor = generateCmpSignResult(_cg, _rootNode, _dstReg, _srcReg, _resultReg, _falseLabel, _gtLabel, _trueLabel, _doneLabel);
+
    TR::RegisterDependencyConditions * dependencies = generateDependencies();
-   _cursor->setDependencyConditions(dependencies);
-   if(_startControlFlow==NULL)
-     {
-     _startControlFlow=cursorBefore->getNext();
-     if(_startControlFlow->getOpCodeValue() == TR::InstOpCode::assocreg) _startControlFlow=_startControlFlow->getNext();
-     }
-   if(_startControlFlow != _cursor)
-     {
-      TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(_cg);
-      TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(_cg);
-
-      generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionStart, dependencies, _startControlFlow->getPrev());
-      cFlowRegionStart->setStartInternalControlFlow();
-
-      generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionEnd, _cursor->getPrev());
-      cFlowRegionEnd->setEndInternalControlFlow();
-     }
+   generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionEnd, dependencies);
+   cFlowRegionEnd->setEndInternalControlFlow();
 
    return _cursor;
    }
@@ -1699,32 +1679,25 @@ MemCmpConstLenSignMacroOp::generate(TR::Register* dstReg, TR::Register* srcReg, 
    _offset = offset;
    _cursor = cursor;
    _litReg = NULL;
-   TR::Compilation *comp = _cg->comp();
 
-   if(cursorBefore == NULL) cursorBefore = _cg->getAppendInstruction();
+   if (_length == 0)
+      {
+      _cursor = generateRRInstruction(_cg, TR::InstOpCode::getXORRegOpCode(), _rootNode, _resultReg, _resultReg);
+      return _cursor;
+      }
+
+   TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(_cg);
+
+   generateShortCircuitInstructions(_cg, _rootNode, _resultReg, _srcReg, _dstReg, _doneLabel);
    generateLoop();
    setInRemainder(true);
    generateRemainder();
 
    _cursor = generateCmpSignResult(_cg, _rootNode, _dstReg, _srcReg, _resultReg, _falseLabel, _gtLabel, _trueLabel, _doneLabel);
+
    TR::RegisterDependencyConditions * dependencies = generateDependencies();
-   _cursor->setDependencyConditions(dependencies);
-   if(_startControlFlow==NULL)
-     {
-     _startControlFlow=cursorBefore->getNext();
-     if(_startControlFlow->getOpCodeValue() == TR::InstOpCode::assocreg) _startControlFlow=_startControlFlow->getNext();
-     }
-   if(_startControlFlow != _cursor)
-     {
-      TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(_cg);
-      TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(_cg);
-
-      generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionStart, dependencies, _startControlFlow->getPrev());
-      cFlowRegionStart->setStartInternalControlFlow();
-
-      generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionEnd, _cursor->getPrev());
-      cFlowRegionEnd->setEndInternalControlFlow();
-     }
+   generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, cFlowRegionEnd, dependencies);
+   cFlowRegionEnd->setEndInternalControlFlow();
 
    return _cursor;
    }

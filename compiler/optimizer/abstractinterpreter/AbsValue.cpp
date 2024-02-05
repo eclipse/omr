@@ -23,7 +23,7 @@
 
 TR::AbsValue* TR::AbsVPValue::clone(TR::Region& region) const
    {
-   TR::AbsVPValue* copy = new (region) TR::AbsVPValue(_vp, _constraint, _dataType, _paramPos);   
+   TR::AbsVPValue* copy = new (region) TR::AbsVPValue(_vp, _constraint, _dataType, _paramPos);
    return copy;
    }
 
@@ -31,11 +31,11 @@ TR::AbsValue* TR::AbsVPValue::merge(const TR::AbsValue *other)
    {
    if (other == NULL)
       return this;
-   
-   if (_paramPos != other->getParameterPosition()) 
+
+   if (_paramPos != other->getParameterPosition())
       _paramPos = -1;
 
-   if (other->getDataType() != _dataType) 
+   if (other->getDataType() != _dataType)
       {
       _dataType = TR::NoType;
       setToTop();
@@ -45,7 +45,7 @@ TR::AbsValue* TR::AbsVPValue::merge(const TR::AbsValue *other)
    if (isTop())
       return this;
 
-   if (other->isTop()) 
+   if (other->isTop())
       {
       setToTop();
       return this;
@@ -57,16 +57,16 @@ TR::AbsValue* TR::AbsVPValue::merge(const TR::AbsValue *other)
    return this;
    }
 
-void TR::AbsVPValue::print(TR::Compilation* comp) const  
+void TR::AbsVPValue::print(TR::Compilation* comp) const
    {
    traceMsg(comp, "AbsValue: Type: %s ", TR::DataType::getName(_dataType));
-   
+
    if (_constraint)
       {
       traceMsg(comp, "Constraint: ");
       _constraint->print(_vp);
       }
-   else 
+   else
       {
       traceMsg(comp, "TOP (unknown) ");
       }

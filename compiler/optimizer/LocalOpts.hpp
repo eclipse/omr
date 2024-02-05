@@ -858,9 +858,9 @@ class TR_TrivialDeadTreeRemoval : public TR::Optimization
    void transformBlock(TR::TreeTop * entryTree, TR::TreeTop * exitTree);
    void examineNode(TR::Node *node, vcount_t visitCount);
 
-   void preProcessTreetop(TR::TreeTop *treeTop, List<TR::TreeTop> &commonedTreeTopList, char *optDetails, TR::Compilation *comp);
-   void postProcessTreetop(TR::TreeTop *treeTop, List<TR::TreeTop> &commonedTreeTopList, char *optDetails, TR::Compilation *comp);
-   void processCommonedChild(TR::Node *child, TR::TreeTop *treeTop, List<TR::TreeTop> &commonedTreeTopList, char *optDetails, TR::Compilation *comp);
+   void preProcessTreetop(TR::TreeTop *treeTop, List<TR::TreeTop> &commonedTreeTopList, const char *optDetails, TR::Compilation *comp);
+   void postProcessTreetop(TR::TreeTop *treeTop, List<TR::TreeTop> &commonedTreeTopList, const char *optDetails, TR::Compilation *comp);
+   void processCommonedChild(TR::Node *child, TR::TreeTop *treeTop, List<TR::TreeTop> &commonedTreeTopList, const char *optDetails, TR::Compilation *comp);
    private:
    TR_ScratchList<TR::TreeTop> _commonedTreeTopList;
    TR::TreeTop *_currentTreeTop;

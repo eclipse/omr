@@ -40,19 +40,19 @@ void TR::AbsOpArray::merge(const TR::AbsOpArray* other, TR::Region& region)
       TR::AbsValue *selfValue = at(i);
       TR::AbsValue *otherValue = other->at(i);
 
-      if (!selfValue && !otherValue) 
+      if (!selfValue && !otherValue)
          {
          continue;
          }
-      else if (selfValue && otherValue) 
+      else if (selfValue && otherValue)
          {
          TR::AbsValue* mergedVal = selfValue->merge(otherValue);
          set(i, mergedVal);
-         } 
-      else if (selfValue) 
+         }
+      else if (selfValue)
          {
          set(i, selfValue);
-         } 
+         }
       else
          {
          set(i, otherValue->clone(region));
@@ -69,7 +69,7 @@ void TR::AbsOpArray::set(uint32_t index, TR::AbsValue *value)
 TR::AbsValue* TR::AbsOpArray::at(uint32_t index) const
    {
    TR_ASSERT_FATAL(index < size(), "Index out of range! Max array size: %d, Index: %d\n", size(), index);
-   return _container[index]; 
+   return _container[index];
    }
 
 void TR::AbsOpArray::print(TR::Compilation* comp) const
@@ -80,7 +80,7 @@ void TR::AbsOpArray::print(TR::Compilation* comp) const
       traceMsg(comp, "A[%d] = ", i);
       if (!at(i))
          traceMsg(comp, "Uninitialized");
-      else 
+      else
          at(i)->print(comp);
 
       traceMsg(comp, "\n");

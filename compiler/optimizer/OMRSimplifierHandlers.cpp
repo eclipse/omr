@@ -7629,7 +7629,19 @@ TR::Node *lsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       TR::Node * i2lNode = firstChild;
       firstChild = i2lNode->getFirstChild();
       firstChildOp = firstChild->getOpCodeValue();
-      if (firstChildOp == TR::iadd || firstChildOp == TR::isub)
+
+      /*
+       *  lsub         // node
+       *    i2l        // i2lNode
+       *      iadd     // firstChild
+       *        iload  // llChild
+       *        iconst // lrChild, iValue, lValue
+       *    lconst     // secondChild
+       *
+       *  If firstChild can overflow or underflow, the isub node should not be simplified.
+       */
+      if ((firstChildOp == TR::iadd || firstChildOp == TR::isub) &&
+           firstChild->cannotOverflow())
          {
          if (secondChildOp == TR::lconst)
             {
@@ -8569,9 +8581,52 @@ TR::Node *smulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 // Divide simplifiers
 //
 
+/**
+ * Determines whether the context permits a division or remainder operation
+ * to be simplified if the divisor is known to be a non-zero constant.  In
+ * particular, if the parent of the subject node is a \c DIVCHK operation,
+ * permission to simplify the \c DIVCHK is required in order to consider
+ * simplifying the division or remainder operation itself.
+ *
+ * \param[in] s    The \ref TR::Simplifier object
+ * \param[in] node The \ref TR::Node of division or remainder operation
+ *
+ * \return \c false if the parent node of the division or remainder is a \c DIVCHK
+ *         and \ref permitTransformation returns \c false;
+ *         otherwise, \c true.
+ */
+static bool permitSimplificationOfConstantDivisor(TR::Simplifier *s, TR::Node *node)
+   {
+   bool maySimplify = true;
+   TR::Node *treetopNode = s->_curTree->getNode();
+
+   if (treetopNode->getOpCodeValue() == TR::DIVCHK
+       && treetopNode->getFirstChild() == node)
+      {
+      if (performTransformation(s->comp(), "%sConstant non-zero divisor for %s [" POINTER_PRINTF_FORMAT "] allows parent DIVCHK [" POINTER_PRINTF_FORMAT "] to be removed\n", s->optDetailString(), node->getOpCode().getName(), node, treetopNode))
+         {
+         // Division by non-zero constant value, so any parent DIVCHK is no longer needed
+         s->_nodeToDivchk = NULL;
+         }
+      else
+         {
+         maySimplify = false;
+         }
+      }
+
+   return maySimplify;
+   }
+
 TR::Node *idivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    s->simplifyChildren(node, block);
+
+   // Handshake with divchkSimplifier:  If simplifying the child of a DIVCHK
+   // results in a node that still needs to have a DIVCHK applied, place that
+   // node in _nodeToDivchk.  If the simplification leaves no node that needs
+   // to have a DIVCHK applied, set _nodeToDivchk to NULL.
+   //
+   s->_nodeToDivchk = node;
 
    if (node->getOpCodeValue() == TR::iudiv)
       {
@@ -8592,7 +8647,7 @@ TR::Node *idivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       {
       int32_t divisor = secondChild->getInt();
       int32_t shftAmnt = -1;
-      if (divisor != 0)
+      if (divisor != 0 && permitSimplificationOfConstantDivisor(s, node))
          {
          if (firstChild->getOpCode().isLoadConst())
             {
@@ -8629,12 +8684,17 @@ TR::Node *idivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
             else
                {
                if (divisor == -1 && dividend == TR::getMinSigned<TR::Int32>())
+                  {
                   return s->replaceNode(node, firstChild, s->_curTree);
+                  }
+
                foldIntConstant(node, dividend/divisor, s, false /* !anchorChildren*/);
                }
             }   // first child is constant
          else if (divisor == 1)
+            {
             return s->replaceNode(node, firstChild, s->_curTree);
+            }
          else if (!secondChild->getOpCode().isUnsigned() && divisor == -1)
             {
             if (performTransformation(s->comp(), "%sReduced idiv by -1 with ineg in node [%s]\n", s->optDetailString(), node->getName(s->getDebug())))
@@ -8787,6 +8847,13 @@ TR::Node *ldivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    s->simplifyChildren(node, block);
 
+   // Handshake with divchkSimplifier:  If simplifying the child of a DIVCHK
+   // results in a node that still needs to have a DIVCHK applied, place that
+   // node in _nodeToDivchk.  If the simplification leaves no node that needs
+   // to have a DIVCHK applied, set _nodeToDivchk to NULL.
+   //
+   s->_nodeToDivchk = node;
+
    if (node->getOpCodeValue() == TR::ludiv)
       {
       if (!node->getChild(0)->isNonNegative())
@@ -8805,17 +8872,22 @@ TR::Node *ldivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    if (secondChild->getOpCode().isLoadConst())
       {
       int64_t divisor = secondChild->getLongInt();
-      if (divisor != 0)
+      if (divisor != 0 && permitSimplificationOfConstantDivisor(s, node))
          {
          if (firstChild->getOpCode().isLoadConst())
             {
             int64_t dividend = firstChild->getLongInt();
             if (divisor == -1 && dividend == TR::getMinSigned<TR::Int64>())
+               {
                return s->replaceNode(node, firstChild, s->_curTree);
+               }
+
             foldLongIntConstant(node, dividend / divisor, s, false /* !anchorChildren */);
             }
          else if (divisor == 1)
+            {
             return s->replaceNode(node, firstChild, s->_curTree);
+            }
          else if (divisor == -1)
             {
             if (performTransformation(s->comp(), "%sReduced ldiv by -1 with lneg in node [%p]\n", s->optDetailString(), node))
@@ -9056,10 +9128,6 @@ TR::Node *ldivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
           performTransformation(s->comp(), "%sReduced ldiv [%p] of two i2l children to i2l of idiv \n", s->optDetailString(), node))
          {
          TR::TreeTop *curTree = s->_curTree;
-         TR::Node *divCheckParent = NULL;
-         if ((curTree->getNode()->getOpCodeValue() == TR::DIVCHK) &&
-             (curTree->getNode()->getFirstChild() == node))
-            divCheckParent = curTree->getNode();
 
          TR::Node *divNode = TR::Node::create(TR::idiv, 2, firstChild->getFirstChild(), secondChild->getFirstChild());
 
@@ -9071,12 +9139,9 @@ TR::Node *ldivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          node->setAndIncChild(0, divNode);
          node->setNumChildren(1);
 
-         if (divCheckParent)
-            {
-            divCheckParent->setAndIncChild(0, divNode);
-            node->recursivelyDecReferenceCount();
-            return divNode;
-            }
+         // Division has been transformed, but still needs to be checked for division by zero
+         // if the current node was the child of a DIVCHK
+         s->_nodeToDivchk = divNode;
          }
 
       if (secondChild->getOpCode().isLoadConst() && secondChild->getLongInt() == 10 &&
@@ -9084,23 +9149,14 @@ TR::Node *ldivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
           node->getFirstChild()->getOpCode().isLoadVar() &&     //transformToLongDiv creates a tonne of nodes.  Not good to do this recursively if you have chained divides
           performTransformation(s->comp(), "%sReduced ldiv by 10 [%p] to bitwise ops\n", s->optDetailString(), node))
          {
-         TR::TreeTop *curTree = s->_curTree;
-         TR::Node *divCheckParent = NULL;
-         if ((curTree->getNode()->getOpCodeValue() == TR::DIVCHK) &&
-             (curTree->getNode()->getFirstChild() == node))
-            divCheckParent = curTree->getNode();
+         // Division by ten using bit manipulation - any DIVCHK parent must be removed
+         s->_nodeToDivchk = NULL;
 
          transformToLongDivBy10Bitwise(node, node, s);
          TR::Node::recreate(node, TR::ladd);
          firstChild->recursivelyDecReferenceCount();
          secondChild->recursivelyDecReferenceCount();
-
-         if (divCheckParent)
-            {
-            divCheckParent->setAndIncChild(0, node);
-            node->recursivelyDecReferenceCount();
-            return node;
-            }
+         return node;
          }
       }
 
@@ -9210,15 +9266,28 @@ TR::Node *bdivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    s->simplifyChildren(node, block);
 
+   // Handshake with divchkSimplifier:  If simplifying the child of a DIVCHK
+   // results in a node that still needs to have a DIVCHK applied, place that
+   // node in _nodeToDivchk.  If the simplification leaves no node that needs
+   // to have a DIVCHK applied, set _nodeToDivchk to NULL.
+   s->_nodeToDivchk = node;
+
    TR::Node * firstChild = node->getFirstChild(), * secondChild = node->getSecondChild();
 
-   if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst())
+   if (secondChild->getOpCode().isLoadConst()
+       && (secondChild->getByte() != 0)
+       && permitSimplificationOfConstantDivisor(s, node))
       {
-      foldByteConstant(node, (int8_t)(firstChild->getByte() / secondChild->getByte()), s, false /* !anchorChildren*/);
-      return node;
+      if (firstChild->getOpCode().isLoadConst())
+         {
+         foldByteConstant(node, (int8_t)(firstChild->getByte() / secondChild->getByte()), s, false /* !anchorChildren*/);
+         return node;
+         }
+
+      // Handle the possibility of a division by constant value one
+      BINARY_IDENTITY_OP(Byte, 1)
       }
 
-   BINARY_IDENTITY_OP(Byte, 1)
    return node;
    }
 
@@ -9226,15 +9295,31 @@ TR::Node *sdivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    s->simplifyChildren(node, block);
 
+   // Handshake with divchkSimplifier:  If simplifying the child of a DIVCHK
+   // results in a node that still needs to have a DIVCHK applied, place that
+   // node in _nodeToDivchk.  If the simplification leaves no node that needs
+   // to have a DIVCHK applied, set _nodeToDivchk to NULL.
+   s->_nodeToDivchk = node;
+
    TR::Node * firstChild = node->getFirstChild(), * secondChild = node->getSecondChild();
 
-   if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst())
+   if (secondChild->getOpCode().isLoadConst()
+       && (secondChild->getShortInt() != 0)
+       && permitSimplificationOfConstantDivisor(s, node))
       {
-      foldShortIntConstant(node, (int16_t)(firstChild->getShortInt() / secondChild->getShortInt()), s, false /* !anchorChildren */);
-      return node;
+      // Division by a non-zero constant - any parent DIVCHK is no longer needed
+      s->_nodeToDivchk = NULL;
+
+      if (firstChild->getOpCode().isLoadConst())
+         {
+         foldShortIntConstant(node, (int16_t)(firstChild->getShortInt() / secondChild->getShortInt()), s, false /* !anchorChildren */);
+         return node;
+         }
+
+      // Handle the possibility of a division by constant value one
+      BINARY_IDENTITY_OP(ShortInt, 1)
       }
 
-   BINARY_IDENTITY_OP(ShortInt, 1)
    return node;
    }
 
@@ -9246,6 +9331,12 @@ TR::Node *iremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    bool isUnsigned = node->getOpCode().isUnsigned();
    s->simplifyChildren(node, block);
+
+   // Handshake with divchkSimplifier:  If simplifying the child of a DIVCHK
+   // results in a node that still needs to have a DIVCHK applied, place that
+   // node in _nodeToDivchk.  If the simplification leaves no node that needs
+   // to have a DIVCHK applied, set _nodeToDivchk to NULL.
+   s->_nodeToDivchk = node;
 
    TR::Node * firstChild = node->getFirstChild(), * secondChild = node->getSecondChild();
 
@@ -9259,7 +9350,7 @@ TR::Node *iremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       int32_t dividend = firstChild->getInt();
       int32_t divisor = secondChild->getInt();
       int32_t shftAmnt = -1;
-      if (divisor != 0)
+      if (divisor != 0 && permitSimplificationOfConstantDivisor(s, node))
          {
          if (divisor == 1 || (!isUnsigned && (divisor == -1)))
             {
@@ -9380,6 +9471,13 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    s->simplifyChildren(node, block);
 
+   // Handshake with divchkSimplifier:  If simplifying the child of a DIVCHK
+   // results in a node that still needs to have a DIVCHK applied, place that
+   // node in _nodeToDivchk.  If the simplification leaves no node that needs
+   // to have a DIVCHK applied, set _nodeToDivchk to NULL.
+   //
+   s->_nodeToDivchk = node;
+
    TR::Node * firstChild = node->getFirstChild(), * secondChild = node->getSecondChild();
 
    static const char * disableILRemPwr2Opt = feGetEnv("TR_DisableILRemPwr2Opt");
@@ -9393,7 +9491,7 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       int32_t shftAmnt = -1;
       uint64_t udivisor = divisor;
       bool upwr2 = (udivisor & (udivisor - 1)) == 0;
-      if (divisor != 0)
+      if (divisor != 0 && permitSimplificationOfConstantDivisor(s, node))
          {
          if (divisor == 1 || (divisor == -1))
             {
@@ -9498,10 +9596,6 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
           performTransformation(s->comp(), "%sReduced lrem [%p] of two i2l children to i2l of irem \n", s->optDetailString(), node))
          {
          TR::TreeTop *curTree = s->_curTree;
-         TR::Node *divCheckParent = NULL;
-         if ((curTree->getNode()->getOpCodeValue() == TR::DIVCHK) &&
-             (curTree->getNode()->getFirstChild() == node))
-            divCheckParent = curTree->getNode();
 
          TR::Node *remNode = TR::Node::create(TR::irem, 2, firstChild->getFirstChild(), secondChild->getFirstChild());
 
@@ -9512,12 +9606,10 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          node->setAndIncChild(0, remNode);
          node->setNumChildren(1);
 
-         if (divCheckParent)
-            {
-            divCheckParent->setAndIncChild(0, remNode);
-            node->recursivelyDecReferenceCount();
-            return remNode;
-            }
+         // Remainder operation has been transformed, but still needs to be checked
+         // for division by zero if the current node was the child of a DIVCHK
+         s->_nodeToDivchk = remNode;
+
          return node;
          }
 
@@ -9526,14 +9618,13 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
           node->getFirstChild()->getOpCode().isLoadVar() &&
           performTransformation(s->comp(), "%sReduced lrem by 10 [%p] to sequence of bitwise operations\n", s->optDetailString(), node))
          {
+         // Division by ten using bit manipulation - any DIVCHK parent must be removed
+         s->_nodeToDivchk = NULL;
+
          TR::TreeTop *curTree = s->_curTree;
-         TR::Node *divCheckParent = NULL;
-         if ((curTree->getNode()->getOpCodeValue() == TR::DIVCHK) &&
-             (curTree->getNode()->getFirstChild() == node))
-            divCheckParent = curTree->getNode();
 
          // Create the long divide tree
-        TR::Node * ldivNode = TR::Node::create(node, TR::ladd);
+         TR::Node * ldivNode = TR::Node::create(node, TR::ladd);
          transformToLongDivBy10Bitwise(node, ldivNode, s);
 
          // Modify the lrem node
@@ -9544,12 +9635,6 @@ TR::Node *lremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
          firstChild->recursivelyDecReferenceCount();
          secondChild->recursivelyDecReferenceCount();
 
-         if (divCheckParent)
-            {
-            divCheckParent->setAndIncChild(0, node);
-            node->recursivelyDecReferenceCount();
-            return node;
-            }
          return node;
          }
       }
@@ -9618,9 +9703,17 @@ TR::Node *bremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    s->simplifyChildren(node, block);
 
+   // Handshake with divchkSimplifier:  If simplifying the child of a DIVCHK
+   // results in a node that still needs to have a DIVCHK applied, place that
+   // node in _nodeToDivchk.  If the simplification leaves no node that needs
+   // to have a DIVCHK applied, set _nodeToDivchk to NULL.
+   s->_nodeToDivchk = node;
+
    TR::Node * firstChild = node->getFirstChild(), * secondChild = node->getSecondChild();
 
-   if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst())
+   if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst()
+       && (secondChild->getByte() != 0)
+       && permitSimplificationOfConstantDivisor(s, node))
       {
       foldByteConstant(node, (int8_t)(firstChild->getByte() % secondChild->getByte()), s, false /* !anchorChildren*/);
       return node;
@@ -9633,9 +9726,17 @@ TR::Node *sremSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
    s->simplifyChildren(node, block);
 
+   // Handshake with divchkSimplifier:  If simplifying the child of a DIVCHK
+   // results in a node that still needs to have a DIVCHK applied, place that
+   // node in _nodeToDivchk.  If the simplification leaves no node that needs
+   // to have a DIVCHK applied, set _nodeToDivchk to NULL.
+   s->_nodeToDivchk = node;
+
    TR::Node * firstChild = node->getFirstChild(), * secondChild = node->getSecondChild();
 
-   if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst())
+   if (firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst()
+       && (secondChild->getShortInt() != 0)
+       && permitSimplificationOfConstantDivisor(s, node))
       {
       foldShortIntConstant(node, (int16_t)(firstChild->getShortInt() % secondChild->getShortInt()), s, false /* !anchorChildren */);
       return node;
@@ -16586,25 +16687,126 @@ TR::Node *nullchkSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
 //
 TR::Node *divchkSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    {
-   // Remember the original child of the divchk. If simplification of this
-   // child causes it to be replaced by another node, the divchk is no longer
-   // needed.
-   // The child of the divchk may no longer be a divide node, due to commoning.
-   // In this case the divchk is no longer needed.
-   //
-   TR::Node *originalChild = node->getFirstChild();
-   /////TR::ILOpCodes originalChildOpCode = originalChild->getOpCode().getOpCodeValue();
-   /////TR_ASSERT(originalChild->getVisitCount() != s->comp()->getVisitCount(),"Simplifier, bad divchk node");
-   TR::Node * child = originalChild;
-   if (originalChild->getVisitCount() != s->comp()->getVisitCount())
-      child = s->simplify(originalChild, block);
+   TR::Node * child = node->getFirstChild();
+   TR::Node * origChild = child;
+   TR::ILOpCode childOpCode = child->getOpCode();
 
-   if (child != originalChild ||
-       !(child->getOpCode().isDiv() || child->getOpCode().isRem()))
+   // Check whether the child has already been simplified
+   //
+   if (child->getVisitCount() != s->comp()->getVisitCount())
       {
-      TR::Node::recreate(node, TR::treetop);
-      node->setFirst(child);
-      return node;
+      if (childOpCode.isDiv() || childOpCode.isRem())
+         {
+         s->_nodeToDivchk = NULL;
+
+         child = s->simplify(child, block);
+
+         // Handshake with division and remainder simplifiers:  If simplifying the
+         // child of a DIVCHK results in a node that still needs to have a DIVCHK
+         // applied, those simplififiers will place that node in _nodeToDivchk.  If
+         // the simplification leaves no node that needs to have a DIVCHK applied,
+         // they will set _nodeToDivchk to NULL.  If _nodeToDivchk is non-null, that
+         // is used as the child of the DIVCHK; otherwise, the DIVCHK is simplified
+         // to a treetop node.
+         //
+         // Note that the division and remainder simplifiers will set _nodeToDivchk
+         // only after recursively simplifying their own children, so any setting of
+         // _nodeToDivchk by division or remainder operations that are deeper in the
+         // trees will not be seen upon returning to this method.
+         //
+         // For example, before simplifying the DIVCHK child, n98n, we might have the
+         // trees on the left and after, the trees on the right.  Notice that the
+         // ldiv child of the DIVCHK has been replaced with an idiv that must still
+         // be checked for division by zero.  The ldivSimplifier will set
+         // _nodeToDivchk to refer to node n100n so that divchkSimplifier
+         // can update the DIVCHK node to refer to the correct child node.
+         //
+         // n99n  DIVCHK                    n99n  DIVCHK
+         // n98n    ldiv                    n100n   idiv
+         // n97n      i2l
+         // n96n        iload a             n96n      iload a
+         // n95n      i2l
+         // n94n        iload b             n94n      iload b
+         // n93n  lstore c                  n93n  lstore c
+         // n98n    ==> ldiv                n98n    i2l
+         //                                 n100n     ==> idiv
+         //
+         // If the numerator of a division is itself a division operation and the
+         // denominator is unity (1), the trees might look like those on the left,
+         // while if the numerator was simply the value of a variable, it might
+         // look like those on the right:
+         //
+         // n199n DIVCHK                       n299n DIVCHK
+         // n198n   idiv                       n298n   idiv
+         // n197n     idiv                     n297n     iload a
+         // n196n       iload a                n296n     iconst 1
+         // n195n       iload b
+         // n194n     iconst 1
+         //
+         // For the trees on the left, the result of simplifying the child of the
+         // DIVCHK would be n197n, which is itself an idiv, while for the trees on
+         // the right, the result would be iload, n297n.  In both cases, the
+         // iremSimplifier would set _nodeToDivchk to NULL to indicate that the
+         // DIVCHK is no longer needed.
+         //
+         if (s->_nodeToDivchk == NULL)
+            {
+            if (s->trace())
+               {
+               traceMsg(s->comp(), "Simplifying DIVCHK n%un %p child resulted in no node to DIVCHK - replacing DIVCHK with treetop\n",
+                        node->getGlobalIndex(), node);
+               }
+
+            TR::Node::recreate(node, TR::treetop);
+            node->setChild(0, child);
+            return node;
+            }
+         else
+            {
+            if (s->trace())
+               {
+               traceMsg(s->comp(), "Simplifying DIVCHK child has left us with a node to DIVCHK - replacing child with n%un [%p]\n",
+                        s->_nodeToDivchk->getGlobalIndex(),  s->_nodeToDivchk);
+               }
+
+            // Simplifying the child has left us with a node that still needs to
+            // have a DIVCHK applied.  Replace the original child with the node
+            // that must have a DIVCHK - which could still be the original child.
+            //
+            node->setAndIncChild(0, s->_nodeToDivchk);
+            origChild->recursivelyDecReferenceCount();
+            s->_nodeToDivchk = NULL;
+            }
+         }
+      else
+         {
+         // Child of DIVCHK must be a division or remainder operation.  If it's not,
+         // eliminate the DIVCHK.
+         //
+         if (s->trace())
+            {
+            traceMsg(s->comp(), "DIVCHK n%un %p child is not a division or remainder operation - replacing DIVCHK with treetop\n", node->getGlobalIndex(), node);
+            }
+
+         TR::Node::recreate(node, TR::treetop);
+         return node;
+         }
+      }
+   else
+      {
+      // The child node has already been visited, so it must have been anchored
+      // at some earlier TR::TreeTop.  If it needed to be protected by a DIVCHK
+      // that DIVCHK would have appeared at that earlier point, so the current
+      // DIVCHK is no longer needed.  If the child is no longer a division or
+      // remainder operation, the DIVCHK must be removed - otherwise, allow
+      // performTransformation to gate its removal.
+      //
+      if ((!childOpCode.isDiv() && !childOpCode.isRem())
+          || performTransformation(s->comp(), "%sRemoved DIVCHK for commoned division operation in node[%s]\n", s->optDetailString(), node->getName(s->getDebug())))
+         {
+         TR::Node::recreate(node, TR::treetop);
+         return node;
+         }
       }
 
    // If the divisor is a non-zero constant, this check is redundant and

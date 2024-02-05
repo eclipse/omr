@@ -465,9 +465,9 @@ public:
 #endif /* defined(OMR_GC_BATCH_CLEAR_TLH) */
 	omrthread_monitor_t gcStatsMutex;
 	uintptr_t gcThreadCount; /**< Initial number of GC threads - chosen default or specified in java options*/
-	bool gcThreadCountForced; /**< true if number of GC threads is specified in java options. Currently we have a few ways to do this:
-										-Xgcthreads		-Xthreads= (RT only)	-XthreadCount= */
-	uintptr_t dispatcherHybridNotifyThreadBound; /** Bound for determining hybrid notification type (Individual notifies for count < MIN(bound, maxThreads/2), otherwise notify_all) */
+	bool gcThreadCountSpecified; /**< true if number of GC threads is specified in command line options. */
+	bool gcThreadCountForced; /**< true if user forced a fixed number of GC threads. Default is false, but a command line option could set it if not wanting adaptive threading */
+	uintptr_t dispatcherHybridNotifyThreadBound; /**< Bound for determining hybrid notification type (Individual notifies for count < MIN(bound, maxThreads/2), otherwise notify_all) */
 
 #if defined(OMR_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC)
 	enum ScavengerScanOrdering {
@@ -1657,6 +1657,7 @@ public:
 		, batchClearTLH(0)
 #endif /* defined(OMR_GC_BATCH_CLEAR_TLH) */
 		, gcThreadCount(0)
+		, gcThreadCountSpecified(false)
 		, gcThreadCountForced(false)
 		, dispatcherHybridNotifyThreadBound(16)
 #if defined(OMR_GC_MODRON_SCAVENGER) || defined(OMR_GC_VLHGC)

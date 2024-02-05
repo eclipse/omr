@@ -1235,8 +1235,6 @@ OMR::CodeGenerator::getBlocksWithCalls()
 
 bool OMR::CodeGenerator::profiledPointersRequireRelocation() { return self()->comp()->compileRelocatableCode(); }
 
-bool OMR::CodeGenerator::needGuardSitesEvenWhenGuardRemoved() { return self()->comp()->compileRelocatableCode(); }
-
 bool OMR::CodeGenerator::supportsInternalPointers()
    {
    if (_disableInternalPointers)

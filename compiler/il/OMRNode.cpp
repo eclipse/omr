@@ -5899,6 +5899,14 @@ OMR::Node::setIsInternalPointer(bool v)
    }
 
 bool
+OMR::Node::isDataAddrPointer()
+   {
+   return self()->getOpCodeValue() == TR::aloadi
+       && self()->getOpCode().hasSymbolReference()
+       && self()->getSymbolReference() == TR::comp()->getSymRefTab()->findContiguousArrayDataAddrFieldShadowSymRef();
+   }
+
+bool
 OMR::Node::isArrayTRT()
    {
    TR_ASSERT(self()->getOpCodeValue() == TR::arraytranslateAndTest, "Opcode must be arraytranslateAndTest");

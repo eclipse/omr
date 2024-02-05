@@ -267,12 +267,6 @@ OMR::Z::CPU::getSupportsArch(Architecture arch)
    }
 
 bool
-OMR::Z::CPU::setSupportsArch(Architecture arch)
-   {
-   return _supportedArch = _supportedArch >= arch ? _supportedArch : arch;
-   }
-
-bool
 OMR::Z::CPU::getSupportsHardwareSQRT()
    {
    return true;
@@ -290,7 +284,7 @@ OMR::Z::CPU::getSupportsHighWordFacility()
    return _flags.testAny(S390SupportsHPR);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsHighWordFacility(bool value)
    {
    if (value)
@@ -301,8 +295,6 @@ OMR::Z::CPU::setSupportsHighWordFacility(bool value)
       {
       _flags.reset(S390SupportsHPR);
       }
-
-   return value;
    }
 
 bool
@@ -311,7 +303,7 @@ OMR::Z::CPU::getSupportsDecimalFloatingPointFacility()
    return _flags.testAny(S390SupportsDFP);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsDecimalFloatingPointFacility(bool value)
    {
    if (value)
@@ -322,8 +314,6 @@ OMR::Z::CPU::setSupportsDecimalFloatingPointFacility(bool value)
       {
       _flags.reset(S390SupportsDFP);
       }
-
-   return value;
    }
 
 bool
@@ -332,7 +322,7 @@ OMR::Z::CPU::getSupportsFloatingPointExtensionFacility()
    return _flags.testAny(S390SupportsFPE);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsFloatingPointExtensionFacility(bool value)
    {
    if (value)
@@ -343,8 +333,6 @@ OMR::Z::CPU::setSupportsFloatingPointExtensionFacility(bool value)
       {
       _flags.reset(S390SupportsFPE);
       }
-
-   return value;
    }
 
 bool
@@ -360,7 +348,7 @@ OMR::Z::CPU::supportsTransactionalMemoryInstructions()
    }
 
 
-bool
+void
 OMR::Z::CPU::setSupportsTransactionalExecutionFacility(bool value)
    {
    if (value)
@@ -371,8 +359,6 @@ OMR::Z::CPU::setSupportsTransactionalExecutionFacility(bool value)
       {
       _flags.reset(OMR_FEATURE_S390_TRANSACTIONAL_EXECUTION_FACILITY);
       }
-
-   return value;
    }
 
 bool
@@ -381,7 +367,7 @@ OMR::Z::CPU::getSupportsConstrainedTransactionalExecutionFacility()
    return _flags.testAny(OMR_FEATURE_S390_CONSTRAINED_TRANSACTIONAL_EXECUTION_FACILITY);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsConstrainedTransactionalExecutionFacility(bool value)
    {
    if (value)
@@ -392,8 +378,6 @@ OMR::Z::CPU::setSupportsConstrainedTransactionalExecutionFacility(bool value)
       {
       _flags.reset(OMR_FEATURE_S390_CONSTRAINED_TRANSACTIONAL_EXECUTION_FACILITY);
       }
-
-   return value;
    }
 
 bool
@@ -402,7 +386,7 @@ OMR::Z::CPU::getSupportsRuntimeInstrumentationFacility()
    return _flags.testAny(S390SupportsRI);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsRuntimeInstrumentationFacility(bool value)
    {
    if (value)
@@ -413,8 +397,6 @@ OMR::Z::CPU::setSupportsRuntimeInstrumentationFacility(bool value)
       {
       _flags.reset(S390SupportsRI);
       }
-
-   return value;
    }
 
 bool
@@ -423,7 +405,7 @@ OMR::Z::CPU::getSupportsVectorFacility()
    return _flags.testAny(S390SupportsVectorFacility);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsVectorFacility(bool value)
    {
    if (value)
@@ -434,8 +416,6 @@ OMR::Z::CPU::setSupportsVectorFacility(bool value)
       {
       _flags.reset(S390SupportsVectorFacility);
       }
-
-   return value;
    }
 
 bool
@@ -444,7 +424,7 @@ OMR::Z::CPU::getSupportsVectorPackedDecimalFacility()
    return _flags.testAny(S390SupportsVectorPackedDecimalFacility);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsVectorPackedDecimalFacility(bool value)
    {
    if (value)
@@ -455,8 +435,6 @@ OMR::Z::CPU::setSupportsVectorPackedDecimalFacility(bool value)
       {
       _flags.reset(S390SupportsVectorPackedDecimalFacility);
       }
-
-   return value;
    }
 
 bool
@@ -465,7 +443,7 @@ OMR::Z::CPU::getSupportsGuardedStorageFacility()
    return _flags.testAny(S390SupportsGuardedStorageFacility);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsGuardedStorageFacility(bool value)
    {
    if (value)
@@ -476,8 +454,6 @@ OMR::Z::CPU::setSupportsGuardedStorageFacility(bool value)
       {
       _flags.reset(S390SupportsGuardedStorageFacility);
       }
-
-   return value;
    }
 
 bool
@@ -486,7 +462,7 @@ OMR::Z::CPU::getSupportsMiscellaneousInstructionExtensions2Facility()
    return _flags.testAny(S390SupportsMIE2);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsMiscellaneousInstructionExtensions2Facility(bool value)
    {
    if (value)
@@ -497,8 +473,6 @@ OMR::Z::CPU::setSupportsMiscellaneousInstructionExtensions2Facility(bool value)
       {
       _flags.reset(S390SupportsMIE2);
       }
-
-   return value;
    }
 
 bool
@@ -507,7 +481,7 @@ OMR::Z::CPU::getSupportsMiscellaneousInstructionExtensions3Facility()
    return _flags.testAny(S390SupportsMIE3);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsMiscellaneousInstructionExtensions3Facility(bool value)
    {
    if (value)
@@ -518,8 +492,6 @@ OMR::Z::CPU::setSupportsMiscellaneousInstructionExtensions3Facility(bool value)
       {
       _flags.reset(S390SupportsMIE3);
       }
-
-   return value;
    }
 
 bool
@@ -528,7 +500,7 @@ OMR::Z::CPU::getSupportsVectorFacilityEnhancement2()
    return _flags.testAny(S390SupportsVectorFacilityEnhancement2);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsVectorFacilityEnhancement2(bool value)
    {
    if (value)
@@ -539,8 +511,6 @@ OMR::Z::CPU::setSupportsVectorFacilityEnhancement2(bool value)
       {
       _flags.reset(S390SupportsVectorFacilityEnhancement2);
       }
-
-   return value;
    }
 
 bool
@@ -549,7 +519,7 @@ OMR::Z::CPU::getSupportsVectorFacilityEnhancement1()
    return _flags.testAny(S390SupportsVectorFacilityEnhancement1);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsVectorFacilityEnhancement1(bool value)
    {
    if (value)
@@ -560,8 +530,6 @@ OMR::Z::CPU::setSupportsVectorFacilityEnhancement1(bool value)
       {
       _flags.reset(S390SupportsVectorFacilityEnhancement1);
       }
-
-   return value;
    }
 
 bool
@@ -570,7 +538,7 @@ OMR::Z::CPU::getSupportsVectorPackedDecimalEnhancementFacility()
    return _flags.testAny(S390SupportsVectorPDEnhancementFacility);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsVectorPackedDecimalEnhancementFacility(bool value)
    {
    if (value)
@@ -581,8 +549,6 @@ OMR::Z::CPU::setSupportsVectorPackedDecimalEnhancementFacility(bool value)
       {
       _flags.reset(S390SupportsVectorPDEnhancementFacility);
       }
-
-   return value;
    }
 
 bool
@@ -598,7 +564,7 @@ OMR::Z::CPU::getSupportsVectorPackedDecimalEnhancementFacility2()
    return _flags.testAny(S390SupportsVectorPDEnhancementFacility2);
    }
 
-bool
+void
 OMR::Z::CPU::setSupportsVectorPackedDecimalEnhancementFacility2(bool value)
    {
    if (value)
@@ -609,6 +575,5 @@ OMR::Z::CPU::setSupportsVectorPackedDecimalEnhancementFacility2(bool value)
       {
       _flags.reset(S390SupportsVectorPDEnhancementFacility2);
       }
-   return value;
    }
 

@@ -80,13 +80,14 @@
 
 
 #if defined(J9ZOS390)
+#include "omrgetthent.h"
 #include "omrsimap.h"
 #endif /* defined(J9ZOS390) */
 
-#if defined(LINUXPPC) || (defined(S390) && defined(LINUX) && !defined(J9ZTPF)) || (defined(AARCH64) && defined(LINUX))
+#if defined(LINUXPPC) || (defined(S390) && defined(LINUX) && !defined(OMRZTPF)) || (defined(AARCH64) && defined(LINUX))
 #include "auxv.h"
 #include <strings.h>
-#endif /* defined(LINUXPPC) || (defined(S390) && defined(LINUX) && !defined(J9ZTPF)) || (defined(AARCH64) && defined(LINUX)) */
+#endif /* defined(LINUXPPC) || (defined(S390) && defined(LINUX) && !defined(OMRZTPF)) || (defined(AARCH64) && defined(LINUX)) */
 
 #if (defined(S390))
 #include "omrportpriv.h"
@@ -95,6 +96,7 @@
 
 #if defined(AIXPPC)
 #include <fcntl.h>
+#include <procinfo.h>
 #include <sys/procfs.h>
 #include <sys/systemcfg.h>
 #endif /* defined(AIXPPC) */
@@ -195,6 +197,14 @@ uintptr_t Get_Number_Of_CPUs();
 #define JIFFIES         100
 #define USECS_PER_SEC   1000000
 #define TICKS_TO_USEC   ((uint64_t)(USECS_PER_SEC/JIFFIES))
+#define OMRPORT_SYSINFO_PROC_DIR_BUFFER_SIZE 256
+#define OMRPORT_SYSINFO_NUM_SYSCTL_ARGS 4
+#define OMRPORT_SYSINFO_NANOSECONDS_PER_MICROSECOND 1000ULL
+#if defined(_LP64)
+#define GETTHENT BPX4GTH
+#else /* defined(_LP64) */
+#define GETTHENT BPX1GTH
+#endif /* defined(_LP64) */
 
 static uintptr_t copyEnvToBuffer(struct OMRPortLibrary *portLibrary, void *args);
 static uintptr_t copyEnvToBufferSignalHandler(struct OMRPortLibrary *portLib, uint32_t gpType, void *gpInfo, void *unUsed);
@@ -258,11 +268,11 @@ static intptr_t omrsysinfo_get_aix_ppc_description(struct OMRPortLibrary *portLi
 #endif  /* !defined(__power_tm) */
 #endif /* !defined(J9OS_I5_V7R2) && !defined(J9OS_I5_V6R1) */
 
-#if (defined(S390) || defined(J9ZOS390) || defined(J9ZTPF))
+#if (defined(S390) || defined(J9ZOS390) || defined(OMRZTPF))
 static BOOLEAN omrsysinfo_test_stfle(struct OMRPortLibrary *portLibrary, uint64_t stfleBit);
 static intptr_t omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc);
 const char * omrsysinfo_get_s390_processor_feature_name(uint32_t feature);
-#endif /* defined(S390) || defined(J9ZOS390) || defined(J9ZTPF) */
+#endif /* defined(S390) || defined(J9ZOS390) || defined(OMRZTPF) */
 
 #if defined(RISCV)
 static intptr_t omrsysinfo_get_riscv_description(struct OMRPortLibrary *portLibrary, OMRProcessorDesc *desc);
@@ -598,6 +608,19 @@ static intptr_t searchSystemPath(struct OMRPortLibrary *portLibrary, char *filen
 #if defined(J9ZOS390)
 static void setOSFeature(struct OMROSDesc *desc, uint32_t feature);
 static intptr_t getZOSDescription(struct OMRPortLibrary *portLibrary, struct OMROSDesc *desc);
+#if defined(_LP64)
+#pragma linkage(BPX4GTH,OS)
+#else /* defined(_LP64) */
+#pragma linkage(BPX1GTH,OS)
+#endif /* defined(_LP64) */
+void GETTHENT(
+	unsigned int *inputSize,
+	unsigned char **input,
+	unsigned int *outputSize,
+	unsigned char **output,
+	unsigned int *ret,
+	unsigned int *retCode,
+	unsigned int *reasonCode);
 #endif /* defined(J9ZOS390) */
 
 #if !defined(RS6000) && !defined(J9ZOS390) && !defined(OSX) && !defined(OMRZTPF)
@@ -839,9 +862,9 @@ omrsysinfo_get_processor_feature_name(struct OMRPortLibrary *portLibrary, uint32
 	Trc_PRT_sysinfo_get_processor_feature_name_Entered(feature);
 #if defined(J9X86) || defined(J9HAMMER)
 	rc = omrsysinfo_get_x86_processor_feature_name(feature);
-#elif defined(S390) || defined(J9ZOS390) || defined(J9ZTPF) /* defined(J9X86) || defined(J9HAMMER) */
+#elif defined(S390) || defined(J9ZOS390) || defined(OMRZTPF) /* defined(J9X86) || defined(J9HAMMER) */
 	rc = omrsysinfo_get_s390_processor_feature_name(feature);
-#elif defined(AIXPPC) || defined(LINUXPPC) /* defined(S390) || defined(J9ZOS390) || defined(J9ZTPF) */
+#elif defined(AIXPPC) || defined(LINUXPPC) /* defined(S390) || defined(J9ZOS390) || defined(OMRZTPF) */
 	rc = omrsysinfo_get_ppc_processor_feature_name(feature);
 #elif defined(AARCH64) /* defined(AIXPPC) || defined(LINUXPPC) */
 	rc = omrsysinfo_get_aarch64_processor_feature_name(feature);
@@ -1408,7 +1431,7 @@ omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessor
 	if (OMR_ARE_NO_BITS_SET(*(int*) 200, S390_STFLE_BIT)) {
 		return -1;
 	}
-#elif defined(J9ZTPF)  /* defined(J9ZOS390) */
+#elif defined(OMRZTPF)  /* defined(J9ZOS390) */
 	/*
 	 * z/TPF requires OS support for some of the Hardware Capabilities.
 	 * Setting the auxvFeatures capabilities flag directly to mimic the query_auxv call in Linux.
@@ -1417,7 +1440,7 @@ omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessor
 			OMR_HWCAP_S390_STFLE|OMR_HWCAP_S390_MSA|OMR_HWCAP_S390_DFP|
 			OMR_HWCAP_S390_LDISP|OMR_HWCAP_S390_EIMM|OMR_HWCAP_S390_ETF3EH;
 
-#elif defined(LINUX) /* defined(J9ZTPF) */
+#elif defined(LINUX) /* defined(OMRZTPF) */
 	/* Some s390 features require OS support on Linux, querying auxv for AT_HWCAP bit-mask of processor capabilities. */
 	unsigned long auxvFeatures = query_auxv(AT_HWCAP);
 #endif /* defined(LINUX) */
@@ -1610,9 +1633,9 @@ omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessor
 		if (omrsysinfo_get_s390_zos_supports_runtime_instrumentation_facility())
 #endif /* defined(J9ZOS390) */
 		{
-#if !defined(J9ZTPF)
+#if !defined(OMRZTPF)
 			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_RI);
-#endif /* !defined(J9ZTPF) */
+#endif /* !defined(OMRZTPF) */
 		}
 	}
 
@@ -1723,9 +1746,9 @@ omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessor
 	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2)) {
 #if defined(J9ZOS390)
 		if (omrsysinfo_get_s390_zos_supports_vector_extension_facility())
-#elif defined(LINUX) && !defined(J9ZTPF) /* defined(J9ZOS390) */
+#elif defined(LINUX) && !defined(OMRZTPF) /* defined(J9ZOS390) */
 		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_VXRS))
-#endif /* defined(LINUX) && !defined(J9ZTPF) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 		{
 			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2);
 
@@ -1736,9 +1759,9 @@ omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessor
 	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY)) {
 #if defined(J9ZOS390)
 		if (omrsysinfo_get_s390_zos_supports_vector_extension_facility())
-#elif defined(LINUX) && !defined(J9ZTPF) /* defined(J9ZOS390) */
+#elif defined(LINUX) && !defined(OMRZTPF) /* defined(J9ZOS390) */
 		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_VXRS))
-#endif /* defined(LINUX) && !defined(J9ZTPF) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 		{
 			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY);
 
@@ -1751,9 +1774,9 @@ omrsysinfo_get_s390_description(struct OMRPortLibrary *portLibrary, OMRProcessor
 	if (omrsysinfo_test_stfle(portLibrary, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2)) {
 #if defined(J9ZOS390)
 		if (omrsysinfo_get_s390_zos_supports_vector_extension_facility())
-#elif defined(LINUX) && !defined(J9ZTPF) /* defined(J9ZOS390) */
+#elif defined(LINUX) && !defined(OMRZTPF) /* defined(J9ZOS390) */
 		if (OMR_ARE_ALL_BITS_SET(auxvFeatures, OMR_HWCAP_S390_VXRS))
-#endif /* defined(LINUX) && !defined(J9ZTPF) */
+#endif /* defined(LINUX) && !defined(OMRZTPF) */
 		{
 			omrsysinfo_set_feature(desc, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2);
 
@@ -4642,7 +4665,7 @@ omrsysinfo_get_CPU_load(struct OMRPortLibrary *portLibrary, double *cpuLoad)
 	if (oldestCPUTime->timestamp == 0) {
 		*oldestCPUTime = currentCPUTime;
 		*latestCPUTime = currentCPUTime;
-		return OMRPORT_ERROR_OPFAILED;
+		return OMRPORT_ERROR_INSUFFICIENT_DATA;
 	}
 
 	/* Calculate using the most recent value in the history */
@@ -4674,7 +4697,7 @@ omrsysinfo_get_CPU_load(struct OMRPortLibrary *portLibrary, double *cpuLoad)
 	if (oldestCPUTime->timestamp == 0) {
 		*oldestCPUTime = currentCPUTime;
 		*latestCPUTime = currentCPUTime;
-		return OMRPORT_ERROR_OPFAILED;
+		return OMRPORT_ERROR_INSUFFICIENT_DATA;
 	}
 
 	/* Calculate using the most recent value in the history */
@@ -7354,3 +7377,84 @@ get_Dispatch_IstreamCount(void) {
 	return (uintptr_t)numberOfIStreams;
 }
 #endif /* defined(OMRZTPF) */
+
+int32_t
+omrsysinfo_get_process_start_time(struct OMRPortLibrary *portLibrary, uintptr_t pid, uint64_t *processStartTimeInNanoseconds)
+{
+	int32_t rc = 0;
+	uint64_t computedProcessStartTimeInNanoseconds = 0;
+	Trc_PRT_sysinfo_get_process_start_time_enter(pid);
+	if (0 != omrsysinfo_process_exists(portLibrary, pid)) {
+#if defined(LINUX)
+		char procDir[OMRPORT_SYSINFO_PROC_DIR_BUFFER_SIZE] = {0};
+		struct stat st;
+		snprintf(procDir, sizeof(procDir), "/proc/%" PRIuPTR, pid);
+		if (-1 == stat(procDir, &st)) {
+			rc = OMRPORT_ERROR_SYSINFO_ERROR_GETTING_PROCESS_START_TIME;
+			goto done;
+		}
+		computedProcessStartTimeInNanoseconds = (uint64_t)st.st_mtime * OMRPORT_TIME_DELTA_IN_NANOSECONDS + st.st_mtim.tv_nsec;
+#elif defined(OSX) /* defined(LINUX) */
+		int mib[OMRPORT_SYSINFO_NUM_SYSCTL_ARGS] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
+		size_t len = sizeof(struct kinfo_proc);
+		struct kinfo_proc procInfo;
+		if (-1 == sysctl(mib, OMRPORT_SYSINFO_NUM_SYSCTL_ARGS, &procInfo, &len, NULL, 0)) {
+			rc = OMRPORT_ERROR_SYSINFO_ERROR_GETTING_PROCESS_START_TIME;
+			goto done;
+		}
+		if (0 == len) {
+			rc = OMRPORT_ERROR_SYSINFO_NONEXISTING_PROCESS;
+			goto done;
+		}
+		computedProcessStartTimeInNanoseconds =
+			((uint64_t)procInfo.kp_proc.p_starttime.tv_sec * OMRPORT_TIME_DELTA_IN_NANOSECONDS) +
+			((uint64_t)procInfo.kp_proc.p_starttime.tv_usec * OMRPORT_SYSINFO_NANOSECONDS_PER_MICROSECOND);
+#elif defined(AIXPPC) /* defined(OSX) */
+		pid_t convertedPid = (pid_t)pid;
+		struct procsinfo procInfos[] = {0};
+		int ret = getprocs(procInfos, sizeof(procInfos[0]), NULL, 0, &convertedPid, sizeof(procInfos) / sizeof(procInfos[0]));
+		if (-1 == ret) {
+			rc = OMRPORT_ERROR_SYSINFO_ERROR_GETTING_PROCESS_START_TIME;
+			goto done;
+		} else if (0 == ret) {
+			rc = OMRPORT_ERROR_SYSINFO_NONEXISTING_PROCESS;
+			goto done;
+		}
+		computedProcessStartTimeInNanoseconds = (uint64_t)(procInfos[0].pi_start) * OMRPORT_TIME_DELTA_IN_NANOSECONDS;
+#elif defined(J9ZOS390) /* defined(AIXPPC) */
+		pgtha pgtha;
+		ProcessData processData;
+		pgthc *currentProcessInfo = NULL;
+		uint32_t dataOffset = 0;
+		uint32_t inputSize = sizeof(pgtha);
+		unsigned char *input = (unsigned char *)&pgtha;
+		uint32_t outputSize = sizeof(ProcessData);
+		unsigned char *output = (unsigned char *)&processData;
+		uint32_t ret = 0;
+		uint32_t retCode = 0;
+		uint32_t reasonCode = 0;
+		memset(input, 0, sizeof(pgtha));
+		memset(output, 0, sizeof(processData));
+		pgtha.pid = pid;
+		pgtha.accesspid = PGTHA_ACCESS_CURRENT;
+		pgtha.flag1 = PGTHA_FLAG_PROCESS_DATA;
+		GETTHENT(&inputSize, &input, &outputSize, &output, &ret, &retCode, &reasonCode);
+		if (-1 == ret) {
+			rc = OMRPORT_ERROR_SYSINFO_ERROR_GETTING_PROCESS_START_TIME;
+			goto done;
+		}
+		dataOffset = *((unsigned int *)processData.pgthb.offc);
+		dataOffset = (dataOffset & I_32_MAX) >> 8;
+		currentProcessInfo = (pgthc *)(((char *)&processData) + dataOffset);
+		computedProcessStartTimeInNanoseconds = (uint64_t)currentProcessInfo->starttime * OMRPORT_TIME_DELTA_IN_NANOSECONDS;
+#else /* defined(J9ZOS390) */
+		rc = OMRPORT_ERROR_NOT_SUPPORTED_ON_THIS_PLATFORM;
+#endif /* defined(LINUX) */
+	} else {
+		rc = OMRPORT_ERROR_SYSINFO_NONEXISTING_PROCESS;
+	}
+done:
+	*processStartTimeInNanoseconds = computedProcessStartTimeInNanoseconds;
+	Trc_PRT_sysinfo_get_process_start_time_exit(pid, computedProcessStartTimeInNanoseconds, rc);
+	return rc;
+}

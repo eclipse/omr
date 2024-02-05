@@ -55,11 +55,11 @@
 namespace TR
 {
 
-SimpleRegex *SimpleRegex::create(char *&s)
+SimpleRegex *SimpleRegex::create(const char *& s)
    {
    if (s == NULL || s[0] != '{')
       return NULL;
-   char *origStr = s;
+   const char *origStr = s;
    ++s;
    bool negate = (s[0] == '^');
    if (negate)
@@ -78,7 +78,7 @@ SimpleRegex *SimpleRegex::create(char *&s)
    }
 
 
-SimpleRegex::Regex *SimpleRegex::processRegex(char *&s, bool &foundError)
+SimpleRegex::Regex *SimpleRegex::processRegex(const char *&s, bool &foundError)
    {
    // First get rid of all + and |
    //
@@ -108,10 +108,10 @@ void *SimpleRegex::Component::operator new (size_t size, PERSISTENT_NEW_DECLARE,
 
 // Process a simple_pattern: a sequence of components
 //
-SimpleRegex::Simple *SimpleRegex::processSimple(char *&s, TR_YesNoMaybe allowAlternates, bool &foundError)
+SimpleRegex::Simple *SimpleRegex::processSimple(const char *&s, TR_YesNoMaybe allowAlternates, bool &foundError)
    {
    int32_t i,lo,hi;
-   char *startSimple = s;
+   const char *startSimple = s;
 
    if (s[0] == '\0' || s[0] == ',' || s[0] == '|' || s[0] == '}')
       return NULL;

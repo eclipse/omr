@@ -214,11 +214,11 @@ OMR::CodeGenPhase::performProcessRelocationsPhase(TR::CodeGenerator * cg, TR::Co
       {
       if (cg->comp()->target().is64Bit())
          {
-         setDllSlip((char*)cg->getCodeStart(), (char*)cg->getCodeStart() + cg->getCodeLength(), "SLIPDLL64", comp);
+         setDllSlip((const char *)cg->getCodeStart(), (const char *)cg->getCodeStart() + cg->getCodeLength(), "SLIPDLL64", comp);
          }
       else
          {
-         setDllSlip((char*)cg->getCodeStart(), (char*)cg->getCodeStart() + cg->getCodeLength(), "SLIPDLL31", comp);
+         setDllSlip((const char *)cg->getCodeStart(), (const char *)cg->getCodeStart() + cg->getCodeLength(), "SLIPDLL31", comp);
          }
       }
 

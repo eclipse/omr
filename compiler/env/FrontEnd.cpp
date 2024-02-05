@@ -158,7 +158,7 @@ TR_FrontEnd::getFormattedName(
 
 
 TR_OpaqueMethodBlock*
-TR_FrontEnd::getMethodFromName(char * className, char *methodName, char *signature)
+TR_FrontEnd::getMethodFromName(const char *className, const char *methodName, const char *signature)
    {
    TR_UNIMPLEMENTED();
    return 0;

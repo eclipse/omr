@@ -1630,3 +1630,6 @@ TraceEvent=Trc_PRT_sl_open_shared_library_noload Group=sl Overhead=1 Level=3 NoE
 TraceException=Trc_PRT_retrieveLinuxMemoryStats_failedOpeningSwappinessFs Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxMemoryStats: Failed to open /proc/sys/vm/swappiness. Error code = %d."
 TraceException=Trc_PRT_retrieveLinuxMemoryStats_failedReadingSwappiness Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxMemoryStats: Failed to read /proc/sys/vm/swappiness. Error code = %d."
 TraceException=Trc_PRT_retrieveLinuxMemoryStats_unexpectedSwappinessFormat Group=sysinfo Overhead=1 Level=1 NoEnv Template="retrieveLinuxMemoryStats: Expected %d items to read, but read %d items."
+
+TraceEntry=Trc_PRT_sysinfo_get_process_start_time_enter Group=sysinfo Overhead=1 Level=1 NoEnv Template="Enter omrsysinfo_get_process_start_time, pid=%zu."
+TraceExit=Trc_PRT_sysinfo_get_process_start_time_exit Group=sysinfo Overhead=1 Level=1 NoEnv Template="Exit omrsysinfo_get_process_start_time, pid=%zu, processStartTimeInNanoseconds=%llu, rc=%d."

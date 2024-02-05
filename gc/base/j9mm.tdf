@@ -1007,7 +1007,7 @@ TraceEntry=Trc_MM_DoFixHeapForCompact_Entry Overhead=1 Level=1 Template="Trc_MM_
 TraceExit=Trc_MM_DoFixHeapForCompact_Exit Overhead=1 Level=1 Template="Trc_MM_DoFixHeapForCompact Exit after fixing up %zu objects"
 
 TraceEntry=Trc_MM_ParallelDispatcher_expandThreadPool_Entry noEnv Overhead=1 Level=1 Group=dispatcher Template="expandThreadPool Entry"
-TraceEvent=Trc_MM_ParallelDispatcher_expandThreadPool_params noEnv Overhead=1 Level=1 Group=dispatcher Template="expandThreadPool_params: newThreadCount: %zu, _threadCountMaximumAtCheckpointStartup: %zu, supportedGCThreadCount: %zu, preExpandThreadCount: %zu"
+TraceEvent=Trc_MM_ParallelDispatcher_expandThreadPool_params noEnv Overhead=1 Level=1 Group=dispatcher Template="expandThreadPool_params: newThreadCount: %zu, _threadCountMaximumAtCheckpointStartup: %zu, defaultGCThreadCount: %zu, preExpandThreadCount: %zu"
 TraceExit=Trc_MM_ParallelDispatcher_expandThreadPool_Exit noEnv Overhead=1 Level=1 Group=dispatcher Template="expandThreadPool Exit: preExpandThreadCount: %zu, gcThreadCount: %zu, _threadShutdownCount: %zu"
 
 TraceEntry=Trc_MM_ParallelDispatcher_contractThreadPool_Entry noEnv Overhead=1 Level=1 Group=dispatcher Template="contractThreadPool Entry: gcThreadCount: %zu, requested newThreadCount: %zu"

@@ -103,7 +103,7 @@ static bool swapChildren(TR::Node * node, TR::Simplifier * s)
 //
 bool performTransformationSimplifier(TR::Node * node, TR::Simplifier * s)
    {
-   return performTransformation(s->comp(), "%sConstant folding node [%s] %s", s->optDetailString(), node->getName(s->getDebug()), node->getOpCode().getName());
+   return performTransformation(s->comp(), "%sConstant folding node [%s] %s\n", s->optDetailString(), node->getName(s->getDebug()), node->getOpCode().getName());
    }
 
 void setIsHighWordZero(TR::Node * node, TR::Simplifier * s)
@@ -228,7 +228,6 @@ void foldByteConstant(TR::Node * node, int8_t value, TR::Simplifier * s, bool an
    s->prepareToReplaceNode(node, TR::bconst);
    node->setByte(value);
    dumpOptDetails(s->comp(), " to %s %d\n", node->getOpCode().getName(), node->getByte());
-
    }
 
 void foldShortIntConstant(TR::Node * node, int16_t value, TR::Simplifier * s, bool anchorChildrenP)

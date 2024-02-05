@@ -47,7 +47,7 @@ class TR_BlockOrderingOptimization : public TR::Optimization
    {
    public:
 
-   void dumpBlockOrdering(TR::TreeTop *tt, char *title=NULL); // This is called from other opts!
+   void dumpBlockOrdering(TR::TreeTop *tt, const char *title=NULL); // This is called from other opts!
 
    protected:
    TR_BlockOrderingOptimization(TR::OptimizationManager *manager)
@@ -93,7 +93,7 @@ class TR_OrderBlocks : public TR_BlockOrderingOptimization
    void            dontReorderBlocks()       { _reorderBlocks = false; }
    void            extendBlocks()            { _extendBlocks = true; }
    void            dontExtendBlocks()        { _extendBlocks = false; }
-   bool            lookForPeepHoleOpportunities(char *title);
+   bool            lookForPeepHoleOpportunities(const char *title);
    void            doReordering();
 
    void            invalidateStructure() { _needInvalidateStructure = true; }
@@ -114,17 +114,17 @@ class TR_OrderBlocks : public TR_BlockOrderingOptimization
    void            removeFromOrderedBlockLists(TR::CFGNode *block);
    void            addRemainingSuccessorsToList(TR::CFGNode *block, TR::CFGNode *excludeBlock);
 
-   bool            peepHoleGotoToFollowing(TR::CFG *cfg, TR::Block *block, TR::Block *followingBlock, char *title);
-   bool            peepHoleGotoToGoto(TR::CFG *cfg, TR::Block *block, TR::Node *gotoNode, TR::Block *destOfGoto, char *title, TR::BitVector &skippedGotoBlocks);
-   bool            peepHoleGotoToEmpty(TR::CFG *cfg, TR::Block *block, TR::Node *gotoNode, TR::Block *destOfGoto, char *title);
-   void            peepHoleGotoBlock(TR::CFG *cfg, TR::Block *block, char *title);
+   bool            peepHoleGotoToFollowing(TR::CFG *cfg, TR::Block *block, TR::Block *followingBlock, const char *title);
+   bool            peepHoleGotoToGoto(TR::CFG *cfg, TR::Block *block, TR::Node *gotoNode, TR::Block *destOfGoto, const char *title, TR::BitVector &skippedGotoBlocks);
+   bool            peepHoleGotoToEmpty(TR::CFG *cfg, TR::Block *block, TR::Node *gotoNode, TR::Block *destOfGoto, const char *title);
+   void            peepHoleGotoBlock(TR::CFG *cfg, TR::Block *block, const char *title);
    void            removeRedundantBranch(TR::CFG *cfg, TR::Block *block, TR::Node *branchNode, TR::Block *takenBlock);
-   void            peepHoleBranchBlock(TR::CFG *cfg, TR::Block *block, char *title);
-   void            peepHoleBranchAroundSingleGoto(TR::CFG *cfg, TR::Block *block, char *title);
-   bool            peepHoleBranchToFollowing(TR::CFG *cfg, TR::Block *block, TR::Block *followingBlock, char *title);
-   bool            peepHoleBranchToLoopHeader(TR::CFG *cfg, TR::Block *block, TR::Block *fallThrough, TR::Block *dest, char *title);
-   void            removeEmptyBlock(TR::CFG *cfg, TR::Block *block, char *title);
-   bool            doPeepHoleBlockCorrections(TR::Block *block, char *title);
+   void            peepHoleBranchBlock(TR::CFG *cfg, TR::Block *block, const char *title);
+   void            peepHoleBranchAroundSingleGoto(TR::CFG *cfg, TR::Block *block, const char *title);
+   bool            peepHoleBranchToFollowing(TR::CFG *cfg, TR::Block *block, TR::Block *followingBlock, const char *title);
+   bool            peepHoleBranchToLoopHeader(TR::CFG *cfg, TR::Block *block, TR::Block *fallThrough, TR::Block *dest, const char *title);
+   void            removeEmptyBlock(TR::CFG *cfg, TR::Block *block, const char *title);
+   bool            doPeepHoleBlockCorrections(TR::Block *block, const char *title);
    void            addRemainingSuccessorsToListHWProfile(TR::CFGNode *block, TR::CFGNode *excludeBlock);
    void            insertBlocksToList();
    bool            hasValidCandidate(List<TR::CFGNode> & list, TR::CFGNode *prevBlock);

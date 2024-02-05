@@ -272,13 +272,13 @@ class TR_StatsEvents
    public:
    enum {NAME_LEN=31};
    TR_StatsEvents() {}
-   TR_StatsEvents(const char *name, char **binNames, int minEventId)
+   TR_StatsEvents(const char *name, const char **binNames, int minEventId)
       {
       init(name, binNames, minEventId);
       }
    // the init method can be used if we want to declare an array of stats
    // that are initialized later (in a for loop)
-   void init(const char *name, char **binNames, int minEventId)
+   void init(const char *name, const char **binNames, int minEventId)
       {
       strncpy(_name, name, NAME_LEN);
       _name[NAME_LEN] = 0; // just in case name is longer than _name
@@ -341,12 +341,12 @@ class TR_StatsEvents
       }
    unsigned samples() const {return _numSamples;}
    protected:
-   char     _name[NAME_LEN+1];
-   int      _bins[N];
-   char**   _binNames;
-   int      _minEventId;  // value of smallest bin
-   int      _numSamples;
-   int      _numInvalidSamples;
+   char         _name[NAME_LEN+1];
+   int          _bins[N];
+   const char **_binNames;
+   int          _minEventId;  // value of smallest bin
+   int          _numSamples;
+   int          _numInvalidSamples;
    };
 
 #endif

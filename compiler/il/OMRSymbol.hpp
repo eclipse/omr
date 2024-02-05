@@ -382,6 +382,9 @@ public:
    inline void setArrayShadowSymbol();
    inline bool isArrayShadowSymbol();
 
+   inline void setContiguousArrayDataAddrFieldSymbol();
+   inline bool isContiguousArrayDataAddrFieldSymbol();
+
    inline bool isRecognizedShadow();
 
    inline bool isRecognizedKnownObjectShadow();
@@ -515,7 +518,7 @@ public:
                                               ///< to behave as regular locals to
                                               ///< preserve floating point semantics
       PinningArrayPointer       = 0x10000000,
-      // Available              = 0x00020000,
+      contiguousArrayDataAddrField = 0x00020000,
       AutoAddressTaken          = 0x04000000, ///< a loadaddr of this auto exists
       SpillTempLoaded           = 0x04000000, ///< share bit with loadaddr because spill temps will never have their address taken. Used to remove store to spill if never loaded
       // Available              = 0x02000000,

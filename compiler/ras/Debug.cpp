@@ -764,7 +764,7 @@ TR_Debug::printPrefix(TR::FILE *pOutFile, TR::Instruction *instr, uint8_t *curso
       }
    else if (_registerAssignmentTraceFlags & TRACERA_IN_PROGRESS)
       {
-      char *spaces = "                                        ";
+      const char *spaces = "                                        ";
       int16_t padding = 30 - _registerAssignmentTraceCursor;
 
       if (padding < 0)
@@ -1667,6 +1667,8 @@ TR_Debug::getName(TR::SymbolReference * symRef)
              return "<storeFlattenableArrayElementNonHelper>";
          case TR::SymbolReferenceTable::J9JNIMethodIDvTableIndexFieldSymbol:
              return "<J9JNIMethodIDvTableIndexFieldSymbol>";
+         case TR::SymbolReferenceTable::contiguousArrayDataAddrFieldSymbol:
+             return "<contiguousArrayDataAddrFieldSymbol>";
          case TR::SymbolReferenceTable::defaultValueSymbol:
              return "<defaultValue>";
          case TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol:
@@ -1803,7 +1805,7 @@ TR_Debug::getAutoName(TR::SymbolReference * symRef)
    else if (slot < getOwningMethodSymbol(symRef)->getFirstJitTempIndex())
       {
       int debugNameLen;
-      char *debugName = getOwningMethod(symRef)->localName(slot, 0, debugNameLen, comp()->trMemory()); // TODO: Proper bcIndex somehow; TODO: proper length
+      const char *debugName = getOwningMethod(symRef)->localName(slot, 0, debugNameLen, comp()->trMemory()); // TODO: Proper bcIndex somehow; TODO: proper length
       if (!debugName)
          {
          debugName = "";
@@ -1850,8 +1852,8 @@ TR_Debug::getParmName(TR::SymbolReference * symRef)
    int32_t debugNameLen, signatureLen;
    int32_t slot = symRef->getCPIndex();
    const char * s = symRef->getSymbol()->castToParmSymbol()->getTypeSignature(signatureLen);
-   char *debugName = getOwningMethod(symRef)->localName(slot, 0, debugNameLen, comp()->trMemory()); // TODO: Proper bcIndex somehow; TODO: proper length
-   char * buf;
+   const char *debugName = getOwningMethod(symRef)->localName(slot, 0, debugNameLen, comp()->trMemory()); // TODO: Proper bcIndex somehow; TODO: proper length
+   char *buf;
 
    if (!debugName)
       {
@@ -1915,7 +1917,7 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
       if (!sym->addressIsCPIndexOfStatic() && staticAddress)
          {
          int32_t len;
-         char * name = TR::Compiler->cls.classNameChars(comp(), symRef, len);
+         const char *name = TR::Compiler->cls.classNameChars(comp(), symRef, len);
          if (name)
             {
             char * s = (char *)_comp->trMemory()->allocateHeapMemory(len+1);
@@ -1937,7 +1939,7 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
          TR::StackMemoryRegion stackMemoryRegion(*comp()->trMemory());
          char *contents = NULL;
          intptr_t length = 0, prefixLength = 0, suffixOffset = 0;
-         char *etc = "";
+         const char *etc = "";
          const intptr_t LENGTH_LIMIT=80;
          const intptr_t PIECE_LIMIT=20;
 
@@ -2111,6 +2113,7 @@ static const char *commonNonhelperSymbolNames[] =
    "<osrScratchBuffer>",
    "<osrFrameIndex>",
    "<osrReturnAddress>",
+   "<contiguousArrayDataAddrField>",
    "<potentialOSRPointHelper>",
    "<osrFearPointHelper>",
    "<eaEscapeHelper>",
@@ -3624,7 +3627,7 @@ TR_Debug::dump(TR::FILE *pOutFile, TR_CHTable * chTable)
          TR_OpaqueClassBlock * clazz = chTable->_classes->element(i);
          int32_t len;
 
-         char *sig = TR::Compiler->cls.classNameChars(comp(), clazz, len);
+         const char *sig = TR::Compiler->cls.classNameChars(comp(), clazz, len);
 
          if (len>255) len = 255;
          strncpy(buf, sig, len);
@@ -4949,18 +4952,18 @@ void TR_Debug::setupDebugger(void *addr)
          char cfname[20];
          FILE *cf;
          char pp[20];
-         char * Argv[20];
+         char *Argv[20];
 
          yield();
          sprintf(cfname, "_%" OMR_PRId64 "_", (int64_t)getpid());
          sprintf(pp, "%" OMR_PRId64, (int64_t)ppid);
-         Argv[1] = "-a";
+         Argv[1] = (char *)"-a";
          Argv[2] = pp;
          Argv[3] = NULL;
 
          if ((Argv[0] = ::feGetEnv("TR_DEBUGGER")) == NULL)
             {
-            Argv[0] = "/usr/bin/dbx";
+            Argv[0] = (char *)"/usr/bin/dbx";
             if ((cf = fopen(cfname, "wb+")) == 0)
               cfname[0] = '\0';
             else
@@ -4972,7 +4975,7 @@ void TR_Debug::setupDebugger(void *addr)
                fprintf(cf, "cont SIGCONT\n");
                fclose(cf);
 
-               Argv[3] = "-c";
+               Argv[3] = (char *)"-c";
                Argv[4] = cfname;
                Argv[5] = NULL;
               }

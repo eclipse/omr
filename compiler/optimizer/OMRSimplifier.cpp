@@ -167,6 +167,8 @@ OMR::Simplifier::Simplifier(TR::OptimizationManager *manager)
    _reassociate = comp()->getOption(TR_EnableReassociation);
 
    _containingStructure = NULL;
+
+   _nodeToDivchk = NULL;
    }
 
 TR::Optimization *OMR::Simplifier::create(TR::OptimizationManager *manager)

@@ -661,6 +661,8 @@ extern J9_CFUNC int32_t
 omrsysinfo_cgroup_subsystem_iterator_next(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state, struct OMRCgroupMetricElement *metricElement);
 extern J9_CFUNC void
 omrsysinfo_cgroup_subsystem_iterator_destroy(struct OMRPortLibrary *portLibrary, struct OMRCgroupMetricIteratorState *state);
+extern J9_CFUNC int32_t
+omrsysinfo_get_process_start_time(struct OMRPortLibrary *portLibrary, uintptr_t pid, uint64_t *processStartTimeInNanoseconds);
 
 /* J9SourceJ9Signal*/
 extern J9_CFUNC int32_t

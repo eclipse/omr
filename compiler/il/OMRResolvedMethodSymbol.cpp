@@ -194,13 +194,15 @@ OMR::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod * method, TR::
 
    self()->setParameterList();
 
-   _properties.set(CanSkipNullChecks                   , self()->safeToSkipNullChecks());
-   _properties.set(CanSkipBoundChecks                  , self()->safeToSkipBoundChecks());
-   _properties.set(CanSkipCheckCasts                   , self()->safeToSkipCheckCasts());
-   _properties.set(CanSkipDivChecks                    , self()->safeToSkipDivChecks());
-   _properties.set(CanSkipArrayStoreChecks             , self()->safeToSkipArrayStoreChecks());
-   _properties.set(CanSkipChecksOnArrayCopies          , self()->safeToSkipChecksOnArrayCopies());
-   _properties.set(CanSkipZeroInitializationOnNewarrays, self()->safeToSkipZeroInitializationOnNewarrays());
+   _properties.set(CanSkipNullChecks                          , self()->safeToSkipNullChecks());
+   _properties.set(CanSkipBoundChecks                         , self()->safeToSkipBoundChecks());
+   _properties.set(CanSkipCheckCasts                          , self()->safeToSkipCheckCasts());
+   _properties.set(CanSkipDivChecks                           , self()->safeToSkipDivChecks());
+   _properties.set(CanSkipArrayStoreChecks                    , self()->safeToSkipArrayStoreChecks());
+   _properties.set(CanSkipNonNullableArrayNullStoreCheck      , self()->safeToSkipNonNullableArrayNullStoreCheck());
+   _properties.set(CanSkipFlattenableArrayElementNonHelperCall, self()->safeToSkipFlattenableArrayElementNonHelperCall());
+   _properties.set(CanSkipChecksOnArrayCopies                 , self()->safeToSkipChecksOnArrayCopies());
+   _properties.set(CanSkipZeroInitializationOnNewarrays       , self()->safeToSkipZeroInitializationOnNewarrays());
    }
 
 
@@ -267,7 +269,7 @@ bcIndexForFakeInduce(TR::Compilation* comp, int16_t* callSiteInsertionPoint,
       if (!p) break;
       strncpy(signatureRegex, p, temp - p);
       signatureRegex[temp-p] = '\0';
-      char* tempRegex = signatureRegex;
+      const char *tempRegex = (const char *)signatureRegex;
       TR::SimpleRegex* regex = TR::SimpleRegex::create(tempRegex);
       if (regex)
          {

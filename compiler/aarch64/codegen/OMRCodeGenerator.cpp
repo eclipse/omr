@@ -700,6 +700,7 @@ bool OMR::ARM64::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::CPU *cpu, TR::I
       case TR::vmor:
       case TR::vmxor:
       case TR::vmnot:
+#if 0  // Disable vector shift and rotate opcodes until they comply with the JVM Specification
       case TR::vshl:
       case TR::vmshl:
       case TR::vshr:
@@ -708,6 +709,7 @@ bool OMR::ARM64::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::CPU *cpu, TR::I
       case TR::vmushr:
       case TR::vrol:
       case TR::vmrol:
+#endif
       case TR::vpopcnt:
       case TR::vmpopcnt:
       case TR::vnotz:

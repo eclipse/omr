@@ -136,7 +136,7 @@ TR::OptionTable OMR::Options::_feOptions[] =
 
 // S390 specific fucntion - FIXME: make this only be a problem when HOST is s390.  Also, use a better
 // name for this
-void setDllSlip(char*CodeStart,char*CodeEnd,char*dllName,  TR::Compilation *comp) { TR_UNIMPLEMENTED(); }
+void setDllSlip(const char *CodeStart, const char *CodeEnd, const char *dllName, TR::Compilation *comp) { TR_UNIMPLEMENTED(); }
 
 // runtime assumptions
 #ifdef J9_PROJECT_SPECIFIC
@@ -146,7 +146,7 @@ void TR::PatchNOPedGuardSite::compensate(TR_FrontEnd *fe, bool isSMP, uint8_t *l
 void TR_PersistentClassInfo::removeASubClass(TR_PersistentClassInfo *) { TR_UNIMPLEMENTED(); }
 bool isOrderedPair(uint8_t recordType) { TR_UNIMPLEMENTED(); return false; }
 void OMR::RuntimeAssumption::addToRAT(TR_PersistentMemory * persistentMemory, TR_RuntimeAssumptionKind kind, TR_FrontEnd *fe, OMR::RuntimeAssumption** sentinel) { TR_UNIMPLEMENTED(); }
-void OMR::RuntimeAssumption::dumpInfo(char *subclassName) { TR_UNIMPLEMENTED(); }
+void OMR::RuntimeAssumption::dumpInfo(const char *subclassName) { TR_UNIMPLEMENTED(); }
 void TR_PatchJNICallSite::compensate(TR_FrontEnd*, bool, void *) { TR_UNIMPLEMENTED(); }
 void TR_PreXRecompile::compensate(TR_FrontEnd*, bool, void *) { TR_UNIMPLEMENTED(); }
 TR_PatchNOPedGuardSiteOnClassPreInitialize *TR_PatchNOPedGuardSiteOnClassPreInitialize::make(TR_FrontEnd *fe, TR_PersistentMemory *, char*, unsigned int, unsigned char*, unsigned char*, OMR::RuntimeAssumption**) { TR_UNIMPLEMENTED(); return 0; }

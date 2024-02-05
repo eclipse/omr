@@ -376,29 +376,7 @@ atoe_perror(const char *string)
 void
 atoe_enableFileTagging(void)
 {
-#pragma convlit(suspend)
-	const char *dllname = "libwrappers.so";
-	const char *fnname  = "atoe_enableFileTagging";
-	dllhandle *libwrappersDll;
-	void (*patoe_enableFileTagging)();
-
 	fileTaggingEnabled = 1;
-
-	/* Handle libwrappers.so:atoe_enableFileTagging as well */
-	libwrappersDll = dllload(dllname);
-	if (libwrappersDll == NULL) {
-		perror(0);
-		printf("atoe_enableFileTagging: %s not found\n", dllname);
-	} else {
-		patoe_enableFileTagging = (void (*)()) dllqueryfn(libwrappersDll, fnname);
-		if (patoe_enableFileTagging == NULL) {
-			perror(0);
-			printf("atoe_enableFileTagging: %s not found\n", fnname);
-		} else {
-			patoe_enableFileTagging();
-		}
-	}
-#pragma convlit(resume)
 }
 
 
@@ -413,6 +391,30 @@ atoe_setFileTaggingCcsid(void *pccsid)
 {
 	__ccsid_t ccsid = *(__ccsid_t *) pccsid;
 	newFileCCSID = ccsid;
+
+	if (fileTaggingEnabled) {
+#pragma convlit(suspend)
+		const char *dllname = "libwrappers.so";
+		const char *fnname  = "atoe_enableFileTagging";
+		dllhandle *libwrappersDll;
+		void (*patoe_enableFileTagging)();
+
+		/* Handle libwrappers.so:atoe_enableFileTagging */
+		libwrappersDll = dllload(dllname);
+		if (libwrappersDll == NULL) {
+			perror(0);
+			printf("atoe_enableFileTagging: %s not found\n", dllname);
+		} else {
+			patoe_enableFileTagging = (void (*)()) dllqueryfn(libwrappersDll, fnname);
+			if (patoe_enableFileTagging == NULL) {
+				perror(0);
+				printf("atoe_enableFileTagging: %s not found\n", fnname);
+			} else {
+				patoe_enableFileTagging(newFileCCSID);
+			}
+		}
+#pragma convlit(resume)
+	}
 }
 
 

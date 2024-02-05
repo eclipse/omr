@@ -447,13 +447,16 @@ MM_Configuration::initializeGCThreadCount(MM_EnvironmentBase* env)
 {
 	MM_GCExtensionsBase* extensions = env->getExtensions();
 
-	if (!extensions->gcThreadCountForced) {
-		extensions->gcThreadCount = supportedGCThreadCount(env);
+	if (!extensions->gcThreadCountSpecified) {
+		extensions->gcThreadCount = defaultGCThreadCount(env);
 	}
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	_delegate.checkPointGCThreadCountVerifyAndAdjust(env);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 }
 
 uintptr_t
-MM_Configuration::supportedGCThreadCount(MM_EnvironmentBase* env)
+MM_Configuration::defaultGCThreadCount(MM_EnvironmentBase* env)
 {
 	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 	uintptr_t threadCount = omrsysinfo_get_number_CPUs_by_type(OMRPORT_CPU_TARGET);

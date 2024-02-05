@@ -310,7 +310,7 @@ omrdump_startup(struct OMRPortLibrary *portLibrary)
 	 *  The #define following is that constant in EBCDIC.
 	 */
 #define OMRZTPF_BYTE_INTERP "\xC4\xF9\xE5\xD4"
-	/*              J9ZTPF_BYTE_INTERP "D9VM" */
+	/*              OMRZTPF_BYTE_INTERP "D9VM" */
 	/*
 	 *      z/TPF handles JVM-associated processes a little differently than all
 	 *      others. We need to mark the process block to inform the kernel that

@@ -50,7 +50,7 @@ class SimpleRegex
 
    // Create a new regular expression
    //
-   static SimpleRegex *create(char *&s);
+   static SimpleRegex *create(const char *& s);
 
    // Check whether a string matches this regular expression
    //
@@ -139,15 +139,15 @@ class SimpleRegex
 
    private:
 
-   static Regex  *processRegex(char *&s, bool &foundError);
-   static Simple *processSimple(char *&s, TR_YesNoMaybe allowAlternates, bool &foundError);
+   static Regex  *processRegex(const char *&s, bool &foundError);
+   static Simple *processSimple(const char *&s, TR_YesNoMaybe allowAlternates, bool &foundError);
 
    Regex *_regex;
    bool   _negate;
 
    // Length and pointer to the original string that the regex was parsed from
    size_t _regexStrLen;
-   char *_regexStr;
+   const char *_regexStr;
    };
 
 }

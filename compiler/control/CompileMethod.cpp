@@ -190,7 +190,7 @@ int32_t init_options(TR::JitConfig *jitConfig, char *cmdLineOptions)
       if (*cmdLineOptions == ':') cmdLineOptions++; // also skip :
       }
 
-   char *endOptions = TR::Options::processOptionsJIT(cmdLineOptions, jitConfig, fe);
+   const char *endOptions = TR::Options::processOptionsJIT(cmdLineOptions, jitConfig, fe);
    if (*endOptions)
       {
       fprintf(stderr, "JIT: fatal error: invalid command line at %s\n", endOptions);

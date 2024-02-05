@@ -57,7 +57,6 @@ extern int64_t __getNanos(void);
 /* Frequency is nanoseconds / second */
 #define OMRTIME_HIRES_CLOCK_FREQUENCY J9CONST_U64(1000000000)
 
-#define OMRTIME_NANOSECONDS_PER_SECOND J9CONST_I64(1000000000)
 static const clockid_t OMRTIME_NANO_CLOCK = CLOCK_MONOTONIC;
 
 /*
@@ -113,7 +112,7 @@ omrtime_current_time_nanos(struct OMRPortLibrary *portLibrary, uintptr_t *succes
 	uint64_t nsec = 0;
 	*success = 0;
 	if (0 == clock_gettime(CLOCK_REALTIME, &ts)) {
-		nsec = ((uint64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (uint64_t)ts.tv_nsec;
+		nsec = ((uint64_t)ts.tv_sec * OMRPORT_TIME_DELTA_IN_NANOSECONDS) + (uint64_t)ts.tv_nsec;
 		*success = 1;
 	}
 	return nsec;
@@ -148,7 +147,7 @@ omrtime_nano_time(struct OMRPortLibrary *portLibrary)
 	int64_t hiresTime = 0;
 
 	if (0 == clock_gettime(OMRTIME_NANO_CLOCK, &ts)) {
-		hiresTime = ((int64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (int64_t)ts.tv_nsec;
+		hiresTime = ((int64_t)ts.tv_sec * OMRPORT_TIME_DELTA_IN_NANOSECONDS) + (int64_t)ts.tv_nsec;
 	}
 
 	return hiresTime;
@@ -171,7 +170,7 @@ omrtime_hires_clock(struct OMRPortLibrary *portLibrary)
 	} else {
 		struct timespec ts;
 		if (0 == clock_gettime(OMRTIME_NANO_CLOCK, &ts)) {
-			ret = ((uint64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (uint64_t)ts.tv_nsec;
+			ret = ((uint64_t)ts.tv_sec * OMRPORT_TIME_DELTA_IN_NANOSECONDS) + (uint64_t)ts.tv_nsec;
 		}
 	}
 	return ret;

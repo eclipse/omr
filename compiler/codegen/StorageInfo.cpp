@@ -35,7 +35,7 @@
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 
-char *TR_StorageInfo::TR_StorageClassNames[TR_NumStorageClassTypes] =
+const char *TR_StorageInfo::TR_StorageClassNames[TR_NumStorageClassTypes] =
    {
    "<unknown_class>",
    "<direct_mapped_auto>",
@@ -44,7 +44,7 @@ char *TR_StorageInfo::TR_StorageClassNames[TR_NumStorageClassTypes] =
    "<private_static_base_address>",
    };
 
-char *TR_StorageInfo::TR_StorageOverlapKindNames[TR_NumOverlapTypes] =
+const char *TR_StorageInfo::TR_StorageOverlapKindNames[TR_NumOverlapTypes] =
    {
    "NoOverlap",
    "MayOverlap",

@@ -229,7 +229,7 @@ private:
 public:
    bool                       addFreeBlock2WithCallSite(uint8_t *start,
                                                         uint8_t *end,
-                                                        char *file,
+                                                        const char *file,
                                                         uint32_t lineNumber);
 
    /**

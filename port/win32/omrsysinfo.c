@@ -46,6 +46,10 @@
 #include "ut_omrport.h"
 #include "omrsysinfo_helpers.h"
 
+#define OMRPORT_SYSINFO_WINDOWS_TICK 10000000ULL
+#define OMRPORT_SYSINFO_SEC_TO_UNIX_EPOCH 11644473600ULL
+#define OMRPORT_SYSINFO_NS100_PER_SEC 10000000ULL
+
 static int32_t copyEnvToBuffer(struct OMRPortLibrary *portLibrary, void *args);
 
 typedef struct CopyEnvToBufferArgs {
@@ -1271,7 +1275,7 @@ omrsysinfo_get_CPU_load(struct OMRPortLibrary *portLibrary, double *cpuLoad)
 	if (oldestCPUTime->timestamp == 0) {
 		*oldestCPUTime = currentCPUTime;
 		*latestCPUTime = currentCPUTime;
-		return OMRPORT_ERROR_OPFAILED;
+		return OMRPORT_ERROR_INSUFFICIENT_DATA;
 	}
 
 	/* Calculate using the most recent value in the history */
@@ -1990,3 +1994,34 @@ omrsysinfo_cgroup_subsystem_iterator_destroy(struct OMRPortLibrary *portLibrary,
 	return;
 }
 
+int32_t
+omrsysinfo_get_process_start_time(struct OMRPortLibrary *portLibrary, uintptr_t pid, uint64_t *processStartTimeInNanoseconds)
+{
+	int32_t rc = 0;
+	uint64_t computedProcessStartTimeInNanoseconds = 0;
+	Trc_PRT_sysinfo_get_process_start_time_enter(pid);
+	if (0 != omrsysinfo_process_exists(portLibrary, pid)) {
+		double seconds = 0;
+		FILETIME createTime, exitTime, kernelTime, userTime;
+		HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, (DWORD)pid);
+		if (NULL == process) {
+			rc = OMRPORT_ERROR_SYSINFO_NONEXISTING_PROCESS;
+			goto done;
+		}
+		if (!GetProcessTimes(process, &createTime, &exitTime, &kernelTime, &userTime)) {
+			rc = OMRPORT_ERROR_SYSINFO_ERROR_GETTING_PROCESS_START_TIME;
+			goto cleanup;
+		}
+		seconds = (double)(*(LONGLONG *)&(createTime)) / OMRPORT_SYSINFO_WINDOWS_TICK;
+		computedProcessStartTimeInNanoseconds = (uint64_t)((seconds - OMRPORT_SYSINFO_SEC_TO_UNIX_EPOCH) * OMRPORT_SYSINFO_NS100_PER_SEC);
+		computedProcessStartTimeInNanoseconds *= 100;
+cleanup:
+		CloseHandle(process);
+	} else {
+		rc = OMRPORT_ERROR_SYSINFO_NONEXISTING_PROCESS;
+	}
+done:
+	*processStartTimeInNanoseconds = computedProcessStartTimeInNanoseconds;
+	Trc_PRT_sysinfo_get_process_start_time_exit(pid, computedProcessStartTimeInNanoseconds, rc);
+	return rc;
+}

@@ -43,8 +43,6 @@
 #define OMRTIME_HIRES_CLOCK_FREQUENCY J9CONST_U64(1000000)
 #endif /* defined(OSX) || defined(LINUX) */
 
-#define OMRTIME_NANOSECONDS_PER_SECOND J9CONST_I64(1000000000)
-
 #if defined(OSX)
 static clock_serv_t cs_t;
 #else /* defined(OSX) */
@@ -97,14 +95,14 @@ omrtime_current_time_nanos(struct OMRPortLibrary *portLibrary, uintptr_t *succes
 	struct timeval ts;
 	*success = 0;
 	if (0 == gettimeofday(&ts, NULL)) {
-		nsec = ((uint64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (uint64_t)(ts.tv_usec * 1000);
+		nsec = ((uint64_t)ts.tv_sec * OMRPORT_TIME_DELTA_IN_NANOSECONDS) + (uint64_t)(ts.tv_usec * 1000);
 		*success = 1;
 	}
 #else /* defined(OSX) */
 	struct timespec ts;
 	*success = 0;
 	if (0 == clock_gettime(CLOCK_REALTIME, &ts)) {
-		nsec = ((uint64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (uint64_t)ts.tv_nsec;
+		nsec = ((uint64_t)ts.tv_sec * OMRPORT_TIME_DELTA_IN_NANOSECONDS) + (uint64_t)ts.tv_nsec;
 		*success = 1;
 	}
 #endif /* defined(OSX) */
@@ -118,13 +116,13 @@ omrtime_nano_time(struct OMRPortLibrary *portLibrary)
 #if defined(OSX)
 	mach_timespec_t mt;
 	if (KERN_SUCCESS == clock_get_time(cs_t, &mt)) {
-		hiresTime = ((int64_t)mt.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (int64_t)mt.tv_nsec;
+		hiresTime = ((int64_t)mt.tv_sec * OMRPORT_TIME_DELTA_IN_NANOSECONDS) + (int64_t)mt.tv_nsec;
 	}
 #else /* defined(OSX) */
 	struct timespec ts;
 
 	if (0 == clock_gettime(OMRTIME_NANO_CLOCK, &ts)) {
-		hiresTime = ((int64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (int64_t)ts.tv_nsec;
+		hiresTime = ((int64_t)ts.tv_sec * OMRPORT_TIME_DELTA_IN_NANOSECONDS) + (int64_t)ts.tv_nsec;
 	}
 #endif /* defined(OSX) */
 
@@ -165,7 +163,7 @@ omrtime_hires_clock(struct OMRPortLibrary *portLibrary)
 	uint64_t ret = 0;
 	struct timespec ts;
 	if (0 == clock_gettime(OMRTIME_NANO_CLOCK, &ts)) {
-		ret = ((uint64_t)ts.tv_sec * OMRTIME_NANOSECONDS_PER_SECOND) + (uint64_t)ts.tv_nsec;
+		ret = ((uint64_t)ts.tv_sec * OMRPORT_TIME_DELTA_IN_NANOSECONDS) + (uint64_t)ts.tv_nsec;
 	}
 	return ret;
 #else /* defined(LINUX) */

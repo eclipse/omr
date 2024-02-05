@@ -144,8 +144,8 @@ public:
 
 	virtual void kill(MM_EnvironmentBase* env);
 
-	/* Number of GC threads supported based on hardware and dispatcher's max. */
-	virtual uintptr_t supportedGCThreadCount(MM_EnvironmentBase* env);
+	/* Default number of GC threads based on h/w, os and container limits */
+	virtual uintptr_t defaultGCThreadCount(MM_EnvironmentBase* env);
 
 	/**
 	 * Sets the number of gc threads

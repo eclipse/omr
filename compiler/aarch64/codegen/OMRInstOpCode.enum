@@ -770,12 +770,18 @@
 		vshll2_2d,                                              	/* 0x6EA13800,	SHLL2     	 */
 	/* Vector Compare */
 		vcmeq16b,                                               	/* 0x6E208C00,	CMEQ      	 */
+		vcmeq8b,                                                	/* 0x2E208C00,	CMEQ      	 */
 		vcmeq8h,                                                	/* 0x6E608C00,	CMEQ      	 */
+		vcmeq4h,                                                	/* 0x2E608C00,	CMEQ      	 */
 		vcmeq4s,                                                	/* 0x6EA08C00,	CMEQ      	 */
+		vcmeq2s,                                                	/* 0x2EA08C00,	CMEQ      	 */
 		vcmeq2d,                                                	/* 0x6EE08C00,	CMEQ      	 */
 		vcmeq16b_zero,                                          	/* 0x4E209800,	CMEQ      	 */
+		vcmeq8b_zero,                                           	/* 0x0E209800,	CMEQ      	 */
 		vcmeq8h_zero,                                           	/* 0x4E609800,	CMEQ      	 */
+		vcmeq4h_zero,                                           	/* 0x0E609800,	CMEQ      	 */
 		vcmeq4s_zero,                                           	/* 0x4EA09800,	CMEQ      	 */
+		vcmeq2s_zero,                                           	/* 0x0EA09800,	CMEQ      	 */
 		vcmeq2d_zero,                                           	/* 0x4EE09800,	CMEQ      	 */
 		vcmhs16b,                                               	/* 0x6E203C00,	CMHS      	 */
 		vcmhs8h,                                                	/* 0x6E603C00,	CMHS      	 */

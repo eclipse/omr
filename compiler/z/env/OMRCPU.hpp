@@ -77,8 +77,6 @@ public:
 
    bool getSupportsArch(Architecture arch);
 
-   bool setSupportsArch(Architecture arch);
-
    bool getSupportsHardwareSQRT();
 
    bool hasPopulationCountInstruction();
@@ -94,7 +92,7 @@ public:
     *  \param value
     *     Determines whether the High-Word facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsHighWordFacility(bool value);
+   void setSupportsHighWordFacility(bool value);
 
    /** \brief
     *     Determines whether the Decimal Floating Point (DFP) facility is available on the current processor.
@@ -107,7 +105,7 @@ public:
     *  \param value
     *     Determines whether the Decimal Floating Point facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsDecimalFloatingPointFacility(bool value);
+   void setSupportsDecimalFloatingPointFacility(bool value);
 
    /** \brief
     *     Determines whether the Floating Point Extension (FPE) facility is available on the current processor.
@@ -120,7 +118,7 @@ public:
     *  \param value
     *     Determines whether the Floating Point Extension facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsFloatingPointExtensionFacility(bool value);
+   void setSupportsFloatingPointExtensionFacility(bool value);
 
    /** \brief
     *     Determines whether the Transactional Execution (TX) facility is available on the current processor.
@@ -139,7 +137,7 @@ public:
     *  \param value
     *     Determines whether the Transactional Execution facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsTransactionalExecutionFacility(bool value);
+   void setSupportsTransactionalExecutionFacility(bool value);
 
    /** \brief
     *     Determines whether the Constrained Transactional Execution (TXC) facility is available on the current processor.
@@ -152,7 +150,7 @@ public:
     *  \param value
     *     Determines whether the Constrained Transactional Execution facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsConstrainedTransactionalExecutionFacility(bool value);
+   void setSupportsConstrainedTransactionalExecutionFacility(bool value);
 
    /** \brief
     *     Determines whether the Runtime Instrumentation (RI) facility is available on the current processor.
@@ -165,7 +163,7 @@ public:
     *  \param value
     *     Determines whether the Runtime Instrumentation facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsRuntimeInstrumentationFacility(bool value);
+   void setSupportsRuntimeInstrumentationFacility(bool value);
 
    /** \brief
     *     Determines whether the Vector facility is available on the current processor.
@@ -178,7 +176,7 @@ public:
     *  \param value
     *     Determines whether the Vector facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsVectorFacility(bool value);
+   void setSupportsVectorFacility(bool value);
 
    /** \brief
     *     Determines whether the Vector Packed Decimal facility is available on the current processor.
@@ -191,7 +189,7 @@ public:
     *  \param value
     *     Determines whether the Vector Packed Decimal facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsVectorPackedDecimalFacility(bool value);
+   void setSupportsVectorPackedDecimalFacility(bool value);
 
    /** \brief
     *     Determines whether the Miscellaneous Instruction Extensions 2 (MIE2) facility is available on the current
@@ -207,7 +205,7 @@ public:
     *     Determines whether the Miscellaneous Instruction Extensions 2 facility is available (if \c true) or not (if
     *     \c false).
     */
-   bool setSupportsMiscellaneousInstructionExtensions2Facility(bool value);
+   void setSupportsMiscellaneousInstructionExtensions2Facility(bool value);
 
 
    /** \brief
@@ -224,7 +222,7 @@ public:
     *     Determines whether the Miscellaneous Instruction Extensions 3 facility is available (if \c true) or not (if
     *     \c false).
     */
-   bool setSupportsMiscellaneousInstructionExtensions3Facility(bool value);
+   void setSupportsMiscellaneousInstructionExtensions3Facility(bool value);
 
    /** \brief
     *     Determines whether the Vector Enhancement 2 facility is available on the current processor.
@@ -237,7 +235,7 @@ public:
     *  \param value
     *     Determines whether the Vector Enhancement 2 facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsVectorFacilityEnhancement2(bool value);
+   void setSupportsVectorFacilityEnhancement2(bool value);
 
    /** \brief
     *     Determines whether the Vector Enhancement 1 facility is available on the current processor.
@@ -250,7 +248,7 @@ public:
     *  \param value
     *     Determines whether the Vector Enhancement 1 facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsVectorFacilityEnhancement1(bool value);
+   void setSupportsVectorFacilityEnhancement1(bool value);
 
    /** \brief
     *     Determines whether the Vector Packed Decimal facility is available on the current processor.
@@ -263,7 +261,7 @@ public:
     *  \param value
     *     Determines whether the Vector Packed Decimal facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsVectorPackedDecimalEnhancementFacility(bool value);
+   void setSupportsVectorPackedDecimalEnhancementFacility(bool value);
 
    /** \brief
     *     Determines whether the Guarded Storage (GS) facility is available on the current processor.
@@ -276,7 +274,7 @@ public:
     *  \param value
     *     Determines whether the Guarded Storage facility is available (if \c true) or not (if \c false).
     */
-   bool setSupportsGuardedStorageFacility(bool value);
+   void setSupportsGuardedStorageFacility(bool value);
 
    /**
     * \brief Determines whether 32bit integer rotate is available
@@ -327,7 +325,7 @@ public:
     *  \param value
     *     \c true if the Vector Packed Decimal facility is available, and \c false otherwise.
     */
-   bool setSupportsVectorPackedDecimalEnhancementFacility2(bool value);
+   void setSupportsVectorPackedDecimalEnhancementFacility2(bool value);
 
 private:
 

@@ -330,7 +330,7 @@ splitPathName(char *finalname, char *pathname)
  * \param[in]        arg->portLibrary    Pointer to an initialized OMRPortLibrary
  *                                        block. If there isn't one at call time,
  *                                        leave this value NULL and set flag
- *                                        J9ZTPF_NO_PORT_LIBRARY
+ *                                        OMRZTPF_NO_PORT_LIBRARY
  * \param[in]        arg->dibPtr            Address of the DIB attached to the faulting
  *                                        UOW at post-interrupt time.
  *

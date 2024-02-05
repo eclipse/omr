@@ -1551,6 +1551,12 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
             doThisOptimization = true;
          }
          break;
+      case IfLoopsAndNotCompileTimeSensitive:
+         {
+         if (comp()->mayHaveLoops() && comp()->getOption(TR_NotCompileTimeSensitive))
+            doThisOptimization = true;
+         }
+         break;
       case MarkLastRun:
          doThisOptimization = true;
          TR_ASSERT(optNum < OMR::numOpts ,"No current support for marking groups as last (optNum=%d,numOpt=%d\n",optNum,OMR::numOpts); //make sure we didn't mark groups

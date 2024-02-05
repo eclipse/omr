@@ -110,6 +110,7 @@ void TR_X86ProcessorInfo::reset()
    _featureFlags = 0;
    _featureFlags2 = 0;
    _featureFlags8 = 0;
+   _featureFlags10 = 0;
    _processorDescription = 0;
    }
 
@@ -130,6 +131,7 @@ void TR_X86ProcessorInfo::initialize(bool force)
    _featureFlags.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags());
    _featureFlags2.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags2());
    _featureFlags8.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags8());
+   _featureFlags10.set(TR::Compiler->target.cpu.getX86ProcessorFeatureFlags10());
 
    // Determine the processor vendor.
    //

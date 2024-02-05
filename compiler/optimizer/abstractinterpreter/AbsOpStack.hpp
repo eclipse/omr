@@ -37,10 +37,10 @@ class AbsOpStack
    explicit AbsOpStack(TR::Region& region) :
          _container(region)
       {}
-      
+
    /**
     * @brief Clone an operand stack
-    * 
+    *
     * @param region The memory region where the cloned operand stack should be allocated.
     * @return the cloned operand stack
     */
@@ -48,7 +48,7 @@ class AbsOpStack
 
    /**
     * @brief Perform an in-place merge another operand stack.
-    * The merge operation does not modify the state of another state 
+    * The merge operation does not modify the state of another state
     * or store any references of abstract values from another state to be merged with
     *
     * @param other the operand stack to be merged with
@@ -65,7 +65,7 @@ class AbsOpStack
    /**
     * @brief Peek the top value on the operand stack (stack top; not lattice top).
     * @note the stack must not be empty
-    * 
+    *
     * @return the abstract value
     */
    TR::AbsValue* peek() const { TR_ASSERT_FATAL(size() > 0, "Peek an empty stack!"); return _container.back(); }
@@ -73,18 +73,18 @@ class AbsOpStack
    /**
     * @brief Get and pop a value off of the operand stack.
     * @note the stack must not be empty.
-    * 
+    *
     * @return the abstract value
     */
    TR::AbsValue* pop();
 
    bool empty() const { return _container.empty(); }
    size_t size() const { return _container.size(); }
-  
+
    void print(TR::Compilation* comp) const;
 
    private:
-   TR::vector<TR::AbsValue*, TR::Region&> _container; 
+   TR::vector<TR::AbsValue*, TR::Region&> _container;
    };
 
 }
