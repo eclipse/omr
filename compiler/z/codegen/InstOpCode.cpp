@@ -95,9 +95,10 @@ OMR::Z::InstOpCode::isOperandHW(uint32_t i)
 void
 OMR::Z::InstOpCode::copyBinaryToBufferWithoutClear(uint8_t *cursor, TR::InstOpCode::Mnemonic i_opCode)
   {
+  // Write first byte of the opcode into the first byte of the instruction
   cursor[0] = metadata[i_opCode].opcode[0];
 
-  // Second opcode being non-zero indicates a two-byte opcode the second of which is always the last byte of the instruction
+  // Second opcode being non-zero indicates a two-byte opcode the second of which can either be second or last byte of the instruction
   if (metadata[i_opCode].opcode[1] != 0)
      {
      switch (getInstructionFormat(i_opCode))
@@ -146,11 +147,25 @@ OMR::Z::InstOpCode::copyBinaryToBufferWithoutClear(uint8_t *cursor, TR::InstOpCo
         case VRV_FORMAT:
         case VRX_FORMAT:
         case VSI_FORMAT:
+           // Write second byte of non contiguous opCode into last byte of the instruction
            cursor[5] = metadata[i_opCode].opcode[1];
            break;
-
-        default:
-           cursor[1] = metadata[i_opCode].opcode[1];
+        case E_FORMAT:
+        case IE_FORMAT:
+        case RRD_FORMAT:
+        case RRE_FORMAT:
+        case RRFa_FORMAT:
+        case RRFb_FORMAT:
+        case RRFc_FORMAT:
+        case RRFd_FORMAT:
+        case RRFe_FORMAT:
+        case S_FORMAT:
+        case SIL_FORMAT:
+        case SSE_FORMAT:
+            // Write second byte of 2 byte contiguous opCode into second byte of the instruction
+            cursor[1] = metadata[i_opCode].opcode[1];
+            break;
+         default:
            break;
        }
     }
