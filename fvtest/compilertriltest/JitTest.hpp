@@ -140,7 +140,7 @@ class JitTest : public TestWithPortLib
 
    JitTest()
       {
-      auto initSuccess = initializeJitWithOptions((char*)"-Xjit:acceptHugeMethods,enableBasicBlockHoisting,omitFramePointer,useILValidator,paranoidoptcheck");
+      auto initSuccess = initializeJitWithOptions((char*)"-Xjit:acceptHugeMethods,enableBasicBlockHoisting,omitFramePointer,useILValidator,paranoidoptcheck", privateOmrPortLibrary);
       if (!initSuccess)
          throw std::runtime_error("Failed to initialize jit");
       }
