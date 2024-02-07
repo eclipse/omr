@@ -407,6 +407,8 @@ OMR::X86::CPU::supports_feature_test(uint32_t feature)
          return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512BITALG() == ans;
       case OMR_FEATURE_X86_AVX512_VPOPCNTDQ:
          return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VPOPCNTDQ() == ans;
+      case OMR_FEATURE_X86_FMA:
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsFMA() == ans;
       default:
          return false;
       }
