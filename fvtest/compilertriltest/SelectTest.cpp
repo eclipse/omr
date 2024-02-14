@@ -184,7 +184,7 @@ TEST_P(Int8SelectTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int32, Int8, Int8]"
         "  (block"
         "    (ireturn"
@@ -212,7 +212,7 @@ TEST_P(Int8SelectTest, UsingConstSelector) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int8, Int8]"
         "  (block"
         "    (ireturn"
@@ -241,7 +241,7 @@ TEST_P(Int8SelectTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -278,7 +278,7 @@ TEST_P(Int16SelectTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int32, Int16, Int16]"
         "  (block"
         "    (ireturn"
@@ -306,7 +306,7 @@ TEST_P(Int16SelectTest, UsingConstSelector) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int16, Int16]"
         "  (block"
         "    (ireturn"
@@ -335,7 +335,7 @@ TEST_P(Int16SelectTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -370,7 +370,7 @@ TEST_P(Int32SelectTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -395,7 +395,7 @@ TEST_P(Int32SelectTest, UsingConstSelector) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -421,7 +421,7 @@ TEST_P(Int32SelectTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -455,7 +455,7 @@ TEST_P(Int64SelectTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int32, Int64, Int64]"
         "  (block"
         "    (lreturn"
@@ -480,7 +480,7 @@ TEST_P(Int64SelectTest, UsingConstSelector) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int64, Int64]"
         "  (block"
         "    (lreturn"
@@ -506,7 +506,7 @@ TEST_P(Int64SelectTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int32]"
         "  (block"
         "    (lreturn"
@@ -544,7 +544,7 @@ TEST_P(FloatSelectTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Float args=[Int32, Float, Float]"
         "  (block"
         "    (freturn"
@@ -573,7 +573,7 @@ TEST_P(FloatSelectTest, UsingConstSelector) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Float args=[Float, Float]"
         "  (block"
         "    (freturn"
@@ -603,7 +603,7 @@ TEST_P(FloatSelectTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Float args=[Int32]"
         "  (block"
         "    (freturn"
@@ -641,7 +641,7 @@ TEST_P(DoubleSelectTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Double args=[Int32, Double, Double]"
         "  (block"
         "    (dreturn"
@@ -670,7 +670,7 @@ TEST_P(DoubleSelectTest, UsingConstSelector) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Double args=[Double, Double]"
         "  (block"
         "    (dreturn"
@@ -700,7 +700,7 @@ TEST_P(DoubleSelectTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Double args=[Int32]"
         "  (block"
         "    (dreturn"
@@ -736,7 +736,7 @@ TEST_P(Int8SelectInt32CompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int32, Int32, Int8, Int8]"
         "  (block"
         "    (ireturn"
@@ -767,7 +767,7 @@ TEST_P(Int8SelectInt32CompareTest, UsingConstCompare) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int32, Int8, Int8]"
         "  (block"
         "    (ireturn"
@@ -799,7 +799,7 @@ TEST_P(Int8SelectInt32CompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int8 args=[Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -840,7 +840,7 @@ TEST_P(Int16SelectInt32CompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int32, Int32, Int16, Int16]"
         "  (block"
         "    (ireturn"
@@ -871,7 +871,7 @@ TEST_P(Int16SelectInt32CompareTest, UsingConstCompare) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int32, Int16, Int16]"
         "  (block"
         "    (ireturn"
@@ -903,7 +903,7 @@ TEST_P(Int16SelectInt32CompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int16 args=[Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -944,7 +944,7 @@ TEST_P(Int32SelectInt32CompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32, Int32, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -974,7 +974,7 @@ TEST_P(Int32SelectInt32CompareTest, UsingConstCompare) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1005,7 +1005,7 @@ TEST_P(Int32SelectInt32CompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1045,7 +1045,7 @@ TEST_P(Int64SelectInt32CompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int32, Int32, Int64, Int64]"
         "  (block"
         "    (lreturn"
@@ -1075,7 +1075,7 @@ TEST_P(Int64SelectInt32CompareTest, UsingConstCompare) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int32, Int64, Int64]"
         "  (block"
         "    (lreturn"
@@ -1106,7 +1106,7 @@ TEST_P(Int64SelectInt32CompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int32, Int32]"
         "  (block"
         "    (lreturn"
@@ -1148,7 +1148,7 @@ TEST_P(FloatSelectInt32CompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Float args=[Int32, Int32, Float, Float]"
         "  (block"
         "    (freturn"
@@ -1180,7 +1180,7 @@ TEST_P(FloatSelectInt32CompareTest, UsingConstCompare) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Float args=[Int32, Float, Float]"
         "  (block"
         "    (freturn"
@@ -1213,7 +1213,7 @@ TEST_P(FloatSelectInt32CompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Float args=[Int32, Int32]"
         "  (block"
         "    (freturn"
@@ -1255,7 +1255,7 @@ TEST_P(DoubleSelectInt32CompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Double args=[Int32, Int32, Double, Double]"
         "  (block"
         "    (dreturn"
@@ -1287,7 +1287,7 @@ TEST_P(DoubleSelectInt32CompareTest, UsingConstCompare) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Double args=[Int32, Double, Double]"
         "  (block"
         "    (dreturn"
@@ -1320,7 +1320,7 @@ TEST_P(DoubleSelectInt32CompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Double args=[Int32, Int32]"
         "  (block"
         "    (dreturn"
@@ -1365,7 +1365,7 @@ TEST_P(Int32SelectInt8CompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int8, Int8, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1400,7 +1400,7 @@ TEST_P(Int32SelectInt8CompareTest, UsingConstCompare) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int8, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1436,7 +1436,7 @@ TEST_P(Int32SelectInt8CompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int8, Int8]"
         "  (block"
         "    (ireturn"
@@ -1481,7 +1481,7 @@ TEST_P(Int32SelectInt16CompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int16, Int16, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1516,7 +1516,7 @@ TEST_P(Int32SelectInt16CompareTest, UsingConstCompare) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int16, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1552,7 +1552,7 @@ TEST_P(Int32SelectInt16CompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int16, Int16]"
         "  (block"
         "    (ireturn"
@@ -1592,7 +1592,7 @@ TEST_P(Int32SelectInt64CompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int64, Int64, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1622,7 +1622,7 @@ TEST_P(Int32SelectInt64CompareTest, UsingConstCompare) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int64, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1653,7 +1653,7 @@ TEST_P(Int32SelectInt64CompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int64, Int64]"
         "  (block"
         "    (ireturn"
@@ -1693,7 +1693,7 @@ TEST_P(Int32SelectFloatCompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Float, Float, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1728,7 +1728,7 @@ TEST_P(Int32SelectFloatCompareTest, UsingConstCompare) {
     }
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Float, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1759,7 +1759,7 @@ TEST_P(Int32SelectFloatCompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Float, Float]"
         "  (block"
         "    (ireturn"
@@ -1799,7 +1799,7 @@ TEST_P(Int32SelectDoubleCompareTest, UsingLoadParam) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Double, Double, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1834,7 +1834,7 @@ TEST_P(Int32SelectDoubleCompareTest, UsingConstCompare) {
     }
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Double, Int32, Int32]"
         "  (block"
         "    (ireturn"
@@ -1865,7 +1865,7 @@ TEST_P(Int32SelectDoubleCompareTest, UsingConstValues) {
     auto param = to_struct(GetParam());
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Double, Double]"
         "  (block"
         "    (ireturn"

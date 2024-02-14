@@ -128,7 +128,7 @@ class NoAbsAbsIlVerifier : public SimplifierFoldAbsNegTestIlVerifierBase
  */
 TYPED_TEST(SimplifierFoldAbsNegTest, FoldAbsAbs) {
     char inputTrees[256];
-    std::snprintf(inputTrees, sizeof(inputTrees), "(method return=%s args=[%s]    "
+    Tril::format(inputTrees, sizeof(inputTrees), "(method return=%s args=[%s]    "
                                                   " (block                        "
                                                   "  (%sreturn                    "
                                                   "   (%sabs                      "
@@ -171,7 +171,7 @@ class NoAbsNegIlVerifier : public SimplifierFoldAbsNegTestIlVerifierBase
  */
 TYPED_TEST(SimplifierFoldAbsNegTest, FoldAbsNeg) {
     char inputTrees[256];
-    std::snprintf(inputTrees, sizeof(inputTrees), "(method return=%s args=[%s]    "
+    Tril::format(inputTrees, sizeof(inputTrees), "(method return=%s args=[%s]    "
                                                   " (block                        "
                                                   "  (%sreturn                    "
                                                   "   (%sabs                      "
@@ -214,7 +214,7 @@ class NoNegNegIlVerifier : public SimplifierFoldAbsNegTestIlVerifierBase
  */
 TYPED_TEST(SimplifierFoldAbsNegTest, FoldNegNeg) {
     char inputTrees[256];
-    std::snprintf(inputTrees, sizeof(inputTrees), "(method return=%s args=[%s]    "
+    Tril::format(inputTrees, sizeof(inputTrees), "(method return=%s args=[%s]    "
                                                   " (block                        "
                                                   "  (%sreturn                    "
                                                   "   (%sneg                      "
