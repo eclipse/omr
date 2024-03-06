@@ -263,6 +263,14 @@ TR::Node * e2dSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 TR::Node * NewSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * lowerTreeSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * arrayLengthSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
+TR::Node * lcompressbitsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
+TR::Node * icompressbitsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
+TR::Node * scompressbitsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
+TR::Node * bcompressbitsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
+TR::Node * lexpandbitsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
+TR::Node * iexpandbitsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
+TR::Node * sexpandbitsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
+TR::Node * bexpandbitsSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 
 TR::Node * removeArithmeticsUnderIntegralCompare(TR::Node* node,TR::Simplifier * s);
 
