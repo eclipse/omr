@@ -325,7 +325,7 @@ void miscInstr(int32_t* instrPtr, char* mBuf, char* iBuf)
          branchExchange(instrPtr, mBuf, iBuf);
          break;
       case 5:
-         constant32(instrPtr, mBuf, iBuf);   // Enhanced DSP add/substracts
+         constant32(instrPtr, mBuf, iBuf);   // Enhanced DSP add/subtracts
          break;
       case 7:
          {
