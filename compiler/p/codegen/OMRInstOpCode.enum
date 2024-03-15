@@ -100,6 +100,7 @@
    cmpl8,            // Compare dword logical
    cmpli4,           // Compare word immediate logical
    cmpli8,           // Compare dword immediate logical
+   cmpb,             // Compare Bytes
    cmprb,            // Compare Ranged Byte
    cmpeqb,           // Compare Equal Byte
    cntlzd,           // Count leading zeros dword
@@ -746,9 +747,9 @@
 // vcipher,          // Vector AES Cipher
 // vcipherlast,      // Vector AES Cipher Last
 // vclzb,            // Vector Count Leading Zeros Byte
-// vclzd,            // Vector Count Leading Zeros Dword
+   vclzd,            // Vector Count Leading Zeros Dword
 // vclzh,            // Vector Count Leading Zeros Hword
-// vclzw,            // Vector Count Leading Zeros Word
+   vclzw,            // Vector Count Leading Zeros Word
 // vcmpbfp,          // Vector Compare Bounds Floating-Point
 // vcmpbfp_r,        // Vector Compare Bounds Floating-Point Rc=1
 // vcmpeqfp,         // Vector Compare Equal To Floating-Point

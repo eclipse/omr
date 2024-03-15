@@ -993,6 +993,17 @@
    },
 
    {
+   /* .mnemonic    = */ OMR::InstOpCode::cmpb,
+   /* .name        = */ "cmpb",
+   /* .description =    "Compare Bytes", */
+   /* .prefix      = */ 0x00000000,
+   /* .opcode      = */ 0x7C0003F8,
+   /* .format      = */ FORMAT_RA_RS_RB,
+   /* .minimumALS  = */ OMR_PROCESSOR_PPC_P6,
+   /* .properties  = */ PPCOpProp_SyncSideEffectFree,
+   },
+
+   {
    /* .mnemonic    = */ OMR::InstOpCode::cmprb,
    /* .name        = */ "cmprb",
    /* .description =    "Compare Ranged Byte", */
@@ -8774,17 +8785,17 @@
    /*                   PPCOpProp_SyncSideEffectFree, */
    /* }, */
 
-   /* { */
-   /* .mnemonic    =    OMR::InstOpCode::vclzd, */
-   /* .name        =    "vclzd", */
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::vclzd,
+   /* .name        = */ "vclzd",
    /* .description =    "Vector Count Leading Zeros Dword", */
-   /* .prefix      =    0x00000000, */
-   /* .opcode      =    0x100007C2, */
-   /* .format      =    FORMAT_UNKNOWN, */
-   /* .minimumALS  =    OMR_PROCESSOR_PPC_P8, */
-   /* .properties  =    PPCOpProp_IsVMX | */
-   /*                   PPCOpProp_SyncSideEffectFree, */
-   /* }, */
+   /* .prefix      = */ 0x00000000,
+   /* .opcode      = */ 0x100007C2,
+   /* .format      = */ FORMAT_VRT_VRB,
+   /* .minimumALS  = */ OMR_PROCESSOR_PPC_P8,
+   /* .properties  = */ PPCOpProp_IsVMX |
+                        PPCOpProp_SyncSideEffectFree,
+   },
 
    /* { */
    /* .mnemonic    =    OMR::InstOpCode::vclzh, */
@@ -8798,17 +8809,17 @@
    /*                   PPCOpProp_SyncSideEffectFree, */
    /* }, */
 
-   /* { */
-   /* .mnemonic    =    OMR::InstOpCode::vclzw, */
+   {
+   /* .mnemonic    = */ OMR::InstOpCode::vclzw,
    /* .name        =    "vclzw", */
-   /* .description =    "Vector Count Leading Zeros Word", */
-   /* .prefix      =    0x00000000, */
-   /* .opcode      =    0x10000782, */
-   /* .format      =    FORMAT_UNKNOWN, */
-   /* .minimumALS  =    OMR_PROCESSOR_PPC_P8, */
-   /* .properties  =    PPCOpProp_IsVMX | */
-   /*                   PPCOpProp_SyncSideEffectFree, */
-   /* }, */
+   /* .description = */ "Vector Count Leading Zeros Word",
+   /* .prefix      = */ 0x00000000,
+   /* .opcode      = */ 0x10000782,
+   /* .format      = */ FORMAT_VRT_VRB,
+   /* .minimumALS  = */ OMR_PROCESSOR_PPC_P8,
+   /* .properties  = */ PPCOpProp_IsVMX |
+                        PPCOpProp_SyncSideEffectFree,
+   },
 
    /* { */
    /* .mnemonic    =    OMR::InstOpCode::vcmpbfp, */
