@@ -32,8 +32,8 @@ namespace TR
 class OMR_EXTENSIBLE CompilerEnv : public OMR::CompilerEnvConnector
    {
 public:
-   CompilerEnv(TR::RawAllocator raw, const TR::PersistentAllocatorKit &persistentAllocatorKit) :
-         OMR::CompilerEnvConnector(raw, persistentAllocatorKit)
+   CompilerEnv(TR::RawAllocator raw, const TR::PersistentAllocatorKit &persistentAllocatorKit, OMRPortLibrary *omrPortLib = NULL) :
+         OMR::CompilerEnvConnector(raw, persistentAllocatorKit, omrPortLib)
       {}
    };
 

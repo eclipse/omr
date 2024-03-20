@@ -25,8 +25,9 @@
 #include <gtest/gtest.h>
 #include "ilgen/MethodBuilder.hpp"
 #include "Jit.hpp"
+#include "omrport.h"
 
-bool initializeJit();
+bool initializeJit(OMRPortLibrary *omrPortLib);
 int32_t compileMethodBuilder(TR::MethodBuilder * methodBuilder, void ** entryPoint);
 void shutdownJit();
 
