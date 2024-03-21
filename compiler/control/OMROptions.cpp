@@ -2003,7 +2003,7 @@ OMR::Options::latePostProcess(TR::Options *options, void *jitConfig, bool isAOT)
          {
          optionSet->setOptions(newOptions);
          subOpts = TR::Options::processOptionSet(subOpts, optionSet, optionSet->getOptions(), isAOT);
-         if (*subOpts != ')')
+         if (*subOpts != ')' && *subOpts != ']')
             return subOpts;
          if (!optionSet->getOptions()->jitLatePostProcess(optionSet, jitConfig))
             return options->_startOptions;
@@ -3316,7 +3316,7 @@ OMR::Options::processOptionSet(
       void *jitBase,
       bool isAOT)
    {
-   while (*options && *options != ')')
+   while (*options && *options != ')' && *options != ']')
       {
       const char *endOpt = NULL;
       const char *filterHeader = NULL;
@@ -3428,15 +3428,17 @@ OMR::Options::processOptionSet(
       //
       if (endOpt)
          {
-         if (*endOpt != '(')
+         if (*endOpt != '(' && *endOpt != '[')
             return options;
+         const char bracket = *endOpt;
+         const char matchingBracket = (bracket == '(') ? ')' : ']';
          const char *startOptString = ++endOpt;
          int32_t parenNest = 1;
          for (; *endOpt; endOpt++)
             {
-            if (*endOpt == '(')
+            if (*endOpt == bracket)
                parenNest++;
-            else if (*endOpt == ')')
+            else if (*endOpt == matchingBracket)
                {
                if (--parenNest == 0)
                   {
@@ -3530,7 +3532,7 @@ OMR::Options::processOptionSet(
          options = endOpt+1;
          continue;
          }
-      else if (*endOpt && *endOpt != ')')
+      else if (*endOpt && *endOpt != ')' && *endOpt != ']')
          {
          return options;  // Missing separator
          }
