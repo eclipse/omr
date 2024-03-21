@@ -38,6 +38,7 @@
 #include "Configuration.hpp"
 #include "RememberedSetSATB.hpp"
 #endif /* defined(OMR_GC_REALTIME) */
+#include "Heap.hpp"
 
 MM_GCExtensionsBase*
 MM_GCExtensionsBase::newInstance(MM_EnvironmentBase* env)
@@ -355,4 +356,10 @@ MM_GCExtensionsBase::usingSATBBarrier()
 	return (configuration->isSnapshotAtTheBeginningBarrierEnabled());
 #endif /* defined(OMR_GC_REALTIME) */
 	return false;
+}
+
+bool
+MM_GCExtensionsBase::isAddressWithinHeap(void *address)
+{
+	return ((uintptr_t)address >= (uintptr_t) heap->getHeapBase()) && ((uintptr_t)address < (uintptr_t)heap->getHeapTop());
 }
