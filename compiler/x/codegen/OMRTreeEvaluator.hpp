@@ -440,6 +440,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *maskStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *SIMDstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *SIMDsplatsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *broadcast(TR::Node *node, TR::Register *targetReg, TR::Register* srcReg, TR::DataType et, TR::VectorLength vl, TR::CodeGenerator *cg);
    static TR::Register *SIMDvgetelemEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *icmpsetEvaluator(TR::Node *node, TR::CodeGenerator *cg);
