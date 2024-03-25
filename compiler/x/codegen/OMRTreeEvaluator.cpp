@@ -3038,7 +3038,8 @@ TR::Register *OMR::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::C
    TR::Compilation *comp = cg->comp();
    TR::SymbolReference* SymRef = node->getSymbolReference();
 
-   if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::singlePrecisionSQRTSymbol))
+   auto symRefTab = comp->getSymRefTab();
+   if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::singlePrecisionSQRTSymbol))
       {
       return inlineSinglePrecisionSQRT(node, cg);
       }
@@ -3047,31 +3048,63 @@ TR::Register *OMR::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::C
       {
       TR::InstOpCode::Mnemonic op = TR::InstOpCode::bad;
 
-      if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicAddSymbol))
+      if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicAddSymbol))
          {
          op = node->getChild(1)->getDataType().isInt32() ? TR::InstOpCode::LADD4MemReg : TR::InstOpCode::LADD8MemReg;
          }
-      else if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicFetchAndAddSymbol))
+      else if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicFetchAndAddSymbol))
          {
-         op = node->getChild(1)->getDataType().isInt32() ? TR::InstOpCode::LXADD4MemReg : TR::InstOpCode::LXADD8MemReg;
+         auto dataType = node->getChild(1)->getDataType();
+         if (dataType.isInt8())
+            op = TR::InstOpCode::LXADD1MemReg;
+         else if (dataType.isInt16())
+            op = TR::InstOpCode::LXADD2MemReg;
+         else if (dataType.isInt32())
+            op = TR::InstOpCode::LXADD4MemReg;
+         else
+            op = TR::InstOpCode::LXADD8MemReg;
          }
-      else if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicFetchAndAdd32BitSymbol))
+      else if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicFetchAndAdd8BitSymbol))
+         {
+         op = TR::InstOpCode::LXADD1MemReg;
+         }
+      else if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicFetchAndAdd16BitSymbol))
+         {
+         op = TR::InstOpCode::LXADD2MemReg;
+         }
+      else if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicFetchAndAdd32BitSymbol))
          {
          op = TR::InstOpCode::LXADD4MemReg;
          }
-      else if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicFetchAndAdd64BitSymbol))
+      else if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicFetchAndAdd64BitSymbol))
          {
          op = TR::InstOpCode::LXADD8MemReg;
          }
-      else if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicSwapSymbol))
+      else if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicSwapSymbol))
          {
-         op = node->getChild(1)->getDataType().isInt32() ? TR::InstOpCode::XCHG4MemReg : TR::InstOpCode::XCHG8MemReg;
+         auto dataType = node->getChild(1)->getDataType();
+         if (dataType.isInt8())
+            op = TR::InstOpCode::XCHG1MemReg;
+         else if (dataType.isInt16())
+            op = TR::InstOpCode::XCHG2MemReg;
+         else if (dataType.isInt32())
+            op = TR::InstOpCode::XCHG4MemReg;
+         else
+            op = TR::InstOpCode::XCHG8MemReg;
          }
-      else if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicSwap32BitSymbol))
+      else if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicSwap8BitSymbol))
+         {
+         op = TR::InstOpCode::XCHG1MemReg;
+         }
+      else if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicSwap16BitSymbol))
+         {
+         op = TR::InstOpCode::XCHG2MemReg;
+         }
+      else if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicSwap32BitSymbol))
          {
          op = TR::InstOpCode::XCHG4MemReg;
          }
-      else if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicSwap64BitSymbol))
+      else if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicSwap64BitSymbol))
          {
          op = TR::InstOpCode::XCHG8MemReg;
          }
@@ -3080,11 +3113,11 @@ TR::Register *OMR::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::C
          {
          return inlineAtomicMemoryUpdate(node, op, cg);
          }
-      if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicCompareAndSwapReturnStatusSymbol))
+      if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicCompareAndSwapReturnStatusSymbol))
          {
          return inlineAtomicCompareAndMemoryUpdate(node, false, cg);
          }
-      if (comp->getSymRefTab()->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicCompareAndSwapReturnValueSymbol))
+      if (symRefTab->isNonHelper(SymRef, TR::SymbolReferenceTable::atomicCompareAndSwapReturnValueSymbol))
          {
          return inlineAtomicCompareAndMemoryUpdate(node, true, cg);
          }

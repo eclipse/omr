@@ -333,6 +333,8 @@ class SymbolReferenceTable
        *  The data type of \c <value> indicates the width of the operation.
        */
       atomicFetchAndAddSymbol,
+      atomicFetchAndAdd8BitSymbol,
+      atomicFetchAndAdd16BitSymbol,
       atomicFetchAndAdd32BitSymbol,
       atomicFetchAndAdd64BitSymbol,
 
@@ -357,6 +359,8 @@ class SymbolReferenceTable
        *  The data type of \c <value> indicates the width of the operation.
        */
       atomicSwapSymbol,
+      atomicSwap8BitSymbol,
+      atomicSwap16BitSymbol,
       atomicSwap32BitSymbol,
       atomicSwap64BitSymbol,
 
