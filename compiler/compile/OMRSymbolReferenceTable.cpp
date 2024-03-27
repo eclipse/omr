@@ -157,7 +157,7 @@ OMR::SymbolReferenceTable::findOrCreateContiguousArrayDataAddrFieldShadowSymRef(
    {
    if (!element(contiguousArrayDataAddrFieldSymbol))
       {
-      TR::Symbol * sym = TR::Symbol::createShadow(trHeapMemory(), TR::Address);
+      TR::Symbol * sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int64);
       sym->setContiguousArrayDataAddrFieldSymbol();
       element(contiguousArrayDataAddrFieldSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), contiguousArrayDataAddrFieldSymbol, sym);
       element(contiguousArrayDataAddrFieldSymbol)->setOffset(TR::Compiler->om.offsetOfContiguousDataAddrField());

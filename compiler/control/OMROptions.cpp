@@ -2604,6 +2604,15 @@ OMR::Options::jitPreProcess()
    _disabledOptimizations[IVTypeTransformation] = true;
    _disabledOptimizations[basicBlockHoisting] = true;
 
+#ifdef J9_PROJECT_SPECIFIC
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      // Disable opts known to be broken for off heap
+      _disabledOptimizations[escapeAnalysis] = true;
+      _disabledOptimizations[idiomRecognition] = true;
+      }
+#endif
+
    self()->setOption(TR_DisableTreePatternMatching);
    self()->setOption(TR_DisableHalfSlotSpills);
 
