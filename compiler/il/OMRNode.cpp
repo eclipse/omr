@@ -2687,6 +2687,10 @@ OMR::Node::mayModifyValue(TR::SymbolReference * symRef)
          if (symbol->isConst())
             return false;
 
+         if (symbol->isClassObject())
+            return false;
+
+         // check if both symbols refer to the same static field
          if (storeSymbol->isStatic())
             {
             if (symbol->getDataType() != storeSymbol->getDataType())
