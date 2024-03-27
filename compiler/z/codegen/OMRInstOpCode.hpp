@@ -682,8 +682,8 @@ class InstOpCode: public OMR::InstOpCode
    static Mnemonic getAddLogicalImmOpCode();
    static Mnemonic getAddImmOpCode();
    static Mnemonic getAddLogicalRegRegImmediateOpCode();
-   static Mnemonic getSubstractOpCode();
-   static Mnemonic getSubstractRegOpCode();
+   static Mnemonic getSubtractOpCode();
+   static Mnemonic getSubtractRegOpCode();
    static Mnemonic getSubtractThreeRegOpCode();
    static Mnemonic getSubtractLogicalImmOpCode();
    static Mnemonic getSubtractLogicalThreeRegOpCode();
@@ -729,8 +729,8 @@ class InstOpCode: public OMR::InstOpCode
    static Mnemonic getLoadTestRegWidenOpCode();
    static Mnemonic getAddWidenOpCode();
    static Mnemonic getAddRegWidenOpCode();
-   static Mnemonic getSubstractWidenOpCode();
-   static Mnemonic getSubStractRegWidenOpCode();
+   static Mnemonic getSubtractWidenOpCode();
+   static Mnemonic getSubtractRegWidenOpCode();
    static Mnemonic getCmpWidenOpCode();
    static Mnemonic getCmpRegWidenOpCode();
    static Mnemonic getCmpLogicalWidenOpCode();
