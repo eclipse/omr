@@ -402,6 +402,10 @@ bool TR_RedundantAsyncCheckRemoval::callDoesAnImplicitAsyncCheck(TR::Node *callN
        (symbol->getRecognizedMethod()==TR::java_lang_Math_min_I) ||
        (symbol->getRecognizedMethod()==TR::java_lang_Math_max_L) ||
        (symbol->getRecognizedMethod()==TR::java_lang_Math_min_L) ||
+       (symbol->getRecognizedMethod()==TR::java_lang_Math_max_D) ||
+       (symbol->getRecognizedMethod()==TR::java_lang_Math_min_D) ||
+       (symbol->getRecognizedMethod()==TR::java_lang_Math_max_F) ||
+       (symbol->getRecognizedMethod()==TR::java_lang_Math_min_F) ||
        (symbol->getRecognizedMethod()==TR::java_lang_Math_abs_L) ||
        (symbol->getRecognizedMethod()==TR::java_lang_Math_abs_D) ||
        (symbol->getRecognizedMethod()==TR::java_lang_Math_abs_F) ||

@@ -335,20 +335,44 @@ xmaxxminHelper(TR::Node* node, TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic c
    TR::LabelSymbol* cFlowRegionStart = generateLabelSymbol(cg);
    TR::LabelSymbol* cFlowRegionEnd = generateLabelSymbol(cg);
 
+   TR::LabelSymbol* swap = generateLabelSymbol(cg);
+   TR::LabelSymbol* equalRegion = generateLabelSymbol(cg);
+
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
    cFlowRegionStart->setStartInternalControlFlow();
 
    generateRREInstruction(cg, compareRROp, node, lhsReg, rhsReg);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, branchCond, node, cFlowRegionEnd);
-
    //Check for NaN operands for float and double
+   //Support float and double +0/-0 comparisons adhering to IEEE 754 standard
    if (node->getOpCode().isFloatingPoint())
       {
+      //Checking if operands are equal, then branching to equalRegion, otherwise fall through for NaN case handling
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, equalRegion);
+
       // If first operand is NaN, then we are done, otherwise fallthrough to move second operand as result
       generateRREInstruction(cg, node->getOpCode().isDouble() ? TR::InstOpCode::LTDBR : TR::InstOpCode::LTEBR, node, lhsReg, lhsReg);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC3, node, cFlowRegionEnd);
+      //branch to swap label, since either second operand is NaN, or entire satisfies the alternate condition code
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, swap);
+
+      //code for handling +0/-0 comparisons when operands are equal
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, equalRegion);
+      if (node->getOpCode().isMax())
+         {
+         //For Max calls, checking if first operand is +0, then we are done, otherwise fall through for swap
+         generateRXEInstruction(cg, node->getOpCode().isDouble() ? TR::InstOpCode::TCDB : TR::InstOpCode::TCEB, node, lhsReg, generateS390MemoryReference(0x800, cg), 0);  // lhsReg is +0 ?
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, cFlowRegionEnd);   // it is +0
+         }
+      else if (node->getOpCode().isMin())
+         {
+         //For Min calls, checking if first operand is not +0, then we are done, otherwise fall through for swap
+         generateRXEInstruction(cg, node->getOpCode().isDouble() ? TR::InstOpCode::TCDB : TR::InstOpCode::TCEB, node, lhsReg, generateS390MemoryReference(0x800, cg), 0);  // lhsReg is +0 ?
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, cFlowRegionEnd);   // it is not +0
+         }
       }
 
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, swap);
    //Move resulting operand to lhsReg as fallthrough for alternate Condition Code
    generateRREInstruction(cg, moveRROp, node, lhsReg, rhsReg);
 
@@ -473,15 +497,16 @@ OMR::Z::TreeEvaluator::lmaxEvaluator(TR::Node* node, TR::CodeGenerator* cg)
 TR::Register*
 OMR::Z::TreeEvaluator::fmaxEvaluator(TR::Node* node, TR::CodeGenerator* cg)
    {
-   //Passing COND_MASK10 to check CC if operand 1 is already greater than, or equal to operand 2
-   return xmaxxminHelper(node, cg, TR::InstOpCode::CEBR, TR::InstOpCode::COND_MASK10, TR::InstOpCode::LER);
+
+   //Passing COND_MASK2 to check CC if operand 1 is already greater than operand 2
+   return xmaxxminHelper(node, cg, TR::InstOpCode::CEBR, TR::InstOpCode::COND_MASK2, TR::InstOpCode::LER);
    }
 
 TR::Register*
 OMR::Z::TreeEvaluator::dmaxEvaluator(TR::Node* node, TR::CodeGenerator* cg)
    {
-   //Passing COND_MASK10 to check CC if operand 1 is already greater than, or equal to operand 2
-   return xmaxxminHelper(node, cg, TR::InstOpCode::CDBR, TR::InstOpCode::COND_MASK10, TR::InstOpCode::LDR);
+   //Passing COND_MASK2 to check CC if operand 1 is already greater than operand 2
+   return xmaxxminHelper(node, cg, TR::InstOpCode::CDBR, TR::InstOpCode::COND_MASK2, TR::InstOpCode::LDR);
    }
 
 TR::Register *
@@ -499,15 +524,15 @@ OMR::Z::TreeEvaluator::lminEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register*
 OMR::Z::TreeEvaluator::fminEvaluator(TR::Node* node, TR::CodeGenerator* cg)
    {
-   //Passing COND_MASK12 to check CC if operand 1 is already less than, or equal to operand 2
-   return xmaxxminHelper(node, cg, TR::InstOpCode::CEBR, TR::InstOpCode::COND_MASK12, TR::InstOpCode::LER);
+   //Passing COND_MASK4 to check CC if operand 1 is already less than operand 2
+   return xmaxxminHelper(node, cg, TR::InstOpCode::CEBR, TR::InstOpCode::COND_MASK4, TR::InstOpCode::LER);
    }
 
 TR::Register*
 OMR::Z::TreeEvaluator::dminEvaluator(TR::Node* node, TR::CodeGenerator* cg)
    {
-   //Passing COND_MASK12 to check CC if operand 1 is already less than, or equal to operand 2
-   return xmaxxminHelper(node, cg, TR::InstOpCode::CDBR, TR::InstOpCode::COND_MASK12, TR::InstOpCode::LDR);
+   //Passing COND_MASK4 to check CC if operand 1 is already less than operand 2
+   return xmaxxminHelper(node, cg, TR::InstOpCode::CDBR, TR::InstOpCode::COND_MASK4, TR::InstOpCode::LDR);
    }
 
 /**
