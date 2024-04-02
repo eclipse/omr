@@ -59,6 +59,8 @@ class ObjectModel
    bool mayRequireSpineChecks() { return false; }
 
    bool areValueTypesEnabled() { return false; }
+
+   bool areValueTypeInstancesCreatedWithBCNew() { return false; }
    /**
    * @brief: Returns true if flattenable value type is enabled
    */
