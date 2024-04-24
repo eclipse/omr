@@ -1060,7 +1060,7 @@ omrshsem_openSemaphore(struct OMRPortLibrary *portLibrary, intptr_t fd, char *ba
 				goto failDontUnlink;
 			}
 		} else {
-#if defined(__GNUC__) || defined(AIXPPC) || defined(OMRZTPF)
+#if (defined(__GNUC__) || defined(AIXPPC) || defined(J9ZTPF)) && !defined(J9ZOS390)
 #if defined(OSX)
 			/*Use _key for OSX*/
 			if (buf.sem_perm._key != controlinfo->ftok_key)
