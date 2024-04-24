@@ -42,7 +42,9 @@ typedef __sighandler_t sighandler_t;
 typedef void (*sighandler_t)(int sig);
 #elif defined(J9ZOS390) || defined(AIXPPC)
 typedef void (*sighandler_t)(int sig);
+#if !defined(__GNUC__)
 #define __THROW
+#endif
 #elif defined(OMR_OS_WINDOWS)
 /* Use sig_handler_t instead of sighandler_t for Windows. Define it for compatibility. */
 #define sig_handler_t sighandler_t

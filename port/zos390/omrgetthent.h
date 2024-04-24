@@ -28,7 +28,7 @@
 #define PGTHA_ACCESS_CURRENT 1
 #define PGTHA_FLAG_PROCESS_DATA 0x80
 
-#pragma pack(packed)
+#pragma pack(push, 1)
 
 typedef struct pgtha {
 	/* Start of PGTHACONTINUE group. */
@@ -177,6 +177,6 @@ typedef struct ProcessData {
 	char padding[256];
 } ProcessData;
 
-#pragma pack(reset)
+#pragma pack(pop)
 
 #endif /* !defined(OMRGETTHENT_H_) */
