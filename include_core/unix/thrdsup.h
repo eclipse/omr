@@ -89,6 +89,10 @@ int linux_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, c
 intptr_t init_thread_library(void);
 intptr_t set_pthread_priority(pthread_t handle, omrthread_prio_t j9ThreadPriority);
 intptr_t set_pthread_name(pthread_t self, pthread_t thread, const char *name);
+intptr_t sem_init_zos(j9sem_t s, int pShared, int initValue);
+intptr_t sem_destroy_zos(j9sem_t s);
+intptr_t sem_wait_zos(j9sem_t s);
+intptr_t sem_post_zos(j9sem_t s);
 
 extern struct J9ThreadLibrary default_library;
 
