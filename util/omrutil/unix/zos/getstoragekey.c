@@ -26,6 +26,7 @@
 uintptr_t
 getStorageKey(void)
 {
+	extern uintptr_t _GETPSW(); /* defined in getpsw.s */
 	/* The storage key is returned in bits 8-11 of the PSW */
 	return ((_GETPSW() >> 20) & 0xF);
 }

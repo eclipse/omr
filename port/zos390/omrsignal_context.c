@@ -22,6 +22,7 @@
 
 #include "omrport.h"
 #include "omrportpriv.h"
+#include <strings.h>
 #include <unistd.h>
 #include "omrsignal_context.h"
 #include "omrceeocb.h"
