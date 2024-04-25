@@ -26,6 +26,9 @@
  * @brief Dump formatting
  */
 
+#if defined(__open_xl__)
+#define _EXT
+#endif /* defined(__open_xl__) */
 
 #include <errno.h>
 #include <stdio.h>
@@ -37,7 +40,9 @@
 #include <time.h>
 #include <pwd.h>
 #include <ctest.h>
+#include "omrgetjobname.h"
 #include "omrport.h"
+#include "omrportpriv.h"
 #if defined(J9ZOS390) && !defined(OMR_EBCDIC)
 #include "atoe.h"
 #endif
@@ -332,6 +337,9 @@ tdump(struct OMRPortLibrary *portLibrary, char *asciiLabel, char *ebcdicLabel, u
 		unsigned char len;
 		char dsn[256];
 	} *dsnPattern31;
+
+	/* Defined in omrgenerate_ieat_dump.s */
+	extern void _TDUMP(struct ioparms_t *ioparms, struct dsn_pattern_t *dsn_pattern);
 
 	/* _TDUMP subroutine expects 31 bit addresses */
 	ioParms31 = __malloc31(sizeof(*ioParms31));

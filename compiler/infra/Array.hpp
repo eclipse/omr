@@ -227,7 +227,7 @@ protected:
       uint32_t prevSize = _nextIndex * sizeof(T);
       uint32_t newSize = size * sizeof(T);
 
-      char * tmpArray;
+      char * tmpArray = nullptr;
       if (_trMemory)
          tmpArray = (char*)_trMemory->allocateMemory(newSize, _allocationKind, TR_MemoryBase::Array);
       else if (_trPersistentMemory)

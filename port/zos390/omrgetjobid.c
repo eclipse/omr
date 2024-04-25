@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include "omrport.h"
 #include "omrgetjobid.h"
+#include "omrportpriv.h"
 
 #define JOBID_STRING_LENGTH 9
 
