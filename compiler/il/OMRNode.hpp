@@ -1510,10 +1510,6 @@ public:
    bool isLoadAndTest()          { return _flags.testAny(loadAndTest); }
    void setIsLoadAndTest(bool v) { _flags.set(loadAndTest, v); }
 
-   // Flag for TR::New
-   bool shouldAlignTLHAlloc();
-   void setAlignTLHAlloc(bool v);
-
    // Flag used by TR_PassThrough
    bool isCopyToNewVirtualRegister();
    void setCopyToNewVirtualRegister(bool v = true);
@@ -2021,10 +2017,7 @@ protected:
       // Flag used by iload, iiload, lload, ilload, aload, iaload
       loadAndTest                           = 0x00008000,
 
-      // Flag used by TR::New when the codegen supports
-      // alignment on the TLH when allocating the object
-      //
-      alignTLHAlloc                         = 0x00002000,
+      // Available                          = 0x00002000,  // AVAILABLE FOR USE
 
       // Flag used by TR_PassThrough
       copyToNewVirtualRegister              = 0x00001000,
