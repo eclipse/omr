@@ -24,6 +24,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <cassert>
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/StackMemoryRegion.hpp"
@@ -256,7 +257,7 @@ public:
    setAliases_impl(TR::SparseBitVector &aliasesToModify, bool value, bool isDirectCall, bool includeGCSafePoint)
       {
       TR::Compilation *comp = TR::comp();
-      TR_ASSERT_FATAL(_AliasSetInterface == UseDefAliasSet || _AliasSetInterface ==  UseOnlyAliasSet, "failed: can only call setAliases_impl for UseOnly or useDef presently");
+      static_assert(_AliasSetInterface == UseDefAliasSet || _AliasSetInterface ==  UseOnlyAliasSet, "failed: can only call setAliases_impl for UseOnly or useDef presently");
 
          {
          TR::SparseBitVector::Cursor aliasCursor(aliasesToModify);
@@ -274,7 +275,7 @@ public:
       {
       TR::Compilation *comp = TR::comp();
       LexicalTimer t("removeAllAliases", comp->phaseTimer());
-      TR_ASSERT_FATAL(_AliasSetInterface == UseDefAliasSet || _AliasSetInterface ==  UseOnlyAliasSet, "failed: can only call removeAllAliases for UseOnly or useDef presently");
+      static_assert(_AliasSetInterface == UseDefAliasSet || _AliasSetInterface ==  UseOnlyAliasSet, "failed: can only call removeAllAliases for UseOnly or useDef presently");
 
       }
 private:
@@ -359,7 +360,7 @@ void TR_AliasSetInterface<_AliasSetInterface>::setAlias_impl(TR::SymbolReference
    if (symRef2 == NULL)
       return;
 
-   TR_ASSERT_FATAL(_AliasSetInterface == UseDefAliasSet || _AliasSetInterface ==  UseOnlyAliasSet, "failed: can only call setAlias_impl for UseOnly or useDef presently");
+   static_assert(_AliasSetInterface == UseDefAliasSet || _AliasSetInterface ==  UseOnlyAliasSet, "failed: can only call setAlias_impl for UseOnly or useDef presently");
 
       {
       if (_AliasSetInterface == UseDefAliasSet)
