@@ -8340,19 +8340,9 @@ bool TR_LoopVersioner::depsForLoopEntryPrep(
 
             TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node->getFirstChild(), comp()->getSymRefTab()->findOrCreateVftSymbolRef());
             //TR::Node *componentTypeLoad = TR::Node::create(TR::aloadi, 1, vftLoad, comp()->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef());
-            TR::Node *classFlag = NULL;
-            if (comp()->target().is32Bit())
-               {
-               classFlag = TR::Node::createWithSymRef(TR::iloadi, 1, 1, vftLoad, comp()->getSymRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
-               }
-            else
-               {
-               classFlag = TR::Node::createWithSymRef(TR::lloadi, 1, 1, vftLoad, comp()->getSymRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
-               classFlag = TR::Node::create(TR::l2i, 1, classFlag);
-               }
-            TR::Node *andConstNode = TR::Node::create(classFlag, TR::iconst, 0, TR::Compiler->cls.flagValueForArrayCheck(comp()));
-            TR::Node * andNode   = TR::Node::create(TR::iand, 2, classFlag, andConstNode);
-            TR::Node *cmp = TR::Node::createif(TR::ificmpne, andNode, andConstNode, _exitGotoTarget);
+            TR::Node *classFlag = comp()->fej9()->testIsClassArrayType(vftLoad);
+            TR::Node *zeroNode = TR::Node::iconst(classFlag, 0);
+            TR::Node *cmp = TR::Node::createif(TR::ificmpeq, classFlag, zeroNode, _exitGotoTarget);
             if (addLoopEntryPrepDep(LoopEntryPrep::TEST, cmp, deps, visited) == NULL)
                {
                dumpOptDetailsFailedToCreateTest("array type", node->getFirstChild());
