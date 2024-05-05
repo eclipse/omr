@@ -462,6 +462,33 @@ void TR::DebugCounterAggregation::accumulate()
       }
    }
 
+
+int64_t TR::DebugCounterAggregation::getCount()
+   {
+   int64_t count = 0;
+   ListIterator<CounterDelta> it(_counterDeltas);
+
+   for (CounterDelta *counterDelta = it.getFirst(); counterDelta; counterDelta = it.getNext())
+      {
+      count += counterDelta->counter->getCount();
+      }
+
+   return count;
+   }
+
+void TR::DebugCounterAggregation::printCounters()
+   {
+   ListIterator<CounterDelta> it(_counterDeltas);
+
+   for (CounterDelta *counterDelta = it.getFirst(); counterDelta; counterDelta = it.getNext())
+      {
+      TR::DebugCounter *counter = counterDelta->counter;
+      int64_t count = counter->getCount();
+      if (count)
+         TR_VerboseLog::writeLine(TR_Vlog_PERF, "RSS counter count=%d %s", count, counter->getName());
+      }
+   }
+
 TR::DebugCounter *TR::DebugCounterGroup::findCounter(const char *nameChars, int32_t nameLength)
    {
    if (nameChars == NULL)

@@ -219,7 +219,6 @@ class DebugCounter : public DebugCounterBase
       _totalCount = 0;
       _bumpCountBase = _bumpCount;
       }
-
    };
 
 // It's common for multiple related counter bumps to be adjacent to each other.
@@ -265,6 +264,8 @@ public:
    TR::SymbolReference *getBumpCountSymRef(TR::Compilation *comp);
 
    void accumulate();
+   int64_t getCount();
+   void printCounters();
    };
 
 class DebugCounterGroup

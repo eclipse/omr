@@ -421,6 +421,13 @@ OMR::CodeCache::initialize(TR::CodeCacheManager *manager,
    *((TR::CodeCache **)(_segment->segmentBase())) = self();
    omrthread_jit_write_protect_enable();
 
+   if (OMR::RSSReport::instance())
+      {
+      // TODO: specify page size for the region (vs. the default 4K)
+      _coldRSSRegion = OMR::RSSRegion("cold cache", _coldCodeAlloc, 0, OMR::RSSRegion::highToLow);
+      OMR::RSSReport::instance()->addRegion(&_coldRSSRegion);
+      }
+
    return true;
    }
 
@@ -1553,6 +1560,7 @@ OMR::CodeCache::allocateCodeMemory(size_t warmCodeSize,
    uint8_t * cacheHeapAlloc;
    bool warmIsFreeBlock = false;
    bool coldIsFreeBlock = false;
+   uint8_t *oldColdAlloc = _coldCodeAlloc;
 
    size_t warmSize = warmCodeSize;
    size_t coldSize = coldCodeSize;
@@ -1678,6 +1686,38 @@ OMR::CodeCache::allocateCodeMemory(size_t warmCodeSize,
       *coldCode = coldCodeAddress;
    else
       *coldCode = warmCodeAddress;
+
+   if (OMR::RSSReport::instance() &&
+       !coldIsFreeBlock &&
+       !needsToBeContiguous)
+      {
+      _coldRSSRegion._size = _coldRSSRegion._start - _coldCodeAlloc;
+
+      int32_t padding = static_cast<int32_t>(oldColdAlloc - coldCodeAddress - coldCodeSize);
+      TR_ASSERT_FATAL(padding >= 0, "Cold code padding should be >= 0");
+
+      if (padding > 0)
+         {
+         TR_PersistentList<TR::DebugCounterAggregation> emptyCountersList;
+         OMR::RSSItem *rssItem = new (TR::Compiler->persistentMemory()) OMR::RSSItem(OMR::RSSItem::alignment,
+                                                                                     oldColdAlloc - padding, padding,
+                                                                                     emptyCountersList);
+         _coldRSSRegion.addRSSItem(rssItem, self()->getReservingCompThreadID());
+         }
+
+      int32_t header = static_cast<uint32_t>(coldCodeAddress - _coldCodeAlloc);
+      TR_ASSERT_FATAL(header >= 0, "Cold code header should be >= 0");
+
+      if (header > 0)
+         {
+         TR_PersistentList<TR::DebugCounterAggregation> emptyCountersList;
+         OMR::RSSItem *rssItem = new (TR::Compiler->persistentMemory()) OMR::RSSItem(OMR::RSSItem::header,
+                                                                                     coldCodeAddress - header, header,
+                                                                                     emptyCountersList);
+         _coldRSSRegion.addRSSItem(rssItem, self()->getReservingCompThreadID());
+         }
+      }
+
    return warmCodeAddress;
    }
 

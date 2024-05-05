@@ -384,6 +384,7 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    void doRegisterAssignment(TR_RegisterKinds kindsToAssign);
    void doBinaryEncoding();
+   void addItemsToRSSReport(uint8_t *oldColdCode, uint8_t *coldCode);
 
    void doBackwardsRegisterAssignment(TR_RegisterKinds kindsToAssign, TR::Instruction *startInstruction, TR::Instruction *appendInstruction = NULL);
 

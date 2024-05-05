@@ -30,6 +30,7 @@
 #include "runtime/MethodExceptionData.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/CodeCacheTypes.hpp"
+#include "runtime/OMRRSSReport.hpp"
 #include "env/RawAllocator.hpp"
 #include "codegen/StaticRelocation.hpp"
 #include "codegen/ELFRelocationResolver.hpp"
