@@ -423,7 +423,7 @@ OMR::CodeCache::initialize(TR::CodeCacheManager *manager,
 
    if (OMR::RSSReport::instance())
       {
-      // TODO: specify page size for the region (vs. the default 4K)
+      // Down-stream project should set page size
       _coldRSSRegion = OMR::RSSRegion("cold cache", _coldCodeAlloc, 0, OMR::RSSRegion::highToLow);
       OMR::RSSReport::instance()->addRegion(&_coldRSSRegion);
       }

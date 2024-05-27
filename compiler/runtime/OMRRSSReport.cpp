@@ -48,6 +48,7 @@ OMR::RSSRegion::addRSSItem(OMR::RSSItem *item, int32_t threadId, const char* met
    TR_PersistentList<TR::DebugCounterAggregation> counters = item->_counters;
 
    TR_ASSERT_FATAL(address, "Address should not be null");
+   TR_ASSERT_FATAL(_pageSize >=0, "Page size should be set");
 
    size_t addressPage = (uintptr_t)address / _pageSize;
    size_t startPage = (uintptr_t)_start / _pageSize;
@@ -169,6 +170,8 @@ OMR::RSSReport::countResidentPages(int fd, OMR::RSSRegion *rssRegion, char *page
    uint8_t *end = start + size;
    size_t  pageCount = 0;
    size_t  pageSize = rssRegion->_pageSize;
+
+   TR_ASSERT_FATAL(pageSize >=0, "Page size should be set");
 
    for (uint8_t *addr = start; addr < end; addr += pageSize)
       {
@@ -326,6 +329,9 @@ OMR::RSSReport::printRegions()
       uint8_t *regionStart = rssRegion->_start;
       size_t regionSize = rssRegion->_size;
       size_t pageSize = rssRegion->_pageSize;
+
+      TR_ASSERT_FATAL(pageSize >=0, "Page size should be set");
+
       uint8_t *regionEnd = regionStart - regionSize;
       uint32_t totalPages = static_cast<uint32_t>((regionSize + pageSize - 1) / pageSize) ;
       size_t rssPages = countResidentPages(fd, rssRegion, pagesInfo);

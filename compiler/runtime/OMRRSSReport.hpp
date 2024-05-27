@@ -94,9 +94,16 @@ public:
       };
 
    RSSRegion(const char *name = NULL, uint8_t *start = 0, uint32_t size = 0,
-             Grows grows = lowToHigh, size_t pageSize = 4*1024*1024) :
+             Grows grows = lowToHigh, size_t pageSize = 0) :
              _name(name), _start(start), _size(size), _grows(grows), _pageSize(pageSize),
              _pageMap(TR::Compiler->persistentMemory()) { }
+
+   /**
+    * \brief
+    *  Sets page size
+    */
+   void setPageSize(size_t pageSize) { _pageSize = pageSize; }
+
    /**
     * \brief
     *  Returns region's start
@@ -142,6 +149,8 @@ public:
     */
    TR_PersistentList<RSSItem> getRSSItemList(uint8_t *address)
          {
+         TR_ASSERT_FATAL(_pageSize >=0, "Page size should be set");
+
          size_t addressPage = (uintptr_t)address / _pageSize;
          size_t startPage = (uintptr_t)_start / _pageSize;
          int32_t offset = static_cast<uint32_t>((_grows == lowToHigh) ?

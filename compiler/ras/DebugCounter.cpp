@@ -35,6 +35,7 @@
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
 #include "env/StackMemoryRegion.hpp"
+#include "env/VerboseLog.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/Node.hpp"
@@ -485,7 +486,7 @@ void TR::DebugCounterAggregation::printCounters()
       TR::DebugCounter *counter = counterDelta->counter;
       int64_t count = counter->getCount();
       if (count)
-         TR_VerboseLog::writeLine(TR_Vlog_PERF, "RSS counter count=%d %s", count, counter->getName());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "RSS counter count=%d %s", count, counter->getName());
       }
    }
 
