@@ -18,9 +18,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-
-#include "runtime/CodeCacheManager.hpp"
-#include "runtime/CodeCache.hpp"
+#include "runtime/OMRRSSReport.hpp"
 
 OMR::RSSReport *OMR::RSSReport::_instance = NULL;
 
@@ -45,7 +43,7 @@ OMR::RSSRegion::addRSSItem(OMR::RSSItem *item, int32_t threadId, const char* met
 #endif
 
    uint8_t *address = item->_addr;
-   TR_PersistentList<TR::DebugCounterAggregation> counters = item->_counters;
+   TR_PersistentList<TR::DebugCounterAggregation> *counters = item->_counters;
 
    TR_ASSERT_FATAL(address, "Address should not be null");
    TR_ASSERT_FATAL(_pageSize >=0, "Page size should be set");
@@ -61,15 +59,19 @@ OMR::RSSRegion::addRSSItem(OMR::RSSItem *item, int32_t threadId, const char* met
    // split across pages if necessary
    size_t tillPageEnd = _pageSize - ((uintptr_t)address % _pageSize);
 
-   OMR::RSSItem *newItem = item;
-
-   while (newItem->_size > tillPageEnd)
+   while (item->_size > tillPageEnd)
       {
-      size_t newSize = newItem->_size - tillPageEnd;
-      newItem->_size = tillPageEnd;
-      address += newItem->_size;
+      // find how much of the previously inserted item does not fit into the page
+      size_t remainingSize = item->_size - tillPageEnd;
+      
+      // update the address of the previously inserted item
+      item->_size = tillPageEnd;
 
-      newItem = new (TR::Compiler->persistentMemory()) OMR::RSSItem(item->_type, address, newSize, counters);
+      // calculate new address (always beginning of the next page)
+      address += tillPageEnd;
+
+      // insert a new item with the remaining size into the next page (with shallow counters copy)
+      item = new (TR::Compiler->persistentMemory()) OMR::RSSItem(item->_type, address, remainingSize, counters);
       offset = (_grows == lowToHigh) ? ++offset : --offset;
 
       TR_ASSERT_FATAL(offset >= 0, "Got negative offset %d for addr=%p size=%zu type=%s\n", offset,
@@ -77,12 +79,13 @@ OMR::RSSRegion::addRSSItem(OMR::RSSItem *item, int32_t threadId, const char* met
 
 #ifdef DEBUG_RSS_REPORT
       TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "RSS adding overflow item addr=%p size=%zu type=%s thread=%d method=%s",
-                                     newItem->_addr, newItem->_size,
-                                     OMR::RSSItem::itemNames[newItem->_type], threadId,
+                                     item->_addr, item->_size,
+                                     OMR::RSSItem::itemNames[item->_type], threadId,
                                      methodName ? methodName : "no method");
 #endif
-      addToListSorted(&_pageMap[offset], newItem);
-       tillPageEnd = _pageSize;
+
+      addToListSorted(&_pageMap[offset], item);
+      tillPageEnd = _pageSize;
       }
    }
 
@@ -227,17 +230,21 @@ OMR::RSSReport::countResidentPages(int fd, OMR::RSSRegion *rssRegion, char *page
          // print RSS items
          for (OMR::RSSItem *item = it.getFirst(); item; item = it.getNext())
             {
-            ListIterator<TR::DebugCounterAggregation> aggrIt(&item->_counters);
             uint64_t itemDebugCount = 0;
 
-            // print debug counters
-            for (TR::DebugCounterAggregation *aggr = aggrIt.getFirst(); aggr; aggr = aggrIt.getNext())
+            if (item->_counters)
                {
-               uint64_t count = aggr->getCount();
+               ListIterator<TR::DebugCounterAggregation> aggrIt(item->_counters);
 
-               itemDebugCount += count;
-               pageDebugCount += count;
-               if (count > 0) aggr->printCounters();
+               // print debug counters
+               for (TR::DebugCounterAggregation *aggr = aggrIt.getFirst(); aggr; aggr = aggrIt.getNext())
+                  {
+                  uint64_t count = aggr->getCount();
+
+                  itemDebugCount += count;
+                  pageDebugCount += count;
+                  if (count > 0) aggr->printCounters();
+                  }
                }
 
             int32_t gap = item->_addr - prevEnd;
@@ -247,7 +254,7 @@ OMR::RSSReport::countResidentPages(int fd, OMR::RSSRegion *rssRegion, char *page
 
             if (gap != 0)
                {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "RSS: gap at addr=%p size=%zu in region %s", prevEnd, gap, rssRegion->_name);
+               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "RSS: gap at addr=%p size=%zu in %s region", prevEnd, gap, rssRegion->_name);
                }
 
             totalItemSize += item->_size + gap;
@@ -299,7 +306,6 @@ OMR::RSSReport::printRegions()
    {
    size_t totalRSSKb = 0;
    int32_t regionNum = 0;
-   TR::CodeCache *codeCache = TR::CodeCacheManager::instance()->getFirstCodeCache();
    char rssLine[MAX_RSS_LINE];
 
 #ifdef DEBUG_RSS_REPORT

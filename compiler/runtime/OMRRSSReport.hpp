@@ -64,15 +64,14 @@ class RSSItem
 
    static const char *itemNames[];
 
-   RSSItem() : _type(unknown), _addr(NULL), _size(0) {}
-   RSSItem(Type type, uint8_t *addr, size_t size, TR_PersistentList<TR::DebugCounterAggregation> counters,
-              const char* methodSignature = NULL) : _type(type), _addr(addr), _size(size), _counters(counters) {}
-
+   RSSItem() : _type(unknown), _addr(NULL), _size(0), _counters(NULL) {}
+   RSSItem(Type type, uint8_t *addr, size_t size, TR_PersistentList<TR::DebugCounterAggregation> *counters)
+           : _type(type), _addr(addr), _size(size), _counters(counters){}
    private:
    enum Type _type;
    uint8_t *_addr;
    size_t _size;
-   TR_PersistentList<TR::DebugCounterAggregation> _counters;
+   TR_PersistentList<TR::DebugCounterAggregation> *_counters;
    friend class RSSRegion;
    friend class RSSReport;
    };

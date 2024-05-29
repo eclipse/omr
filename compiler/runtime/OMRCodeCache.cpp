@@ -1698,10 +1698,9 @@ OMR::CodeCache::allocateCodeMemory(size_t warmCodeSize,
 
       if (padding > 0)
          {
-         TR_PersistentList<TR::DebugCounterAggregation> emptyCountersList;
          OMR::RSSItem *rssItem = new (TR::Compiler->persistentMemory()) OMR::RSSItem(OMR::RSSItem::alignment,
                                                                                      oldColdAlloc - padding, padding,
-                                                                                     emptyCountersList);
+                                                                                     NULL /* counters */);
          _coldRSSRegion.addRSSItem(rssItem, self()->getReservingCompThreadID());
          }
 
@@ -1710,10 +1709,9 @@ OMR::CodeCache::allocateCodeMemory(size_t warmCodeSize,
 
       if (header > 0)
          {
-         TR_PersistentList<TR::DebugCounterAggregation> emptyCountersList;
          OMR::RSSItem *rssItem = new (TR::Compiler->persistentMemory()) OMR::RSSItem(OMR::RSSItem::header,
                                                                                      coldCodeAddress - header, header,
-                                                                                     emptyCountersList);
+                                                                                     NULL /* counters */);
          _coldRSSRegion.addRSSItem(rssItem, self()->getReservingCompThreadID());
          }
       }
