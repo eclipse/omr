@@ -97,7 +97,7 @@ TR::Register *TR_ScratchRegisterManager::findOrCreateScratchRegister(TR_Register
 
    if (_cursor >= _capacity)
       {
-      traceMsg(_cg->comp(), "ERROR: cannot allocate any more scratch registers\n");
+      TR_ASSERT_FATAL(false, "ERROR: cannot allocate any more scratch registers");
       return NULL;
       }
 

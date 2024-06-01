@@ -114,6 +114,7 @@ class SymbolReferenceTable
       componentClassAsPrimitiveSymbol,
       isArraySymbol,
       isClassAndDepthFlagsSymbol,
+      isClassDepthAndFlagsSymbol = isClassAndDepthFlagsSymbol,
       initializeStatusFromClassSymbol,
       isClassFlagsSymbol,
       vftSymbol,
@@ -773,6 +774,7 @@ class SymbolReferenceTable
    TR::SymbolReference * findDescriptionWordFromPtrSymbolRef();
    TR::SymbolReference * findClassFlagsSymbolRef();
    TR::SymbolReference * findClassAndDepthFlagsSymbolRef();
+   TR::SymbolReference * findClassDepthAndFlagsSymbolRef();
    TR::SymbolReference * findArrayComponentTypeSymbolRef();
    TR::SymbolReference * findClassIsArraySymbolRef();
    TR::SymbolReference * findHeaderFlagsSymbolRef() { return element(headerFlagsSymbol); }

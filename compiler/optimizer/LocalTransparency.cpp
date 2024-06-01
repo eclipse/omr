@@ -633,6 +633,18 @@ void TR_LocalTransparency::updateUsesAndDefs(TR::Node *node, ContainerType *glob
                *globallySeenDefinedSymbolReferences |= *tempContainer;
                tempContainer->reset(symRefNum);
                *seenDefinedSymbolReferences |= *tempContainer;
+
+               // If this is a volatile store, it should kill any store node that has appeared
+               // earlier in the block. Otherwise, the store node could survive the block
+               // in local transparency but will be killed in _downwardExposedAnalysisInfo
+               // when the volatile store is processed in local anticipatability, which causes
+               // inconsistency between local transparency and local anticipatability.
+               // This matches how a call node is processed earlier.
+               if (node->mightHaveVolatileSymbolReference())
+                  {
+                  *tempContainer &= *seenStoredSymRefs;
+                  *symRefsDefinedAfterStored |= *tempContainer;
+                  }
                }
 
             seenStoredSymRefs->set(symRefNum);

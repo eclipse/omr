@@ -103,7 +103,6 @@ class DeadTreesElimination : public TR::Optimization
 
    int32_t process(TR::TreeTop *, TR::TreeTop *);
 
-   List<OMR::TreeInfo> _targetTrees;
    bool _cannotBeEliminated;
    bool _delayedRegStores;
    };

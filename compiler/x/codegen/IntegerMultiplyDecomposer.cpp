@@ -98,21 +98,21 @@ TR::Register *TR_X86IntegerMultiplyDecomposer::decomposeIntegerMultiplier(int32_
          const integerMultiplyComposition& composition = _integerMultiplySolutions[decompositionIndex];
          if (composition._subsequentShiftTooExpensive == false)
             {
-            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTELCORE2) == cg()->getX86ProcessorInfo().isIntelCore2(), "isIntelCore2 failed\n");
-            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTELNEHALEM) == cg()->getX86ProcessorInfo().isIntelNehalem(), "isIntelNehalem failed\n");
-            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTELWESTMERE) == cg()->getX86ProcessorInfo().isIntelWestmere(), "isIntelWestmere failed\n");
-            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTELSANDYBRIDGE) == cg()->getX86ProcessorInfo().isIntelSandyBridge(), "isIntelSandyBridge failed\n");
-            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H) == cg()->getX86ProcessorInfo().isAMD15h(), "isAMD15h failed\n");
-            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_AMDOPTERON) == cg()->getX86ProcessorInfo().isAMDOpteron(), "isAMDOpteron failed\n");
+            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_CORE2) == cg()->getX86ProcessorInfo().isIntelCore2(), "isIntelCore2 failed\n");
+            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_NEHALEM) == cg()->getX86ProcessorInfo().isIntelNehalem(), "isIntelNehalem failed\n");
+            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_WESTMERE) == cg()->getX86ProcessorInfo().isIntelWestmere(), "isIntelWestmere failed\n");
+            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_SANDYBRIDGE) == cg()->getX86ProcessorInfo().isIntelSandyBridge(), "isIntelSandyBridge failed\n");
+            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_AMD_FAMILY15H) == cg()->getX86ProcessorInfo().isAMD15h(), "isAMD15h failed\n");
+            TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_AMD_OPTERON) == cg()->getX86ProcessorInfo().isAMDOpteron(), "isAMDOpteron failed\n");
 
             target = generateDecompositionInstructions(decompositionIndex, tempRegArraySize, tempRegArray);
             if (shiftAmount < 3 &&
-               !comp->target().cpu.is(OMR_PROCESSOR_X86_INTELCORE2) &&
-               !comp->target().cpu.is(OMR_PROCESSOR_X86_INTELNEHALEM) &&
-               !comp->target().cpu.is(OMR_PROCESSOR_X86_INTELWESTMERE) &&
-               !comp->target().cpu.is(OMR_PROCESSOR_X86_INTELSANDYBRIDGE) &&
-               !comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H) &&
-               !comp->target().cpu.is(OMR_PROCESSOR_X86_AMDOPTERON)) // TODO:: P3 should go straight to else and use shift always
+               !comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_CORE2) &&
+               !comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_NEHALEM) &&
+               !comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_WESTMERE) &&
+               !comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_SANDYBRIDGE) &&
+               !comp->target().cpu.is(OMR_PROCESSOR_X86_AMD_FAMILY15H) &&
+               !comp->target().cpu.is(OMR_PROCESSOR_X86_AMD_OPTERON)) // TODO:: P3 should go straight to else and use shift always
                {
                for (; shiftAmount > 0; --shiftAmount)
                   {

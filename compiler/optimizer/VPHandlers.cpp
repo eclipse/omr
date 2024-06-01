@@ -1521,7 +1521,7 @@ bool simplifyJ9ClassFlags(OMR::ValuePropagation *vp, TR::Node *node, bool isLong
    TR::VPConstraint *base = vp->getConstraint(node->getFirstChild(), isGlobal);
    TR::SymbolReference *symRef = node->getSymbolReference();
 
-   if (symRef == vp->comp()->getSymRefTab()->findClassAndDepthFlagsSymbolRef() &&
+   if (symRef == vp->comp()->getSymRefTab()->findClassDepthAndFlagsSymbolRef() &&
          base &&
          base->isJ9ClassObject() == TR_yes &&
          base->getClassType() &&
@@ -7647,7 +7647,7 @@ TR::Node *constrainIand(OMR::ValuePropagation *vp, TR::Node *node)
                firstChild = firstChild->getChild(0);
 
             if ((firstChild->getOpCodeValue() == TR::iloadi || firstChild->getOpCodeValue() == TR::lloadi) &&
-                (firstChild->getSymbolReference() == vp->comp()->getSymRefTab()->findClassAndDepthFlagsSymbolRef()) &&
+                (firstChild->getSymbolReference() == vp->comp()->getSymRefTab()->findClassDepthAndFlagsSymbolRef()) &&
                 (rhs->getLowInt() == TR::Compiler->cls.flagValueForArrayCheck(vp->comp())))
                {
                if (vp->trace())

@@ -284,7 +284,7 @@ TR::Register *OMR::X86::TreeEvaluator::floatingPointStoreEvaluator(TR::Node *nod
             TR::Register *floatConstReg = cg->allocateRegister(TR_GPR);
             if (valueChild->getLongInt() == 0)
                {
-               generateRegRegInstruction(TR::InstOpCode::XOR8RegReg, node, floatConstReg, floatConstReg, cg);
+               generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, floatConstReg, floatConstReg, cg);
                }
             else
                {

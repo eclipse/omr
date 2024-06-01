@@ -26,5 +26,6 @@
 uintptr_t
 omrthread_get_ras_tid(void)
 {
-	return (uintptr_t)(*(uint32_t *)pthread_self().__);
+	pthread_t id = pthread_self();
+	return (uintptr_t)*(unsigned long long *)&id;
 }

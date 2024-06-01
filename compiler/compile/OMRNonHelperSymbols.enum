@@ -50,6 +50,7 @@
    componentClassSymbol,
    isArraySymbol,
    isClassAndDepthFlagsSymbol,
+   isClassDepthAndFlagsSymbol = isClassAndDepthFlagsSymbol,
    isClassFlagsSymbol,
    vftSymbol,
    currentThreadSymbol,

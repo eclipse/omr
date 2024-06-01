@@ -2151,7 +2151,7 @@ TR::Register *OMR::X86::TreeEvaluator::signedIntegerDivOrRemAnalyser(TR::Node *n
          // MIN_INT or MIN_LONG divisor
          //
          TR::Register *quotientRegister = cg->allocateRegister();
-         generateRegRegInstruction(TR::InstOpCode::XORRegReg(nodeIs64Bit), node, quotientRegister, quotientRegister, cg);
+         generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, quotientRegister, quotientRegister, cg);
 
          if (nodeIs64Bit)
             {
@@ -2387,7 +2387,7 @@ TR::Register *OMR::X86::TreeEvaluator::integerDivOrRemEvaluator(TR::Node *node, 
       //
       if (!nodeIs64Bit && node->isUnsigned())
          {
-         generateRegRegInstruction(TR::InstOpCode::XORRegReg(nodeIs64Bit), node, edxRegister, edxRegister, edxDeps, cg);
+         generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, edxRegister, edxRegister, edxDeps, cg);
 
          if (divisorRegister)
             {

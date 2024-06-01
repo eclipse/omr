@@ -953,7 +953,7 @@ TraceException=Trc_PRT_filestream_open_invalidPath Group=omrfilestream Overhead=
 TraceEntry=Trc_PRT_filestream_close_Entry Group=omrfilestream Overhead=1 Level=5 NoEnv Template="omrfilestream_close fileStream = %p"
 TraceExit=Trc_PRT_filestream_close_Exit Group=j9filestrean Overhead=1 Level=5 NoEnv Template="omrfilestream_close returns code = %d"
 TraceException=Trc_PRT_filestream_close_invalidFileStream Group=omrfilestream Overhead=1 Level=5 NoEnv Template="omrfilestream_close Invalid fileStream. fileStream = %p"
-TraceException=Trc_PRT_filestream_close_failedToClose Group=omrfilestream Overhead=1 Level=5 NoEnv Template="omrfilestream_close Failed to close fileStream. fileStream = %p errorCode = %d"
+TraceException=Trc_PRT_filestream_close_failedToClose Obsolete Group=omrfilestream Overhead=1 Level=5 NoEnv Template="omrfilestream_close Failed to close fileStream. fileStream = %p errorCode = %d"
 
 TraceEntry=Trc_PRT_filestream_sync_Entry Group=omrfilestream Overhead=1 Level=5 NoEnv Template="omrfilestream_sync fileStream = %p"
 TraceExit=Trc_PRT_filestream_sync_Exit Group=j9filestrean Overhead=1 Level=5 NoEnv Template="omrfilestream_sync returns code = %d"

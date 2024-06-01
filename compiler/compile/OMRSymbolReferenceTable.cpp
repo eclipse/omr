@@ -157,7 +157,7 @@ OMR::SymbolReferenceTable::findOrCreateContiguousArrayDataAddrFieldShadowSymRef(
    {
    if (!element(contiguousArrayDataAddrFieldSymbol))
       {
-      TR::Symbol * sym = TR::Symbol::createShadow(trHeapMemory(), TR::Address);
+      TR::Symbol * sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int64);
       sym->setContiguousArrayDataAddrFieldSymbol();
       element(contiguousArrayDataAddrFieldSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), contiguousArrayDataAddrFieldSymbol, sym);
       element(contiguousArrayDataAddrFieldSymbol)->setOffset(TR::Compiler->om.offsetOfContiguousDataAddrField());
@@ -310,6 +310,12 @@ OMR::SymbolReferenceTable::findClassIsArraySymbolRef()
    return element(isArraySymbol);
    }
 
+
+TR::SymbolReference *
+OMR::SymbolReferenceTable::findClassDepthAndFlagsSymbolRef()
+   {
+   return element(isClassDepthAndFlagsSymbol);
+   }
 
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findClassAndDepthFlagsSymbolRef()
@@ -2142,7 +2148,7 @@ const char *OMR::SymbolReferenceTable::_commonNonHelperSymbolNames[] =
    "<addressOfClassOfMethod>",
    "<componentClass>",
    "<isArray>",
-   "<isClassAndDepthFlags>",
+   "<isClassDepthAndFlags>",
    "<isClassFlags>",
    "<vft>",
    "<currentThread>",

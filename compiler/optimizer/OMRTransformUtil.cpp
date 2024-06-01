@@ -436,3 +436,96 @@ OMR::TransformUtil::createConditionalAlternatePath(TR::Compilation* comp,
    cfg->addEdge(TR::CFGEdge::createEdge(ifBlock, thenBlock, comp->trMemory()));
    cfg->copyExceptionSuccessors(elseBlock, thenBlock);
    }
+
+#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
+TR::Node *
+OMR::TransformUtil::generateDataAddrLoadTrees(TR::Compilation *comp, TR::Node *arrayObject)
+   {
+   TR_ASSERT_FATAL_WITH_NODE(arrayObject,
+      TR::Compiler->om.isOffHeapAllocationEnabled(),
+      "This helper shouldn't be called if off heap allocation is disabled.\n");
+
+   TR::SymbolReference *dataAddrFieldOffset = comp->getSymRefTab()->findOrCreateContiguousArrayDataAddrFieldShadowSymRef();
+   TR::Node *dataAddrField = TR::Node::createWithSymRef(TR::aloadi, 1, arrayObject, 0, dataAddrFieldOffset);
+   dataAddrField->setIsInternalPointer(true);
+
+   return dataAddrField;
+   }
+#endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
+
+TR::Node *
+OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayNode, TR::Node *offsetNode)
+   {
+   TR::Node *arrayAddressNode = NULL;
+   TR::Node *totalOffsetNode = NULL;
+
+   TR_ASSERT_FATAL_WITH_NODE(arrayNode,
+      !TR::Compiler->om.canGenerateArraylets(),
+      "This helper shouldn't be called if arraylets are enabled.\n");
+
+#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      arrayAddressNode = generateDataAddrLoadTrees(comp, arrayNode);
+      if (offsetNode)
+         arrayAddressNode = TR::Node::create(TR::aladd, 2, arrayAddressNode, offsetNode);
+      }
+   else if (comp->target().is64Bit())
+#else
+   if (comp->target().is64Bit())
+#endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      totalOffsetNode = TR::Node::lconst(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      if (offsetNode)
+         totalOffsetNode = TR::Node::create(TR::ladd, 2, offsetNode, totalOffsetNode);
+      arrayAddressNode = TR::Node::create(TR::aladd, 2, arrayNode, totalOffsetNode);
+      }
+   else
+      {
+      totalOffsetNode = TR::Node::iconst(static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
+      if (offsetNode)
+         totalOffsetNode = TR::Node::create(TR::iadd, 2, offsetNode, totalOffsetNode);
+      arrayAddressNode = TR::Node::create(TR::aiadd, 2, arrayNode, totalOffsetNode);
+      }
+
+   return arrayAddressNode;
+   }
+
+TR::Node *
+OMR::TransformUtil::generateFirstArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayObject)
+   {
+   TR::Node *firstArrayElementNode = generateArrayElementAddressTrees(comp, arrayObject);
+   return firstArrayElementNode;
+   }
+
+TR::Node *
+OMR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(TR::Compilation *comp, TR::Node *indexNode, TR::Node *elementSizeNode, int32_t elementSize, bool useShiftOpCode)
+   {
+   TR::Node *offsetNode = indexNode->createLongIfNeeded();
+   TR::Node *strideNode = elementSizeNode;
+   if (strideNode)
+      strideNode = strideNode->createLongIfNeeded();
+
+   if (strideNode != NULL || elementSize > 1)
+      {
+      TR::ILOpCodes offsetOpCode = TR::BadILOp;
+      if (comp->target().is64Bit())
+         {
+         if (strideNode == NULL && elementSize > 1)
+            strideNode = TR::Node::lconst(indexNode, elementSize);
+
+         offsetOpCode = useShiftOpCode ? TR::lshl : TR::lmul;
+         }
+      else
+         {
+         if (strideNode == NULL && elementSize > 1)
+            strideNode = TR::Node::iconst(indexNode, elementSize);
+
+         offsetOpCode = useShiftOpCode ? TR::ishl : TR::imul;
+         }
+
+      offsetNode = TR::Node::create(offsetOpCode, 2, offsetNode, strideNode);
+      }
+
+   return offsetNode;
+   }

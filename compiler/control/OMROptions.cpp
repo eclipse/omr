@@ -251,6 +251,8 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableAOTStaticField",               "O\tdisable AOT static field inlining",                      SET_OPTION_BIT(TR_DisableAOTStaticField), "F"},
    {"disableAOTValidationOpts",           "O\tdisable AOT optimizations with validations",                      SET_OPTION_BIT(TR_DisableAOTCheckCastInlining | TR_DisableAOTInstanceOfInlining | TR_DisableAOTInstanceFieldResolution | TR_DisableAOTStaticField), "F"},
    {"disableAOTWarmRunThroughputImprovement", "O\tdisable change iprofiler entry choosing heuristic to improve aot warm run throughput",                      SET_OPTION_BIT(TR_DisableAOTWarmRunThroughputImprovement), "F"},
+   {"disableArrayCopyByteArrayInlineSmallSizeWithoutREPMOVS", "O\tdisable array copy optimizations enhancement for 8 bit primitive array", SET_OPTION_BIT(TR_Disable8BitPrimitiveArrayCopyInlineSmallSizeWithoutREPMOVS), "F"},
+   {"disableArrayCopyCharArrayInlineSmallSizeWithoutREPMOVS", "O\tdisable array copy optimizations enhancement for 16 bit primitive array", SET_OPTION_BIT(TR_Disable16BitPrimitiveArrayCopyInlineSmallSizeWithoutREPMOVS), "F"},
    {"disableArrayCopyOpts",               "O\tdisable array copy optimizations",                SET_OPTION_BIT(TR_DisableArrayCopyOpts), "F"},
    {"disableArraySetOpts",                "O\tdisable array set optimizations",                 SET_OPTION_BIT(TR_DisableArraySetOpts), "F"},
    {"disableArraySetStoreElimination",     "O\tdisable arrayset store elimination",                SET_OPTION_BIT(TR_DisableArraysetStoreElimination), "F"},
@@ -677,6 +679,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"enableClassChainSharing",            "M\tenable class sharing", SET_OPTION_BIT(TR_EnableClassChainSharing), "F", NOT_IN_SUBSET},
    {"enableClassChainValidationCaching",  "M\tenable class chain validation caching", SET_OPTION_BIT(TR_EnableClassChainValidationCaching), "F", NOT_IN_SUBSET},
    {"enableCodeCacheConsolidation",       "M\tenable code cache consolidation", SET_OPTION_BIT(TR_EnableCodeCacheConsolidation), "F", NOT_IN_SUBSET},
+   {"enableCodeCacheDisclaiming",         "M\tenable memory disclaiming for code cache (linux specific).", SET_OPTION_BIT(TR_EnableCodeCacheDisclaiming),"F", NOT_IN_SUBSET},
    {"enableColdCheapTacticalGRA",         "O\tenable cold cheap tactical GRA", SET_OPTION_BIT(TR_EnableColdCheapTacticalGRA), "F"},
    {"enableCompilationBeforeCheckpoint",  "C\tenable compilation before checkpoint", RESET_OPTION_BIT(TR_DisableCompilationBeforeCheckpoint), "F", NOT_IN_SUBSET},
    {"enableCompilationSpreading",         "C\tenable adding spreading invocations to methods before compiling", SET_OPTION_BIT(TR_EnableCompilationSpreading), "F", NOT_IN_SUBSET},
@@ -829,8 +832,6 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"GCRresetCount=",       "R<nnn>\tthe value to which the counter is reset to after being tripped by guarded counting recompilations (positive value)",
     TR::Options::setCount, offsetof(OMR::Options,_GCRResetCount), 0, "F%d"},
    {"generateCompleteInlineRanges", "O\tgenerate meta data ranges for each change in inliner depth", SET_OPTION_BIT(TR_GenerateCompleteInlineRanges), "F"},
-   {"graFreqThresholdAtWarm=", "O<nnn>\tgra threshold for block frequency for opt level less of equal to warm",
-        TR::Options::set32BitNumeric, offsetof(OMR::Options, _graFreqThresholdAtWarm), 500, "F%d"},
    {"help",               " \tdisplay this help information", TR::Options::helpOption, 0, 0, "F", NOT_IN_SUBSET},
    {"help=",              " {regex}\tdisplay help for options whose names match {regex}", TR::Options::helpOption, 1, 0, "F", NOT_IN_SUBSET},
    {"highCodeCacheOccupancyBCount=", "R<nnn>\tthe initial invocation count used during high code cache occupancy for methods with loops",
@@ -1096,6 +1097,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"slipTrap=",                          "O{regex}\trecord entry/exit for slit/trap for methods listed",
                                           TR::Options::setRegex, offsetof(OMR::Options, _slipTrap), 0, "P"},
    {"softFailOnAssume",   "M\tfail the compilation quietly and use the interpreter if an assume fails", SET_OPTION_BIT(TR_SoftFailOnAssume), "P"},
+   {"splitWarmAndColdBlocks",       "M\tplace cold blocks into cold part of code cache", SET_OPTION_BIT(TR_SplitWarmAndColdBlocks), "F"},
    {"stackPCDumpNumberOfBuffers=",            "O<nnn>\t The number of gc cycles for which we collect top stack pcs", TR::Options::setCount, offsetof(OMR::Options,_stackPCDumpNumberOfBuffers), 0, "F%d"},
    {"stackPCDumpNumberOfFrames=",            "O<nnn>\t The number of top stack pcs we collect during each cycle", TR::Options::setCount, offsetof(OMR::Options,_stackPCDumpNumberOfFrames), 0, "F%d"},
    {"startThrottlingTime=", "M<nnn>\tTime when compilation throttling should start (ms since JVM start)",
@@ -2605,6 +2607,15 @@ OMR::Options::jitPreProcess()
    _disabledOptimizations[IVTypeTransformation] = true;
    _disabledOptimizations[basicBlockHoisting] = true;
 
+#ifdef OMR_GC_SPARSE_HEAP_ALLOCATION
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      // Disable opts known to be broken for off heap
+      _disabledOptimizations[escapeAnalysis] = true;
+      _disabledOptimizations[idiomRecognition] = true;
+      }
+#endif
+
    self()->setOption(TR_DisableTreePatternMatching);
    self()->setOption(TR_DisableHalfSlotSpills);
 
@@ -2680,7 +2691,6 @@ OMR::Options::jitPreProcess()
    _alwaysWorthInliningThreshold = 15;
    _maxLimitedGRACandidates = TR_MAX_LIMITED_GRA_CANDIDATES;
    _maxLimitedGRARegs = TR_MAX_LIMITED_GRA_REGS;
-   _graFreqThresholdAtWarm = 500;
    _counterBucketGranularity = 2;
    _minCounterFidelity = INT_MIN;
    _lastIpaOptTransformationIndex = INT_MAX;

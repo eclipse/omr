@@ -846,6 +846,11 @@ TR::Node* generateLenForArrayCopy(TR::Compilation *comp, int32_t elementSize, TR
          stride = TR::TransformUtil::generateArrayElementShiftAmountTrees(comp, srcObjNode);
 #endif
 
+#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
+      if (TR::Compiler->om.isOffHeapAllocationEnabled())
+         len = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp, copyLenNode, stride, elementSize, true);
+      else
+#endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
       if (is64BitTarget)
          {
          if (stride->getType().isInt32())
@@ -864,6 +869,11 @@ TR::Node* generateLenForArrayCopy(TR::Compilation *comp, int32_t elementSize, TR
       }
    else
       {
+#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
+      if (TR::Compiler->om.isOffHeapAllocationEnabled())
+         len = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp, copyLenNode, stride, elementSize, false);
+      else
+#endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
       if (is64BitTarget)
          {
          if (!stride)
@@ -2114,6 +2124,30 @@ TR::Node *generateArrayAddressTree(
 
    TR::Node *array;
 
+#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      if (offHigh > 0)
+         {
+         if (elementSize == 1)
+            array = offNode->createLongIfNeeded();
+         else if (elementSize == 0)
+            {
+            if (!stride)
+               stride = TR::TransformUtil::generateArrayElementShiftAmountTrees(comp, objNode);
+            array = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp, offNode, stride, elementSize, true);
+            }
+         else
+            {
+            array = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp, offNode, stride, elementSize, false);
+            }
+         }
+      array = TR::TransformUtil::generateArrayElementAddressTrees(comp, objNode, array);
+      array->setIsInternalPointer(true);
+      return array;
+      }
+#endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
+
    if (offHigh > 0)
       {
       if (elementSize == 1)
@@ -2429,25 +2463,47 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
        (rm == TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8))
        encode = true;
 
-   if (encode)
+#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
-      node = TR::Node::create(is64BitTarget ? TR::lmul : TR::imul, 2, srcOff, strideNode);
-      node = TR::Node::create(is64BitTarget ? TR::ladd : TR::iadd, 2, node, hdrSize);
-      src = TR::Node::create(is64BitTarget? TR::aladd : TR::aiadd, 2, srcObj, node);
-      node = TR::Node::create(is64BitTarget ? TR::ladd : TR::iadd, 2, dstOff, hdrSize);
-      dst = TR::Node::create(is64BitTarget? TR::aladd : TR::aiadd, 2, dstObj, node);
-      arrayTranslateNode->setSourceIsByteArrayTranslate(false);
-      arrayTranslateNode->setTargetIsByteArrayTranslate(true);
+      if (encode)
+         {
+         srcOff = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp(), srcOff, strideNode, 0, false);
+         arrayTranslateNode->setSourceIsByteArrayTranslate(false);
+         arrayTranslateNode->setTargetIsByteArrayTranslate(true);
+         }
+      else
+         {
+         dstOff = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp(), dstOff, strideNode, 0, false);
+         arrayTranslateNode->setSourceIsByteArrayTranslate(true);
+         arrayTranslateNode->setTargetIsByteArrayTranslate(false);
+         }
+      src = TR::TransformUtil::generateArrayElementAddressTrees(comp(), srcObj, srcOff);
+      dst = TR::TransformUtil::generateArrayElementAddressTrees(comp(), dstObj, dstOff);
       }
    else
+#endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
       {
-      node = TR::Node::create(is64BitTarget ? TR::ladd : TR::iadd, 2, srcOff, hdrSize);
-      src = TR::Node::create(is64BitTarget? TR::aladd : TR::aiadd, 2, srcObj, node);
-      node = TR::Node::create(is64BitTarget ? TR::lmul : TR::imul, 2, dstOff, strideNode);
-      node = TR::Node::create(is64BitTarget ? TR::ladd : TR::iadd, 2, node, hdrSize);
-      dst = TR::Node::create(is64BitTarget? TR::aladd : TR::aiadd, 2, dstObj, node);
-      arrayTranslateNode->setSourceIsByteArrayTranslate(true);
-      arrayTranslateNode->setTargetIsByteArrayTranslate(false);
+      if (encode)
+         {
+         node = TR::Node::create(is64BitTarget ? TR::lmul : TR::imul, 2, srcOff, strideNode);
+         node = TR::Node::create(is64BitTarget ? TR::ladd : TR::iadd, 2, node, hdrSize);
+         src = TR::Node::create(is64BitTarget? TR::aladd : TR::aiadd, 2, srcObj, node);
+         node = TR::Node::create(is64BitTarget ? TR::ladd : TR::iadd, 2, dstOff, hdrSize);
+         dst = TR::Node::create(is64BitTarget? TR::aladd : TR::aiadd, 2, dstObj, node);
+         arrayTranslateNode->setSourceIsByteArrayTranslate(false);
+         arrayTranslateNode->setTargetIsByteArrayTranslate(true);
+         }
+      else
+         {
+         node = TR::Node::create(is64BitTarget ? TR::ladd : TR::iadd, 2, srcOff, hdrSize);
+         src = TR::Node::create(is64BitTarget? TR::aladd : TR::aiadd, 2, srcObj, node);
+         node = TR::Node::create(is64BitTarget ? TR::lmul : TR::imul, 2, dstOff, strideNode);
+         node = TR::Node::create(is64BitTarget ? TR::ladd : TR::iadd, 2, node, hdrSize);
+         dst = TR::Node::create(is64BitTarget? TR::aladd : TR::aiadd, 2, dstObj, node);
+         arrayTranslateNode->setSourceIsByteArrayTranslate(true);
+         arrayTranslateNode->setTargetIsByteArrayTranslate(false);
+         }
       }
 
    if (encode && !isSBCSEncoder)
@@ -4090,17 +4146,15 @@ void OMR::ValuePropagation::transformArrayCloneCall(TR::TreeTop *callTree, OMR::
    newArray->setIsNonNull(true);
 
    int32_t elementSize = TR::Compiler->om.getSizeOfArrayElement(newArray);
-   TR::Node *lengthInBytes = comp()->target().is64Bit() ?
-      TR::Node::create(callNode, TR::lmul, 2, TR::Node::create(callNode, TR::i2l, 1, lenNode), TR::Node::lconst(lenNode, elementSize)) :
-      TR::Node::create(callNode, TR::imul, 2, lenNode, TR::Node::iconst(lenNode, elementSize));
 
+   TR::Node *lengthInBytes;
+   TR::Node *srcStart;
+   TR::Node *destStart;
 
-   TR::Node *srcStart = comp()->target().is64Bit() ?
-      TR::Node::create(callNode, TR::aladd, 2, objNode, TR::Node::lconst(objNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes())) :
-      TR::Node::create(callNode, TR::aiadd, 2, objNode, TR::Node::iconst(objNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
-   TR::Node *destStart = comp()->target().is64Bit() ?
-      TR::Node::create(callNode, TR::aladd, 2, newArray, TR::Node::lconst(newArray, TR::Compiler->om.contiguousArrayHeaderSizeInBytes())) :
-      TR::Node::create(callNode, TR::aiadd, 2, newArray, TR::Node::iconst(newArray, TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
+   lengthInBytes = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp(), lenNode, NULL, elementSize, false);
+   srcStart = TR::TransformUtil::generateFirstArrayElementAddressTrees(comp(), objNode);
+   destStart = TR::TransformUtil::generateFirstArrayElementAddressTrees(comp(), newArray);
+
    TR::Node *arraycopy = NULL;
    if (isPrimitiveClass)
       arraycopy = TR::Node::createArraycopy(srcStart, destStart, lengthInBytes);

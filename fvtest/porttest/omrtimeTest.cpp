@@ -299,7 +299,7 @@ TEST(PortTimeTest, time_test3)
 	uint64_t hiresTimeStart, hiresTimeStop;
 	uint64_t hiresDeltaAsMillis, hiresDeltaAsMicros;
 	uint64_t ntimeDeltaAsMillis;
-	uint32_t i, j;
+	uint32_t i;
 	int32_t millires;
 
 	reportTestEntry(OMRPORTLIB, testName);
@@ -314,7 +314,7 @@ TEST(PortTimeTest, time_test3)
 			/*change of millis*/
 			time = omrtime_current_time_millis();
 			oldTime = time;
-			for (j = 0; oldTime == time; j++) {
+			while (oldTime == time) {
 				oldTime = omrtime_current_time_millis();
 			}
 			millires = (int32_t)(oldTime - time);

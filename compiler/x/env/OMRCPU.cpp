@@ -221,7 +221,7 @@ OMR::X86::CPU::prefersMultiByteNOP()
    if (TR::Compiler->omrPortLib == NULL)
       return TR::CodeGenerator::getX86ProcessorInfo().prefersMultiByteNOP();
 
-   return self()->isGenuineIntel() && !self()->is(OMR_PROCESSOR_X86_INTELPENTIUM);
+   return self()->isGenuineIntel() && !self()->is(OMR_PROCESSOR_X86_INTEL_PENTIUM);
    }
 
 bool
@@ -265,35 +265,43 @@ OMR::X86::CPU::is_test(OMRProcessorArchitecture p)
    {
    switch(p)
       {
-      case OMR_PROCESSOR_X86_INTELWESTMERE:
+      case OMR_PROCESSOR_X86_INTEL_WESTMERE:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelWestmere() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELNEHALEM:
+      case OMR_PROCESSOR_X86_INTEL_NEHALEM:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelNehalem() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELPENTIUM:
+      case OMR_PROCESSOR_X86_INTEL_PENTIUM:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelPentium() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELP6:
+      case OMR_PROCESSOR_X86_INTEL_P6:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelP6() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELPENTIUM4:
+      case OMR_PROCESSOR_X86_INTEL_PENTIUM4:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelPentium4() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELCORE2:
+      case OMR_PROCESSOR_X86_INTEL_CORE2:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelCore2() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELTULSA:
+      case OMR_PROCESSOR_X86_INTEL_TULSA:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelTulsa() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELSANDYBRIDGE:
+      case OMR_PROCESSOR_X86_INTEL_SANDYBRIDGE:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelSandyBridge() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELIVYBRIDGE:
+      case OMR_PROCESSOR_X86_INTEL_IVYBRIDGE:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelIvyBridge() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELHASWELL:
+      case OMR_PROCESSOR_X86_INTEL_HASWELL:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelHaswell() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELBROADWELL:
+      case OMR_PROCESSOR_X86_INTEL_BROADWELL:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelBroadwell() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELSKYLAKE:
+      case OMR_PROCESSOR_X86_INTEL_SKYLAKE:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelSkylake() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_AMDATHLONDURON:
+      case OMR_PROCESSOR_X86_INTEL_CASCADELAKE:
+         return TR::CodeGenerator::getX86ProcessorInfo().isIntelCascadeLake() == (_processorDescription.processor == p);
+      case OMR_PROCESSOR_X86_INTEL_ICELAKE:
+         return TR::CodeGenerator::getX86ProcessorInfo().isIntelIceLake() == (_processorDescription.processor == p);
+      case OMR_PROCESSOR_X86_INTEL_SAPPHIRERAPIDS:
+         return TR::CodeGenerator::getX86ProcessorInfo().isIntelSapphireRapids() == (_processorDescription.processor == p);
+      case OMR_PROCESSOR_X86_INTEL_EMERALDRAPIDS:
+         return TR::CodeGenerator::getX86ProcessorInfo().isIntelEmeraldRapids() == (_processorDescription.processor == p);
+      case OMR_PROCESSOR_X86_AMD_ATHLONDURON:
          return TR::CodeGenerator::getX86ProcessorInfo().isAMDAthlonDuron() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_AMDOPTERON:
+      case OMR_PROCESSOR_X86_AMD_OPTERON:
          return TR::CodeGenerator::getX86ProcessorInfo().isAMDOpteron() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_AMDFAMILY15H:
+      case OMR_PROCESSOR_X86_AMD_FAMILY15H:
          return TR::CodeGenerator::getX86ProcessorInfo().isAMD15h() == (_processorDescription.processor == p);
       default:
          return false;
@@ -419,49 +427,61 @@ OMR::X86::CPU::is_old_api(OMRProcessorArchitecture p)
    bool ans = false;
    switch(p)
       {
-      case OMR_PROCESSOR_X86_INTELWESTMERE:
+      case OMR_PROCESSOR_X86_INTEL_WESTMERE:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelWestmere();
          break;
-      case OMR_PROCESSOR_X86_INTELNEHALEM:
+      case OMR_PROCESSOR_X86_INTEL_NEHALEM:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelNehalem();
          break;
-      case OMR_PROCESSOR_X86_INTELPENTIUM:
+      case OMR_PROCESSOR_X86_INTEL_PENTIUM:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelPentium();
          break;
-      case OMR_PROCESSOR_X86_INTELP6:
+      case OMR_PROCESSOR_X86_INTEL_P6:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelP6();
          break;
-      case OMR_PROCESSOR_X86_INTELPENTIUM4:
+      case OMR_PROCESSOR_X86_INTEL_PENTIUM4:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelPentium4();
          break;
-      case OMR_PROCESSOR_X86_INTELCORE2:
+      case OMR_PROCESSOR_X86_INTEL_CORE2:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelCore2();
          break;
-      case OMR_PROCESSOR_X86_INTELTULSA:
+      case OMR_PROCESSOR_X86_INTEL_TULSA:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelTulsa();
          break;
-      case OMR_PROCESSOR_X86_INTELSANDYBRIDGE:
+      case OMR_PROCESSOR_X86_INTEL_SANDYBRIDGE:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelSandyBridge();
          break;
-      case OMR_PROCESSOR_X86_INTELIVYBRIDGE:
+      case OMR_PROCESSOR_X86_INTEL_IVYBRIDGE:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelIvyBridge();
          break;
-      case OMR_PROCESSOR_X86_INTELHASWELL:
+      case OMR_PROCESSOR_X86_INTEL_HASWELL:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelHaswell();
          break;
-      case OMR_PROCESSOR_X86_INTELBROADWELL:
+      case OMR_PROCESSOR_X86_INTEL_BROADWELL:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelBroadwell();
          break;
-      case OMR_PROCESSOR_X86_INTELSKYLAKE:
+      case OMR_PROCESSOR_X86_INTEL_SKYLAKE:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelSkylake();
          break;
-      case OMR_PROCESSOR_X86_AMDATHLONDURON:
+      case OMR_PROCESSOR_X86_INTEL_CASCADELAKE:
+         ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelCascadeLake();
+         break;
+      case OMR_PROCESSOR_X86_INTEL_ICELAKE:
+         ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelIceLake();
+         break;
+      case OMR_PROCESSOR_X86_INTEL_SAPPHIRERAPIDS:
+         ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelSapphireRapids();
+         break;
+      case OMR_PROCESSOR_X86_INTEL_EMERALDRAPIDS:
+         ans = TR::CodeGenerator::getX86ProcessorInfo().isIntelEmeraldRapids();
+         break;
+      case OMR_PROCESSOR_X86_AMD_ATHLONDURON:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isAMDAthlonDuron();
          break;
-      case OMR_PROCESSOR_X86_AMDOPTERON:
+      case OMR_PROCESSOR_X86_AMD_OPTERON:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isAMDOpteron();
          break;
-      case OMR_PROCESSOR_X86_AMDFAMILY15H:
+      case OMR_PROCESSOR_X86_AMD_FAMILY15H:
          ans = TR::CodeGenerator::getX86ProcessorInfo().isAMD15h();
          break;
       default:
@@ -637,71 +657,87 @@ OMR::X86::CPU::getProcessorName()
    const char* returnString = "";
    switch(_processorDescription.processor)
       {
-      case OMR_PROCESSOR_X86_INTELPENTIUM:
+      case OMR_PROCESSOR_X86_INTEL_PENTIUM:
          returnString = "X86 Intel Pentium";
          break;
 
-      case OMR_PROCESSOR_X86_INTELP6:
+      case OMR_PROCESSOR_X86_INTEL_P6:
          returnString = "X86 Intel P6";
          break;
 
-      case OMR_PROCESSOR_X86_INTELPENTIUM4:
+      case OMR_PROCESSOR_X86_INTEL_PENTIUM4:
          returnString = "X86 Intel Netburst Microarchitecture";
          break;
 
-      case OMR_PROCESSOR_X86_INTELCORE2:
+      case OMR_PROCESSOR_X86_INTEL_CORE2:
          returnString = "X86 Intel Core2 Microarchitecture";
          break;
 
-      case OMR_PROCESSOR_X86_INTELTULSA:
+      case OMR_PROCESSOR_X86_INTEL_TULSA:
          returnString = "X86 Intel Tulsa";
          break;
 
-      case OMR_PROCESSOR_X86_INTELNEHALEM:
+      case OMR_PROCESSOR_X86_INTEL_NEHALEM:
          returnString = "X86 Intel Nehalem";
          break;
 
-      case OMR_PROCESSOR_X86_INTELWESTMERE:
+      case OMR_PROCESSOR_X86_INTEL_WESTMERE:
          returnString = "X86 Intel Westmere";
          break;
 
-      case OMR_PROCESSOR_X86_INTELSANDYBRIDGE:
+      case OMR_PROCESSOR_X86_INTEL_SANDYBRIDGE:
          returnString = "X86 Intel Sandy Bridge";
          break;
 
-      case OMR_PROCESSOR_X86_INTELIVYBRIDGE:
+      case OMR_PROCESSOR_X86_INTEL_IVYBRIDGE:
          returnString = "X86 Intel Ivy Bridge";
          break;
 
-      case OMR_PROCESSOR_X86_INTELHASWELL:
+      case OMR_PROCESSOR_X86_INTEL_HASWELL:
          returnString = "X86 Intel Haswell";
          break;
 
-      case OMR_PROCESSOR_X86_INTELBROADWELL:
+      case OMR_PROCESSOR_X86_INTEL_BROADWELL:
          returnString = "X86 Intel Broadwell";
          break;
 
-      case OMR_PROCESSOR_X86_INTELSKYLAKE:
+      case OMR_PROCESSOR_X86_INTEL_SKYLAKE:
          returnString = "X86 Intel Skylake";
          break;
 
-      case OMR_PROCESSOR_X86_AMDK5:
+      case OMR_PROCESSOR_X86_INTEL_CASCADELAKE:
+         returnString = "X86 Intel Cascade Lake";
+         break;
+
+      case OMR_PROCESSOR_X86_INTEL_ICELAKE:
+         returnString = "X86 Intel Ice Lake";
+         break;
+
+      case OMR_PROCESSOR_X86_INTEL_SAPPHIRERAPIDS:
+         returnString = "X86 Intel Sapphire Rapids";
+         break;
+
+      case OMR_PROCESSOR_X86_INTEL_EMERALDRAPIDS:
+         returnString = "X86 Intel Emerald Rapids";
+         break;
+
+      case OMR_PROCESSOR_X86_AMD_K5:
          returnString = "X86 AMDK5";
          break;
 
-      case OMR_PROCESSOR_X86_AMDK6:
+      case OMR_PROCESSOR_X86_AMD_K6:
          returnString = "X86 AMDK6";
          break;
 
-      case OMR_PROCESSOR_X86_AMDATHLONDURON:
+      case OMR_PROCESSOR_X86_AMD_ATHLONDURON:
          returnString = "X86 AMD Athlon-Duron";
          break;
 
-      case OMR_PROCESSOR_X86_AMDOPTERON:
+      case OMR_PROCESSOR_X86_AMD_OPTERON:
          returnString = "X86 AMD Opteron";
          break;
 
-      case OMR_PROCESSOR_X86_AMDFAMILY15H:
+      case OMR_PROCESSOR_X86_AMD_FAMILY15H:
          returnString = "X86 AMD Family 15h";
          break;
 

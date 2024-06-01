@@ -92,7 +92,7 @@ The former two represent forward analysis while the latter two represent backwar
 
 The implementation of these classes are quite trivial as the set union and intersection operations are implemented within the container classes. Never the less they are an important piece of the virtual hierarchy before we reach the leaf classes.
 
-Reaching definitions is an example of a forward union set data-flow analysis while [liveness](https://github.com/eclipse/omr/blob/f2bc4f8f6eb09f6cc8fc4ba48717de4880b970e3/compiler/optimizer/DataFlowAnalysis.hpp#L840-L871) is an example of a backward union set data-flow analysis. 
+Reaching definitions is an example of a forward union set data-flow analysis while [liveness](https://github.com/eclipse/omr/blob/f2bc4f8f6eb09f6cc8fc4ba48717de4880b970e3/compiler/optimizer/DataFlowAnalysis.hpp#L840-L871) is an example of a backward union set data-flow analysis.
 
 ### Leaf Classes
 
@@ -128,3 +128,69 @@ In general using structures as our program fragments enables us to save roughly 
 ## [OMRDataFlowAnalysis.enum](https://github.com/eclipse/omr/blob/f2bc4f8f6eb09f6cc8fc4ba48717de4880b970e3/compiler/optimizer/OMRDataFlowAnalysis.enum)
 
 The (mostly up-to-date) list of all data-flow analyses classes supported in OMR are listed in this file. This file can be used as an extension point to add new data-flow analysis in downstream projects consuming OMR.
+
+### Local Transparency
+
+Local Transparency answers the question: Can this expression be moved pass this block? After building up the correspondence of which
+expression depends on which sym ref, Local Transparency checks which sym refs are being written in the block, and then it will know
+which expression is transparent or can be moved across the block. If the value of this expression does not change in this block, this
+expression is considered locally transparent to the block. If the value of the expression is changed in the block, the expression is
+not locally transparent to the block. The expression cannot be moved across this block.
+
+For example, there is a computation of `x+y`. Where `x+y` is computed and where `x+y` should be computed (the optimal spot) can be many
+blocks apart. Local Transparency determines if `x+y` can flow through all the blocks to the optimal spot where it should be computed.
+If the block does not change `x` or `y`, `x+y` can be moved pass this block. If `x+y` is computed earlier, and then it is computed again,
+and `x` and `y` have not been changed in between, the two computations can be commoned by Partial Redundancy Elimination (PRE).
+The value of `x+y` can be stored in a temporary which can be used in later blocks instead of computing `x+y` again.
+
+[TR_LocalTransparency](https://github.com/eclipse/omr/blob/f2bc4f8f6eb09f6cc8fc4ba48717de4880b970e3/compiler/optimizer/LocalAnalysis.hpp#L230)
+runs before [TR_LocalAnticipatability](https://github.com/eclipse/omr/blob/f2bc4f8f6eb09f6cc8fc4ba48717de4880b970e3/compiler/optimizer/LocalAnalysis.hpp#L286):
+- `TR_LocalTransparency::_transparencyInfo[symRefNum]`: A bit vector indicates which expressions (identified by local index) will not be
+affected by the sym ref if the sym ref is changed in the block
+- `TR_LocalTransparency::_info[blockNum]._analysisInfo`: A bit vector indicates whether or not the expression (identified by local index)
+is transparent to the block
+
+### Local Anticipatability
+
+Local Transparency does not look at whether or not an expression is evaluated in a certain block. It looks at an expression regardless
+of where it is computed. Local Anticipatablility looks at the expressions that are computed in the block. If an expression is locally
+anticipatable in a block, the expression is computed in the block and can be moved out of the block without changing the value of the
+expression. For example, if `x+y` is computed in `block_10`, the expression `x+y` can be a candidate of being locally anticipatable in
+`block_10`. If `x+y` is not computed in `block_10`, the expression `x+y` will not be in the Local Anticipatablility set.
+
+[TR_LocalAnticipatability](https://github.com/eclipse/omr/blob/f2bc4f8f6eb09f6cc8fc4ba48717de4880b970e3/compiler/optimizer/LocalAnalysis.hpp#L286)
+runs after [TR_LocalTransparency](https://github.com/eclipse/omr/blob/f2bc4f8f6eb09f6cc8fc4ba48717de4880b970e3/compiler/optimizer/LocalAnalysis.hpp#L230)
+- `TR_LocalAnticipatability::_info[blockNum]._analysisInfo`: A bit vector indicates whether or not the value of an expression
+(identified by local index) would be changed if it were computed at the very start of the block (upward anticipatable notion)
+- `TR_LocalAnticipatability::_info[blockNum]._downwardExposedAnalysisInfo`: A bit vector indicates whether or not the value of an
+expression (identified by local index) would be changed if it were computed at the very end of the block
+- `TR_LocalAnticipatability::_info[blockNum]._downwardExposedStoreAnalysisInfo`: A bit vector indicates whether or not the value of a
+store expression (identified by local index) would be changed if it were computed at the very end of the block
+
+Both the upward and downward exposed notions of this analysis are valid for their own use cases. In an ideal world, we would be doing
+both kinds of analyses but this takes up more compile time than we can likely afford in a JIT compiler (especially as the following
+dataflow analyses would also need to solve for both notions). Therefore, we currently only use the downward exposed notion for our
+implementation since we feel that this is relevant for more of the common and expected cases to be optimized.
+
+### Global Anticipatability
+
+Global Anticipatablility looks at if an expression can flow through the CFG. If an expression is globally anticipatable at a certain point
+1. It is evaluated (i.e. encountered or computed) on all paths following that point, meaning adding the expression at that point
+will not make anything worse
+2. If it is evaluated at that point, the value of the expression would be the same as the next time the expression is encountered
+on all paths following that point
+
+If an expression is globally anticipatable in all the successors of a block and the expression is locally transparent in that block,
+the expression is global anticipatable in that block.
+
+### Earliestness
+
+Earliestnees is a subset of globally anticipatable points where expressions can be computed as early as possible.
+
+### Delayedness And Latestness
+Delayedness and Latestness give a subset of globally anticipatable points where expressions can be computed as late as possible.
+
+### Related Resource
+1. S. Muchnick. Advanced Compiler Design and Implementation. Chapter 13 Redundancy Elimination
+2. V. Sundaresan, M. Stoodley, P. Ramarao. Removing Redundancy Via Exception Check Motion
+3. J. Knoop, O. Ruthing, B. Steffen. Lazy Code Motion

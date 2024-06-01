@@ -9543,7 +9543,7 @@
    /* .description =    "vector merge high byte", */
    /* .prefix      = */ 0x00000000,
    /* .opcode      = */ 0x1000000C,
-   /* .format      = */ FORMAT_UNKNOWN,
+   /* .format      = */ FORMAT_VRT_VRA_VRB,
    /* .minimumALS  = */ OMR_PROCESSOR_PPC_P6,
    /* .properties  = */ PPCOpProp_IsVMX |
                         PPCOpProp_SyncSideEffectFree,
@@ -9579,7 +9579,7 @@
    /* .description =    "vector merge low byte", */
    /* .prefix      = */ 0x00000000,
    /* .opcode      = */ 0x1000010C,
-   /* .format      = */ FORMAT_UNKNOWN,
+   /* .format      = */ FORMAT_VRT_VRA_VRB,
    /* .minimumALS  = */ OMR_PROCESSOR_PPC_P6,
    /* .properties  = */ PPCOpProp_IsVMX |
                         PPCOpProp_SyncSideEffectFree,

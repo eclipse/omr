@@ -245,7 +245,6 @@ omrfilestream_close(struct OMRPortLibrary *portLibrary, OMRFileStream *fileStrea
 		rc = fclose(fileStream);
 		if (0 != rc) {
 			rc = portLibrary->error_set_last_error(portLibrary, errno, findErrorFromErrno(errno));
-			Trc_PRT_filestream_close_failedToClose(fileStream, rc);
 		}
 	}
 

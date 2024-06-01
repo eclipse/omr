@@ -243,27 +243,31 @@ inline uint32_t getFeatureFlags10Mask()
 
 enum TR_ProcessorDescription
    {
-   TR_ProcessorUnknown          = 0x00000000,
-   TR_ProcessorIntelPentium     = 0x00000001,
-   TR_ProcessorIntelP6          = 0x00000002,
-   TR_ProcessorIntelPentium4    = 0x00000003,
+   TR_ProcessorUnknown             = 0x00000000,
+   TR_ProcessorIntelPentium        = 0x00000001,
+   TR_ProcessorIntelP6             = 0x00000002,
+   TR_ProcessorIntelPentium4       = 0x00000003,
 
-   TR_ProcessorAMDK5            = 0x00000004,
-   TR_ProcessorAMDK6            = 0x00000005,
-   TR_ProcessorAMDAthlonDuron   = 0x00000006,
-   TR_ProcessorAMDOpteron       = 0x00000007,
+   TR_ProcessorAMDK5               = 0x00000004,
+   TR_ProcessorAMDK6               = 0x00000005,
+   TR_ProcessorAMDAthlonDuron      = 0x00000006,
+   TR_ProcessorAMDOpteron          = 0x00000007,
 
-   TR_ProcessorIntelCore2       = 0x00000008,
-   TR_ProcessorIntelTulsa       = 0x00000009,
-   TR_ProcessorIntelNehalem     = 0x0000000a,
+   TR_ProcessorIntelCore2          = 0x00000008,
+   TR_ProcessorIntelTulsa          = 0x00000009,
+   TR_ProcessorIntelNehalem        = 0x0000000a,
 
-   TR_ProcessorAMDFamily15h     = 0x0000000b,
-   TR_ProcessorIntelWestmere    = 0x0000000c,
-   TR_ProcessorIntelSandyBridge = 0x0000000d,
-   TR_ProcessorIntelIvyBridge   = 0x0000000e,
-   TR_ProcessorIntelHaswell     = 0x0000000f,
-   TR_ProcessorIntelBroadwell   = 0x00000010,
-   TR_ProcessorIntelSkylake     = 0x00000011,
+   TR_ProcessorAMDFamily15h        = 0x0000000b,
+   TR_ProcessorIntelWestmere       = 0x0000000c,
+   TR_ProcessorIntelSandyBridge    = 0x0000000d,
+   TR_ProcessorIntelIvyBridge      = 0x0000000e,
+   TR_ProcessorIntelHaswell        = 0x0000000f,
+   TR_ProcessorIntelBroadwell      = 0x00000010,
+   TR_ProcessorIntelSkylake        = 0x00000011,
+   TR_ProcessorIntelCascadeLake    = 0x00000012,
+   TR_ProcessorIntelIceLake        = 0x00000013,
+   TR_ProcessorIntelSapphireRapids = 0x00000014,
+   TR_ProcessorIntelEmeraldRapids  = 0x00000015,
    };
 
 #endif

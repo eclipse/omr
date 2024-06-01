@@ -311,9 +311,9 @@ enum TR_CompilationOptions
    TR_DisableCHOpts                       = 0x00040000 + 7,
    TR_ForceLoadAOT                        = 0x00080000 + 7,
    TR_TraceRelocatableDataCG              = 0x00100000 + 7,
-   // Available                           = 0x00200000 + 7,
+   TR_Disable8BitPrimitiveArrayCopyInlineSmallSizeWithoutREPMOVS = 0x00200000 + 7,
    TR_TraceRelocatableDataDetailsCG       = 0x00400000 + 7,
-   // Available                           = 0x00800000 + 7,
+   TR_Disable16BitPrimitiveArrayCopyInlineSmallSizeWithoutREPMOVS = 0x00800000 + 7,
    TR_TurnOffSelectiveNoOptServerIfNoStartupHint = 0x01000000 + 7,
    TR_TraceDominators                     = 0x02000000 + 7,
    TR_EnableHCR                           = 0x04000000 + 7, // enable hot code replacement
@@ -356,7 +356,7 @@ enum TR_CompilationOptions
 
    // Option word 9
    //
-   // Available                           = 0x00000020 + 9,
+   TR_SplitWarmAndColdBlocks              = 0x00000020 + 9,
    // Available                           = 0x00000040 + 9,
    TR_DisableTLHPrefetch                  = 0x00000080 + 9,
    TR_DisableJProfilerThread              = 0x00000100 + 9,
@@ -390,7 +390,7 @@ enum TR_CompilationOptions
    TR_DisableIProfilerDataDisclaiming     = 0x00000040 + 10,
    TR_DisclaimMemoryOnSwap                = 0x00000080 + 10,
    TR_FirstLevelProfiling                 = 0x00000100 + 10,
-   // Available                           = 0x00000200 + 10,
+   TR_EnableCodeCacheDisclaiming          = 0x00000200 + 10,
    // Available                           = 0x00000400 + 10,
    // Available                           = 0x00000800 + 10,
    // Available                           = 0x00001000 + 10,
@@ -1468,7 +1468,6 @@ public:
       _insertGCRTrees = false;
       _maxLimitedGRACandidates = 0;
       _maxLimitedGRARegs = 0;
-      _graFreqThresholdAtWarm = 0;
       _enableGPU = 0;
       _isAOTCompile = false;
       _jProfilingMethodRecompThreshold = 0;
@@ -1823,7 +1822,6 @@ public:
    int32_t getAlwaysWorthInliningThreshold() const { return _alwaysWorthInliningThreshold; }
    int32_t getMaxLimitedGRACandidates()   { return _maxLimitedGRACandidates; }
    int32_t getMaxLimitedGRARegs()         { return _maxLimitedGRARegs; }
-   int32_t getGRAFreqThresholdAtWarm()    { return _graFreqThresholdAtWarm; }
    int32_t getNumLimitedGRARegsWithheld();
 
    int32_t getProfilingCompNodecountThreshold()  { return _profilingCompNodecountThreshold; }
@@ -2483,7 +2481,6 @@ protected:
 
    int32_t                     _maxLimitedGRACandidates;
    int32_t                     _maxLimitedGRARegs;
-   int32_t                     _graFreqThresholdAtWarm;
 
    int32_t                     _enableGPU;
 

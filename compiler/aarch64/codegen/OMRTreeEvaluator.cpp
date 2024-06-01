@@ -7181,65 +7181,71 @@ inlineConstantLengthForwardArrayCopy(TR::Node *node, int64_t byteLen, TR::Regist
    if (byteLen == 0)
       return;
 
-   int64_t iteration64 = byteLen >> 6;
-   int32_t residue64 = byteLen & 0x3F;
+   int64_t iteration = byteLen >> 7;
+   int32_t residue = byteLen & 0x7F;
    TR::Register *dataReg1 = (byteLen >= 16) ? cg->allocateRegister(TR_VRF) : NULL;
-   TR::Register *dataReg2 = (residue64 & 0xF) ? cg->allocateRegister() : NULL;
+   TR::Register *dataReg2 = (byteLen >= 32) ? cg->allocateRegister(TR_VRF) : NULL;
+   TR::Register *dataReg3 = ((iteration > 1) || (residue & 0xF)) ? cg->allocateRegister() : NULL;
 
-   if (iteration64 > 1)
+   if (iteration > 1)
       {
-      TR::Register *cntReg = cg->allocateRegister();
-      loadConstant64(cg, node, iteration64, cntReg);
+      TR::Register *cntReg = dataReg3;
+      loadConstant64(cg, node, iteration, cntReg);
 
       TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
       generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
 
-      // Copy 16x4 bytes in a loop
-      generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpostq, node, dataReg1, TR::MemoryReference::createWithDisplacement(cg, srcReg, 16));
-      generateMemSrc1Instruction(cg, TR::InstOpCode::vstrpostq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, 16), dataReg1);
-      generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpostq, node, dataReg1, TR::MemoryReference::createWithDisplacement(cg, srcReg, 16));
-      generateMemSrc1Instruction(cg, TR::InstOpCode::vstrpostq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, 16), dataReg1);
-      generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpostq, node, dataReg1, TR::MemoryReference::createWithDisplacement(cg, srcReg, 16));
-      generateMemSrc1Instruction(cg, TR::InstOpCode::vstrpostq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, 16), dataReg1);
-      generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpostq, node, dataReg1, TR::MemoryReference::createWithDisplacement(cg, srcReg, 16));
-      generateMemSrc1Instruction(cg, TR::InstOpCode::vstrpostq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, 16), dataReg1);
+      // Copy 32x4 bytes in a loop
+      generateTrg2MemInstruction(cg, TR::InstOpCode::vldppostq, node, dataReg1, dataReg2, TR::MemoryReference::createWithDisplacement(cg, srcReg, 32));
+      generateMemSrc2Instruction(cg, TR::InstOpCode::vstppostq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, 32), dataReg1, dataReg2);
+      generateTrg2MemInstruction(cg, TR::InstOpCode::vldppostq, node, dataReg1, dataReg2, TR::MemoryReference::createWithDisplacement(cg, srcReg, 32));
+      generateMemSrc2Instruction(cg, TR::InstOpCode::vstppostq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, 32), dataReg1, dataReg2);
+      generateTrg2MemInstruction(cg, TR::InstOpCode::vldppostq, node, dataReg1, dataReg2, TR::MemoryReference::createWithDisplacement(cg, srcReg, 32));
+      generateMemSrc2Instruction(cg, TR::InstOpCode::vstppostq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, 32), dataReg1, dataReg2);
+      generateTrg2MemInstruction(cg, TR::InstOpCode::vldppostq, node, dataReg1, dataReg2, TR::MemoryReference::createWithDisplacement(cg, srcReg, 32));
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmx, node, cntReg, cntReg, 1);
+      generateMemSrc2Instruction(cg, TR::InstOpCode::vstppostq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, 32), dataReg1, dataReg2);
       generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, cntReg, loopLabel);
-
-      cg->stopUsingRegister(cntReg);
       }
-   else if (iteration64 == 1)
+   else if (iteration == 1)
       {
-      residue64 += 64;
+      residue += 128;
+      }
+
+   while (residue >= 32)
+      {
+      generateTrg2MemInstruction(cg, TR::InstOpCode::vldppostq, node, dataReg1, dataReg2, TR::MemoryReference::createWithDisplacement(cg, srcReg, 32));
+      generateMemSrc2Instruction(cg, TR::InstOpCode::vstppostq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, 32), dataReg1, dataReg2);
+      residue -= 32;
       }
 
    int32_t offset = 0;
-   while (residue64 > 0)
+   while (residue > 0)
       {
       TR::InstOpCode::Mnemonic loadOp;
       TR::InstOpCode::Mnemonic storeOp;
       int32_t dataSize;
-      TR::Register *dataReg = (residue64 >= 16) ? dataReg1 : dataReg2;
+      TR::Register *dataReg = (residue >= 16) ? dataReg1 : dataReg3;
 
-      if (residue64 >= 16)
+      if (residue >= 16)
          {
          loadOp  = TR::InstOpCode::vldrimmq;
          storeOp = TR::InstOpCode::vstrimmq;
          dataSize = 16;
          }
-      else if (residue64 >= 8)
+      else if (residue >= 8)
          {
          loadOp  = TR::InstOpCode::ldrimmx;
          storeOp = TR::InstOpCode::strimmx;
          dataSize = 8;
          }
-      else if (residue64 >= 4)
+      else if (residue >= 4)
          {
          loadOp  = TR::InstOpCode::ldrimmw;
          storeOp = TR::InstOpCode::strimmw;
          dataSize = 4;
          }
-      else if (residue64 >= 2)
+      else if (residue >= 2)
          {
          loadOp  = TR::InstOpCode::ldrhimm;
          storeOp = TR::InstOpCode::strhimm;
@@ -7255,13 +7261,15 @@ inlineConstantLengthForwardArrayCopy(TR::Node *node, int64_t byteLen, TR::Regist
       generateTrg1MemInstruction(cg, loadOp, node, dataReg, TR::MemoryReference::createWithDisplacement(cg, srcReg, offset));
       generateMemSrc1Instruction(cg, storeOp, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, offset), dataReg);
       offset += dataSize;
-      residue64 -= dataSize;
+      residue -= dataSize;
       }
 
    if (dataReg1)
       cg->stopUsingRegister(dataReg1);
    if (dataReg2)
       cg->stopUsingRegister(dataReg2);
+   if (dataReg3)
+      cg->stopUsingRegister(dataReg3);
 
    return;
    }
@@ -7272,68 +7280,74 @@ inlineConstantLengthBackwardArrayCopy(TR::Node *node, int64_t byteLen, TR::Regis
    if (byteLen == 0)
       return;
 
-   int64_t iteration64 = byteLen >> 6;
-   int32_t residue64 = byteLen & 0x3F;
+   int64_t iteration = byteLen >> 7;
+   int32_t residue = byteLen & 0x7F;
    TR::Register *dataReg1 = (byteLen >= 16) ? cg->allocateRegister(TR_VRF) : NULL;
-   TR::Register *dataReg2 = (residue64 & 0xF) ? cg->allocateRegister() : NULL;
+   TR::Register *dataReg2 = (byteLen >= 32) ? cg->allocateRegister(TR_VRF) : NULL;
+   TR::Register *dataReg3 = ((iteration > 1) || (residue & 0xF)) ? cg->allocateRegister() : NULL;
 
    // Adjusting scrReg and dstReg
    addConstant64(cg, node, srcReg, srcReg, byteLen);
    addConstant64(cg, node, dstReg, dstReg, byteLen);
 
-   if (iteration64 > 1)
+   if (iteration > 1)
       {
-      TR::Register *cntReg = cg->allocateRegister();
-      loadConstant64(cg, node, iteration64, cntReg);
+      TR::Register *cntReg = dataReg3;
+      loadConstant64(cg, node, iteration, cntReg);
 
       TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
       generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
 
-      // Copy 16x4 bytes in a loop
-      generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpreq, node, dataReg1, TR::MemoryReference::createWithDisplacement(cg, srcReg, -16));
-      generateMemSrc1Instruction(cg, TR::InstOpCode::vstrpreq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, -16), dataReg1);
-      generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpreq, node, dataReg1, TR::MemoryReference::createWithDisplacement(cg, srcReg, -16));
-      generateMemSrc1Instruction(cg, TR::InstOpCode::vstrpreq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, -16), dataReg1);
-      generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpreq, node, dataReg1, TR::MemoryReference::createWithDisplacement(cg, srcReg, -16));
-      generateMemSrc1Instruction(cg, TR::InstOpCode::vstrpreq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, -16), dataReg1);
-      generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpreq, node, dataReg1, TR::MemoryReference::createWithDisplacement(cg, srcReg, -16));
-      generateMemSrc1Instruction(cg, TR::InstOpCode::vstrpreq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, -16), dataReg1);
+      // Copy 32x4 bytes in a loop
+      generateTrg2MemInstruction(cg, TR::InstOpCode::vldppreq, node, dataReg1, dataReg2, TR::MemoryReference::createWithDisplacement(cg, srcReg, -32));
+      generateMemSrc2Instruction(cg, TR::InstOpCode::vstppreq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, -32), dataReg1, dataReg2);
+      generateTrg2MemInstruction(cg, TR::InstOpCode::vldppreq, node, dataReg1, dataReg2, TR::MemoryReference::createWithDisplacement(cg, srcReg, -32));
+      generateMemSrc2Instruction(cg, TR::InstOpCode::vstppreq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, -32), dataReg1, dataReg2);
+      generateTrg2MemInstruction(cg, TR::InstOpCode::vldppreq, node, dataReg1, dataReg2, TR::MemoryReference::createWithDisplacement(cg, srcReg, -32));
+      generateMemSrc2Instruction(cg, TR::InstOpCode::vstppreq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, -32), dataReg1, dataReg2);
+      generateTrg2MemInstruction(cg, TR::InstOpCode::vldppreq, node, dataReg1, dataReg2, TR::MemoryReference::createWithDisplacement(cg, srcReg, -32));
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmx, node, cntReg, cntReg, 1);
+      generateMemSrc2Instruction(cg, TR::InstOpCode::vstppreq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, -32), dataReg1, dataReg2);
       generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, cntReg, loopLabel);
-
-      cg->stopUsingRegister(cntReg);
       }
-   else if (iteration64 == 1)
+   else if (iteration == 1)
       {
-      residue64 += 64;
+      residue += 128;
       }
 
-   while (residue64 > 0)
+   while (residue >= 32)
+      {
+      generateTrg2MemInstruction(cg, TR::InstOpCode::vldppreq, node, dataReg1, dataReg2, TR::MemoryReference::createWithDisplacement(cg, srcReg, -32));
+      generateMemSrc2Instruction(cg, TR::InstOpCode::vstppreq, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, -32), dataReg1, dataReg2);
+      residue -= 32;
+      }
+
+   while (residue > 0)
       {
       TR::InstOpCode::Mnemonic loadOp;
       TR::InstOpCode::Mnemonic storeOp;
       int32_t dataSize;
-      TR::Register *dataReg = (residue64 >= 16) ? dataReg1 : dataReg2;
+      TR::Register *dataReg = (residue >= 16) ? dataReg1 : dataReg3;
 
-      if (residue64 >= 16)
+      if (residue >= 16)
          {
          loadOp  = TR::InstOpCode::vldrpreq;
          storeOp = TR::InstOpCode::vstrpreq;
          dataSize = 16;
          }
-      else if (residue64 >= 8)
+      else if (residue >= 8)
          {
          loadOp  = TR::InstOpCode::ldrprex;
          storeOp = TR::InstOpCode::strprex;
          dataSize = 8;
          }
-      else if (residue64 >= 4)
+      else if (residue >= 4)
          {
          loadOp  = TR::InstOpCode::ldrprew;
          storeOp = TR::InstOpCode::strprew;
          dataSize = 4;
          }
-      else if (residue64 >= 2)
+      else if (residue >= 2)
          {
          loadOp  = TR::InstOpCode::ldrhpre;
          storeOp = TR::InstOpCode::strhpre;
@@ -7348,7 +7362,7 @@ inlineConstantLengthBackwardArrayCopy(TR::Node *node, int64_t byteLen, TR::Regis
 
       generateTrg1MemInstruction(cg, loadOp, node, dataReg, TR::MemoryReference::createWithDisplacement(cg, srcReg, -dataSize));
       generateMemSrc1Instruction(cg, storeOp, node, TR::MemoryReference::createWithDisplacement(cg, dstReg, -dataSize), dataReg);
-      residue64 -= dataSize;
+      residue -= dataSize;
       }
 
    if (dataReg1)
@@ -7393,62 +7407,19 @@ OMR::ARM64::TreeEvaluator::stopUsingCopyReg(TR::Node *node, TR::Register *&reg, 
 static void
 generateCallToArrayCopyHelper(TR::Node *node, TR::Register *srcAddrReg, TR::Register *dstAddrReg, TR::Register *lengthReg,  TR::RegisterDependencyConditions *deps, TR::CodeGenerator *cg)
    {
-   // Start of assembly helper path.
-   TR_RuntimeHelper helper;
-   TR::DataType dt = node->getArrayCopyElementType();
-   uint32_t elementSize;
-   if (node->isReferenceArrayCopy() || dt == TR::Address)
-      elementSize = TR::Compiler->om.sizeofReferenceField();
-   else
-      elementSize = TR::Symbol::convertTypeToSize(dt);
+   TR_RuntimeHelper helper = TR_ARM64arrayCopy; // Generic entry point
 
    if (node->isForwardArrayCopy())
       {
-      switch (elementSize)
-         {
-         case 16:
-            helper = TR_ARM64forwardQuadWordArrayCopy;
-            break;
-         case 8:
-            helper = TR_ARM64forwardDoubleWordArrayCopy;
-            break;
-         case 4:
-            helper = TR_ARM64forwardWordArrayCopy;
-            break;
-         case 2:
-            helper = TR_ARM64forwardHalfWordArrayCopy;
-            break;
-         default:
-            helper = TR_ARM64forwardArrayCopy;
-            break;
-         }
+      helper = TR_ARM64forwardArrayCopy;
       }
    else if (node->isBackwardArrayCopy())
       {
       // Adjusting src and dst addresses
       generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, srcAddrReg, srcAddrReg, lengthReg);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, dstAddrReg, dstAddrReg, lengthReg);
-      switch (elementSize)
-         {
-         case 16:
-            helper = TR_ARM64backwardQuadWordArrayCopy;
-            break;
-         case 8:
-            helper = TR_ARM64backwardDoubleWordArrayCopy;
-            break;
-         case 4:
-            helper = TR_ARM64backwardWordArrayCopy;
-            break;
-         case 2:
-            helper = TR_ARM64backwardHalfWordArrayCopy;
-            break;
-         default:
-            helper = TR_ARM64backwardArrayCopy;
-            break;
-         }
+      helper = TR_ARM64backwardArrayCopy;
       }
-   else // We are not sure it is forward or we have to do backward.
-      helper = TR_ARM64arrayCopy;
 
    TR::SymbolReference *arrayCopyHelper = cg->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
 
@@ -7459,6 +7430,7 @@ generateCallToArrayCopyHelper(TR::Node *node, TR::Register *srcAddrReg, TR::Regi
 
    return;
    }
+
 TR::Register *
 OMR::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -7548,15 +7520,17 @@ OMR::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator 
       stopUsingCopyReg5 = true;
       }
 
-   // x0-x4 are destroyed in the helper
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(5, 5, cg->trMemory());
+   // x0-x3 and v30-v31 are destroyed in the helper
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(6, 6, cg->trMemory());
    TR::addDependency(deps, lengthReg, TR::RealRegister::x0, TR_GPR, cg);
    TR::addDependency(deps, srcAddrReg, TR::RealRegister::x1, TR_GPR, cg);
    TR::addDependency(deps, dstAddrReg, TR::RealRegister::x2, TR_GPR, cg);
    TR::addDependency(deps, NULL, TR::RealRegister::x3, TR_GPR, cg);
-   TR::addDependency(deps, NULL, TR::RealRegister::x4, TR_GPR, cg);
+   TR::addDependency(deps, NULL, TR::RealRegister::v30, TR_FPR, cg);
+   TR::addDependency(deps, NULL, TR::RealRegister::v31, TR_FPR, cg);
    TR::Register *x3Reg = deps->searchPostConditionRegister(TR::RealRegister::x3);
-   TR::Register *x4Reg = deps->searchPostConditionRegister(TR::RealRegister::x4);
+   TR::Register *v30Reg = deps->searchPostConditionRegister(TR::RealRegister::v30);
+   TR::Register *v31Reg = deps->searchPostConditionRegister(TR::RealRegister::v31);
 
    generateCallToArrayCopyHelper(node, srcAddrReg, dstAddrReg, lengthReg, deps, cg);
 
@@ -7579,7 +7553,8 @@ OMR::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator 
       cg->stopUsingRegister(lengthReg);
 
    cg->stopUsingRegister(x3Reg);
-   cg->stopUsingRegister(x4Reg);
+   cg->stopUsingRegister(v30Reg);
+   cg->stopUsingRegister(v31Reg);
 
    cg->decReferenceCount(srcAddrNode);
    cg->decReferenceCount(dstAddrNode);

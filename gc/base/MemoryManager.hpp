@@ -54,14 +54,14 @@ private:
 	 * @param env environment
 	 * @return true if Virtual Memory can be used
 	 */
-	MMINLINE bool isMetadataAllocatedInVirtualMemory(MM_EnvironmentBase* env)
+	MMINLINE bool isMetadataAllocatedInVirtualMemory(MM_EnvironmentBase *env)
 	{
 		bool result = true;
 
 #if (defined(AIXPPC) && !defined(PPC64))
 		result = false;
 #elif(defined(AIXPPC) && defined(OMR_GC_REALTIME))
-		MM_GCExtensionsBase* extensions = env->getExtensions();
+		MM_GCExtensionsBase *extensions = env->getExtensions();
 		if (extensions->isMetronomeGC()) {
 			result = false;
 		}
@@ -101,9 +101,9 @@ protected:
 	 * @param env environment
 	 * @return true if an initialization is successful
 	 */
-	bool initialize(MM_EnvironmentBase* env);
+	bool initialize(MM_EnvironmentBase *env);
 
-	MM_MemoryManager(MM_EnvironmentBase* env)
+	MM_MemoryManager(MM_EnvironmentBase *env)
 		: _preAllocated()
 	{
 		_typeId = __FUNCTION__;
@@ -116,7 +116,7 @@ public:
 	 * @param env environment
 	 * @return pointer to created instance of class
 	 */
-	static MM_MemoryManager* newInstance(MM_EnvironmentBase* env);
+	static MM_MemoryManager *newInstance(MM_EnvironmentBase *env);
 
 	/**
 	 * Check is provided page size larger then default page size from port library
@@ -125,14 +125,14 @@ public:
 	 * @param pageSize requested page size
 	 * @return true if page size is larger then default
 	 */
-	bool isLargePage(MM_EnvironmentBase* env, uintptr_t pageSize);
+	bool isLargePage(MM_EnvironmentBase *env, uintptr_t pageSize);
 
 	/**
 	 * Kill this instance of the class
 	 *
 	 * @param env environment
 	 */
-	void kill(MM_EnvironmentBase* env);
+	void kill(MM_EnvironmentBase *env);
 
 	/**
 	 * Create virtual memory instance
@@ -147,7 +147,7 @@ public:
 	 * @return true if pointer to virtual memory is not NULL
 	 *
 	 */
-	bool createVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryHandle* handle, uintptr_t heapAlignment, uintptr_t size, uintptr_t tailPadding, void* preferredAddress, void* ceiling);
+	bool createVirtualMemoryForHeap(MM_EnvironmentBase *env, MM_MemoryHandle *handle, uintptr_t heapAlignment, uintptr_t size, uintptr_t tailPadding, void *preferredAddress, void *ceiling);
 
 	/**
 	 * Creates the correct type of VirtualMemory object for the current platform and configuration
@@ -158,7 +158,7 @@ public:
 	 * @param size required memory size
 	 * @return true if pointer to virtual memory is not NULL
 	 */
-	bool createVirtualMemoryForMetadata(MM_EnvironmentBase* env, MM_MemoryHandle* handle, uintptr_t heapAlignment, uintptr_t size);
+	bool createVirtualMemoryForMetadata(MM_EnvironmentBase *env, MM_MemoryHandle *handle, uintptr_t heapAlignment, uintptr_t size);
 
 	/**
 	 * Destroy virtual memory instance
@@ -166,7 +166,7 @@ public:
 	 * @param env environment
 	 * @param[in/out] handle pointer to memory handle
 	 */
-	void destroyVirtualMemory(MM_EnvironmentBase* env, MM_MemoryHandle* handle);
+	void destroyVirtualMemory(MM_EnvironmentBase *env, MM_MemoryHandle *handle);
 	
 	/**
 	 * Destroy virtual memory instance, plus everything that is heap specific (for example, shadow heap)
@@ -174,7 +174,7 @@ public:
 	 * @param env environment
 	 * @param[in/out] handle pointer to memory handle
 	 */
-	void destroyVirtualMemoryForHeap(MM_EnvironmentBase* env, MM_MemoryHandle* handle);
+	void destroyVirtualMemoryForHeap(MM_EnvironmentBase *env, MM_MemoryHandle *handle);
 	
 #if defined(OMR_GC_DOUBLE_MAP_ARRAYLETS)
 	/**
@@ -191,7 +191,7 @@ public:
  	 * @param pageSize
  	 * @param category
   	 */
-	void *doubleMapArraylet(MM_MemoryHandle* handle, MM_EnvironmentBase *env, void* arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize);
+	void *doubleMapArraylet(MM_MemoryHandle *handle, MM_EnvironmentBase *env, void *arrayletLeaves[], UDATA arrayletLeafCount, UDATA arrayletLeafSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize);
 
 	/**
 	 * Double maps regions. Discontiguous regions are double mapped to one contiguous region.
@@ -208,7 +208,7 @@ public:
 	 *
 	 * @return pointer to contiguous region to which regions were double mapped into, NULL is returned if unsuccessful
 	 */
-	void *doubleMapRegions(MM_MemoryHandle* handle, MM_EnvironmentBase *env, void* regions[], UDATA regionsCount, UDATA regionSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize, void *preferredAddress);
+	void *doubleMapRegions(MM_MemoryHandle *handle, MM_EnvironmentBase *env, void *regions[], UDATA regionsCount, UDATA regionSize, UDATA byteAmount, struct J9PortVmemIdentifier *newIdentifier, UDATA pageSize, void *preferredAddress);
 #endif /* defined(OMR_GC_DOUBLE_MAP_ARRAYLETS) */
 
 	/**
@@ -219,7 +219,7 @@ public:
 	 * @param size size of memory should be commited
 	 * @return true if succeed
 	 */
-	bool commitMemory(MM_MemoryHandle* handle, void* address, uintptr_t size);
+	bool commitMemory(MM_MemoryHandle *handle, void *address, uintptr_t size);
 
 	/**
 	 * Decommit memory for range for specified virtual memory instance
@@ -232,7 +232,7 @@ public:
 	 * @return true if succeed
 	 *
 	 */
-	bool decommitMemory(MM_MemoryHandle* handle, void* address, uintptr_t size, void* lowValidAddress, void* highValidAddress);
+	bool decommitMemory(MM_MemoryHandle *handle, void *address, uintptr_t size, void *lowValidAddress, void *highValidAddress);
 
 #if defined(OMR_GC_VLHGC) || defined(OMR_GC_MODRON_SCAVENGER)
 	/*
@@ -254,9 +254,9 @@ public:
 	 * @param handle pointer to memory handle
 	 * @param rounding rounding value
 	 */
-	MMINLINE void roundDownTop(MM_MemoryHandle* handle, uintptr_t rounding)
+	MMINLINE void roundDownTop(MM_MemoryHandle *handle, uintptr_t rounding)
 	{
-		MM_VirtualMemory* memory = handle->getVirtualMemory();
+		MM_VirtualMemory *memory = handle->getVirtualMemory();
 		memory->roundDownTop(rounding);
 		/* heapTop can be modified, refresh it in the memory handle */
 		handle->setMemoryTop(memory->getHeapTop());
@@ -268,7 +268,7 @@ public:
 	 * @param handle pointer to memory handle
 	 * @return pointer to base address of virtual memory
 	 */
-	MMINLINE void* getHeapBase(MM_MemoryHandle* handle)
+	MMINLINE void *getHeapBase(MM_MemoryHandle *handle)
 	{
 		return handle->getMemoryBase();
 	};
@@ -279,7 +279,7 @@ public:
 	 * @param handle pointer to memory handle
 	 * @return file descriptor associated with heap, if non existent return -1
 	 */
-	int getHeapFileDescriptor(MM_MemoryHandle* handle);
+	int getHeapFileDescriptor(MM_MemoryHandle *handle);
 
 	/**
 	 * Return the top of the heap of the virtual memory object.
@@ -287,7 +287,7 @@ public:
 	 * @param handle pointer to memory handle
 	 * @return pointer to top address of virtual memory
 	 */
-	MMINLINE void* getHeapTop(MM_MemoryHandle* handle)
+	MMINLINE void *getHeapTop(MM_MemoryHandle *handle)
 	{
 		return handle->getMemoryTop();
 	};
@@ -298,9 +298,9 @@ public:
 	 * @param handle pointer to memory handle
 	 * @return page size for pages this virtual memory is actually allocated
 	 */
-	MMINLINE uintptr_t getPageSize(MM_MemoryHandle* handle)
+	MMINLINE uintptr_t getPageSize(MM_MemoryHandle *handle)
 	{
-		MM_VirtualMemory* memory = handle->getVirtualMemory();
+		MM_VirtualMemory *memory = handle->getVirtualMemory();
 		return memory->getPageSize();
 	};
 
@@ -310,9 +310,9 @@ public:
 	 * @param handle pointer to memory handle
 	 * @return page flags for pages this virtual memory is actually allocated
 	 */
-	MMINLINE uintptr_t getPageFlags(MM_MemoryHandle* handle)
+	MMINLINE uintptr_t getPageFlags(MM_MemoryHandle *handle)
 	{
-		MM_VirtualMemory* memory = handle->getVirtualMemory();
+		MM_VirtualMemory *memory = handle->getVirtualMemory();
 		return memory->getPageFlags();
 	};
 
@@ -322,7 +322,7 @@ public:
 	 * @param handle pointer to memory handle
 	 * @return maximum size of memory for this virtual memory instance
 	 */
-	MMINLINE uintptr_t getMaximumSize(MM_MemoryHandle* handle)
+	MMINLINE uintptr_t getMaximumSize(MM_MemoryHandle *handle)
 	{
 		return (uintptr_t)getHeapTop(handle) - (uintptr_t)getHeapBase(handle);
 	};
@@ -334,7 +334,7 @@ public:
 	 * @param address The base address of the range.
 	 * @return The size of the range.
 	 */
-	MMINLINE uintptr_t calculateOffsetToHeapTop(MM_MemoryHandle* handle, void* address)
+	MMINLINE uintptr_t calculateOffsetToHeapTop(MM_MemoryHandle *handle, void *address)
 	{
 		return (uintptr_t)getHeapTop(handle) - (uintptr_t)address;
 	};
@@ -346,7 +346,7 @@ public:
 	 * @param address The address to calculate offset for.
 	 * @return The offset from _heapBase.
 	 */
-	MMINLINE uintptr_t calculateOffsetFromHeapBase(MM_MemoryHandle* handle, void* address)
+	MMINLINE uintptr_t calculateOffsetFromHeapBase(MM_MemoryHandle *handle, void *address)
 	{
 		return (uintptr_t)address - (uintptr_t)getHeapBase(handle);
 	};

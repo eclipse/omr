@@ -8105,7 +8105,7 @@ bool TR_LoopVersioner::suppressInvarianceAndPrivatization(TR::SymbolReference *s
          return true;
 
       // Class flags are mutable.
-      case TR::SymbolReferenceTable::isClassAndDepthFlagsSymbol:
+      case TR::SymbolReferenceTable::isClassDepthAndFlagsSymbol:
          return true;
 
 #ifdef J9_PROJECT_SPECIFIC

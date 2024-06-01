@@ -144,7 +144,7 @@ if(OMR_JITBUILDER AND OMR_ENV_DATA64)
 	add_subdirectory(release)
 endif()
 
-if(OMR_JITBUILDER_TEST)
+if(OMR_JITBUILDER_TEST AND NOT (OMR_OS_OSX AND OMR_ARCH_X86))
 	add_test(
 		NAME TestJitBuilderAPIGenerator
 		COMMAND ${PYTHON_EXECUTABLE} run_tests.py

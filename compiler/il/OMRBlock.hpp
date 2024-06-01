@@ -448,6 +448,8 @@ class OMR_EXTENSIBLE Block : public TR::CFGNode
    bool wasHeaderOfCanonicalizedLoop()                { return _flags.testAny(_wasHeaderOfCanonicalizedLoop); }
    void setWasHeaderOfCanonicalizedLoop(bool b)       { _flags.set(_wasHeaderOfCanonicalizedLoop, b); }
 
+   bool isLastWarmBlock()                             { return _flags.testAny(_isLastWarmBlock); }
+   void setIsLastWarmBlock(bool b = true)             { _flags.set(_isLastWarmBlock, b); }
 
    bool isSyntheticHandler()                          { return  _catchBlockExtension && _catchBlockExtension->_isSyntheticHandler; }
    void setIsSyntheticHandler();
@@ -534,6 +536,7 @@ class OMR_EXTENSIBLE Block : public TR::CFGNode
       _isCreatedByVersioning                = 0x02000000,
       _isEntryOfShortRunningLoop            = 0x04000000,
       _wasHeaderOfCanonicalizedLoop         = 0x08000000,
+      _isLastWarmBlock                      = 0x10000000,
       };
 
    TR::TreeTop *                         _pEntry;

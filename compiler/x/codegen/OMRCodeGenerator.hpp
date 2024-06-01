@@ -195,25 +195,29 @@ struct TR_X86ProcessorInfo
    uint32_t getCPUExtendedModel(uint32_t signature)  {return (signature & CPUID_SIGNATURE_EXTENDEDMODEL_MASK) >> 16;}
    uint32_t getCPUExtendedFamily(uint32_t signature) {return (signature & CPUID_SIGNATURE_EXTENDEDFAMILY_MASK) >> 20;}
 
-   bool isIntelPentium()      { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelPentium; }
-   bool isIntelP6()           { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelP6; }
-   bool isIntelPentium4()     { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelPentium4; }
-   bool isIntelCore2()        { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelCore2; }
-   bool isIntelTulsa()        { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelTulsa; }
-   bool isIntelNehalem()      { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelNehalem; }
-   bool isIntelWestmere()     { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelWestmere; }
-   bool isIntelSandyBridge()  { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelSandyBridge; }
-   bool isIntelIvyBridge()    { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelIvyBridge; }
-   bool isIntelHaswell()      { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelHaswell; }
-   bool isIntelBroadwell()    { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelBroadwell; }
-   bool isIntelSkylake()      { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelSkylake; }
+   bool isIntelPentium()        { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelPentium; }
+   bool isIntelP6()             { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelP6; }
+   bool isIntelPentium4()       { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelPentium4; }
+   bool isIntelCore2()          { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelCore2; }
+   bool isIntelTulsa()          { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelTulsa; }
+   bool isIntelNehalem()        { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelNehalem; }
+   bool isIntelWestmere()       { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelWestmere; }
+   bool isIntelSandyBridge()    { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelSandyBridge; }
+   bool isIntelIvyBridge()      { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelIvyBridge; }
+   bool isIntelHaswell()        { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelHaswell; }
+   bool isIntelBroadwell()      { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelBroadwell; }
+   bool isIntelSkylake()        { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelSkylake; }
+   bool isIntelCascadeLake()    { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelCascadeLake; }
+   bool isIntelIceLake()        { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelIceLake; }
+   bool isIntelSapphireRapids() { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelSapphireRapids; }
+   bool isIntelEmeraldRapids()  { return (_processorDescription & 0x000000ff) == TR_ProcessorIntelEmeraldRapids; }
 
-   bool isIntelOldMachine()   { return (isIntelPentium() || isIntelP6() || isIntelPentium4() || isIntelCore2() || isIntelTulsa() || isIntelNehalem()); }
+   bool isIntelOldMachine()     { return (isIntelPentium() || isIntelP6() || isIntelPentium4() || isIntelCore2() || isIntelTulsa() || isIntelNehalem()); }
 
-   bool isAMDK6()             { return (_processorDescription & 0x000000fe) == TR_ProcessorAMDK5; } // accept either K5 or K6
-   bool isAMDAthlonDuron()    { return (_processorDescription & 0x000000ff) == TR_ProcessorAMDAthlonDuron; }
-   bool isAMDOpteron()        { return (_processorDescription & 0x000000ff) == TR_ProcessorAMDOpteron; }
-   bool isAMD15h()            { return (_processorDescription & 0x000000ff) == TR_ProcessorAMDFamily15h; }
+   bool isAMDK6()               { return (_processorDescription & 0x000000fe) == TR_ProcessorAMDK5; } // accept either K5 or K6
+   bool isAMDAthlonDuron()      { return (_processorDescription & 0x000000ff) == TR_ProcessorAMDAthlonDuron; }
+   bool isAMDOpteron()          { return (_processorDescription & 0x000000ff) == TR_ProcessorAMDOpteron; }
+   bool isAMD15h()              { return (_processorDescription & 0x000000ff) == TR_ProcessorAMDFamily15h; }
 
    bool isGenuineIntel() {return _vendorFlags.testAny(TR_GenuineIntel);}
    bool isAuthenticAMD() {return _vendorFlags.testAny(TR_AuthenticAMD);}

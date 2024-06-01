@@ -106,49 +106,32 @@ void OMR::GlobalSet::collectBlocks()
    TR_BitVectorIterator bvi(references);
    TR::NodeChecklist visited(_comp);
 
-   TR::TreeTop *startTree = _comp->getStartTree();
-   TR::TreeTop *endTree = NULL;
-   TR::TreeTop *treeTop;
-   TR::TreeTop *exitTreeTop = startTree->getExtendedBlockExitTreeTop();
-   // Process each block in treetop order
-   //
-   for (treeTop = startTree; (treeTop != endTree); treeTop = exitTreeTop->getNextTreeTop())
+   for (TR::CFGNode *node = _comp->getFlowGraph()->getFirstNode(); node; node = node->getNext())
       {
-      TR::Block *block = NULL;
-      exitTreeTop = treeTop->getExtendedBlockExitTreeTop();
+      TR::Block *block = toBlock(node);
+      if (!block)
+         continue;
 
       // Collect all autos/parms used in this block
+      references.empty();
       visited.remove(visited);
-      for (TR::TreeTop * tt = treeTop; tt && tt != exitTreeTop; tt = tt->getNextTreeTop())
-         {
-         if (tt->getNode()->getOpCodeValue() == TR::BBStart)
-            {
-            references.empty();
-            block = tt->getNode()->getBlock();
-            }
-
+      for (TR::TreeTop * tt = block->getEntry(); tt && tt != block->getExit(); tt = tt->getNextTreeTop())
          collectReferencedAutoSymRefs(tt->getNode(), references, visited);
 
-         if (tt->getNextTreeTop()->getNode()->getOpCodeValue() == TR::BBEnd)
+      // Set this block as referencing the collected autos/params
+      // Also set any blocks that extend this one
+      bvi.setBitVector(references);
+      while (bvi.hasMoreElements())
+         {
+         uint32_t symRefNum = bvi.getNextElement();
+         auto lookup = _blocksPerAuto.find(symRefNum);
+         if (lookup != _blocksPerAuto.end())
+            lookup->second->set(block->getNumber());
+         else
             {
-            // Set this block as referencing the collected autos/params
-            //
-            bvi.setBitVector(references);
-            while (bvi.hasMoreElements())
-               {
-               uint32_t symRefNum = bvi.getNextElement();
-               auto lookup = _blocksPerAuto.find(symRefNum);
-               if (lookup != _blocksPerAuto.end())
-                  {
-                  lookup->second->set(block->getNumber());
-                  }
-               else
-                  {
-                  TR_BitVector *blocks = new (_region) TR_BitVector(_region);
-                  blocks->set(block->getNumber());
-                  _blocksPerAuto[symRefNum] = blocks;
-                  }
-               }
+            TR_BitVector *blocks = new (_region) TR_BitVector(_region);
+            blocks->set(block->getNumber());
+            _blocksPerAuto[symRefNum] = blocks;
             }
          }
       }

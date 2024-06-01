@@ -507,7 +507,7 @@ MM_Configuration::initializeGCParameters(MM_EnvironmentBase *env)
 	/* initialize default split freelist split amount */
 	if (!extensions->splitFreeListAmountForced) {
 		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
-		uintptr_t freeListSplitAmount = (omrsysinfo_get_number_CPUs_by_type(OMRPORT_CPU_ONLINE) - 1) / 8  +  1;
+		uintptr_t freeListSplitAmount = (omrsysinfo_get_number_CPUs_by_type(OMRPORT_CPU_TARGET) - 1) / 8  +  1;
 #if defined(OMR_GC_MODRON_SCAVENGER)
 		if (extensions->scavengerEnabled) {
 			freeListSplitAmount = splitAmount;

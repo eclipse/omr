@@ -31,3 +31,7 @@ NeedsGCMapBit,
 // Instruction requires an AOT relocation
 //
 NeedsAOTRelocation,
+
+// Last warm instruction
+//
+LastWarmInstruction,

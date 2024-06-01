@@ -73,7 +73,7 @@ static OMR::TreeInfo *findOrCreateTreeInfo(TR::TreeTop *treeTop, List<OMR::TreeI
          return t;
       }
 
-   t = new (comp->trStackMemory()) OMR::TreeInfo(treeTop, 0);
+   t = new (targetTrees->getRegion()) OMR::TreeInfo(treeTop, 0);
    targetTrees->add(t);
    return t;
    }
@@ -433,8 +433,7 @@ TR::Optimization *TR::DeadTreesElimination::create(TR::OptimizationManager *mana
 
 
 TR::DeadTreesElimination::DeadTreesElimination(TR::OptimizationManager *manager)
-   : TR::Optimization(manager),
-     _targetTrees(manager->trMemory())
+   : TR::Optimization(manager)
    {
    _cannotBeEliminated = false;
    _delayedRegStores = false;
@@ -473,8 +472,6 @@ void TR::DeadTreesElimination::prePerformOnBlocks()
    {
    _cannotBeEliminated = false;
    _delayedRegStores = false;
-
-   _targetTrees.deleteAll();
 
    /*
     * Walk through all the blocks to remove trivial dead trees in the following forms:
@@ -759,6 +756,9 @@ static bool treeCanPossiblyBeRemoved(TR::Node *node)
 int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *endTree)
    {
    TR::StackMemoryRegion stackRegion(*comp()->trMemory());
+
+   List<OMR::TreeInfo> targetTrees(stackRegion);
+
    LongestPathMap longestPaths(std::less<TR::Node*>(), stackRegion);
 
    typedef TR::typed_allocator<CRAnchor, TR::Region&> CRAnchorAlloc;
@@ -894,7 +894,7 @@ int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *e
                   visitCount,
                   comp(),
                   this,
-                  &_targetTrees,
+                  &targetTrees,
                   _cannotBeEliminated,
                   longestPaths);
                }

@@ -3248,7 +3248,7 @@ static void decomposeMultiply(TR::Node *node, TR::Simplifier *s, bool isLong)
    int count = 0;
    int i;
    char bitPosition[64];
-   char operationType[64];
+   char operationType[128];
    char temp;
 
    count = decomposeConstant(bitPosition, operationType, isLong?secondChild->getLongInt():secondChild->getInt(), isLong?64:32);

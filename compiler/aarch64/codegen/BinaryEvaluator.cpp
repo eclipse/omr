@@ -1576,9 +1576,17 @@ static TR::Register *shiftHelper(TR::Node *node, TR::ARM64ShiftCode shiftType, T
    if (secondOp == TR::iconst)
       {
       int32_t value = secondChild->getInt();
-      if (value == 0 && firstChild->getReferenceCount() == 1)
+      if (value == 0)
          {
-         trgReg = srcReg;
+         if (firstChild->getReferenceCount() == 1)
+            {
+            trgReg = srcReg;
+            }
+         else
+            {
+            trgReg = cg->allocateRegister();
+            generateMovInstruction(cg, node, trgReg, srcReg, is64bit);
+            }
          }
       else
          {

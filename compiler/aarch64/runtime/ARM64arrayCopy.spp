@@ -38,76 +38,12 @@
 	.text
 	.align	2
 
-// These are entry points for halfword, word and doubleword alignment of arrays to be copied
-// in forward direction to avoid multiple checks in generic forward copy entry point,
-// when the alignment is known.
-//
-// in:    x0 - length in bytes
-//        x1 - src addr
-//        x2 - dst addr
-
-FUNC_LABEL(__fwHalfWordArrayCopy):
-	cbz	x0, finished			// return if no bytes to copy
-	cmp	x1, x2
-	beq	finished			// return if srcAddr == dstAddr
-	b	fwBothAlign2
-
-FUNC_LABEL(__fwWordArrayCopy):
-	cbz	x0, finished			// return if no bytes to copy
-	cmp	x1, x2
-	beq	finished			// return if srcAddr == dstAddr
-	b	fwBothAlign4
-
-FUNC_LABEL(__fwDoubleWordArrayCopy):
-	cbz	x0, finished			// return if no bytes to copy
-	cmp	x1, x2
-	beq	finished			// return if srcAddr == dstAddr
-	b	fwBothAlign8
-
-FUNC_LABEL(__fwQuadWordArrayCopy):
-	cbz	x0, finished			// return if no bytes to copy
-	cmp	x1, x2
-	beq	finished			// return if srcAddr == dstAddr
-	b	fwBothAlign16
-
-// These are entry points for halfword, word and doubleword alignment of arrays to be copied
-// in backward direction to avoid multiple checks in generic backward copy entry point,
-// when the alignment is known.
-//
-// in:    x0 - length in bytes
-//        x1 - src addr + length
-//        x2 - dst addr + length
-
-FUNC_LABEL(__bwHalfWordArrayCopy):
-	cbz	x0, finished			// return if no bytes to copy
-	cmp	x1, x2
-	beq	finished			// return if srcAddr == dstAddr
-	b	bwBothAlign2
-
-FUNC_LABEL(__bwWordArrayCopy):
-	cbz	x0, finished			// return if no bytes to copy
-	cmp	x1, x2
-	beq	finished			// return if srcAddr == dstAddr
-	b	bwBothAlign4
-
-FUNC_LABEL(__bwDoubleWordArrayCopy):
-	cbz	x0, finished			// return if no bytes to copy
-	cmp	x1, x2
-	beq	finished			// return if srcAddr == dstAddr
-	b	bwBothAlign8
-
-FUNC_LABEL(__bwQuadWordArrayCopy):
-	cbz	x0, finished			// return if no bytes to copy
-	cmp	x1, x2
-	beq	finished			// return if srcAddr == dstAddr
-	b	bwBothAlign16
-
 // This is a generic entry point that will determine which direction(forward/backward) to copy as appropriate.
 //
 // in:    x0 - length in bytes
 //        x1 - src addr
 //        x2 - dst addr
-// trash: x3, x4
+// trash: x3, q30, q31
 
 FUNC_LABEL(__arrayCopy):
 	cbz	x0, finished			// return if no bytes to copy
@@ -119,123 +55,48 @@ FUNC_LABEL(__arrayCopy):
 
 // This assembler function can be called during runtime,
 // instead of emmitting these instructions through functions.
-// Forward arraycopy function checks the alignment of the data
-// and goes into the respective loop to copy elements in forward direction.
 //
 // in:    x0 - length in bytes
 //        x1 - src addr
 //        x2 - dst addr
-// trash: x3, x4
+// trash: x3, q30, q31
 
 FUNC_LABEL(__forwardArrayCopy):
-	cbz	x0, finished			// return if no bytes to copy
 	cmp	x1, x2
 	beq	finished			// return if srcAddr == dstAddr
-	tst	x2, #1
-	beq	fwDstAlign2			// dstAddr is 2-byte aligned
-	ldrb	w3, [x1], #1
-	sub	x0, x0, #1
-	strb	w3, [x2], #1
-fwDstAlign2:
-	cmp	x0, #2
-	blt	fwByteCopy			// less than 2 bytes remaining
-	tst	x1, #1
-	bne	fwByteCopyLoop			// srcAddr is not 2-byte aligned
-fwBothAlign2:
-	tst	x2, #2
-	beq	fwDstAlign4			// dstAddr is 4-byte aligned
-	ldrh	w3, [x1], #2
-	sub	x0, x0, #2
-	strh	w3, [x2], #2
-fwDstAlign4:
-	cmp	x0, #4
-	blt	fwHalfWordCopy			// less than 4 bytes remaining
-	tst	x1, #2
-	bne	fwHalfWordCopyLoop		// srcAddr is not 4-byte aligned
-fwBothAlign4:
-	tst	x2, #4
-	beq	fwDstAlign8			// dstAddr is 8-byte aligned
+	asr	x3, x0, 6			// loop count
+	cbz	x3, fwAC32
+fwACLoop:
+	// Copy 32x2 bytes
+	ldp	q30, q31, [x1], #32
+	subs	x3, x3, #1
+	stp	q30, q31, [x2], #32
+	ldp	q30, q31, [x1], #32
+	stp	q30, q31, [x2], #32
+	bne	fwACLoop
+fwAC32:
+	tbz	x0, #5, fwAC16			// test bit 5
+	ldp	q30, q31, [x1], #32
+	stp	q30, q31, [x2], #32
+fwAC16:
+	tbz	x0, #4, fwAC8			// test bit 4
+	ldr	q30, [x1], #16
+	str	q30, [x2], #16
+fwAC8:
+	tbz	x0, #3, fwAC4			// test bit 3
+	ldr	x3, [x1], #8
+	str	x3, [x2], #8
+fwAC4:
+	tbz	x0, #2, fwAC2			// test bit 2
 	ldr	w3, [x1], #4
-	sub	x0, x0, #4
 	str	w3, [x2], #4
-fwDstAlign8:
-	cmp	x0, #8
-	blt	fwWordCopy			// less than 8 bytes remaining
-	tst	x1, #4
-	bne	fwWordCopyLoop			// srcAddr is not 8-byte aligned
-fwBothAlign8:
-	tst	x2, #8
-	beq	fwDstAlign16			// dstAddr is 16-byte aligned
-	ldr	x3, [x1], #8
-	sub	x0, x0, #8
-	str	x3, [x2], #8
-fwDstAlign16:
-	tst	x1, #8
-	bne	fwDoubleWordCopyLoop		// srcAddr is not 16-byte aligned
-fwQuadWordCopyLoop:
-	// Both srcAddr and dstAddr are 16-byte aligned
-	cmp	x0, #16
-	blt	fwDoubleWordCopy		// less than 16 bytes remaining
-fwBothAlign16:
-	ldp	x3, x4, [x1], #16
-	sub	x0, x0, #16
-	stp	x3, x4, [x2], #16
-	b	fwQuadWordCopyLoop
-fwDoubleWordCopyLoop:
-	// Both srcAddr and dstAddr are 8-byte aligned
-	cmp	x0, #8
-	blt	fwWordCopy			// less than 8 bytes remaining
-	ldr	x3, [x1], #8
-	sub	x0, x0, #8
-	str	x3, [x2], #8
-	b	fwDoubleWordCopyLoop
-fwWordCopyLoop:
-	// Both srcAddr and dstAddr are 4-byte aligned
-	cmp	x0, #4
-	blt	fwHalfWordCopy
-	ldr	w3, [x1], #4			// less than 4 bytes remaining
-	sub	x0, x0, #4
-	str	w3, [x2], #4
-	b	fwWordCopyLoop
-fwHalfWordCopyLoop:
-	// Both srcAddr and dstAddr are 2-byte aligned
-	cmp	x0, #2
-	blt	fwByteCopy			// less than 2 bytes remaining
+fwAC2:
+	tbz	x0, #1, fwAC1			// test bit 1
 	ldrh	w3, [x1], #2
-	sub	x0, x0, #2
 	strh	w3, [x2], #2
-	b	fwHalfWordCopyLoop
-fwByteCopyLoop:
-	cbz	x0, finished
+fwAC1:
+	tbz	x0, #0, finished		// test bit 0 (LSB)
 	ldrb	w3, [x1], #1
-	sub	x0, x0, #1
-	strb	w3, [x2], #1
-	b	fwByteCopyLoop
-fwDoubleWordCopy:
-	// Both srcAddr and dstAddr are 8-byte aligned
-	cmp	x0, #8
-	blt	fwWordCopy
-	ldr	x3, [x1], #8
-	sub	x0, x0, #8
-	str	x3, [x2], #8
-fwWordCopy:
-	// Both srcAddr and dstAddr are 4-byte aligned
-	cmp	x0, #4
-	blt	fwHalfWordCopy
-	ldr	w3, [x1], #4
-	sub	x0, x0, #4
-	str	w3, [x2], #4
-fwHalfWordCopy:
-	// Both srcAddr and dstAddr are 2-byte aligned
-	cmp	x0, #2
-	blt	fwByteCopy
-	ldrh	w3, [x1], #2
-	sub	x0, x0, #2
-	strh	w3, [x2], #2
-fwByteCopy:
-	cbz	x0, finished
-	ldrb	w3, [x1], #1
-	sub	x0, x0, #1
 	strb	w3, [x2], #1
 finished:
 	ret
@@ -243,126 +104,52 @@ finished:
 adjustAddressForBackwardCopy:
 	add	x1, x1, x0
 	add	x2, x2, x0
-	// Fall through to __backwardArrayCopy
+	b	bwACSkipCheck
 
 // This assembler function can be called during runtime,
 // instead of emmitting these instructions through functions.
-// Backward arraycopy function checks the alignment of the data
-// and goes into the respective loop to copy elements in backward direction.
 //
 // in:    x0 - length in bytes
 //        x1 - src addr + length
 //        x2 - dst addr + length
-// trash: x3, x4
+// trash: x3, q30, q31
 
 FUNC_LABEL(__backwardArrayCopy):
-	cbz	x0, finished			// return if no bytes to copy
 	cmp	x1, x2
 	beq	finished			// return if srcAddr == dstAddr
-	tst	x2, #1
-	beq	bwDstAlign2			// dstAddr is 2-byte aligned
-	ldrb	w3, [x1, #-1]!
-	sub	x0, x0, #1
-	strb	w3, [x2, #-1]!
-bwDstAlign2:
-	cmp	x0, #2
-	blt	bwByteCopy			// less than 2 bytes remaining
-	tst	x1, #1
-	bne	bwByteCopyLoop			// srcAddr is not 2-byte aligned
-bwBothAlign2:
-	tst	x2, #2
-	beq	bwDstAlign4			// dstAddr is 4-byte aligned
-	ldrh	w3, [x1, #-2]!
-	sub	x0, x0, #2
-	strh	w3, [x2, #-2]!
-bwDstAlign4:
-	cmp	x0, #4
-	blt	bwHalfWordCopy			// less than 4 bytes remaining
-	tst	x1, #2
-	bne	bwHalfWordCopyLoop		// srcAddr is not 4-byte aligned
-bwBothAlign4:
-	tst	x2, #4
-	beq	bwDstAlign8			// dstAddr is 8-byte aligned
+bwACSkipCheck:
+	asr	x3, x0, 6			// loop count
+	cbz	x3, bwAC32
+bwACLoop:
+	// Copy 32x2 bytes
+	ldp	q30, q31, [x1, #-32]!
+	subs	x3, x3, #1
+	stp	q30, q31, [x2, #-32]!
+	ldp	q30, q31, [x1, #-32]!
+	stp	q30, q31, [x2, #-32]!
+	bne	bwACLoop
+bwAC32:
+	tbz	x0, #5, bwAC16			// test bit 5
+	ldp	q30, q31, [x1, #-32]!
+	stp	q30, q31, [x2, #-32]!
+bwAC16:
+	tbz	x0, #4, bwAC8			// test bit 4
+	ldr	q30, [x1, #-16]!
+	str	q30, [x2, #-16]!
+bwAC8:
+	tbz	x0, #3, bwAC4			// test bit 3
+	ldr	x3, [x1, #-8]!
+	str	x3, [x2, #-8]!
+bwAC4:
+	tbz	x0, #2, bwAC2			// test bit 2
 	ldr	w3, [x1, #-4]!
-	sub	x0, x0, #4
 	str	w3, [x2, #-4]!
-bwDstAlign8:
-	cmp	x0, #8
-	blt	bwWordCopy			// less than 8 bytes remaining
-	tst	x1, #4
-	bne	bwWordCopyLoop			// srcAddr is not 8-byte aligned
-bwBothAlign8:
-	tst	x2, #8
-	beq	bwDstAlign16			// dstAddr is 16-byte aligned
-	ldr	x3, [x1, #-8]!
-	sub	x0, x0, #8
-	str	x3, [x2, #-8]!
-bwDstAlign16:
-	tst	x1, #8
-	bne	bwDoubleWordCopyLoop		// srcAddr is not 16-byte aligned
-bwQuadWordCopyLoop:
-	// Both srcAddr and dstAddr are 16-byte aligned
-	cmp	x0, #16
-	blt	bwDoubleWordCopy		// less than 16 bytes remaining
-bwBothAlign16:
-	ldp	x3, x4, [x1, #-16]!
-	sub	x0, x0, #16
-	stp	x3, x4, [x2, #-16]!
-	b	bwQuadWordCopyLoop
-bwDoubleWordCopyLoop:
-	// Both srcAddr and dstAddr are 8-byte aligned
-	cmp	x0, #8
-	blt	bwWordCopy			// less than 8 bytes remaining
-	ldr	x3, [x1, #-8]!
-	sub	x0, x0, #8
-	str	x3, [x2, #-8]!
-	b	bwDoubleWordCopyLoop
-bwWordCopyLoop:
-	// Both srcAddr and dstAddr are 4-byte aligned
-	cmp	x0, #4
-	blt	bwHalfWordCopy
-	ldr	w3, [x1, #-4]!			// less than 4 bytes remaining
-	sub	x0, x0, #4
-	str	w3, [x2, #-4]!
-	b	bwWordCopyLoop
-bwHalfWordCopyLoop:
-	// Both srcAddr and dstAddr are 2-byte aligned
-	cmp	x0, #2
-	blt	bwByteCopy			// less than 2 bytes remaining
+bwAC2:
+	tbz	x0, #1, bwAC1			// test bit 1
 	ldrh	w3, [x1, #-2]!
-	sub	x0, x0, #2
 	strh	w3, [x2, #-2]!
-	b	bwHalfWordCopyLoop
-bwByteCopyLoop:
-	cbz	x0, finished
+bwAC1:
+	tbz	x0, #0, finished		// test bit 0 (LSB)
 	ldrb	w3, [x1, #-1]!
-	sub	x0, x0, #1
-	strb	w3, [x2, #-1]!
-	b	bwByteCopyLoop
-bwDoubleWordCopy:
-	// Both srcAddr and dstAddr are 8-byte aligned
-	cmp	x0, #8
-	blt	bwWordCopy
-	ldr	x3, [x1, #-8]!
-	sub	x0, x0, #8
-	str	x3, [x2, #-8]!
-bwWordCopy:
-	// Both srcAddr and dstAddr are 4-byte aligned
-	cmp	x0, #4
-	blt	bwHalfWordCopy
-	ldr	w3, [x1, #-4]!
-	sub	x0, x0, #4
-	str	w3, [x2, #-4]!
-bwHalfWordCopy:
-	// Both srcAddr and dstAddr are 2-byte aligned
-	cmp	x0, #2
-	blt	bwByteCopy
-	ldrh	w3, [x1, #-2]!
-	sub	x0, x0, #2
-	strh	w3, [x2, #-2]!
-bwByteCopy:
-	cbz	x0, finished
-	ldrb	w3, [x1, #-1]!
-	sub	x0, x0, #1
 	strb	w3, [x2, #-1]!
 	ret

@@ -2477,18 +2477,36 @@ TR::Instruction *
 genLoadAddressConstant(TR::CodeGenerator * cg, TR::Node * node, uintptr_t value, TR::Register * targetRegister,
    TR::Instruction * cursor, TR::RegisterDependencyConditions * cond, TR::Register * base)
    {
-   TR_ExternalRelocationTargetKind reloKind = TR_NoRelocation;
-   if (cg->profiledPointersRequireRelocation() &&
-            node->getOpCodeValue() == TR::aconst &&
-            (node->isMethodPointerConstant() || node->isClassPointerConstant()))
+   TR::Compilation *comp = cg->comp();
+   bool isPicSite = false;
+   bool assumeUnload = false;
+   bool isMethodPointer = false;
+   if (node->getOpCodeValue() == TR::aconst)
       {
+      TR_ResolvedMethod * method = comp->getCurrentMethod();
       if (node->isMethodPointerConstant())
+         {
+         isPicSite = true;
+         isMethodPointer = true;
+         assumeUnload = cg->fe()->isUnloadAssumptionRequired(cg->fe()->createResolvedMethod(cg->trMemory(), reinterpret_cast<TR_OpaqueMethodBlock *>(value), method)->classOfMethod(), method);
+         }
+      else if (node->isClassPointerConstant())
+         {
+         isPicSite = true;
+         assumeUnload = cg->fe()->isUnloadAssumptionRequired(reinterpret_cast<TR_OpaqueClassBlock *>(value), method);
+         }
+      }
+
+   TR_ExternalRelocationTargetKind reloKind = TR_NoRelocation;
+   if (cg->profiledPointersRequireRelocation() && isPicSite)
+      {
+      if (isMethodPointer)
          {
          reloKind = TR_MethodPointer;
          if (node->getInlinedSiteIndex() == -1)
             reloKind = TR_RamMethod;
          }
-      else if (node->isClassPointerConstant())
+      else
          reloKind = TR_ClassPointer;
 
       TR_ASSERT(reloKind != TR_NoRelocation, "relocation kind shouldn't be TR_NoRelocation");
@@ -2503,14 +2521,25 @@ genLoadAddressConstant(TR::CodeGenerator * cg, TR::Node * node, uintptr_t value,
       return generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, targetRegister, value, reloKind, cond, cursor, base);
       }
 
-   TR::Compilation *comp = cg->comp();
-   cursor = generateRILInstruction(cg, comp->target().is64Bit() ? TR::InstOpCode::LLILF : TR::InstOpCode::IILF, node, targetRegister, static_cast<uint32_t>(value), cursor);
-
-   bool assumePatch = false;
-   bool isCompressedClassPointer = false;
-   if (node->isClassUnloadingConst())
+   if (assumeUnload)
       {
-      if (node->isMethodPointerConstant())
+      // the address constant may need patched, must use a recognizable instruction sequence
+      // for TR_UnloadedClassPicSite::compensate and TR_RedefinedClassPicSite::compensate to
+      // be able to patch the address correctly
+      bool usedLARL = false;
+      if (cg->canUseRelativeLongInstructions(static_cast<int64_t>(value)))
+         {
+         cursor = generateRILInstruction(cg, TR::InstOpCode::LARL, node, targetRegister, reinterpret_cast<void*>(value));
+         usedLARL = true;
+         }
+      else
+         {
+         cursor = generateRILInstruction(cg, comp->target().is64Bit() ? TR::InstOpCode::LLILF : TR::InstOpCode::IILF, node, targetRegister, static_cast<uint32_t>(value), cursor);
+         }
+
+      bool isCompressedClassPointer = false;
+
+      if (isMethodPointer)
          {
          comp->getStaticMethodPICSites()->push_front(cursor);
          }
@@ -2519,24 +2548,32 @@ genLoadAddressConstant(TR::CodeGenerator * cg, TR::Node * node, uintptr_t value,
          comp->getStaticPICSites()->push_front(cursor);
          isCompressedClassPointer = comp->useCompressedPointers();
          }
-      assumePatch = true;
-      }
-   if (comp->getOption(TR_EnableHCR))
-      {
-      comp->getStaticHCRPICSites()->push_front(cursor);
-      assumePatch = true;
-      }
 
-   TR_ASSERT(!isCompressedClassPointer || ((value & CONSTANT64(0xFFFFFFFF00000000)) == 0), "Compressed class pointers are assumed to fit in 32 bits");
-   // IIHF is only needed when addresses (besides compressed class pointer) need to be patched or do not fit into 32 bits
-   if (comp->target().is64Bit() && !isCompressedClassPointer && (assumePatch || ((value & CONSTANT64(0xFFFFFFFF00000000)) != 0)))
-      {
-      toS390RILInstruction(cursor)->setisFirstOfAddressPair();
-      uint32_t high32 = static_cast<uint32_t>(value >> 32);
-      cursor = generateRILInstruction(cg, TR::InstOpCode::IIHF, node, targetRegister, high32, cursor);
-      }
+      if (comp->getOption(TR_EnableHCR) && node->getOpCode().hasSymbolReference() &&
+          node->getSymbol()->isStatic() && node->getSymbol()->isClassObject())
+         {
+         comp->getStaticHCRPICSites()->push_front(cursor);
+         }
 
-   return cursor;
+      TR_ASSERT(!isCompressedClassPointer || ((value & CONSTANT64(0xFFFFFFFF00000000)) == 0), "Compressed class pointers are assumed to fit in 32 bits");
+      // IIHF is only needed when addresses do not fit into 32 bits and LARL could not be used
+      if (!usedLARL && comp->target().is64Bit() && !isCompressedClassPointer)
+         {
+         toS390RILInstruction(cursor)->setisFirstOfAddressPair();
+         uint32_t high32 = static_cast<uint32_t>(value >> 32);
+         cursor = generateRILInstruction(cg, TR::InstOpCode::IIHF, node, targetRegister, high32, cursor);
+         }
+
+      return cursor;
+      }
+   else if (comp->target().is64Bit())
+      {
+      return genLoadLongConstant(cg, node, static_cast<int64_t>(value), targetRegister, cursor, cond, base);
+      }
+   else
+      {
+      return generateLoad32BitConstant(cg, node, static_cast<int32_t>(value), targetRegister, false, cursor, cond, base);
+      }
    }
 
 TR::Instruction *

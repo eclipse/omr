@@ -169,12 +169,16 @@ public:
 
 private:
 
+   void                findIfThenRegisterCandidates();
+   void                findLoopsAndCorrespondingAutos(TR_StructureSubGraphNode *, vcount_t, SymRefCandidateMap &);
    void                findLoopsAndAutosNoStructureInfo(vcount_t visitCount, TR::RegisterCandidate **registerCandidates);
    void                initializeControlFlowInfo();
+   virtual void        markAutosUsedIn(TR::Node *, TR::Node *, TR::Node *, TR::Node **, TR::Block *, List<TR::Block> *, vcount_t, int32_t, SymRefCandidateMap &, TR_BitVector *, TR_BitVector *, bool);
    void                signExtendAllDefNodes(TR::Node *, List<TR::Node> *);
    void                findSymsUsedInIndirectAccesses(TR::Node *, TR_BitVector *, TR_BitVector *, bool);
 
    void                offerAllAutosAndRegisterParmAsCandidates(TR::Block **, int32_t, bool onlySelectedCandidates = false);
+   void                offerAllFPAutosAndParmsAsCandidates(TR::Block **, int32_t);
 
    bool                allocateForSymRef(TR::SymbolReference *symRef);
    bool                allocateForType(TR::DataType dt);
@@ -219,7 +223,8 @@ private:
    void appendStoreToBlock(TR::SymbolReference *storeSymRef, TR::SymbolReference *loadSymRef, TR::Block *block, TR::Node *node);
    */
 protected:
-   TR::Block *         createNewSuccessorBlock(TR::Block *, TR::Block *, TR::TreeTop *, TR::Node *, TR::RegisterCandidate * rc);
+   void                findLoopAutoRegisterCandidates();
+   TR::Block *          createNewSuccessorBlock(TR::Block *, TR::Block *, TR::TreeTop *, TR::Node *, TR::RegisterCandidate * rc);
    void                appendGotoBlock(TR::Block *gotoBlock, TR::Block *curBlock);
    void                transformBlock(TR::TreeTop *);
    bool                isTypeAvailable(TR::SymbolReference *symref);

@@ -42,6 +42,7 @@
 #include <direct.h>
 #endif /* defined(OMR_OS_WINDOWS) */
 #if !defined(OMR_OS_WINDOWS)
+#include <locale>
 #include <grp.h>
 #include <errno.h>
 #if defined(J9ZOS390)
@@ -500,7 +501,6 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_env_iterator)
 	J9SysinfoEnvElement element;
 	void *buffer = NULL;
 	uint32_t bufferSizeBytes = 0;
-	int l = 0;
 #undef SI_DEBUG
 
 	reportTestEntry(OMRPORTLIB, testName);
@@ -546,13 +546,11 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_env_iterator)
 
 	portTestEnv->log("Environment:\n\n");
 
-	l = 0;
 	while (omrsysinfo_env_iterator_hasNext(&state)) {
 		rc = omrsysinfo_env_iterator_next(&state, &element);
 
 		if (0 == rc) {
 			portTestEnv->log("%s\n", element.nameAndValue);
-			l++;
 		} else {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "\tomrsysinfo_env_iterator_next returned: %i when 0 was expected\n", rc);
 			goto done;
@@ -586,7 +584,6 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_env_iterator)
 #endif
 	}
 
-	l = 0;
 	while (omrsysinfo_env_iterator_hasNext(&state)) {
 
 		rc = omrsysinfo_env_iterator_next(&state, &element);
@@ -596,7 +593,6 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_env_iterator)
 #endif
 
 		if (0 == rc) {
-			l++;
 		} else {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "\tomrsysinfo_env_iterator_next returned: %i when 0 was expected\n", rc);
 			goto done;
@@ -629,7 +625,6 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_env_iterator)
 #endif
 	}
 
-	l = 0;
 	while (omrsysinfo_env_iterator_hasNext(&state)) {
 
 		rc = omrsysinfo_env_iterator_next(&state, &element);
@@ -639,7 +634,6 @@ TEST(PortSysinfoTest, sysinfo_test_sysinfo_env_iterator)
 #endif
 
 		if (0 == rc) {
-			l++;
 		} else {
 			outputErrorMessage(PORTTEST_ERROR_ARGS, "\tomrsysinfo_env_iterator_next returned: %i when 0 was expected\n", rc);
 			goto done;

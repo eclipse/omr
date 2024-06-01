@@ -98,6 +98,13 @@
 #include "x/codegen/X86Instruction.hpp"
 #include "codegen/InstOpCode.hpp"
 
+// Amount to be added to the estimated code size to ensure that there are long
+// branches between warm and cold code sections (must be multiple of 8 bytes).
+//
+#define MIN_DISTANCE_BETWEEN_WARM_AND_COLD_CODE 512
+
+static_assert(MIN_DISTANCE_BETWEEN_WARM_AND_COLD_CODE % 8 == 0, "MIN_DISTANCE_BETWEEN_WARM_AND_COLD_CODE should be multiple of 8");
+
 namespace OMR { class RegisterUsage; }
 namespace TR { class RegisterDependencyConditions; }
 
@@ -162,9 +169,30 @@ void TR_X86ProcessorInfo::initialize(bool force)
          case 0x06:
             {
             uint32_t extended_model = getCPUModel(_processorSignature) + (getCPUExtendedModel(_processorSignature) << 4);
+            uint32_t processorStepping = getCPUStepping(_processorSignature);
             switch (extended_model)
                {
-               case 0x55:
+               case 0xcf:
+                  _processorDescription |= TR_ProcessorIntelEmeraldRapids; break;
+               case 0x8f:
+                  _processorDescription |= TR_ProcessorIntelSapphireRapids; break;
+               case 0x6a:  // IceLake_X
+               case 0x6c:  // IceLake_D
+               case 0x7d:  // IceLake
+               case 0x7e:  // IceLake_L
+                  _processorDescription |= TR_ProcessorIntelIceLake; break;
+               case 0x55:  // Skylake_X
+                  if (processorStepping == 7)
+                     {
+                     _processorDescription |= TR_ProcessorIntelCascadeLake;
+                     }
+                  else
+                     {
+                     _processorDescription |= TR_ProcessorIntelSkylake;
+                     }
+                  break;
+               case 0x4e:  // Skylake_L
+               case 0x5e:  // Skylake
                   _processorDescription |= TR_ProcessorIntelSkylake; break;
                case 0x4f:
                   _processorDescription |= TR_ProcessorIntelBroadwell; break;
@@ -263,8 +291,8 @@ OMR::X86::CodeGenerator::initializeX86(TR::Compilation *comp)
         *
         * TODO: Need to figure out from which mode of Broadwell start supporting TM
         */
-      TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTELHASWELL) == getX86ProcessorInfo().isIntelHaswell(), "isIntelHaswell() failed\n");
-      if (!comp->target().cpu.is(OMR_PROCESSOR_X86_INTELHASWELL))
+      TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_HASWELL) == getX86ProcessorInfo().isIntelHaswell(), "isIntelHaswell() failed\n");
+      if (!comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_HASWELL))
          {
          if (comp->target().is64Bit())
             {
@@ -296,9 +324,9 @@ OMR::X86::CodeGenerator::initializeX86(TR::Compilation *comp)
    // Enable software prefetch of the TLH and configure the TLH prefetching
    // geometry.
    //
-   TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTELCORE2) == comp->cg()->getX86ProcessorInfo().isIntelCore2(), "isIntelCore2() failed\n");
-   TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTELNEHALEM) == comp->cg()->getX86ProcessorInfo().isIntelNehalem(), "isIntelNehalem() failed\n");
-   if (((!comp->getOption(TR_DisableTLHPrefetch) && (comp->target().cpu.is(OMR_PROCESSOR_X86_INTELCORE2) || comp->target().cpu.is(OMR_PROCESSOR_X86_INTELNEHALEM))) ||
+   TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_CORE2) == comp->cg()->getX86ProcessorInfo().isIntelCore2(), "isIntelCore2() failed\n");
+   TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_NEHALEM) == comp->cg()->getX86ProcessorInfo().isIntelNehalem(), "isIntelNehalem() failed\n");
+   if (((!comp->getOption(TR_DisableTLHPrefetch) && (comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_CORE2) || comp->target().cpu.is(OMR_PROCESSOR_X86_INTEL_NEHALEM))) ||
        (comp->getOption(TR_TLHPrefetch) && self()->targetSupportsSoftwarePrefetches())))
       {
       self()->setEnableTLHPrefetching();
@@ -452,9 +480,9 @@ OMR::X86::CodeGenerator::initializeX86(TR::Compilation *comp)
    //
    TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.isGenuineIntel() == getX86ProcessorInfo().isGenuineIntel(), "isGenuineIntel() failed\n");
    TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.isAuthenticAMD() == getX86ProcessorInfo().isAuthenticAMD(), "isAuthenticAMD() failed\n");
-   TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H) == getX86ProcessorInfo().isAMD15h(), "isAMD15h() failed\n");
+   TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.is(OMR_PROCESSOR_X86_AMD_FAMILY15H) == getX86ProcessorInfo().isAMD15h(), "isAMD15h() failed\n");
    int32_t boundary;
-   if (comp->target().cpu.isGenuineIntel() || (comp->target().cpu.isAuthenticAMD() && comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H)))
+   if (comp->target().cpu.isGenuineIntel() || (comp->target().cpu.isAuthenticAMD() && comp->target().cpu.is(OMR_PROCESSOR_X86_AMD_FAMILY15H)))
       boundary = 32;
    else
       {
@@ -1897,6 +1925,7 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
 
    TR::Instruction * estimateCursor = self()->getFirstInstruction();
    int32_t estimate = 0;
+   int32_t warmEstimate = 0;
 
    // Estimate the binary length up to TR::InstOpCode::proc
    //
@@ -2037,6 +2066,19 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
       if (self()->comp()->getOption(TR_TraceCG))
          self()->getDebug()->dumpInstructionWithVFPState(estimateCursor, &prevState);
 
+      // If this is the last warm instruction, remember the estimated size up to
+      // this point and add a buffer to the estimated size so that branches
+      // between warm and cold instructions will be forced to be long branches.
+      // The size is rounded up to a multiple of 8 so that double-alignments in
+      // the cold section will have the same amount of padding for the estimate
+      // and the actual code allocation.
+      //
+      if (estimateCursor->isLastWarmInstruction())
+         {
+         warmEstimate = (estimate+7) & ~7;
+         estimate = warmEstimate + MIN_DISTANCE_BETWEEN_WARM_AND_COLD_CODE;
+         }
+
       if (estimateCursor == _vfpResetInstruction)
          self()->generateDebugCounter(estimateCursor, "cg.prologues:#instructionBytes", estimate - estimatedPrologueStartOffset, TR::DebugCounter::Expensive);
 
@@ -2047,6 +2089,7 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
       traceMsg(self()->comp(), "\n</instructions>\n");
 
    estimate = self()->setEstimatedLocationsForSnippetLabels(estimate);
+
    // When using copyBinaryToBuffer() to copy the encoding of an instruction we
    // indiscriminatelly copy a whole integer, even if the size of the encoding
    // is less than that. This may cause the write to happen beyond the allocated
@@ -2054,8 +2097,20 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
    // block, then the write could potentially destroy data that resides in the
    // adjacent block. For this reason it is better to overestimate
    // the allocated size by 4.
+   //
    #define OVER_ESTIMATION 4
-   self()->setEstimatedCodeLength(estimate+OVER_ESTIMATION);
+   self()->setEstimatedCodeLength(estimate + OVER_ESTIMATION);
+
+   if (warmEstimate)
+      {
+      self()->setEstimatedWarmLength(warmEstimate + OVER_ESTIMATION);
+      self()->setEstimatedColdLength(estimate - warmEstimate - MIN_DISTANCE_BETWEEN_WARM_AND_COLD_CODE + OVER_ESTIMATION);
+      }
+   else
+      {
+      self()->setEstimatedWarmLength(estimate + OVER_ESTIMATION);
+      self()->setEstimatedColdLength(0);
+      }
 
    if (self()->comp()->getOption(TR_TraceCG))
       {
@@ -2073,7 +2128,9 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
       }
 
    uint8_t * coldCode = NULL;
-   uint8_t * temp = self()->allocateCodeMemory(self()->getEstimatedCodeLength(), 0, &coldCode);
+   uint8_t * temp = self()->allocateCodeMemory(self()->getEstimatedWarmLength(),
+                                               self()->getEstimatedColdLength(),
+                                               &coldCode);
    TR_ASSERT(temp, "Failed to allocate primary code area.");
 
    if (self()->comp()->target().is64Bit() && self()->hasCodeCacheSwitched() && self()->getPicSlotCount() != 0)
@@ -2128,6 +2185,29 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
          }
 
       self()->addToAtlas(cursorInstruction);
+
+      // If this is the last warm instruction, save info about the warm code range
+      // and set up to generate code in the cold code range.
+      //
+      if (cursorInstruction->isLastWarmInstruction())
+         {
+         self()->setWarmCodeEnd(self()->getBinaryBufferCursor());
+         self()->setColdCodeStart(coldCode);
+         self()->setBinaryBufferCursor(coldCode);
+
+         if (self()->comp()->getOption(TR_TraceCG))
+            {
+            traceMsg(self()->comp(), "%s warmCodeEnd = %p, lastWarmInstruction = %p coldCodeStart = %p\n",
+                                                           SPLIT_WARM_COLD_STRING,
+                                                           self()->getWarmCodeEnd(), cursorInstruction, coldCode);
+            }
+
+         // Adjust the accumulated length error so that distances within the cold
+         // code are calculated properly using the estimated code locations.
+         //
+         self()->setAccumulatedInstructionLengthError(static_cast<uint32_t>(self()->getBinaryBufferStart() + self()->getEstimatedWarmLength() + MIN_DISTANCE_BETWEEN_WARM_AND_COLD_CODE - coldCode));
+         }
+
       cursorInstruction = cursorInstruction->getNext();
       }
 
