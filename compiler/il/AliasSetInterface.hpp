@@ -24,7 +24,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <cassert>
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/StackMemoryRegion.hpp"
