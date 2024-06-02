@@ -1921,7 +1921,7 @@ void OMR::X86::CodeGenerator::addItemsToRSSReport(uint8_t *coldCode)
 
          if (!coldBlockCountersList)
             coldBlockCountersList = new (self()->comp()->trPersistentMemory()) TR_PersistentList<TR::DebugCounterAggregation> ();
-         
+
          coldBlockCountersList->add(block->getDebugCounters());
          }
 
@@ -1962,7 +1962,7 @@ void OMR::X86::CodeGenerator::addItemsToRSSReport(uint8_t *coldCode)
 
       rssItem = new (self()->comp()->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::coldBlocks, coldCode, actualColdLength,
                                                                         coldBlockCountersList);
-      
+
       rssRegion->addRSSItem(rssItem, codeCache->getReservingCompThreadID(), methodName);
       }
    }

@@ -54,38 +54,40 @@ OMR::RSSRegion::addRSSItem(OMR::RSSItem *item, int32_t threadId, const char* met
 
    TR_ASSERT_FATAL(offset >= 0, "Offset should be >= 0\n");
 
-   addToListSorted(&_pageMap[offset], item);
-
-   // split across pages if necessary
    size_t tillPageEnd = _pageSize - ((uintptr_t)address % _pageSize);
+   size_t remainingSize = item->_size;
 
-   while (item->_size > tillPageEnd)
-      {
-      // find how much of the previously inserted item does not fit into the page
-      size_t remainingSize = item->_size - tillPageEnd;
-      
-      // update the address of the previously inserted item
+   if (remainingSize > tillPageEnd)
       item->_size = tillPageEnd;
 
-      // calculate new address (always beginning of the next page)
-      address += tillPageEnd;
+   addToListSorted(&_pageMap[offset], item);
 
-      // insert a new item with the remaining size into the next page (with shallow counters copy)
-      item = new (TR::Compiler->persistentMemory()) OMR::RSSItem(item->_type, address, remainingSize, counters);
+   remainingSize -= item->_size;
+   address += tillPageEnd;  // next address in case it's needed, points to the beginning of the next page
+
+   while (remainingSize > 0)
+      {
+      size_t  newSize = remainingSize;
+
+      if (newSize > _pageSize)
+         newSize = _pageSize;
+
+      OMR::RSSItem *newItem = new (TR::Compiler->persistentMemory()) OMR::RSSItem(item->_type, address, newSize, counters);
       offset = (_grows == lowToHigh) ? ++offset : --offset;
 
       TR_ASSERT_FATAL(offset >= 0, "Got negative offset %d for addr=%p size=%zu type=%s\n", offset,
-                      item->_addr, item->_size, OMR::RSSItem::itemNames[item->_type]);
+                      newItem->_addr, newItem->_size, OMR::RSSItem::itemNames[newItem->_type]);
 
 #ifdef DEBUG_RSS_REPORT
       TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "RSS adding overflow item addr=%p size=%zu type=%s thread=%d method=%s",
-                                     item->_addr, item->_size,
-                                     OMR::RSSItem::itemNames[item->_type], threadId,
+                                     newItem->_addr, newItem->_size,
+                                     OMR::RSSItem::itemNames[newItem->_type], threadId,
                                      methodName ? methodName : "no method");
 #endif
 
-      addToListSorted(&_pageMap[offset], item);
-      tillPageEnd = _pageSize;
+      addToListSorted(&_pageMap[offset], newItem);
+      address += _pageSize;
+      remainingSize -= newSize;
       }
    }
 
