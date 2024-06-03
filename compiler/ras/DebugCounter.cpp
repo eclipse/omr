@@ -486,7 +486,7 @@ void TR::DebugCounterAggregation::printCounters()
       TR::DebugCounter *counter = counterDelta->counter;
       int64_t count = counter->getCount();
       if (count)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "RSS counter count=%d %s", count, counter->getName());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Counter count=%d %s", count, counter->getName());
       }
    }
 

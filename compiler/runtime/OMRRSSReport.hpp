@@ -92,6 +92,8 @@ public:
       highToLow
       };
 
+   // Note: page size should be set by a down-stream project using setPageSize()
+   //
    RSSRegion(const char *name = NULL, uint8_t *start = 0, uint32_t size = 0,
              Grows grows = lowToHigh, size_t pageSize = 0) :
              _name(name), _start(start), _size(size), _grows(grows), _pageSize(pageSize),
@@ -148,7 +150,7 @@ public:
     */
    TR_PersistentList<RSSItem> getRSSItemList(uint8_t *address)
          {
-         TR_ASSERT_FATAL(_pageSize >=0, "Page size should be set");
+         TR_ASSERT_FATAL(_pageSize > 0, "Page size should be set");
 
          size_t addressPage = (uintptr_t)address / _pageSize;
          size_t startPage = (uintptr_t)_start / _pageSize;
@@ -183,12 +185,13 @@ class RSSReport
    static int32_t const REGION_PRINT_WIDTH = 11;
 
    public:
-   RSSReport(TR_PersistentMemory *pm, bool detailed) : _detailed(detailed), _lastRegion(NULL), _printTitle(true)
-               { _instance = this;
-                 _mutex = TR::Monitor::create("RSSReport-Monitor");
-                 if (!_mutex)
-                    _instance = NULL;
-               }
+   RSSReport(bool detailed) : _detailed(detailed), _lastRegion(NULL), _printTitle(true)
+      {
+      _instance = this;
+      _mutex = TR::Monitor::create("RSSReport-Monitor");
+      if (!_mutex)
+         _instance = NULL;
+      }
 
    class RSSReportCriticalSection : public CriticalSection
       {

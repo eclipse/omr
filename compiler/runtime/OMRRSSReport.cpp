@@ -46,7 +46,7 @@ OMR::RSSRegion::addRSSItem(OMR::RSSItem *item, int32_t threadId, const char* met
    TR_PersistentList<TR::DebugCounterAggregation> *counters = item->_counters;
 
    TR_ASSERT_FATAL(address, "Address should not be null");
-   TR_ASSERT_FATAL(_pageSize >=0, "Page size should be set");
+   TR_ASSERT_FATAL(_pageSize > 0, "Page size should be set");
 
    size_t addressPage = (uintptr_t)address / _pageSize;
    size_t startPage = (uintptr_t)_start / _pageSize;
@@ -118,7 +118,9 @@ OMR::RSSRegion::addToListSorted(TR_PersistentList<OMR::RSSItem> *itemList, OMR::
    if (!next)
       newElement = itemList->addAfter(item, prevElement);
 
-   // remove all subsequent overlaping items
+   // Remove all subsequent overlaping items
+   // Due to the way we inserted the item above, all ovelaping items will be next
+   //
    for (ListElement<OMR::RSSItem> * nextElement = newElement->getNextElement(); nextElement; nextElement = nextElement->getNextElement())
       {
       OMR::RSSItem *nextItem = nextElement->getData();

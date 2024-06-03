@@ -384,6 +384,16 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
 
    void doRegisterAssignment(TR_RegisterKinds kindsToAssign);
    void doBinaryEncoding();
+
+
+   /*
+    * \brief
+    *        Adds items describing cold code cache to RSSReport
+    *
+    * \param coldCode
+    *        Starting address of the cold code cache
+    *
+    */
    void addItemsToRSSReport(uint8_t *coldCode);
 
    void doBackwardsRegisterAssignment(TR_RegisterKinds kindsToAssign, TR::Instruction *startInstruction, TR::Instruction *appendInstruction = NULL);

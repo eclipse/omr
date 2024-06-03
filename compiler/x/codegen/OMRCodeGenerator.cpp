@@ -1900,17 +1900,16 @@ void OMR::X86::CodeGenerator::addItemsToRSSReport(uint8_t *coldCode)
    TR_PersistentList<TR::DebugCounterAggregation> *coldBlockCountersList = NULL;
    bool insideColdCode = false;
    size_t blocksInsideColdCodeSize = 0;
-   const char* methodName = self()->comp()->signature();
+   TR::Compilation *comp = self()->comp();
+   const char* methodName = comp->signature();
 
-   for (TR::TreeTop *tt = self()->comp()->getMethodSymbol()->getFirstTreeTop(); tt ; tt = tt->getNextTreeTop())
+   for (TR::TreeTop *tt = comp->getMethodSymbol()->getFirstTreeTop(); tt ; tt = tt->getNextTreeTop())
       {
       TR::Node *node = tt->getNode();
 
       if (node->getOpCodeValue() != TR::BBStart) continue;
 
-      TR::Block *block;
-
-      block = node->getBlock();
+      TR::Block *block = node->getBlock();
 
       if (insideColdCode)
          {
@@ -1920,7 +1919,7 @@ void OMR::X86::CodeGenerator::addItemsToRSSReport(uint8_t *coldCode)
          blocksInsideColdCodeSize += blockSize;
 
          if (!coldBlockCountersList)
-            coldBlockCountersList = new (self()->comp()->trPersistentMemory()) TR_PersistentList<TR::DebugCounterAggregation> ();
+            coldBlockCountersList = new (comp->trPersistentMemory()) TR_PersistentList<TR::DebugCounterAggregation> ();
 
          coldBlockCountersList->add(block->getDebugCounters());
          }
@@ -1944,10 +1943,10 @@ void OMR::X86::CodeGenerator::addItemsToRSSReport(uint8_t *coldCode)
 
       if (blocksInsideColdCodeSize != actualColdLength)
          {
-         if (self()->comp()->getOption(TR_TraceCG))
+         if (comp->getOption(TR_TraceCG))
             {
-            traceMsg(self()->comp(), "RSS: blocksInsideColdCodeSize=%zu actualColdLength=%zu coldCode=%p coldCodeEnd=%p\n",
-                                      blocksInsideColdCodeSize, actualColdLength, coldCode, coldCode+actualColdLength);
+            traceMsg(comp, "RSS: blocksInsideColdCodeSize=%zu actualColdLength=%zu coldCode=%p coldCodeEnd=%p\n",
+                           blocksInsideColdCodeSize, actualColdLength, coldCode, coldCode+actualColdLength);
             }
          }
 
@@ -1955,12 +1954,12 @@ void OMR::X86::CodeGenerator::addItemsToRSSReport(uint8_t *coldCode)
 
       if (overEstimate > 0)
          {
-         rssItem = new (self()->comp()->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::overEstimate, getBinaryBufferCursor(),
+         rssItem = new (comp->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::overEstimate, getBinaryBufferCursor(),
                                                                            overEstimate, NULL);
          rssRegion->addRSSItem(rssItem, codeCache->getReservingCompThreadID(), methodName);
          }
 
-      rssItem = new (self()->comp()->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::coldBlocks, coldCode, actualColdLength,
+      rssItem = new (comp->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::coldBlocks, coldCode, actualColdLength,
                                                                         coldBlockCountersList);
 
       rssRegion->addRSSItem(rssItem, codeCache->getReservingCompThreadID(), methodName);
