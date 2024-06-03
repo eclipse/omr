@@ -566,9 +566,11 @@ allocateVmemRegion32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, J
 	}
 
 	/* use a minimum 4K page size */
-	if (pageSize < 0x1000) {
-		pageSize = 0x1000;
-	}
+	// if (pageSize < 0x1000) {
+	// 	pageSize = 0x1000;
+	// }
+	/* Make sure that we only allocate 4k pages. */
+	pageSize = 0x1000;
 
 #if defined(LINUX)
 		if (OMR_ARE_ALL_BITS_SET(PPG_mem32BitFlags, OMRPORT_MEM_32BIT_FLAGS_TMP_FILE_BACKED_VMEM)) {
