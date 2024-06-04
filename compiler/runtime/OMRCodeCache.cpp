@@ -421,13 +421,6 @@ OMR::CodeCache::initialize(TR::CodeCacheManager *manager,
    *((TR::CodeCache **)(_segment->segmentBase())) = self();
    omrthread_jit_write_protect_enable();
 
-   if (OMR::RSSReport::instance())
-      {
-      // Down-stream project should set page size
-      _coldRSSRegion = OMR::RSSRegion("cold cache", _coldCodeAlloc, 0, OMR::RSSRegion::highToLow);
-      OMR::RSSReport::instance()->addRegion(&_coldRSSRegion);
-      }
-
    return true;
    }
 
@@ -1689,9 +1682,10 @@ OMR::CodeCache::allocateCodeMemory(size_t warmCodeSize,
 
    if (OMR::RSSReport::instance() &&
        !coldIsFreeBlock &&
-       !needsToBeContiguous)
+       !needsToBeContiguous &&
+       _coldCodeRSSRegion)
       {
-      _coldRSSRegion._size = _coldRSSRegion._start - _coldCodeAlloc;
+      _coldCodeRSSRegion->_size = _coldCodeRSSRegion->_start - _coldCodeAlloc;
 
       int32_t padding = static_cast<int32_t>(oldColdAlloc - coldCodeAddress - coldCodeSize);
       TR_ASSERT_FATAL(padding >= 0, "Cold code padding should be >= 0");
@@ -1701,7 +1695,7 @@ OMR::CodeCache::allocateCodeMemory(size_t warmCodeSize,
          OMR::RSSItem *rssItem = new (TR::Compiler->persistentMemory()) OMR::RSSItem(OMR::RSSItem::alignment,
                                                                                      oldColdAlloc - padding, padding,
                                                                                      NULL /* counters */);
-         _coldRSSRegion.addRSSItem(rssItem, self()->getReservingCompThreadID());
+         _coldCodeRSSRegion->addRSSItem(rssItem, self()->getReservingCompThreadID());
          }
 
       int32_t header = static_cast<uint32_t>(coldCodeAddress - _coldCodeAlloc);
@@ -1712,7 +1706,7 @@ OMR::CodeCache::allocateCodeMemory(size_t warmCodeSize,
          OMR::RSSItem *rssItem = new (TR::Compiler->persistentMemory()) OMR::RSSItem(OMR::RSSItem::header,
                                                                                      coldCodeAddress - header, header,
                                                                                      NULL /* counters */);
-         _coldRSSRegion.addRSSItem(rssItem, self()->getReservingCompThreadID());
+         _coldCodeRSSRegion->addRSSItem(rssItem, self()->getReservingCompThreadID());
          }
       }
 

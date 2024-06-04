@@ -219,6 +219,7 @@ class DebugCounter : public DebugCounterBase
       _totalCount = 0;
       _bumpCountBase = _bumpCount;
       }
+
    };
 
 // It's common for multiple related counter bumps to be adjacent to each other.
@@ -265,7 +266,7 @@ public:
 
    void accumulate();
    int64_t getCount();
-   void printCounters();
+   void printCounters(bool printZeroCounters = true);
    };
 
 class DebugCounterGroup

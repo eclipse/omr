@@ -1933,36 +1933,39 @@ void OMR::X86::CodeGenerator::addItemsToRSSReport(uint8_t *coldCode)
    if (self()->getEstimatedColdLength() &&
        OMR::RSSReport::instance())
       {
-      TR::CodeCache * codeCache = TR::CodeCacheManager::instance()->findCodeCacheFromPC(coldCode);
-      OMR::RSSRegion * rssRegion = codeCache->getColdRSSRegion();
+      TR::CodeCache *codeCache = TR::CodeCacheManager::instance()->findCodeCacheFromPC(coldCode);
+      OMR::RSSRegion *rssRegion = codeCache->getColdCodeRSSRegion();
 
-      size_t actualColdLength = getBinaryBufferCursor() - coldCode;
-      int32_t overEstimate = static_cast<int32_t>(getEstimatedColdLength() - actualColdLength);
-
-      TR_ASSERT_FATAL(overEstimate >= 0, "Estimated cold code length should not be less than actual\n");
-
-      if (blocksInsideColdCodeSize != actualColdLength)
+      if (rssRegion)
          {
-         if (comp->getOption(TR_TraceCG))
+         size_t actualColdLength = getBinaryBufferCursor() - coldCode;
+         int32_t overEstimate = static_cast<int32_t>(getEstimatedColdLength() - actualColdLength);
+
+         TR_ASSERT_FATAL(overEstimate >= 0, "Estimated cold code length should not be less than actual\n");
+
+         if (blocksInsideColdCodeSize != actualColdLength)
             {
-            traceMsg(comp, "RSS: blocksInsideColdCodeSize=%zu actualColdLength=%zu coldCode=%p coldCodeEnd=%p\n",
-                           blocksInsideColdCodeSize, actualColdLength, coldCode, coldCode+actualColdLength);
+            if (comp->getOption(TR_TraceCG))
+               {
+               traceMsg(comp, "RSS: blocksInsideColdCodeSize=%zu actualColdLength=%zu coldCode=%p coldCodeEnd=%p\n",
+                              blocksInsideColdCodeSize, actualColdLength, coldCode, coldCode+actualColdLength);
+               }
             }
-         }
 
-      OMR::RSSItem *rssItem;
+         OMR::RSSItem *rssItem;
 
-      if (overEstimate > 0)
-         {
-         rssItem = new (comp->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::overEstimate, getBinaryBufferCursor(),
+         if (overEstimate > 0)
+            {
+            rssItem = new (comp->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::overEstimate, getBinaryBufferCursor(),
                                                                            overEstimate, NULL);
-         rssRegion->addRSSItem(rssItem, codeCache->getReservingCompThreadID(), methodName);
-         }
+            rssRegion->addRSSItem(rssItem, codeCache->getReservingCompThreadID(), methodName);
+            }
 
-      rssItem = new (comp->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::coldBlocks, coldCode, actualColdLength,
+         rssItem = new (comp->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::coldBlocks, coldCode, actualColdLength,
                                                                         coldBlockCountersList);
 
-      rssRegion->addRSSItem(rssItem, codeCache->getReservingCompThreadID(), methodName);
+         rssRegion->addRSSItem(rssItem, codeCache->getReservingCompThreadID(), methodName);
+         }
       }
    }
 

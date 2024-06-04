@@ -247,7 +247,7 @@ OMR::RSSReport::countResidentPages(int fd, OMR::RSSRegion *rssRegion, char *page
 
                   itemDebugCount += count;
                   pageDebugCount += count;
-                  if (count > 0) aggr->printCounters();
+                  if (count > 0) aggr->printCounters(false /*printZeroCounters*/);
                   }
                }
 

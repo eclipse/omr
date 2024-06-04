@@ -477,7 +477,7 @@ int64_t TR::DebugCounterAggregation::getCount()
    return count;
    }
 
-void TR::DebugCounterAggregation::printCounters()
+void TR::DebugCounterAggregation::printCounters(bool printZeroCounters)
    {
    ListIterator<CounterDelta> it(_counterDeltas);
 
@@ -485,8 +485,11 @@ void TR::DebugCounterAggregation::printCounters()
       {
       TR::DebugCounter *counter = counterDelta->counter;
       int64_t count = counter->getCount();
-      if (count)
+
+      if (count || printZeroCounters)
+         {
          TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Counter count=%d %s", count, counter->getName());
+         }
       }
    }
 

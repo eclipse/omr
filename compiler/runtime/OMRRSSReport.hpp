@@ -51,6 +51,7 @@ class RSSItem
    {
    public:
    TR_ALLOC(TR_Memory::Inliner);  // TODO: add new type
+
    enum Type
       {
       unknown,
@@ -84,26 +85,18 @@ class RSSItem
  */
 class RSSRegion
    {
-   TR_ALLOC(TR_Memory::UnknownType);  // TODO: add new type
 public:
+   TR_ALLOC(TR_Memory::UnknownType);  // TODO: add new type
+
    enum Grows
       {
       lowToHigh,
       highToLow
       };
 
-   // Note: page size should be set by a down-stream project using setPageSize()
-   //
-   RSSRegion(const char *name = NULL, uint8_t *start = 0, uint32_t size = 0,
-             Grows grows = lowToHigh, size_t pageSize = 0) :
+   RSSRegion(const char *name, uint8_t *start, uint32_t size, Grows grows, size_t pageSize) :
              _name(name), _start(start), _size(size), _grows(grows), _pageSize(pageSize),
              _pageMap(TR::Compiler->persistentMemory()) { }
-
-   /**
-    * \brief
-    *  Sets page size
-    */
-   void setPageSize(size_t pageSize) { _pageSize = pageSize; }
 
    /**
     * \brief
