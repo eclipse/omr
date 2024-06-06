@@ -394,10 +394,31 @@ static inline bool isNonPositivePowerOf2(int32_t input)
    return (input & -input) == -input;
    }
 
+/**
+ * \brief Tests whether the operand is a power of 2
+ *
+ * \param input The 32-bit signed integer value to be tested
+ *
+ * \return \c true, if the operand is a power of 2;
+ *         \c false, otherwise
+ */
 static inline bool isPowerOf2(int32_t input)
    {
    input = input < 0 ? -input : input;
    return (input & -input) == input;
+   }
+
+/**
+ * \brief Tests whether the operand is a power of 2
+ *
+ * \param input The 32-bit unsigned integer value to be tested
+ *
+ * \return \c true, if the operand is a power of 2;
+ *         \c false, otherwise
+ */
+static inline bool isPowerOf2(uint32_t input)
+   {
+   return (input != 0) && (input & (input-1)) == 0;
    }
 
 static inline bool isNonNegativePowerOf2(int64_t input)
@@ -417,10 +438,31 @@ static inline bool isNonPositivePowerOf2(int64_t input)
    return (input & -input) == -input;
    }
 
+/**
+ * \brief Tests whether the operand is a power of 2
+ *
+ * \param input The 64-bit signed integer value to be tested
+ *
+ * \return \c true, if the operand is a power of 2;
+ *         \c false, otherwise
+ */
 static inline bool isPowerOf2(int64_t input)
    {
    input = input < 0 ? -input : input;
    return (input & -input) == input;
+   }
+
+/**
+ * \brief Tests whether the operand is a power of 2
+ *
+ * \param input The 64-bit unsigned integer value to be tested
+ *
+ * \return \c true, if the operand is a power of 2;
+ *         \c false, otherwise
+ */
+static inline bool isPowerOf2(uint64_t input)
+   {
+   return (input != 0) && (input & (input-1)) == 0;
    }
 
 #if defined(OSX)
