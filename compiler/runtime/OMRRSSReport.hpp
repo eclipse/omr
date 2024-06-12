@@ -244,6 +244,21 @@ class RSSReport
          _lastRegion = _regions.addAfter(region, _lastRegion);
          }
 
+   /**
+    * \brief
+    *        Creates and adds new RSSRegion to the list
+    */
+   void addNewRegion(const char *name, uint8_t *start, uint32_t size, RSSRegion::Grows grows, size_t pageSize)
+         {
+         RSSRegion *region = new (PERSISTENT_NEW) RSSRegion(name, start, size, grows, pageSize);
+
+         _printTitle = true;
+
+         RSSReportCriticalSection addRegionToList(this);
+         _lastRegion = _regions.addAfter(region, _lastRegion);
+         }
+
+
    private:
    bool _detailed;
    bool _printTitle;
