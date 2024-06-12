@@ -2053,7 +2053,7 @@ TR::Instruction * MemCpyAtomicMacroOp::generateSTXLoop(int32_t strideSize, TR::I
       cursor = generateRIInstruction(_cg, TR::InstOpCode::getAddHalfWordImmOpCode(), _dstNode, _srcReg, -1 * strideSize);
       cursor = generateRIInstruction(_cg, TR::InstOpCode::getAddHalfWordImmOpCode(), _dstNode, _endReg, -1 * strideSize);
       cursor = generateRIInstruction(_cg, TR::InstOpCode::getAddHalfWordImmOpCode(), _dstNode, _startReg, -1 * strideSize);
-      cursor = generateRRInstruction(_cg, TR::InstOpCode::getSubstractRegOpCode(), _dstNode, _startReg, _lenReg);
+      cursor = generateRRInstruction(_cg, TR::InstOpCode::getSubtractRegOpCode(), _dstNode, _startReg, _lenReg);
       cursor = generateRIInstruction(_cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), _dstNode, _strideReg, -1 * strideSize);
       }
    else
@@ -2177,7 +2177,7 @@ MemCpyAtomicMacroOp::generateOneSTXthenSTYLoopLabel(TR::LabelSymbol * oolStartLa
       // Initially decrement srcreg and endreg by stride size
       cursor = generateRIInstruction(_cg, TR::InstOpCode::getAddHalfWordImmOpCode(), _dstNode, _srcReg, -1 * strideSize1);
       cursor = generateRIInstruction(_cg, TR::InstOpCode::getAddHalfWordImmOpCode(), _dstNode, _endReg, -1 * strideSize1);
-      cursor = generateRRInstruction(_cg, TR::InstOpCode::getSubstractRegOpCode(), _dstNode, _startReg, _lenReg);
+      cursor = generateRRInstruction(_cg, TR::InstOpCode::getSubtractRegOpCode(), _dstNode, _startReg, _lenReg);
       cursor = generateRIInstruction(_cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), _dstNode, _strideReg, -1 * strideSize1);
       }
    else

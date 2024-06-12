@@ -2879,7 +2879,7 @@ static int decomposeConstant(char bitPosition[], char operationType[], int64_t v
            {
            if (lastBit)
               {
-              // the previous bit was one we are aiming for substract
+              // the previous bit was one we are aiming for subtract
               subsequentCount++;
               }
            else
@@ -2896,7 +2896,7 @@ static int decomposeConstant(char bitPosition[], char operationType[], int64_t v
            {
            if (subsequentCount > 1)
               {
-              // there are more then 1 bits set in a row set the operation as substract
+              // there are more then 1 bits set in a row set the operation as subtract
               operationType[count - 1] = op_minus;
               operationType[count] = op_plus;
               bitPosition[count] = pos;
