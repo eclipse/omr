@@ -25,6 +25,7 @@
 #include "codegen/ARM64ConditionCode.hpp"
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/GenerateInstructions.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/InstructionDelegate.hpp"
 #include "codegen/Linkage.hpp"
@@ -326,6 +327,28 @@ int32_t TR::ARM64ConditionalBranchInstruction::estimateBinaryLength(int32_t curr
    {
    setEstimatedBinaryLength(ARM64_INSTRUCTION_LENGTH);
    return currentEstimate + getEstimatedBinaryLength();
+   }
+
+void TR::ARM64ConditionalBranchInstruction::expandIntoFarBranch()
+   {
+   TR_ASSERT_FATAL(getLabelSymbol(), "Cannot expand conditional branch without a label");
+
+   if (comp()->getOption(TR_TraceCG))
+      traceMsg(comp(), "Expanding conditional branch instruction %p into a far branch\n", self());
+
+   ARM64ConditionCode newCond = cc_invert(getConditionCode());
+   setConditionCode(newCond);
+
+   TR::LabelSymbol *skipBranchLabel = generateLabelSymbol(cg());
+   skipBranchLabel->setEstimatedCodeLocation(getEstimatedBinaryLocation() + 4);
+
+   TR::Instruction *branchInstr = generateLabelInstruction(cg(), TR::InstOpCode::b, getNode(), getLabelSymbol(), self());
+   branchInstr->setEstimatedBinaryLength(ARM64_INSTRUCTION_LENGTH);
+
+   TR::Instruction *labelInstr = generateLabelInstruction(cg(), TR::InstOpCode::label, getNode(), skipBranchLabel, branchInstr);
+   labelInstr->setEstimatedBinaryLength(0);
+
+   setLabelSymbol(skipBranchLabel);
    }
 
 uint8_t *TR::ARM64CompareBranchInstruction::generateBinaryEncoding()
