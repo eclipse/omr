@@ -128,19 +128,25 @@ function(_omr_toolchain_process_exports TARGET_NAME)
 		return()
 	endif()
 
-	# This does not work on OSX.
-	if(OMR_OS_OSX)
-		return()
-	endif()
-
 	set(exp_file "$<TARGET_PROPERTY:${TARGET_NAME},BINARY_DIR>/${TARGET_NAME}.exp")
 
-	omr_process_template(
-		"${omr_SOURCE_DIR}/cmake/modules/platform/toolcfg/gnu_exports.exp.in"
-		"${exp_file}"
-	)
-
-	target_link_libraries(${TARGET_NAME}
-		PRIVATE
-			"-Wl,--version-script,${exp_file}")
+	if(OMR_OS_OSX)
+		omr_process_template(
+			"${omr_SOURCE_DIR}/cmake/modules/platform/toolcfg/osx_exports.exp.in"
+			"${exp_file}"
+		)
+		target_link_libraries(${TARGET_NAME}
+			PRIVATE
+				"-Wl,-exported_symbols_list,${exp_file}"
+		)
+	else()
+		omr_process_template(
+			"${omr_SOURCE_DIR}/cmake/modules/platform/toolcfg/gnu_exports.exp.in"
+			"${exp_file}"
+		)
+		target_link_libraries(${TARGET_NAME}
+			PRIVATE
+				"-Wl,--version-script,${exp_file}"
+		)
+	endif()
 endfunction()
