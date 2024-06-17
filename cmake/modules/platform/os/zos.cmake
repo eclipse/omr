@@ -43,7 +43,11 @@ list(APPEND CMAKE_INCLUDE_PATH "/usr/lpp/cbclib/include")
 # Create helper targets for specifying ascii/ebcdic options
 add_library(omr_ascii INTERFACE)
 target_compile_definitions(omr_ascii INTERFACE -DIBM_ATOE)
-target_compile_options(omr_ascii INTERFACE "-Wc,convlit(ISO8859-1),nose,se(${CMAKE_CURRENT_LIST_DIR}/../../../../util/a2e/headers)")
+if(CMAKE_C_COMPILER_IS_OPENXL)
+	target_compile_options(omr_ascii INTERFACE -fexec-charset=ISO8859-1 -isystem ${CMAKE_CURRENT_LIST_DIR}/../../../../util/a2e/headers)
+else()
+	target_compile_options(omr_ascii INTERFACE "-Wc,convlit(ISO8859-1),nose,se(${CMAKE_CURRENT_LIST_DIR}/../../../../util/a2e/headers)")
+endif()
 target_link_libraries(omr_ascii INTERFACE j9a2e)
 
 add_library(omr_ebcdic INTERFACE)

@@ -36,8 +36,7 @@
 #if !defined(IBM_STAT_INCLUDED)  /*ibm@39757*/
 #define IBM_STAT_INCLUDED        /*ibm@39757*/
 
-#include "prefixpath.h"
-#include PREFIXPATH(sys/stat.h)                          /*ibm@39429*/
+#include_next <sys/stat.h>                          /*ibm@39429*/
 
 #if defined(IBM_ATOE)
 
@@ -51,6 +50,7 @@
         int atoe_mkdir (const char*, mode_t);
         int atoe_remove (const char*);                     /*ibm@4838*/
         int atoe_chmod (const char*, mode_t);             /*ibm@11596*/
+        int atoe_lstat(const char *pathname, struct stat *sbuf);
         int atoe_stat (const char*, struct stat*);
         int atoe_statvfs (const char*, struct statvfs *buf);
 

@@ -35,8 +35,7 @@
 #if __TARGET_LIB__ == 0X22080000                                   
 #include <//'PP.ADLE370.OS39028.SCEEH.H(Ccsid)'>                   
 #else                                                              
-#include "prefixpath.h"
-#include PREFIXPATH(_Ccsid.h)                                    
+#include_next <_Ccsid.h>
 #endif                                                             
 
 #if defined(IBM_ATOE)

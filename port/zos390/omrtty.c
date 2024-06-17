@@ -40,6 +40,7 @@
 
 #if !defined(OMR_EBCDIC)
 #include "atoe.h"
+#include "omriconvhelpers.h"
 #endif /* !defined(OMR_EBCDIC) */
 
 void WRITE_TTY(int fileno, char *b, int bcount);

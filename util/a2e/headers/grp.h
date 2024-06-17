@@ -38,8 +38,7 @@
 #if __TARGET_LIB__ == 0X22080000
 #include <//'PP.ADLE370.OS39028.SCEEH.H(grp)'>
 #else
-#include "prefixpath.h"
-#include PREFIXPATH(grp.h)
+#include_next <grp.h>
 #endif
 
 #if !defined(IBM_ATOE_GRP)
