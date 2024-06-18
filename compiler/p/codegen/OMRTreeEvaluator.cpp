@@ -6902,6 +6902,20 @@ bool OMR::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&
          isGetThenUpdate = true;
          doInline = true;
          }
+      else if (comp->getSymRefTab()->isNonHelper(symRef, TR::SymbolReferenceTable::atomicFetchAndAdd8BitSymbol))
+         {
+         isAddOp = true;
+         isLong = false;
+         isGetThenUpdate = true;
+         doInline = true;
+         }
+      else if (comp->getSymRefTab()->isNonHelper(symRef, TR::SymbolReferenceTable::atomicFetchAndAdd16BitSymbol))
+         {
+         isAddOp = true;
+         isLong = false;
+         isGetThenUpdate = true;
+         doInline = true;
+         }
       else if (comp->getSymRefTab()->isNonHelper(symRef, TR::SymbolReferenceTable::atomicFetchAndAdd32BitSymbol))
          {
          isAddOp = true;
