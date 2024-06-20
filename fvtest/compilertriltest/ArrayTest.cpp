@@ -51,7 +51,7 @@ TEST_P(ArraycmpEqualTest, ArraycmpSameArray) {
     /*
      * "address=0" parameter is needed for arraycmp opcode because "Call" property is set to the opcode.
      */
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Address, Address]"
       "  (block"
       "    (ireturn"
@@ -80,7 +80,7 @@ TEST_P(ArraycmpEqualTest, ArraycmpEqualConstLen) {
 
     auto length = GetParam();
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Address, Address]"
       "  (block"
       "    (ireturn"
@@ -110,7 +110,7 @@ TEST_P(ArraycmpEqualTest, ArraycmpEqualVariableLen) {
 
     auto length = GetParam();
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Address, Address, Int32]"
       "  (block"
       "    (ireturn"
@@ -142,7 +142,7 @@ TEST_P(ArraycmpNotEqualTest, ArraycmpGreaterThanConstLen) {
     auto length = std::get<0>(GetParam());
     auto offset = std::get<1>(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Address, Address]"
       "  (block"
       "    (ireturn"
@@ -175,7 +175,7 @@ TEST_P(ArraycmpNotEqualTest, ArraycmpGreaterThanVariableLen) {
     auto length = std::get<0>(GetParam());
     auto offset = std::get<1>(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Address, Address, Int32]"
       "  (block"
       "    (ireturn"
@@ -207,7 +207,7 @@ TEST_P(ArraycmpNotEqualTest, ArraycmpLessThanConstLen) {
     auto length = std::get<0>(GetParam());
     auto offset = std::get<1>(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Address, Address]"
       "  (block"
       "    (ireturn"
@@ -240,7 +240,7 @@ TEST_P(ArraycmpNotEqualTest, ArraycmpLessThanVariableLen) {
     auto length = std::get<0>(GetParam());
     auto offset = std::get<1>(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int32 args=[Address, Address, Int32]"
       "  (block"
       "    (ireturn"
@@ -318,7 +318,7 @@ TEST_P(ArraycmplenEqualTest, ArraycmpLenSameArray) {
     /*
      * "address=0" parameter is needed for arraycmp opcode because "Call" property is set to the opcode.
      */
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Address, Address]"
       "  (block"
       "    (lreturn"
@@ -347,7 +347,7 @@ TEST_P(ArraycmplenEqualTest, ArraycmpLenEqualConstLen) {
 
     auto length = GetParam();
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Address, Address]"
       "  (block"
       "    (lreturn"
@@ -377,7 +377,7 @@ TEST_P(ArraycmplenEqualTest, ArraycmpLenEqualVariableLen) {
 
     auto length = GetParam();
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Address, Address, Int64]"
       "  (block"
       "    (lreturn"
@@ -409,7 +409,7 @@ TEST_P(ArraycmplenNotEqualTest, ArraycmpLenNotEqualConstLen) {
     auto length = std::get<0>(GetParam());
     auto offset = std::get<1>(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Address, Address]"
       "  (block"
       "    (lreturn"
@@ -442,7 +442,7 @@ TEST_P(ArraycmplenNotEqualTest, ArraycmpLenNotEqualVariableLen) {
     auto length = std::get<0>(GetParam());
     auto offset = std::get<1>(GetParam());
     char inputTrees[1024] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
       "(method return=Int64 args=[Address, Address, Int64]"
       "  (block"
       "    (lreturn"

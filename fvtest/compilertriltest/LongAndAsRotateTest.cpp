@@ -113,7 +113,7 @@ TEST_P(i2lLongAndAsRotateTest, SimpleTest)
    auto param = to_struct(GetParam());
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
          "(method return=Int64 args=[Int32]  "
          " (block                            "
          "  (lreturn                         "
@@ -148,7 +148,7 @@ TEST_P(i2lLongAndAsRotateTest, iConstTest)
    const int32_t constValue = 0x4321;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
          "(method return=Int64 args=[Int32]  "
          " (block                            "
          "  (lreturn                         "
@@ -189,7 +189,7 @@ TEST_P(i2lLongAndAsRotateTest, GreaterThanOneRefCount1)
    const uint64_t constLongValue = 0xFFFFFFFFFFFF0000;
 
    char inputTrees[2048] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
          "(method name=\"AddAndLand\" return=Int64 args=[Int32]"
          "   (block                                            "
          "      (lstore temp=\"x\"                             "
@@ -239,7 +239,7 @@ TEST_P(i2lLongAndAsRotateTest, GreaterThanOneRefCount2)
    const int32_t constValue2 = 0x1234;
    
    char inputTrees[2048] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
          "(method name=\"AddAndLand\" return=Int64 args=[Int32]"
          "   (block                                            "
          "      (lstore temp=\"x\"                             "
@@ -296,7 +296,7 @@ TEST_P(iu2lLongAndAsRotateTest, SimpleTest)
    auto param = to_struct(GetParam());
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
          "(method return=Int64 args=[Int32]  "
          " (block                            "
          "  (lreturn                         "
@@ -333,7 +333,7 @@ TEST_P(iu2lLongAndAsRotateTest, iConstTest)
    const uint32_t constValue = 0x4321;
 
    char inputTrees[512] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
          "(method return=Int64 args=[Int32]  "
          " (block                            "
          "  (lreturn                         "
@@ -375,7 +375,7 @@ TEST_P(iu2lLongAndAsRotateTest, GreaterThanOneRefCount1)
    const uint64_t constLongValue = 0xFFFFFFFFFFFF0000;
 
    char inputTrees[2048] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
          "(method name=\"AddAndLand\" return=Int64 args=[Int32]"
          "   (block                                            "
          "      (lstore temp=\"x\"                             "
@@ -426,7 +426,7 @@ TEST_P(iu2lLongAndAsRotateTest, GreaterThanOneRefCount2)
    const uint32_t constValue2 = 0x1234;
 
    char inputTrees[2048] = {0};
-   std::snprintf(inputTrees, sizeof(inputTrees),
+   Tril::format(inputTrees, sizeof(inputTrees),
          "(method name=\"AddAndLand\" return=Int64 args=[Int32]"
          "   (block                                            "
          "      (lstore temp=\"x\"                             "

@@ -21,6 +21,7 @@
 
 #include "JitTest.hpp"
 #include "default_compiler.hpp"
+#include "format.hpp"
 
 /* Template for mapping a C/C++ type to
  * a TR type, and type prefix.
@@ -91,14 +92,14 @@ TYPED_TEST(LinkageTest, InvalidLinkageTest) {
     SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=Int32 args=[Int32]"
        "  (block"
        "    (ireturn"
        "      (icall address=0x%jX args=[Int32] linkage=noexist"
        "        (iload parm=0) ) ) ) )",
 
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(TypeParam)>(return1stArgument<TypeParam>)) // address
+       static_cast<TypeParam(*)(TypeParam)>(return1stArgument<TypeParam>) // address
     );
 
     auto trees = parseString(inputTrees);
@@ -120,7 +121,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing1Arg) {
     SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s]"
        "  (block"
        "    (%sreturn"
@@ -131,7 +132,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing1Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(TypeParam)>(return1stArgument<TypeParam>)), // address
+       static_cast<TypeParam(*)(TypeParam)>(return1stArgument<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -165,7 +166,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing2Arg) {
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -178,7 +179,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing2Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(TypeParam, TypeParam)>(return2ndArgument<TypeParam>)), // address
+       static_cast<TypeParam(*)(TypeParam, TypeParam)>(return2ndArgument<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // load
@@ -214,7 +215,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing3Arg) {
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -229,7 +230,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing3Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam)>(return3rdArgument<TypeParam>)), // address
+       static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam)>(return3rdArgument<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -267,7 +268,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing4Arg) {
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -284,7 +285,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing4Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam)>(return4thArgument<TypeParam>)), // address
+       static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam)>(return4thArgument<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -324,7 +325,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing5Arg) {
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -343,7 +344,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing5Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam, TypeParam)>(return5thArgument<TypeParam>)), // address
+       static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam, TypeParam)>(return5thArgument<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -385,7 +386,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing6Arg) {
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -406,7 +407,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing6Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam)>(return6thArgument<TypeParam>)), // address
+       static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam)>(return6thArgument<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -450,7 +451,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing7Arg) {
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -473,7 +474,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing7Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam)>(return7thArgument<TypeParam>)), // address
+       static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam)>(return7thArgument<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -519,7 +520,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing8Arg) {
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -544,7 +545,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing8Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam)>(return8thArgument<TypeParam>)), // address
+       static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam)>(return8thArgument<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -592,7 +593,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing9Arg) {
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -619,7 +620,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing9Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam)>(return9thArgument<TypeParam>)), // address
+       static_cast<TypeParam(*)(TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam, TypeParam)>(return9thArgument<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -699,7 +700,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing2A
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,%s]"
        "  (block"
        "    (%sreturn"
@@ -711,7 +712,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing2A
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(double, TypeParam)>(return2ndArgumentFromMixedTypes<TypeParam>)), // address
+       static_cast<TypeParam(*)(double, TypeParam)>(return2ndArgumentFromMixedTypes<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -745,7 +746,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing3A
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int32,%s]"
        "  (block"
        "    (%sreturn"
@@ -758,7 +759,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing3A
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(double, int32_t, TypeParam)>(return3rdArgumentFromMixedTypes<TypeParam>)), // address
+       static_cast<TypeParam(*)(double, int32_t, TypeParam)>(return3rdArgumentFromMixedTypes<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -792,7 +793,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing4A
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int64,Float,%s]"
        "  (block"
        "    (%sreturn"
@@ -806,7 +807,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing4A
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(double, int64_t, float, TypeParam)>(return4thArgumentFromMixedTypes<TypeParam>)), // address
+       static_cast<TypeParam(*)(double, int64_t, float, TypeParam)>(return4thArgumentFromMixedTypes<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -840,7 +841,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing5A
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Float,Int32,Float,Int64,%s]"
        "  (block"
        "    (%sreturn"
@@ -855,7 +856,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing5A
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(float, int32_t, float, int64_t, TypeParam)>(return5thArgumentFromMixedTypes<TypeParam>)), // address
+       static_cast<TypeParam(*)(float, int32_t, float, int64_t, TypeParam)>(return5thArgumentFromMixedTypes<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -889,7 +890,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing6A
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Float,Int32,Double,Int32,Int64,%s]"
        "  (block"
        "    (%sreturn"
@@ -905,7 +906,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing6A
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(float, int32_t, double, int32_t, int64_t, TypeParam)>(return6thArgumentFromMixedTypes<TypeParam>)), // address
+       static_cast<TypeParam(*)(float, int32_t, double, int32_t, int64_t, TypeParam)>(return6thArgumentFromMixedTypes<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -939,7 +940,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing7A
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int32,Double,Int32,Int32,Int64,%s]"
        "  (block"
        "    (%sreturn"
@@ -956,7 +957,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing7A
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(double, int32_t, double, int32_t, int32_t, int64_t, TypeParam)>(return7thArgumentFromMixedTypes<TypeParam>)), // address
+       static_cast<TypeParam(*)(double, int32_t, double, int32_t, int32_t, int64_t, TypeParam)>(return7thArgumentFromMixedTypes<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -990,7 +991,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing8A
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Int64,Int64,Float,Double,Int32,Int64,Int32,%s]"
        "  (block"
        "    (%sreturn"
@@ -1008,7 +1009,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing8A
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(int64_t, int64_t, float, double, int32_t, int64_t, int32_t, TypeParam)>(return8thArgumentFromMixedTypes<TypeParam>)), // address
+       static_cast<TypeParam(*)(int64_t, int64_t, float, double, int32_t, int64_t, int32_t, TypeParam)>(return8thArgumentFromMixedTypes<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -1042,7 +1043,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing9A
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int32,Float,Int32,Int32,Float,Int64,Int32,%s]"
        "  (block"
        "    (%sreturn"
@@ -1061,7 +1062,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing9A
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(static_cast<TypeParam(*)(double, int32_t, float, int32_t, int32_t, float, int64_t, int32_t, TypeParam)>(return9thArgumentFromMixedTypes<TypeParam>)), // address
+       static_cast<TypeParam(*)(double, int32_t, float, int32_t, int32_t, float, int64_t, int32_t, TypeParam)>(return9thArgumentFromMixedTypes<TypeParam>), // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -1085,7 +1086,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing9A
 template <typename T>
 T (*getJitCompiledMethodReturning1stArgument())(T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s]"
        "  (block"
        "    (%sreturn"
@@ -1113,7 +1114,7 @@ T (*getJitCompiledMethodReturning1stArgument())(T) {
 template <typename T>
 T (*getJitCompiledMethodReturning2ndArgument())(T, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1142,7 +1143,7 @@ T (*getJitCompiledMethodReturning2ndArgument())(T, T) {
 template <typename T>
 T (*getJitCompiledMethodReturning3rdArgument())(T, T, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1172,7 +1173,7 @@ T (*getJitCompiledMethodReturning3rdArgument())(T, T, T) {
 template <typename T>
 T (*getJitCompiledMethodReturning4thArgument())(T, T, T, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1203,7 +1204,7 @@ T (*getJitCompiledMethodReturning4thArgument())(T, T, T, T) {
 template <typename T>
 T (*getJitCompiledMethodReturning5thArgument())(T, T, T, T, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1235,7 +1236,7 @@ T (*getJitCompiledMethodReturning5thArgument())(T, T, T, T, T) {
 template <typename T>
 T (*getJitCompiledMethodReturning6thArgument())(T, T, T, T, T, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1268,7 +1269,7 @@ T (*getJitCompiledMethodReturning6thArgument())(T, T, T, T, T, T) {
 template <typename T>
 T (*getJitCompiledMethodReturning7thArgument())(T, T, T, T, T, T, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1302,7 +1303,7 @@ T (*getJitCompiledMethodReturning7thArgument())(T, T, T, T, T, T, T) {
 template <typename T>
 T (*getJitCompiledMethodReturning8thArgument())(T, T, T, T, T, T, T, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1337,7 +1338,7 @@ T (*getJitCompiledMethodReturning8thArgument())(T, T, T, T, T, T, T, T) {
 template <typename T>
 T (*getJitCompiledMethodReturning9thArgument())(T, T, T, T, T, T, T, T, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1385,7 +1386,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing1Arg) {
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s]"
        "  (block"
        "    (%sreturn"
@@ -1396,7 +1397,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing1Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -1433,7 +1434,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing2Arg) {
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1446,7 +1447,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing2Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // load
@@ -1485,7 +1486,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing3Arg) {
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1500,7 +1501,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing3Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -1541,7 +1542,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing4Arg) {
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1558,7 +1559,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing4Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -1601,7 +1602,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing5Arg) {
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1620,7 +1621,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing5Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -1665,7 +1666,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing6Arg) {
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1686,7 +1687,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing6Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -1733,7 +1734,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing7Arg) {
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1756,7 +1757,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing7Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -1805,7 +1806,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing8Arg) {
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1830,7 +1831,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing8Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -1881,7 +1882,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing9Arg) {
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[%s,%s,%s,%s,%s,%s,%s,%s,%s]"
        "  (block"
        "    (%sreturn"
@@ -1908,7 +1909,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing9Arg) {
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::type, // args
@@ -1948,7 +1949,7 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing9Arg) {
 template <typename T>
 T (*getJitCompiledMethodReturning2ndArgumentFromMixedTypes())(double, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,%s]"
        "  (block"
        "    (%sreturn"
@@ -1976,7 +1977,7 @@ T (*getJitCompiledMethodReturning2ndArgumentFromMixedTypes())(double, T) {
 template <typename T>
 T (*getJitCompiledMethodReturning3rdArgumentFromMixedTypes())(double, int32_t, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int32,%s]"
        "  (block"
        "    (%sreturn"
@@ -2004,7 +2005,7 @@ T (*getJitCompiledMethodReturning3rdArgumentFromMixedTypes())(double, int32_t, T
 template <typename T>
 T (*getJitCompiledMethodReturning4thArgumentFromMixedTypes())(double, int64_t, float, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int64,Float,%s]"
        "  (block"
        "    (%sreturn"
@@ -2032,7 +2033,7 @@ T (*getJitCompiledMethodReturning4thArgumentFromMixedTypes())(double, int64_t, f
 template <typename T>
 T (*getJitCompiledMethodReturning5thArgumentFromMixedTypes())(float, int32_t, float, int64_t, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Float,Int32,Float,Int64,%s]"
        "  (block"
        "    (%sreturn"
@@ -2060,7 +2061,7 @@ T (*getJitCompiledMethodReturning5thArgumentFromMixedTypes())(float, int32_t, fl
 template <typename T>
 T (*getJitCompiledMethodReturning6thArgumentFromMixedTypes())(float, int32_t, double, int32_t, int64_t, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Float,Int32,Double,Int32,Int64,%s]"
        "  (block"
        "    (%sreturn"
@@ -2088,7 +2089,7 @@ T (*getJitCompiledMethodReturning6thArgumentFromMixedTypes())(float, int32_t, do
 template <typename T>
 T (*getJitCompiledMethodReturning7thArgumentFromMixedTypes())(double, int32_t, double, int32_t, int32_t, int64_t, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int32,Double,Int32,Int32,Int64,%s]"
        "  (block"
        "    (%sreturn"
@@ -2116,7 +2117,7 @@ T (*getJitCompiledMethodReturning7thArgumentFromMixedTypes())(double, int32_t, d
 template <typename T>
 T (*getJitCompiledMethodReturning8thArgumentFromMixedTypes())(int64_t, int64_t, float, double, int32_t, int64_t, int32_t, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Int64,Int64,Float,Double,Int32,Int64,Int32,%s]"
        "  (block"
        "    (%sreturn"
@@ -2144,7 +2145,7 @@ T (*getJitCompiledMethodReturning8thArgumentFromMixedTypes())(int64_t, int64_t, 
 template <typename T>
 T (*getJitCompiledMethodReturning9thArgumentFromMixedTypes())(double, int32_t, float, int32_t, int32_t, float, int64_t, int32_t, T) {
     char inputTrees[400] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int32,Float,Int32,Int32,Float,Int64,Int32,%s]"
        "  (block"
        "    (%sreturn"
@@ -2185,7 +2186,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing2ArgW
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,%s]"
        "  (block"
        "    (%sreturn"
@@ -2197,7 +2198,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing2ArgW
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -2234,7 +2235,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing3ArgW
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int32,%s]"
        "  (block"
        "    (%sreturn"
@@ -2247,7 +2248,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing3ArgW
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -2284,7 +2285,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing4ArgW
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int64,Float,%s]"
        "  (block"
        "    (%sreturn"
@@ -2298,7 +2299,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing4ArgW
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -2335,7 +2336,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing5ArgW
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Float,Int32,Float,Int64,%s]"
        "  (block"
        "    (%sreturn"
@@ -2350,7 +2351,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing5ArgW
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -2387,7 +2388,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing6ArgW
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Float,Int32,Double,Int32,Int64,%s]"
        "  (block"
        "    (%sreturn"
@@ -2403,7 +2404,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing6ArgW
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -2440,7 +2441,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing7ArgW
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int32,Double,Int32,Int32,Int64,%s]"
        "  (block"
        "    (%sreturn"
@@ -2457,7 +2458,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing7ArgW
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -2494,7 +2495,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing8ArgW
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Int64,Int64,Float,Double,Int32,Int64,Int32,%s]"
        "  (block"
        "    (%sreturn"
@@ -2512,7 +2513,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing8ArgW
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );
@@ -2549,7 +2550,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing9ArgW
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
 
     char inputTrees[600] = { 0 };
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
        "(method return=%s args=[Double,Int32,Float,Int32,Int32,Float,Int64,Int32,%s]"
        "  (block"
        "    (%sreturn"
@@ -2568,7 +2569,7 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing9ArgW
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix, // return
        TypeToString<TypeParam>::prefix, //call
-       reinterpret_cast<uintmax_t>(callee_entry_point), // address
+       callee_entry_point, // address
        TypeToString<TypeParam>::type, // args
        TypeToString<TypeParam>::prefix // load
     );

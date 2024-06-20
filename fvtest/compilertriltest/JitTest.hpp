@@ -31,6 +31,7 @@
 #include "optimizer/Optimizer.hpp"
 #include "ilgen/MethodBuilder.hpp"
 #include "omrport.h"
+#include "format.hpp"
 #include "Jit.hpp"
 
 #define ASSERT_NULL(pointer) ASSERT_EQ(NULL, (pointer))

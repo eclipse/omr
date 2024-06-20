@@ -79,7 +79,7 @@ TEST_P(Int8ToInt32, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int32"
         "  (block"
         "    (ireturn"
@@ -136,7 +136,7 @@ TEST_P(UInt8ToInt32, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int32"
         "  (block"
         "    (ireturn"
@@ -193,7 +193,7 @@ TEST_P(Int8ToInt64, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -250,7 +250,7 @@ TEST_P(UInt8ToInt64, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -307,7 +307,7 @@ TEST_P(Int16ToInt32, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int32"
         "  (block"
         "    (ireturn"
@@ -364,7 +364,7 @@ TEST_P(UInt16ToInt32, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int32"
         "  (block"
         "    (ireturn"
@@ -421,7 +421,7 @@ TEST_P(Int16ToInt64, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -478,7 +478,7 @@ TEST_P(UInt16ToInt64, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -535,7 +535,7 @@ TEST_P(Int32ToInt64, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -591,7 +591,7 @@ TEST_P(UInt32ToInt64, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -653,7 +653,7 @@ TEST_P(Int64ToInt32, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int32"
         "  (block"
         "    (ireturn"
@@ -726,7 +726,7 @@ TEST_P(Int32ToFloat, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Float"
         "  (block"
         "    (freturn"
@@ -782,7 +782,7 @@ TEST_P(Int64ToFloat, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Float"
         "  (block"
         "    (freturn"
@@ -838,7 +838,7 @@ TEST_P(Int32ToDouble, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Double"
         "  (block"
         "    (dreturn"
@@ -894,7 +894,7 @@ TEST_P(Int64ToDouble, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Double"
         "  (block"
         "    (dreturn"
@@ -990,7 +990,7 @@ TEST_P(FloatToInt32, UsingConst) {
     }
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int32"
         "  (block"
         "    (ireturn"
@@ -1057,7 +1057,7 @@ TEST_P(FloatToInt64, UsingConst) {
     }
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -1119,7 +1119,7 @@ TEST_P(DoubleToInt32, UsingConst) {
     }
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, 512,
+    Tril::format(inputTrees, 512,
         "(method return=Int32"
         "  (block"
         "    (ireturn"
@@ -1181,7 +1181,7 @@ TEST_P(DoubleToInt64, UsingConst) {
     }
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, 512,
+    Tril::format(inputTrees, 512,
         "(method return=Int64"
         "  (block"
         "    (lreturn"
@@ -1258,7 +1258,7 @@ TEST_P(FloatToDouble, UsingConst) {
     }
 
     char inputTrees[160] = {0};
-    std::snprintf(inputTrees, 160,
+    Tril::format(inputTrees, 160,
         "(method return=Double"
         "  (block"
         "    (dreturn"
@@ -1328,7 +1328,7 @@ TEST_P(DoubleToFloat, UsingConst) {
     }
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, 512,
+    Tril::format(inputTrees, 512,
         "(method return=Float"
         "  (block"
         "    (freturn"
@@ -1505,7 +1505,7 @@ TEST_P(FloatNormalizeNan, UsingLoadConst) {
     uint32_t value = GetParam();
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int32 args=[Int32]"
         "  (block"
         "    (ireturn"
@@ -1588,7 +1588,7 @@ TEST_P(DoubleNormalizeNan, UsingLoadConst) {
     uint64_t value = GetParam();
 
     char inputTrees[300] = {0};
-    std::snprintf(inputTrees, sizeof(inputTrees),
+    Tril::format(inputTrees, sizeof(inputTrees),
         "(method return=Int64 args=[Int64]"
         "  (block"
         "    (lreturn"
@@ -1622,7 +1622,7 @@ TEST_P(Int32BitsToFloat, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Float"
         "  (block"
         "    (freturn"
@@ -1693,7 +1693,7 @@ TEST_P(FloatBitsToInt32, UsingConst) {
     }
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Int32"
         "  (block"
         "    (ireturn"
@@ -1755,7 +1755,7 @@ TEST_P(Int64BitsToDouble, UsingConst) {
     auto param = TRTest::to_struct(GetParam());
 
     char inputTrees[256] = {0};
-    std::snprintf(inputTrees, 256,
+    Tril::format(inputTrees, 256,
         "(method return=Double"
         "  (block"
         "    (dreturn"
@@ -1830,7 +1830,7 @@ TEST_P(DoubleBitsToInt64, UsingConst) {
     }
 
     char inputTrees[512] = {0};
-    std::snprintf(inputTrees, 512,
+    Tril::format(inputTrees, 512,
         "(method return=Int64"
         "  (block"
         "    (lreturn"
