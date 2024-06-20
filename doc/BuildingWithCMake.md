@@ -198,7 +198,7 @@ Cross compiling OMR is done in two steps:
 
 2. Cross compile using your CC toolchain and native tools:
    ```bash
-   mkdir -p foreign_build && cd foreign_buid
+   mkdir -p foreign_build && cd foreign_build
    cmake .. -DCMAKE_TOOLCHAIN_FILE=path/to/file
    cmake .. -DOMR_TOOLS_IMPORTFILE=../native_build/tools/ImportTools.cmake
    cmake --build .
