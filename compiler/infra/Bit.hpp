@@ -126,6 +126,19 @@ static inline int32_t leadingZeroes (int64_t input)
    return count;
    }
 #endif
+#elif defined(TR_HOST_S390) && (defined(__IBMC__) || defined(__IBMCPP__) || defined(__GNUC__) || defined(__clang__))
+
+// Return a count 0..32 of leading zeroes in the given word
+static inline int32_t leadingZeroes (int32_t inputWord)
+   {
+   return __builtin_clz (inputWord);
+   }
+
+// Return a count 0..64 of leading zeroes in the given doubleword
+static inline int32_t leadingZeroes (int64_t input)
+   {
+   return __builtin_clzll (input);
+   }
 #else
 extern int32_t leadingZeroes (int32_t inputWord);
 extern int32_t leadingZeroes (int64_t input);
@@ -142,6 +155,14 @@ static inline int32_t leadingZeroes (uint32_t inputWord)
    return leadingZeroes ((int32_t)inputWord);
    }
 
+#if defined(TR_HOST_S390) && (defined(__IBMC__) || defined(__IBMCPP__) || defined(__GNUC__) || defined(__clang__))
+
+// Return a count 0..32 of leading zeroes in the given word
+static inline int32_t trailingZeroes (int32_t inputWord)
+   {
+   return __builtin_ctz (inputWord);
+   }
+#else
 // Return a count 0..32 of trailing zeroes in the given word
 static inline int32_t trailingZeroes (int32_t inputWord)
    {
@@ -154,7 +175,16 @@ static inline int32_t trailingZeroes (uint32_t inputWord)
    {
    return trailingZeroes((int32_t)inputWord);
    }
+#endif
 
+#if defined(TR_HOST_S390) && (defined(__IBMC__) || defined(__IBMCPP__) || defined(__GNUC__) || defined(__clang__))
+
+// Return a count 0..64 of leading zeroes in the given doubleword
+static inline int32_t trailingZeroes (int64_t input)
+   {
+   return __builtin_ctzll (input);
+   }
+#else
 // Return a count 0..64 of trailing zeroes in the given doubleword
 static inline int32_t trailingZeroes (int64_t input)
    {
@@ -168,6 +198,7 @@ static inline int32_t trailingZeroes(uint64_t input)
    {
    return trailingZeroes((int64_t)input);
    }
+#endif
 
 static inline int32_t ceilingPowerOfTwo (int32_t inputWord)
    {
@@ -210,6 +241,13 @@ static inline int32_t populationCount (int32_t inputWord)
    {
    return __builtin_popcount(inputWord);
    }
+#elif defined(TR_HOST_S390) && (defined(__IBMC__) || defined(__IBMCPP__) || defined(__GNUC__) || defined(__clang__))
+// return the number of 1-bits in the argument
+static inline int32_t populationCount (int32_t inputWord)
+   {
+   //built in for s390
+   return __builtin_popcount(inputWord);
+   }
 #else
 // return the number of 1-bits in the argument
 static inline int32_t populationCount (int32_t inputWord)
@@ -237,6 +275,13 @@ static inline int32_t populationCount (uint32_t inputWord)
 // return the number of 1-bits in the argument
 static inline int32_t populationCount (int64_t inputWord)
    {
+   return __builtin_popcountll(inputWord);
+   }
+#elif defined(TR_HOST_S390) && (defined(__IBMC__) || defined(__IBMCPP__) || defined(__GNUC__) || defined(__clang__))
+// return the number of 1-bits in the argument
+static inline int32_t populationCount (int64_t inputWord)
+   {
+   //built in for s390
    return __builtin_popcountll(inputWord);
    }
 #else
