@@ -1052,7 +1052,7 @@ OPCODE_MACRO(\
    /* .properties4          = */ 0, \
    /* .dataType             = */ TR::Int32, \
    /* .typeProperties       = */ ILTypeProp::Size_4 | ILTypeProp::Integer, \
-   /* .childProperties      = */ ONE_CHILD(ILChildProp::UnspecifiedChildType), \
+   /* .childProperties      = */ ONE_CHILD(TR::Int32), \
    /* .swapChildrenOpCode   = */ TR::BadILOp, \
    /* .reverseBranchOpCode  = */ TR::BadILOp, \
    /* .booleanCompareOpCode = */ TR::BadILOp, \
