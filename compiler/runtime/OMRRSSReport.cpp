@@ -127,7 +127,7 @@ OMR::RSSRegion::addToListSorted(TR_PersistentList<OMR::RSSItem> *itemList, OMR::
       uint8_t *nextStart = nextItem->_addr;
       uint8_t *nextEnd = nextStart + nextItem->_size;
 
-      if (itemStart < nextEnd || itemEnd > nextStart)
+      if (itemStart >= nextStart || itemEnd > nextStart)
          {
          itemList->removeNext(newElement);
          }
