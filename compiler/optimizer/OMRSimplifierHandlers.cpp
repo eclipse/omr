@@ -75,69 +75,7 @@
 #define FMA_CONST_HIGHBOUNDI2D 8.371160993643E298
 #define FMA_CONST_HIGHBOUNDF2D 5.282945626245E269
 
-
-
-/**
- * If both sides of a branch are adds, simplify to use atmost one add
- * e.g. if (a + b != x + y) where b and y are constants, would be simplified
- * to   if (a != x + (y - b))
- *
- * This cannot be applied when the comparison operator is a <, <=, >, >=
- * in general.  That _may_ be possible when more information about the value
- * ranges is known (i.e. during value propagation)
- */
-#define SIMPLIFY_BRANCH_ARITHMETIC(Type,Width)                                     \
-   if ((firstChild ->getOpCode().isSub() || firstChild ->getOpCode().isAdd()) &&   \
-       (firstChild ->getSecondChild()->getOpCode().isLoadConst()) &&               \
-       (secondChild->getOpCode().isSub() || secondChild->getOpCode().isAdd()) &&   \
-       (secondChild->getSecondChild()->getOpCode().isLoadConst()) &&               \
-       (firstChild ->getReferenceCount()==1) &&                                    \
-       (secondChild ->getReferenceCount()==1))                                     \
-      {                                                                            \
-      Width konst;                                                                 \
-      if (firstChild->getOpCode().isSub())                                         \
-         {                                                                         \
-         if (secondChild->getOpCode().isSub())                                     \
-            konst = secondChild->getSecondChild()->get##Type() -                   \
-                    firstChild->getSecondChild()->get##Type();                     \
-         else                                                                      \
-            konst = secondChild->getSecondChild()->get##Type() +                   \
-                    firstChild->getSecondChild()->get##Type();                     \
-         }                                                                         \
-      else                                                                         \
-         {                                                                         \
-         if (secondChild->getOpCode().isAdd())                                     \
-            konst = secondChild->getSecondChild()->get##Type() -                   \
-               firstChild->getSecondChild()->get##Type();                          \
-         else                                                                      \
-            konst = secondChild->getSecondChild()->get##Type() +                   \
-               firstChild->getSecondChild()->get##Type();                          \
-         }                                                                         \
-      node->setAndIncChild(0, firstChild->getFirstChild());                        \
-      firstChild->recursivelyDecReferenceCount();                                  \
-      firstChild = firstChild->getFirstChild();                                    \
-      if (konst == 0)                                                              \
-         {                                                                         \
-         node->setAndIncChild(1, secondChild->getFirstChild());                    \
-         secondChild->recursivelyDecReferenceCount();                              \
-         secondChild = secondChild->getFirstChild();                               \
-         }                                                                         \
-      else                                                                         \
-         {                                                                         \
-         TR::Node * grandChild = secondChild->getSecondChild();                      \
-         if (grandChild->getReferenceCount() == 1)                                 \
-            grandChild->set##Type(konst);                                          \
-         else                                                                      \
-            {                                                                      \
-            grandChild->recursivelyDecReferenceCount();                            \
-            secondChild->setAndIncChild(1, TR::Node::create(grandChild, grandChild->getOpCodeValue(), 0, (int32_t)konst)); \
-            }                                                                      \
-         }                                                                         \
-      dumpOptDetails(s->comp(), "%ssimplified arithmetic in branch [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(),        \
-                  node);                                                           \
-      }
-
-struct BinaryOpSimplifierHelpers
+struct TypedNodeSimplifierHelpers
    {
    static int8_t getNodeByteValue(TR::Node * node)
       {
@@ -199,6 +137,89 @@ struct BinaryOpSimplifierHelpers
       node->setDoubleBits(bits);
       }
    };
+
+template <typename T>
+struct BranchArithmeticSimplifier {
+   typedef T (* Getter)(TR::Node *);
+   typedef void (* Setter)(TR::Node *, T);
+   TR::Simplifier * s;
+   Getter getNodeValue;
+   Setter setNodeValue;
+
+   BranchArithmeticSimplifier(TR::Simplifier * simplifier, Getter getter, Setter setter): s(simplifier), getNodeValue(getter), setNodeValue(setter) {}
+
+   /**
+    * If both sides of a branch are adds, simplify to use atmost one add
+    * e.g. if (a + b != x + y) where b and y are constants, would be simplified
+    * to   if (a != x + (y - b))
+    *
+    * This cannot be applied when the comparison operator is a <, <=, >, >=
+    * in general.  That _may_ be possible when more information about the value
+    * ranges is known (i.e. during value propagation)
+    */
+   inline void simplifyBranch(TR::Node * node) {
+      if (!node)
+         return;
+      auto firstChild = node->getFirstChild();
+      auto secondChild = node->getSecondChild();
+
+      auto bothChildrenHaveSingleUse = firstChild->getReferenceCount() == 1 && secondChild->getReferenceCount() == 1;
+      auto isSimplifiable = bothChildrenHaveSingleUse && isAddOrSubConst(firstChild) && isAddOrSubConst(secondChild);
+      if (!isSimplifiable)
+         return;
+
+      auto isFirstChildSub = firstChild->getOpCode().isSub();
+      auto isSecondChildSub = secondChild->getOpCode().isSub();
+      auto firstConst = firstChild->getSecondChild();
+      auto secondConst = secondChild->getSecondChild();
+
+      T konst;
+      // we know by now both children are either adds or subs so this checks
+      // that the two children are not the same operation
+      if (isFirstChildSub != isSecondChildSub)
+         konst = getNodeValue(secondConst) + getNodeValue(firstConst);
+      // otherwise they must be both adds or both subs
+      else
+         konst = getNodeValue(secondConst) - getNodeValue(firstConst);
+
+      node->setAndIncChild(0, firstChild->getFirstChild());
+      firstChild->recursivelyDecReferenceCount();
+
+      if (konst == 0)
+         {
+         node->setAndIncChild(1, secondChild->getFirstChild());
+         secondChild->recursivelyDecReferenceCount();
+         }
+      else if (secondConst->getReferenceCount() == 1)
+         {
+         setNodeValue(secondConst, konst);
+         }
+      else
+         {
+         secondConst->recursivelyDecReferenceCount();
+         auto updatedSecondConst = TR::Node::create(secondConst, secondConst->getOpCodeValue(), 0, (int32_t) konst);
+         secondChild->setAndIncChild(1, updatedSecondConst);
+         }
+      dumpOptDetails(s->comp(), "%ssimplified arithmetic in branch [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node);
+   }
+
+   private:
+      bool isAddOrSubConst(TR::Node * node) {
+         auto opcode = node->getOpCode();
+         auto isSecondChildConst = node->getSecondChild()->getOpCode().isLoadConst();
+         return (opcode.isSub() || opcode.isAdd()) && isSecondChildConst;
+      }
+};
+
+BranchArithmeticSimplifier<int32_t> getIntBranchArithmeticSimplifier(TR::Simplifier * s)
+   {
+   return BranchArithmeticSimplifier<int32_t>(s, TypedNodeSimplifierHelpers::getNodeIntValue, TypedNodeSimplifierHelpers::setNodeIntValue);
+   }
+
+BranchArithmeticSimplifier<int64_t> getLongBranchArithmeticSimplifier(TR::Simplifier * s)
+   {
+   return BranchArithmeticSimplifier<int64_t>(s, TypedNodeSimplifierHelpers::getNodeLongValue, TypedNodeSimplifierHelpers::setNodeLongValue);
+   }
 
 template <typename T>
 struct BinaryOpSimplifier
@@ -267,32 +288,32 @@ struct BinaryOpSimplifier
 
 BinaryOpSimplifier<int8_t> getByteBinaryOpSimplifier(TR::Simplifier * s)
    {
-   return BinaryOpSimplifier<int8_t>(s, BinaryOpSimplifierHelpers::getNodeByteValue, BinaryOpSimplifierHelpers::setNodeByteValue);
+   return BinaryOpSimplifier<int8_t>(s, TypedNodeSimplifierHelpers::getNodeByteValue, TypedNodeSimplifierHelpers::setNodeByteValue);
    }
 
 BinaryOpSimplifier<int16_t> getShortBinaryOpSimplifier(TR::Simplifier * s)
    {
-   return BinaryOpSimplifier<int16_t>(s, BinaryOpSimplifierHelpers::getNodeShortValue, BinaryOpSimplifierHelpers::setNodeShortValue);
+   return BinaryOpSimplifier<int16_t>(s, TypedNodeSimplifierHelpers::getNodeShortValue, TypedNodeSimplifierHelpers::setNodeShortValue);
    }
 
 BinaryOpSimplifier<int32_t> getIntBinaryOpSimplifier(TR::Simplifier * s)
    {
-   return BinaryOpSimplifier<int32_t>(s, BinaryOpSimplifierHelpers::getNodeIntValue, BinaryOpSimplifierHelpers::setNodeIntValue);
+   return BinaryOpSimplifier<int32_t>(s, TypedNodeSimplifierHelpers::getNodeIntValue, TypedNodeSimplifierHelpers::setNodeIntValue);
    }
 
 BinaryOpSimplifier<int64_t> getLongBinaryOpSimplifier(TR::Simplifier * s)
    {
-   return BinaryOpSimplifier<int64_t>(s, BinaryOpSimplifierHelpers::getNodeLongValue, BinaryOpSimplifierHelpers::setNodeLongValue);
+   return BinaryOpSimplifier<int64_t>(s, TypedNodeSimplifierHelpers::getNodeLongValue, TypedNodeSimplifierHelpers::setNodeLongValue);
    }
 
 BinaryOpSimplifier<uint32_t> getFloatBitsBinaryOpSimplifier(TR::Simplifier * s)
    {
-   return BinaryOpSimplifier<uint32_t>(s, BinaryOpSimplifierHelpers::getNodeFloatBits, BinaryOpSimplifierHelpers::setNodeFloatBits);
+   return BinaryOpSimplifier<uint32_t>(s, TypedNodeSimplifierHelpers::getNodeFloatBits, TypedNodeSimplifierHelpers::setNodeFloatBits);
    }
 
 BinaryOpSimplifier<uint64_t> getDoubleBitsBinaryOpSimplifier(TR::Simplifier * s)
    {
-   return BinaryOpSimplifier<uint64_t>(s, BinaryOpSimplifierHelpers::getNodeDoubleBits, BinaryOpSimplifierHelpers::setNodeDoubleBits);
+   return BinaryOpSimplifier<uint64_t>(s, TypedNodeSimplifierHelpers::getNodeDoubleBits, TypedNodeSimplifierHelpers::setNodeDoubleBits);
    }
 
 static TR::ILOpCodes addOps[TR::NumAllTypes] = { TR::BadILOp,
@@ -3544,17 +3565,6 @@ static void changeConverts2Unsigned(TR::Node *node, TR::ILOpCodes searchOp,TR::S
       {
       changeConverts2Unsigned(node->getChild(i),searchOp,s);
       }
-   }
-
-
-static void simplifyIntBranchArithmetic(TR::Node * node, TR::Node * & firstChild, TR::Node * & secondChild, TR::Simplifier * s)
-   {
-   SIMPLIFY_BRANCH_ARITHMETIC(Int,int32_t);
-   }
-
-static void simplifyLongBranchArithmetic(TR::Node * node, TR::Node * & firstChild, TR::Node * & secondChild, TR::Simplifier * s)
-   {
-   SIMPLIFY_BRANCH_ARITHMETIC(LongInt,int64_t);
    }
 
 //**************************************
@@ -13499,7 +13509,9 @@ static TR::Node *simplifyIficmpneHelper(TR::Node *node, TR::Block *block, TR::Si
    if (conditionalZeroComparisonBranchFold (node, firstChild, secondChild, block, s))
       return node;
 
-   simplifyIntBranchArithmetic(node, firstChild, secondChild, s);
+   auto branchSimplifier = getIntBranchArithmeticSimplifier(s);
+   branchSimplifier.simplifyBranch(node);
+   firstChild, secondChild = node->getFirstChild(), node->getSecondChild();
 
    //We will change a if ( a >> C != 0 ) to a if ( a >= 2^C )
    if ( firstChild->getOpCode().isRightShift() && //First child is a right shift
@@ -13609,7 +13621,9 @@ TR::Node *ificmpeqSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
    if (conditionalZeroComparisonBranchFold (node, firstChild, secondChild, block, s))
       return node;
 
-   simplifyIntBranchArithmetic(node, firstChild, secondChild, s);
+   auto branchSimplifier = getIntBranchArithmeticSimplifier(s);
+   branchSimplifier.simplifyBranch(node);
+   firstChild, secondChild = node->getFirstChild(), node->getSecondChild();
 
    //We will change a if ( a >> C == 0 ) to a if ( a < 2^C )
    if ( firstChild->getOpCode().isRightShift() && //First child is a right shift
@@ -13951,7 +13965,8 @@ TR::Node *simplifyIflcmpneHelper(TR::Node * node, TR::Block * block, TR::Simplif
    if (conditionalZeroComparisonBranchFold (node, firstChild, secondChild, block, s))
       return node;
 
-   simplifyLongBranchArithmetic(node, firstChild, secondChild, s);
+   auto branchSimplifier = getLongBranchArithmeticSimplifier(s);
+   branchSimplifier.simplifyBranch(node);
 
    if (node->getOpCodeValue() == TR::iflcmpne)
       {
@@ -13999,7 +14014,8 @@ TR::Node *iflcmpeqSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier 
    if (conditionalZeroComparisonBranchFold (node, firstChild, secondChild, block, s))
       return node;
 
-   simplifyLongBranchArithmetic(node, firstChild, secondChild, s);
+   auto branchSimplifier = getLongBranchArithmeticSimplifier(s);
+   branchSimplifier.simplifyBranch(node);
 
    if (node->getOpCodeValue() == TR::iflcmpeq)
       {
