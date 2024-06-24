@@ -265,14 +265,28 @@ omrtime_startup(struct OMRPortLibrary *portLibrary)
 #if !__GLIBC_PREREQ(2,4)
 	systemcfgP_millis = systemcfg_init();
 #else
-	int procfd;
+	/* Avoid mapping systemcfg if a checkpoint is possible because we may be prevented from
+	 * restoring it in some environments by a security module (e.g. SELinux). If we're currently
+	 * running in an environment that doesn't prevent us from mapping systemcfg, and the
+	 * process is later checkpointed, it can only be restored in an environment that allows
+	 * systemcfg to be mapped. In order to improve portability we'll only map systemcfg if
+	 * no further checkpoints are possible.
+	 */
+#if defined(PPG_criuSupportFlags)
+	if (OMR_ARE_NO_BITS_SET(PPG_criuSupportFlags, OMRPORT_CRIU_SUPPORT_ENABLED)
+		|| OMR_ARE_ANY_BITS_SET(PPG_criuSupportFlags, OMRPORT_CRIU_SUPPORT_FINAL_RESTORE)
+	)
+#endif /* defined(PPG_criuSupportFlags) */
+	{
+		int procfd;
 
-	procfd = open("/proc/ppc64/systemcfg", O_RDONLY);
-	if (-1 != procfd) {
-		systemcfgP_millis = mmap(0, sizeof(struct vdso_data), PROT_READ, MAP_SHARED, procfd, 0);
-		close(procfd);
-		if (MAP_FAILED == systemcfgP_millis) {
-			systemcfgP_millis = NULL;
+		procfd = open("/proc/ppc64/systemcfg", O_RDONLY);
+		if (-1 != procfd) {
+			systemcfgP_millis = mmap(0, sizeof(struct vdso_data), PROT_READ, MAP_SHARED, procfd, 0);
+			close(procfd);
+			if (MAP_FAILED == systemcfgP_millis) {
+				systemcfgP_millis = NULL;
+			}
 		}
 	}
 #endif
