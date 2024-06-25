@@ -300,10 +300,6 @@ OMR::CodeGenerator::buildGCMapForInstruction(TR::Instruction *instr)
          }
       }
 
-   // Build the register save description
-   //
-   map->setRegisterSaveDescription(0);
-
    // Build the register map
    //
    self()->buildRegisterMapForInstruction(map);
