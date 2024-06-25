@@ -317,12 +317,6 @@ OMR::SymbolReferenceTable::findClassDepthAndFlagsSymbolRef()
    return element(isClassDepthAndFlagsSymbol);
    }
 
-TR::SymbolReference *
-OMR::SymbolReferenceTable::findClassAndDepthFlagsSymbolRef()
-   {
-   return element(isClassAndDepthFlagsSymbol);
-   }
-
 
 TR::SymbolReference *
 OMR::SymbolReferenceTable::findClassFlagsSymbolRef()
