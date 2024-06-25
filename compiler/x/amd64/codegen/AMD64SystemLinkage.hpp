@@ -102,6 +102,17 @@ class AMD64Win64FastCallLinkage : public virtual TR::AMD64SystemLinkage
    public:
 
    AMD64Win64FastCallLinkage(TR::CodeGenerator *cg);
+
+   /**
+    * \brief Build arguments to a function.
+    *
+    * \param[in]  callNode : The CALL node
+    *
+    * \param[out] deps     : The register dependency conditions of the CALL instruction
+    *
+    * \return : The size of parameters on stack, in bytes.
+    */
+   virtual int32_t buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *deps);
    };
 
 

@@ -292,6 +292,79 @@ TR::AMD64Win64FastCallLinkage::AMD64Win64FastCallLinkage(TR::CodeGenerator *cg)
       }
    }
 
+// Build arguments for microsoft x64 calling convention dispatch.
+//
+int32_t TR::AMD64Win64FastCallLinkage::buildArgs(TR::Node* callNode, TR::RegisterDependencyConditions* deps)
+   {
+   static bool DuplicateParameterOnStack = feGetEnv("TR_DuplicateParameterOnStack");
+   static bool UseOldFastCallLinkage = feGetEnv("TR_UseOldFastCallLinkage");
+   if (UseOldFastCallLinkage || callNode->getOpCode().isIndirect())
+      {
+      return TR::AMD64SystemLinkage::buildArgs(callNode, deps);
+      }
+
+   // Basic information
+   static TR::RealRegister::RegNum IntegerParams[] = { TR::RealRegister::ecx,  TR::RealRegister::edx,  TR::RealRegister::r8,   TR::RealRegister::r9   };
+   static TR::RealRegister::RegNum FloatParams[]   = { TR::RealRegister::xmm0, TR::RealRegister::xmm1, TR::RealRegister::xmm2, TR::RealRegister::xmm3 };
+   static_assert(sizeof(IntegerParams) == sizeof(FloatParams), "Incorrect parameter-passing register configuration");
+   static const int MaxNumberOfParamsInRegister = sizeof(IntegerParams) / sizeof(IntegerParams[0]);
+
+   // Evaluate children
+   for (int32_t i = 0; i < callNode->getNumChildren(); i++)
+      {
+      cg()->evaluate(callNode->getChild(i));
+      }
+
+   // Setup parameters
+   TR::Register* paramRegisters[MaxNumberOfParamsInRegister] = { 0 };
+   int32_t outgoingArgSize = 0;
+   for (int i = 0; i < callNode->getNumChildren(); i++)
+      {
+      TR::Node* child = callNode->getChild(i);
+      TR::Register* param = child->getRegister();
+      if (i < MaxNumberOfParamsInRegister)
+         {
+         paramRegisters[i] = cg()->allocateRegister(param->getKind());
+         generateRegRegInstruction(TR::Linkage::movOpcodes(RegReg, movType(child->getType())), callNode, paramRegisters[i], param, cg());
+         }
+      if (DuplicateParameterOnStack || i >= MaxNumberOfParamsInRegister)
+         {
+         generateMemRegInstruction(TR::Linkage::movOpcodes(MemReg, movType(child->getType())), callNode, generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::esp), outgoingArgSize, cg()), param, cg());
+         }
+      outgoingArgSize += sizeof(void*);
+      }
+
+   // Assign parameter registers
+   for (int i = 0; i < MaxNumberOfParamsInRegister; i++)
+      {
+      TR::Register* param = paramRegisters[i];
+      if (param)
+         {
+         deps->addPreCondition(param, param->getKind() != TR_FPR ? IntegerParams[i] : FloatParams[i], cg());
+         cg()->stopUsingRegister(param);
+         }
+      }
+   deps->stopAddingPreConditions();
+
+   // Request outgoing argument area
+   if (outgoingArgSize < MaxNumberOfParamsInRegister * sizeof(void*))
+      {
+      outgoingArgSize = MaxNumberOfParamsInRegister * sizeof(void*);
+      }
+   if (outgoingArgSize > cg()->getLargestOutgoingArgSize())
+      {
+      cg()->setLargestOutgoingArgSize(outgoingArgSize);
+      if (comp()->getOption(TR_TraceCG))
+         traceMsg(comp(), "buildArgs: setLargestOutgoingArgSize %d(for call node %p)\n", outgoingArgSize, callNode);
+      }
+
+   // Decrease reference count for child evaluation
+   for (int32_t i = 0; i < callNode->getNumChildren(); i++)
+      {
+      cg()->decReferenceCount(callNode->getChild(i));
+      }
+   return outgoingArgSize;
+   }
 
 TR::AMD64ABILinkage::AMD64ABILinkage(TR::CodeGenerator *cg)
    : TR::AMD64SystemLinkage(cg)
