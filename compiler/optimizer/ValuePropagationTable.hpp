@@ -918,6 +918,8 @@ TR::Node * constrainLongBitCount(OMR::ValuePropagation *vp, TR::Node *node);
 #define pdModifyPrecisionVPHandler constrainChildren
 #define countDigitsVPHandler constrainChildren
 #define BCDCHKVPHandler constrainBCDCHK
+#define storeStoreFenceVPHandler constrainChildren
+
 #endif
 
 const ValuePropagationPointerTable constraintHandlers;
