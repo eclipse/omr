@@ -36,8 +36,7 @@
 #if __TARGET_LIB__ == 0X22080000                                   /*ibm@28725*/
 #include <//'PP.ADLE370.OS39028.SCEEH.H(strings)'>                 /*ibm@28725*/
 #else                                                              /*ibm@28725*/
-#include "prefixpath.h"
-#include PREFIXPATH(strings.h)                                  /*ibm@28725*/
+#include_next <strings.h>                                          /*ibm@28725*/
 #endif                                                             /*ibm@28725*/
 
 #if defined(IBM_ATOE)

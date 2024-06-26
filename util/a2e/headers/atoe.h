@@ -36,7 +36,9 @@
 extern "C" {
 #endif /* __cplusplus */
 /* CMVC 162573 include the header file that includes the prototype for malloc used in functions/macros below*/
-	#include <stdlib.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <sys/types.h>
 
     #pragma map(sysTranslateASM, "SYSXLATE")
     extern char* sysTranslateASM(const char *source, int length, char *trtable, char* xlate_buf);
@@ -66,7 +68,8 @@ extern "C" {
 
     void atoe_enableFileTagging(void);
     void atoe_setFileTaggingCcsid(void *pccsid);
-    int  atoe_open_notag(const char *fname, int options, ...);
+    int atoe_open_notag(const char *fname, int options, ...);
+    struct passwd *etoa_passwd(struct passwd *e_passwd);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
