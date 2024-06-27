@@ -198,19 +198,28 @@ macro(omr_detect_system_information)
 				# just use GNU config
 				set(_OMR_TOOLCONFIG "gnu")
 			endif()
+		elseif(CMAKE_C_COMPILER_ID MATCHES "IBMClang$")
+			set(_OMR_TOOLCONFIG "openxl")
+			set(CMAKE_C_COMPILER_IS_OPENXL ON CACHE BOOL "ibm-clang is the C compiler")
 		elseif(CMAKE_C_COMPILER_ID MATCHES "^XL(Clang)?$" OR CMAKE_C_COMPILER_ID STREQUAL "zOS")
 			# In CMake 3.14 and prior, XLClang uses CMAKE_C_COMPILER_ID "XL"
 			# In CMake 3.15 and beyond, XLClang uses CMAKE_C_COMPILER_ID "XLClang"
 			set(_OMR_TOOLCONFIG "xlc")
+			message(STATUS "CMAKE_C_COMPILER is ${CMAKE_C_COMPILER}")
 			if(CMAKE_C_COMPILER MATCHES ".*xlclang$")
 				# Checking the CMAKE_C_COMPILER command is necessary to determine if XLClang is
 				# the compiler, since XLClang might have CMAKE_C_COMPILER_ID "XL" or "XLClang"
 				# depending on the CMake version. Without this check, it's ambiguous whether the
 				# compiler is XLC or XLClang.
 				set(CMAKE_C_COMPILER_IS_XLCLANG TRUE CACHE BOOL "XLClang is the C compiler")
+			elseif(CMAKE_C_COMPILER MATCHES ".*ibm-clang.*")
+				set(CMAKE_C_COMPILER_IS_OPENXL ON CACHE BOOL "ibm-clang is the C compiler")
+				set(_OMR_TOOLCONFIG "openxl")
+			else()
+				message(STATUS "NO XLClang match. Using xlc toolchain.")
 			endif()
 		else()
-			message(FATAL_ERROR "OMR: Unknown compiler ID: '${CMAKE_CXX_COMPILER_ID}'")
+			message(FATAL_ERROR "OMR: Unknown compiler ID: '${CMAKE_C_COMPILER_ID}'")
 		endif()
 		set(OMR_TOOLCONFIG ${_OMR_TOOLCONFIG} CACHE STRING "Name of toolchain configuration options to use")
 	endif()
