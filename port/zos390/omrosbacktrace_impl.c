@@ -27,6 +27,7 @@
  */
 
 #include "omrport.h"
+#include "omrportpriv.h"
 #include "omrsignal_context.h"
 #include <stdio.h>
 #include <signal.h>

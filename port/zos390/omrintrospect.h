@@ -34,22 +34,25 @@
 #include "omrintrospect_common.h"
 #include "omrutil.h"
 
-#pragma linkage(getthent, OS_UPSTACK)
 #if defined(OMR_ENV_DATA64)
+#pragma linkage(getthent, OS)
 #pragma map(getthent, "BPX4GTH")
-#else
+#else /* defined(OMR_ENV_DATA64) */
+#pragma linkage(getthent, OS_UPSTACK)
 #pragma map(getthent, "BPX1GTH")
-#endif
+#endif /* defined(OMR_ENV_DATA64) */
 
-#pragma linkage(pthread_quiesce, OS_UPSTACK)
 #if defined(OMR_ENV_DATA64)
 #pragma map(pthread_quiesce, "BPX4PTQ")
-#else
+#else /* defined(OMR_ENV_DATA64) */
+#pragma linkage(pthread_quiesce, OS_UPSTACK)
 #pragma map(pthread_quiesce, "BPX1PTQ")
-#endif
+#endif /* defined(OMR_ENV_DATA64) */
 
+#if !defined(OMR_ENV_DATA64)
 #pragma linkage(pthread_quiesce_and_get_np_X, OS_UPSTACK)
 #pragma map(pthread_quiesce_and_get_np_X, "BPX1PQG")
+#endif /* !defined(OMR_ENV_DATA64) */
 
 #ifdef MAX_NAME
 #undef MAX_NAME
@@ -60,8 +63,11 @@
 
 typedef __mcontext_t_ thread_context;
 
-
+#if defined(__open_xl__)
+#pragma pack(push, 1)
+#else /* defined(__open_xl__) */
 #pragma pack(packed)
+#endif /* defined(__open_xl__) */
 
 /* Program routine entry area (XPLINK) */
 typedef struct XPLINK_Routine_entry {
@@ -633,6 +639,10 @@ struct tcb {
 #define QUIESCE_SRB          9  /*  Quiesce threads type = SRBs      @DGA */
 /* Skip 10 and 11 due to collision with BPXZCONS Freeze/Unfreeze Fast */
 
+#if defined(__open_xl__)
+#pragma pack(pop)
+#else /* defined(__open_xl__) */
 #pragma pack(reset)
+#endif /* defined(__open_xl__) */
 
 #endif
