@@ -1731,6 +1731,18 @@ public:
          case TR::lnolz:
             vectorOperation = TR::vnolz;
             break;
+         case TR::bcompressbits:
+         case TR::scompressbits:
+         case TR::icompressbits:
+         case TR::lcompressbits:
+            vectorOperation = TR::vcompressbits;
+            break;
+         case TR::bexpandbits:
+         case TR::sexpandbits:
+         case TR::iexpandbits:
+         case TR::lexpandbits:
+            vectorOperation = TR::vexpandbits;
+            break;
          case TR::sbyteswap:
          case TR::ibyteswap:
          case TR::lbyteswap:

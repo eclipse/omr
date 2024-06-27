@@ -48,7 +48,19 @@ OMR::Power::CPU::supportsDecimalFloatingPoint()
    return self()->supportsFeature(OMR_FEATURE_PPC_HAS_DFP);
    }
 
-bool 
+bool
+OMR::Power::CPU::hasBitCompressInstruction()
+   {
+   return self()->isAtLeast(OMR_PROCESSOR_PPC_P10);
+   }
+
+bool
+OMR::Power::CPU::hasBitExpandInstruction()
+   {
+   return self()->isAtLeast(OMR_PROCESSOR_PPC_P10);
+   }
+
+bool
 OMR::Power::CPU::getSupportsHardwareSQRT()
    {
    return self()->isAtLeast(OMR_PROCESSOR_PPC_HW_SQRT_FIRST);

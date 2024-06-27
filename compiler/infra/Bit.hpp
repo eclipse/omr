@@ -423,6 +423,112 @@ static inline bool isPowerOf2(int64_t input)
    return (input & -input) == input;
    }
 
+#if defined(TR_TARGET_X86) && (defined(__GNUC__) || defined(__clang__)) && defined(__BMI2__)
+
+static inline int8_t expandBits(int8_t src, int8_t mask)
+   {
+   return _pdep_u32((uint8_t) src, (uint8_t) mask);
+   }
+
+static inline int8_t compressBits(int8_t src, int8_t mask)
+   {
+   return _pext_u32((uint8_t) src, (uint8_t) mask);
+   }
+
+static inline int16_t expandBits(int16_t src, int16_t mask)
+   {
+   return _pdep_u32((uint16_t) src, (uint16_t) mask);
+   }
+
+static inline int16_t compressBits(int16_t src, int16_t mask)
+   {
+   return _pext_u32((uint16_t) src, (uint16_t) mask);
+   }
+
+static inline int32_t expandBits(int32_t src, int32_t mask)
+   {
+   return _pdep_u32(src, mask);
+   }
+
+static inline int32_t compressBits(int32_t src, int32_t mask)
+   {
+   return _pext_u32(src, mask);
+   }
+
+#ifdef TR_HOST_64BIT
+static inline int64_t expandBits(int64_t src, int64_t mask)
+   {
+   return _pdep_u64(src, mask);
+   }
+
+static inline int64_t compressBits(int64_t src, int64_t mask)
+   {
+   return _pext_u64(src, mask);
+   }
+#else
+static inline int64_t expandBits(int64_t src, int64_t mask)
+   {
+   int32_t maskLo = mask;
+   int32_t maskHi = mask >> 32;
+   int32_t srcLo = src;
+   int32_t srcHi = src >> populationCount(maskLo);
+   uint64_t lo = _pdep_u32(srcLo, maskLo);
+   uint64_t hi = _pdep_u32(srcHi, maskHi);
+   return lo | (hi << 32);
+   }
+
+static inline int64_t compressBits(int64_t src, int64_t mask)
+   {
+   int32_t srcLo = src;
+   int32_t srcHi = src >> 32;
+   int32_t maskLo = mask;
+   int32_t maskHi = mask >> 32;
+   uint64_t lo = _pext_u32(srcLo, maskLo);
+   uint64_t hi = _pext_u32(srcHi, maskHi);
+   return lo | (hi << populationCount(maskLo));
+   }
+#endif
+
+#else
+
+template <typename int_t>
+static inline int_t compressBits(int_t src, int_t mask)
+   {
+   int_t res = 0;
+   int k = 0;
+   const int_t sign_mask = ~std::numeric_limits<int_t>::min();
+   while (mask)
+      {
+      if (mask & 1)
+         {
+         res |= (src & 1) << k;
+         k++;
+         }
+      mask = (mask >> 1) & sign_mask;
+      src = (src >> 1) & sign_mask;
+      }
+   return res;
+   }
+
+template <typename int_t>
+static inline int_t expandBits(int_t src, int_t mask)
+   {
+   int_t res = 0;
+   const int_t sign_mask = ~std::numeric_limits<int_t>::min();
+   for (int n = 0; mask; n++)
+      {
+      if (mask & 1)
+         {
+         res |= (src & 1) << n;
+         src = (src >> 1) & sign_mask;
+         }
+      mask = (mask >> 1) & sign_mask;
+      }
+   return res;
+   }
+
+#endif
+
 #if defined(OSX)
 // On OSX, intptr_t isn't int32_t nor int64_t
 

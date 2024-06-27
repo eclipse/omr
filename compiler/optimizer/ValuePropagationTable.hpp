@@ -159,6 +159,12 @@ TR::Node * constrainLongLowestOneBit(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node * constrainLongNumberOfLeadingZeros(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node * constrainLongNumberOfTrailingZeros(OMR::ValuePropagation *vp, TR::Node *node);
 TR::Node * constrainLongBitCount(OMR::ValuePropagation *vp, TR::Node *node);
+TR::Node * constrainLongCompressBits(OMR::ValuePropagation *vp, TR::Node *node);
+TR::Node * constrainIntegerCompressBits(OMR::ValuePropagation *vp, TR::Node *node);
+TR::Node * constrainShortCompressBits(OMR::ValuePropagation *vp, TR::Node *node);
+TR::Node * constrainLongExpandBits(OMR::ValuePropagation *vp, TR::Node *node);
+TR::Node * constrainIntegerExpandBits(OMR::ValuePropagation *vp, TR::Node *node);
+TR::Node * constrainShortExpandBits(OMR::ValuePropagation *vp, TR::Node *node);
 
 
 /*
@@ -820,6 +826,14 @@ TR::Node * constrainLongBitCount(OMR::ValuePropagation *vp, TR::Node *node);
 #define sbitpermuteVPHandler constrainChildren
 #define ibitpermuteVPHandler constrainChildren
 #define lbitpermuteVPHandler constrainChildren
+#define lcompressbitsVPHandler constrainLongCompressBits
+#define icompressbitsVPHandler constrainIntegerCompressBits
+#define scompressbitsVPHandler constrainShortCompressBits
+#define bcompressbitsVPHandler constrainChildren
+#define lexpandbitsVPHandler constrainLongExpandBits
+#define iexpandbitsVPHandler constrainIntegerExpandBits
+#define sexpandbitsVPHandler constrainShortExpandBits
+#define bexpandbitsVPHandler constrainChildren
 #define PrefetchVPHandler constrainChildren
 
 #ifdef J9_PROJECT_SPECIFIC

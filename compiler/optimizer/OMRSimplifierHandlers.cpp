@@ -1652,6 +1652,7 @@ static bool reduceLongOp(TR::Node * node, TR::Block * block, TR::Simplifier * s,
       case TR::land: newOp = TR::iand; break;
       case TR::lor:  newOp = TR::ior;  break;
       case TR::lxor: newOp = TR::ixor; break;
+      case TR::lexpandbits: newOp = TR::iexpandbits; break;
       case TR::lushr:
          isUnsigned = true;
       case TR::lshr:
@@ -12077,6 +12078,216 @@ TR::Node *sxorSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
       return identity;
 
    return node;
+   }
+
+template <typename T>
+static TR::Node *expandbitsSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
+   {
+   s->simplifyChildren(node, block);
+
+   TR::Node *srcChild = node->getFirstChild();
+   TR::Node *maskChild = node->getSecondChild();
+
+   if (maskChild->getOpCode().isLoadConst())
+      {
+      T mask = maskChild->getConst<T>();
+      if (srcChild->getOpCode().isLoadConst() &&
+          performTransformation(s->comp(), "%sReduced %s of const src and const mask in node [%s] to const\n",
+                                s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         foldConstant<T>(node, expandBits(srcChild->getConst<T>(), maskChild->getConst<T>()), s, false);
+         }
+      else if (mask == static_cast<T>(0) &&
+               performTransformation(s->comp(), "%sReduced %s with const 0 mask in node [%s] to const 0\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         foldConstant<T>(node, static_cast<T>(0), s, true);
+         }
+      else if (mask == static_cast<T>(-1) &&
+               performTransformation(s->comp(), "%sReduced %s with const -1 mask in node [%s] to src child [%s]\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug()), srcChild->getName(s->getDebug())))
+         {
+         node = s->replaceNode(node, srcChild, s->_curTree);
+         maskChild->recursivelyDecReferenceCount();
+         }
+      else if (isPowerOf2(-mask) &&
+               performTransformation(s->comp(), "%sReduced %s with const mask in node [%s] to left shift\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         // mask = all 1s followed by n 0s
+         // equivalent to left shift by n
+         int32_t shiftBy = trailingZeroes(mask);
+         TR::Node* byNode = TR::Node::iconst(node, shiftBy);
+         TR::Node::recreate(node, TR::ILOpCode::shiftLeftOpCode(node->getType()));
+         node->setChild(1, byNode);
+         maskChild->recursivelyDecReferenceCount();
+         }
+      else if (isPowerOf2(mask+1) &&
+               performTransformation(s->comp(), "%sReduced %s with const mask in node [%s] to and\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         // mask = all 0s followed by n 1s
+         // equivalent to AND with src
+         TR::Node::recreate(node, TR::ILOpCode::andOpCode(node->getType()));
+         }
+      else if (contiguousBits(mask) &&
+               performTransformation(s->comp(), "%sReduced %s with const mask in node [%s] to AND and left shift\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         // mask = contiguous 1s followed by n 0s
+         // equivalent to (src << n) AND mask
+         // this is the general case of the other constant mask simplifications
+         int32_t shiftBy = trailingZeroes(mask);
+         TR::Node* byNode = TR::Node::iconst(node, shiftBy);
+         TR::Node* shlNode = TR::Node::create(srcChild, TR::ILOpCode::shiftLeftOpCode(node->getType()), 2);
+         shlNode->setChild(0, srcChild);
+         shlNode->setAndIncChild(1, byNode);
+         TR::Node::recreate(node, TR::ILOpCode::andOpCode(node->getType()));
+         node->setAndIncChild(0, shlNode);
+         }
+      }
+   else if (srcChild->getOpCode().isLoadConst())
+      {
+      T src = srcChild->getConst<T>();
+      if (src == static_cast<T>(0) &&
+               performTransformation(s->comp(), "%sReduced %s with const 0 src in node [%s] to const 0\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         foldConstant<T>(node, static_cast<T>(0), s, true);
+         }
+      else if (src == static_cast<T>(-1) &&
+               performTransformation(s->comp(), "%sReduced %s with const -1 src in node [%s] to mask child [%s]\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug()), maskChild->getName(s->getDebug())))
+         {
+         node = s->replaceNode(node, maskChild, s->_curTree);
+         srcChild->recursivelyDecReferenceCount();
+         }
+      }
+
+   return node;
+   }
+
+TR::Node *lexpandbitsSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
+   {
+   return expandbitsSimplifier<int64_t>(node, block, s);
+   }
+
+TR::Node *iexpandbitsSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
+   {
+   return expandbitsSimplifier<int32_t>(node, block, s);
+   }
+
+TR::Node *sexpandbitsSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
+   {
+   return expandbitsSimplifier<int16_t>(node, block, s);
+   }
+
+TR::Node *bexpandbitsSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
+   {
+   return expandbitsSimplifier<int8_t>(node, block, s);
+   }
+
+template <typename T>
+static TR::Node *compressbitsSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
+   {
+   s->simplifyChildren(node, block);
+
+   TR::Node *srcChild = node->getFirstChild();
+   TR::Node *maskChild = node->getSecondChild();
+
+   if (maskChild->getOpCode().isLoadConst())
+      {
+      T mask = maskChild->getConst<T>();
+      if (srcChild->getOpCode().isLoadConst() &&
+          performTransformation(s->comp(), "%sReduced %s of const src and const mask in node [%s] to const\n",
+                                s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         foldConstant<T>(node, compressBits(srcChild->getConst<T>(), maskChild->getConst<T>()), s, false);
+         }
+      else if (mask == static_cast<T>(0) &&
+               performTransformation(s->comp(), "%sReduced %s with const 0 mask in node [%s] to const 0\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         foldConstant<T>(node, static_cast<T>(0), s, true);
+         }
+      else if (mask == static_cast<T>(-1) &&
+               performTransformation(s->comp(), "%sReduced %s with const -1 mask in node [%s] to src child [%s]\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug()), srcChild->getName(s->getDebug())))
+         {
+         node = s->replaceNode(node, srcChild, s->_curTree);
+         }
+      else if (isPowerOf2(-mask) &&
+               performTransformation(s->comp(), "%sReduced %s with const mask in node [%s] to right shift\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         // mask = all 1s followed by n 0s
+         // equivalent to unsigned right shift by n
+         int32_t shiftBy = trailingZeroes(mask);
+         TR::Node* byNode = TR::Node::iconst(node, shiftBy);
+         TR::Node::recreate(node, TR::ILOpCode::unsignedShiftRightOpCode(node->getType()));
+         node->setAndIncChild(1, byNode);
+         maskChild->recursivelyDecReferenceCount();
+         }
+      else if (isPowerOf2(mask+1) &&
+               performTransformation(s->comp(), "%sReduced %s with const mask in node [%s] to and\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         // mask = all 0s followed by n 1s
+         // equivalent to AND with src
+         TR::Node::recreate(node, TR::ILOpCode::andOpCode(node->getType()));
+         }
+      else if (contiguousBits(mask) &&
+               performTransformation(s->comp(), "%sReduced %s with const mask in node [%s] to AND and right shift\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         // mask = contiguous 1s followed by n 0s
+         // equivalent to (src >> n) AND (mask >> n)
+         // this is the general case of the other constant mask simplifications
+         int32_t shiftBy = trailingZeroes(mask);
+         TR::Node* byNode = TR::Node::iconst(node, shiftBy);
+         TR::Node* shrNode = TR::Node::create(srcChild, TR::ILOpCode::unsignedShiftRightOpCode(node->getType()), 2);
+         shrNode->setChild(0, srcChild);
+         shrNode->setAndIncChild(1, byNode);
+         TR::Node *newMaskChild = TR::Node::copy(maskChild);
+         maskChild->recursivelyDecReferenceCount();
+         newMaskChild->setConst<T>(mask >> shiftBy);
+         TR::Node::recreate(node, TR::ILOpCode::andOpCode(node->getType()));
+         node->setAndIncChild(0, shrNode);
+         node->setAndIncChild(1, newMaskChild);
+         }
+      }
+   else if (srcChild->getOpCode().isLoadConst())
+      {
+      T src = srcChild->getConst<T>();
+      if (src == static_cast<T>(0) &&
+               performTransformation(s->comp(), "%sReduced %s with const 0 src in node [%s] to const 0\n",
+                                     s->optDetailString(), node->getOpCode().getName(), node->getName(s->getDebug())))
+         {
+         foldConstant<T>(node, static_cast<T>(0), s, true);
+         }
+      }
+
+   return node;
+   }
+
+TR::Node *lcompressbitsSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
+   {
+   return compressbitsSimplifier<int64_t>(node, block, s);
+   }
+
+TR::Node *icompressbitsSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
+   {
+   return compressbitsSimplifier<int32_t>(node, block, s);
+   }
+
+TR::Node *scompressbitsSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
+   {
+   return compressbitsSimplifier<int16_t>(node, block, s);
+   }
+
+TR::Node *bcompressbitsSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
+   {
+   return compressbitsSimplifier<int8_t>(node, block, s);
    }
 
 //---------------------------------------------------------------------

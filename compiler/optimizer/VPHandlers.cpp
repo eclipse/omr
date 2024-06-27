@@ -4511,6 +4511,8 @@ static TR::VPLongRange* getLongRange (TR::VPConstraint* c) {return c->asLongRang
 static TR::VPLongConst* getLongConst (TR::VPConstraint* c) {return c->asLongConst();}
 static TR::VPIntRange* getIntRange (TR::VPConstraint* c)   {return c->asIntRange();}
 static TR::VPIntConst* getIntConst (TR::VPConstraint* c)   {return c->asIntConst();}
+static TR::VPShortRange* getShortRange (TR::VPConstraint* c) {return c->asShortRange();}
+static TR::VPShortConst* getShortConst (TR::VPConstraint* c) {return c->asShortConst();}
 static void getLowHighInts (TR::VPIntRange* range, int32_t& low, int32_t& high)
    {
    low = range->getLowInt();
@@ -4529,12 +4531,40 @@ static void getLong (TR::VPLongConst* c, int64_t& n)
    {
    n = c->getLong();
    }
+static void getShort (TR::VPShortConst* c, int16_t& n)
+   {
+   n = c->getShort();
+   }
 
 static TR::VPConstraint* createIntConstConstraint(OMR::ValuePropagation *vp, int32_t n) {return TR::VPIntConst::create(vp, n); }
 template <typename T>
 static TR::VPConstraint* createIntRangeConstraint(OMR::ValuePropagation *vp, T l, T h) {return TR::VPIntRange::create(vp, static_cast<int32_t>(l), static_cast<int32_t>(h));}
 static TR::VPConstraint* createLongConstConstraint(OMR::ValuePropagation *vp, int64_t n) {return TR::VPLongConst::create(vp, n); }
 static TR::VPConstraint* createLongRangeConstraint(OMR::ValuePropagation *vp, int64_t l, int64_t h) {return TR::VPLongRange::create(vp, l, h);}
+
+template <typename T>
+TR::VPConstraint* createRangeConstraint(OMR::ValuePropagation *vp, T l, T h);
+template <> TR::VPConstraint* createRangeConstraint<int64_t>(OMR::ValuePropagation *vp, int64_t l, int64_t h) {return TR::VPLongRange::create(vp, l, h);}
+template <> TR::VPConstraint* createRangeConstraint<int32_t>(OMR::ValuePropagation *vp, int32_t l, int32_t h) {return TR::VPIntRange::create(vp, l, h);}
+template <> TR::VPConstraint* createRangeConstraint<int16_t>(OMR::ValuePropagation *vp, int16_t l, int16_t h) {return TR::VPShortRange::create(vp, l, h);}
+
+template <typename T>
+TR::VPConstraint* createConstConstraint(OMR::ValuePropagation *vp, T n);
+template <> TR::VPConstraint* createConstConstraint<int64_t>(OMR::ValuePropagation *vp, int64_t n) {return TR::VPLongConst::create(vp, n);}
+template <> TR::VPConstraint* createConstConstraint<int32_t>(OMR::ValuePropagation *vp, int32_t n) {return TR::VPIntConst::create(vp, n);}
+template <> TR::VPConstraint* createConstConstraint<int16_t>(OMR::ValuePropagation *vp, int16_t n) {return TR::VPShortConst::create(vp, n);}
+
+template <typename T>
+T* asConstConstraint(TR::VPConstraint* c);
+template <> TR::VPLongConst* asConstConstraint<TR::VPLongConst>(TR::VPConstraint* c) {return c->asLongConst();}
+template <> TR::VPIntConst* asConstConstraint<TR::VPIntConst>(TR::VPConstraint* c) {return c->asIntConst();}
+template <> TR::VPShortConst* asConstConstraint<TR::VPShortConst>(TR::VPConstraint* c) {return c->asShortConst();}
+
+template <typename T, typename A>
+T getConstValue(A* c);
+template <> int64_t getConstValue<int64_t, TR::VPLongConst>(TR::VPLongConst* c) {return c->getLong();}
+template <> int32_t getConstValue<int32_t, TR::VPIntConst>(TR::VPIntConst* c) {return c->getInt();}
+template <> int16_t getConstValue<int16_t, TR::VPShortConst>(TR::VPShortConst* c) {return c->getShort();}
 
 static int32_t integerToPowerOf2 (int32_t n) {return (n==0) ? 0 : floorPowerOfTwo(n); }
 static int32_t integerNumberOfLeadingZeros (int32_t n) {return leadingZeroes (n);}
@@ -4782,6 +4812,123 @@ TR::Node * constrainLongNumberOfTrailingZeros(OMR::ValuePropagation *vp, TR::Nod
                                                        createIntRangeConstraint<int64_t>, longBitCount, (int64_t) 0, (int64_t) -1);
    }
 
+template <typename int_t, typename ConstConstraint>
+static TR::Node * constrainCompressBits(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   if (findConstant(vp, node))
+      return node;
+   constrainChildren(vp, node);
+
+   bool srcGlobal, maskGlobal;
+   TR::VPConstraint *src = vp->getConstraint(node->getFirstChild(), srcGlobal);
+   TR::VPConstraint *mask = vp->getConstraint(node->getSecondChild(), maskGlobal);
+   bool isGlobal = srcGlobal && maskGlobal;
+   if (src && mask)
+      {
+      ConstConstraint *srcConst = asConstConstraint<ConstConstraint>(src);
+      ConstConstraint *maskConst = asConstConstraint<ConstConstraint>(mask);
+      if (maskConst)
+         {
+         int_t maskValue = getConstValue<int_t, ConstConstraint>(maskConst);
+         if (srcConst)
+            {
+            int_t srcValue = getConstValue<int_t, ConstConstraint>(srcConst);
+            TR::VPConstraint *constraint = createConstConstraint<int_t>(vp, compressBits(srcValue, maskValue));
+            vp->replaceByConstant(node, constraint, isGlobal);
+            }
+         else if (maskValue == static_cast<int_t>(0))
+            {
+            vp->replaceByConstant(node, createConstConstraint<int_t>(vp, 0), isGlobal);
+            }
+         else
+            {
+            vp->addBlockOrGlobalConstraint(node, createRangeConstraint<int_t>(vp, 0, compressBits(maskValue, maskValue)), isGlobal);
+            }
+         }
+      else if (srcConst)
+         {
+         int_t srcValue = getConstValue<int_t, ConstConstraint>(srcConst);
+         if (srcValue == static_cast<int_t>(0))
+            {
+            vp->replaceByConstant(node, createConstConstraint<int_t>(vp, 0), isGlobal);
+            }
+         }
+      }
+
+   return node;
+   }
+
+TR::Node * constrainLongCompressBits(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   return constrainCompressBits<int64_t, TR::VPLongConst>(vp, node);
+   }
+
+TR::Node * constrainIntegerCompressBits(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   return constrainCompressBits<int32_t, TR::VPIntConst>(vp, node);
+   }
+
+TR::Node * constrainShortCompressBits(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   return constrainCompressBits<int16_t, TR::VPShortConst>(vp, node);
+   }
+
+template <typename int_t, typename ConstConstraint>
+static TR::Node * constrainExpandBits(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   if (findConstant(vp, node))
+      return node;
+   constrainChildren(vp, node);
+
+   bool srcGlobal, maskGlobal;
+   TR::VPConstraint *src = vp->getConstraint(node->getFirstChild(), srcGlobal);
+   TR::VPConstraint *mask = vp->getConstraint(node->getSecondChild(), maskGlobal);
+   bool isGlobal = srcGlobal && maskGlobal;
+   if (src && mask)
+      {
+      ConstConstraint *srcConst = asConstConstraint<ConstConstraint>(src);
+      ConstConstraint *maskConst = asConstConstraint<ConstConstraint>(mask);
+      if (maskConst)
+         {
+         int_t maskValue = getConstValue<int_t, ConstConstraint>(maskConst);
+         if (srcConst)
+            {
+            int_t srcValue = getConstValue<int_t, ConstConstraint>(srcConst);
+            TR::VPConstraint *constraint = createConstConstraint<int_t>(vp, expandBits(srcValue, maskValue));
+            vp->replaceByConstant(node, constraint, isGlobal);
+            }
+         else if (maskValue == static_cast<int_t>(0))
+            {
+            vp->replaceByConstant(node, createConstConstraint<int_t>(vp, 0), isGlobal);
+            }
+         }
+      else if (srcConst)
+         {
+         int_t srcValue = getConstValue<int_t, ConstConstraint>(srcConst);
+         if (srcValue == static_cast<int_t>(0))
+            {
+            vp->replaceByConstant(node, createConstConstraint<int_t>(vp, 0), isGlobal);
+            }
+         }
+      }
+
+   return node;
+   }
+
+TR::Node * constrainLongExpandBits(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   return constrainExpandBits<int64_t, TR::VPLongConst>(vp, node);
+   }
+
+TR::Node * constrainIntegerExpandBits(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   return constrainExpandBits<int32_t, TR::VPIntConst>(vp, node);
+   }
+
+TR::Node * constrainShortExpandBits(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   return constrainExpandBits<int16_t, TR::VPShortConst>(vp, node);
+   }
 
 //bit opcodes constraints end
 

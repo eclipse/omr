@@ -78,7 +78,7 @@ GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
 ZASM_SCRIPT?=$(JIT_SCRIPT_DIR)/s390m4check.pl
 
 #
-# First setup C and C++ compilers. 
+# First setup C and C++ compilers.
 #
 #     Note: "CX" means both C and C++
 #
@@ -115,11 +115,11 @@ CX_OPTFLAG?=$(CX_DEFAULTOPT)
 CX_FLAGS_PROD+=$(CX_OPTFLAG)
 
 ifeq ($(HOST_ARCH),x)
-    CX_FLAGS+=-mfpmath=sse -msse -msse2 -fno-strict-aliasing -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
+    CX_FLAGS+=-mfpmath=sse -msse -msse2 -mbmi2 -fno-strict-aliasing -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
     ifeq ($(HOST_BITS),32)
         CX_FLAGS+=-m32 -fpic
     endif
-    
+
     ifeq ($(HOST_BITS),64)
         CX_DEFINES+=J9HAMMER
         CX_FLAGS+=-m64 -fPIC
@@ -128,13 +128,13 @@ endif
 
 ifeq ($(HOST_ARCH),p)
     CX_DEFAULTOPT=-O2
-    
+
     ifeq ($(HOST_BITS),64)
         CX_DEFINES+=LINUXPPC LINUXPPC64 USING_ANSI
         CX_FLAGS+=-fpic
         CX_FLAGS_PROD+=-mcpu=powerpc64
     endif
-    
+
     ifdef ENABLE_SIMD_LIB
         CX_DEFINES+=ENABLE_SPMD_SIMD
         CX_FLAGS+=-qaltivec -qarch=pwr7 -qtune=pwr7
@@ -197,7 +197,7 @@ ifeq ($(HOST_ARCH),x)
     ifeq ($(HOST_BITS),32)
         S_FLAGS+=--32
     endif
-    
+
     ifeq ($(HOST_BITS),64)
         ifeq ($(LLVM_ASSEMBLER),1)
             S_FLAGS+=-march=x86-64 -c
@@ -209,11 +209,11 @@ endif
 
 ifeq ($(HOST_ARCH),z)
     S_FLAGS+=-march=z9-109 -mzarch
-    
+
     ifeq ($(HOST_BITS),32)
         S_FLAGS+=-m31
     endif
-    
+
     ifeq ($(HOST_BITS),64)
         S_FLAGS+=-m64
     endif
@@ -253,14 +253,14 @@ ifeq ($(HOST_ARCH),x)
     ifeq ($(BUILD_CONFIG),prod)
         ASM_FLAGS+=$(ASM_FLAGS_PROD)
     endif
-    
+
     ASM_FLAGS+=$(ASM_FLAGS_EXTRA)
-    
+
     PASM_CMD=$(CC_PATH)
-    
+
     PASM_INCLUDES=$(PRODUCT_INCLUDES)
     PASM_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES)
-    
+
     ifeq ($(BUILD_CONFIG),debug)
         PASM_DEFINES+=$(PASM_DEFINES_DEBUG)
         PASM_FLAGS+=$(PASM_FLAGS_DEBUG)
@@ -270,17 +270,17 @@ ifeq ($(HOST_ARCH),x)
         PASM_DEFINES+=$(PASM_DEFINES_PROD)
         PASM_FLAGS+=$(PASM_FLAGS_PROD)
     endif
-    
+
     PASM_DEFINES+=$(PASM_DEFINES_EXTRA)
     PASM_FLAGS+=$(PASM_FLAGS_EXTRA)
 endif
 
 #
 # Setup CPP and SED to preprocess PowerPC Assembly Files
-# 
+#
 ifeq ($(HOST_ARCH),p)
     IPP_CMD=$(SED_PATH)
-    
+
     ifeq ($(BUILD_CONFIG),debug)
         IPP_FLAGS+=$(IPP_FLAGS_DEBUG)
     endif
@@ -288,16 +288,16 @@ ifeq ($(HOST_ARCH),p)
     ifeq ($(BUILD_CONFIG),prod)
         IPP_FLAGS+=$(IPP_FLAGS_PROD)
     endif
-    
+
     IPP_FLAGS+=$(IPP_FLAGS_EXTRA)
-    
+
     SPP_CMD=$(CC_PATH)
-    
+
     SPP_INCLUDES=$(PRODUCT_INCLUDES)
-    
+
     SPP_DEFINES+=$(CX_DEFINES)
     SPP_FLAGS+=$(CX_FLAGS)
-    
+
     ifeq ($(BUILD_CONFIG),debug)
         SPP_DEFINES+=$(SPP_DEFINES_DEBUG)
         SPP_FLAGS+=$(SPP_FLAGS_DEBUG)
@@ -307,7 +307,7 @@ ifeq ($(HOST_ARCH),p)
         SPP_DEFINES+=$(SPP_DEFINES_PROD)
         SPP_FLAGS+=$(SPP_FLAGS_PROD)
     endif
-    
+
     SPP_DEFINES+=$(SPP_DEFINES_EXTRA)
     SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
 endif
@@ -320,7 +320,7 @@ ifeq ($(HOST_ARCH),z)
 
     M4_INCLUDES=$(PRODUCT_INCLUDES)
     M4_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES)
-    
+
     M4_DEFINES+=$(M4_DEFINES_EXTRA)
     M4_FLAGS+=$(M4_FLAGS_EXTRA)
 endif
@@ -332,12 +332,12 @@ ifeq ($(HOST_ARCH),arm)
     ARMASM_CMD?=$(SED_PATH)
 
     SPP_CMD?=$(CC_PATH)
-    
+
     SPP_INCLUDES=$(PRODUCT_INCLUDES)
-    
+
     SPP_DEFINES+=$(CX_DEFINES)
     SPP_FLAGS+=$(CX_FLAGS)
-    
+
     ifeq ($(BUILD_CONFIG),debug)
         SPP_DEFINES+=$(SPP_DEFINES_DEBUG)
         SPP_FLAGS+=$(SPP_FLAGS_DEBUG)
@@ -347,7 +347,7 @@ ifeq ($(HOST_ARCH),arm)
         SPP_DEFINES+=$(SPP_DEFINES_PROD)
         SPP_FLAGS+=$(SPP_FLAGS_PROD)
     endif
-    
+
     SPP_DEFINES+=$(SPP_DEFINES_EXTRA)
     SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
 endif
@@ -359,12 +359,12 @@ ifeq ($(HOST_ARCH),aarch64)
     AARCH64ASM_CMD?=$(SED_PATH)
 
     SPP_CMD?=$(CC_PATH)
-    
+
     SPP_INCLUDES=$(PRODUCT_INCLUDES)
-    
+
     SPP_DEFINES+=$(CX_DEFINES)
     SPP_FLAGS+=$(CX_FLAGS)
-    
+
     ifeq ($(BUILD_CONFIG),debug)
         SPP_DEFINES+=$(SPP_DEFINES_DEBUG)
         SPP_FLAGS+=$(SPP_FLAGS_DEBUG)
@@ -374,7 +374,7 @@ ifeq ($(HOST_ARCH),aarch64)
         SPP_DEFINES+=$(SPP_DEFINES_PROD)
         SPP_FLAGS+=$(SPP_FLAGS_PROD)
     endif
-    
+
     SPP_DEFINES+=$(SPP_DEFINES_EXTRA)
     SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
 endif
