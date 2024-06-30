@@ -10936,7 +10936,7 @@ OMR::Z::TreeEvaluator::arraycmpHelper(TR::Node *node,
             if (lengthCanBeZero)
                {
                if (lenMinusOne)
-                  generateRRInstruction(cg, TR::InstOpCode::LTR, node, lengthReg, lengthReg); //The LengthminuxOne uses "TR::iadd length, -1"
+                  generateRRInstruction(cg, TR::InstOpCode::LTR, node, lengthReg, lengthReg); //The LengthminusOne uses "TR::iadd length, -1"
 
                //Strings of 0 length are considered equal
                if (isFoldedIf)
