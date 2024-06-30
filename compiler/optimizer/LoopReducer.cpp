@@ -2143,7 +2143,14 @@ TR_LoopReducer::generateArraycmp(TR_RegionStructure * whileLoop, TR_InductionVar
    //
    arraycmpLoop.getFirstAddress()->updateAiaddSubTree(arraycmpLoop.getFirstIndVarNode(), &arraycmpLoop);
    arraycmpLoop.getSecondAddress()->updateAiaddSubTree(arraycmpLoop.getSecondIndVarNode(), &arraycmpLoop);
-   TR::Node * imul = arraycmpLoop.updateIndVarStore(arraycmpLoop.getFirstIndVarNode(), indVarStoreNode, arraycmpLoop.getFirstAddress());
+   TR::Node * mul = arraycmpLoop.updateIndVarStore(arraycmpLoop.getFirstIndVarNode(), indVarStoreNode, arraycmpLoop.getFirstAddress());
+   if (!comp()->target().is64Bit())
+      {
+      // updateIndVarStore returns an imul on 32 bit, extend as arraycmp takes 64 bit length
+      mul = TR::Node::create(TR::i2l, 1, mul);
+      // extending the imul is technically unneccessary since the length of an array on 32 bit cannot exceed 32 bit range
+      mul->setUnneededConversion(true);
+      }
 
    arraycmpLoop.getFirstAddress()->updateMultiply(arraycmpLoop.getFirstMultiplyNode());
    arraycmpLoop.getFirstAddress()->updateMultiply(arraycmpLoop.getSecondMultiplyNode());
@@ -2159,7 +2166,7 @@ TR_LoopReducer::generateArraycmp(TR_RegionStructure * whileLoop, TR_InductionVar
    TR_ASSERT(arraycmpLoop.getSecondLoad()->getOpCode().isLoadVar(),"secondLoad %s (%p) is not a loadVar for arraycmp reduction\n",
       arraycmpLoop.getSecondLoad()->getOpCode().getName(),arraycmpLoop.getSecondLoad());
 
-   TR::Node * arraycmp = TR::Node::create(TR::arraycmp, 3, firstBase, secondBase, imul);
+   TR::Node * arraycmp = TR::Node::create(TR::arraycmp, 3, firstBase, secondBase, mul);
 
    TR::SymbolReference *arraycmpSymRef = comp()->getSymRefTab()->findOrCreateArrayCmpSymbol();
    arraycmp->setSymbolReference(arraycmpSymRef);

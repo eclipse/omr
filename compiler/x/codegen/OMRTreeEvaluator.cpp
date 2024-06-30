@@ -1151,7 +1151,15 @@ TR::Register *OMR::X86::TreeEvaluator::SSE2ArraycmpEvaluator(TR::Node *node, TR:
 
    TR::Register *s1Reg = cg->gprClobberEvaluate(s1AddrNode, TR::InstOpCode::MOVRegReg());
    TR::Register *s2Reg = cg->gprClobberEvaluate(s2AddrNode, TR::InstOpCode::MOVRegReg());
-   TR::Register *strLenReg = cg->gprClobberEvaluate(lengthNode, TR::InstOpCode::MOVRegReg());
+   TR::Register *strLenReg = cg->longClobberEvaluate(lengthNode);
+
+   if (cg->comp()->target().is32Bit() && strLenReg->getRegisterPair())
+      {
+      // On 32-bit, the length is guaranteed to fit into the bottom 32 bits
+      cg->stopUsingRegister(strLenReg->getHighOrder());
+      strLenReg = strLenReg->getLowOrder();
+      }
+
    TR::Register *deltaReg = cg->allocateRegister(TR_GPR);
    TR::Register *equalTestReg = cg->allocateRegister(TR_GPR);
    TR::Register *s2ByteVer1Reg = cg->allocateRegister(TR_GPR);

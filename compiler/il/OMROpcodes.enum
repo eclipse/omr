@@ -7196,7 +7196,7 @@ OPCODE_MACRO(\
    /* .properties4          = */ 0, \
    /* .dataType             = */ TR::Int32, \
    /* .typeProperties       = */ ILTypeProp::Size_4 | ILTypeProp::Integer, \
-   /* .childProperties      = */ THREE_CHILD(TR::Address, TR::Address, TR::Int32), \
+   /* .childProperties      = */ THREE_CHILD(TR::Address, TR::Address, TR::Int64), \
    /* .swapChildrenOpCode   = */ TR::BadILOp, \
    /* .reverseBranchOpCode  = */ TR::BadILOp, \
    /* .booleanCompareOpCode = */ TR::BadILOp, \

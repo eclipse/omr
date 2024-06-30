@@ -6938,7 +6938,7 @@ arraycmpEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg, bool isArrayCmpLe
    generateCompareInstruction(cg, node, src1Reg, src2Reg, true);
    if (!isLengthGreaterThan15)
       {
-      auto ccmpLengthInstr = generateConditionalCompareImmInstruction(cg, node, lengthReg, 0, 4, TR::CC_NE, /* is64bit */ isArrayCmpLen); /* 4 for Z flag */
+      auto ccmpLengthInstr = generateConditionalCompareImmInstruction(cg, node, lengthReg, 0, 4, TR::CC_NE, /* is64bit */ true); /* 4 for Z flag */
       if (debugObj)
          {
          debugObj->addInstructionComment(ccmpLengthInstr, "Compares lengthReg with 0 if src1 and src2 are not the same array. Otherwise, sets EQ flag.");
@@ -6960,14 +6960,14 @@ arraycmpEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg, bool isArrayCmpLe
    TR::Register *data4Reg = srm->findOrCreateScratchRegister();
    if (!isLengthGreaterThan15)
       {
-      generateCompareImmInstruction(cg, node, lengthReg, 16, /* is64bit */ isArrayCmpLen);
+      generateCompareImmInstruction(cg, node, lengthReg, 16, /* is64bit */ true);
       auto branchToLessThan16LabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, lessThan16Label, TR::CC_CC);
       if (debugObj)
          {
          debugObj->addInstructionComment(branchToLessThan16LabelInstr, "Jumps to lessThan16Label if length < 16.");
          }
       }
-   generateTrg1Src1ImmInstruction(cg, isArrayCmpLen ? TR::InstOpCode::subimmx : TR::InstOpCode::subimmw, node, lengthReg, lengthReg, 16);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmx, node, lengthReg, lengthReg, 16);
 
    TR::LabelSymbol *loop16Label = generateLabelSymbol(cg);
    {
@@ -6984,29 +6984,22 @@ arraycmpEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg, bool isArrayCmpLe
          }
       generateConditionalCompareInstruction(cg, node, data3Reg, data4Reg, 0, TR::CC_EQ, true);
       auto branchToNotEqual16LabelInstr2 = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, notEqual16Label, TR::CC_NE);
-      auto subtractLengthInstr = generateTrg1Src1ImmInstruction(cg, (isLengthGreaterThan15 || isArrayCmpLen) ? TR::InstOpCode::subsimmx : TR::InstOpCode::subsimmw, node, lengthReg, lengthReg, 16);
+      auto subtractLengthInstr = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmx, node, lengthReg, lengthReg, 16);
       auto branchBacktoLoop16LabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loop16Label, TR::CC_CS);
       if (debugObj)
          {
          debugObj->addInstructionComment(loop16LabelInstr, "loop16Label");
          debugObj->addInstructionComment(branchToNotEqual16LabelInstr2, "Jumps to notEqual16Label if mismatch is found in the 16-byte data");
          debugObj->addInstructionComment(branchBacktoLoop16LabelInstr, "Jumps to loop16Label if the remaining length >= 16 and no mismatch is found so far.");
-         if (isLengthGreaterThan15)
-            {
-            debugObj->addInstructionComment(subtractLengthInstr, "Treats length reg as a 64-bit reg as it is used as the 2nd source reg for 64-bit add later.");
-            }
          }
    }
    if (isLengthGreaterThan15)
       {
       generateCompareImmInstruction(cg, node, lengthReg, -16, true);
-      auto branchToDoneLabelInstr3 = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, isArrayCmpLen ? done0Label : doneLabel, TR::CC_EQ);
+      auto branchToDoneLabelInstr3 = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, done0Label, TR::CC_EQ);
       auto adjustSrc1RegInstr = generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, src1Reg, src1Reg, lengthReg);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, src2Reg, src2Reg, lengthReg);
-      if (isArrayCmpLen)
-         loadConstant64(cg, node, 0, lengthReg);
-      else
-         loadConstant32(cg, node, 0, lengthReg);
+      loadConstant64(cg, node, 0, lengthReg);
       auto branchBacktoLoop16LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::b, node, loop16Label);
       if (debugObj)
          {
@@ -7025,16 +7018,8 @@ arraycmpEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg, bool isArrayCmpLe
    else
       {
       TR::Instruction *branchToDoneLabelInstr3;
-      if (isArrayCmpLen)
-         {
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, lengthReg, lengthReg, 16);
-         branchToDoneLabelInstr3 = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, lengthReg, done0Label);
-         }
-      else
-         {
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, lengthReg, lengthReg, 16);
-         branchToDoneLabelInstr3 = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, lengthReg, doneLabel);
-         }
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, lengthReg, lengthReg, 16);
+      branchToDoneLabelInstr3 = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, lengthReg, isArrayCmpLen? done0Label : doneLabel);
 
       auto branchToLessThan16Label2 = generateLabelInstruction(cg, TR::InstOpCode::b, node, lessThan16Label);
 
@@ -7092,7 +7077,7 @@ arraycmpEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg, bool isArrayCmpLe
       auto branchToDone0LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::b, node, done0Label);
 
       auto lessThan16LabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, lessThan16Label);
-      generateTrg1Src1ImmInstruction(cg, isArrayCmpLen ? TR::InstOpCode::subsimmx : TR::InstOpCode::subsimmw, node, lengthReg, lengthReg, 1);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmx, node, lengthReg, lengthReg, 1);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbpost, node, data1Reg, TR::MemoryReference::createWithDisplacement(cg, src1Reg, 1));
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbpost, node, data2Reg, TR::MemoryReference::createWithDisplacement(cg, src2Reg, 1));
       generateConditionalCompareInstruction(cg, node, data1Reg, data2Reg, 0, TR::CC_HI);
