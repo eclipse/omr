@@ -1727,7 +1727,8 @@ Some influential environment variables:
               Specifies whether the package will run in 32- or 64-bit mode.
               One of: 31,32,64
   OMR_TOOLCHAIN
-              The toolchain used to build the package. One of: gcc,xlc,msvc
+              The toolchain used to build the package. One of:
+              gcc,xlc,msvc,openxl
   OMR_TOOLS_CC
               The C compiler to use for building tools (can differ from CC).
   OMR_TOOLS_CXX
@@ -4678,6 +4679,8 @@ case $OMR_TOOLCHAIN in #(
   xlc) :
      ;; #(
   msvc) :
+     ;; #(
+  openxl) :
      ;; #(
   *) :
     as_fn_error $? "An invalid value was provided for OMR_TOOLCHAIN: $OMR_TOOLCHAIN" "$LINENO" 5

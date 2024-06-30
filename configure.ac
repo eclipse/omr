@@ -47,7 +47,7 @@ AC_ARG_VAR([exe_output_dir], [The output directory for executables. (Default: $t
 AC_ARG_VAR([OMR_HOST_OS], [The operating system where the package will run. One of: aix,linux,osx,win,zos])
 AC_ARG_VAR([OMR_HOST_ARCH], [The architecture of the CPU where the package will run. One of: aarch64,arm,ppc,riscv,s390,x86])
 AC_ARG_VAR([OMR_TARGET_DATASIZE], [Specifies whether the package will run in 32- or 64-bit mode. One of: 31,32,64])
-AC_ARG_VAR([OMR_TOOLCHAIN], [The toolchain used to build the package. One of: gcc,xlc,msvc])
+AC_ARG_VAR([OMR_TOOLCHAIN], [The toolchain used to build the package. One of: gcc,xlc,msvc,openxl])
 AC_ARG_VAR([OMR_TOOLS_CC], [The C compiler to use for building tools (can differ from CC).])
 AC_ARG_VAR([OMR_TOOLS_CXX], [The C++ compiler to use for building tools (can differ from CXX).])
 AC_ARG_VAR([OMR_CROSS_CONFIGURE],
@@ -231,6 +231,7 @@ AS_CASE([$OMR_TOOLCHAIN],
 	[gcc],[],
 	[xlc],[],
 	[msvc],[],
+	[openxl],[],
 	[AC_MSG_ERROR([An invalid value was provided for OMR_TOOLCHAIN: $OMR_TOOLCHAIN])]
 )
 AC_MSG_RESULT([$OMR_TOOLCHAIN])
