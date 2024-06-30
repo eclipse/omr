@@ -63,7 +63,6 @@ protected:
 	uintptr_t _spineBytes;
 	uintptr_t _numArraylets;
 	bool _chunkedArray;
-	bool _dataAdjacentToHeader;
 	omrarrayptr_t _spine; /**< field to store the arraylet spine allocated during an arraylet allocation */
 	bool _threadAtSafePoint;
 	MM_MemoryPool *_memoryPool;
@@ -105,8 +104,6 @@ public:
 	void setNumArraylets(uintptr_t na) { _numArraylets = na; }
 	bool isChunkedArray() { return _chunkedArray; }
 	void setChunkedArray(bool ca) { _chunkedArray = ca; }
-	bool isDataAdjacentToHeader() { return _dataAdjacentToHeader; }
-	void setDataAdjacentToHeader(bool da) { _dataAdjacentToHeader = da; }
 	omrarrayptr_t getSpine() { return _spine; }
 	void setSpine(omrarrayptr_t spine) { _spine = spine; }
 	MMINLINE bool isArrayletSpine() { return (0 != _spineBytes); }
@@ -239,7 +236,6 @@ public:
 		,_spineBytes(0)
 		,_numArraylets(0)
 		,_chunkedArray(false)
-		,_dataAdjacentToHeader(false)
 		,_spine(NULL)
 		,_threadAtSafePoint(threadAtSafePoint)
 		,_memoryPool(NULL)
