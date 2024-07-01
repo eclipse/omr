@@ -27,4 +27,5 @@ compiler_library(runtime
 	${CMAKE_CURRENT_LIST_DIR}/OMRCodeCacheManager.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRCodeCacheMemorySegment.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRCodeCacheConfig.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRRSSReport.cpp
 )

@@ -40,6 +40,7 @@ namespace OMR { typedef CodeCache CodeCacheConnector; }
 #include "runtime/CodeCacheConfig.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/CodeCacheTypes.hpp"
+#include "runtime/OMRRSSReport.hpp"
 #include "OMR/Bytes.hpp"
 
 class TR_OpaqueMethodBlock;
@@ -57,7 +58,7 @@ class OMR_EXTENSIBLE CodeCache
    TR::CodeCache *self();
 
 public:
-   CodeCache() { }
+   CodeCache() : _coldCodeRSSRegion(NULL) { }
 
    void *operator new(size_t s, TR::CodeCache *cache) { return cache; }
    void operator delete(void *p, TR::CodeCache *cache) { /* do nothing */ }
@@ -416,6 +417,11 @@ public:
 
    CodeCacheFreeCacheBlock *_freeBlockList;
 
+   /**
+   * @brief Returns pointer to the cold code RSS Region
+   */
+   OMR::RSSRegion *getColdCodeRSSRegion() { return _coldCodeRSSRegion; }
+
    // This is used in an attempt to enforce mutually exclusive ownership.
    // flag accessed under mutex <== This is deceiving! There are two different monitors we may hold (not at the same time!) when we write to this.
    // We can either be holding the code cache monitor *OR* the manager's code cache list monitor.
@@ -450,6 +456,8 @@ public:
 
    TR_YesNoMaybe _almostFull;
    CodeCacheMethodHeader *_lastAllocatedBlock; // used for error detection (RAS)
+
+   OMR::RSSRegion   *_coldCodeRSSRegion;
    };
 
 } // namespace OMR

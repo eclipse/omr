@@ -91,6 +91,7 @@
 #include "optimizer/RegisterCandidate.hpp"
 #include "ras/Debug.hpp"
 #include "ras/DebugCounter.hpp"
+#include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "x/codegen/DataSnippet.hpp"
 #include "x/codegen/OutlinedInstructions.hpp"
@@ -1891,6 +1892,83 @@ struct DescendingSortX86DataSnippetByDataSize
       return a->getDataSize() > b->getDataSize();
       }
    };
+
+
+void OMR::X86::CodeGenerator::addItemsToRSSReport(uint8_t *coldCode)
+   {
+   // calculate size and collect counters for all cold blocks in the cold cache
+   TR_PersistentList<TR::DebugCounterAggregation> *coldBlockCountersList = NULL;
+   bool insideColdCode = false;
+   size_t blocksInsideColdCodeSize = 0;
+   TR::Compilation *comp = self()->comp();
+   const char* methodName = comp->signature();
+
+   for (TR::TreeTop *tt = comp->getMethodSymbol()->getFirstTreeTop(); tt ; tt = tt->getNextTreeTop())
+      {
+      TR::Node *node = tt->getNode();
+
+      if (node->getOpCodeValue() != TR::BBStart) continue;
+
+      TR::Block *block = node->getBlock();
+
+      if (insideColdCode)
+         {
+         uint8_t *startCursor = block->getFirstInstruction()->getBinaryEncoding();
+         uint8_t *endCursor = block->getLastInstruction()->getBinaryEncoding();
+         size_t blockSize = endCursor - startCursor;
+         blocksInsideColdCodeSize += blockSize;
+
+         if (!coldBlockCountersList)
+            coldBlockCountersList = new (comp->trPersistentMemory()) TR_PersistentList<TR::DebugCounterAggregation> ();
+
+         coldBlockCountersList->add(block->getDebugCounters());
+         }
+
+      if (block->isLastWarmBlock())
+         insideColdCode = true;
+
+      }
+
+   // create one RSSItem for all cold blocks
+   if (self()->getEstimatedColdLength() &&
+       OMR::RSSReport::instance())
+      {
+      TR::CodeCache *codeCache = TR::CodeCacheManager::instance()->findCodeCacheFromPC(coldCode);
+      OMR::RSSRegion *rssRegion = codeCache->getColdCodeRSSRegion();
+
+      if (rssRegion)
+         {
+         size_t actualColdLength = getBinaryBufferCursor() - coldCode;
+         int32_t overEstimate = static_cast<int32_t>(getEstimatedColdLength() - actualColdLength);
+
+         TR_ASSERT_FATAL(overEstimate >= 0, "Estimated cold code length should not be less than actual\n");
+
+         if (blocksInsideColdCodeSize != actualColdLength)
+            {
+            if (comp->getOption(TR_TraceCG))
+               {
+               traceMsg(comp, "RSS: blocksInsideColdCodeSize=%zu actualColdLength=%zu coldCode=%p coldCodeEnd=%p\n",
+                              blocksInsideColdCodeSize, actualColdLength, coldCode, coldCode+actualColdLength);
+               }
+            }
+
+         OMR::RSSItem *rssItem;
+
+         if (overEstimate > 0)
+            {
+            rssItem = new (comp->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::overEstimate, getBinaryBufferCursor(),
+                                                                           overEstimate, NULL);
+            rssRegion->addRSSItem(rssItem, codeCache->getReservingCompThreadID(), methodName);
+            }
+
+         rssItem = new (comp->trPersistentMemory()) OMR::RSSItem(OMR::RSSItem::coldBlocks, coldCode, actualColdLength,
+                                                                        coldBlockCountersList);
+
+         rssRegion->addRSSItem(rssItem, codeCache->getReservingCompThreadID(), methodName);
+         }
+      }
+   }
+
 void OMR::X86::CodeGenerator::doBinaryEncoding()
    {
    LexicalTimer pt1("code generation", self()->comp()->phaseTimer());
@@ -2206,6 +2284,9 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
 
       cursorInstruction = cursorInstruction->getNext();
       }
+
+   if (OMR::RSSReport::instance())
+       addItemsToRSSReport(coldCode);
 
    // Create exception table entries for outlined instructions.
    //

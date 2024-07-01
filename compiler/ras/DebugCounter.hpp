@@ -265,6 +265,8 @@ public:
    TR::SymbolReference *getBumpCountSymRef(TR::Compilation *comp);
 
    void accumulate();
+   int64_t getCount();
+   void printCounters(bool printZeroCounters = true);
    };
 
 class DebugCounterGroup

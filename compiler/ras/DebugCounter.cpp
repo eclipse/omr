@@ -35,6 +35,7 @@
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
 #include "env/StackMemoryRegion.hpp"
+#include "env/VerboseLog.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/Node.hpp"
@@ -459,6 +460,36 @@ void TR::DebugCounterAggregation::accumulate()
    for (CounterDelta *counterDelta = it.getFirst(); counterDelta; counterDelta = it.getNext())
       {
       counterDelta->counter->accumulate(increment * counterDelta->delta);
+      }
+   }
+
+
+int64_t TR::DebugCounterAggregation::getCount()
+   {
+   int64_t count = 0;
+   ListIterator<CounterDelta> it(_counterDeltas);
+
+   for (CounterDelta *counterDelta = it.getFirst(); counterDelta; counterDelta = it.getNext())
+      {
+      count += counterDelta->counter->getCount();
+      }
+
+   return count;
+   }
+
+void TR::DebugCounterAggregation::printCounters(bool printZeroCounters)
+   {
+   ListIterator<CounterDelta> it(_counterDeltas);
+
+   for (CounterDelta *counterDelta = it.getFirst(); counterDelta; counterDelta = it.getNext())
+      {
+      TR::DebugCounter *counter = counterDelta->counter;
+      int64_t count = counter->getCount();
+
+      if (count || printZeroCounters)
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Counter count=%d %s", count, counter->getName());
+         }
       }
    }
 
