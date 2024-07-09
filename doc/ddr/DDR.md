@@ -69,5 +69,5 @@ For every target added to a ddr set a text file is generated which holds info wh
 + include path used when building the target
 + pre-processor defines which are set when building the target
 
-For each ddr set a CMakeLists.txt file is generated which will process the target information text files, and do appropriate procesing to get the macro list needed for ddrgen.
+For each ddr set a CMakeLists.txt file is generated which will process the target information text files, and do appropriate processing to get the macro list needed for ddrgen.
 In addition rules will be added to run cmake and run make on the generated output as part of the build.

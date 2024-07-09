@@ -34,7 +34,7 @@ We have used following valgrind API requests:
 
 1.  `VALGRIND_MAKE_MEM_NOACCESS(lowAddress, size)` - This marks address ranges as completely inaccessible. This is mainly used when a new range added to the heap in `MM_HeapVirtualMemory::heapAddRange`.
 
-2. `VALGRIND_MAKE_MEM_DEFINED(lowAddress, size)` - This marks range as accessable, mainly used when we need to access some area of heap that is unallocated (NOACCESS) and then mark it back with `VALGRIND_MAKE_MEM_NOACCESS`.
+2. `VALGRIND_MAKE_MEM_DEFINED(lowAddress, size)` - This marks range as accessible, mainly used when we need to access some area of heap that is unallocated (NOACCESS) and then mark it back with `VALGRIND_MAKE_MEM_NOACCESS`.
 
 3. `VALGRIND_MAKE_MEM_UNDEFINED(lowAddress, size)` - This marks address ranges as accessible but containing undefined data. This request is used in `MM_HeapVirtualMemory::heapRemoveRange` to let Valgrind know that the memory is no longer in use for the heap.
 
@@ -89,7 +89,7 @@ All api requests are made using a wrapper file `MemcheckWrapper.cpp`. Refer `Mem
         Invalid read of size 8
         Address 0x6d71d18 is 1,104 bytes inside a block of size 1,448 free'd  
         <StackTrace>
-    This means that a read attempt of size 8 byes has been made at adddress `0x6d71d18` which is not allocated to any object.
+    This means that a read attempt of size 8 byes has been made at address `0x6d71d18` which is not allocated to any object.
     
     Further it says that the address is 1104 bytes inside a block of size 1448. This means a block was previously allocated there, starting from `0x6D72168` (0x6d71d18 - 1104 (decimal)) to `0x6D72710` (0x6D72168 + 1448 (decimal)).
 
