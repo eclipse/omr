@@ -2737,6 +2737,7 @@ bool TR_RegionStructure::changeContinueLoopsToNestedLoops(TR_RegionStructure *ro
                {
                diagnostic("Incoming [%p] edge %d->%d\n", incomingEdge, incomingEdge->getFrom()->asBlock()->getNumber(), incomingEdge->getTo()->asBlock()->getNumber());
                diagnostic("\tassuming it should be ->%d\n", entryBlock->getNumber());
+               TR_ASSERT_FATAL(newHeader, "New header must have been set by now");
                diagnostic("\tredirecting to ->%d\n", newHeader->getNumber());
                }
 
