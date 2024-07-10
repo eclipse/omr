@@ -454,7 +454,7 @@ OMR::TransformUtil::generateDataAddrLoadTrees(TR::Compilation *comp, TR::Node *a
 #endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
 
 TR::Node *
-OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayNode, TR::Node *offsetNode)
+OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayNode, TR::Node *offsetNode, bool subNegativeHeaderSize)
    {
    TR::Node *arrayAddressNode = NULL;
    TR::Node *totalOffsetNode = NULL;
@@ -470,22 +470,35 @@ OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::
       if (offsetNode)
          arrayAddressNode = TR::Node::create(TR::aladd, 2, arrayAddressNode, offsetNode);
       }
-   else if (comp->target().is64Bit())
-#else
-   if (comp->target().is64Bit())
+   else
 #endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
       {
-      totalOffsetNode = TR::Node::lconst(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      TR_ASSERT_FATAL_WITH_NODE(arrayNode,
+         static_cast<int64_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes()) <= TR::getMaxSigned<TR::Int32>(),
+         "Array header size is expected to fit in int32 but was wider.\n");
+      TR::DataTypes widestAvailableIntDataType = comp->target().is64Bit() ? TR::DataTypes::Int64 : TR::DataTypes::Int32;
+
+      TR::ILOpCodes arrayHeaderSizeLoadOpCode = TR::ILOpCode::constOpCode(widestAvailableIntDataType);
+      int32_t arrayHeaderSize = static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
       if (offsetNode)
-         totalOffsetNode = TR::Node::create(TR::ladd, 2, offsetNode, totalOffsetNode);
-      arrayAddressNode = TR::Node::create(TR::aladd, 2, arrayNode, totalOffsetNode);
-      }
-   else
-      {
-      totalOffsetNode = TR::Node::iconst(static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
-      if (offsetNode)
-         totalOffsetNode = TR::Node::create(TR::iadd, 2, offsetNode, totalOffsetNode);
-      arrayAddressNode = TR::Node::create(TR::aiadd, 2, arrayNode, totalOffsetNode);
+         {
+         TR::ILOpCodes offsetNodeOpCode = TR::ILOpCode::addOpCode(widestAvailableIntDataType, comp->target().is64Bit());
+
+         if (subNegativeHeaderSize)
+            {
+            arrayHeaderSize = -arrayHeaderSize;
+            offsetNodeOpCode = TR::ILOpCode::subtractOpCode(widestAvailableIntDataType);
+            }
+
+         totalOffsetNode = TR::Node::create(offsetNodeOpCode, 2, offsetNode, TR::Node::create(arrayHeaderSizeLoadOpCode, 0, arrayHeaderSize));
+         }
+      else
+         {
+         totalOffsetNode = TR::Node::create(arrayHeaderSizeLoadOpCode, 0, arrayHeaderSize);
+         }
+
+      TR::ILOpCodes arrayAddressNodeOpCode = TR::ILOpCode::addOpCode(TR::DataTypes::Address, comp->target().is64Bit());
+      arrayAddressNode = TR::Node::create(arrayAddressNodeOpCode, 2, arrayNode, totalOffsetNode);
       }
 
    return arrayAddressNode;

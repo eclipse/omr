@@ -219,6 +219,10 @@ class OMR_EXTENSIBLE TransformUtil
     * \param offsetNode
     *    The offset node (in bytes)
     *
+    * \param subNegativeHeaderSize
+    *    Subtract -header size from offset instead of adding header size,
+    *    applies only when offsetNode is not null
+    *
     * \return
     *    IL to access array element at offset provided by offsetNode or
     *    first array element if no offset node is provided
@@ -226,7 +230,8 @@ class OMR_EXTENSIBLE TransformUtil
    static TR::Node *generateArrayElementAddressTrees(
       TR::Compilation *comp,
       TR::Node *arrayNode,
-      TR::Node *offsetNode = NULL);
+      TR::Node *offsetNode = NULL,
+      bool subNegativeHeaderSize = false);
 
    /**
     * \brief
