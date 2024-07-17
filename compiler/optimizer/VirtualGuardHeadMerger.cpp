@@ -314,6 +314,7 @@ static void moveBlockAfterDest(TR::CFG *cfg, TR::Block *toMove, TR::Block *dest)
 // for some empty methods and is common for Object.<init> at the top of constructors.
 int32_t TR_VirtualGuardHeadMerger::perform() {
    static char *disableVGHeadMergerTailSplitting = feGetEnv("TR_DisableVGHeadMergerTailSplitting");
+   static char *enableVGHeadMergerGuardMotion = feGetEnv("TR_DisableVGHeadMergerGuardMotion");
    TR::CFG *cfg = comp()->getFlowGraph();
 
    // Cache the loads for the outer guard's cold path
@@ -374,8 +375,18 @@ int32_t TR_VirtualGuardHeadMerger::perform() {
          //
          // Note we always split the block - this may create an empty block but preserves the incoming
          // control flow we leave the rest to block extension to fix later
+         //
+         // Fix: Since moving guards down can lead to unprotected privargs loading from objects that are
+         //      not of the right type, and moving guards up can allow for a guard to pass only for that
+         //      guard to be patched before the privargs executes a load which leaves a window where the
+         //      field being loaded could have been changed to an obj of the class type that caused the
+         //      guard to be patched. Therefore guard motion in this function was disabled by default.
+         //      It's likely that HCR guards can move within the bounds of GC points, but we didn't
+         //      attempt to allow it since perf tests was OK.
+         //      Use export enableVGHeadMergerGuardMotion=1 to enable.
 
-         block = block->split(block->getLastRealTreeTop(), cfg, true, false);
+         if (enableVGHeadMergerGuardMotion)
+            block = block->split(block->getLastRealTreeTop(), cfg, true, false);
          TR::Block *privargIns = block->getPrevBlock();
          TR::Block *runtimeIns = block->getPrevBlock();
          TR::Block *HCRIns = block;
@@ -421,7 +432,7 @@ int32_t TR_VirtualGuardHeadMerger::perform() {
                break;
 
             TR::Block *insertPoint = isStopTheWorldGuard(guard2) ? HCRIns : runtimeIns;
-            if (!safeToMoveGuard(insertPoint, guard2Tree, guard1->getBranchDestination(), privArgSymRefs, comp()))
+            if (enableVGHeadMergerGuardMotion && !safeToMoveGuard(insertPoint, guard2Tree, guard1->getBranchDestination(), privArgSymRefs, comp()))
                break;
 
             // now we figure out if we can redirect guard2 to guard1's cold block
@@ -515,8 +526,9 @@ int32_t TR_VirtualGuardHeadMerger::perform() {
                   // Monitor store is generated for the caller of the method guard2 protects, so should appear before
                   // priv arg stores for the method guard2 protects
                   TR::Block *privargBlock = guard2Block;
-                  guard2Block = splitRuntimeGuardBlock(comp(), guard2Block, cfg);
-                  if (privargBlock != guard2Block)
+                  if (enableVGHeadMergerGuardMotion)
+                     guard2Block = splitRuntimeGuardBlock(comp(), guard2Block, cfg);
+                  if (enableVGHeadMergerGuardMotion && privargBlock != guard2Block)
                      {
                      if (trace())
                         traceMsg(comp(), "  Moving privarg block_%d after block_%d\n", privargBlock->getNumber(), privargIns->getNumber());
@@ -534,12 +546,15 @@ int32_t TR_VirtualGuardHeadMerger::perform() {
                      }
                   }
 
-               guard2Block = guard2Block->split(guard2Tree, cfg, true, false);
-               if (trace())
-                  traceMsg(comp(), "  Created new block_%d to hold guard [%p] from block_%d\n", guard2Block->getNumber(), guard2, guard2Block->getNumber());
+               if (enableVGHeadMergerGuardMotion)
+                  {
+                  guard2Block = guard2Block->split(guard2Tree, cfg, true, false);
+                  if (trace())
+                     traceMsg(comp(), "  Created new block_%d to hold guard [%p] from block_%d\n", guard2Block->getNumber(), guard2, guard2Block->getNumber());
+                  }
                }
 
-            if (insertPoint != guard2Block->getPrevBlock())
+            if (enableVGHeadMergerGuardMotion && insertPoint != guard2Block->getPrevBlock())
                {
                TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "headMerger/%s_%s/(%s)", isStopTheWorldGuard(guard1) ? "stop the world" : "runtime", isStopTheWorldGuard(guard2) ? "stop the world" : "runtime", comp()->signature()));
                cfg->setStructure(NULL);
