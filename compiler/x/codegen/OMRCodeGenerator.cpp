@@ -2056,6 +2056,8 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
    //
    bool skipOneReturn = false;
    int32_t estimatedPrologueStartOffset = estimate;
+   bool snippetsAfterWarm = self()->comp()->getOption(TR_MoveSnippetsToWarmCode);
+
    while (estimateCursor)
       {
       // Update the info bits on the register mask.
@@ -2149,6 +2151,9 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
       //
       if (estimateCursor->isLastWarmInstruction())
          {
+         if (snippetsAfterWarm)
+            estimate = setEstimatedLocationsForSnippetLabels(estimate);
+
          warmEstimate = (estimate+7) & ~7;
          estimate = warmEstimate + MIN_DISTANCE_BETWEEN_WARM_AND_COLD_CODE;
          }
@@ -2162,7 +2167,8 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
    if (self()->comp()->getOption(TR_TraceCG))
       traceMsg(self()->comp(), "\n</instructions>\n");
 
-   estimate = self()->setEstimatedLocationsForSnippetLabels(estimate);
+   if (!snippetsAfterWarm || !warmEstimate)
+      estimate = self()->setEstimatedLocationsForSnippetLabels(estimate);
 
    // When using copyBinaryToBuffer() to copy the encoding of an instruction we
    // indiscriminatelly copy a whole integer, even if the size of the encoding
@@ -2237,6 +2243,8 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
 
    // Generate binary for the rest of the instructions
    //
+   int32_t accumulatedErrorBeforeSnippets = 0;
+
    while (cursorInstruction)
       {
       uint8_t * const instructionStart = self()->getBinaryBufferCursor();
@@ -2275,6 +2283,8 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
                                                            SPLIT_WARM_COLD_STRING,
                                                            self()->getWarmCodeEnd(), cursorInstruction, coldCode);
             }
+
+         accumulatedErrorBeforeSnippets = getAccumulatedInstructionLengthError();
 
          // Adjust the accumulated length error so that distances within the cold
          // code are calculated properly using the estimated code locations.
@@ -2323,6 +2333,12 @@ void OMR::X86::CodeGenerator::doBinaryEncoding()
    if (self()->comp()->getOption(TR_TraceCG))
       {
       traceMsg(self()->comp(), "</encode>\n");
+      }
+
+   if (self()->comp()->getOption(TR_SplitWarmAndColdBlocks))
+      {
+      if (snippetsAfterWarm) // snippets will follow the warm code
+         setAccumulatedInstructionLengthError(accumulatedErrorBeforeSnippets);
       }
 
    }

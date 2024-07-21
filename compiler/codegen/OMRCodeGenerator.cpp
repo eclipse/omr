@@ -363,6 +363,78 @@ OMR::CodeGenerator::generateCodeFromIL()
    return false;
    }
 
+void
+OMR::CodeGenerator::insertGotoIntoLastBlock(TR::Block *lastBlock)
+   {
+   // If the last tree in the last block is not a TR_goto, insert a goto tree
+   // at the end of the block.
+   // If there is a following block the goto will branch to it so that when the
+   // code is split any fall-through will go to the right place.
+   // If there is no following block the goto will branch to the first block; in
+   // this case the goto should never be reached, it is there only to
+   // make sure that the instruction following the last real treetop will be in
+   // method's code, so if it is a helper call (e.g. for a throw) the return address
+   // is in this method's code.
+   //
+   TR::Compilation *comp = self()->comp();
+   TR::TreeTop * tt;
+   TR::Node * node;
+
+   if (lastBlock->getNumberOfRealTreeTops() == 0)
+      tt = lastBlock->getEntry();
+   else
+      tt = lastBlock->getLastRealTreeTop();
+
+   node = tt->getNode();
+
+   if (!(node->getOpCode().isGoto() ||
+         node->getOpCode().isJumpWithMultipleTargets() ||
+         node->getOpCode().isReturn()))
+      {
+
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "%s Inserting goto at the end of block_%d\n", SPLIT_WARM_COLD_STRING, lastBlock->getNumber());
+         }
+
+      // Find the block to be branched to
+      //
+      TR::TreeTop * targetTreeTop = lastBlock->getExit()->getNextTreeTop();
+
+      if (targetTreeTop)
+         // Branch to following block. Make sure it is not marked as an
+         // extension block so that it will get a label generated.
+         //
+         targetTreeTop->getNode()->getBlock()->setIsExtensionOfPreviousBlock(false);
+      else
+         // Branch to the first block. This will not be marked as an extension
+         // block.
+         //
+         targetTreeTop = comp->getStartBlock()->getEntry();
+
+      // Generate the goto and insert it into the end of the last warm block.
+      //
+      TR::TreeTop *gotoTreeTop = TR::TreeTop::create(comp, TR::Node::create(node, TR::Goto, 0, targetTreeTop));
+
+      // Move reg deps from BBEnd to goto
+      //
+      TR::Node *bbEnd = lastBlock->getExit()->getNode();
+
+      if (bbEnd->getNumChildren() > 0)
+         {
+         TR::Node *glRegDeps = bbEnd->getChild(0);
+
+         gotoTreeTop->getNode()->setNumChildren(1);
+         gotoTreeTop->getNode()->setChild(0, glRegDeps);
+
+         bbEnd->setChild(0,NULL);
+         bbEnd->setNumChildren(0);
+         }
+
+      tt->insertAfter(gotoTreeTop);
+      }
+   }
+
 void OMR::CodeGenerator::findLastWarmBlock()
    {
    TR::Compilation *comp = self()->comp();
@@ -457,62 +529,18 @@ void OMR::CodeGenerator::findLastWarmBlock()
                            (numColdBlocks - numNonOutlinedColdBlocks)*100/numColdBlocks);
       }
 
-   // If the last tree in the last warm block is not a TR_goto, insert a goto tree
-   // at the end of the block.
-   // If there is a following block the goto will branch to it so that when the
-   // code is split any fall-through will go to the right place.
-   // If there is no following block the goto will branch to the first block; in
-   // this case the goto should never be reached, it is there only to
-   // make sure that the instruction following the last real treetop will be in
-   // warm code, so if it is a helper call (e.g. for a throw) the return address
-   // is in this method's code.
+
+   insertGotoIntoLastBlock(lastWarmBlock);
+   TR::Block *lastBlock = comp->findLastTree()->getNode()->getBlock();
+
+   // If disclaim is enabled, it may happen that nothing follows mainline code
+   // (no snippets or OOL). Then, we need to insert a goto at the end for the
+   // reasons described in insertGotoIntoLastBlock()
    //
-   if (lastWarmBlock->getNumberOfRealTreeTops() == 0)
-      tt = lastWarmBlock->getEntry();
-   else
-      tt = lastWarmBlock->getLastRealTreeTop();
-
-   node = tt->getNode();
-
-   if (!(node->getOpCode().isGoto() ||
-         node->getOpCode().isJumpWithMultipleTargets() ||
-         node->getOpCode().isReturn()))
+   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming) &&
+       lastBlock != lastWarmBlock)
       {
-      // Find the block to be branched to
-      //
-      TR::TreeTop * targetTreeTop = lastWarmBlock->getExit()->getNextTreeTop();
-
-      if (targetTreeTop)
-         // Branch to following block. Make sure it is not marked as an
-         // extension block so that it will get a label generated.
-         //
-         targetTreeTop->getNode()->getBlock()->setIsExtensionOfPreviousBlock(false);
-      else
-         // Branch to the first block. This will not be marked as an extension
-         // block.
-         //
-         targetTreeTop = comp->getStartBlock()->getEntry();
-
-      // Generate the goto and insert it into the end of the last warm block.
-      //
-      TR::TreeTop *gotoTreeTop = TR::TreeTop::create(comp, TR::Node::create(node, TR::Goto, 0, targetTreeTop));
-
-      // Move reg deps from BBEnd to goto
-      //
-      TR::Node *bbEnd = lastWarmBlock->getExit()->getNode();
-
-      if (bbEnd->getNumChildren() > 0)
-         {
-         TR::Node *glRegDeps = bbEnd->getChild(0);
-
-         gotoTreeTop->getNode()->setNumChildren(1);
-         gotoTreeTop->getNode()->setChild(0, glRegDeps);
-
-         bbEnd->setChild(0,NULL);
-         bbEnd->setNumChildren(0);
-         }
-
-      tt->insertAfter(gotoTreeTop);
+      insertGotoIntoLastBlock(lastBlock);
       }
    }
 

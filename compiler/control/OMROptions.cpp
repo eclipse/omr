@@ -1002,7 +1002,10 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_minProfiledCheckcastFrequency, 0, "F%d", NOT_IN_SUBSET},
    {"minSleepTimeMsForCompThrottling=", "M<nnn>\tLower bound for sleep time during compilation throttling (ms)",
                                          TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_minSleepTimeMsForCompThrottling, 0, "F%d", NOT_IN_SUBSET },
+   {"moveSnippetsToWarmCode",           "M\tmove snippets to after last warm instruction", SET_OPTION_BIT(TR_MoveSnippetsToWarmCode), "F"},
+
    {"noAotSecondRunDetection", "M\tdo not do second run detection for AOT", SET_OPTION_BIT(TR_NoAotSecondRunDetection), "F", NOT_IN_SUBSET },
+
 #ifdef DEBUG
    {"noExceptions",       "C\tfail compilation for methods with exceptions",
         TR::Options::setDebug, (intptr_t)"noExceptions"},
