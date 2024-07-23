@@ -445,6 +445,10 @@ OMR::TransformUtil::generateDataAddrLoadTrees(TR::Compilation *comp, TR::Node *a
       TR::Compiler->om.isOffHeapAllocationEnabled(),
       "This helper shouldn't be called if off heap allocation is disabled.\n");
 
+   TR_ASSERT_FATAL_WITH_NODE(arrayObject,
+      arrayObject->getDataType().isAddress(),
+      "arrayObject must be address data type.\n");
+
    TR::SymbolReference *dataAddrFieldOffset = comp->getSymRefTab()->findOrCreateContiguousArrayDataAddrFieldShadowSymRef();
    TR::Node *dataAddrField = TR::Node::createWithSymRef(TR::aloadi, 1, arrayObject, 0, dataAddrFieldOffset);
    dataAddrField->setIsInternalPointer(true);
@@ -462,6 +466,14 @@ OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::
    TR_ASSERT_FATAL_WITH_NODE(arrayNode,
       !TR::Compiler->om.canGenerateArraylets(),
       "This helper shouldn't be called if arraylets are enabled.\n");
+
+   TR_ASSERT_FATAL_WITH_NODE(arrayNode,
+      arrayNode->getDataType().isAddress(),
+      "arrayNode must be address data type.\n");
+
+   TR_ASSERT_FATAL_WITH_NODE(offsetNode,
+      offsetNode == NULL || offsetNode->getDataType().isIntegral(),
+      "offsetNode must be integeral data type.\n");
 
 #if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
@@ -507,6 +519,10 @@ OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::
 TR::Node *
 OMR::TransformUtil::generateFirstArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayObject)
    {
+   TR_ASSERT_FATAL_WITH_NODE(arrayObject,
+      arrayObject->getDataType().isAddress(),
+      "arrayObject must be address data type.\n");
+
    TR::Node *firstArrayElementNode = generateArrayElementAddressTrees(comp, arrayObject);
    return firstArrayElementNode;
    }
@@ -514,6 +530,14 @@ OMR::TransformUtil::generateFirstArrayElementAddressTrees(TR::Compilation *comp,
 TR::Node *
 OMR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(TR::Compilation *comp, TR::Node *indexNode, TR::Node *elementSizeNode, int32_t elementSize, bool useShiftOpCode)
    {
+   TR_ASSERT_FATAL_WITH_NODE(indexNode,
+      indexNode->getDataType().isIntegral(),
+      "indexNode must be integeral data type.\n");
+
+   TR_ASSERT_FATAL_WITH_NODE(elementSizeNode,
+      elementSizeNode == NULL || elementSizeNode->getDataType().isIntegral(),
+      "elementSizeNode must be integeral data type.\n");
+
    TR::Node *offsetNode = indexNode->createLongIfNeeded();
    TR::Node *strideNode = elementSizeNode;
    if (strideNode)
