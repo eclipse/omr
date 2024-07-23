@@ -102,9 +102,9 @@ MM_MemoryPoolLargeObjects::initialize(MM_EnvironmentBase* env)
 	uintptr_t minimumFreeEntrySize = OMR_MAX(_memoryPoolLargeObjects->getMinimumFreeEntrySize(), _memoryPoolSmallObjects->getMinimumFreeEntrySize());
 	/* this memoryPool can be used by scavenger, maximum tlh size should be max(_extensions->tlhMaximumSize, _extensions->scavengerScanCacheMaximumSize) */
 #if defined(OMR_GC_MODRON_SCAVENGER)
-	uintptr_t tlhMaximumSize = OMR_MAX(_extensions->tlhMaximumSize, _extensions->scavengerScanCacheMaximumSize);
+	uintptr_t tlhMaximumSize = OMR_MAX(_extensions->getTlhMaximumSize(), _extensions->scavengerScanCacheMaximumSize);
 #else /* OMR_GC_MODRON_SCAVENGER */
-	uintptr_t tlhMaximumSize = _extensions->tlhMaximumSize;
+	uintptr_t tlhMaximumSize = _extensions->getTlhMaximumSize();
 #endif /* OMR_GC_MODRON_SCAVENGER */
 	_largeObjectAllocateStats = MM_LargeObjectAllocateStats::newInstance(env, (uint16_t)_extensions->largeObjectAllocationProfilingTopK, _extensions->largeObjectAllocationProfilingThreshold, _extensions->largeObjectAllocationProfilingVeryLargeObjectThreshold, (float)_extensions->largeObjectAllocationProfilingSizeClassRatio / (float)100.0,
 																		 _extensions->heap->getMaximumMemorySize(), tlhMaximumSize + minimumFreeEntrySize, _extensions->tlhMinimumSize);

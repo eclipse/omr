@@ -124,9 +124,17 @@ MM_TLHAllocationSupport::refresh(MM_EnvironmentBase *env, MM_AllocateDescription
 	 */
 	uintptr_t sizeInBytesRequired = allocDescription->getContiguousBytes();
 	uintptr_t tlhMinimumSize = extensions->tlhMinimumSize;
-	uintptr_t tlhMaximumSize = extensions->tlhMaximumSize;
+	uintptr_t tlhMaximumSize = extensions->tlhMaximumSizeNonBatchCleared;
+
+#if defined(OMR_GC_BATCH_CLEAR_TLH)
+	if (0 != extensions->batchClearTLH) {
+		tlhMaximumSize = extensions->tlhMaximumSizeBatchCleared;
+	}
+#endif /* defined(OMR_GC_BATCH_CLEAR_TLH) */
+
 	uintptr_t halfRefreshSize = getRefreshSize() >> 1;
 	uintptr_t abandonSize = (tlhMinimumSize > halfRefreshSize ? tlhMinimumSize : halfRefreshSize);
+
 	if (sizeInBytesRequired > abandonSize) {
 		/* increase thread hungriness if we did not refresh */
 		if (getRefreshSize() < tlhMaximumSize && sizeInBytesRequired < tlhMaximumSize) {
