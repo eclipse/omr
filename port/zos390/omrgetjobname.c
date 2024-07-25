@@ -48,6 +48,7 @@ void
 omrget_jobname(struct OMRPortLibrary *portLibrary, char *jobname, uintptr_t length)
 {
 	char *tmp_jobname = (char *)__malloc31(J9_MAX_JOBNAME);
+	extern void _JOBNAME(char *); /* defined in omrjobname.s */
 
 	if (NULL != tmp_jobname) {
 		char *ascname = NULL;
