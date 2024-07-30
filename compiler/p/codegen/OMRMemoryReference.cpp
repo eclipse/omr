@@ -1638,6 +1638,12 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
          loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_MethodEnterExitHookAddress);
          return;
          }
+      else if (symbol->isCallSiteTableEntry() && !ref->isUnresolved() && cg->comp()->compileRelocatableCode())
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_CallsiteTableEntryAddress);
+         return;
+         }
       else
          {
          TR_ASSERT_FATAL(!comp->getOption(TR_UseSymbolValidationManager) || ref->isUnresolved(), "SVM relocation unhandled");
@@ -1792,6 +1798,12 @@ void OMR::Power::MemoryReference::accessStaticItem(TR::Node *node, TR::SymbolRef
          {
          TR::Register *reg = _baseRegister = cg->allocateRegister();
          loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_MethodEnterExitHookAddress);
+         return;
+         }
+      else if (symbol->isCallSiteTableEntry() && !refIsUnresolved && cg->comp()->compileRelocatableCode()
+         {
+         TR::Register *reg = _baseRegister = cg->allocateRegister();
+         loadAddressConstant(cg, true, nodeForSymbol, 1, reg, NULL, false, TR_CallsiteTableEntryAddress);
          return;
          }
       else if (refIsUnresolved || useUnresSnippetToAvoidRelo)

@@ -118,6 +118,10 @@ static void loadRelocatableConstant(TR::Node *node,
       {
       loadAddressConstant(cg, true, GCRnode, 1, reg, NULL, TR_MethodEnterExitHookAddress);
       }
+   else if (symbol->isCallSiteTableEntry() && !ref->isUnresolved() && comp->compileRelocatableCode())
+      {
+      loadAddressConstant(cg, true, GCRnode, 1, reg, NULL, TR_CallsiteTableEntryAddress);
+      }
    else
       {
       loadConstant64(cg, node, addr, reg);

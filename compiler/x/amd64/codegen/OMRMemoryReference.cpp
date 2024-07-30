@@ -586,6 +586,22 @@ OMR::X86::AMD64::MemoryReference::addMetaDataForCodeAddressWithLoad(
                containingInstruction->getNode());
             }
          }
+      else if (sr.getSymbol()->isCallSiteTableEntry())
+         {
+         if (cg->needRelocationsForStatics())
+            {
+            cg->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  displacementLocation,
+                  (uint8_t *)srCopy,
+                  NULL,
+                  TR_CallsiteTableEntryAddress,
+                  cg),
+               __FILE__,
+               __LINE__,
+               containingInstruction->getNode());
+            }
+         }
       }
    else
       {

@@ -1357,6 +1357,19 @@ OMR::X86::MemoryReference::addMetaDataForCodeAddress(
                            __LINE__,
                            node);
                         }
+                     else if (symbol->isCallSiteTableEntry())
+                        {
+                        cg->addExternalRelocation(
+                           TR::ExternalRelocation::create(
+                              cursor,
+                              (uint8_t *)&self()->getSymbolReference(),
+                              NULL,
+                              TR_CallsiteTableEntryAddress,
+                              cg),
+                           __FILE__,
+                           __LINE__,
+                           node);
+                        }
                      else
                         {
                         cg->addExternalRelocation(

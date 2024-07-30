@@ -1174,6 +1174,10 @@ TR::X86RegImmSymInstruction::autoSetReloKind()
       {
       setReloKind(TR_MethodEnterExitHookAddress);
       }
+   else if (symbol->isCallSiteTableEntry())
+      {
+      setReloKind(TR_CallsiteTableEntryAddress);
+      }
    }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -4466,6 +4470,8 @@ TR::AMD64RegImm64SymInstruction::autoSetReloKind()
       setReloKind(TR_RecompQueuedFlag);
    else if (symbol->isEnterEventHookAddress() || symbol->isExitEventHookAddress())
       setReloKind(TR_MethodEnterExitHookAddress);
+   else if (symbol->isCallSiteTableEntry() && !getSymbolReference()->isUnresolved())
+      setReloKind(TR_CallsiteTableEntryAddress);
    else
       setReloKind(-1);
    }

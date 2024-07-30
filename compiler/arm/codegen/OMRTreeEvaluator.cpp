@@ -3120,6 +3120,20 @@ TR::Instruction *loadAddressConstantFixed(TR::CodeGenerator *cg, TR::Node * node
                                  node);
                }
             }
+         else if (typeAddress == TR_CallsiteTableEntryAddress)
+            {
+            if (doAOTRelocation)
+               {
+               cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+                                 cursor,
+                                 (uint8_t *)node->getSymbolReference(),
+                                 (uint8_t *)seqKind,
+                                 (TR_ExternalRelocationTargetKind)typeAddress, cg),
+                                 __FILE__,
+                                 __LINE__,
+                                 node);
+               }
+            }
          else
             {
             if (doAOTRelocation)
