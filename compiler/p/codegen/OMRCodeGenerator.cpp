@@ -2020,6 +2020,16 @@ OMR::Power::CodeGenerator::addMetaDataForLoadAddressConstantFixed(
             TR_CallsiteTableEntryAddress, self());
          break;
          }
+
+      case TR_MethodTypeTableEntryAddress:
+         {
+         relo = new (self()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+            firstInstruction,
+            (uint8_t *)node->getSymbolReference(),
+            (uint8_t *)seqKind,
+            TR_MethodTypeTableEntryAddress, self());
+         break;
+         }
       }
 
    if (comp->getOption(TR_UseSymbolValidationManager) && !relo)
@@ -2202,6 +2212,15 @@ OMR::Power::CodeGenerator::addMetaDataForLoadIntConstantFixed(
                                                                                           (uint8_t *)node->getSymbolReference(),
                                                                                           (uint8_t *)orderedPairSequence2,
                                                                                           (TR_ExternalRelocationTargetKind)TR_CallsiteTableEntryAddress, self()),
+                           __FILE__, __LINE__, node);
+      }
+   else if (typeAddress == TR_MethodTypeTableEntryAddress)
+      {
+      self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation((uint8_t *)firstInstruction,
+                                                                                          (uint8_t *)secondInstruction,
+                                                                                          (uint8_t *)node->getSymbolReference(),
+                                                                                          (uint8_t *)orderedPairSequence2,
+                                                                                          (TR_ExternalRelocationTargetKind)TR_MethodTypeTableEntryAddress, self()),
                            __FILE__, __LINE__, node);
       }
    else if (typeAddress != -1)

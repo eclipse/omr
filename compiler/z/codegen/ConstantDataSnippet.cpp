@@ -394,6 +394,21 @@ TR::S390ConstantDataSnippet::addMetaDataForCodeAddress(uint8_t *cursor)
          }
          break;
 
+      case TR_MethodTypeTableEntryAddress:
+         {
+         cg()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *) getNode()->getSymbolReference(),
+               NULL,
+               TR_MethodTypeTableEntryAddress,
+               cg()),
+            __FILE__,
+            __LINE__,
+            getNode());
+         }
+         break;
+
       default:
          TR_ASSERT( 0,"relocation type not handled yet");
       }

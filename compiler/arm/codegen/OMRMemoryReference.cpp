@@ -1391,6 +1391,10 @@ static void loadRelocatableConstant(TR::Node               *node,
          {
          loadAddressConstant(cg, GCRnode, 1, reg, NULL, false, TR_CallsiteTableEntryAddress);
          }
+      else if (symbol->isMethodTypeTableEntry() && !ref->isUnresolved())
+         {
+         loadAddressConstant(cg, GCRnode, 1, reg, NULL, false, TR_MethodTypeTableEntryAddress);
+         }
       else
          {
          cg->addSnippet(mr->setUnresolvedSnippet(new (cg->trHeapMemory()) TR::UnresolvedDataSnippet(cg, node, ref, node->getOpCode().isStore(), false)));
