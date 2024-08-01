@@ -57,10 +57,13 @@ enum TR_OpCodeVEX_L : uint8_t
     VEX_L256 = 0x1,
     VEX_L512 = 0x2,
     VEX_L___ = 0x3, // Instruction does not support VEX encoding
+    EVEX_L128 = 0x4,
+    EVEX_L256 = 0x5,
+    EVEX_L512 = 0x6,
 };
 enum TR_OpCodeVEX_v : uint8_t
 {
-    VEX_vNONE = 0x0,
+    VEX_vNONE = 0x0, // typical of SIMD instructions with a single source operand
     VEX_vReg_ = 0x1,
 };
 enum TR_InstructionREX_W : uint8_t
@@ -74,6 +77,8 @@ enum TR_OpCodePrefix : uint8_t
     PREFIX_66 = 0x1,
     PREFIX_F3 = 0x2,
     PREFIX_F2 = 0x3,
+    PREFIX_66_F2 = 0x4,
+    PREFIX_66_F3 = 0x5,
 };
 enum TR_OpCodeEscape : uint8_t
 {
@@ -115,8 +120,71 @@ enum TR_OpCodeImmediate : uint8_t
 2.1 Convert the 3-byte VEX to 2-byte VEX if possible
 3. Write the VEX prefix
 
+## Working with SIMD instructions
+
+With the support of AVX, AVX2, and AVX-512, OMR supports generation
+of vector instructions for 128/256/512-bit vectors. SIMD instructions
+can also be generated using VEX, EVEX, and legacy SSE encoding methods.
+Each vector length can use the encoding methods shown below.
+
+```
+128 - SSE, VEX_L128, EVEX_L128
+256 - VEX_L256, EVEX_L128
+512 - EVEX_L512
+```
+
+### Generating SIMD instructions
+
+Generating SIMD instructions is simple. You may optionally specify the method of which to encode
+the instruction. Shown below are a list of possible encoding methods.
+
+1. Legacy implies SSE instruction
+2. Default (or not specified) uses information already specified on the instruction
+
+```c++
+typedef enum
+   {
+   VEX_L128 = 0x0,
+   VEX_L256 = 0x1,
+   Default  = 0x2,
+   Legacy   = 0x3,
+   EVEX_L128 = 0x4,
+   EVEX_L256 = 0x5,
+   EVEX_L512 = 0x6,
+   Bad       = 0x7
+   } Encoding;
+```
+
+#### 128-Bit vmovdqu
+
+```c++
+generateRegRegInstruction(TR::InstOpCode::MOVDQURegReg, node, resultReg, valueReg, cg, OMR::X86::VEX_L128);
+```
+
+By not specifying an opcode encoding method, the code-generator will use method specified
+on opcodes definition. If the instruction is labeled as VEX_L128, and AVX is not supported,
+legacy SSE encoding will be used.
+```c++
+generateRegRegInstruction(TR::InstOpCode::MOVDQURegReg, node, resultReg, valueReg, cg);
+```
+
+#### Dynamically determining the best encoding method
+
+To dynamically find the best encoding method you may call ```getSIMDEncoding(&cpu, vl)```.
+This query uses flags stored on the instruction to determine the best encoding method for
+the given instruction, cpu, and vector length.
+This method will return ```OMR::X86::Bad``` if the opcode is not supported at the given
+vector length and will also throw an assertion failure if the instruction is missing
+CPU feature requirements flags.
+
+```c++
+movOpcode = TR::InstOpCode::MOVDQURegReg;
+OMR::X86::Encoding movEncoding = movOpcode.getSIMDEncoding(&cg->comp()->target().cpu, vl);
+```
+
 # FUTURE WORK
 
-## Generate AVX-512 Instruction
-1. Obtain REX prefix from operand and set REX.W according to rex_w field.
-2. Setup EVEX structure and write it.
+## Generate APX Instructions
+1. REX 2 Prefix
+2. Enhanced EVEX prefix
+
