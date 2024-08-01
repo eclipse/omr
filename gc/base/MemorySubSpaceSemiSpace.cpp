@@ -436,7 +436,7 @@ MM_MemorySubSpaceSemiSpace::initialize(MM_EnvironmentBase *env)
 	_memorySubSpaceSurvivor->isAllocatable(false);
 
 	/* this memoryPool can be used by scavenger, maximum tlh size should be max(_extensions->tlhMaximumSize, _extensions->scavengerScanCacheMaximumSize) */
-	uintptr_t tlhMaximumSize = OMR_MAX(_extensions->tlhMaximumSize, _extensions->scavengerScanCacheMaximumSize);
+	uintptr_t tlhMaximumSize = OMR_MAX(_extensions->getTlhMaximumSize(), _extensions->scavengerScanCacheMaximumSize);
 	_largeObjectAllocateStats = MM_LargeObjectAllocateStats::newInstance(env, (uint16_t)_extensions->largeObjectAllocationProfilingTopK, _extensions->largeObjectAllocationProfilingThreshold, _extensions->largeObjectAllocationProfilingVeryLargeObjectThreshold, (float)_extensions->largeObjectAllocationProfilingSizeClassRatio / (float)100.0,
 			_extensions->heap->getMaximumMemorySize(), tlhMaximumSize + _extensions->minimumFreeEntrySize, _extensions->tlhMinimumSize);
 	if (NULL == _largeObjectAllocateStats) {
