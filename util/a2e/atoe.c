@@ -45,6 +45,9 @@
  * Include all system header files.
  * ======================================================================
  */
+#if defined(__open_xl__)
+#define _EXT
+#endif /* defined(__open_xl__) */
 #define _OPEN_SYS_FILE_EXT  /* For SETCVTOFF */    /*ibm@57265*/
 #include <unistd.h>
 #include <fcntl.h>          /* <--SETCVTOFF in here */
@@ -69,6 +72,7 @@
 #include <langinfo.h>
 #include <arpa/inet.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/utsname.h>
 #include <sys/ipc.h>
 #include <strings.h>
@@ -1388,18 +1392,6 @@ atoe_snprintf(char *buf, size_t buflen, char *ascii_chars, ...)
 }
 
 /**************************************************************************
- * name        - atoe_vprintf
- * description -
- * parameters  -
- * returns     -
- *************************************************************************/
-int
-atoe_vprintf(const char *ascii_chars, va_list args)
-{
-	return atoe_vfprintf(stdout, ascii_chars, args);
-}
-
-/**************************************************************************
  * name        - atoe_vfprintf
  * description -
  * parameters  -
@@ -1426,6 +1418,18 @@ atoe_vfprintf(FILE *file, const char *ascii_chars, va_list args)
 	free(ebuf);
 
 	return len;
+}
+
+/**************************************************************************
+ * name        - atoe_vprintf
+ * description -
+ * parameters  -
+ * returns     -
+ *************************************************************************/
+int
+atoe_vprintf(const char *ascii_chars, va_list args)
+{
+	return atoe_vfprintf(stdout, ascii_chars, args);
 }
 
 /**************************************************************************
@@ -2392,7 +2396,7 @@ iconv_init(void)
  * returns     -
  *************************************************************************/
 dllhandle *
-atoe_dllload(char *dllName)
+atoe_dllload(const char *dllName)
 {
 	dllhandle *handle;
 	char *d = a2e(dllName, strlen(dllName));
@@ -2434,7 +2438,7 @@ atoe_dllqueryvar(dllhandle *dllHandle, char *varName)
 }
 
 
-void (*atoe_dllqueryfn(dllhandle *dllHandle, char *funcName))()
+void (*atoe_dllqueryfn(dllhandle *dllHandle, const char *funcName))()
 {
 	char *n = a2e_string(funcName);
 	void (*r)() = dllqueryfn(dllHandle, n);
@@ -2444,44 +2448,6 @@ void (*atoe_dllqueryfn(dllhandle *dllHandle, char *funcName))()
 	free(n);
 
 	return r;
-}
-
-/**************************************************************************
- * name        - atoe_spawnpe
- * description -
- *              Spawn may be called using the parent's environment variables
- *              or with specified ev's. If the ev's are inherited from the
- *              parent then they will be EBCDIC, if they are specified to
- *              spawn they will be ASCII. This code deals with this
- *              latter case and just converts the ev's to EBCDIC before
- *              calling atoe_spawnp.
- * parameters  -
- * returns     -
- *************************************************************************/
-pid_t
-atoe_spawnpe(const char *filename, const int fd_cnt, const int *fd_map,
-			 const struct inheritance *inherit, char **argv, char **envp, int envlen)
-{
-	char *e_envp[1025];
-	int i, j;
-	pid_t pid;
-
-	Log(1, "Entry: atoe_spawnpe\n");
-
-	i = j = (envlen < 1025) ? envlen : 1025;
-	while (i--) {
-		e_envp[i] = a2e(envp[i], strlen(envp[i]));
-	}
-
-	e_envp[envlen] = NULL; /* ensure null terminated */
-
-	pid = atoe_spawnp(filename, fd_cnt, fd_map, inherit, argv, e_envp);
-
-	while (j--) {
-		free(e_envp[j]);
-	}
-
-	return pid;
 }
 
 /**************************************************************************
@@ -2548,6 +2514,43 @@ atoe_spawnp(const char *filename, const int fd_cnt, const int *fd_map,
 	return pid;
 }
 
+/**************************************************************************
+ * name        - atoe_spawnpe
+ * description -
+ *              Spawn may be called using the parent's environment variables
+ *              or with specified ev's. If the ev's are inherited from the
+ *              parent then they will be EBCDIC, if they are specified to
+ *              spawn they will be ASCII. This code deals with this
+ *              latter case and just converts the ev's to EBCDIC before
+ *              calling atoe_spawnp.
+ * parameters  -
+ * returns     -
+ *************************************************************************/
+pid_t
+atoe_spawnpe(const char *filename, const int fd_cnt, const int *fd_map,
+			 const struct inheritance *inherit, char **argv, char **envp, int envlen)
+{
+	char *e_envp[1025];
+	int i, j;
+	pid_t pid;
+
+	Log(1, "Entry: atoe_spawnpe\n");
+
+	i = j = (envlen < 1025) ? envlen : 1025;
+	while (i--) {
+		e_envp[i] = a2e(envp[i], strlen(envp[i]));
+	}
+
+	e_envp[envlen] = NULL; /* ensure null terminated */
+
+	pid = atoe_spawnp(filename, fd_cnt, fd_map, inherit, argv, e_envp);
+
+	while (j--) {
+		free(e_envp[j]);
+	}
+
+	return pid;
+}
 
 /**************************************************************************
  * name        - etoa_uname                                 ibm@3752
