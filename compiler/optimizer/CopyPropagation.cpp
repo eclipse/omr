@@ -1230,7 +1230,7 @@ void TR_CopyPropagation::replaceCopySymbolReferenceByOriginalIn(TR::SymbolRefere
                if (origNode->getNumChildren() == 2)
                   {
                   twoChildrenCase = true;
-                  TR_ASSERT(0, "Only in WCode we can add extra children\n");
+                  TR_ASSERT_FATAL(0, "Only in WCode we can add extra children\n");
                   }
                else
                   {
