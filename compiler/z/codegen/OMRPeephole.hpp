@@ -70,7 +70,7 @@ class OMR_EXTENSIBLE Peephole : public OMR::Peephole
     *     true if the reduction was successful; false otherwise.
     */
    bool tryLoadStoreReduction(TR::InstOpCode::Mnemonic storeOpCode, uint16_t size);
-   
+
    /** \brief
     *     Tries to fold a load register instruction (\c LR or \c LGR) into a subsequent three-operand instruction if
     *     possible. For example:
@@ -92,7 +92,7 @@ class OMR_EXTENSIBLE Peephole : public OMR::Peephole
     *     true if the reduction was successful; false otherwise.
     */
    bool tryToFoldLoadRegisterIntoSubsequentInstruction();
-   
+
    /** \brief
     *     Tries to forward a branch target if the branch instruction transfers control to another unconditional
     *     branch instruction (i.e. a trampoline). For example:
@@ -170,7 +170,7 @@ class OMR_EXTENSIBLE Peephole : public OMR::Peephole
     *     true if the reduction was successful; false otherwise.
     */
    bool tryToReduceAGI();
-   
+
    /** \brief
     *     Tries to reduce a compare logical (\c CLR) insturction followed by a branch to a compare and branch
     *     instruction (\c CLRJ) For example:
@@ -190,7 +190,7 @@ class OMR_EXTENSIBLE Peephole : public OMR::Peephole
     *     true if the reduction was successful; false otherwise.
     */
    bool tryToReduceCLRToCLRJ();
-   
+
    /** \brief
     *     Tries to reduce a simple branch conditional load of an immediate to a load immediate on condition branch-
     *     less sequence. For example:
@@ -218,7 +218,7 @@ class OMR_EXTENSIBLE Peephole : public OMR::Peephole
     *     true if the reduction was successful; false otherwise.
     */
    bool tryToReduceCRJLHIToLOCHI(TR::InstOpCode::Mnemonic compareMnemonic);
-   
+
    /** \brief
     *     Tries to reduce a load instruction (\c L) to an insert character under mask (\c ICM) instruction. This can
     *     be done if following the load we have a load and test or a compare against certain immediates. For example:
@@ -261,7 +261,7 @@ class OMR_EXTENSIBLE Peephole : public OMR::Peephole
     *     true if the reduction was successful; false otherwise.
     */
    bool tryToReduceLToLZRF(TR::InstOpCode::Mnemonic loadAndZeroRightMostByteMnemonic);
-   
+
    /** \brief
     *     Tries to reduce a load register instruction (\c LGR or \c LTGR) followed by a sign extension to \c LGFR.
     *     For example:
@@ -300,7 +300,7 @@ class OMR_EXTENSIBLE Peephole : public OMR::Peephole
     *     true if the reduction was successful; false otherwise.
     */
    bool tryToReduceLHIToXR();
-   
+
    /** \brief
     *     Tries to reduce a load logical character instruction (\c LLC) followed by a zero extension to \c LLGC.
     *     For example:
@@ -320,7 +320,7 @@ class OMR_EXTENSIBLE Peephole : public OMR::Peephole
     *     true if the reduction was successful; false otherwise.
     */
    bool tryToReduceLLCToLLGC();
-   
+
    /** \brief
     *     Tries to reduce a load register instruction (\c LR or \c LGR) and a future compare (\c CHI) against the
     *     target register to \c LTR or \c LTGR. For example:
@@ -347,7 +347,7 @@ class OMR_EXTENSIBLE Peephole : public OMR::Peephole
     *     true if the reduction was successful; false otherwise.
     */
    bool tryToReduceLRCHIToLTR();
-   
+
    /** \brief
     *     Tries to reduce a load and test register instruction (\c LTR or \c LTGR) to a compare halfword immediate if
     *     the target register of the load is used in a future memory reference. This is an attempt to reduce the AGI
@@ -479,6 +479,30 @@ class OMR_EXTENSIBLE Peephole : public OMR::Peephole
     *     true if the reduction was successful; false otherwise.
     */
    bool tryToRemoveRedundantLTR();
+
+   /** \brief
+    *     Tries to remove redundant 32 to 64 bit extensions with \c LGFR or \c LLGFR on register
+    *     values originating from 32 bit loads if the 32 bit load instruction can be replaced with
+    *     an equivalent extending 32 bit load. For example:
+    *
+    *     <code>
+    *     L    R1,N(R2,R3)
+    *     LGFR R1,R1
+    *     </code>
+    *
+    *     can be reduced to:
+    *
+    *     <code>
+    *     LGF  R1,N(R2,R3)
+    *     </code>
+    *
+    *  \param isSigned
+    *     true if operating on an LGFR instruction; false if LLGFR
+    *
+    *  \return
+    *     true if the reduction was successful; false otherwise
+    */
+   bool tryToRemoveRedundant32To64BitExtend(bool isSigned);
 
    private:
 

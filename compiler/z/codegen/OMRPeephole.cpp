@@ -38,7 +38,7 @@ isBarrierToPeepHoleLookback(TR::Instruction* cursor)
    {
    if (cursor == NULL)
       return true;
-   
+
    if (cursor->isLabel())
       return true;
 
@@ -198,6 +198,11 @@ OMR::Z::Peephole::performOnInstruction(TR::Instruction* cursor)
             performed |= performedCurrentPeephole;
             break;
             }
+         case TR::InstOpCode::LGFR:
+            {
+            performed |= self()->tryToRemoveRedundant32To64BitExtend(true);
+            break;
+            }
          case TR::InstOpCode::LHI:
             {
             performed |= self()->tryToReduceLHIToXR();
@@ -211,6 +216,11 @@ OMR::Z::Peephole::performOnInstruction(TR::Instruction* cursor)
          case TR::InstOpCode::LLGF:
             {
             performed |= self()->tryToReduceLToLZRF(TR::InstOpCode::LLZRGF);
+            break;
+            }
+         case TR::InstOpCode::LLGFR:
+            {
+            performed |= self()->tryToRemoveRedundant32To64BitExtend(false);
             break;
             }
          case TR::InstOpCode::LR:
@@ -254,7 +264,7 @@ OMR::Z::Peephole::performOnInstruction(TR::Instruction* cursor)
 
             if (!performedCurrentPeephole)
                performedCurrentPeephole |= self()->tryToRemoveDuplicateLoadRegister();
-            
+
             performed |= performedCurrentPeephole;
             break;
             }
@@ -358,7 +368,7 @@ OMR::Z::Peephole::tryLoadStoreReduction(TR::InstOpCode::Mnemonic storeOpCode, ui
          return false;
          }
 
-      if (performTransformation(self()->comp(), "O^O S390 PEEPHOLE: Transforming load-store sequence at %p to MVC.", storeInst))
+      if (performTransformation(self()->comp(), "O^O S390 PEEPHOLE: Transforming load-store sequence at %p to MVC.\n", storeInst))
          {
          TR::DebugCounter::incStaticDebugCounter(self()->comp(), "z/peephole/load-store");
 
@@ -942,7 +952,7 @@ OMR::Z::Peephole::tryToReduceAGI()
          {
          if (performTransformation(self()->comp(), "O^O S390 PEEPHOLE: AGI LA reduction on [%p] from source load [%p].\n", current, cursor))
             {
-            auto laInst = generateRXInstruction(self()->cg(), TR::InstOpCode::LA, cursor->getNode(), lgrTargetReg, 
+            auto laInst = generateRXInstruction(self()->cg(), TR::InstOpCode::LA, cursor->getNode(), lgrTargetReg,
                generateS390MemoryReference(lgrSourceReg, 0, self()->cg()), cursor->getPrev());
 
             self()->cg()->replaceInst(cursor, laInst);
@@ -1328,7 +1338,7 @@ OMR::Z::Peephole::tryToReduceLLCToLLGC()
             memRef->resetMemRefUsedBefore();
             auto llgcInst = generateRXInstruction(self()->cg(), TR::InstOpCode::LLGC, cursor->getNode(), llcTgtReg, memRef, cursor->getPrev());
             self()->cg()->replaceInst(cursor, llgcInst);
-            
+
             return true;
             }
          }
@@ -1419,7 +1429,7 @@ OMR::Z::Peephole::tryToReduceLTRToCHI()
    TR::InstOpCode lgrOpCode = cursor->getOpCode();
 
    if (lgrTargetReg == lgrSourceReg &&
-      (lgrOpCode.getOpCodeValue() == TR::InstOpCode::LTR || 
+      (lgrOpCode.getOpCodeValue() == TR::InstOpCode::LTR ||
        lgrOpCode.getOpCodeValue() == TR::InstOpCode::LTGR))
       {
       if (seekRegInFutureMemRef(cursor, 4, lgrTargetReg))
@@ -1528,7 +1538,7 @@ OMR::Z::Peephole::tryToRemoveDuplicateLoadRegister()
                   windowSize = 0;
                   setCC = setCC || current->getOpCode().setsCC();
                   useCC = useCC || current->getOpCode().readsCC();
-                  
+
                   rrInst->remove();
 
                   continue;
@@ -1740,7 +1750,7 @@ OMR::Z::Peephole::tryToRemoveRedundantLA()
       if (performTransformation(self()->comp(), "O^O S390 PEEPHOLE: Removing redundant LA [%p].\n", cursor))
          {
          cursor->remove();
-         
+
          return true;
          }
       }
@@ -1828,7 +1838,7 @@ OMR::Z::Peephole::tryToRemoveRedundantLTR()
 
    TR::Register *lgrSourceReg = cursor->getRegisterOperand(2);
    TR::Register *lgrTargetReg = cursor->getRegisterOperand(1);
-   
+
    if (lgrTargetReg == lgrSourceReg)
       {
       TR::Instruction *prevInst = cursor->getPrev();
@@ -1857,6 +1867,145 @@ OMR::Z::Peephole::tryToRemoveRedundantLTR()
                }
             }
          }
+      }
+
+   return false;
+   }
+
+bool
+OMR::Z::Peephole::tryToRemoveRedundant32To64BitExtend(bool isSigned)
+   {
+   static const bool disableRemoveExtend = feGetEnv("TR_DisableRemoveRedundant32to64Extend") != NULL;
+   if (disableRemoveExtend)
+      {
+      return false;
+      }
+
+   int32_t windowSize = 0;
+   const int32_t maxWindowSize = 10;
+
+   const char *lgfrMnemonicName = isSigned ? "LGFR" : "LLGFR";
+   TR::Compilation *comp = self()->comp();
+   TR::Instruction *lgfr = cursor;
+   TR::Register *lgfrReg = lgfr->getRegisterOperand(1);
+
+   if (lgfrReg != lgfr->getRegisterOperand(2))
+      return false;
+
+   TR::Instruction *current = lgfr->getPrev();
+
+   while ((current != NULL) &&
+      !isBarrierToPeepHoleLookback(current) &&
+      windowSize < maxWindowSize)
+      {
+      TR::InstOpCode::Mnemonic curOpMnemonic = current->getOpCode().getMnemonic();
+
+      if (current->getNumRegisterOperands() > 0 && lgfrReg == current->getRegisterOperand(1))
+         {
+         TR::MemoryReference *mr = NULL;
+         TR::Instruction *replacement = NULL;
+         switch (curOpMnemonic)
+            {
+            case TR::InstOpCode::L:
+               if (performTransformation(comp, "O^O S390 PEEPHOLE: Merging L [%p] and %s [%p] into %s.\n",
+                     current, lgfrMnemonicName, lgfr, isSigned ? "LGF" : "LLGF"))
+                  {
+                  mr = current->getMemoryReference();
+                  mr->resetMemRefUsedBefore();
+                  replacement = generateRXInstruction(self()->cg(), isSigned ? TR::InstOpCode::LGF : TR::InstOpCode::LLGF, current->getNode(), lgfrReg, mr, current->getPrev());
+                  }
+               break;
+            case TR::InstOpCode::LH:
+               if (isSigned && performTransformation(comp, "O^O S390 PEEPHOLE: Merging LH [%p] and LGFR [%p] into LGH.\n", current, lgfr))
+                  {
+                  mr = current->getMemoryReference();
+                  mr->resetMemRefUsedBefore();
+                  replacement = generateRXInstruction(self()->cg(), TR::InstOpCode::LGH, current->getNode(), lgfrReg, mr, current->getPrev());
+                  }
+               break;
+            case TR::InstOpCode::LLH:
+               if (performTransformation(comp, "O^O S390 PEEPHOLE: Merging LLH [%p] and %s [%p] into LLGH.\n", current, lgfrMnemonicName, lgfr))
+                  {
+                  mr = current->getMemoryReference();
+                  mr->resetMemRefUsedBefore();
+                  replacement = generateRXInstruction(self()->cg(), TR::InstOpCode::LLGH, current->getNode(), lgfrReg, mr, current->getPrev());
+                  }
+               break;
+            case TR::InstOpCode::LB:
+               if (isSigned && performTransformation(comp, "O^O S390 PEEPHOLE: Merging LB [%p] and LGFR [%p] into LGB.\n", current, lgfr))
+                  {
+                  mr = current->getMemoryReference();
+                  mr->resetMemRefUsedBefore();
+                  replacement = generateRXInstruction(self()->cg(), TR::InstOpCode::LGB, current->getNode(), lgfrReg, mr, current->getPrev());
+                  }
+               break;
+            case TR::InstOpCode::LLC:
+               if (performTransformation(comp, "O^O S390 PEEPHOLE: Merging LLC [%p] and %s [%p] into LLGC.\n", current, lgfrMnemonicName, lgfr))
+                  {
+                  mr = current->getMemoryReference();
+                  mr->resetMemRefUsedBefore();
+                  replacement = generateRXInstruction(self()->cg(), TR::InstOpCode::LLGC, current->getNode(), lgfrReg, mr, current->getPrev());
+                  }
+               break;
+
+            case TR::InstOpCode::XR:
+               // The following sequence of instructions
+               //    XR          GPR1, GPR1  ; Zero out bottom 32 bits of GPR1
+               //    LGFR/LLGFR  GPR1, GPR1  ; Extend those zeros to all 64 bits of GPR1
+               // Can be converted to
+               //    XGR         GPR1, GPR1  ; Zero out all 64 bits of GPR1
+               if (lgfrReg == current->getRegisterOperand(2) &&
+                   performTransformation(comp, "O^O S390 PEEPHOLE: Merging XR [%p] and %s [%p] into XGR.\n", current, lgfrMnemonicName, lgfr))
+                  replacement = generateRRInstruction(self()->cg(), TR::InstOpCode::XGR, current->getNode(), lgfrReg, lgfrReg, current->getPrev());
+               break;
+            case TR::InstOpCode::IILF:
+               if (performTransformation(comp, "O^O S390 PEEPHOLE: Merging IILF [%p] and %s [%p] into %s.\n", current, lgfrMnemonicName, lgfr, isSigned ? "LGFI" : "LLILF"))
+                  replacement = generateRILInstruction(self()->cg(), isSigned ? TR::InstOpCode::LGFI : TR::InstOpCode::LLILF, current->getNode(), lgfrReg, toS390RILInstruction(current)->getSourceImmediate(), current->getPrev());
+               break;
+            case TR::InstOpCode::LHI:
+               if (isSigned && performTransformation(comp, "O^O S390 PEEPHOLE: Merging LHI [%p] and LGFR [%p] into LGH.\n", current, lgfr))
+                  {
+                  replacement = generateRIInstruction(self()->cg(), TR::InstOpCode::LGHI, current->getNode(), lgfrReg, toS390RIInstruction(current)->getSourceImmediate(), current->getPrev());
+                  }
+               else if (performTransformation(comp, "O^O S390 PEEPHOLE: Merging LHI [%p] and LLGFR [%p] into LLILF.\n", current, lgfr))
+                  {
+                  // The following sequence of instructions:
+                  //    LHI      GPR1, IMM   ; sign extend IMM from 16 to 32 bits
+                  //    LLGFR    GPR1, GPR1  ; zero extend from 32 to 64 bits
+                  // Can be converted to
+                  //    LLILF    GPR1, IMM'  ; where IMM' is IMM sign extended from 16 to 32 bits
+                  int16_t imm = toS390RIInstruction(current)->getSourceImmediate();
+                  replacement = generateRILInstruction(self()->cg(), TR::InstOpCode::LLILF, current->getNode(), lgfrReg, static_cast<int32_t>(imm), current->getPrev());
+                  }
+               break;
+
+            case TR::InstOpCode::LR:
+            case TR::InstOpCode::LGR:
+               replacement = generateRRInstruction(self()->cg(), isSigned ? TR::InstOpCode::LGFR : TR::InstOpCode::LLGFR, current->getNode(), lgfrReg, current->getRegisterOperand(2), current->getPrev());
+               break;
+            }
+
+         if (replacement != NULL)
+            {
+            TR::DebugCounter::incStaticDebugCounter(comp,
+               TR::DebugCounter::debugCounterName(comp, "z/peephole/redundant32To64BitExtend/%s/%s/%s/(%s)",
+                  current->getOpCode().getMnemonicName(),
+                  lgfr->getOpCode().getMnemonicName(),
+                  replacement->getOpCode().getMnemonicName(),
+                  comp->signature()));
+            self()->cg()->replaceInst(current, replacement);
+            lgfr->remove();
+            return true;
+            }
+         }
+
+      // Ensure the extend acts on the correct register values
+      if (current->isDefRegister(lgfrReg))
+         break;
+
+      current = current->getPrev();
+
+      windowSize++;
       }
 
    return false;
