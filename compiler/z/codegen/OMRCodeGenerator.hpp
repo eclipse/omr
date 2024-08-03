@@ -237,7 +237,7 @@ public:
     */
    bool materializesLargeConstants() { return true; }
    bool shouldValueBeInACommonedNode(int64_t value);
-   int64_t getLargestNegConstThatMustBeMaterialized() {return ((-1ll) << 31) - 1;}   // min 32bit signed integer minus 1
+   int64_t getLargestNegConstThatMustBeMaterialized() { return (int64_t)(((~(uint64_t)0) << 31) - 1); } // min 32bit signed integer minus 1
    int64_t getSmallestPosConstThatMustBeMaterialized() {return ((int64_t)0x000000007FFFFFFF) + 1;}   // max 32bit signed integer plus 1
 
    void beginInstructionSelection();
