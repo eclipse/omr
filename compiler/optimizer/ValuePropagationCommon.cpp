@@ -3295,7 +3295,7 @@ void OMR::ValuePropagation::transformRealTimeArrayCopy(TR_RealTimeArrayCopy *rtA
    //create ifNodes
    TR::Node *spineShiftNode = TR::Node::create(vcallNode, TR::iconst, 0, (int32_t)fe()->getArraySpineShift(elementSize));
    TR::TreeTop *ifTree;
-   TR::Node *ifNode;
+   TR::Node *ifNode = nullptr;
    TR::Node *srcOff = NULL, *dstOff = NULL;
    TR::Node *len = NULL;
    TR::SymbolReference *child1Ref = NULL, *child2Ref = NULL;
