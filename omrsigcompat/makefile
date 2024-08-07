@@ -24,7 +24,7 @@ top_srcdir := ..
 include $(top_srcdir)/omrmakefiles/configure.mk
 
 MODULE_NAME := omrsig
-ARTIFACT_TYPE := c_shared
+ARTIFACT_TYPE := cxx_shared
 OBJECTS := omrsig
 OBJECTS := $(addsuffix $(OBJEXT),$(OBJECTS))
 ifeq (win,$(OMR_HOST_OS))
