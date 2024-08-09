@@ -1663,7 +1663,7 @@ omrshmem_openSharedMemory (OMRPortLibrary *portLibrary, intptr_t fd, const char 
 				goto failDontUnlink;
 			}
 		} else {
-#if defined(__GNUC__) || defined(AIXPPC)
+#if (defined(__GNUC__) || defined(AIXPPC)) && !defined(J9ZOS390)
 #if defined(OSX)
 			/*Use ._key for OSX*/
 			if (buf.shm_perm._key != controlinfo->common.ftok_key)
