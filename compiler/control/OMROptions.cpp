@@ -1079,6 +1079,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"realTimeGC",         "I\tSupport the real time GC", SET_OPTION_BIT(TR_RealTimeGC), "F" },
    {"reduceCountsForMethodsCompiledDuringStartup", "M\tNeeds SCC compilation hints\t", SET_OPTION_BIT(TR_ReduceCountsForMethodsCompiledDuringStartup), "F", NOT_IN_SUBSET },
    {"regmap",             "C\tgenerate GC maps with register maps", SET_OPTION_BIT(TR_RegisterMaps), "F", NOT_IN_SUBSET},
+   {"reinstallAOTToColdCode", "M\treinstall AOT methods into cold code cache", SET_OPTION_BIT(TR_ReinstallAOTToColdCode), "F"},
    {"reportEvents",       "C\tcompile event reporting hooks into code", SET_OPTION_BIT(TR_ReportMethodEnter | TR_ReportMethodExit)},
    {"reportMethodEnterExit", "D\treport method enter and exit",                   SET_OPTION_BIT(TR_ReportMethodEnter | TR_ReportMethodExit), "F"},
    {"reserveAllLocks",    "O\tenable reserving locks for all classes and methods (DEBUG Only)", SET_OPTION_BIT(TR_ReserveAllLocks), "F"},
