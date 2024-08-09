@@ -382,7 +382,7 @@ enum TR_CompilationOptions
    TR_DisableInliningUnrecognizedIntrinsics = 0x10000000 + 9,
    TR_EnableVectorAPIExpansion            = 0x20000000 + 9,
    // Available                           = 0x40000000 + 9,
-   // Available                           = 0x80000000 + 9,
+   TR_MoveSnippetsToWarmCode              = 0x80000000 + 9,
 
    // Option word 10
    //
