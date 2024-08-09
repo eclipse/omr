@@ -654,6 +654,12 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    bool considerTypeForGRA(TR::DataType dt);
    bool considerTypeForGRA(TR::SymbolReference *symRef);
 
+   /*
+    * \brief move out-of-line instructions from cold code to warm
+    *
+    */
+   void moveOutOfLineInstructionsToWarmCode();
+
    uint32_t getOutOfLineCodeSize();
 
    /*

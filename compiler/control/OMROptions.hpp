@@ -381,7 +381,7 @@ enum TR_CompilationOptions
    TR_BreakOnNew                          = 0x08000000 + 9,
    TR_DisableInliningUnrecognizedIntrinsics = 0x10000000 + 9,
    TR_EnableVectorAPIExpansion            = 0x20000000 + 9,
-   // Available                           = 0x40000000 + 9,
+   TR_MoveOOLInstructionsToWarmCode       = 0x40000000 + 9,
    // Available                           = 0x80000000 + 9,
 
    // Option word 10
