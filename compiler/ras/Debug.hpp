@@ -422,7 +422,7 @@ public:
    virtual void newRegister(TR::Register *);
    virtual void newVariableSizeSymbol(TR::AutomaticSymbol *sym);
    virtual void newInstruction(TR::Instruction *);
-   virtual void addInstructionComment(TR::Instruction *, char*, ...);
+   virtual void addInstructionComment(TR::Instruction *, const char*, ...);
 
    /**
     * @brief Check whether to trigger debugger breakpoint or launch debugger
