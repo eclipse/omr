@@ -580,8 +580,13 @@ INSTANTIATE_TEST_CASE_P(VectorTypeParameters, ParameterizedVectorTest, ::testing
 )));
 
 template<typename T, int n>
-struct BinaryTestData {
+struct UnaryTestData {
+    T expected[n];
+    T inputA[n];
+};
 
+template<typename T, int n>
+struct BinaryTestData {
     T expected[n];
     T inputA[n];
     T inputB[n];
@@ -595,6 +600,12 @@ struct TernaryTestData {
     T inputC[n];
 };
 
+typedef UnaryTestData<int8_t, 64> UnaryByteTest;
+typedef UnaryTestData<int16_t, 32> UnaryShortTest;
+typedef UnaryTestData<int32_t, 16> UnaryIntTest;
+typedef UnaryTestData<int64_t, 8> UnaryLongTest;
+typedef UnaryTestData<float_t, 16> UnaryFloatTest;
+typedef UnaryTestData<double_t, 8> UnaryDoubleTest;
 typedef BinaryTestData<int8_t, 64> BinaryByteTest;
 typedef BinaryTestData<int16_t, 32> BinaryShortTest;
 typedef BinaryTestData<int32_t, 16> BinaryIntTest;
@@ -699,6 +710,30 @@ TEST_P(TernaryDataDriven##type##Test, TernaryVector512##type##Test) {           
     dataDrivenTestEvaluator(std::get<0>(GetParam()), TR::VectorLength512, TR::type, &cpu, data.expected, data.inputA, data.inputB, data.inputC);\
 }
 
+#define ParameterizedUnaryIOTest(type, testType) \
+class UnaryDataDriven##type##Test : public VectorTest, public ::testing::WithParamInterface<std::tuple<TR::VectorOperation, testType>> {};      \
+TEST_P(UnaryDataDriven##type##Test, UnaryVector128##type##Test) {                                                                             \
+    testType data = std::get<1>(GetParam());                                                                                                    \
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);                                                                                       \
+    SKIP_ON_S390(KnownBug) << "This test is currently disabled on Z platforms because not all Z platforms have vector support (issue #1843)";   \
+    SKIP_ON_S390X(KnownBug) << "This test is currently disabled on Z platforms because not all Z platforms have vector support (issue #1843)";  \
+    dataDrivenTestEvaluator(std::get<0>(GetParam()), TR::VectorLength128, TR::type, &cpu, data.expected, data.inputA, NULL, NULL);\
+}                                                                                                                                               \
+TEST_P(UnaryDataDriven##type##Test, UnaryVector256##type##Test) {                                                                               \
+    testType data = std::get<1>(GetParam());                                                                                                    \
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);                                                                                       \
+    SKIP_ON_S390(KnownBug) << "This test is currently disabled on Z platforms because not all Z platforms have vector support (issue #1843)";   \
+    SKIP_ON_S390X(KnownBug) << "This test is currently disabled on Z platforms because not all Z platforms have vector support (issue #1843)";  \
+    dataDrivenTestEvaluator(std::get<0>(GetParam()), TR::VectorLength256, TR::type, &cpu, data.expected, data.inputA, NULL, NULL);\
+}                                                                                                                                               \
+TEST_P(UnaryDataDriven##type##Test, UnaryVector512##type##Test) {                                                                               \
+    testType data = std::get<1>(GetParam());                                                                                                    \
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);                                                                                       \
+    SKIP_ON_S390(KnownBug) << "This test is currently disabled on Z platforms because not all Z platforms have vector support (issue #1843)";   \
+    SKIP_ON_S390X(KnownBug) << "This test is currently disabled on Z platforms because not all Z platforms have vector support (issue #1843)";  \
+    dataDrivenTestEvaluator(std::get<0>(GetParam()), TR::VectorLength512, TR::type, &cpu, data.expected, data.inputA, NULL, NULL);\
+}
+
 ParameterizedBinaryIOTest(Int8, BinaryByteTest)
 ParameterizedBinaryIOTest(Int16, BinaryShortTest)
 ParameterizedBinaryIOTest(Int32, BinaryIntTest)
@@ -711,6 +746,12 @@ ParameterizedTernaryIOTest(Int32, TernaryIntTest)
 ParameterizedTernaryIOTest(Int64, TernaryLongTest)
 ParameterizedTernaryIOTest(Float, TernaryFloatTest)
 ParameterizedTernaryIOTest(Double, TernaryDoubleTest)
+ParameterizedUnaryIOTest(Int8, UnaryByteTest)
+ParameterizedUnaryIOTest(Int16, UnaryShortTest)
+ParameterizedUnaryIOTest(Int32, UnaryIntTest)
+ParameterizedUnaryIOTest(Int64, UnaryLongTest)
+ParameterizedUnaryIOTest(Float, UnaryFloatTest)
+ParameterizedUnaryIOTest(Double, UnaryDoubleTest)
 
 #define FNAN std::numeric_limits<float>::quiet_NaN()
 #define DNAN std::numeric_limits<double>::quiet_NaN()
@@ -1116,4 +1157,9 @@ INSTANTIATE_TEST_CASE_P(Long128ShiftRotateTest, BinaryDataDriven128Int64Test, ::
     std::make_tuple(TR::vshr, BinaryLongTest { { 1, 4, 0, 4 },  { 2, 4, 8, 9}, { 1, 0, 10, 1 }, }),
     std::make_tuple(TR::vrol, BinaryLongTest { { 30064771072, 4 }, { 0x70000000, 4}, { 4, 0 }, }),
     std::make_tuple(TR::vrol, BinaryLongTest { { 8, 2305843009213693953 }, { 8, 9}, { 64, -3 }, })
+)));
+
+INSTANTIATE_TEST_CASE_P(Int128ZCNTTest, UnaryDataDrivenInt32Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, UnaryIntTest>>(
+    std::make_tuple(TR::vnolz, UnaryIntTest { { 31, 30, 29, 28 }, { 1, 2, 4, 8} }),
+    std::make_tuple(TR::vnotz, UnaryIntTest { { 0, 1, 2, 3 },  { 1, 2, 4, 8} })
 )));
