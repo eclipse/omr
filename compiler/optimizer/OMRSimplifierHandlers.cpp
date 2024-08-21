@@ -1890,7 +1890,7 @@ static TR::Node *intDemoteSimplifier(TR::Node * node, TR::Block * block, TR::Sim
    //    /     \
    // subtree  lconst 22
    //
-   int64_t andVal;
+   int64_t andVal = 0;
    switch (targetSize)
       {
       case 1: andVal = 0xFF; break;
@@ -3356,7 +3356,7 @@ TR::Node *getQuotientUsingMagicNumberMultiply(TR::Node *node, TR::Block *block, 
    TR::Node * firstChild = node->getFirstChild(), * secondChild = node->getSecondChild();
 
    // the node we'll create and return to the caller
-   TR::Node * replacementNode;
+   TR::Node * replacementNode = new TR::Node();
 
    if(node->getOpCodeValue() == TR::idiv || node->getOpCodeValue() == TR::irem)
       {
