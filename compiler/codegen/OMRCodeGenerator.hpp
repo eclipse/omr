@@ -1407,8 +1407,8 @@ public:
    //Rather confusingly not used -only- in BCD related codegen.
    //... has leaked into non-BCD code.
    bool traceBCDCodeGen();
-   void traceBCDEntry(char *str, TR::Node *node);
-   void traceBCDExit(char *str, TR::Node *node);
+   void traceBCDEntry(const char *str, TR::Node *node);
+   void traceBCDExit(const char *str, TR::Node *node);
 
    TR_BitVector *getLiveButMaybeUnreferencedLocals() {return _liveButMaybeUnreferencedLocals;}
    TR_BitVector *setLiveButMaybeUnreferencedLocals(TR_BitVector *v) {return (_liveButMaybeUnreferencedLocals = v);}
