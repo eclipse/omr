@@ -743,6 +743,8 @@ OMR::Z::TreeEvaluator::returnEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       case TR::Return:
          comp->setReturnInfo(TR_VoidReturn);
          break;
+      default:
+         break;
       }
 
    TR::Instruction * inst = generateS390PseudoInstruction(cg, TR::InstOpCode::retn, node, dependencies);
