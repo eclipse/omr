@@ -153,7 +153,7 @@ TR_S390BinaryCommutativeAnalyser::genericAnalyser(TR::Node * root, TR::InstOpCod
    TR::Register * nodeReg = NULL;
    TR::Instruction * finalInstr = NULL;
    TR::Compilation *comp = cg()->comp();
-   char * CLOBBER_EVAL  = "LR=Clobber_eval";
+   const char * CLOBBER_EVAL  = "LR=Clobber_eval";
    TR_Debug * debugObj = cg()->getDebug();
    if (cg()->whichChildToEvaluate(root) == 0)
       {
@@ -701,7 +701,7 @@ TR_S390BinaryCommutativeAnalyser::integerAddAnalyser(TR::Node * root, TR::InstOp
    // which do not produce a carry. The flag would be used to prevent such optimizations when the carry is needed.
    /* bool setsOrReadsCC = NEED_CC(node) || (node->getOpCodeValue() == TR::luaddc) || (node->getOpCodeValue() == TR::iuaddc); */
 
-   char * CLOBBER_EVAL = "LR=Clobber_eval";
+   const char * CLOBBER_EVAL = "LR=Clobber_eval";
    TR_Debug * debugObj = cg()->getDebug();
    if (cg()->whichChildToEvaluate(root) == 0)
       {
