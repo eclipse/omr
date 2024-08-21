@@ -931,7 +931,7 @@ bool OMR::CFGSimplifier::simplifySimpleStore(bool needToDuplicateTree)
    if (trace())
       traceMsg(comp(), "End simplifySimpleStore. New select node is n%dn\n", select->getGlobalIndex());
 
-   TR::Block *dest;
+   TR::Block *dest = nullptr;
    if (diamond) {
       dest = toBlock(_next1->getSuccessors().front()->getTo());
       _cfg->addEdge(_block, dest);
