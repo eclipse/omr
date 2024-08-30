@@ -1005,7 +1005,13 @@ INSTANTIATE_TEST_CASE_P(XRegMaskRegEncTest, XRegMaskRegEncEncodingTest, ::testin
     std::make_tuple(TR::InstOpCode::ADDPDRegReg,  TR::RealRegister::xmm5, TR::RealRegister::k6, TR::RealRegister::xmm3, OMR::X86::EVEX_L128, "62f1d50e58eb"),
     std::make_tuple(TR::InstOpCode::MOVDQURegReg, TR::RealRegister::xmm6, TR::RealRegister::k6, TR::RealRegister::xmm4, OMR::X86::EVEX_L128, "62f17e0e6ff4"),
     std::make_tuple(TR::InstOpCode::MOVDQURegReg, TR::RealRegister::xmm7, TR::RealRegister::k6, TR::RealRegister::xmm5, OMR::X86::EVEX_L256, "62f17e2e6ffd"),
-    std::make_tuple(TR::InstOpCode::MOVDQURegReg, TR::RealRegister::xmm8, TR::RealRegister::k6, TR::RealRegister::xmm6, OMR::X86::EVEX_L512, "62717e4e6fc6")
+    std::make_tuple(TR::InstOpCode::MOVDQURegReg, TR::RealRegister::xmm8, TR::RealRegister::k6, TR::RealRegister::xmm6, OMR::X86::EVEX_L512, "62717e4e6fc6"),
+    std::make_tuple(TR::InstOpCode::VPLZCNTDRegMaskReg, TR::RealRegister::xmm1, TR::RealRegister::k6, TR::RealRegister::xmm6, OMR::X86::EVEX_L128, "62f27d0e44ce"),
+    std::make_tuple(TR::InstOpCode::VPLZCNTDRegMaskReg, TR::RealRegister::xmm1, TR::RealRegister::k6, TR::RealRegister::xmm6, OMR::X86::EVEX_L256, "62f27d2e44ce"),
+    std::make_tuple(TR::InstOpCode::VPLZCNTDRegMaskReg, TR::RealRegister::xmm1, TR::RealRegister::k6, TR::RealRegister::xmm6, OMR::X86::EVEX_L512, "62f27d4e44ce"),
+    std::make_tuple(TR::InstOpCode::VPLZCNTQRegMaskReg, TR::RealRegister::xmm1, TR::RealRegister::k6, TR::RealRegister::xmm6, OMR::X86::EVEX_L128, "62f2fd0e44ce"),
+    std::make_tuple(TR::InstOpCode::VPLZCNTQRegMaskReg, TR::RealRegister::xmm1, TR::RealRegister::k6, TR::RealRegister::xmm6, OMR::X86::EVEX_L256, "62f2fd2e44ce"),
+    std::make_tuple(TR::InstOpCode::VPLZCNTQRegMaskReg, TR::RealRegister::xmm1, TR::RealRegister::k6, TR::RealRegister::xmm6, OMR::X86::EVEX_L512, "62f2fd4e44ce")
 )));
 
 class XMemEncEncodingTest : public TRTest::BinaryEncoderTest<>, public ::testing::WithParamInterface<std::tuple<TR::InstOpCode::Mnemonic, TR::RealRegister::RegNum, int32_t, TRTest::BinaryInstruction>> {};
