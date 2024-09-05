@@ -138,7 +138,7 @@ initializeCodeCache(TR::CodeCacheManager & codeCacheManager)
 // options is any JIT option string passed in to globally influence compilation
 extern "C"
 bool
-initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t numHelpers, char *options)
+initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t numHelpers, char *options, OMRPortLibrary *portLib)
    {
     // Force enable tree verifier
     std::string optionsWithVerifier = options;
@@ -155,7 +155,7 @@ initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t n
       {
       // Allocate the host environment structure
       //
-      TR::Compiler = new (rawAllocator) TR::CompilerEnv(rawAllocator, TR::PersistentAllocatorKit(rawAllocator));
+      TR::Compiler = new (rawAllocator) TR::CompilerEnv(rawAllocator, TR::PersistentAllocatorKit(rawAllocator), portLib);
       }
    catch (const std::bad_alloc&)
       {
@@ -180,16 +180,16 @@ initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t n
 
 extern "C"
 bool
-initializeJitWithOptions(char *options)
+initializeJitWithOptions(char *options, OMRPortLibrary *portLib)
    {
-   return initializeTestJit(0, 0, 0, options);
+   return initializeTestJit(0, 0, 0, options, portLib);
    }
 
 extern "C"
 bool
-initializeJit()
+initializeJit(OMRPortLibrary *portLib)
    {
-   return initializeTestJit(0, 0, 0, (char *)"-Xjit:useILValidator");
+   return initializeTestJit(0, 0, 0, (char *)"-Xjit:useILValidator", portLib);
    }
 
 extern "C"
