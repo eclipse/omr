@@ -90,6 +90,7 @@ class VPConstraint
    virtual class VPUnresolvedClass   *asUnresolvedClass();
      //virtual class TR::VPImplementedInterface *asImplementedInterface();
    virtual class VPClassPresence     *asClassPresence();
+   virtual class VPUnspecifiedArrayType *asUnspecifiedArrayType();
    virtual class VPNullObject        *asNullObject();
    virtual class VPNonNullObject     *asNonNullObject();
    virtual class VPPreexistentObject *asPreexistentObject();
@@ -169,6 +170,7 @@ class VPConstraint
    virtual TR_OpaqueClassBlock *getTypeHintClass();
    virtual bool isFixedClass();
    virtual bool isConstString();
+   virtual bool isUnspecifiedArrayType();
    virtual TR::VPClassType *getClassType();
    virtual TR::VPClassPresence *getClassPresence();
    virtual TR::VPPreexistentObject *getPreexistence();
@@ -176,6 +178,7 @@ class VPConstraint
    virtual TR::VPConstString *getConstString();
    virtual TR::VPKnownObject *getKnownObject();
    virtual TR::VPArrayInfo *getArrayInfo();
+   virtual TR::VPUnspecifiedArrayType *getUnspecifiedArrayType();
    virtual const char *getClassSignature(int32_t &len);
 
    virtual TR_YesNoMaybe isStackObject();
@@ -504,12 +507,14 @@ class VPClass : public TR::VPConstraint
    {
    public:
    VPClass(TR::VPClassType *type, TR::VPClassPresence *presence, TR::VPPreexistentObject *preexistence,
-           TR::VPArrayInfo *arrayInfo, TR::VPObjectLocation *location, TR_OpaqueClassBlock *typeHintClass=NULL)
+           TR::VPArrayInfo *arrayInfo, TR::VPObjectLocation *location, TR_OpaqueClassBlock *typeHintClass = NULL,
+           TR::VPUnspecifiedArrayType *unspecifiedArrayType = NULL)
       : TR::VPConstraint(ClassPriority), _type(type), _typeHintClass(typeHintClass), _presence(presence),
-        _preexistence(preexistence), _arrayInfo(arrayInfo), _location(location)
+        _preexistence(preexistence), _arrayInfo(arrayInfo), _location(location), _unspecifiedArrayType(unspecifiedArrayType)
       {}
    static TR::VPConstraint *create(OMR::ValuePropagation *vp, TR::VPClassType *type, TR::VPClassPresence *presence, TR::VPPreexistentObject *preexistence,
-                                     TR::VPArrayInfo *arrayInfo, TR::VPObjectLocation *location, TR_OpaqueClassBlock *typeHintClass = NULL);
+                                   TR::VPArrayInfo *arrayInfo, TR::VPObjectLocation *location,
+                                   TR_OpaqueClassBlock *typeHintClass = NULL, TR::VPUnspecifiedArrayType *unspecifiedArrayType = NULL);
    virtual TR::VPClass *asClass();
 
    virtual TR::VPConstraint *merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp);
@@ -524,6 +529,7 @@ class VPClass : public TR::VPConstraint
    virtual TR_OpaqueClassBlock *getClass();
    virtual bool isFixedClass();
    virtual bool isConstString();
+   virtual bool isUnspecifiedArrayType();
    virtual TR::VPClassType *getClassType();
    virtual TR_OpaqueClassBlock *getTypeHintClass();
    virtual TR::VPArrayInfo *getArrayInfo();
@@ -532,6 +538,7 @@ class VPClass : public TR::VPConstraint
    virtual TR::VPObjectLocation *getObjectLocation();
    virtual TR::VPConstString *getConstString();
    virtual TR::VPKnownObject *getKnownObject();
+   virtual TR::VPUnspecifiedArrayType *getUnspecifiedArrayType();
 
    virtual TR_YesNoMaybe isStackObject();
    virtual TR_YesNoMaybe isHeapObject();
@@ -554,11 +561,12 @@ class VPClass : public TR::VPConstraint
     *
     * _typeHintClass is the intersect of the initial typeHintClass and _type._typeHintClass if _type exists
     */
-   TR_OpaqueClassBlock     *_typeHintClass;
-   TR::VPClassPresence     *_presence;
-   TR::VPPreexistentObject *_preexistence;
-   TR::VPArrayInfo         *_arrayInfo;
-   TR::VPObjectLocation    *_location;
+   TR_OpaqueClassBlock        *_typeHintClass;
+   TR::VPClassPresence        *_presence;
+   TR::VPPreexistentObject    *_preexistence;
+   TR::VPArrayInfo            *_arrayInfo;
+   TR::VPObjectLocation       *_location;
+   TR::VPUnspecifiedArrayType *_unspecifiedArrayType;
    };
 
 class VPClassType : public TR::VPConstraint
@@ -714,6 +722,17 @@ class VPUnresolvedClass : public TR::VPClassType
    private:
    TR_ResolvedMethod *_method;
    bool _definiteType;
+   };
+
+class VPUnspecifiedArrayType : public TR::VPConstraint
+   {
+   public:
+   VPUnspecifiedArrayType() : TR::VPConstraint(UnresolvedClassPriority) {}
+   static TR::VPUnspecifiedArrayType *create(OMR::ValuePropagation *vp);
+   virtual const char *name();
+   virtual TR::VPUnspecifiedArrayType *asUnspecifiedArrayType();
+   virtual bool isUnspecifiedArrayType();
+   virtual void print(TR::Compilation *, TR::FILE *);
    };
 
 class VPClassPresence : public TR::VPConstraint

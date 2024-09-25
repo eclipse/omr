@@ -79,6 +79,7 @@ TR::VPConstString       *TR::VPConstraint::asConstString()       { return NULL; 
 TR::VPKnownObject       *TR::VPConstraint::asKnownObject()       { return NULL; }
 TR::VPUnresolvedClass   *TR::VPConstraint::asUnresolvedClass()   { return NULL; }
 TR::VPClassPresence     *TR::VPConstraint::asClassPresence()     { return NULL; }
+TR::VPUnspecifiedArrayType *TR::VPConstraint::asUnspecifiedArrayType() { return NULL; }
 TR::VPNullObject        *TR::VPConstraint::asNullObject()        { return NULL; }
 TR::VPNonNullObject     *TR::VPConstraint::asNonNullObject()     { return NULL; }
 TR::VPPreexistentObject *TR::VPConstraint::asPreexistentObject() { return NULL; }
@@ -112,6 +113,7 @@ TR::VPConstString       *TR::VPConstString::asConstString()             { return
 TR::VPKnownObject       *TR::VPKnownObject::asKnownObject()             { return this; }
 TR::VPUnresolvedClass   *TR::VPUnresolvedClass::asUnresolvedClass()     { return this; }
 TR::VPClassPresence     *TR::VPClassPresence::asClassPresence()         { return this; }
+TR::VPUnspecifiedArrayType *TR::VPUnspecifiedArrayType::asUnspecifiedArrayType() { return this; }
 TR::VPNullObject        *TR::VPNullObject::asNullObject()               { return this; }
 TR::VPNonNullObject     *TR::VPNonNullObject::asNonNullObject()         { return this; }
 TR::VPPreexistentObject *TR::VPPreexistentObject::asPreexistentObject() { return this; }
@@ -247,6 +249,11 @@ bool TR::VPConstraint::isConstString()
    return false;
    }
 
+bool TR::VPConstraint::isUnspecifiedArrayType()
+   {
+   return false;
+   }
+
 // VP_SPECIALKLASS is created so that any type that
 // intersects with it results in a null type. It is
 // not meant to be propagated during the analysis
@@ -299,6 +306,11 @@ TR::VPKnownObject *TR::VPConstraint::getKnownObject()
    }
 
 TR::VPConstString *TR::VPConstraint::getConstString()
+   {
+   return NULL;
+   }
+
+TR::VPUnspecifiedArrayType *TR::VPConstraint::getUnspecifiedArrayType()
    {
    return NULL;
    }
@@ -473,6 +485,11 @@ bool TR::VPClass::isConstString()
    return false;
    }
 
+bool TR::VPClass::isUnspecifiedArrayType()
+   {
+   return _unspecifiedArrayType != NULL;
+   }
+
 TR_YesNoMaybe TR::VPClass::isStackObject()
    {
    if (_location)
@@ -553,6 +570,11 @@ TR::VPKnownObject *TR::VPClass::getKnownObject()
 TR::VPConstString *TR::VPClass::getConstString()
    {
    return _type? _type->asConstString() : NULL;
+   }
+
+TR::VPUnspecifiedArrayType *TR::VPClass::getUnspecifiedArrayType()
+   {
+   return _unspecifiedArrayType? _unspecifiedArrayType->asUnspecifiedArrayType() : NULL;
    }
 
 TR::VPClassType *TR::VPClassType::getClassType()
@@ -795,6 +817,11 @@ bool TR::VPNullObject::isNullObject()
    }
 
 bool TR::VPNonNullObject::isNonNullObject()
+   {
+   return true;
+   }
+
+bool TR::VPUnspecifiedArrayType::isUnspecifiedArrayType()
    {
    return true;
    }
@@ -1134,7 +1161,8 @@ TR::VPLongConstraint *TR::VPLongRange::create(OMR::ValuePropagation *vp, int64_t
    }
 
 TR::VPConstraint *TR::VPClass::create(OMR::ValuePropagation *vp, TR::VPClassType *type, TR::VPClassPresence *presence,
-                                    TR::VPPreexistentObject *preexistence, TR::VPArrayInfo *arrayInfo, TR::VPObjectLocation *location, TR_OpaqueClassBlock *typeHintClass)
+                                      TR::VPPreexistentObject *preexistence, TR::VPArrayInfo *arrayInfo, TR::VPObjectLocation *location, TR_OpaqueClassBlock *typeHintClass,
+                                      TR::VPUnspecifiedArrayType *unspecifiedArrayType)
    {
    // We shouldn't create a class constraint that contains the "null" constraint
    // since null objects are not typed.
@@ -1212,7 +1240,7 @@ TR::VPConstraint *TR::VPClass::create(OMR::ValuePropagation *vp, TR::VPClassType
    // If the constraint does not already exist, create it
    //
    int32_t hash = (((int32_t)(intptr_t)type)>>2) + (((int32_t)(intptr_t)presence)>>2) + (((int32_t)(intptr_t)preexistence)>>2) +
-      (((int32_t)(intptr_t)arrayInfo)>>2) + (((int32_t)(intptr_t)location)>>2) + (((int32_t)(intptr_t)typeHintClass)>>2);
+      (((int32_t)(intptr_t)arrayInfo)>>2) + (((int32_t)(intptr_t)location)>>2) + (((int32_t)(intptr_t)typeHintClass)>>2) + (((int32_t)(intptr_t)unspecifiedArrayType)>>2);
    hash = ((uint32_t)hash) % VP_HASH_TABLE_SIZE;
    TR::VPClass *constraint;
    OMR::ValuePropagation::ConstraintsHashTableEntry *entry;
@@ -1220,17 +1248,23 @@ TR::VPConstraint *TR::VPClass::create(OMR::ValuePropagation *vp, TR::VPClassType
       {
       constraint = entry->constraint->asClass();
       if (constraint &&
-          constraint->_type         == type &&
-          constraint->_typeHintClass== typeHintClass &&
-          constraint->_presence     == presence &&
-          constraint->_preexistence == preexistence &&
-          constraint->_arrayInfo    == arrayInfo &&
-          constraint->_location     == location)
+          constraint->_type                 == type &&
+          constraint->_typeHintClass        == typeHintClass &&
+          constraint->_presence             == presence &&
+          constraint->_preexistence         == preexistence &&
+          constraint->_arrayInfo            == arrayInfo &&
+          constraint->_location             == location &&
+          constraint->_unspecifiedArrayType == unspecifiedArrayType)
          return constraint;
       }
-   constraint = new (vp->trStackMemory()) TR::VPClass(type, presence, preexistence, arrayInfo, location, typeHintClass);
+   constraint = new (vp->trStackMemory()) TR::VPClass(type, presence, preexistence, arrayInfo, location, typeHintClass, unspecifiedArrayType);
    vp->addConstraint(constraint, hash);
    return constraint;
+   }
+
+TR::VPUnspecifiedArrayType *TR::VPUnspecifiedArrayType::create(OMR::ValuePropagation *vp)
+   {
+   return vp->_unspecifiedArrayTypeConstraint;
    }
 
 TR::VPClassType *TR::VPClassType::create(OMR::ValuePropagation *vp, TR::SymbolReference *symRef, bool isFixedClass, bool isPointerToClass)
@@ -3266,11 +3300,12 @@ TR::VPConstraint *TR::VPClass::intersect1(TR::VPConstraint *other, OMR::ValuePro
    {
    TRACER(vp, this, other);
 
-   TR::VPClassType         *type          = _type;
-   TR::VPClassPresence     *presence      = _presence;
-   TR::VPPreexistentObject *preexistence  = _preexistence;
-   TR::VPArrayInfo         *arrayInfo     = _arrayInfo;
-   TR::VPObjectLocation    *location      = _location;
+   TR::VPClassType            *type             = _type;
+   TR::VPClassPresence        *presence         = _presence;
+   TR::VPPreexistentObject    *preexistence     = _preexistence;
+   TR::VPArrayInfo            *arrayInfo        = _arrayInfo;
+   TR::VPObjectLocation       *location         = _location;
+   TR::VPUnspecifiedArrayType *unspecifiedArrayType = _unspecifiedArrayType;
 
    const bool thisClassObjectYes = isClassObject() == TR_yes;
    const bool otherClassObjectYes = other->isClassObject() == TR_yes;
@@ -3312,6 +3347,8 @@ TR::VPConstraint *TR::VPClass::intersect1(TR::VPConstraint *other, OMR::ValuePro
       presence = NULL;
       if (isNonNullObject() || other->isNonNullObject())
          presence = TR::VPNonNullObject::create(vp);
+      if (isUnspecifiedArrayType() || other->isUnspecifiedArrayType())
+         unspecifiedArrayType = TR::VPUnspecifiedArrayType::create(vp);
       }
    else if (other->asClass())
       {
@@ -3481,14 +3518,21 @@ TR::VPConstraint *TR::VPClass::intersect1(TR::VPConstraint *other, OMR::ValuePro
       else
          location = otherInfo;
       }
+   else if (other->asUnspecifiedArrayType())
+      {
+      TR::VPUnspecifiedArrayType *otherUnspecifiedArrayType = other->asUnspecifiedArrayType();
+      //unspecifiedArrayType = unspecifiedArrayType ? (TR::VPUnspecifiedArrayType *)unspecifiedArrayType->intersect(otherUnspecifiedArrayType, vp) : otherUnspecifiedArrayType;
+      if (!unspecifiedArrayType)
+         unspecifiedArrayType = otherUnspecifiedArrayType;
+      }
    else
       return NULL;
 
    TR_OpaqueClassBlock *otherTypeHintClass = other->getTypeHintClass();
    TR_OpaqueClassBlock *typeHintClass = intersectTypeHintClasses(_typeHintClass, otherTypeHintClass, vp);
 
-   if (type || presence || preexistence || arrayInfo || location || typeHintClass)
-      return TR::VPClass::create(vp, type, presence, preexistence, arrayInfo, location, typeHintClass);
+   if (type || presence || preexistence || arrayInfo || location || typeHintClass || unspecifiedArrayType)
+      return TR::VPClass::create(vp, type, presence, preexistence, arrayInfo, location, typeHintClass, unspecifiedArrayType);
    return NULL;
    }
 
@@ -5251,18 +5295,32 @@ bool TR::VPClass::mustBeNotEqual(TR::VPConstraint *other, OMR::ValuePropagation 
       // Only one is a fixed-type constraint (or we'd have returned above).
       TR_OpaqueClassBlock *fixedClass = NULL;
       TR_OpaqueClassBlock *boundClass = NULL;
+      TR::VPConstraint    *fixedConstraint = NULL;
+      TR::VPConstraint    *boundConstraint = NULL;
       if (thisIsFixedClass)
          {
          fixedClass = thisClass;
          boundClass = otherClass;
+         fixedConstraint = this;
+         boundConstraint = other;
          }
       else
          {
          fixedClass = otherClass;
          boundClass = thisClass;
+         fixedConstraint = other;
+         boundConstraint = this;
          }
 
-      return vp->fe()->isInstanceOf(fixedClass, boundClass, true, true) == TR_no;
+      TR_YesNoMaybe fixedIsInstanceOfBound = vp->fe()->isInstanceOf(fixedClass, boundClass, true, true);
+      if (fixedIsInstanceOfBound == TR_no)
+         return true;
+      
+      static bool enableUnspecifiedArrayOpt = feGetEnv("TR_mustNotBeEqualVPUnspecifiedArrayType") != NULL;
+      if (boundConstraint->isUnspecifiedArrayType())
+         return !fixedConstraint->getClassType()->isPrimitiveArray(vp->comp()) && !fixedConstraint->getClassType()->isReferenceArray(vp->comp()) && enableUnspecifiedArrayOpt;
+
+      return false;
       }
 
    // Neither type is fixed.
@@ -6073,6 +6131,8 @@ void TR::VPClass::print(TR::Compilation *comp, TR::FILE *outFile)
       _arrayInfo->print(comp, outFile);
    if (_location)
       _location->print(comp, outFile);
+   if (_unspecifiedArrayType)
+      _unspecifiedArrayType->print(comp, outFile);
    }
 
 void TR::VPResolvedClass::print(TR::Compilation *comp, TR::FILE *outFile)
@@ -6154,6 +6214,13 @@ void TR::VPUnresolvedClass::print(TR::Compilation *comp, TR::FILE *outFile)
    int32_t methodLen  = _method->nameLength();
    char   *methodName = _method->nameChars();
    trfprintf(outFile, "unresolved class %.*s in method %.*s", _len, _sig, methodLen, methodName);
+   }
+
+void TR::VPUnspecifiedArrayType::print(TR::Compilation *comp, TR::FILE *outFile)
+   {
+   if (outFile == NULL)
+      return;
+   trfprintf(outFile, " unspecified-array-type");
    }
 
 void TR::VPNullObject::print(TR::Compilation *comp, TR::FILE *outFile)
@@ -6341,6 +6408,7 @@ const char *TR::VPResolvedClass::name()              { return "ResolvedClass";  
 const char *TR::VPFixedClass::name()                 { return "FixedClass";           }
 const char *TR::VPConstString::name()                { return "ConstString";          }
 const char *TR::VPUnresolvedClass::name()            { return "UnresolvedClass";      }
+const char *TR::VPUnspecifiedArrayType::name()       { return "UnspecifiedArrayType"; }
 const char *TR::VPNullObject::name()                 { return "NullObject";           }
 const char *TR::VPNonNullObject::name()              { return "NonNullObject";        }
 const char *TR::VPPreexistentObject::name()          { return "PreexistentObject";    }

@@ -156,12 +156,12 @@ void OMR::ValuePropagation::initialize()
    _enableVersionBlocks       = false;
    _disableVersionBlockForThisBlock = true;
 
-   _nullObjectConstraint        = new (trStackMemory()) TR::VPNullObject();
-   _nonNullObjectConstraint     = new (trStackMemory()) TR::VPNonNullObject();
-   _preexistentObjectConstraint = new (trStackMemory()) TR::VPPreexistentObject();
-   _constantZeroConstraint      = new (trStackMemory()) TR::VPIntConst(0);
-   _unreachablePathConstraint   = new (trStackMemory()) TR::VPUnreachablePath();
-
+   _nullObjectConstraint           = new (trStackMemory()) TR::VPNullObject();
+   _nonNullObjectConstraint        = new (trStackMemory()) TR::VPNonNullObject();
+   _preexistentObjectConstraint    = new (trStackMemory()) TR::VPPreexistentObject();
+   _constantZeroConstraint         = new (trStackMemory()) TR::VPIntConst(0);
+   _unreachablePathConstraint      = new (trStackMemory()) TR::VPUnreachablePath();
+   _unspecifiedArrayTypeConstraint = new (trStackMemory()) TR::VPUnspecifiedArrayType();
 
    _invalidateUseDefInfo      = false;
    _invalidateValueNumberInfo = false;
