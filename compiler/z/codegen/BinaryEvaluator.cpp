@@ -1226,7 +1226,8 @@ genericLongShiftSingle(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::
             }
          else if (firstChild->getOpCodeValue() == TR::land && firstChild->getReferenceCount() == 1)
             {
-            if (trgReg = TR::TreeEvaluator::tryToReplaceShiftLandWithRotateInstruction(firstChild, cg, value, node->getOpCodeValue() == TR::lshl))
+            trgReg = TR::TreeEvaluator::tryToReplaceShiftLandWithRotateInstruction(firstChild, cg, value, node->getOpCodeValue() == TR::lshl);
+            if (NULL != trgReg)
                {
                node->setRegister(trgReg);
                cg->decReferenceCount(firstChild);
@@ -1240,7 +1241,8 @@ genericLongShiftSingle(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::
          // Generate RISBGN for (lshr + land) and (lushr + land) sequences
          if (firstChild->getOpCodeValue() == TR::land && firstChild->getReferenceCount() == 1)
             {
-            if (trgReg = TR::TreeEvaluator::tryToReplaceShiftLandWithRotateInstruction(firstChild, cg, -value, node->getOpCodeValue() == TR::lshr))
+            trgReg = TR::TreeEvaluator::tryToReplaceShiftLandWithRotateInstruction(firstChild, cg, -value, node->getOpCodeValue() == TR::lshr);
+            if (NULL != trgReg)
                {
                node->setRegister(trgReg);
                cg->decReferenceCount(firstChild);
@@ -3350,7 +3352,8 @@ OMR::Z::TreeEvaluator::iandEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
 
-   if (targetRegister = genericRotateAndInsertHelper(node, cg))
+   targetRegister = genericRotateAndInsertHelper(node, cg);
+   if (NULL != targetRegister)
       {
       node->setRegister(targetRegister);
 
@@ -3501,7 +3504,8 @@ OMR::Z::TreeEvaluator::lorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    // See if rotate-left can be used
    //
-   if (targetRegister = genericRotateLeft(node, cg))
+   targetRegister = genericRotateLeft(node, cg);
+   if (NULL != targetRegister)
       {
       node->setRegister(targetRegister);
 
@@ -3604,7 +3608,8 @@ OMR::Z::TreeEvaluator::lxorEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    // See if rotate-left can be used
    //
-   if (targetRegister = genericRotateLeft(node, cg))
+   targetRegister = genericRotateLeft(node, cg);
+   if (NULL != targetRegister)
       {
       node->setRegister(targetRegister);
 

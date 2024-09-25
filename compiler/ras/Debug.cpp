@@ -5084,7 +5084,8 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
          Argv[0] = "/tr/zos-tools/bin/dbxattach";
          // for break_before, although command file is always the same,
          // we generate it dynamically for consistency with other platforms
-         if (cf = fopen(cfname, "wb+"))
+         cf = fopen(cfname, "wb+");
+         if (NULL != cf)
             {
             fprintf(cf, "set $unsafebps\n");
             fprintf(cf, "set $unsafegoto\n");
@@ -5115,7 +5116,8 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
             fclose(cf);
             }
          // check for dbx that cfname file could be read (dbx does not do this check)
-         if (cf = fopen(cfname, "r"))
+         cf = fopen(cfname, "r");
+         if (NULL != cf)
             {
             struct inheritance inh = { 0 }; /* use all the default inheritance stuff */
             int fdCount = 0; /* inherit all file descriptors from parent */
