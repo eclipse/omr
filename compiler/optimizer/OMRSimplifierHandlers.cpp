@@ -17752,30 +17752,38 @@ TR::Node *fmaxminSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
    TR::Node * secondChild = node->getSecondChild();
    bool isBothConst = firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst();
    float fmin = 0, fmax = 0;
-   bool maxOpcode = node->getOpCodeValue() == TR::fmax;
+   bool isMaxOpcode = node->getOpCodeValue() == TR::fmax;
 
-   if (isBothConst)
+   if (!isBothConst) return node;
+
+   float first = firstChild->getFloat();
+   float second = secondChild->getFloat();
+
+   uint32_t firstBits = firstChild->getFloatBits();
+   uint32_t secondBits = secondChild->getFloatBits();
+
+   // if either or both operands is a NaN, the result is the first NaN.
+   // +0.0f compares as strictly greater than -0.0f
+   if (isNaNFloat(firstChild))
       {
-      if (isNaNFloat(firstChild))
-         fmin = fmax = firstChild->getFloat();
-      else if (isNaNFloat(secondChild))
-         fmin = fmax = secondChild->getFloat();
-      else
-         {
-         if (firstChild->getFloat() <= secondChild->getFloat())
-            {
-            fmin = firstChild->getFloat();
-            fmax = secondChild->getFloat();
-            }
-         else
-            {
-            fmin = secondChild->getFloat();
-            fmax = firstChild->getFloat();
-            }
-         }
-      foldFloatConstant(node, maxOpcode ? fmax : fmin, s);
+      fmin = fmax = first;
+      }
+   else if (isNaNFloat(secondChild))
+      {
+      fmin = fmax = second;
+      }
+   else if (first > second || (firstBits == 0 && secondBits == FLOAT_NEG_ZERO))
+      {
+      fmax = first;
+      fmin = second;
+      }
+   else
+      {
+      fmax = second;
+      fmin = first;
       }
 
+   foldFloatConstant(node, isMaxOpcode ? fmax : fmin, s);
    return node;
    }
 
@@ -17787,30 +17795,38 @@ TR::Node *dmaxminSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
    bool isBothConst = firstChild->getOpCode().isLoadConst() && secondChild->getOpCode().isLoadConst();
-   bool maxOpcode = node->getOpCodeValue() == TR::dmax;
+   bool isMaxOpcode = node->getOpCodeValue() == TR::dmax;
 
-   if (isBothConst)
+   if (!isBothConst) return node;
+
+   double first = firstChild->getDouble();
+   double second = secondChild->getDouble();
+
+   uint64_t firstBits = firstChild->getDoubleBits();
+   uint64_t secondBits = secondChild->getDoubleBits();
+
+   // if either or both operands is a NaN, the result is the first NaN.
+   // +0.0d compares as strictly greater than -0.0d
+   if (isNaNDouble(firstChild))
       {
-      if (isNaNDouble(firstChild))
-         min = max = firstChild->getDouble();
-      else if (isNaNDouble(secondChild))
-         min = max = secondChild->getDouble();
-      else
-         {
-         if (firstChild->getDouble() <= secondChild->getDouble())
-            {
-            min = firstChild->getDouble();
-            max = secondChild->getDouble();
-            }
-         else
-            {
-            min = secondChild->getDouble();
-            max = firstChild->getDouble();
-            }
-         }
-      foldDoubleConstant(node, maxOpcode ? max : min, s);
+      min = max = first;
+      }
+   else if (isNaNDouble(secondChild))
+      {
+      min = max = second;
+      }
+   else if (first > second || (firstBits == 0L && secondBits == DOUBLE_NEG_ZERO))
+      {
+      max = first;
+      min = second;
+      }
+   else
+      {
+      max = second;
+      min = first;
       }
 
+   foldDoubleConstant(node, isMaxOpcode ? max : min, s);
    return node;
    }
 
