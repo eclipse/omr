@@ -186,8 +186,8 @@ OMR::Z::Machine::registerExchange(TR::CodeGenerator* cg,
    TR::Compilation *comp = cg->comp();
    TR::Node * currentNode = precedingInstruction->getNode();
    TR::Instruction * currentInstruction = NULL;
-   char * REG_EXCHANGE = "LR=Reg_exchg";
-   char * REG_PAIR     = "LR=Reg_pair";
+   const char * REG_EXCHANGE = "LR=Reg_exchg";
+   const char * REG_PAIR     = "LR=Reg_pair";
    TR_Debug * debugObj = cg->getDebug();
    TR::Machine *machine = cg->machine();
 
