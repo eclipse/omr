@@ -33,7 +33,6 @@
 #include "omrthreadattr.h"
 
 #define J9THREAD_ATTR_IS_VALID(attr) ((attr) && (*(attr)) && ((*(attr))->size == sizeof(omrthread_attr)))
-#define J9THREAD_VALUE_OUT_OF_RANGE(val, lo, hi) (((val) < (lo)) || ((val) > (hi)))
 
 static intptr_t failedToSetAttr(intptr_t rc);
 
@@ -220,7 +219,7 @@ omrthread_attr_set_priority(omrthread_attr_t *attr, omrthread_prio_t priority)
 		return J9THREAD_ERR_INVALID_ATTR;
 	}
 
-	if (J9THREAD_VALUE_OUT_OF_RANGE(priority, J9THREAD_PRIORITY_MIN, J9THREAD_PRIORITY_MAX)) {
+	if (priority > J9THREAD_PRIORITY_MAX) {
 		return J9THREAD_ERR_INVALID_VALUE;
 	}
 
