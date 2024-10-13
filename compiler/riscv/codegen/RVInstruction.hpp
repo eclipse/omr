@@ -949,7 +949,8 @@ class JtypeInstruction : public UtypeInstruction
 
       : UtypeInstruction(op, n, 0, treg, cg),
         _symbolReference(nullptr),
-        _symbol(label)
+        _symbol(label),
+        _snippet(nullptr)
       {
       }
 
@@ -962,7 +963,8 @@ class JtypeInstruction : public UtypeInstruction
 
       : UtypeInstruction(op, n, 0, treg, cond, cg),
         _symbolReference(nullptr),
-        _symbol(label)
+        _symbol(label),
+        _snippet(nullptr)
       {
       }
 
@@ -989,7 +991,8 @@ class JtypeInstruction : public UtypeInstruction
          TR::CodeGenerator *cg)
       : UtypeInstruction(op, n, 0, treg, precedingInstruction, cg),
         _symbolReference(nullptr),
-        _symbol(label)
+        _symbol(label),
+        _snippet(nullptr)
       {
       }
 
@@ -1003,7 +1006,8 @@ class JtypeInstruction : public UtypeInstruction
 
       : UtypeInstruction(op, n, 0, treg, cond, precedingInstruction, cg),
         _symbolReference(nullptr),
-        _symbol(label)
+        _symbol(label),
+        _snippet(nullptr)
       {
       }
 
