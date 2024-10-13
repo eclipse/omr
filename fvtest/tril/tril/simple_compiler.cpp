@@ -48,10 +48,13 @@ int32_t Tril::SimpleCompiler::compile() {
 int32_t Tril::SimpleCompiler::compileWithVerifier(TR::IlVerifier* verifier) {
     // construct an IL generator for the method
     auto methodInfo = getMethodInfo();
-    TR::TypeDictionary types;
+    static TR::TypeDictionary* types = nullptr;
+    if (types == nullptr)
+      types = new (PERSISTENT_NEW) TR::TypeDictionary();
+
     GenericNodeConverter genericNodeConverter;
     CallConverter callConverter(&genericNodeConverter);
-    Tril::TRLangBuilder ilgenerator(methodInfo.getBodyAST(), &types, &callConverter);
+    Tril::TRLangBuilder ilgenerator(methodInfo.getBodyAST(), types, &callConverter);
 
     // get a list of the method's argument types and transform it
     // into a list of `TR::IlType`
@@ -59,14 +62,14 @@ int32_t Tril::SimpleCompiler::compileWithVerifier(TR::IlVerifier* verifier) {
     auto argIlTypes = std::vector<TR::IlType*>(argTypes.size());
     auto it_argIlTypes = argIlTypes.begin();
     for (auto it = argTypes.begin(); it != argTypes.end(); it++) {
-          *it_argIlTypes++ = types.PrimitiveType(*it);
+          *it_argIlTypes++ = types->PrimitiveType(*it);
     }
     // construct a `TR::ResolvedMethod` instance from the IL generator and use
     // to compile the method
     TR::ResolvedMethod resolvedMethod("file", "line", "name",
                                       static_cast<int32_t>(argIlTypes.size()),
                                       argIlTypes.size() != 0 ? &argIlTypes[0] : NULL,
-                                      types.PrimitiveType(methodInfo.getReturnType()),
+                                      types->PrimitiveType(methodInfo.getReturnType()),
                                       0,
                                       &ilgenerator);
     TR::IlGeneratorMethodDetails methodDetails(&resolvedMethod);
