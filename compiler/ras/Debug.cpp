@@ -1629,12 +1629,20 @@ TR_Debug::getName(TR::SymbolReference * symRef)
              return "<atomicAdd>";
          case TR::SymbolReferenceTable::atomicFetchAndAddSymbol:
              return "<atomicFetchAndAdd>";
+         case TR::SymbolReferenceTable::atomicFetchAndAdd8BitSymbol:
+            return "<atomicFetchAndAdd8Bit>";
+         case TR::SymbolReferenceTable::atomicFetchAndAdd16BitSymbol:
+            return "<atomicFetchAndAdd16Bit>";
          case TR::SymbolReferenceTable::atomicFetchAndAdd32BitSymbol:
              return "<atomicFetchAndAdd32Bit>";
          case TR::SymbolReferenceTable::atomicFetchAndAdd64BitSymbol:
              return "<atomicFetchAndAdd64Bit>";
          case TR::SymbolReferenceTable::atomicSwapSymbol:
              return "<atomicSwap>";
+         case TR::SymbolReferenceTable::atomicSwap8BitSymbol:
+             return "<atomicSwap8Bit>";
+         case TR::SymbolReferenceTable::atomicSwap16BitSymbol:
+             return "<atomicSwap16Bit>";
          case TR::SymbolReferenceTable::atomicSwap32BitSymbol:
              return "<atomicSwap32Bit>";
          case TR::SymbolReferenceTable::atomicSwap64BitSymbol:
@@ -2140,9 +2148,13 @@ static const char *commonNonhelperSymbolNames[] =
    "<synchronizedFieldLoad>",
    "<atomicAdd>",
    "<atomicFetchAndAdd>",
+   "<atomicFetchAndAdd8Bit>",
+   "<atomicFetchAndAdd16Bit>",
    "<atomicFetchAndAdd32Bit>",
    "<atomicFetchAndAdd64Bit>",
    "<atomicSwap>",
+   "<atomicSwap8Bit>",
+   "<atomicSwap16Bit>",
    "<atomicSwap32Bit>",
    "<atomicSwap64Bit>",
    "<atomicCompareAndSwapReturnStatus>",
