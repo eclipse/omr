@@ -159,7 +159,7 @@ settings/options.
 the xlinux PR build will use OPTIONS_A whereas all other PR builds will use OPTIONS_B.
 * **Example 3**: `jenkins build xlinux(<OPTIONS_A>),all,linux_x86-64(<OPTIONS_B>)`. <br />In
 this example, xlinux is an alias for linux_x86-64. Two different sets of options are
-provided for the same PR build specfication. The set of options of provided at the end
+provided for the same PR build specification. The set of options of provided at the end
 will be enforced. In this example, OPTIONS_B will be used whereas OPTIONS_A will be
 ignored. The same analogy is used if N-sets of options are specified for a PR build
 specification.
