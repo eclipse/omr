@@ -48,7 +48,7 @@
  * The RSM Internal Table (RIT) reached from the `ritp' address field in PVT. The
  * field of interest here is the total amount of online storage.
  */
-typedef _Packed struct J9RIT {
+typedef struct __attribute__((packed)) J9RIT {
 	uint8_t ritFiller1[296];    /**< 0:296 Fields irrelevant to our current purpose. */
 	uint64_t rittos;            /**< 296:8 The total amount of online storage at IPL */
 	/**< Ignore rest of the fields in RIT. */
@@ -58,7 +58,7 @@ typedef _Packed struct J9RIT {
  * The Page Vector Table (PVT). Reached from the virtual address found at offset 356 of
  * CVT.
  */
-typedef _Packed struct J9PVT {
+typedef struct __attribute__((packed)) J9PVT {
 	uint8_t pvtFiller1[4];              /**< 0:4 PVT Control Block Identifier 'PVT' */
 	J9RIT *__ptr32 pvtritp;         /**< 4:4 Address of the start of RSM Internal Table (RIT) */
 	/**< Ignore rest of the fields in PVT. */
@@ -73,7 +73,7 @@ typedef _Packed struct J9PVT {
  *   CCVCPUCT - No of online CPUs
  *   CCVUTILP - System CPU utilization
  */
-typedef _Packed struct J9CCT {
+typedef struct __attribute__((packed)) J9CCT {
 	uint8_t cctFiller1[72];           /**< 0:72 Ignore fields not relevant to current implementation */
 	uint32_t ccvrbswt;                /**< 72:4 Recent base system wait time */
 	uint8_t cctFiller2[4];            /**< 76:4 Ignore fields not relevant to current implementation */
@@ -91,7 +91,7 @@ typedef _Packed struct J9CCT {
  * Fields of interest:
  *   RMCTCCT - CPU Management Control Table
  */
-typedef _Packed struct J9RMCT {
+typedef struct __attribute__((packed)) J9RMCT {
 	uint8_t rmctname[4];              /**< 0:4 Block Identification */
 	J9CCT *__ptr32 rmctcct;       /**< 4:4 CPU Management Control Table */
 	/**< Ignore rest of the RMCT */
@@ -106,7 +106,7 @@ typedef _Packed struct J9RMCT {
  *   ASMNVSC - Count of non-VIO allocated slots
  *   ASMERRS - Count of bad slots
  */
-typedef _Packed struct J9ASMVT {
+typedef struct __attribute__((packed)) J9ASMVT {
 	uint8_t asmvtFiller1[112];        /**< 0:112 Ignore fields not relevant to current implementation */
 	uint32_t asmslots;                /**< 112:4 Count of total local slots in all open local page data sets */
 	uint32_t asmvsc;                  /**< 116:4 Count of total local slots allocated to VIO private area pages */
@@ -122,7 +122,7 @@ typedef _Packed struct J9ASMVT {
  *   RCEPOOL - No of frames currently available to system
  *   RCEAFC - Total no of frames currently on all available frame queues
  */
-typedef _Packed struct J9RCE {
+typedef struct __attribute__((packed)) J9RCE {
 	uint8_t rceid[4];                 /**< 0:4 RCE control block Id */
 	int32_t rcepool;                 /**< 4:4 No of frames currently available to system */
 	uint8_t rceFiller1[128];          /**< 8:128 Ignore fields not relevant to current implementation */
@@ -140,7 +140,7 @@ typedef _Packed struct J9RCE {
  *   CVTASMVT - Pointer to auxiliary storage management vector table (ASMVT)
  *   CVTRCEP - Address of the RSM Control & Enumeration Area
  */
-typedef _Packed struct J9CVT {
+typedef struct __attribute__((packed)) J9CVT {
 	uint8_t cvtFiller1[356];          /**< 0:356 Ignore fields not relevant to current implementation */
 	J9PVT *__ptr32 cvtpvtp;       /**< 356:4 Address of Page Vector Table (PVT). */
 	uint8_t cvtFiller2[244];          /**< 360:244 Ignore fields not relevant to current implementation */
@@ -160,7 +160,7 @@ typedef _Packed struct J9CVT {
  * Fields of interest:
  *   FLCCVT - Address of CVT after IPL
  */
-typedef _Packed struct J9PSA {
+typedef struct __attribute__((packed)) J9PSA {
 	uint8_t psaFiller1[16];           /**< 0:16 Ignore 16 bytes before CVT pointer */
 	J9CVT *__ptr32 flccvt;        /**< 16:4 Address of CVT after IPL */
 	/**< Ignore rest of the PSA */
