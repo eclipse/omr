@@ -347,7 +347,9 @@ public:
 #endif /* defined(OMR_GC_COMBINATION_SPEC) */
 
 	uintptr_t tlhMinimumSize;
-	uintptr_t tlhMaximumSize;
+	uintptr_t tlhMaximumSize; // to be removed
+	uintptr_t tlhMaximumSizeBatchCleared;
+	uintptr_t tlhMaximumSizeNonBatchCleared;
 	uintptr_t tlhInitialSize;
 	uintptr_t tlhIncrementSize;
 	uintptr_t tlhSurvivorDiscardThreshold; /**< below this size GC (Scavenger) will discard survivor copy cache TLH, if alloc not succeeded (otherwise we reuse memory for next TLH) */
@@ -1112,6 +1114,8 @@ public:
 
 	MMINLINE uintptr_t getMinimumFreeEntrySize() { return tlhMinimumSize; }
 
+	MMINLINE uintptr_t getTlhMaximumSize() { return OMR_MAX(tlhMaximumSizeBatchCleared, tlhMaximumSizeNonBatchCleared);	}
+
 	MMINLINE MM_Heap* getHeap() { return heap; }
 
 	MMINLINE void
@@ -1568,6 +1572,8 @@ public:
 #endif /* defined(OMR_GC_COMBINATION_SPEC) */
 		, tlhMinimumSize(MINIMUM_TLH_SIZE)
 		, tlhMaximumSize(131072)
+		, tlhMaximumSizeBatchCleared(128 * 1024)
+		, tlhMaximumSizeNonBatchCleared(1024 * 1024)
 		, tlhInitialSize(2048)
 		, tlhIncrementSize(4096)
 		, tlhSurvivorDiscardThreshold(tlhMinimumSize)
