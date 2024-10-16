@@ -4492,6 +4492,8 @@ OMR::Node::getEvaluationPriority(TR::CodeGenerator * cg)
 int32_t
 OMR::Node::setEvaluationPriority(int32_t p)
    {
+   TR_ASSERT(!self()->getOpCode().isTreeTop(), "cannot set evaluation priority of a treetop");
+
    if (_unionA._register == 0 ||            // not evaluated, priority unknown
        ((uintptr_t)(_unionA._register) & 1))  // not evaluated, priority known
       {
