@@ -1345,7 +1345,7 @@ std_sprintf(const char *buf, char *ascii_chars, ...)
  * returns     -
  *************************************************************************/
 int
-atoe_sprintf(char *buf, char *ascii_chars, ...)
+atoe_sprintf(char *buf, const char *ascii_chars, ...)
 {
 	int len;
 	char wrkbuf[BUFLEN];
@@ -1374,7 +1374,7 @@ atoe_sprintf(char *buf, char *ascii_chars, ...)
  * returns     -
  *************************************************************************/
 int
-atoe_snprintf(char *buf, size_t buflen, char *ascii_chars, ...)
+atoe_snprintf(char *buf, size_t buflen, const char *ascii_chars, ...)
 {
 	int len;
 

@@ -58,8 +58,8 @@
         int        atoe_printf    (const char*, ...);
         int        atoe_putchar   (int);
         int        atoe_rename    (const char*, const char*);
-        int        atoe_sprintf   (char*, char*, ...);
-        int        atoe_snprintf  (char *buf, size_t buflen, char *ascii_chars, ...);
+        int        atoe_sprintf   (char*, const char*, ...);
+        int        atoe_snprintf  (char *buf, size_t buflen, const char *ascii_chars, ...);
         int        std_sprintf    (const char*, char*, ...);
         int        atoe_sscanf    (const char*, const char*, ...); /*ibm@2609*/
         char *     atoe_tempnam   (const char *, char *);
