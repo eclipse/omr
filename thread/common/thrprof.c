@@ -28,6 +28,11 @@
  * APIs for querying per-thread statistics: CPU usage, stack usage.
  */
 
+#if defined (LINUX)
+#define _GNU_SOURCE
+#include <sys/resource.h>
+#endif /* defined (LINUX) */
+
 #include <string.h> /* for memset() */
 #include "omrcfg.h"
 
@@ -1024,4 +1029,36 @@ omrthread_get_jvm_cpu_usage_info_error_recovery(void)
 		lib->threadWalkMutexesHeld = 0;
 		GLOBAL_UNLOCK_SIMPLE(lib);
 	}
+}
+
+intptr_t
+omrthread_get_self_thread_time(omrthread_thread_time_t *threadTime)
+{
+#if defined(LINUX)
+	struct rusage rUsage = {0};
+	int rc = getrusage(RUSAGE_THREAD, &rUsage);
+
+	if (-1 == rc) {
+		return -1;
+	}
+
+	threadTime->userTime = (SEC_TO_NANO_CONVERSION_CONSTANT * (int64_t)rUsage.ru_utime.tv_sec)
+			+ (MICRO_TO_NANO_CONVERSION_CONSTANT * (int64_t)rUsage.ru_utime.tv_usec);
+	threadTime->sysTime = (SEC_TO_NANO_CONVERSION_CONSTANT * (int64_t)rUsage.ru_stime.tv_sec)
+			+ (MICRO_TO_NANO_CONVERSION_CONSTANT * (int64_t)rUsage.ru_stime.tv_usec);
+#else /* defined(LINUX) */
+	omrthread_t self = omrthread_self();
+
+	int64_t userTime = omrthread_get_user_time(self);
+	int64_t cpuTime = omrthread_get_cpu_time(self);
+
+	if ((-1 == cpuTime) || (-1 == userTime)) {
+		return -1;
+	}
+
+	threadTime->sysTime = cpuTime - userTime;
+	threadTime->userTime = userTime;
+#endif /* defined(LINUX) */
+
+	return 0;
 }

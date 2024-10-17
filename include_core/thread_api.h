@@ -98,6 +98,11 @@ typedef struct omrthread_monitor_walk_state_t {
 	BOOLEAN lockTaken;
 } omrthread_monitor_walk_state_t;
 
+typedef struct omrthread_thread_time_t {
+	int64_t userTime;
+	int64_t sysTime;
+} omrthread_thread_time_t;
+
 /* ---------------- omrthreadinspect.c ---------------- */
 
 /**
@@ -1423,6 +1428,15 @@ omrthread_monitor_pin(omrthread_monitor_t monitor, omrthread_t self);
 */
 void
 omrthread_monitor_unpin(omrthread_monitor_t monitor, omrthread_t self);
+
+/**
+ * Gets the system and user CPU time of the current thread.
+ *
+ * @param[out] threadTime the pointer to the thread time structure
+ * @return 0 on success or -1 on failure
+ */
+intptr_t
+omrthread_get_self_thread_time(omrthread_thread_time_t *threadTime);
 
 /* forward struct definition */
 struct J9ThreadLibrary;
