@@ -64,7 +64,7 @@
 #define OMR_NORETURN _declspec(noreturn)
 #elif defined(__GNUC__)
 #define OMR_NORETURN __attribute__ ((noreturn))
-#elif defined(__IBMCPP__)
+#elif defined(__IBMCPP__) || defined(__open_xl__) && defined(__cplusplus)
 #define OMR_NORETURN __attribute__ ((noreturn))
 #else
 #warning "Noreturn attribute undefined for this platform."

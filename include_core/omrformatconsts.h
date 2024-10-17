@@ -33,7 +33,7 @@
 /* OMR_PRId8: int8_t */
 #if defined(PRId8)
 #define OMR_PRId8 PRId8
-#elif defined(__GNUC__) || defined(__clang__) || defined(__xlC__)
+#elif defined(__GNUC__) || defined(__clang__) || defined(__xlC__) || defined(__open_xl__)
 #define OMR_PRId8 "hhd"
 #else
 #define OMR_PRId8 "d" /* promote to int */
@@ -42,7 +42,7 @@
 /* OMR_PRIu8: uint8_t */
 #if defined(PRIu8)
 #define OMR_PRIu8 PRIu8
-#elif defined(__GNUC__) || defined(__clang__) || defined(__xlC__)
+#elif defined(__GNUC__) || defined(__clang__) || defined(__xlC__) || defined(__open_xl__)
 #define OMR_PRIu8 "hhu"
 #else
 #define OMR_PRIu8 "u" /* promote to unsigned int */
@@ -51,7 +51,7 @@
 /* OMR_PRIx8: uint8_t (hex) */
 #if defined(PRIx8)
 #define OMR_PRIx8 PRIx8
-#elif defined(__GNUC__) || defined(__clang__) || defined(__xlC__)
+#elif defined(__GNUC__) || defined(__clang__) || defined(__xlC__) || defined(__open_xl__)
 #define OMR_PRIx8 "hhx"
 #else
 #define OMR_PRIx8 "x" /* promote to unsigned int */
@@ -60,7 +60,7 @@
 /* OMR_PRIX8: uint8_t (uppercase hex) */
 #if defined(PRIX8)
 #define OMR_PRIX8 PRIX8
-#elif defined(__GNUC__) || defined(__clang__) || defined(__xlC__)
+#elif defined(__GNUC__) || defined(__clang__) || defined(__xlC__) || defined(__open_xl__) 
 #define OMR_PRIX8 "hhX"
 #else
 #define OMR_PRIX8 "X" /* promote to unsigned int */

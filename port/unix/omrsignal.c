@@ -406,15 +406,17 @@ omrsig_protect(struct OMRPortLibrary *portLibrary, omrsig_protected_fn fn, void 
 		 */
 		OMRCurrentSignal *currentSignal = omrthread_tls_get(thisThread, tlsKeyCurrentSignal);
 
-		/* setjmp/longjmp does not clear the mask setup by the OS when it delivers the signal. User sigsetjmp/siglongjmp(buf, 1) instead */
-		if (0 != sigsetjmp(thisRecord.returnBuf, 1)) {
-			/* the handler had long jumped back here -- reset the signal handler stack and currentSignal and return */
-			omrthread_tls_set(thisThread, tlsKey, thisRecord.previous);
-			omrthread_tls_set(thisThread, tlsKeyCurrentSignal, currentSignal);
-			*result = 0;
-			Trc_PRT_signal_omrsignal_sig_protect_Exit_long_jumped_back_to_omrsig_protect(fn, fn_arg, handler, handler_arg, flags);
-			return OMRPORT_SIG_EXCEPTION_OCCURRED;
-		}
+		#if !defined(__open_xl__)
+			/* setjmp/longjmp does not clear the mask setup by the OS when it delivers the signal. User sigsetjmp/siglongjmp(buf, 1) instead */
+			if (0 != sigsetjmp(thisRecord.returnBuf, 1)) {
+				/* the handler had long jumped back here -- reset the signal handler stack and currentSignal and return */
+				omrthread_tls_set(thisThread, tlsKey, thisRecord.previous);
+				omrthread_tls_set(thisThread, tlsKeyCurrentSignal, currentSignal);
+				*result = 0;
+				Trc_PRT_signal_omrsignal_sig_protect_Exit_long_jumped_back_to_omrsig_protect(fn, fn_arg, handler, handler_arg, flags);
+				return OMRPORT_SIG_EXCEPTION_OCCURRED;
+			}
+		#endif
 	}
 
 	if (0 != omrthread_tls_set(thisThread, tlsKey, &thisRecord)) {

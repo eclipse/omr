@@ -39,7 +39,7 @@ namespace TR { class Recompilation; }
 namespace TR { class Monitor; }
 struct TR_MethodToBeCompiled;
 
-#if defined(__IBMCPP__)
+#if defined(__IBMCPP__) || defined(__open_xl__) && defined(__cplusplus)
 // GCC (and other compilers) may assume that operator new cannot return null
 // unless a nothrow specification is provided. For other reasons, we build
 // Testarossa with -qnoeh / -fnoeh to disable exceptions. This is all fine,
