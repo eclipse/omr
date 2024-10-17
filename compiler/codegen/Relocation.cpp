@@ -319,7 +319,8 @@ uint8_t TR::ExternalOrderedPair32BitRelocation::collectModifier()
 
    if (comp->target().cpu.isPower() &&
           (kind == TR_ArrayCopyHelper || kind == TR_ArrayCopyToc || kind == TR_RamMethod || kind == TR_GlobalValue || kind == TR_BodyInfoAddressLoad || kind == TR_DataAddress
-           || kind == TR_DebugCounter || kind == TR_BlockFrequency || kind == TR_RecompQueuedFlag || kind == TR_CatchBlockCounter || kind == TR_MethodEnterExitHookAddress))
+           || kind == TR_DebugCounter || kind == TR_BlockFrequency || kind == TR_RecompQueuedFlag || kind == TR_CatchBlockCounter || kind == TR_MethodEnterExitHookAddress
+           || kind == TR_CallsiteTableEntryAddress || kind == TR_MethodTypeTableEntryAddress))
       {
       TR::Instruction *instr = (TR::Instruction *)getUpdateLocation();
       TR::Instruction *instr2 = (TR::Instruction *)getLocation2();
@@ -351,7 +352,8 @@ void TR::ExternalOrderedPair32BitRelocation::apply(TR::CodeGenerator *cg)
    TR_ExternalRelocationTargetKind kind = getRelocationRecord()->getTargetKind();
    if (comp->target().cpu.isPower() &&
       (kind == TR_ArrayCopyHelper || kind == TR_ArrayCopyToc || kind == TR_RamMethodSequence || kind == TR_GlobalValue || kind == TR_BodyInfoAddressLoad || kind == TR_DataAddress
-       || kind == TR_DebugCounter || kind == TR_BlockFrequency || kind == TR_RecompQueuedFlag || kind == TR_CatchBlockCounter || kind == TR_MethodEnterExitHookAddress))
+       || kind == TR_DebugCounter || kind == TR_BlockFrequency || kind == TR_RecompQueuedFlag || kind == TR_CatchBlockCounter || kind == TR_MethodEnterExitHookAddress
+       || kind == TR_CallsiteTableEntryAddress || kind == TR_MethodTypeTableEntryAddress))
       {
       TR::Instruction *instr = (TR::Instruction *)getUpdateLocation();
       TR::Instruction *instr2 = (TR::Instruction *)getLocation2();
@@ -484,6 +486,10 @@ const char *TR::ExternalRelocation::_externalRelocationTargetKindNames[TR_NumExt
    "TR_CatchBlockCounter (113)",
    "TR_StartPC (114)",
    "TR_MethodEnterExitHookAddress (115)",
+   "TR_ValidateDynamicMethodFromCallsiteIndex (116)",
+   "TR_ValidateHandleMethodFromCPIndex (117)",
+   "TR_CallsiteTableEntryAddress (118)",
+   "TR_MethodTypeTableEntryAddress (119)",
    };
 
 uintptr_t TR::ExternalRelocation::_globalValueList[TR_NumGlobalValueItems] =
