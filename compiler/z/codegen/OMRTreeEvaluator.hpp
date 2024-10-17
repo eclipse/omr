@@ -254,6 +254,42 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
    static TR::Register *MethodExitHookEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *PassThroughEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
+   /** \brief
+    *    This is a helper function used for floating point max/min operations
+    *    when SIMD instructions are available. +0.0 compares as strictly
+    *    greater than -0.0, and NaNs are returned unchanged if given
+    *    (the quiet bit is not set for Signalling NaNs).
+    *    Generates vector instructions.
+    *
+    *    \param node
+    *        The node to evaluate
+    *
+    *    \param cg
+    *       The code generator used to generate the instructions
+    *
+    *    \return
+    *        The register containing the result of the evaluation
+    *
+    */
+   static TR::Register *fpMinMaxVectorHelper(TR::Node *node, TR::CodeGenerator *cg);
+
+   /** \brief
+    *    This is a helper function used for integral and floating point max/min operations.
+    *    For floating points, +0.0 compares as strictly greater than -0.0, and NaNs are
+    *    returned unchanged if given (the quiet bit is not set for Signalling NaNs).
+    *
+    *    \param node
+    *        The node to evaluate
+    *
+    *    \param cg
+    *       The code generator used to generate the instructions
+    *
+    *    \return
+    *        The register containing the result of the evaluation
+    *
+    */
+   static TR::Register *xmaxxminHelper(TR::Node *node, TR::CodeGenerator *cg);
+
    // mask evaluators
    static TR::Register *mAnyTrueEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *mAllTrueEvaluator(TR::Node *node, TR::CodeGenerator *cg);
