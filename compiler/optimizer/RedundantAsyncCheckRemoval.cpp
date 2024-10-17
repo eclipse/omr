@@ -435,7 +435,7 @@ bool TR_RedundantAsyncCheckRemoval::callDoesAnImplicitAsyncCheck(TR::Node *callN
       return false;
 
    if (symbol->isNative() &&
-       (comp()->target().cpu.isPower() || comp()->target().cpu.isX86()) &&
+       (comp()->target().cpu.isPower() || comp()->target().cpu.isX86() || comp()->target().cpu.isZ()) &&
        ((symbol->getRecognizedMethod()==TR::jdk_internal_misc_Unsafe_compareAndExchangeInt) ||
         (symbol->getRecognizedMethod()==TR::jdk_internal_misc_Unsafe_compareAndExchangeLong) ||
         (symbol->getRecognizedMethod()==TR::jdk_internal_misc_Unsafe_compareAndExchangeObject) ||
