@@ -367,14 +367,14 @@ class ValuePropagation : public TR::Optimization
    TR_YesNoMaybe isCastClassObject(TR::VPClassType *type);
 
    /**
-    * Determine whether the component type of an array is, or might be, a primitive value
-    * type.
+    * Determine whether the array is, or might be, null-restricted
+    *
     * \param arrayConstraint The \ref TR::VPConstraint type constraint for the array reference
-    * \returns \c TR_yes if the array's component type is definitely a primitive value type;\n
-    *          \c TR_no if it is definitely not a primitive value type; or\n
+    * \returns \c TR_yes if the array is definitely a null-restricted array;\n
+    *          \c TR_no if it is definitely not a null-restricted array; or\n
     *          \c TR_maybe otherwise.
     */
-   virtual TR_YesNoMaybe isArrayCompTypePrimitiveValueType(TR::VPConstraint *arrayConstraint);
+   virtual TR_YesNoMaybe isArrayNullRestricted(TR::VPConstraint *arrayConstraint);
 
    /**
     * \brief
@@ -616,15 +616,16 @@ class ValuePropagation : public TR::Optimization
      {
      TR_ALLOC(TR_Memory::ValuePropagation)
 
-     TR_NeedRuntimeTestNullRestrictedArrayCopy(TR::Node *dstArrRef, TR::Node *srcArrRef,
+     TR_NeedRuntimeTestNullRestrictedArrayCopy(TR::SymbolReference *dstArrRefSymRef, TR::SymbolReference *srcArrRefSymRef,
                                                TR::TreeTop *ptt, TR::TreeTop *ntt,
                                                TR::Block *originBlock, TR::Block *slowBlock,
                                                bool testDstArray)
-        : _dstArrayRefNode(dstArrRef),  _srcArrayRefNode(srcArrRef), _prevTT(ptt), _nextTT(ntt), _originBlock(originBlock), _slowBlock(slowBlock), _needRuntimeTestDstArray(testDstArray)
+        : _dstArrRefSymRef(dstArrRefSymRef), _srcArrRefSymRef(srcArrRefSymRef), _prevTT(ptt), _nextTT(ntt),
+          _originBlock(originBlock), _slowBlock(slowBlock), _needRuntimeTestDstArray(testDstArray)
         {}
 
-     TR::Node *_dstArrayRefNode;
-     TR::Node *_srcArrayRefNode;
+     TR::SymbolReference * _dstArrRefSymRef;
+     TR::SymbolReference * _srcArrRefSymRef;
 
      TR::TreeTop *_prevTT;
      TR::TreeTop *_nextTT;

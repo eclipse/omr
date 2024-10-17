@@ -1690,7 +1690,7 @@ TR_YesNoMaybe OMR::ValuePropagation::isCastClassObject(TR::VPClassType *type)
    }
 
 
-TR_YesNoMaybe OMR::ValuePropagation::isArrayCompTypePrimitiveValueType(TR::VPConstraint *arrayConstraint)
+TR_YesNoMaybe OMR::ValuePropagation::isArrayNullRestricted(TR::VPConstraint *arrayConstraint)
    {
    return TR::Compiler->om.areFlattenableValueTypesEnabled() ? TR_maybe : TR_no;
    }

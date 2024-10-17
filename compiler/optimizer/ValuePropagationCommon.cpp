@@ -977,10 +977,10 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
 
    bool doRuntimeNullRestrictedTest = false;
    bool needRuntimeTestDstArray = true; // needRuntimeTestDstArray is used only if doRuntimeNullRestrictedTest is true
-   bool areBothArraysFlattenedPrimitiveValueType = false;
+   bool areBothArraysFlattenedNullRestrictedArray = false;
    bool isValueTypeArrayFlatteningEnabled = TR::Compiler->om.isValueTypeArrayFlatteningEnabled();
-   TR_YesNoMaybe isDstArrayCompTypePrimitiveValueType = TR_no;
-   TR_YesNoMaybe isSrcArrayCompTypePrimitiveValueType = TR_no;
+   TR_YesNoMaybe isDstArrayNullRestricted = TR_no;
+   TR_YesNoMaybe isSrcArrayNullRestricted = TR_no;
 
    if (trace() && comp()->generateArraylets())
       traceMsg(comp(), "Detected arraylet arraycopy: %p\n", node);
@@ -1311,7 +1311,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
 
       static char *disableNullRestrictedArrayCopyXForm = feGetEnv("TR_DisableNullRestrictedArraycopyXForm");
 
-      // JEP 401: If null restricted value type is enabled, we need to preform null check on the value being stored
+      // JEP 401: If null-restricted value type is enabled, we need to preform null check on the value being stored
       // in order to throw a NullPointerException if the array is null-restricted and the value to write is null.
       // If it is this case, System.arraycopy cannot be transformed into arraycopy instructions.
       //
@@ -1324,23 +1324,23 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
           !primitiveArray2 &&
           (copyLen != _constantZeroConstraint)) // Not zero length copy
          {
-         isDstArrayCompTypePrimitiveValueType = isArrayCompTypePrimitiveValueType(dstObject);
-         isSrcArrayCompTypePrimitiveValueType = isArrayCompTypePrimitiveValueType(srcObject);
+         isDstArrayNullRestricted = isArrayNullRestricted(dstObject);
+         isSrcArrayNullRestricted = isArrayNullRestricted(srcObject);
 
-         switch (isDstArrayCompTypePrimitiveValueType)
+         switch (isDstArrayNullRestricted)
             {
             case TR_yes:
                {
-               if (isSrcArrayCompTypePrimitiveValueType == TR_yes)
+               if (isSrcArrayNullRestricted == TR_yes)
                   {
                   // Array flattening is not enabled
-                  //    - If both source and destination arrays are primitive VT, they don't contain
+                  //    - If both source and destination arrays are null-restricted, they don't contain
                   //      NULL value. There is no need to check null store
                   //    - Also because flattening is not enabled, we don't need to concern about copying
                   //      between flattened arrays
                   //
                   // Array flattening is enabled
-                  //    - If both source and destination arrays are primitive VT
+                  //    - If both source and destination arrays are null-restricted
                   //        - (1) Both arrays are not flattened, there is no need to do anything
                   //        - (2) Both arrays are flattened, elementSize needs to be updated in order to
                   //          use arraycopy instructions
@@ -1356,7 +1356,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
                      if ((isArrayElementFlattened(dstObject) == TR_yes) &&
                          (isArrayElementFlattened(srcObject) == TR_yes))
                         {
-                        areBothArraysFlattenedPrimitiveValueType = true;
+                        areBothArraysFlattenedNullRestrictedArray = true;
                         elementSize = TR::Compiler->cls.flattenedArrayElementSize(comp(), dstObject->getClass());
 
                         if (trace())
@@ -1369,10 +1369,10 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
                         }
                      }
                   }
-               else // isSrcArrayCompTypePrimitiveValueType == TR_no or TR_maybe
+               else // isSrcArrayNullRestricted == TR_no or TR_maybe
                   {
-                  // The destination is primitive VT array and the source might or might not
-                  // be primitive VT array, do not transform because we need to do null store check and
+                  // The destination is null-restricted array and the source might or might not
+                  // be null-restricted array, do not transform because we need to do null store check and
                   // consider if the arrays are flattened
                   transformTheCall = false;
                   }
@@ -1380,16 +1380,16 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
                }
             case TR_maybe:
                {
-               // If the destination array might or might not be primitive VT array at compile time,
+               // If the destination array might or might not be null-restricted array at compile time,
                // runtime tests are required regardless of the source array type.
                doRuntimeNullRestrictedTest = true;
                break;
                }
-            default: // TR_no == isDstArrayCompTypePrimitiveValueType
+            default: // TR_no == isDstArrayNullRestricted
                {
                if (isValueTypeArrayFlatteningEnabled)
                   {
-                  if (isSrcArrayCompTypePrimitiveValueType == TR_yes)
+                  if (isSrcArrayNullRestricted == TR_yes)
                      {
                      if (isArrayElementFlattened(srcObject) == TR_yes)
                         {
@@ -1400,16 +1400,16 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
                         }
                      // else: As long as the source array is not flattened, no need to do anything here
                      }
-                  else if (isSrcArrayCompTypePrimitiveValueType == TR_maybe)
+                  else if (isSrcArrayNullRestricted == TR_maybe)
                      {
-                     // The source might or might not be a primitive VT array. If it is primitive VT array that is flattened,
+                     // The source might or might not be a null-restricted array. If it is null-restricted array that is flattened,
                      // the arraycopy instruction cannot handle copying from flattened array into non-flattened array since the
                      // destination array is identity type. Need to add runtime check here
                      doRuntimeNullRestrictedTest = true;
                      // We already know the destination array is identity type. No need to insert runtime test here
                      needRuntimeTestDstArray = false;
                      }
-                  // else: isSrcArrayCompTypePrimitiveValueType == TR_no, both destination and source arrays are
+                  // else: isSrcArrayNullRestricted == TR_no, both destination and source arrays are
                   // identity arrays. No need to do anything here
                   }
                // else: As long as array flattening is not enabled, no need to do anything here
@@ -1419,8 +1419,8 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
          }
 
       if (trace())
-         traceMsg(comp(), "%s: n%dn %p transformTheCall %d isSrcArrayCompTypePrimitiveValueType %d isDstArrayCompTypePrimitiveValueType %d doRuntimeNullRestrictedTest %d\n", __FUNCTION__,
-         node->getGlobalIndex(), node, transformTheCall, isSrcArrayCompTypePrimitiveValueType, isDstArrayCompTypePrimitiveValueType, doRuntimeNullRestrictedTest);
+         traceMsg(comp(), "%s: n%dn %p transformTheCall %d isSrcArrayNullRestricted %d isDstArrayNullRestricted %d doRuntimeNullRestrictedTest %d\n", __FUNCTION__,
+         node->getGlobalIndex(), node, transformTheCall, isSrcArrayNullRestricted, isDstArrayNullRestricted, doRuntimeNullRestrictedTest);
       }
 #else
    bool isStringCompressedArrayCopy = false;
@@ -1436,7 +1436,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
          {
          if (trace())
             {
-            comp()->dumpMethodTrees("Trees before modifying for null restricted array check");
+            comp()->dumpMethodTrees("Trees before modifying for null-restricted array check");
             comp()->getDebug()->print(comp()->getOutFile(), comp()->getFlowGraph());
             }
          /*
@@ -1496,6 +1496,9 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
          if (trace())
             traceMsg(comp(),"Creating temps for children of the original call node n%dn %p. new call node n%dn %p\n", oldCallNode->getGlobalIndex(), oldCallNode, newCallNode->getGlobalIndex(), newCallNode);
 
+         TR::SymbolReference * dstArrRefSymRef = NULL;
+         TR::SymbolReference * srcArrRefSymRef = NULL;
+
          // Create temporaries for System.arraycopy arguments and replace the children of the new call node with the temps
          for (int32_t i = 0 ; i < oldCallNode->getNumChildren(); ++i)
             {
@@ -1516,10 +1519,17 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
                _curTree->insertBefore(savedChildTree);
 
                if (trace())
-                  traceMsg(comp(),"Created child n%dn %p for old child n%dn %p of the original call node\n", savedChildNode->getGlobalIndex(), savedChildNode, child->getGlobalIndex(), child);
+                  traceMsg(comp(),"Created child n%dn %p #%d for old child n%dn %p of the original call node\n", savedChildNode->getGlobalIndex(), savedChildNode, newSymbolReference->getReferenceNumber(),
+                     child->getGlobalIndex(), child);
 
                // Create the child for the new call node with a load of the new sym ref
                value = TR::Node::createLoad(newCallNode, newSymbolReference);
+
+               if (child == dstObjNode)
+                  dstArrRefSymRef = newSymbolReference;
+
+               if (child == srcObjNode)
+                  srcArrRefSymRef = newSymbolReference;
                }
 
             if (trace())
@@ -1539,19 +1549,22 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
             nextTT = nextTT->getNextTreeTop();
 
          if (trace())
-            traceMsg(comp(), "%s: n%dn %p current block_%d slowBlock block_%d newCallTree n%dn %p srcObjNode n%dn %p dstObjNode n%dn %p prevTT n%dn %p nextTT n%dn %p\n",
-               __FUNCTION__, node->getGlobalIndex(), node, _curTree->getEnclosingBlock()->getNumber(), slowBlock->getNumber(),
-               newCallTree->getNode()->getGlobalIndex(), newCallTree->getNode(),
-               srcObjNode->getGlobalIndex(), srcObjNode, dstObjNode->getGlobalIndex(), dstObjNode,
+            {
+            traceMsg(comp(), "%s: n%dn %p current block_%d slowBlock block_%d newCallTree n%dn %p prevTT n%dn %p nextTT n%dn %p\n", __FUNCTION__, node->getGlobalIndex(), node,
+               _curTree->getEnclosingBlock()->getNumber(), slowBlock->getNumber(), newCallTree->getNode()->getGlobalIndex(), newCallTree->getNode(),
                prevTT->getNode()->getGlobalIndex(), prevTT->getNode(), nextTT->getNode()->getGlobalIndex(), nextTT->getNode());
 
-         _needRuntimeTestNullRestrictedArrayCopy.add(new (trStackMemory()) TR_NeedRuntimeTestNullRestrictedArrayCopy(dstObjNode, srcObjNode,
+            traceMsg(comp(), "%s: srcObjNode n%dn %p #%d dstObjNode n%dn %p #%d\n", __FUNCTION__, srcObjNode->getGlobalIndex(), srcObjNode, srcArrRefSymRef->getReferenceNumber(),
+               dstObjNode->getGlobalIndex(), dstObjNode, dstArrRefSymRef->getReferenceNumber());
+            }
+
+         _needRuntimeTestNullRestrictedArrayCopy.add(new (trStackMemory()) TR_NeedRuntimeTestNullRestrictedArrayCopy(dstArrRefSymRef, srcArrRefSymRef,
                                                                                                                      prevTT, nextTT,
                                                                                                                      _curTree->getEnclosingBlock(), slowBlock,
                                                                                                                      needRuntimeTestDstArray));
          if (trace())
             {
-            comp()->dumpMethodTrees("Trees after modifying for null restricted array check");
+            comp()->dumpMethodTrees("Trees after modifying for null-restricted array check");
             comp()->getDebug()->print(comp()->getOutFile(), comp()->getFlowGraph());
             }
          }
@@ -1731,7 +1744,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
          else if (srcArrayInfo)
             stride = srcArrayInfo->elementSize();
 
-         stride = areBothArraysFlattenedPrimitiveValueType ? elementSize : stride;
+         stride = areBothArraysFlattenedNullRestrictedArray ? elementSize : stride;
 
          if (stride != 0)
             srcArrayLength->setArrayStride(stride);
@@ -1746,7 +1759,7 @@ void OMR::ValuePropagation::transformArrayCopyCall(TR::Node *node)
          else if (dstArrayInfo)
             stride = dstArrayInfo->elementSize();
 
-         stride = areBothArraysFlattenedPrimitiveValueType ? elementSize : stride;
+         stride = areBothArraysFlattenedNullRestrictedArray ? elementSize : stride;
 
          if (stride != 0)
             dstArrayLength->setArrayStride(stride);
@@ -3644,8 +3657,7 @@ void OMR::ValuePropagation::transformNullRestrictedArrayCopy(TR_NeedRuntimeTestN
     *     Array Flattening Is NOT Enabled:
     *    ================================
     *
-    *           Is dstArray primitive VT?
-    *                 (null restricted)
+    *           Is dstArray null-restricted?
     *                        |
     *              +---------+---------+
     *              |                   |
@@ -3660,15 +3672,14 @@ void OMR::ValuePropagation::transformNullRestrictedArrayCopy(TR_NeedRuntimeTestN
     *    Array Flattening IS Enabled:
     *    ================================
     *
-    *           Is dstArray primitive VT?
-    *                 (null restricted)
+    *           Is dstArray null-restricted?
     *                       |
     *             +---------+---------+
     *             |                   |
     *            Yes                  No
     *             |                   |
     *             v                   v
-    *     System.arrayCopy      Is srcArray primitive VT?
+    *     System.arrayCopy      Is srcArray null-restricted?
     *        (slowBlock)           (could be flattened)
     *                                       |
     *                             +---------+---------+
@@ -3683,7 +3694,7 @@ void OMR::ValuePropagation::transformNullRestrictedArrayCopy(TR_NeedRuntimeTestN
     *    No need to check dstArray(needTestDstArray=false):
     *    ================================
     *
-    *             Is srcArray primitive VT?
+    *             Is srcArray null-restricted?
     *               (could be flattened)
     *                        |
     *              +---------+---------+
@@ -3835,8 +3846,10 @@ slowBlock-> n39n      BBStart <block_10> (freq 0) (cold)
 
    TR_ASSERT_FATAL(needTestSrcArray || needTestDstArray, "needTestSrcArray %d needTestDstArray %d should not both be false\n", needTestSrcArray, needTestDstArray);
 
-   TR::Node *dstArrayRefNode = nullRestrictedArrayCopy->_dstArrayRefNode;
-   TR::Node *srcArrayRefNode = nullRestrictedArrayCopy->_srcArrayRefNode;
+   TR::SymbolReference *dstArrRefSymRef = nullRestrictedArrayCopy->_dstArrRefSymRef;
+   TR::SymbolReference *srcArrRefSymRef = nullRestrictedArrayCopy->_srcArrRefSymRef;
+   TR::Node *dstArrayRefNode = TR::Node::createLoad(dstArrRefSymRef);
+   TR::Node *srcArrayRefNode = TR::Node::createLoad(srcArrRefSymRef);
 
    TR::Block *originBlock = nullRestrictedArrayCopy->_originBlock;
    TR::Block *slowBlock = nullRestrictedArrayCopy->_slowBlock;
@@ -3881,8 +3894,8 @@ slowBlock-> n39n      BBStart <block_10> (freq 0) (cold)
       prevBlock->split(ifDstTree->getNextTreeTop(), cfg, true, true);
       }
 
-   // If destination is not null restricted value type array and array flattening is enabled, we need to check
-   // the source array component type.  If it is null restricted value type, the current arraycopy instructions
+   // If destination is not null-restricted value type array and array flattening is enabled, we need to check
+   // the source array component type.  If it is null-restricted value type, the current arraycopy instructions
    // can't handle copying between flattened and non-flattened arrays.
    if (needTestSrcArray)
       {

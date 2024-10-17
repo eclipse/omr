@@ -188,6 +188,13 @@ TR_FrontEnd::getArrayClassFromComponentClass(TR_OpaqueClassBlock * componentClas
    }
 
 TR_OpaqueClassBlock *
+TR_FrontEnd::getNullRestrictedArrayClassFromComponentClass(TR_OpaqueClassBlock * componentClass)
+   {
+   TR_UNIMPLEMENTED();
+   return 0;
+   }
+
+TR_OpaqueClassBlock *
 TR_FrontEnd::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass)
    {
    TR_UNIMPLEMENTED();
