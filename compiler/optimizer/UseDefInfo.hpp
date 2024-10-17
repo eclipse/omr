@@ -211,7 +211,6 @@ class TR_UseDefInfo
 
    bool getUseDefIsZero(int32_t useIndex);
    bool getUseDef(BitVector &useDef, int32_t useIndex);
-   bool getUseDef_noExpansion(BitVector &useDef, int32_t useIndex);
    private:
    const BitVector &getUseDef_ref(int32_t useIndex, BitVector *defs = NULL);
    const BitVector &getUseDef_ref_body(int32_t useIndex, TR_BitVector *visitedDefs, TR_UseDefInfo::BitVector *defs = NULL);
@@ -243,9 +242,6 @@ class TR_UseDefInfo
 
    // For Languages where an auto can alias a volatile, extra care needs to be taken when setting up use-def
    // The conservative answer is to not index autos that have volatile aliases.
-
-   void setVolatileSymbolsIndexAndRecurse(TR::BitVector &volatileSymbols, int32_t symRefNum);
-   void findAndPopulateVolatileSymbolsIndex(TR::BitVector &volatileSymbols);
 
    bool shouldIndexVolatileSym(TR::SymbolReference *ref, AuxiliaryData &aux);
 
@@ -321,8 +317,6 @@ class TR_UseDefInfo
    public:
    int32_t getNumSymbols() { return _numSymbols; }
    int32_t getMemorySymbolIndex (TR::Node *);
-   bool isPreciseDef(TR::Node *def, TR::Node *use);
-   bool isChildUse(TR::Node *node, int32_t childIndex);
 
    public:
    bool     _useDefForRegs;

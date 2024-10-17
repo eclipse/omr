@@ -432,58 +432,6 @@ bool TR_UseDefInfo::_runReachingDefinitions(TR_ReachingDefinitions& reachingDefi
    return succeeded;
    }
 
-void TR_UseDefInfo::setVolatileSymbolsIndexAndRecurse(TR::BitVector &volatileSymbols, int32_t symRefNum)
-   {
-   TR::SymbolReference* symRef = comp()->getSymRefTab()->getSymRef(symRefNum);
-
-   if (!symRef || !symRef->getSymbol())
-      return;
-
-
-   if(volatileSymbols[symRef->getReferenceNumber()])    //already set, do not need to recurse.
-      return;
-
- //  traceMsg(comp(), "JIAG, setting volatile Symbols for symref %d.\n",symRefNum);
-   volatileSymbols[symRefNum] = true;
-
-
-   TR::SparseBitVector aliases(comp()->allocator());
-   symRef->getUseDefAliases().getAliases(aliases);
-   symRef->getUseonlyAliases().getAliasesAndUnionWith(aliases);
-
-
-   TR::SparseBitVector::Cursor aliasesCursor(aliases);
-   for (aliasesCursor.SetToFirstOne(); aliasesCursor.Valid(); aliasesCursor.SetToNextOne())
-      {
-      TR::SymbolReference *aliasedSymRef = comp()->getSymRefTab()->getSymRef(aliasesCursor);
-
-      if (!aliasedSymRef || !aliasedSymRef->getSymbol())
-         continue;
-
-      setVolatileSymbolsIndexAndRecurse(volatileSymbols,aliasedSymRef->getReferenceNumber());
-      }
-   }
-
-void TR_UseDefInfo::findAndPopulateVolatileSymbolsIndex(TR::BitVector &volatileSymbols)
-   {
-//   traceMsg(comp(), "In findAndPopulateVolatileSymbolsIndex\n");
-   for (int32_t symRefNumber = comp()->getSymRefTab()->getIndexOfFirstSymRef(); unsigned(symRefNumber) < comp()->getSymRefCount(); symRefNumber++)
-      {
- //     traceMsg(comp(), "Considering symRef %d: ",symRefNumber);
-      TR::SymbolReference* symRef = comp()->getSymRefTab()->getSymRef(symRefNumber);
-
-      if (!symRef || !symRef->getSymbol())
-         continue;
-
-      if (symRef->getSymbol()->isVolatile())
-         {
- //        traceMsg(comp(), "it is volatile");
-         setVolatileSymbolsIndexAndRecurse(volatileSymbols, symRefNumber);
-         }
- //     traceMsg(comp(), "\n");
-      }
-   }
-
 void TR_UseDefInfo::fillInDataStructures(AuxiliaryData &aux)
    {
    TR::SymbolReferenceTable *symRefTab = comp()->getSymRefTab();
@@ -2264,14 +2212,6 @@ void TR_UseDefInfo::dereferenceDef(TR_UseDefInfo::BitVector &useDefInfo, int32_t
       }
    }
 
-
-// PLX only
-bool TR_UseDefInfo::isChildUse(TR::Node* node, int32_t childIndex)
-   {
-   TR_ASSERT(childIndex < node->getNumChildren(), "Bad child index");
-   return true;
-   }
-
 void TR_UseDefInfo::buildUseDefs(TR::Node *node, void *vanalysisInfo, TR_BitVector &nodesToBeDereferenced, TR::Node *parent, AuxiliaryData &aux)
    {
    vcount_t visitCount = comp()->getVisitCount();
@@ -2655,12 +2595,6 @@ bool TR_UseDefInfo::getUseDefIsZero(int32_t useIndex)
 bool TR_UseDefInfo::getUseDef(BitVector &useDef, int32_t useIndex)
    {
    useDef.Or(getUseDef_ref(useIndex));
-   return !useDef.IsZero();
-   }
-
-bool TR_UseDefInfo::getUseDef_noExpansion(BitVector &useDef, int32_t useIndex)
-   {
-   useDef.Or(_useDefInfo[useIndex - getFirstUseIndex()]);
    return !useDef.IsZero();
    }
 

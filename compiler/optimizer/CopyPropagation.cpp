@@ -1159,9 +1159,7 @@ void TR_CopyPropagation::replaceCopySymbolReferenceByOriginalIn(TR::SymbolRefere
       if (node->getOpCode().hasSymbolReference())
          {
          TR::SymbolReference *symRef = node->getSymbolReference();
-#ifndef PROPAGATE_GLOBALS
          if (symRef->getReferenceNumber() == copySymbolReference->getReferenceNumber())
-#endif
             {
             if (node->getOpCode().isLoadIndirect())
                {
@@ -1396,13 +1394,11 @@ void TR_CopyPropagation::replaceCopySymbolReferenceByOriginalIn(TR::SymbolRefere
             }
          }
 
-#ifndef PROPAGATE_GLOBALS
       for (int i = 0; i < node->getNumChildren(); i++)
          {
          TR::Node *child = node->getChild(i);
          replaceCopySymbolReferenceByOriginalIn(copySymbolReference, origNode, child, defNode);
          }
-#endif
       }
    }
 
@@ -1589,21 +1585,11 @@ TR::Node *TR_CopyPropagation::areAllDefsInCorrectForm(TR::Node *useNode, const T
 
       TR::SymbolReference *copySymbolReference = defNode->getSymbolReference();
 
-#ifdef PROPAGATE_GLOBALS
-      if (!defNode->getOpCode().isStore())
-         return NULL;
-#else
       if (!defNode->getOpCode().isStoreDirect())
          return NULL;
-#endif
 
-#ifdef PROPAGATE_GLOBALS
-      if (!useDefInfo->isPreciseDef(defNode, useNode))
-         return NULL;
-#else
       if (!defNode->getSymbolReference()->getSymbol()->isAutoOrParm())
          return NULL;
-#endif
 
       if (defNode->getDataType() != useNode->getDataType() ||
           defNode->getSize() != useNode->getSize())
@@ -1927,15 +1913,9 @@ bool TR_CopyPropagation::isCorrectToPropagate(TR::Node *useNode, TR::Node *store
          {
          return true;
          }
-#ifdef PROPAGATE_GLOBALS
-      else if (_lookForOriginalDefs &&
-               currentNode->getOpCode().isStore() &&
-               defs.ValueAt(currentNode->getUseDefIndex()-useDefInfo->getFirstDefIndex()))
-#else
       else if (_lookForOriginalDefs &&
               currentNode->getOpCode().isStoreDirect() &&
               currentNode->getSymbolReference() == storeNode->getSymbolReference())
-#endif
          {
          return true;
          }
@@ -2014,15 +1994,9 @@ bool TR_CopyPropagation::isRedefinedBetweenStoreTreeAnd(TR::list< TR::Node *> & 
             visitPredecessors = false;
             break;
             }
-#ifdef PROPAGATE_GLOBALS
-         else if (_lookForOriginalDefs &&
-                  currentNode->getOpCode().isStore() &&
-                  defs.ValueAt(currentNode->getUseDefIndex()-useDefInfo->getFirstDefIndex()))
-#else
          else if (_lookForOriginalDefs &&
                  currentNode->getOpCode().isStoreDirect() &&
                  currentNode->getSymbolReference() == storeNode->getSymbolReference())
-#endif
             {
             visitPredecessors = false;
             break;
@@ -2091,15 +2065,9 @@ bool TR_CopyPropagation::recursive_isRedefinedBetweenStoreTreeAnd(TR::list< TR::
          {
          return false;
          }
-#ifdef PROPAGATE_GLOBALS
-      else if (_lookForOriginalDefs &&
-               currentNode->getOpCode().isStore() &&
-               defs.ValueAt(currentNode->getUseDefIndex()-useDefInfo->getFirstDefIndex()))
-#else
       else if (_lookForOriginalDefs &&
               currentNode->getOpCode().isStoreDirect() &&
               currentNode->getSymbolReference() == storeNode->getSymbolReference())
-#endif
          {
          return false;
          }
