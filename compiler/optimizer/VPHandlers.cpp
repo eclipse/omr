@@ -583,6 +583,14 @@ static bool findConstant(OMR::ValuePropagation *vp, TR::Node *node)
                            }
                         }
                      }
+                  else if (node->getOpCode().isLoadDirect() &&
+                           !node->hasKnownObjectIndex() &&
+                           !node->getSymbolReference()->hasKnownObjectIndex() &&
+                           node->getSymbolReference()->getSymbol()->isAutoOrParm())
+                     {
+                     if (performTransformation(vp->comp(), "%sSetting known-object obj%d on node [%p]\n", OPT_DETAILS, knownObject->getIndex(), node))
+                         node->setKnownObjectIndex(knownObject->getIndex());
+                     }
                   }
                }
             break;
