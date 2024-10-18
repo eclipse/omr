@@ -62,6 +62,11 @@ typedef struct omrthread_process_time_t {
 	int64_t _userTime;
 } omrthread_process_time_t;
 
+typedef struct omrthread_thread_time_t {
+	int64_t userTime;
+	int64_t sysTime;
+} omrthread_thread_time_t;
+
 typedef struct omrthread_state_t {
 	uintptr_t flags;
 	omrthread_monitor_t blocker;
@@ -1239,6 +1244,15 @@ omrthread_get_jvm_cpu_usage_info(J9ThreadsCpuUsage *cpuUsage);
  */
 void
 omrthread_get_jvm_cpu_usage_info_error_recovery(void);
+
+/**
+ * Gets the system and user CPU time of the current thread.
+ *
+ * @param[out] threadTime the pointer to the thread time structure
+ * @return 0 on success or -1 on failure
+ */
+intptr_t
+omrthread_get_thread_times(omrthread_thread_time_t *threadTime);
 
 /* ---------------- omrthreadattr.c ---------------- */
 

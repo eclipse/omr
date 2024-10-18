@@ -60,7 +60,7 @@ userTimeCpuBurn()
 	}
 }
 
-TEST(ThreadCpuTime, userCpuTimeIncreasesMonotonically)
+TEST(ProcessCpuTime, userCpuTimeIncreasesMonotonically)
 {
 	omrthread_process_time_t cpuTime;
 	omrthread_process_time_t prevCpuTime;
@@ -74,7 +74,7 @@ TEST(ThreadCpuTime, userCpuTimeIncreasesMonotonically)
 	}
 }
 
-TEST(ThreadCpuTime, systemCpuTimeIncreasesMonotonically)
+TEST(ProcessCpuTime, systemCpuTimeIncreasesMonotonically)
 {
 	omrthread_process_time_t cpuTime;
 	omrthread_process_time_t prevCpuTime;
@@ -369,3 +369,38 @@ TEST(ThreadExtendedTest, DISABLED_TestThreadCpuTime)
 	 */
 	ASSERT_TRUE(cpuUsageAft.systemJvmCpuTime >= cpuUsageBef.systemJvmCpuTime);
 }
+
+/* Currently omrthread_get_thread_times is only supported in certain platforms */
+#if defined(LINUX) \
+	|| (defined(OMR_OS_WINDOWS) && !defined(BREW)) \
+	|| defined(AIXPPC)
+TEST(ThreadCpuTime, userCpuTimeIncreasesMonotonically)
+{
+	omrthread_thread_time_t cpuTime;
+	omrthread_thread_time_t prevCpuTime;
+	ASSERT_EQ(omrthread_get_thread_times(&prevCpuTime), 0);
+
+	for (size_t i = 0; i < 500; i += 1) {
+		userTimeCpuBurn();
+		ASSERT_EQ(omrthread_get_thread_times(&cpuTime), 0);
+		ASSERT_GE(cpuTime.userTime, prevCpuTime.userTime);
+		prevCpuTime = cpuTime;
+	}
+}
+
+TEST(ThreadCpuTime, systemCpuTimeIncreasesMonotonically)
+{
+	omrthread_thread_time_t cpuTime;
+	omrthread_thread_time_t prevCpuTime;
+	ASSERT_EQ(omrthread_get_thread_times(&prevCpuTime), 0);
+
+	for (size_t i = 0; i < 500; i += 1) {
+		systemTimeCpuBurn();
+		ASSERT_EQ(omrthread_get_thread_times(&cpuTime), 0);
+		ASSERT_GE(cpuTime.sysTime, prevCpuTime.sysTime);
+		prevCpuTime = cpuTime;
+	}
+}
+#endif /* defined(LINUX) \
+	|| (defined(OMR_OS_WINDOWS) && !defined(BREW)) \
+	|| defined(AIXPPC) */
