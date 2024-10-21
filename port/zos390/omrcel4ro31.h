@@ -124,7 +124,7 @@ omr_cel4ro31_call(OMR_CEL4RO31_infoBlock *infoBlock);
  * @return whether CEL4RO31 runtime support is available.
  */
 BOOLEAN
-omr_cel4ro31_isSupported(void);
+omr_cel4ro31_is_supported(void);
 
 /**
  * A helper routine to return an error message associated with the CEL4RO31 return code.
