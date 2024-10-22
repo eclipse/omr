@@ -241,6 +241,7 @@ class InstOpCode: public OMR::InstOpCode
    {
    enum TR_OpCodeVEX_L : uint8_t
       {
+      VEX_LZ   = 0x0,
       VEX_L128 = 0x0,
       VEX_L256 = 0x1,
       VEX_L512 = 0x2,
