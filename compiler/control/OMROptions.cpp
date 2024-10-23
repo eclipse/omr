@@ -2423,29 +2423,6 @@ OMR::Options::jitLatePostProcess(TR::OptionSet *optionSet, void * jitConfig)
 
       }
 
-#ifdef J9_PROJECT_SPECIFIC
-
-   // Disable regDepCopyRemoval when value types are enabled
-   //
-   // In OpenJ9, the implementation of value types does not behave well with
-   // regDepCopyRemoval. Specifically,  the ifacmp{eq,ne} operations rely on
-   // lowering that requires basic block splitting after GRA.
-   // RegDepCopyRemoval currently leaves the trees in a state that the post
-   // GRA block splitter cannot handle. So, for now, the optimization is
-   // disabled.
-   //
-   // https://github.com/eclipse-openj9/openj9/issues/9712 was opened to track the
-   // work to re-enable the optimization.
-   //
-   // Unfortunately, the design of the option processing framework requires
-   // the disabling code to be in OMR (rather than OpenJ9) and guarded
-   // with J9_PROJECT_SPECIFIC.
-   if (TR::Compiler->om.areValueTypesEnabled())
-      {
-      _disabledOptimizations[regDepCopyRemoval] = true;
-      }
-
-#endif
 
    // The adding of the enumeration of register names takes up a lot
    // of heap storage (as much as 100+ MBs) for very large programs. Here
