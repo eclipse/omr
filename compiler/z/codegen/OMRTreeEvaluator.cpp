@@ -2360,7 +2360,10 @@ getRelocationTargetKindFromSymbol(TR::CodeGenerator* cg, TR::Symbol *sym)
       reloKind = TR_CatchBlockCounter;
    else if (cg->comp()->compileRelocatableCode() && (sym->isEnterEventHookAddress() || sym->isExitEventHookAddress()))
       reloKind = TR_MethodEnterExitHookAddress;
-
+   else if (cg->comp()->compileRelocatableCode() && sym->isCallSiteTableEntry())
+      reloKind = TR_CallsiteTableEntryAddress;
+   else if (cg->comp()->compileRelocatableCode() && sym->isMethodTypeTableEntry())
+      reloKind = TR_MethodTypeTableEntryAddress;
    return reloKind;
    }
 
@@ -8332,6 +8335,14 @@ OMR::Z::TreeEvaluator::checkAndSetMemRefDataSnippetRelocationType(TR::Node * nod
       {
       reloType = TR_MethodEnterExitHookAddress;
       }
+   else if (cg->comp()->compileRelocatableCode() && node->getSymbol()->isCallSiteTableEntry())
+      {
+      reloType = TR_CallsiteTableEntryAddress;
+      }
+   else if (cg->comp()->compileRelocatableCode() && node->getSymbol()->isMethodTypeTableEntry())
+      {
+      reloType = TR_MethodTypeTableEntryAddress;
+      }
 
    if (reloType != 0)
       {
@@ -11441,6 +11452,18 @@ OMR::Z::TreeEvaluator::loadaddrEvaluator(TR::Node * node, TR::CodeGenerator * cg
                cursor = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, targetRegister,
                                                         (uintptr_t) node->getSymbol()->getStaticSymbol()->getStaticAddress(),
                                                         TR_MethodEnterExitHookAddress, NULL, NULL, NULL);
+               }
+            else if (comp->compileRelocatableCode() && sym && sym->isCallSiteTableEntry())
+               {
+               cursor = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, targetRegister,
+                                                        (uintptr_t) node->getSymbol()->getStaticSymbol()->getStaticAddress(),
+                                                        TR_CallsiteTableEntryAddress, NULL, NULL, NULL);
+               }
+            else if (comp->compileRelocatableCode() && sym && sym->isMethodTypeTableEntry())
+               {
+               cursor = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, targetRegister,
+                                                        (uintptr_t) node->getSymbol()->getStaticSymbol()->getStaticAddress(),
+                                                        TR_MethodTypeTableEntryAddress, NULL, NULL, NULL);
                }
             else
                {

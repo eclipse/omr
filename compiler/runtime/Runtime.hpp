@@ -349,7 +349,11 @@ typedef enum
    TR_CatchBlockCounter                   = 113,
    TR_StartPC                             = 114,
    TR_MethodEnterExitHookAddress          = 115,
-   TR_NumExternalRelocationKinds          = 116,
+   TR_ValidateDynamicMethodFromCallsiteIndex = 116,
+   TR_ValidateHandleMethodFromCPIndex     = 117,
+   TR_CallsiteTableEntryAddress           = 118,
+   TR_MethodTypeTableEntryAddress         = 119,
+   TR_NumExternalRelocationKinds          = 120,
    TR_ExternalRelocationTargetKindMask    = 0xff,
    } TR_ExternalRelocationTargetKind;
 

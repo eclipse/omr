@@ -5936,6 +5936,26 @@ addMetaDataForLoadAddressConstantFixed(TR::CodeGenerator *cg, TR::Node *node, TR
             TR_MethodEnterExitHookAddress, cg);
          break;
          }
+
+      case TR_CallsiteTableEntryAddress:
+         {
+         relo = new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+            firstInstruction,
+            (uint8_t *)node->getSymbolReference(),
+            NULL,
+            TR_CallsiteTableEntryAddress, cg);
+         break;
+         }
+
+      case TR_MethodTypeTableEntryAddress:
+         {
+         relo = new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+            firstInstruction,
+            (uint8_t *)node->getSymbolReference(),
+            NULL,
+            TR_MethodTypeTableEntryAddress, cg);
+         break;
+         }
       }
 
    if (!relo)
