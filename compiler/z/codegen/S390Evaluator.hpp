@@ -154,7 +154,7 @@ template <uint32_t numberOfBits>
 TR::Register * genericLoad(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * tempMR, TR::Register * srcRegister);
 
 template <uint32_t numberOfBits, uint32_t numberOfExtendBits, enum LoadForm form>
-#if defined(__IBMCPP__) || defined(__ibmxl__)
+#if defined(__IBMCPP__) || defined(__ibmxl__) || defined(__open_xl__)
 inline
 #endif
 TR::Register * genericLoadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * tempMR, TR::Register * srcRegister, bool isSourceSigned, bool couldIgnoreExtend);

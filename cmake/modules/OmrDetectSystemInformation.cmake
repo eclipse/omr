@@ -193,10 +193,21 @@ macro(omr_detect_system_information)
 			if("${CMAKE_C_SIMULATE_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
 				# clang on Windows mimics MSVC
 				set(_OMR_TOOLCONFIG "msvc")
-			else()
-				# TODO we don't actually have a clang config
-				# just use GNU config
-				set(_OMR_TOOLCONFIG "gnu")
+			elseif(CMAKE_C_COMPILER_ID MATCHES "^Clang$")
+                                # OpenXL17 uses CMAKE_C_COMPILER_ID "Clang"
+                                set(_OMR_TOOLCONFIG "gnu")
+                                set(CMAKE_C_COMPILER_IS_OPENXL TRUE CACHE BOOL "OpenXL is the C compiler")
+				if(CMAKE_C_COMPILER_IS_OPENXL)
+					set(OMR_ENV_OPENXL 1)
+					set(ENV{OMR_ENV_OPENXL} ${OMR_ENV_OPENXL})
+				else()
+					set(OMR_ENV_OPENXL 0)
+                                        set(ENV{OMR_ENV_OPENXL} ${OMR_ENV_OPENXL})
+				endif()
+                        else()
+                                # TODO we don't actually have a clang config
+                                # just use GNU config
+                                set(_OMR_TOOLCONFIG "gnu")
 			endif()
 		elseif(CMAKE_C_COMPILER_ID MATCHES "^XL(Clang)?$" OR CMAKE_C_COMPILER_ID STREQUAL "zOS")
 			# In CMake 3.14 and prior, XLClang uses CMAKE_C_COMPILER_ID "XL"

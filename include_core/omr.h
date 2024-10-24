@@ -555,7 +555,8 @@ const char * const *OMR_Glue_GetMethodDictionaryPropertyNames(void);
  * (__xlC__ is defined by xlC_r, __ibmxl_version__ is defined by xlclang++).
  */
 #if (defined(__xlC__) && ((__xlC__ >> 8) >= 16)) \
- || (defined(__ibmxl_version__) && (__ibmxl_version__ >= 16))
+ || (defined(__ibmxl_version__) && (__ibmxl_version__ >= 16)) \
+ || defined(__open_xl__)
 #define ddr_constant(name, value) static enum { name = value } ddr_ref_ ## name
 #else /* defined(__ibmxl_version__) && (__ibmxl_version__ >= 16) */
 #define ddr_constant(name, value)        enum { name = value }

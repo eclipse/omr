@@ -33,7 +33,7 @@
 #include <tpf/cmpswp.h>
 #endif
 
-#if defined(__xlC__) && defined(AIXPPC)
+#if (defined(__xlC__) || defined(__open_xl__)) && defined(AIXPPC)
 #include <sys/atomic_op.h>
 #endif
 
@@ -184,7 +184,7 @@ public:
 		_ReadWriteBarrier();
 #elif defined(J9ZOS390) /* _MSC_VER */
 		__fence();
-#elif defined(__xlC__) /* J9ZOS390 */
+#elif (defined(__xlC__) || defined(__open_xl__)) /* J9ZOS390 */
 		asm volatile("");
 #else /* __xlC__ */
 #error Unknown compiler
@@ -352,7 +352,7 @@ public:
 #if defined(OMRZTPF)
 		cs((cs_t *)&oldValue, (cs_t *)address, (cs_t)newValue);
 		return oldValue;
-#elif defined(__xlC__) /* defined(OMRZTPF) */
+#elif (defined(__xlC__) || defined(__open_xl__)) /* defined(OMRZTPF) */
 		__compare_and_swap((volatile int*)address, (int*)&oldValue, (int)newValue);
 		return oldValue;
 #elif defined(__GNUC__)  /* defined(__xlC__) */
@@ -418,7 +418,7 @@ public:
 #elif defined(OMRZTPF) /* defined(OMR_ARCH_POWER) && !defined(OMR_ENV_DATA64) */
 		csg((csg_t *)&oldValue, (csg_t *)address, (csg_t)newValue);
 		return oldValue;
-#elif defined(__xlC__) /* defined(OMRZTPF) */
+#elif (defined(__xlC__)|| defined(__open_xl__)) /* defined(OMRZTPF) */
 #if defined(__64BIT__) || !defined(AIXPPC)
 		__compare_and_swaplp((volatile long*)address, (long*)&oldValue, (long)newValue);
 #else /* defined(__64BIT__) */
@@ -508,8 +508,8 @@ public:
 		readWriteBarrier();
 #if defined(__GNUC__)
 		return (uint64_t)__sync_lock_test_and_set(address, newValue);
-#elif defined(__xlC__) /* defined(__GNUC__) */
-#if ((__xlC__ > 0x0d01) || ((__xlC__ == 0x0d01) && (__xlC_ver__ >= 0x00000300))) /* XLC >= 13.1.3 */
+#elif (defined(__xlC__)) /* defined(__GNUC__) */
+#if ((__xlC__ > 0x0d01) || ((__xlC__ == 0x0d01) && (__xlC_ver__ >= 0x00000300))) /* XLC >= 13.1.3 OR OpenXL */
 		return (uint64_t)__fetch_and_swaplp((volatile unsigned long *)address, (unsigned long)newValue);
 #else /* ((__xlC__ > 0x0d01) || ((__xlC__ == 0x0d01) && (__xlC_ver__ >= 0x00000300))) */
 		return (uint64_t)__fetch_and_swaplp((volatile long *)address, (long)newValue);

@@ -2137,7 +2137,7 @@ static void assign_candidate_loop_trace_increment(TR::Compilation *comp, TR::Reg
 bool
 OMR::RegisterCandidates::assign(TR::Block ** cfgBlocks, int32_t numberOfBlocks, int32_t & lowestNumber, int32_t & highestNumber)
    {
-#if (defined(__IBMCPP__) || defined(__IBMC__)) && !defined(__ibmxl__)
+#if (defined(__IBMCPP__) || defined(__IBMC__)) && !(defined(__ibmxl__) || defined(__open_xl__))
    // __func__ is not defined for this function on XLC compilers (Notably XLC on Linux PPC and ZOS)
    static const char __func__[] = "OMR::RegisterCandidates::assign";
 #endif

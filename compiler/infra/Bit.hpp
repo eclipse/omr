@@ -98,7 +98,7 @@ static inline bool contiguousBits(uint64_t lmask)
    return contiguousBits((int64_t) lmask);
    }
 
-#if defined(TR_HOST_POWER)  && (defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__))
+#if defined(TR_HOST_POWER)  && (defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__) || defined(__open_xl__))
 #include <builtins.h>
 
 // Return a count 0..32 of leading zeroes in the given word

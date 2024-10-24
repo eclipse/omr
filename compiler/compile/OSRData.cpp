@@ -1515,7 +1515,7 @@ bool TR_OSRCompilationData::TR_ScratchBufferInfo::operator==(const TR_ScratchBuf
 
 #if (defined(TR_HOST_POWER) && defined(TR_TARGET_POWER)                       \
            || defined(TR_HOST_S390) && defined(TR_TARGET_S390))               \
-        && defined(__IBMCPP__)
+        && (defined(__IBMCPP__) || defined(__open_xl__) && defined(__cplusplus))
 __attribute__((__noinline__))
 //This tiny function when inlined by xlC 12 or later at -O3 breaks java -version
 //on Power and causes intermittent crashes on z/OS with xlC 2.1.1
