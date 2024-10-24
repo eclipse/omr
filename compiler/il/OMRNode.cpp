@@ -3911,13 +3911,25 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
                   }
                else
                   {
-                  newArrayRef = comp->getSymRefTab()->
-                     createTemporary(comp->getMethodSymbol(), TR::Address);
+                  TR::Node *arrayObjectNode = NULL;
+                  TR::Node *arrayLoadNode = NULL;
 
-                  TR::Node *newStore = TR::Node::createStore(newArrayRef, child);
+                  if (child->isDataAddrPointer())
+                     arrayObjectNode = child->getFirstChild();
+
+                  newArrayRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Address);
+                  TR::Node *newStore = TR::Node::createStore(newArrayRef, child->isDataAddrPointer() ? arrayObjectNode : child);
                   newStoreTree = TR::TreeTop::create(comp, newStore);
+
                   newArrayRef->getSymbol()->setPinningArrayPointer();
                   pinningArray = newArrayRef->getSymbol()->castToAutoSymbol();
+
+                  if (child->isDataAddrPointer())
+                     {
+                     arrayLoadNode = TR::Node::createLoad(arrayObjectNode, newArrayRef);
+                     child->setAndIncChild(0, arrayLoadNode);
+                     arrayObjectNode->recursivelyDecReferenceCount();
+                     }
                   }
                }
             }
