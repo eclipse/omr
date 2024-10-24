@@ -248,6 +248,7 @@ class InstOpCode: public OMR::InstOpCode
       EVEX_L128 = 0x4,
       EVEX_L256 = 0x5,
       EVEX_L512 = 0x6,
+      VEX_LZ    = 0x8,
       };
    enum TR_OpCodeVEX_v : uint8_t
       {
@@ -293,7 +294,7 @@ class InstOpCode: public OMR::InstOpCode
       };
    struct OpCode_t
       {
-      uint8_t vex_l : 3;
+      uint8_t vex_l : 4;
       uint8_t vex_v : 1;
       uint8_t prefixes : 3;
       uint8_t rex_w : 1;

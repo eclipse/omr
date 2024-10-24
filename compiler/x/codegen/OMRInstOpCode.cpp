@@ -86,7 +86,7 @@ template <typename TBuffer> typename TBuffer::cursor_t OMR::X86::InstOpCode::OpC
 
    if (encoding == OMR::X86::Default)
       {
-      enc = comp->target().cpu.supportsAVX() ? vex_l : OMR::X86::Legacy;
+      enc = (comp->target().cpu.supportsAVX() || vex_l == VEX_LZ) ? vex_l : OMR::X86::Legacy;
       }
 
    TBuffer buffer(cursor);
@@ -107,7 +107,7 @@ template <typename TBuffer> typename TBuffer::cursor_t OMR::X86::InstOpCode::OpC
 
    if (enc != VEX_L___)
       {
-      if (enc >> 2)
+      if (enc >> 2 && enc != VEX_LZ)
          {
          TR::Instruction::EVEX vex(rex, modrm_opcode);
          vex.mm = escape;
