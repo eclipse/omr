@@ -4237,6 +4237,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_ARM64interfaceCompleteSlot2:                      return "_interfaceCompleteSlot2";
          case TR_ARM64interfaceSlotsUnavailable:                   return "_interfaceSlotsUnavailable";
          case TR_ARM64PatchGCRHelper:                              return "_patchGCRHelper" ;
+         case TR_ARM64arrayTranslateTRTO255:                       return "__arrayTranslateTRTO255";
          }
       }
 #endif

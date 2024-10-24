@@ -6400,10 +6400,74 @@ OMR::ARM64::TreeEvaluator::arraytranslateAndTestEvaluator(TR::Node *node, TR::Co
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::arraytranslateEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-	{
-	// TODO:ARM64: Enable TR::TreeEvaluator::arraytranslateEvaluator in compiler/aarch64/codegen/TreeEvaluatorTable.hpp when Implemented.
-	return OMR::ARM64::TreeEvaluator::unImpOpEvaluator(node, cg);
-	}
+   {
+   // tree looks as follows:
+   // arraytranslate
+   //    (0) input ptr
+   //    (1) output ptr
+   //    (2) translation table (dummy)
+   //    (3) stop character (terminal character, either 0xff00ff00 (ISO8859) or 0xff80ff80 (ASCII)
+   //    (4) input length (in elements)
+   //    (5) stopping char (dummy)
+   //
+   // Number of translated elements is returned
+
+   TR::Compilation *comp = cg->comp();
+
+   TR_ASSERT_FATAL(!node->isSourceByteArrayTranslate(), "Source is byte[] for arraytranslate");
+   TR_ASSERT_FATAL(node->isTargetByteArrayTranslate(), "Target is char[] for arraytranslate");
+   TR_ASSERT_FATAL(node->getChild(3)->getOpCodeValue() == TR::iconst && node->getChild(3)->getInt() == 0x0ff00ff00, "Non-ISO8859 stop character for arraytranslate");
+
+   static bool verboseArrayTranslate = (feGetEnv("TR_verboseArrayTranslate") != NULL);
+   if (verboseArrayTranslate)
+      {
+      fprintf(stderr, "arrayTranslateTRTO255: %s @ %s\n",
+         comp->signature(),
+         comp->getHotnessName(comp->getMethodHotness())
+         );
+      }
+
+   TR::Register *inputReg = cg->gprClobberEvaluate(node->getChild(0));
+   TR::Register *outputReg = cg->gprClobberEvaluate(node->getChild(1));
+   TR::Register *inputLenReg = cg->gprClobberEvaluate(node->getChild(4));
+   TR::Register *outputLenReg = cg->allocateRegister();
+
+   int noOfDependecies = 10;
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, noOfDependecies, cg->trMemory());
+
+   deps->addPreCondition(inputReg, TR::RealRegister::x0);
+
+   deps->addPostCondition(outputLenReg, TR::RealRegister::x0);
+   deps->addPostCondition(outputReg, TR::RealRegister::x1);
+   deps->addPostCondition(inputLenReg, TR::RealRegister::x2);
+
+   // Clobbered by the helper
+   TR::Register *clobberedReg;
+   deps->addPostCondition(clobberedReg = cg->allocateRegister(), TR::RealRegister::x4);
+   cg->stopUsingRegister(clobberedReg);
+   deps->addPostCondition(clobberedReg = cg->allocateRegister(), TR::RealRegister::x5);
+   cg->stopUsingRegister(clobberedReg);
+   deps->addPostCondition(clobberedReg = cg->allocateRegister(), TR::RealRegister::x6);
+   cg->stopUsingRegister(clobberedReg);
+
+   deps->addPostCondition(clobberedReg = cg->allocateRegister(TR_VRF), TR::RealRegister::v0);
+   cg->stopUsingRegister(clobberedReg);
+   deps->addPostCondition(clobberedReg = cg->allocateRegister(TR_VRF), TR::RealRegister::v1);
+   cg->stopUsingRegister(clobberedReg);
+   deps->addPostCondition(clobberedReg = cg->allocateRegister(TR_VRF), TR::RealRegister::v2);
+   cg->stopUsingRegister(clobberedReg);
+
+   // Array Translate helper call
+   TR_RuntimeHelper helper = TR_ARM64arrayTranslateTRTO255;
+   TR::SymbolReference *helperSym = cg->symRefTab()->findOrCreateRuntimeHelper(helper);
+   uintptr_t addr = reinterpret_cast<uintptr_t>(helperSym->getMethodAddress());
+   generateImmSymInstruction(cg, TR::InstOpCode::bl, node, addr, deps, helperSym, NULL);
+
+   cg->machine()->setLinkRegisterKilled(true);
+   node->setRegister(outputLenReg);
+   return outputLenReg;
+   }
 
 TR::Register *
 OMR::ARM64::TreeEvaluator::arraysetEvaluator(TR::Node *node, TR::CodeGenerator *cg)
