@@ -990,9 +990,6 @@ TR_Debug::nodePrintAllFlags(TR::Node *node, TR_PrettyPrinterString &output)
    FLAG(chkCannotTrackLocalStringUses, "cannotTrackLocalStringUses");
    FLAG(chkCharArrayTRT, "charArrayTRT");
    FLAG(chkEscapesInColdBlock, "escapesInColdBlock");
-#ifdef J9_PROJECT_SPECIFIC
-   FLAG(chkDontInlineUnsafePutOrderedCall, "dontInlineUnsafePutOrderedCall");
-#endif
    FLAG(chkHeapificationStore, "HeapificationStore");
    FLAG(chkHeapificationAlloc, "HeapificationAlloc");
    FLAG(chkIdentityless, "Identityless");
