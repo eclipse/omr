@@ -264,9 +264,9 @@ static bool isSafeToReplaceNode(TR::Node *currentNode, TR::TreeTop *curTreeTop, 
    if (isUnresolvedReference)
       return false;
 
-   bool mayBeVolatileReference = currentNode->mightHaveVolatileSymbolReference();
-   // Do not swing down volatile nodes
-   if (mayBeVolatileReference)
+   bool mayBeOpaqueReference = currentNode->mightHaveOpaqueSymbolReference();
+   // Do not swing down opaque nodes
+   if (mayBeOpaqueReference)
       return false;
 
    // Now scan forwards through the trees looking for the next use and checking
@@ -306,7 +306,7 @@ static bool isSafeToReplaceNode(TR::Node *currentNode, TR::TreeTop *curTreeTop, 
        *    => xload/xloadi a.volatileField
        *    ...
        */
-      //if (mayBeVolatileReference && !canMoveIfVolatile)
+      //if (mayBeOpaqueReference && !canMoveIfVolatile)
       //   return false;
 
       if (nodeInSubTree)
@@ -338,7 +338,7 @@ static bool isSafeToReplaceNode(TR::Node *currentNode, TR::TreeTop *curTreeTop, 
             treeInfo->setHeight(height);
             }
 
-         if (mayBeVolatileReference)
+         if (mayBeOpaqueReference)
             dumpOptDetails(opt->comp(), "%sit is safe to remove volatile field load tree n%dn\n", opt->optDetailString(), currentNode->getGlobalIndex());
          return true;
          }
@@ -1068,7 +1068,7 @@ int32_t TR::DeadTreesElimination::process(TR::TreeTop *startTree, TR::TreeTop *e
                //    iloadi (volatile)
                // TT3
 
-               if (!node->getFirstChild()->mightHaveVolatileSymbolReference() &&
+               if (!node->getFirstChild()->mightHaveOpaqueSymbolReference() &&
                    lastNode->getOpCode().isIf() && !lastNode->getOpCode().isCompBranchOnly() &&
                    prevLastNode->getOpCode().isStoreReg() &&
                    ((prevLastNode->getFirstChild() == lastNode->getFirstChild()) ||

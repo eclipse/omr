@@ -709,7 +709,7 @@ bool TR_LocalAnalysisInfo::isCallLike(TR::Node *node) {
 
    if (node->getOpCode().hasSymbolReference())
       {
-      if (node->getSymbolReference()->getSymbol()->isVolatile() ||
+      if (node->getSymbolReference()->getSymbol()->isOpaque() ||
           (node->getSymbolReference()->getSymbol()->isMethodMetaData() &&
            !node->getSymbolReference()->getSymbol()->isImmutableField()))
          return true;

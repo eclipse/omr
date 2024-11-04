@@ -2003,7 +2003,7 @@ bool nodeContainsCall(TR::Node *node, vcount_t visitCount)
          node->getOpCodeValue() == TR::monexit ||
          (node->getOpCode().isStore() && node->getSymbolReference()->getSymbol()->isStatic()) ||
          (node->getOpCode().hasSymbolReference() && node->getSymbolReference()->isUnresolved()) ||
-         (node->getOpCode().hasSymbolReference() && node->getSymbol()->isVolatile()))
+         (node->getOpCode().hasSymbolReference() && node->getSymbol()->isOpaque()))
       return true;
 
    int32_t i;

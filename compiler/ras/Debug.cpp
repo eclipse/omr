@@ -1070,7 +1070,7 @@ TR_Debug::print(TR::SymbolReference * symRef, TR_PrettyPrinterString& output, bo
          }
       if (symRef->getSymbol()->isFinal())
          symRefKind.appends(" final");
-      if (!symRef->getSymbol()->isTransparent()) // only need to print opaque access orderings
+      if (symRef->getSymbol()->isOpaque())
          symRefKind.appendf(" %s", TR::Symbol::getMemoryOrderingName(symRef->getSymbol()->getMemoryOrdering()));
       switch (sym->getKind())
          {
@@ -1208,7 +1208,7 @@ TR_Debug::print(TR::SymbolReference * symRef, TR_PrettyPrinterString& output, bo
 
           output.appendf(")");
 
-          if (!sym->isTransparent())
+          if (sym->isOpaque())
              {
              output.appendf(" [%s]", TR::Symbol::getMemoryOrderingName(sym->getMemoryOrdering()));
              }
