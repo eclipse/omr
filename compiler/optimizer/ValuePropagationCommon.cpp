@@ -2404,7 +2404,6 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
    bool isISO88591Encoder = (rm == TR::sun_nio_cs_ISO_8859_1_Encoder_encodeISOArray
                              || rm == TR::java_lang_StringCoding_implEncodeISOArray);
    bool isAsciiEncoder = (rm == TR::java_lang_StringCoding_implEncodeAsciiArray);
-   bool isISO88591Decoder = (rm == TR::sun_nio_cs_ISO_8859_1_Decoder_decodeISO8859_1);
    bool isSBCSEncoder = (rm == TR::sun_nio_cs_ext_SBCS_Encoder_encodeSBCS)? true:false;
    bool isSBCSDecoder = (rm == TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS)? true:false;
    bool isEncodeUtf16 = (rm == TR::sun_nio_cs_UTF_16_Encoder_encodeUTF16Big || rm == TR::sun_nio_cs_UTF_16_Encoder_encodeUTF16Little);
@@ -2472,8 +2471,7 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
       strideNode = TR::Node::create(callNode, TR::iconst, 0, 2);
 
    if ( isISO88591Encoder || isAsciiEncoder || isSBCSEncoder || isEncodeUtf16 ||
-       (rm == TR::sun_nio_cs_US_ASCII_Encoder_encodeASCII)         ||
-       (rm == TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8))
+       (rm == TR::sun_nio_cs_US_ASCII_Encoder_encodeASCII))
        encode = true;
 
 #if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
@@ -2572,12 +2570,7 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
       arrayTranslateNode->setTableBackedByRawStorage(true);
       if (cg()->getSupportsArrayTranslateTROTNoBreak() ||cg()->getSupportsArrayTranslateTROT())
          {//X or P
-
-         if (isISO88591Decoder)
-            termchar = 0xFFFF;
-         else
-            termchar = 0x00;
-
+         termchar = 0x00;
          tableNode = TR::Node::create(callNode, TR::iconst, 0, 0); //dummy table node, it's not gonna be used
          }
       else
@@ -2587,7 +2580,7 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
           if (genSIMD)
              {
              tableNode = TR::Node::create(callNode, TR::aconst, 0, 0); //dummy table node, it's not gonna be used
-             stopIndex = isISO88591Decoder ? 255: 127;
+             stopIndex = 127;
              }
           else
             {
@@ -2596,7 +2589,7 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
             for (i = 0 ; i < 128; i++)
                table[i] = i;
             for (i = 128; i < 256; i++)
-               table[i] = isISO88591Decoder ? i : -1;
+               table[i] = -1;
 
             tableNode = createTableLoad(comp(), callNode, 8, 16, table, false);
             }
@@ -4420,13 +4413,10 @@ void OMR::ValuePropagation::transformConverterCall(TR::TreeTop *callTree)
             break;
          case TR::sun_nio_cs_ISO_8859_1_Encoder_encodeISOArray:
          case TR::java_lang_StringCoding_implEncodeISOArray:
-         case TR::sun_nio_cs_ISO_8859_1_Decoder_decodeISO8859_1:
          case TR::sun_nio_cs_US_ASCII_Encoder_encodeASCII:
          case TR::sun_nio_cs_US_ASCII_Decoder_decodeASCII:
          case TR::java_lang_StringCoding_implEncodeAsciiArray:
          case TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS:
-         case TR::sun_nio_cs_UTF_8_Decoder_decodeUTF_8:
-         case TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8:
          default:
             threshold = 0;
             break;
