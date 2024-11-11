@@ -2240,6 +2240,182 @@ OMR::Power::TreeEvaluator::lbitpermuteEvaluator(TR::Node *node, TR::CodeGenerato
    return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
    }
 
+static inline TR::Register*
+compressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg, TR::DataType type)
+   {
+   TR::Node *srcNode = node->getFirstChild();
+   TR::Node *maskNode = node->getSecondChild();
+   TR::Register *srcReg = cg->evaluate(srcNode);
+   TR::Register *maskReg = NULL;
+   TR::Register *resReg = cg->allocateRegister();
+
+   if (type != TR::Int64)
+      {
+      TR::InstOpCode::Mnemonic loadOpcode;
+      uint64_t maskConst;
+      uint32_t length;
+      switch (type)
+         {
+         case TR::Int32:
+            loadOpcode = TR::InstOpCode::lwz;
+            maskConst = CONSTANT64(0x00000000ffffffff);
+            length = 4;
+            break;
+         case TR::Int16:
+            loadOpcode = TR::InstOpCode::lhz;
+            maskConst = CONSTANT64(0x000000000000ffff);
+            length = 2;
+            break;
+         case TR::Int8:
+            loadOpcode = TR::InstOpCode::lbz;
+            maskConst = CONSTANT64(0x00000000000000ff);
+            length = 1;
+            break;
+         default:
+            TR_ASSERT_FATAL(false, "Unrecognized compressbits type %s\n", type.toString());
+            break;
+         }
+
+      if (maskNode->getReferenceCount()==1 &&
+          maskNode->getOpCode().isMemoryReference() && (maskNode->getRegister() == NULL))
+         {
+         maskReg = cg->allocateRegister();
+         TR::LoadStoreHandler::generateLoadNodeSequence(cg, maskReg, maskNode, loadOpcode, length);
+         }
+      else
+         {
+         maskReg = cg->evaluate(maskNode);
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicl, node, maskReg, maskReg, 0, maskConst);
+         }
+      }
+   else
+      {
+      maskReg = cg->evaluate(maskNode);
+      }
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::pextd, node, resReg, srcReg, maskReg);
+
+   cg->decReferenceCount(srcNode);
+   cg->decReferenceCount(maskNode);
+   cg->stopUsingRegister(srcReg);
+   cg->stopUsingRegister(maskReg);
+   node->setRegister(resReg);
+
+   return resReg;
+   }
+
+TR::Register*
+OMR::Power::TreeEvaluator::bcompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return compressbitsEvaluator(node, cg, TR::Int8);
+   }
+
+TR::Register*
+OMR::Power::TreeEvaluator::scompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return compressbitsEvaluator(node, cg, TR::Int16);
+   }
+
+TR::Register*
+OMR::Power::TreeEvaluator::icompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return compressbitsEvaluator(node, cg, TR::Int32);
+   }
+
+TR::Register*
+OMR::Power::TreeEvaluator::lcompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return compressbitsEvaluator(node, cg, TR::Int64);
+   }
+
+static TR::Register*
+expandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg, TR::DataType type)
+   {
+   TR::Node *srcNode = node->getFirstChild();
+   TR::Node *maskNode = node->getSecondChild();
+   TR::Register *srcReg = NULL;
+   TR::Register *maskReg = cg->evaluate(maskNode);
+   TR::Register *resReg = cg->allocateRegister();
+
+   if (type != TR::Int64)
+      {
+      TR::InstOpCode::Mnemonic loadOpcode;
+      uint64_t maskConst;
+      uint32_t length;
+      switch (type)
+         {
+         case TR::Int32:
+            loadOpcode = TR::InstOpCode::lwz;
+            maskConst = CONSTANT64(0x00000000ffffffff);
+            length = 4;
+            break;
+         case TR::Int16:
+            loadOpcode = TR::InstOpCode::lhz;
+            maskConst = CONSTANT64(0x000000000000ffff);
+            length = 2;
+            break;
+         case TR::Int8:
+            loadOpcode = TR::InstOpCode::lbz;
+            maskConst = CONSTANT64(0x00000000000000ff);
+            length = 1;
+            break;
+         default:
+            TR_ASSERT_FATAL(false, "Unrecognized compressbits type %s\n", type.toString());
+            break;
+         }
+
+      if (srcNode->getReferenceCount()==1 &&
+          srcNode->getOpCode().isMemoryReference() && (srcNode->getRegister() == NULL))
+         {
+         srcReg = cg->allocateRegister();
+         TR::LoadStoreHandler::generateLoadNodeSequence(cg, srcReg, srcNode, loadOpcode, length);
+         }
+      else
+         {
+         srcReg = cg->evaluate(srcNode);
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicl, node, srcReg, srcReg, 0, maskConst);
+         }
+      }
+   else
+      {
+      srcReg = cg->gprClobberEvaluate(srcNode);
+      }
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::pdepd, node, resReg, srcReg, maskReg);
+
+   cg->decReferenceCount(maskNode);
+   cg->decReferenceCount(srcNode);
+   cg->stopUsingRegister(srcReg);
+   cg->stopUsingRegister(maskReg);
+   node->setRegister(resReg);
+
+   return resReg;
+   }
+
+TR::Register*
+OMR::Power::TreeEvaluator::bexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return expandbitsEvaluator(node, cg, TR::Int8);
+   }
+
+TR::Register*
+OMR::Power::TreeEvaluator::sexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return expandbitsEvaluator(node, cg, TR::Int16);
+   }
+
+TR::Register*
+OMR::Power::TreeEvaluator::iexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return expandbitsEvaluator(node, cg, TR::Int32);
+   }
+
+TR::Register*
+OMR::Power::TreeEvaluator::lexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return expandbitsEvaluator(node, cg, TR::Int64);
+   }
+
 class TR_OpaqueClassBlock;
 class TR_OpaqueMethodBlock;
 

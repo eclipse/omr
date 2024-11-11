@@ -1652,6 +1652,7 @@ static bool reduceLongOp(TR::Node * node, TR::Block * block, TR::Simplifier * s,
       case TR::land: newOp = TR::iand; break;
       case TR::lor:  newOp = TR::ior;  break;
       case TR::lxor: newOp = TR::ixor; break;
+      case TR::lexpandbits: newOp = TR::iexpandbits; break;
       case TR::lushr:
          isUnsigned = true;
       case TR::lshr:

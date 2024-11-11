@@ -820,6 +820,14 @@ TR::Node * constrainLongBitCount(OMR::ValuePropagation *vp, TR::Node *node);
 #define sbitpermuteVPHandler constrainChildren
 #define ibitpermuteVPHandler constrainChildren
 #define lbitpermuteVPHandler constrainChildren
+#define lcompressbitsVPHandler constrainChildren
+#define icompressbitsVPHandler constrainChildren
+#define scompressbitsVPHandler constrainChildren
+#define bcompressbitsVPHandler constrainChildren
+#define lexpandbitsVPHandler constrainChildren
+#define iexpandbitsVPHandler constrainChildren
+#define sexpandbitsVPHandler constrainChildren
+#define bexpandbitsVPHandler constrainChildren
 #define PrefetchVPHandler constrainChildren
 
 #ifdef J9_PROJECT_SPECIFIC
