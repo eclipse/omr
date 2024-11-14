@@ -39,6 +39,7 @@ class TR_LiveVariableInformation;
 class TR_Liveness;
 class TR_MovableStore;
 class TR_SinkStores;
+namespace OMR { struct UnsafeSubexpressionRemover; }
 namespace TR { class Block; }
 namespace TR { class CFGEdge; }
 namespace TR { class CFGNode; }

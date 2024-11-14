@@ -63,6 +63,7 @@
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/Structure.hpp"
+#include "optimizer/UnsafeSubexpressionRemover.hpp"
 
 #define OPT_DETAILS "O^O SINK STORES: "
 
