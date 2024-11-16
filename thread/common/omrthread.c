@@ -3345,6 +3345,7 @@ omrthread_park(int64_t millis, intptr_t nanos)
 void
 omrthread_unpark(omrthread_t thread)
 {
+	uintptr_t slowPath = 0;
 	ASSERT(thread);
 
 	THREAD_LOCK(thread, CALLER_UNPARK_THREAD);
@@ -3352,10 +3353,13 @@ omrthread_unpark(omrthread_t thread)
 	thread->flags |= J9THREAD_FLAG_UNPARKED;
 
 	if (thread->flags & J9THREAD_FLAG_PARKED) {
+		slowPath = 1;
 		NOTIFY_WRAPPER(thread);
 	}
 
 	THREAD_UNLOCK(thread);
+
+	Trc_THR_Unpark(slowPath);
 }
 
 
