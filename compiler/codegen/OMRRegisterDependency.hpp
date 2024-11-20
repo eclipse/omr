@@ -369,7 +369,7 @@ class RegisterDependencyMap
     *     The index into the dependency list whose dependency has \param regNum. It is up to the caller to validate
     *     or assume that such a register dpendency exists.
     */
-   uint8_t getTargetIndex(TR::RealRegister::RegNum regNum)
+   uint16_t getTargetIndex(TR::RealRegister::RegNum regNum)
       {
       TR_ASSERT(realRegisterToTargetTable[regNum] != SENTINEL, "No such target register in dependency condition");
       return realRegisterToTargetTable[regNum];
@@ -399,11 +399,11 @@ class RegisterDependencyMap
 
    private:
 
-   static const uint8_t SENTINEL = 255;
+   static const uint16_t SENTINEL = 65535;
 
    TR::RegisterDependency *deps;
-   uint8_t realRegisterToTargetTable[TR::RealRegister::NumRegisters];
-   uint8_t realRegisterToSourceAssignedTable[TR::RealRegister::NumRegisters];
+   uint16_t realRegisterToTargetTable[TR::RealRegister::NumRegisters];
+   uint16_t realRegisterToSourceAssignedTable[TR::RealRegister::NumRegisters];
    };
 }
 
