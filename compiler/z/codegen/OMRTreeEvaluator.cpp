@@ -5725,6 +5725,7 @@ generateTestUnderMaskIfPossible(TR::Node * node, TR::CodeGenerator * cg, TR::Ins
       else if ((nonConstNode->getFirstChild()->getOpCodeValue() == TR::bu2i ||
             nonConstNode->getFirstChild()->getOpCodeValue() == TR::s2i ||
             nonConstNode->getFirstChild()->getOpCodeValue() == TR::b2i ||
+            nonConstNode->getFirstChild()->getOpCodeValue() == TR::l2i ||
             nonConstNode->getFirstChild()->getOpCodeValue() == TR::i2l)
             && nonConstNode->getFirstChild()->getReferenceCount() == 1)
          {
