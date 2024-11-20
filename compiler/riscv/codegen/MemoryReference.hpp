@@ -36,7 +36,7 @@ namespace TR
 
 class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReferenceConnector
    {
-   public:
+   private:
 
    /**
     * @brief Constructor
@@ -67,28 +67,33 @@ class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReferenceConnector
 
    /**
     * @brief Constructor
-    * @param[in] node : load or store node
-    * @param[in] len : length
+    * @param[in] rootLoadOrStore : load or store node
     * @param[in] cg : CodeGenerator object
     */
-   MemoryReference(TR::Node *node,
-      uint32_t len,
+   MemoryReference(TR::Node *rootLoadOrStore,
       TR::CodeGenerator *cg) :
-         OMR::MemoryReferenceConnector(node, len, cg) {}
+         OMR::MemoryReferenceConnector(rootLoadOrStore, cg) {}
 
    /**
     * @brief Constructor
     * @param[in] node : node
     * @param[in] symRef : symbol reference
-    * @param[in] len : length
     * @param[in] cg : CodeGenerator object
     */
    MemoryReference(TR::Node *node,
       TR::SymbolReference *symRef,
-      uint32_t len,
       TR::CodeGenerator *cg) :
-         OMR::MemoryReferenceConnector(node, symRef, len, cg) {}
+         OMR::MemoryReferenceConnector(node, symRef, cg) {}
+
+   public:
+
+   static TR::MemoryReference *create(TR::CodeGenerator *cg);
+   static TR::MemoryReference *createWithIndexReg(TR::CodeGenerator *cg, TR::Register *baseReg, TR::Register *indexReg, uint8_t scale = 0);
+   static TR::MemoryReference *createWithDisplacement(TR::CodeGenerator *cg, TR::Register *baseReg, int64_t displacement);
+   static TR::MemoryReference *createWithRootLoadOrStore(TR::CodeGenerator *cg, TR::Node *rootLoadOrStore);
+   static TR::MemoryReference *createWithSymRef(TR::CodeGenerator *cg, TR::Node *node, TR::SymbolReference *symRef);
    };
+
 } // TR
 
 #endif
