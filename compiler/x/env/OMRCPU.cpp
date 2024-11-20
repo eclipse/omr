@@ -400,23 +400,25 @@ OMR::X86::CPU::supports_feature_test(uint32_t feature)
       case OMR_FEATURE_X86_AVX:
          return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX() == ans;
       case OMR_FEATURE_X86_AVX2:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX2();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX2() == ans;
       case OMR_FEATURE_X86_AVX512F:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512F();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512F() == ans;
       case OMR_FEATURE_X86_AVX512VL:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VL();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VL() == ans;
       case OMR_FEATURE_X86_AVX512BW:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512BW();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512BW() == ans;
       case OMR_FEATURE_X86_AVX512DQ:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512DQ();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512DQ() == ans;
       case OMR_FEATURE_X86_AVX512CD:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512CD();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512CD() == ans;
       case OMR_FEATURE_X86_AVX512_VBMI2:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VBMI2();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VBMI2() == ans;
       case OMR_FEATURE_X86_AVX512_BITALG:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512BITALG();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512BITALG() == ans;
       case OMR_FEATURE_X86_AVX512_VPOPCNTDQ:
-         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VPOPCNTDQ();
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX512VPOPCNTDQ() == ans;
+      case OMR_FEATURE_X86_FMA:
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsFMA() == ans;
       default:
          return false;
       }
