@@ -15998,28 +15998,32 @@ TR::Node *selectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
    {
    s->simplifyChildren(node, block);
 
-   if (node->getFirstChild()->getOpCode().isLoadConst())
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getChild(2);
+
+   if (firstChild->getOpCode().isLoadConst())
       {
-      int64_t value = node->getFirstChild()->get64bitIntegralValue();
-      TR::Node * newNode = value ? node->getChild(1) : node->getChild(2);
+      int64_t value = firstChild->get64bitIntegralValue();
+      TR::Node * newNode = value ? secondChild : thirdChild;
       return s->replaceNode(node, newNode, s->_curTree);
       }
 
-   if (node->getChild(1) == node->getChild(2))
-      return s->replaceNode(node, node->getChild(1), s->_curTree);
+   if (secondChild == thirdChild)
+      return s->replaceNode(node, secondChild, s->_curTree);
 
    // sometimes the children are different but represent the same value
-   if (node->getChild(1)->getOpCode().isLoadConst() && node->getChild(2)->getOpCode().isLoadConst())
-      if (node->getChild(1)->getOpCode().isInteger() && node->getChild(2)->getOpCode().isInteger())
-         if (node->getChild(1)->get64bitIntegralValue() == node->getChild(2)->get64bitIntegralValue())
-            return s->replaceNode(node, node->getChild(1), s->_curTree);
+   if (secondChild->getOpCode().isLoadConst() && thirdChild->getOpCode().isLoadConst())
+      if (secondChild->getOpCode().isInteger() && thirdChild->getOpCode().isInteger())
+         if (secondChild->get64bitIntegralValue() == thirdChild->get64bitIntegralValue())
+            return s->replaceNode(node, secondChild, s->_curTree);
 
    if (node->getOpCode().isInteger()
-       && node->getFirstChild()->getOpCode().isBooleanCompare()
-       && !node->getFirstChild()->getOpCode().isBranch()
-       && node->getChild(1)->getOpCode().isInteger()
-       && node->getChild(2)->getOpCode().isInteger()
-       && node->getDataType() == node->getFirstChild()->getDataType())
+       && firstChild->getOpCode().isBooleanCompare()
+       && !firstChild->getOpCode().isBranch()
+       && secondChild->getOpCode().isInteger()
+       && thirdChild->getOpCode().isInteger()
+       && node->getDataType() == firstChild->getDataType())
       {
       // handle case of integer select of the form:
       //    select
@@ -16027,33 +16031,36 @@ TR::Node *selectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       //       const 0/1
       //       const 0/1
       // where the two consts are NOT equal (0 == 0 or 1 == 1 was handled above)
-      if (node->getChild(1)->getOpCode().isLoadConst()
-          && node->getChild(2)->getOpCode().isLoadConst())
+      if (secondChild->getOpCode().isLoadConst()
+          && thirdChild->getOpCode().isLoadConst())
          {
-         if (node->getChild(1)->get64bitIntegralValue() == 1
-             && node->getChild(2)->get64bitIntegralValue() == 0)
+         TR::Node *conditionNode = firstChild;
+         TR::Node *loadConstNode1 = secondChild;
+         TR::Node *loadConstNode2 = thirdChild;
+         if (loadConstNode1->get64bitIntegralValue() == 1
+             && loadConstNode1->get64bitIntegralValue() == 0)
             {
-            if (performTransformation(s->comp(), "%sReplacing select with children of constant values 1 and 0 at [" POINTER_PRINTF_FORMAT "] its condition at [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node, node->getFirstChild()))
-               return s->replaceNode(node, node->getFirstChild(), s->_curTree);
+            if (performTransformation(s->comp(), "%sReplacing select with children of constant values 1 and 0 at [" POINTER_PRINTF_FORMAT "] its condition at [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node, conditionNode))
+               return s->replaceNode(node, conditionNode, s->_curTree);
             }
-         else if (node->getChild(1)->get64bitIntegralValue() == 0
-             && node->getChild(2)->get64bitIntegralValue() == 1)
+         else if (loadConstNode1->get64bitIntegralValue() == 0
+             && loadConstNode2->get64bitIntegralValue() == 1)
             {
             TR::Node *replacement = NULL;
-            if (node->getFirstChild()->getReferenceCount() == 1)
+            if (conditionNode->getReferenceCount() == 1)
                {
                if (performTransformation(s->comp(), "%sReplacing select with children of constant values 0 and 1 at [" POINTER_PRINTF_FORMAT "] with its condition reversed\n", s->optDetailString(), node))
                   {
-                  TR::Node *oldFirstChild = node->getFirstChild();
+                  TR::Node *oldconditionNode = conditionNode;
                   // we will remove the two consts from the node
-                  node->getChild(1)->recursivelyDecReferenceCount();
-                  node->getChild(2)->recursivelyDecReferenceCount();
-                  int32_t numChildren = oldFirstChild->getNumChildren();
-                  TR::Node::recreateWithoutProperties(node, oldFirstChild->getOpCode().getOpCodeForReverseBranch(), numChildren);
+                  loadConstNode1->recursivelyDecReferenceCount();
+                  loadConstNode2->recursivelyDecReferenceCount();
+                  int32_t numChildren = oldconditionNode->getNumChildren();
+                  TR::Node::recreateWithoutProperties(node, oldconditionNode->getOpCode().getOpCodeForReverseBranch(), numChildren);
                   for (int i = 0; i < numChildren; ++i)
-                    node->setAndIncChild(i, oldFirstChild->getChild(i));
+                    node->setAndIncChild(i, oldconditionNode->getChild(i));
 
-                  oldFirstChild->recursivelyDecReferenceCount();
+                  oldconditionNode->recursivelyDecReferenceCount();
                   return node;
                   }
                }
@@ -16061,9 +16068,9 @@ TR::Node *selectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
                {
                if (performTransformation(s->comp(), "%sReplacing select with children of constant values 0 and 1 at [" POINTER_PRINTF_FORMAT "] with its condition reversed\n", s->optDetailString(), node))
                   {
-                  s->anchorChildren(node->getFirstChild(), s->_curTree);
-                  TR::Node *replacement = TR::Node::create(node->getFirstChild(), node->getFirstChild()->getOpCode().getOpCodeForReverseBranch(), 2,
-                                   node->getFirstChild()->getFirstChild(), node->getFirstChild()->getSecondChild());
+                  s->anchorChildren(conditionNode, s->_curTree);
+                  TR::Node *replacement = TR::Node::create(conditionNode, conditionNode->getOpCode().getOpCodeForReverseBranch(), 2,
+                                   conditionNode->getFirstChild(), conditionNode->getSecondChild());
                   return s->replaceNode(node, replacement, s->_curTree);
                   }
                }
@@ -16079,49 +16086,49 @@ TR::Node *selectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
       //       condition
       //       const 0/1
       //       boolean expression
-      else if (((node->getChild(2)->getOpCode().isLoadConst()
-                    && (node->getChild(2)->get64bitIntegralValue() == 0
-                        || node->getChild(2)->get64bitIntegralValue() == 1))
-                && isBooleanExpression(node->getChild(1)))
-               || ((node->getChild(1)->getOpCode().isLoadConst()
-                    && (node->getChild(1)->get64bitIntegralValue() == 0
-                        || node->getChild(1)->get64bitIntegralValue() == 1))
-                   && isBooleanExpression(node->getChild(2))))
+      else if (((thirdChild->getOpCode().isLoadConst()
+                    && (thirdChild->get64bitIntegralValue() == 0
+                        || thirdChild->get64bitIntegralValue() == 1))
+                && isBooleanExpression(secondChild))
+               || ((secondChild->getOpCode().isLoadConst()
+                    && (secondChild->get64bitIntegralValue() == 0
+                        || secondChild->get64bitIntegralValue() == 1))
+                   && isBooleanExpression(thirdChild)))
          {
          TR::Node *replacement = NULL;
-         if (node->getChild(2)->getOpCode().isLoadConst())
+         if (thirdChild->getOpCode().isLoadConst())
             {
-            TR::Node *cond1 = node->getChild(0);
-            TR::Node *cond2 = node->getChild(1);
-            if (node->getChild(2)->get64bitIntegralValue() == 0)
+            TR::Node *conditionNode = firstChild;
+            TR::Node *booleanExpressionNode = secondChild;
+            if (thirdChild->get64bitIntegralValue() == 0)
                {
                replacement = TR::Node::create(node, TR::iand, 2,
-                                cond1, cond2);
+                                conditionNode, booleanExpressionNode);
                }
             else
                {
-               if (cond1->getReferenceCount() > 1)
-                  s->anchorChildren(cond1, s->_curTree);
+               if (conditionNode->getReferenceCount() > 1)
+                  s->anchorChildren(conditionNode, s->_curTree);
                replacement = TR::Node::create(node, TR::ior, 2,
-                                TR::Node::create(cond1, cond1->getOpCode().getOpCodeForReverseBranch(), 2, cond1->getFirstChild(), cond1->getSecondChild()),
-                                cond2);
+                                TR::Node::create(conditionNode, conditionNode->getOpCode().getOpCodeForReverseBranch(), 2, conditionNode->getFirstChild(), conditionNode->getSecondChild()),
+                                booleanExpressionNode);
                }
             }
          else
             {
-            TR::Node *cond1 = node->getChild(0);
-            TR::Node *cond2 = node->getChild(2);
-            if (node->getChild(1)->get64bitIntegralValue() == 0)
+            TR::Node *conditionNode = firstChild;
+            TR::Node *booleanExpressionNode = thirdChild;
+            if (secondChild->get64bitIntegralValue() == 0)
                {
-               if (cond1->getReferenceCount() > 1)
-                  s->anchorChildren(cond1, s->_curTree);
+               if (conditionNode->getReferenceCount() > 1)
+                  s->anchorChildren(conditionNode, s->_curTree);
                replacement = TR::Node::create(node, TR::iand, 2,
-                                TR::Node::create(cond1, cond1->getOpCode().getOpCodeForReverseBranch(), 2, cond1->getFirstChild(), cond1->getSecondChild()),
-                                cond2);
+                                TR::Node::create(conditionNode, conditionNode->getOpCode().getOpCodeForReverseBranch(), 2, conditionNode->getFirstChild(), conditionNode->getSecondChild()),
+                                booleanExpressionNode);
                }
             else
                {
-               replacement = TR::Node::create(node, TR::ior, 2, cond1, cond2);
+               replacement = TR::Node::create(node, TR::ior, 2, conditionNode, booleanExpressionNode);
                }
             }
          if (performTransformation(s->comp(), "%sReplacing select tree of constant leaves at [" POINTER_PRINTF_FORMAT "] with equivalent boolean compare tree at [" POINTER_PRINTF_FORMAT "]\n", s->optDetailString(), node, replacement))
