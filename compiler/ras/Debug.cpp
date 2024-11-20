@@ -3670,6 +3670,8 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_referenceArrayCopy:        return "jitReferenceArrayCopy";
          case TR_jitLookupDynamicInterfaceMethod: return "jitLookupDynamicInterfaceMethod";
          case TR_jitLookupDynamicPublicInterfaceMethod: return "jitLookupDynamicPublicInterfaceMethod";
+
+         case TR_intrinsicImplSquareToLen: return "bigIntegerSquare";
          }
       }
 #ifdef TR_TARGET_X86
