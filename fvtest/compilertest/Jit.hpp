@@ -20,12 +20,18 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#ifndef FVTEST_COMPILERTEST_JIT_INCL
+#define FVTEST_COMPILERTEST_JIT_INCL
+
 #include <stdint.h>
+#include "omrport.h"
 
 namespace TR { class MethodBuilder; }
 class TR_Memory;
 
-extern "C" bool initializeJit();
-extern "C" bool initializeJitWithOptions(char * options);
+extern "C" bool initializeJit(OMRPortLibrary *omrPortLib = NULL);
+extern "C" bool initializeJitWithOptions(char * options, OMRPortLibrary *omrPortLib = NULL);
 extern "C" uint32_t compileMethodBuilder(TR::MethodBuilder *m, uint8_t **entry);
 extern "C" void shutdownJit();
+
+#endif
