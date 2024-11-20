@@ -668,6 +668,26 @@ class OMR_InlinerPolicy : public TR::OptimizationPolicy, public OMR_InlinerHelpe
       bool mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR::TreeTop *callNodeTreeTop);
       virtual TR_InlinerFailureReason checkIfTargetInlineable(TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp);
       virtual bool suitableForRemat(TR::Compilation *comp, TR::Node *node, TR_VirtualGuardSelection *guard);
+
+      /**
+       * \brief
+       *    Check if the callee to be inlined is a recognized method that should
+       *    not be inlined.
+       *
+       * \details
+       *    For example, some optimizations may fold away call nodes for
+       *    recognized methods so there is no point in inlining them.
+       *
+       * \param calltarget
+       *    The calltarget of the callee to be checked.
+       *
+       * \param tracer
+       *    The tracer to use.
+       *
+       * \return
+       *    True if the calltarget should not be inlined.
+       */
+      virtual bool shouldSkipInliningRecognizedMethod(TR_CallTarget *calltarget, TR_LogTracer *tracer);
    };
 
 class TR_TransformInlinedFunction
