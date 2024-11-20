@@ -94,6 +94,7 @@
 #include "infra/Cfg.hpp"
 #include "infra/Flags.hpp"
 #include "infra/HashTab.hpp"
+#include "infra/ILWalk.hpp"
 #include "infra/Link.hpp"
 #include "infra/List.hpp"
 #include "infra/Stack.hpp"
@@ -691,18 +692,16 @@ OMR::CodeGenerator::setUpForInstructionSelection()
    // the _register and _label fields are unioned members of a node.  prepareNodeForInstructionSelection
    // zeros the _register field while the second for loop sets label fields on destination nodes.
    //
-   TR::TreeTop * tt=NULL, *prev = NULL;
+   //TR::TreeTop * tt=NULL, *prev = NULL;
 
-
-   for (tt = self()->comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
+   for (TR::TreeTopIterator it(self()->comp()->getStartTree(), self()->comp()); it.currentNode(); it.stepForward())
+   //for (tt = self()->comp()->getStartTree(); tt; prev=tt, tt = tt->getNextTreeTop())
       {
-      self()->prepareNodeForInstructionSelection(tt->getNode());
-      }
+      TR::Node * node = it.currentNode();
 
-
-   for (tt = self()->comp()->getStartTree(); tt; prev=tt, tt = tt->getNextTreeTop())
-      {
-      TR::Node * node = tt->getNode();
+      // prepareNodeForInstructionSelection is called in a single walk of the treetops
+      // since the UnionA field _register is not affected by labeling nodes as was previously thought.
+      self()->prepareNodeForInstructionSelection(node);
 
       if ((node->getOpCodeValue() == TR::treetop) ||
           node->getOpCode().isAnchor() ||
