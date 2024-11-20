@@ -216,6 +216,53 @@ uint64_t TR::VPConstraint::getUnsignedHighLong()
    return TR::getMaxUnsigned<TR::Int64>();    // consumer beware! You don't want to assign this to a int64_t
    }
 
+TR::VPLongConst* TR::VPConstraint::createConst(OMR::ValuePropagation *vp, int64_t n)
+   {
+   return TR::VPLongConst::create(vp, n);
+   }
+
+TR::VPIntConst* TR::VPConstraint::createConst(OMR::ValuePropagation *vp, int32_t n)
+   {
+   return TR::VPIntConst::create(vp, n);
+   }
+
+TR::VPShortConst* TR::VPConstraint::createConst(OMR::ValuePropagation *vp, int16_t n)
+   {
+   return TR::VPShortConst::create(vp, n);
+   }
+
+TR::VPLongConstraint* TR::VPConstraint::createRange(OMR::ValuePropagation *vp, int64_t l, int64_t h)
+   {
+   return TR::VPLongRange::create(vp, l, h);
+   }
+
+TR::VPIntConstraint* TR::VPConstraint::createRange(OMR::ValuePropagation *vp, int32_t l, int32_t h)
+   {
+   return TR::VPIntRange::create(vp, l, h);
+   }
+
+TR::VPShortConstraint* TR::VPConstraint::createRange(OMR::ValuePropagation *vp, int16_t l, int16_t h)
+   {
+   return TR::VPShortRange::create(vp, l, h);
+   }
+
+template <>
+int64_t TR::VPConstraint::getConstValue<int64_t>()
+   {
+   return asLongConst()->getLong();
+   }
+
+template <>
+int32_t TR::VPConstraint::getConstValue<int32_t>()
+   {
+   return asIntConst()->getInt();
+   }
+
+template <>
+int16_t TR::VPConstraint::getConstValue<int16_t>()
+   {
+   return asShortConst()->getShort();
+   }
 
 bool TR::VPConstraint::isNullObject()
    {

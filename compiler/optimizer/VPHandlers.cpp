@@ -4513,36 +4513,6 @@ TR::Node *constrainMultiANewArray(OMR::ValuePropagation *vp, TR::Node *node)
 
 
 //bit opcode constraints start
-
-static TR::VPLongRange* getLongRange (TR::VPConstraint* c) {return c->asLongRange();}
-static TR::VPLongConst* getLongConst (TR::VPConstraint* c) {return c->asLongConst();}
-static TR::VPIntRange* getIntRange (TR::VPConstraint* c)   {return c->asIntRange();}
-static TR::VPIntConst* getIntConst (TR::VPConstraint* c)   {return c->asIntConst();}
-static void getLowHighInts (TR::VPIntRange* range, int32_t& low, int32_t& high)
-   {
-   low = range->getLowInt();
-   high = range->getHighInt();
-   }
-static void getInt (TR::VPIntConst* c, int32_t& n)
-   {
-   n = c->getInt();
-   }
-static void getLowHighLongs (TR::VPLongRange* range, int64_t& low, int64_t& high)
-   {
-   low = range->getLowLong();
-   high = range->getHighLong();
-   }
-static void getLong (TR::VPLongConst* c, int64_t& n)
-   {
-   n = c->getLong();
-   }
-
-static TR::VPConstraint* createIntConstConstraint(OMR::ValuePropagation *vp, int32_t n) {return TR::VPIntConst::create(vp, n); }
-template <typename T>
-static TR::VPConstraint* createIntRangeConstraint(OMR::ValuePropagation *vp, T l, T h) {return TR::VPIntRange::create(vp, static_cast<int32_t>(l), static_cast<int32_t>(h));}
-static TR::VPConstraint* createLongConstConstraint(OMR::ValuePropagation *vp, int64_t n) {return TR::VPLongConst::create(vp, n); }
-static TR::VPConstraint* createLongRangeConstraint(OMR::ValuePropagation *vp, int64_t l, int64_t h) {return TR::VPLongRange::create(vp, l, h);}
-
 static int32_t integerToPowerOf2 (int32_t n) {return (n==0) ? 0 : floorPowerOfTwo(n); }
 static int32_t integerNumberOfLeadingZeros (int32_t n) {return leadingZeroes (n);}
 static int32_t integerNumberOfTrailingZeros (int32_t n) {return trailingZeroes(n);}
@@ -4555,11 +4525,10 @@ static int32_t longBitCount (int64_t n) {return populationCount(n);}
 static int64_t longLowestOneBit (int64_t n) {return (n==0) ? 0 : 1 << longNumberOfTrailingZeros(n);}
 
 
-template <typename FUNC, typename FUNC2, typename T>
+template <typename T, typename FUNC>
 void addValidRangeBlockOrGlobalConstraint (OMR::ValuePropagation *vp,
                                                    TR::Node *node,
-                                                   FUNC createRange,
-                                                   FUNC2 processValue,
+                                                   FUNC processValue,
                                                    T low,
                                                    T high,
                                                    bool childGlobal)
@@ -4577,26 +4546,13 @@ void addValidRangeBlockOrGlobalConstraint (OMR::ValuePropagation *vp,
       }
 
 
-   vp->addBlockOrGlobalConstraint(node, createRange(vp, pLow, pHigh),childGlobal);
+   vp->addBlockOrGlobalConstraint(node, TR::VPConstraint::createRange(vp, pLow, pHigh), childGlobal);
    }
 
-template <typename A,
-         typename B,
-         typename C,
-         typename D,
-         typename E,
-         typename F,
-         typename G,
-         typename T>
+template <typename T, typename FUNC>
 static TR::Node* constrainHighestOneBitAndLeadingZerosHelper (OMR::ValuePropagation *vp,
                                                                      TR::Node *node,
-                                                                     A getConst,
-                                                                     B getRange,
-                                                                     C getValue,
-                                                                     D getValues,
-                                                                     E createConst,
-                                                                     F createRange,
-                                                                     G processValue,
+                                                                     FUNC processValue,
                                                                      T MIN_VALUE,
                                                                      T MAX_VALUE)
   {
@@ -4613,10 +4569,9 @@ static TR::Node* constrainHighestOneBitAndLeadingZerosHelper (OMR::ValuePropagat
 
    if (childConstraint)
       {
-      if (getConst(childConstraint))
+      if (childConstraint->isConst())
          {
-         T value = 0;
-         getValue (getConst(childConstraint), value);
+         T value = childConstraint->getConstValue<T>();
 
          //RangeConstraint with the same low and high should be folded into a const constraint
          MIN_VALUE = value;
@@ -4628,10 +4583,10 @@ static TR::Node* constrainHighestOneBitAndLeadingZerosHelper (OMR::ValuePropagat
             }
 
          }
-      else if (getRange(childConstraint))
+      else if (childConstraint->isRange())
          {
-         T low = 0, high = 0;
-         getValues(getRange(childConstraint) , low, high);
+         T low = childConstraint->getLow<T>();
+         T high = childConstraint->getHigh<T>();
          if (low < 0 && high < 0)
             {
             //RangeConstraint with the same low and high should be folded into a const constraint.
@@ -4651,27 +4606,14 @@ static TR::Node* constrainHighestOneBitAndLeadingZerosHelper (OMR::ValuePropagat
          }
       }
 
-   addValidRangeBlockOrGlobalConstraint (vp, node, createRange, processValue, MIN_VALUE, MAX_VALUE, childGlobal);
+   addValidRangeBlockOrGlobalConstraint (vp, node, processValue, MIN_VALUE, MAX_VALUE, childGlobal);
    return node;
    }
 
-template <typename A,
-         typename B,
-         typename C,
-         typename D,
-         typename E,
-         typename F,
-         typename G,
-         typename T>
+template <typename T, typename FUNC>
 static TR::Node* constrainLowestOneBitAndTrailingZerosHelper (OMR::ValuePropagation *vp,
                                                                      TR::Node *node,
-                                                                     A getConst,
-                                                                     B getRange,
-                                                                     C getValue,
-                                                                     D getValues,
-                                                                     E createConst,
-                                                                     F createRange,
-                                                                     G processValue,
+                                                                     FUNC processValue,
                                                                      T MIN_VALUE,
                                                                      T MAX_VALUE)
   {
@@ -4687,106 +4629,73 @@ static TR::Node* constrainLowestOneBitAndTrailingZerosHelper (OMR::ValuePropagat
 
    bool childGlobal;
    TR::VPConstraint *childConstraint = vp->getConstraint(node->getFirstChild(), childGlobal);
-   if (childConstraint && getConst(childConstraint))
+   if (childConstraint)
       {
-      T value = 0;
-      getValue (getConst(childConstraint), value);
-      MIN_VALUE = value;
-      MAX_VALUE = value;
+      if (childConstraint->isConst())
+         {
+         T value = childConstraint->getConstValue<T>();
+         MIN_VALUE = value;
+         MAX_VALUE = value;
+         }
       }
 
-   addValidRangeBlockOrGlobalConstraint (vp, node, createRange, processValue, MIN_VALUE, MAX_VALUE, childGlobal);
+   addValidRangeBlockOrGlobalConstraint (vp, node, processValue, MIN_VALUE, MAX_VALUE, childGlobal);
    return node;
    }
 
 TR::Node * constrainIntegerHighestOneBit(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   return constrainHighestOneBitAndLeadingZerosHelper (vp, node, getIntConst,
-                                                       getIntRange, getInt, getLowHighInts,
-                                                       createIntConstConstraint,
-                                                       //createIntRangeConstraint, integerToPowerOf2, (int32_t) 0, (int32_t) -1);
-                                                       createIntRangeConstraint<int32_t>, integerToPowerOf2, (int32_t) TR::getMaxSigned<TR::Int32>(), (int32_t) TR::getMinSigned<TR::Int32>());
+   return constrainHighestOneBitAndLeadingZerosHelper<int32_t>(vp, node, integerToPowerOf2, (int32_t) TR::getMaxSigned<TR::Int32>(), (int32_t) TR::getMinSigned<TR::Int32>());
    }
 
 
 TR::Node * constrainIntegerNumberOfLeadingZeros(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   return constrainHighestOneBitAndLeadingZerosHelper (vp, node, getIntConst,
-                                                       getIntRange, getInt, getLowHighInts,
-                                                       createIntConstConstraint,
-                                                       createIntRangeConstraint<int32_t>, integerNumberOfLeadingZeros, (int32_t) 0, (int32_t) -1);
-
-
+   return constrainHighestOneBitAndLeadingZerosHelper<int32_t>(vp, node, integerNumberOfLeadingZeros, (int32_t) 0, (int32_t) -1);
    }
 
 TR::Node * constrainLongHighestOneBit(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   return constrainHighestOneBitAndLeadingZerosHelper (vp, node, getLongConst,
-                                                       getLongRange, getLong, getLowHighLongs,
-                                                       createLongConstConstraint,
-                                                       //createLongRangeConstraint, longToPowerOf2, (int64_t) 0, (int64_t) -1);
-                                                       createLongRangeConstraint, longToPowerOf2, (int64_t) TR::getMaxSigned<TR::Int64>(), TR::getMinSigned<TR::Int64>());
-
+   return constrainHighestOneBitAndLeadingZerosHelper<int64_t>(vp, node, longToPowerOf2, (int64_t) TR::getMaxSigned<TR::Int64>(), TR::getMinSigned<TR::Int64>());
    }
 
 TR::Node * constrainLongNumberOfLeadingZeros(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   return constrainHighestOneBitAndLeadingZerosHelper (vp, node, getLongConst,
-                                                       getLongRange, getLong, getLowHighLongs,
-                                                       createIntConstConstraint,
-                                                       createIntRangeConstraint<int64_t>, longNumberOfLeadingZeros, (int64_t) 0, (int64_t) -1);
+   return constrainHighestOneBitAndLeadingZerosHelper<int64_t>(vp, node, longNumberOfLeadingZeros, (int64_t) 0, (int64_t) -1);
    }
 
 TR::Node * constrainIntegerLowestOneBit(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   return constrainLowestOneBitAndTrailingZerosHelper (vp, node, getIntConst,
-                                                       getIntRange, getInt, getLowHighInts,
-                                                       createIntConstConstraint,
-                                                       createIntRangeConstraint<int32_t>, integerLowestOneBit, (int32_t) TR::getMaxSigned<TR::Int32>(), (int32_t) TR::getMinSigned<TR::Int32>());
+   return constrainLowestOneBitAndTrailingZerosHelper<int32_t>(vp, node, integerLowestOneBit, (int32_t) TR::getMaxSigned<TR::Int32>(), (int32_t) TR::getMinSigned<TR::Int32>());
    }
 
 
    TR::Node * constrainIntegerBitCount(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   return constrainLowestOneBitAndTrailingZerosHelper (vp, node, getIntConst,
-                                                       getIntRange, getInt, getLowHighInts,
-                                                       createIntConstConstraint,
-                                                       createIntRangeConstraint<int32_t>, integerBitCount, (int32_t) 0, (int32_t) -1);
+   return constrainLowestOneBitAndTrailingZerosHelper<int32_t>(vp, node, integerBitCount, (int32_t) 0, (int32_t) -1);
    }
 
 
 TR::Node * constrainIntegerNumberOfTrailingZeros(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   return constrainLowestOneBitAndTrailingZerosHelper (vp, node, getIntConst,
-                                                       getIntRange, getInt, getLowHighInts,
-                                                       createIntConstConstraint,
-                                                       createIntRangeConstraint<int32_t>, integerNumberOfTrailingZeros, (int32_t) 0, (int32_t) -1);
+   return constrainLowestOneBitAndTrailingZerosHelper<int32_t>(vp, node, integerNumberOfTrailingZeros, (int32_t) 0, (int32_t) -1);
    }
 
 TR::Node * constrainLongLowestOneBit(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   return constrainLowestOneBitAndTrailingZerosHelper (vp, node, getLongConst,
-                                                       getLongRange, getLong, getLowHighLongs,
-                                                       createLongConstConstraint,
-                                                       createLongRangeConstraint, longLowestOneBit, (int64_t) TR::getMaxSigned<TR::Int64>(), (int64_t) TR::getMinSigned<TR::Int64>());
+   return constrainLowestOneBitAndTrailingZerosHelper<int64_t>(vp, node, longLowestOneBit, (int64_t) TR::getMaxSigned<TR::Int64>(), (int64_t) TR::getMinSigned<TR::Int64>());
    }
 
 
 TR::Node * constrainLongNumberOfTrailingZeros(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   return constrainLowestOneBitAndTrailingZerosHelper (vp, node, getLongConst,
-                                                       getLongRange, getLong, getLowHighLongs,
-                                                       createIntConstConstraint,
-                                                       createIntRangeConstraint<int64_t>, longNumberOfTrailingZeros, (int64_t) 0, (int64_t) -1);
+   return constrainLowestOneBitAndTrailingZerosHelper<int64_t>(vp, node, longNumberOfTrailingZeros, (int64_t) 0, (int64_t) -1);
    }
 
 
    TR::Node * constrainLongBitCount(OMR::ValuePropagation *vp, TR::Node *node)
    {
-   return constrainLowestOneBitAndTrailingZerosHelper  (vp, node, getLongConst,
-                                                       getLongRange, getLong, getLowHighLongs,
-                                                       createIntConstConstraint,
-                                                       createIntRangeConstraint<int64_t>, longBitCount, (int64_t) 0, (int64_t) -1);
+   return constrainLowestOneBitAndTrailingZerosHelper<int64_t>(vp, node, longBitCount, (int64_t) 0, (int64_t) -1);
    }
 
 

@@ -158,7 +158,28 @@ class VPConstraint
    virtual uint64_t getUnsignedLowLong();
    virtual uint64_t getUnsignedHighLong();
 
+   template <typename int_t> int_t getConstValue();
 
+   template <typename int_t> int_t getLow();
+   template <> virtual int64_t getLow<int64_t>() {return getLowLong();}
+   template <> virtual int32_t getLow<int32_t>() {return getLowInt();}
+   template <> virtual int16_t getLow<int16_t>() {return getLowShort();}
+
+   template <typename int_t> int_t getHigh();
+   template <> virtual int64_t getHigh<int64_t>() {return getLowLong();}
+   template <> virtual int32_t getHigh<int32_t>() {return getLowInt();}
+   template <> virtual int16_t getHigh<int16_t>() {return getLowShort();}
+
+   static TR::VPLongConst* createConst(OMR::ValuePropagation *vp, int64_t n);
+   static TR::VPIntConst* createConst(OMR::ValuePropagation *vp, int32_t n);
+   static TR::VPShortConst* createConst(OMR::ValuePropagation *vp, int16_t n);
+
+   static TR::VPLongConstraint* createRange(OMR::ValuePropagation *vp, int64_t l, int64_t h);
+   static TR::VPIntConstraint* createRange(OMR::ValuePropagation *vp, int32_t l, int32_t h);
+   static TR::VPShortConstraint* createRange(OMR::ValuePropagation *vp, int16_t l, int16_t h);
+
+   virtual bool isConst() {return false;}
+   virtual bool isRange() {return false;}
 
    // Class information
    //
@@ -320,6 +341,7 @@ class VPShortConst : public TR::VPShortConstraint
    virtual TR::VPShortConst *asShortConst();
    virtual int16_t getHigh() {return _low;}
    virtual bool mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp);
+   virtual bool isConst() {return true;}
 
    virtual void print(TR::Compilation *, TR::FILE *);
    virtual const char *name();
@@ -336,6 +358,7 @@ class VPShortRange : public TR::VPShortConstraint
    static TR::VPShortConstraint *createWithPrecision(OMR::ValuePropagation *vp, int32_t precision, bool isNonNegative = false);
    virtual TR::VPShortRange *asShortRange();
    virtual int16_t getHigh() {return _high;}
+   virtual bool isRange() {return true;}
 
    virtual void print(TR::Compilation *, TR::FILE *);
    virtual const char *name();
@@ -399,6 +422,7 @@ class VPIntConst : public TR::VPIntConstraint
    virtual TR::VPIntConst *asIntConst();
    virtual int32_t getHigh() {return _low;}
    virtual bool mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp);
+   virtual bool isConst() {return true;}
 
    virtual void print(TR::Compilation *, TR::FILE *);
    virtual const char *name();
@@ -416,6 +440,7 @@ class VPIntRange : public TR::VPIntConstraint
    static TR::VPIntConstraint *createWithPrecision(OMR::ValuePropagation *vp, TR::DataType dt, int32_t precision, TR_YesNoMaybe isUnsigned, bool isNonNegative = false);
    virtual TR::VPIntRange *asIntRange();
    virtual int32_t getHigh() {return _high;}
+   virtual bool isRange() {return true;}
 
    virtual void print(TR::Compilation *, TR::FILE *);
    virtual const char *name();
@@ -471,6 +496,7 @@ class VPLongConst : public TR::VPLongConstraint
    virtual TR::VPLongConst *asLongConst();
    virtual int64_t getHigh() {return _low;}
    virtual bool mustBeEqual(TR::VPConstraint *other, OMR::ValuePropagation *vp);
+   virtual bool isConst() {return true;}
 
    virtual void print(TR::Compilation *, TR::FILE *);
    virtual const char *name();
@@ -485,6 +511,7 @@ class VPLongRange : public TR::VPLongConstraint
    static TR::VPLongConstraint *create(OMR::ValuePropagation *vp, int64_t low, int64_t high, bool powerOfTwo = false, TR_YesNoMaybe canOverflow = TR_no);
    virtual TR::VPLongRange *asLongRange();
    virtual int64_t getHigh() {return _high;}
+   virtual bool isRange() {return true;}
 
    virtual void print(TR::Compilation *, TR::FILE *);
    virtual const char *name();
