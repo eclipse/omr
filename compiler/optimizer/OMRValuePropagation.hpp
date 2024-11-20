@@ -61,6 +61,7 @@ namespace TR { class VPNonNullObject; }
 namespace TR { class VPNullObject; }
 namespace TR { class VPPreexistentObject; }
 namespace TR { class VPUnreachablePath; }
+namespace TR { class VPUnspecifiedArrayType; }
 class TR_ValueNumberInfo;
 namespace OMR { class ValuePropagation; }
 class TR_VirtualGuard;
@@ -928,11 +929,12 @@ class ValuePropagation : public TR::Optimization
 
    // Cached constraints
    //
-   TR::VPNullObject        *_nullObjectConstraint;
-   TR::VPNonNullObject     *_nonNullObjectConstraint;
-   TR::VPPreexistentObject *_preexistentObjectConstraint;
-   TR::VPIntConst          *_constantZeroConstraint;
-   TR::VPUnreachablePath   *_unreachablePathConstraint;
+   TR::VPNullObject           *_nullObjectConstraint;
+   TR::VPNonNullObject        *_nonNullObjectConstraint;
+   TR::VPPreexistentObject    *_preexistentObjectConstraint;
+   TR::VPIntConst             *_constantZeroConstraint;
+   TR::VPUnreachablePath      *_unreachablePathConstraint;
+   TR::VPUnspecifiedArrayType *_unspecifiedArrayTypeConstraint;
 
    TR_UseDefInfo      *_useDefInfo;      // Cached use/def info
    TR_ValueNumberInfo *_valueNumberInfo; // Cached value number info

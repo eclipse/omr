@@ -2223,9 +2223,10 @@ TR::Node *constrainAloadi(OMR::ValuePropagation *vp, TR::Node *node)
          TR::VPClassPresence *nonnull = TR::VPNonNullObject::create(vp);
          TR::VPObjectLocation *loc =
             TR::VPObjectLocation::create(vp, TR::VPObjectLocation::J9ClassObject);
+         TR::VPUnspecifiedArrayType *unspecifiedArrayType = base->isUnspecifiedArrayType() ? TR::VPUnspecifiedArrayType::create(vp) : NULL;
          vp->addBlockOrGlobalConstraint(
             node,
-            TR::VPClass::create(vp, type, nonnull, NULL, NULL, loc),
+            TR::VPClass::create(vp, type, nonnull, NULL, NULL, loc, NULL, unspecifiedArrayType),
             isGlobal);
 
          node->setIsNonNull(true);
@@ -2718,6 +2719,19 @@ TR::Node *constrainAloadi(OMR::ValuePropagation *vp, TR::Node *node)
                        fieldSigLen,fieldSig,
                        fieldNameLen,fieldName);
             vp->addBlockConstraint(node, TR::VPNonNullObject::create(vp));
+            }
+
+         J9Class *fieldClass = (J9Class *)node->getSymbolReference()->getOwningMethod(vp->comp())->classOfMethod();
+         bool isPrimitiveArray = vp->comp()->fej9()->isPrimitiveArray(fieldClass, node->getSymbolReference()->getCPIndex());
+         if (isPrimitiveArray)
+            {
+            static bool enable = feGetEnv("TR_VPUnspecifiedArrayType") != NULL;
+            if (enable)
+               {
+               if (vp->trace())
+                  traceMsg(vp->comp(), "[%p] %.*s %.*s.%.*s has IsPrimitiveArray annotation\n", node, fieldSigLen, fieldSig, classNameLen, className, fieldNameLen, fieldName);
+               vp->addGlobalConstraint(node, TR::VPUnspecifiedArrayType::create(vp));
+               }
             }
          }
       }
@@ -7639,15 +7653,25 @@ TR::Node *constrainIand(OMR::ValuePropagation *vp, TR::Node *node)
                const char *hitOrMiss = "miss";
                if (classConstraint != NULL
                    && classConstraint->isJ9ClassObject() == TR_yes
-                   && classConstraint->getClassType() != NULL
-                   && classConstraint->getClassType()->isArray() != TR_maybe)
+                   && classConstraint->getClassType() != NULL)
                   {
-                  hitOrMiss = "hit";
-
-                  if (classConstraint->getClassType()->isArray() == TR_yes)
-                     constraint = TR::VPIntConst::create(vp, rhs->asIntConst()->getLowInt());
-                  else
-                     constraint = TR::VPIntConst::create(vp, 0);
+                  TR_YesNoMaybe isArray = classConstraint->getClassType()->isArray();
+                  if (isArray == TR_maybe)
+                     {
+                     bool classSourceConstraintIsGlobal;
+                     TR::VPConstraint *classSourceConstraint = vp->getConstraint(classNode->getFirstChild(), classSourceConstraintIsGlobal);
+                     if (classSourceConstraint && classSourceConstraint->isUnspecifiedArrayType())
+                        {
+                        static bool enable = feGetEnv("TR_isArrayVPUnspecifiedArrayType") != NULL;
+                        if (enable)
+                           isArray = TR_yes;
+                        }
+                     }
+                  if (isArray != TR_maybe)
+                     {
+                     hitOrMiss = "hit";
+                     constraint = TR::VPIntConst::create(vp, isArray == TR_yes ? rhs->asIntConst()->getLowInt() : 0);
+                     }
                   }
 
                TR::DebugCounter::incStaticDebugCounter(
