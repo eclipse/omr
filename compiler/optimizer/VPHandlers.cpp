@@ -4127,14 +4127,21 @@ TR::Node *constrainNew(OMR::ValuePropagation *vp, TR::Node *node)
       else
          vp->addGlobalConstraint(node, classConstraint);
 
-      // If it's an abstract class, or an interface, or a value type, the allocation
+      // If it's an abstract class, an interface, or a value type (unless value
+      // type instances can be created by a new operation), the allocation
       // cannot be removed because InstantiationError could be thrown
       TR_OpaqueClassBlock *clazz = classConstraint->getClassType() ? classConstraint->getClassType()->getClass() : NULL;
       if (clazz &&
           TR::Compiler->cls.isConcreteClass(vp->comp(), clazz) &&
-          !TR::Compiler->cls.isValueTypeClass(clazz))
+          (!TR::Compiler->cls.isValueTypeClass(clazz) || TR::Compiler->om.areValueTypeInstancesCreatedWithBCNew()))
          {
          node->setAllocationCanBeRemoved(true);
+
+         // Instances of value classes have no identity
+         if (TR::Compiler->cls.isValueTypeClass(clazz))
+            {
+            node->setIdentityless(true);
+            }
          }
       }
 
