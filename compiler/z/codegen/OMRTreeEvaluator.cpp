@@ -16021,6 +16021,10 @@ generateFusedMultiplyAddIfPossible(TR::CodeGenerator *cg, TR::Node *addNode, TR:
    TR_ASSERT_FATAL_WITH_NODE(addNode, !addNode->getDataType().isVector() ||
                    addNode->getDataType().getVectorLength() == TR::VectorLength128,
                    "Only 128-bit vectors are supported %s", addNode->getDataType().toString());
+   if (node->getDataType().getVectorElementType() != TR::Double || 
+         node->getDataType().getVectorElementType() != TR::Float ||
+         (op == VFMS && !canUseNodeForFusedMultiply(node->getFirstChild()))
+      return false;
 
    TR::Compilation *comp = cg->comp();
 
@@ -16030,8 +16034,15 @@ generateFusedMultiplyAddIfPossible(TR::CodeGenerator *cg, TR::Node *addNode, TR:
    //  Check for opposite order
    if(!canUseNodeForFusedMultiply(mulNode))
       {
-      addChild = addNode->getFirstChild();
-      mulNode  = addNode->getSecondChild();
+      if (canUseNodeForFusedMultiply(addChild))
+         {
+         addChild = addNode->getFirstChild();
+         mulNode  = addNode->getSecondChild();
+         }
+      else
+         {
+         return false;
+         }
       }
 
    // if the FloatMAF option is not set and the node is not FP strict, we can't generate FMA operations
@@ -16099,9 +16110,7 @@ OMR::Z::TreeEvaluator::vaddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR_ASSERT_FATAL_WITH_NODE(node, node->getDataType().getVectorLength() == TR::VectorLength128,
                    "Only 128-bit vectors are supported %s", node->getDataType().toString());
 
-   if ((node->getDataType().getVectorElementType() == TR::Double || node->getDataType().getVectorElementType() == TR::Float) &&
-      (canUseNodeForFusedMultiply(node->getFirstChild()) || canUseNodeForFusedMultiply(node->getSecondChild())) &&
-      generateFusedMultiplyAddIfPossible(cg, node, TR::InstOpCode::VFMA))
+   if (generateFusedMultiplyAddIfPossible(cg, node, TR::InstOpCode::VFMA))
       {
       if (cg->comp()->getOption(TR_TraceCG))
          traceMsg(cg->comp(), "Successfully changed vadd with vmul child to fused multiply and add operation\n");
@@ -16137,10 +16146,7 @@ OMR::Z::TreeEvaluator::vsubEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR_ASSERT_FATAL_WITH_NODE(node, node->getDataType().getVectorLength() == TR::VectorLength128,
                    "Only 128-bit vectors are supported %s", node->getDataType().toString());
 
-   if ((node->getDataType().getVectorElementType() == TR::Double ||
-        node->getDataType().getVectorElementType() == TR::Float) &&
-      canUseNodeForFusedMultiply(node->getFirstChild()) &&
-      generateFusedMultiplyAddIfPossible(cg, node, TR::InstOpCode::VFMS))
+   if (generateFusedMultiplyAddIfPossible(cg, node, TR::InstOpCode::VFMS))
       {
       if (cg->comp()->getOption(TR_TraceCG))
          traceMsg(cg->comp(), "Successfully changed vsub with vmul child to fused multiply and sub operation\n");
