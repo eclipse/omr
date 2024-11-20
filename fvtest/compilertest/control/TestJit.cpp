@@ -179,22 +179,8 @@ initializeTestJit(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_t n
    }
 
 extern "C"
-bool
-initializeJitWithOptions(char *options)
-   {
-   return initializeTestJit(0, 0, 0, options);
-   }
-
-extern "C"
-bool
-initializeJit()
-   {
-   return initializeTestJit(0, 0, 0, (char *)"-Xjit:useILValidator");
-   }
-
-extern "C"
 void
-shutdownJit()
+shutdownTestJit()
    {
    auto fe = TestCompiler::FrontEnd::instance();
 
@@ -202,6 +188,56 @@ shutdownJit()
    codeCacheManager.destroy();
 
    TR::CompilationController::shutdown();
+   }
+
+
+static int  initCount = 0;
+const  int  initCountMax = 5000;
+static std::string initOptions = "";
+
+extern "C"
+bool
+initializeJitWithOptions(char *options)
+   {
+   if (// If initialized with different options...
+          (initCount > 0 && initOptions != options)
+       // ...or virtual "initialication" count reaches threshold
+          || (initCount > initCountMax))
+      {
+      shutdownTestJit();
+      initCount = 0;
+      initOptions = "";
+      }
+
+   // Initialize if not initialized already
+   if (initCount == 0)
+      {
+      if (initializeTestJit(0, 0, 0, options))
+         {
+         initCount = 1;
+         initOptions = options;
+         }
+      }
+   // else increment "initialization" count.
+   else
+      {
+         initCount++;
+      }
+   return initCount > 0;
+   }
+
+extern "C"
+bool
+initializeJit()
+   {
+   return initializeJitWithOptions((char *)"-Xjit:useILValidator");
+   }
+
+extern "C"
+void
+shutdownJit()
+   {
+   // Do nothing, shutdown is handled in initializeJitWithOptions()
    }
 
 extern "C"

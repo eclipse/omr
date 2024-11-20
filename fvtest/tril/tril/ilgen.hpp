@@ -166,7 +166,6 @@ class TRLangBuilder : public TR::IlInjector {
 
     private:
         ASTToTRNode* _converter;
-        TR::TypeDictionary _types;
         const ASTNode* _trees;    // pointer to the AST node list representing Trees
 };
 
