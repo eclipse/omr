@@ -45,6 +45,8 @@ namespace TR { class Node; }
 namespace TR { class Register; }
 namespace TR { class RegisterDependencyConditions; }
 
+namespace TR { class ARM64ConditionalBranchInstruction; }
+
 namespace OMR
 {
 
@@ -232,6 +234,14 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
     * @param[in] v : flag status
     */
    void setWillBePatched(bool v = true) { v ? _index |= WillBePatched : _index &= ~WillBePatched; }
+
+   /**
+    * @brief Returns ARM64ConditionalBranchInstruction or NULL
+    */
+   virtual TR::ARM64ConditionalBranchInstruction *getARM64ConditionalBranchInstruction()
+      {
+      return NULL;
+      }
 
    private:
       TR::RegisterDependencyConditions *_conditions;
