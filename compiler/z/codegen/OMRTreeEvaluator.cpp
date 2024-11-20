@@ -11889,7 +11889,7 @@ OMR::Z::TreeEvaluator::arraycmplenEvaluator(TR::Node * node, TR::CodeGenerator *
    generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, secondLen, orgLen);
    generateRRInstruction(cg, TR::InstOpCode::CLCL, node, firstPair, secondPair);
 
-   generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, resultReg, firstLen);
+   generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, resultReg, firstLen);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
    cFlowRegionEnd->setEndInternalControlFlow();
@@ -12213,7 +12213,7 @@ OMR::Z::TreeEvaluator::arraytranslateAndTestEvaluator(TR::Node * node, TR::CodeG
          // Compute the actual index.
          //   Last translated character pointer - base register of array - array header size.
          generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, indexReg, ptrReg);
-         generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, indexReg, baseReg);
+         generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, indexReg, baseReg);
          generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, indexReg, -((int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
 
          if (elementChar)
@@ -12346,7 +12346,7 @@ OMR::Z::TreeEvaluator::arraytranslateAndTestEvaluator(TR::Node * node, TR::CodeG
             generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, label256Top);
             generateS390LabelInstruction(cg, TR::InstOpCode::label, node, label2ByteOk);
             }
-         generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, tmpReg, baseReg);
+         generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, tmpReg, baseReg);
          generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, tmpReg, -((int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
          generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, indexReg, tmpReg);
 
@@ -13417,8 +13417,8 @@ OMR::Z::TreeEvaluator::backwardArrayCopySequenceGenerator(TR::Node *node, TR::Co
       TR::LabelSymbol *skipResidueLabel = generateLabelSymbol(cg);
       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, skipResidueLabel);
 
-      cursor = generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, byteSrcReg, byteLenReg);
-      cursor = generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, byteDstReg, byteLenReg);
+      cursor = generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, byteSrcReg, byteLenReg);
+      cursor = generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, byteDstReg, byteLenReg);
 
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, handleResidueLabel);
       iComment("Handle residue");
@@ -13948,7 +13948,7 @@ OMR::Z::TreeEvaluator::long2StringEvaluator(TR::Node * node, TR::CodeGenerator *
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelDigit1);
    TR::MemoryReference * outMR = generateS390MemoryReference(baseReg, 0, cg);
    generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, countReg, 48);
-   generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, countReg, inputReg);
+   generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, countReg, inputReg);
    generateRXInstruction(cg, TR::InstOpCode::STH, node, countReg, outMR);
    outMR->stopUsingMemRefRegister(cg);
    // end
@@ -15270,7 +15270,7 @@ OMR::Z::TreeEvaluator::arraytranslateDecodeSIMDEvaluator(TR::Node * node, TR::Co
    processUnder16Bytes->setStartInternalControlFlow();
 
    // Calculate the number of residue bytes available
-   generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, inputLen, translated);
+   generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, inputLen, translated);
 
    // Branch to the end if there is no residue
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, cFlowRegionEnd);
@@ -15550,7 +15550,7 @@ OMR::Z::TreeEvaluator::arraytranslateEncodeSIMDEvaluator(TR::Node * node, TR::Co
    processUnder16Chars->setStartInternalControlFlow();
 
    // Calculate the number of residue chars available
-   generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, inputLen, translated);
+   generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, inputLen, translated);
 
    // Branch to the end if there is no residue
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, cFlowRegionEnd);
@@ -15850,7 +15850,7 @@ OMR::Z::TreeEvaluator::arraycmpSIMDHelper(TR::Node *node,
          // (resultReg - 1) - lastByteIndexReg = number of elements compared before the last loop
          // vectorOutputReg contains the 0-based index of the first non-matching element (index is its position in the vector)
          generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, resultReg, -1);
-         generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, resultReg, lastByteIndexReg);
+         generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, resultReg, lastByteIndexReg);
          generateVRScInstruction(cg, TR::InstOpCode::VLGV/*B*/, node, lastByteIndexReg, vectorOutputReg, generateS390MemoryReference(7, cg), 0);
          generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, resultReg, lastByteIndexReg);
          }

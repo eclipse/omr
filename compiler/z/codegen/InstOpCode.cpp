@@ -389,10 +389,10 @@ TR::InstOpCode::Mnemonic
 OMR::Z::InstOpCode::getAddLogicalRegRegImmediateOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::ALGHSIK : TR::InstOpCode::ALHSIK; }
 
 TR::InstOpCode::Mnemonic
-OMR::Z::InstOpCode::getSubstractOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::SG : TR::InstOpCode::S; }
+OMR::Z::InstOpCode::getSubtractOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::SG : TR::InstOpCode::S; }
 
 TR::InstOpCode::Mnemonic
-OMR::Z::InstOpCode::getSubstractRegOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::SGR : TR::InstOpCode::SR; }
+OMR::Z::InstOpCode::getSubtractRegOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::SGR : TR::InstOpCode::SR; }
 
 TR::InstOpCode::Mnemonic
 OMR::Z::InstOpCode::getSubtractThreeRegOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::SGRK : TR::InstOpCode::SRK; }
@@ -509,10 +509,10 @@ TR::InstOpCode::Mnemonic
 OMR::Z::InstOpCode::getAddRegWidenOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::AGFR : TR::InstOpCode::AR; }
 
 TR::InstOpCode::Mnemonic
-OMR::Z::InstOpCode::getSubstractWidenOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::SGF : TR::InstOpCode::S; }
+OMR::Z::InstOpCode::getSubtractWidenOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::SGF : TR::InstOpCode::S; }
 
 TR::InstOpCode::Mnemonic
-OMR::Z::InstOpCode::getSubStractRegWidenOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::SGFR : TR::InstOpCode::SR; }
+OMR::Z::InstOpCode::getSubtractRegWidenOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::SGFR : TR::InstOpCode::SR; }
 
 TR::InstOpCode::Mnemonic
 OMR::Z::InstOpCode::getCmpWidenOpCode() { return TR::comp()->target().is64Bit() ? TR::InstOpCode::CGF : TR::InstOpCode::C; }
