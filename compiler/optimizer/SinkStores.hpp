@@ -257,7 +257,7 @@ class TR_SinkStores : public TR::Optimization
                                         bool &isLoadStatic,
                                         vcount_t &treeVisitCount,
                                         vcount_t &highVisitCount) = 0;
-   virtual bool sinkStorePlacement(TR_MovableStore *store, bool nextStoreWasMoved) = 0;
+   virtual bool sinkStorePlacement(TR_MovableStore *store) = 0;
    void coalesceSimilarEdgePlacements();
    void placeStoresAlongEdges(List<TR_StoreInformation> & stores, List<TR_EdgeInformation> & edges);
    void placeStoresInBlock(List<TR_StoreInformation> & stores, TR::Block *placementBlock);
@@ -375,7 +375,7 @@ class TR_GeneralSinkStores : public TR_SinkStores
                                         bool &isLoadStatic,
                                         vcount_t &treeVisitCount,
                                         vcount_t &highVisitCount);
-   virtual bool sinkStorePlacement(TR_MovableStore *store, bool nextStoreWasMoved);
+   virtual bool sinkStorePlacement(TR_MovableStore *store);
    };
 
 // current call store with commoned load with be moved with temp because current

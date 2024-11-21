@@ -405,7 +405,7 @@ void TR_SinkStores::recordPlacementForDefAlongEdge(TR_EdgeStorePlacement *edgePl
          (*edgeInfo->_symbolsUsedOrKilled) |= (*_usedSymbolsToMove);
          (*edgeInfo->_symbolsUsedOrKilled) |= (*_killedSymbolsToMove);
          _allEdgePlacements.add(edgePlacement);
-	 optimizer()->setRequestOptimization(OMR::basicBlockOrdering, true);
+         optimizer()->setRequestOptimization(OMR::basicBlockOrdering, true);
 
          if (_placementsForEdgesToBlock[toBlockNumber] == NULL)
             _placementsForEdgesToBlock[toBlockNumber] = new (trStackMemory()) TR_EdgeStorePlacementList(trMemory());
@@ -665,7 +665,7 @@ int32_t TR_SinkStores::performStoreSinking()
       comp()->dumpMethodTrees("After Store Sinking");
       }
 
-    } // scope of the stack memory region
+   } // scope of the stack memory region
 
    optimizer()->enableAllLocalOpts();
 
@@ -915,7 +915,7 @@ void TR_SinkStores::lookForSinkableStores()
                               traceMsg(comp(), "         marking store [" POINTER_PRINTF_FORMAT "] as movable with temp because it has commoned reference used sym %d\n", store->_useOrKillInfo->_tt->getNode(), killedSymIdx);
                            }
                         }
-                        storeElement = storeElement->getNextElement();
+                     storeElement = storeElement->getNextElement();
                      }
                   }
 
@@ -1143,7 +1143,6 @@ void TR_SinkStores::lookForSinkableStores()
 
          // now go through the list of potentially movable stores in this extended basic
          // block (a subset of the useOrKillInfoList) and try to sink the ones that are still movable
-         bool movedPreviousStore = false;
          while (!useOrKillInfoList.isEmpty())
             {
             TR_UseOrKillInfo *useOrKill = useOrKillInfoList.popHead();
@@ -1203,17 +1202,15 @@ void TR_SinkStores::lookForSinkableStores()
                   {
                   int32_t symIdx = store->_symIdx;
                   TR_ASSERT(_killedSymbolsToMove->isSet(symIdx), "_killedSymbolsToMove is inconsistent with potentiallyMovableStores entry for this store (symIdx=%d)!", symIdx);
-                  if (sinkStorePlacement(store,
-                                         movedPreviousStore))
+                  if (sinkStorePlacement(store))
                      {
                      if (trace())
                         traceMsg(comp(), "        Successfully sunk past a non-live path\n");
-                     movedStore = movedPreviousStore = true;
+                     movedStore = true;
                      _numRemovedStores++;
                      }
                   else
                      {
-                     movedPreviousStore = false;
                      if (trace())
                         traceMsg(comp(), "        Didn't sink this store\n");
                      }
@@ -1225,7 +1222,6 @@ void TR_SinkStores::lookForSinkableStores()
                }
             else
                {
-               movedPreviousStore = false;
                if (trace())
                   traceMsg(comp(), " is not movable (isStore = %s)\n", isStore ? "true" : "false");
                // if a once movable store was later marked as unmovable must remove it from the list now
@@ -1616,7 +1612,7 @@ void TR_SinkStores::placeStoresAlongEdges(List<TR_StoreInformation> & stores, Li
                 from->getLastRealTreeTop()->getNode()->getOpCode().isIf())
                {
                TR::TreeTop *prevExit = placementBlock->getEntry()->getPrevTreeTop();
-	       TR::TreeTop *nextEntry = placementBlock->getExit()->getNextTreeTop();
+               TR::TreeTop *nextEntry = placementBlock->getExit()->getNextTreeTop();
                TR::TreeTop *newExit = from->getExit();
                TR::TreeTop *newEntry = newExit->getNextTreeTop();
                prevExit->join(nextEntry);
@@ -1874,11 +1870,11 @@ bool TR_SinkStores::treeIsSinkableStore(TR::Node *node, bool sinkIndirectLoads, 
        node->getOpCode().isLoadVarDirect() &&
        node->getSymbolReference()->getSymbol()->isStatic() &&
        (underCommonedNode || node->getReferenceCount() > 1))
-       {
-       if (trace())
+      {
+      if (trace())
          traceMsg(comp(), "         commoned static load store failure: %p\n", node);
-       return false;
-       }
+      return false;
+      }
 
    int32_t currentDepth = ++depth;
    bool    previouslyCommoned = underCommonedNode;
@@ -2287,8 +2283,7 @@ bool TR_SinkStores::storeCanMoveThroughBlock(TR_BitVector *blockKilledSet, TR_Bi
    }
 
 
-bool TR_GeneralSinkStores::sinkStorePlacement(TR_MovableStore *movableStore,
-                                              bool nextStoreWasMoved)
+bool TR_GeneralSinkStores::sinkStorePlacement(TR_MovableStore *movableStore)
    {
    TR::Block *sourceBlock = movableStore->_useOrKillInfo->_block;
    TR::TreeTop *tt = movableStore->_useOrKillInfo->_tt;
