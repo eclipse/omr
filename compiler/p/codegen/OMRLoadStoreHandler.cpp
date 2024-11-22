@@ -282,7 +282,7 @@ StoreSyncRequirements getStoreSyncRequirements(TR::CodeGenerator *cg, TR::Node *
 
         return StoreSyncRequirements::Full;
         }
-    else if (node->getSymbol()->isShadow() && node->getSymbol()->isOrdered() && cg->comp()->target().isSMP())
+    else if (node->getSymbol()->isShadow() && node->getSymbol()->isAcquireRelease() && cg->comp()->target().isSMP())
         {
         return StoreSyncRequirements::LazySet;
         }

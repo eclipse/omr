@@ -491,6 +491,100 @@ OMR::Symbol::isMemoryTypeShadowSymbol()
    return self()->isShadow() && _flags.testAny(MemoryTypeShadow);
    }
 
+const char *
+OMR::Symbol::getMemoryOrderingName(OMR::Symbol::MemoryOrdering ordering)
+   {
+   switch (ordering)
+      {
+      case TransparentSemantics: return "transparent";
+      case OpaqueSemantics: return "opaque";
+      case AcquireReleaseSemantics: return "acquire/release";
+      case VolatileSemantics: return "volatile";
+
+      default:
+         TR_ASSERT_FATAL(false, "Unrecognized memory ordering type");
+         return NULL;
+      }
+   }
+
+void
+OMR::Symbol::setMemoryOrdering(OMR::Symbol::MemoryOrdering ordering)
+   {
+   switch (ordering)
+      {
+      case TransparentSemantics:
+         setTransparent();
+         break;
+      case OpaqueSemantics:
+         setOpaque();
+         break;
+      case AcquireReleaseSemantics:
+         setAcquireRelease();
+         break;
+      case VolatileSemantics:
+         setVolatile();
+         break;
+
+      default:
+         TR_ASSERT_FATAL(false, "Unrecognized memory access ordering type");
+         break;
+      }
+   }
+
+OMR::Symbol::MemoryOrdering
+OMR::Symbol::getMemoryOrdering()
+   {
+   switch (_flags.getValue(MemoryOrderingMask))
+      {
+      case Transparent: return TransparentSemantics;
+      case Opaque: return OpaqueSemantics;
+      case AcquireRelease: return AcquireReleaseSemantics;
+      case Volatile: return VolatileSemantics;
+
+      default:
+         TR_ASSERT_FATAL(false, "This should be unreachable");
+         return 0;
+      }
+   }
+
+void
+OMR::Symbol::setOpaque()
+   {
+   _flags.setValue(MemoryOrderingMask, Opaque);
+   }
+
+bool
+OMR::Symbol::isOpaque()
+   {
+   // AcquireRelease and Volatile both imply Opaque, so we need to check that the memory ordering is at least Opaque
+   return _flags.getValue(MemoryOrderingMask) >= Opaque;
+   }
+
+void
+OMR::Symbol::setAcquireRelease()
+   {
+   _flags.setValue(MemoryOrderingMask, AcquireRelease);
+   }
+
+bool
+OMR::Symbol::isAcquireRelease()
+   {
+   // Volatile implies AcquireRelease, so we need to check that the ordering is at least AcquireRelease
+   return _flags.getValue(MemoryOrderingMask) >= AcquireRelease;
+   }
+
+void
+OMR::Symbol::setVolatile()
+   {
+   _flags.setValue(MemoryOrderingMask, Volatile);
+   }
+
+bool
+OMR::Symbol::isVolatile()
+   {
+   return _flags.testValue(MemoryOrderingMask, Volatile);
+   }
+
 void
 OMR::Symbol::setStartOfColdInstructionStream()
    {
@@ -751,12 +845,6 @@ OMR::Symbol::isRegularShadow()
    return self()->isShadow() && !self()->isAutoField() && !self()->isParmField();
    }
 
-bool
-OMR::Symbol::isSyncVolatile()
-   {
-   return self()->isVolatile();
-   }
-
 void
 OMR::Symbol::setDummyResolvedMethod()
    {
@@ -883,5 +971,7 @@ OMR::Symbol::getVariableSizeSymbol()
    {
    return self()->isVariableSizeSymbol() ? (TR::AutomaticSymbol *)this : 0;
    }
+
+
 
 #endif // OMR_SYMBOL_INLINES_INCL

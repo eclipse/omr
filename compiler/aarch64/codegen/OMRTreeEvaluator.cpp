@@ -6196,7 +6196,7 @@ TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, 
    bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
    bool lazyVolatile = false;
    if (node->getSymbolReference()->getSymbol()->isShadow() &&
-       node->getSymbolReference()->getSymbol()->isOrdered() && cg->comp()->target().isSMP())
+       node->getSymbolReference()->getSymbol()->isAcquireRelease() && cg->comp()->target().isSMP())
       {
       needSync = true;
       lazyVolatile = true;
