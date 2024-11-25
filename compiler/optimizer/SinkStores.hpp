@@ -136,9 +136,10 @@ class TR_MovableStore
    TR::Compilation * _comp;
 
    TR_SinkStores * _s;
+   TR_BitVector *_needTempForCommonedLoads; // move stores with commoned load
+   TR_BitVector *_unsafeLoads;              //
    int32_t       _depth;                    // a measure of store tree complexity
    bool          _movable;
-   TR_BitVector *_needTempForCommonedLoads; // move stores with commoned load
    bool          _isLoadStatic;             // is this a store of a static load?
 
    };
@@ -147,11 +148,13 @@ class TR_StoreInformation
    {
    public:
    TR_ALLOC(TR_Memory::DataFlowAnalysis)
-   TR_StoreInformation(TR::TreeTop *store, bool copy, bool needsDuplication = true) :
-                        _store(store), _copy(copy), _needsDuplication(needsDuplication), _storeTemp(NULL) { }
+   TR_StoreInformation(TR::TreeTop *store, TR_BitVector *unsafeLoads, bool copy, bool needsDuplication = true) :
+                        _store(store), _unsafeLoads(unsafeLoads), _copy(copy),
+                        _needsDuplication(needsDuplication), _storeTemp(NULL) { }
 
    TR::TreeTop *_store;   // original store to be sunk
    TR::TreeTop *_storeTemp;// dup store with commoned loads replaced by temp
+   TR_BitVector *_unsafeLoads;
    bool        _copy;    // whether original store should be copied or moved
                          //  it should be copied if the store is placed in a block that does NOT extend the original source block
                          //  it should be moved if it is to be placed in a block that extends the original source block
@@ -246,6 +249,18 @@ class TR_SinkStores : public TR::Optimization
    virtual void lookForSinkableStores();
    virtual void doSinking();
    TR_EdgeInformation *findEdgeInformation(TR::CFGEdge *edge, List<TR_EdgeInformation> & edgeList);
+
+   /**
+    * Walk through a tree looking for loads of local symbols that are considered to
+    * unsafe.
+    *
+    * \param[in] usr An \ref OMR::UnsafeSubexpressionRemover that is used to keep track of nodes that
+    *                are considered to be unsafe.
+    * \param[in] unsafeLoads A \ref TR_BitVector containing the set of local sym indices that are
+    *                considered to be unsafe to load.
+    * \param[in] node The tree that is to be searched for loads of unsafe local syms.
+    */
+   void findUnsafeLoads(OMR::UnsafeSubexpressionRemover &usr, TR_BitVector *unsafeLoads, TR::Node *node);
 
    protected:
    virtual bool storeIsSinkingCandidate(TR::Block *block,
