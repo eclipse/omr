@@ -1258,6 +1258,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"traceProfiledNodeVersioning",      "L\ttrace profiled node versioning",               TR::Options::traceOptimization, profiledNodeVersioning, 0, "P"},
 #ifdef J9_PROJECT_SPECIFIC
    {"traceProfileGenerator",            "L\ttrace profile generator",                      TR::Options::traceOptimization, profileGenerator, 0, "P"},
+   {"traceProfilingData",               "L\tdump the profiling data if available",           SET_OPTION_BIT(TR_TraceProfilingData), "P"},
 #endif
    {"traceRA",                          "L\ttrace register assignment",                    SET_OPTION_BIT(TR_TraceRA), "P" },
    {"traceReachability",                "L\ttrace all analyses based on the reachability engine",     SET_OPTION_BIT(TR_TraceReachability), "P"},

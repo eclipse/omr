@@ -821,7 +821,7 @@ enum TR_CompilationOptions
    TR_TracePREForOptimalSubNodeReplacement            = 0x00002000 + 25,
    // Available                                       = 0x00008000 + 25,
    TR_PerfTool                                        = 0x00010000 + 25,
-   // Available                                       = 0x00020000 + 25,
+   TR_TraceProfilingData                              = 0x00020000 + 25,
    TR_DisableBranchOnCount                            = 0x00040000 + 25,
    // Available                                       = 0x00080000 + 25,
    TR_DisableLoopEntryAlignment                       = 0x00100000 + 25,
