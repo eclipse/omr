@@ -3437,24 +3437,24 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
       }
 
    if (isInternalPointer &&
-       examineChildren)
+      examineChildren &&
+      comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers() &&
+      (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
+         _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED))
       {
       bool isConst = false;
       if (node->getOpCode().isLoadConst())
          isConst = true;
 
+      bool isIntrlPtrReplacable = isConst ||
+         (node->getOpCode().hasSymbolReference() &&
+         node->getOpCode().isLoadVar() &&
+         node->getSymbolReference()->getSymbol()->isAutoOrParm() &&
+         _neverWritten->get(node->getSymbolReference()->getReferenceNumber()));
 
-      if ((isConst ||
-           (node->getOpCode().hasSymbolReference() &&
-            node->getOpCode().isLoadVar() &&
-            //node->getSymbolReference()->getSymbol()->isAuto() &&
-            node->getSymbolReference()->getSymbol()->isAutoOrParm() &&
-            _neverWritten->get(node->getSymbolReference()->getReferenceNumber()))) &&
-           (!_registersScarce || (originalNode->getReferenceCount() > 1)) &&
-           (comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers()) &&
-           (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
-               _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
-           performTransformation(comp(), "%s Replacing invariant internal pointer %p based on symRef #%d\n", OPT_DETAILS, node, internalPointerSymbol))
+      if (isIntrlPtrReplacable &&
+         (!_registersScarce || originalNode->getReferenceCount() > 1) &&
+         performTransformation(comp(), "%s Replacing invariant internal pointer %p based on symRef #%d\n", OPT_DETAILS, node, internalPointerSymbol))
          {
          TR::SymbolReference *internalPointerSymRef = NULL;
          auto symRefPairSearchResult = _hoistedAutos->find(originalInternalPointerSymbol);
@@ -3492,7 +3492,7 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
          if (!internalPointerSymRef)
             {
             TR::SymbolReference *newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, isInternalPointer);
-            if (isInternalPointer && !pinningArrayPointer)
+            if (!pinningArrayPointer)
                {
                TR::SymbolReference *newPinningArray = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, false);
                pinningArrayPointer = newPinningArray->getSymbol()->castToAutoSymbol();
@@ -3514,10 +3514,7 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
                }
 
             _newTempsCreated = true;
-            if (isInternalPointer)
-               _numInternalPointers++;
-            else
-               _newNonAddressTempsCreated = true;
+            _numInternalPointers++;
 
             TR::Symbol *symbol = newSymbolReference->getSymbol();
 
@@ -3559,98 +3556,93 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
          originalNode->setSymbolReference(internalPointerSymRef);
          originalNode->setNumChildren(0);
          originalNode->setLocalIndex(~0);
-         reassociatedComputation = true;
          examineChildren = false;
+         reassociatedComputation = true;
          }
       }
 
-   if (((node->getOpCodeValue() == TR::iadd) || (node->getOpCodeValue() == TR::isub)) ||
-       ((node->getOpCodeValue() == TR::ladd) || (node->getOpCodeValue() == TR::lsub)))
+   if (isInternalPointer &&
+      comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers() &&
+      (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
+         _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
+      (node->getOpCodeValue() == TR::iadd || node->getOpCodeValue() == TR::isub ||
+         node->getOpCodeValue() == TR::ladd || node->getOpCodeValue() == TR::lsub) &&
+      (node->getSecondChild()->getOpCodeValue() == TR::iconst || node->getSecondChild()->getOpCodeValue() == TR::lconst))
       {
-      if (node->getSecondChild()->getOpCodeValue() == TR::iconst ||
-          node->getSecondChild()->getOpCodeValue() == TR::lconst)
+      bool isAdd = false;
+      if (node->getOpCodeValue() == TR::iadd || node->getOpCodeValue() == TR::ladd)
+         isAdd = true;
+
+      int32_t constValue;
+      if (usingAladd && node->getSecondChild()->getType().isInt64())
+         constValue = (int32_t)node->getSecondChild()->getLongInt();
+      else
+         constValue = node->getSecondChild()->getInt();
+
+      int32_t hdrSize = (int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+      bool isAddOfHdrSizeConst = (isAdd && constValue == hdrSize) || (!isAdd && constValue == -hdrSize);
+
+      if (isAddOfHdrSizeConst &&
+         (!_registersScarce || node->getReferenceCount() > 1 || _reassociatedNodes.find(node)) &&
+         performTransformation(comp(), "%s Replacing reassociated internal pointer based on symRef #%d\n", OPT_DETAILS, internalPointerSymbol))
          {
-         bool isAdd = false;
-         if (node->getOpCodeValue() == TR::iadd || node->getOpCodeValue() == TR::ladd)
-            isAdd = true;
-
-         int32_t constValue;
-         if (usingAladd && node->getSecondChild()->getType().isInt64())
-            constValue = (int32_t)node->getSecondChild()->getLongInt();
-         else
-            constValue = node->getSecondChild()->getInt();
-
-         int32_t hdrSize = (int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-         if ((isInternalPointer &&
-              (comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers()) &&
-              ((isAdd && (constValue == hdrSize)) ||
-               (!isAdd && constValue == -hdrSize))) &&
-              (!_registersScarce || (node->getReferenceCount() > 1) || _reassociatedNodes.find(node)) &&
-              (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
-                  _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
-              performTransformation(comp(), "%s Replacing reassociated internal pointer based on symRef #%d\n", OPT_DETAILS, internalPointerSymbol))
+         if (_reassociatedAutos->find(originalInternalPointerSymbol) == _reassociatedAutos->end())
             {
-            if (_reassociatedAutos->find(originalInternalPointerSymbol) == _reassociatedAutos->end())
+            TR::SymbolReference *newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, isInternalPointer);
+            if (!pinningArrayPointer)
                {
-               TR::SymbolReference *newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, isInternalPointer);
-               if (isInternalPointer && !pinningArrayPointer)
-                  {
-                  TR::SymbolReference *newPinningArray = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, false);
-                  pinningArrayPointer = newPinningArray->getSymbol()->castToAutoSymbol();
-                  createParmAutoPair(comp()->getSymRefTab()->getSymRef(internalPointerSymbol), newPinningArray);
+               TR::SymbolReference *newPinningArray = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address, false);
+               pinningArrayPointer = newPinningArray->getSymbol()->castToAutoSymbol();
+               createParmAutoPair(comp()->getSymRefTab()->getSymRef(internalPointerSymbol), newPinningArray);
 
-                  TR::Node *newAload = TR::Node::createLoad(node, comp()->getSymRefTab()->getSymRef(internalPointerSymbol));
-                  newAload->setLocalIndex(~0);
-                  TR::Node *newStore = TR::Node::createWithSymRef(TR::astore, 1, 1, newAload, newPinningArray);
-                  internalPointerSymbol = newPinningArray->getReferenceNumber();
-                  TR::TreeTop *placeHolderTree = loopInvariantBlock->getEntry();
-                  TR::TreeTop *nextTree = placeHolderTree->getNextTreeTop();
-                  newStore->setLocalIndex(~0);
-                  TR::TreeTop *newStoreTreeTop = TR::TreeTop::create(comp(), newStore);
-                  placeHolderTree->join(newStoreTreeTop);
-                  newStoreTreeTop->join(nextTree);
-                  dumpOptDetails(comp(), "\nO^O INDUCTION VARIABLE ANALYSIS: Induction variable analysis inserted initialization tree : %p for new symRef #%d\n", newStoreTreeTop->getNode(), newPinningArray->getReferenceNumber());
-                  _numInternalPointerOrPinningArrayTempsInitialized++;
-                  }
-
-               _newTempsCreated = true;
-               if (isInternalPointer)
-                  _numInternalPointers++;
-               else
-                  _newNonAddressTempsCreated = true;
-
-               TR::Symbol *symbol = newSymbolReference->getSymbol();
-
-               if (!pinningArrayPointer->isInternalPointer())
-                  {
-                  symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer);
-                  pinningArrayPointer->setPinningArrayPointer();
-                  }
-               else
-                  symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
-
-               (*_reassociatedAutos)[originalInternalPointerSymbol] = newSymbolReference;
-               dumpOptDetails(comp(), "reass num %d newsymref %d\n", internalPointerSymbol, newSymbolReference->getReferenceNumber());
+               TR::Node *newAload = TR::Node::createLoad(node, comp()->getSymRefTab()->getSymRef(internalPointerSymbol));
+               newAload->setLocalIndex(~0);
+               TR::Node *newStore = TR::Node::createWithSymRef(TR::astore, 1, 1, newAload, newPinningArray);
+               internalPointerSymbol = newPinningArray->getReferenceNumber();
+               TR::TreeTop *placeHolderTree = loopInvariantBlock->getEntry();
+               TR::TreeTop *nextTree = placeHolderTree->getNextTreeTop();
+               newStore->setLocalIndex(~0);
+               TR::TreeTop *newStoreTreeTop = TR::TreeTop::create(comp(), newStore);
+               placeHolderTree->join(newStoreTreeTop);
+               newStoreTreeTop->join(nextTree);
+               dumpOptDetails(comp(), "\nO^O INDUCTION VARIABLE ANALYSIS: Induction variable analysis inserted initialization tree : %p for new symRef #%d\n", newStoreTreeTop->getNode(), newPinningArray->getReferenceNumber());
+               _numInternalPointerOrPinningArrayTempsInitialized++;
                }
 
-            TR::SymbolReference *internalPointerSymRef = (*_reassociatedAutos)[originalInternalPointerSymbol];
-            originalNode->getFirstChild()->recursivelyDecReferenceCount();
-            //node->recursivelyDecReferenceCount();
-            node->decReferenceCount();
-            _reassociatedNodes.add(node);
+            _newTempsCreated = true;
+            _numInternalPointers++;
 
-            if (node->getReferenceCount() == 0)
+            TR::Symbol *symbol = newSymbolReference->getSymbol();
+
+            if (!pinningArrayPointer->isInternalPointer())
                {
-               node->getFirstChild()->decReferenceCount();
-               node->getSecondChild()->decReferenceCount();
+               symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer);
+               pinningArrayPointer->setPinningArrayPointer();
                }
+            else
+               symbol->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArrayPointer->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
 
-            TR::Node *newLoad = TR::Node::createWithSymRef(node, TR::aload, 0, internalPointerSymRef);
-            newLoad->setLocalIndex(~0);
-            originalNode->setAndIncChild(0, newLoad);
-            originalNode->setAndIncChild(1, node->getFirstChild());
-            reassociatedComputation = true;
+            (*_reassociatedAutos)[originalInternalPointerSymbol] = newSymbolReference;
+            dumpOptDetails(comp(), "reass num %d newsymref %d\n", internalPointerSymbol, newSymbolReference->getReferenceNumber());
             }
+
+         TR::SymbolReference *internalPointerSymRef = (*_reassociatedAutos)[originalInternalPointerSymbol];
+         originalNode->getFirstChild()->recursivelyDecReferenceCount();
+         //node->recursivelyDecReferenceCount();
+         node->decReferenceCount();
+         _reassociatedNodes.add(node);
+
+         if (node->getReferenceCount() == 0)
+            {
+            node->getFirstChild()->decReferenceCount();
+            node->getSecondChild()->decReferenceCount();
+            }
+
+         TR::Node *newLoad = TR::Node::createWithSymRef(node, TR::aload, 0, internalPointerSymRef);
+         newLoad->setLocalIndex(~0);
+         originalNode->setAndIncChild(0, newLoad);
+         originalNode->setAndIncChild(1, node->getFirstChild());
+         reassociatedComputation = true;
          }
       }
 
