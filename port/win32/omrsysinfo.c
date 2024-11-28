@@ -929,7 +929,9 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 	}
 
-	status = PdhAddCounter(statsHandle,
+	// PdhAddCounter requires a localized counter path, and so fails on non-english locales.
+	// Replacing with PdhAddEnglishCounter should avoid the problem
+	status = PdhAddEnglishCounter(statsHandle,
 						   MEMORY_COMMIT_LIMIT_COUNTER_PATH,
 						   (DWORD_PTR)NULL,
 						   &memoryCommitLimitCounter);
@@ -940,7 +942,7 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 	}
 
-	status = PdhAddCounter(statsHandle,
+	status = PdhAddEnglishCounter(statsHandle,
 						   MEMORY_COMMITTED_BYTES_COUNTER_PATH,
 						   (DWORD_PTR)NULL,
 						   &memoryCommittedBytesCounter);
@@ -951,7 +953,7 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 	}
 
-	status = PdhAddCounter(statsHandle,
+	status = PdhAddEnglishCounter(statsHandle,
 						   MEMORY_CACHE_BYTES_COUNTER_PATH,
 						   (DWORD_PTR)NULL,
 						   &memoryCacheBytesCounter);
