@@ -534,6 +534,7 @@ allocateVmemRegion32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, J
 	 */
 #if defined(OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS)
 	J9PortVmemIdentifier *vmemID = NULL;
+	uintptr_t *pageSizes = NULL;
 	uintptr_t pageSize = 0;
 	uintptr_t i = 0;
 	J9HeapWrapper *wrapper = NULL;
@@ -558,8 +559,10 @@ allocateVmemRegion32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, J
 		return NULL;
 	}
 
+	pageSizes = portLibrary->vmem_supported_page_sizes(portLibrary);
+
 	/* get the default page size */
-	pageSize = portLibrary->vmem_supported_page_sizes(portLibrary)[0];
+	pageSize = pageSizes[0];
 	if (0 == pageSize) {
 		Trc_PRT_mem_allocate_memory32_failed_page(callSite);
 		portLibrary->mem_free_memory(portLibrary, vmemID);
@@ -568,8 +571,18 @@ allocateVmemRegion32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, J
 	}
 
 	/* use a minimum 4K page size */
-	if (pageSize < 0x1000) {
-		pageSize = 0x1000;
+	// if (pageSize < 0x1000) {
+	// 	pageSize = 0x1000;
+	// }
+	/* Make sure that we only allocate 4k pages. */
+	// pageSize = 0x1000;
+	/* If 4K is not the default page size, then look for the smallest one as per omrvmem_startup. */
+	if (0x1000 != pageSize) {
+		for (i = 0 ; pageSizes[i] != 0 ; i++) {
+			if (pageSize > pageSizes[i]) {
+				pageSize = pageSizes[i];
+			}
+		}
 	}
 
 #if defined(LINUX)
