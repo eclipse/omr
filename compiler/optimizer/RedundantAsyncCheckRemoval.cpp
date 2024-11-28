@@ -424,7 +424,11 @@ bool TR_RedundantAsyncCheckRemoval::callDoesAnImplicitAsyncCheck(TR::Node *callN
        (symbol->getRecognizedMethod()==TR::java_lang_Integer_rotateLeft) ||
        (symbol->getRecognizedMethod()==TR::java_lang_Long_rotateLeft) ||
        (symbol->getRecognizedMethod()==TR::java_lang_Integer_rotateRight) ||
-       (symbol->getRecognizedMethod()==TR::java_lang_Long_rotateRight)
+       (symbol->getRecognizedMethod()==TR::java_lang_Long_rotateRight) ||
+       (symbol->getRecognizedMethod()==TR::java_lang_Integer_compress) ||
+       (symbol->getRecognizedMethod()==TR::java_lang_Long_compress) ||
+       (symbol->getRecognizedMethod()==TR::java_lang_Integer_expand) ||
+       (symbol->getRecognizedMethod()==TR::java_lang_Long_expand)
        )
        return false;
 

@@ -291,7 +291,7 @@ bool isAligned();
  *    A return value of `false` does not imply long displacement is not required. This is because the displacement of
  *    this memory reference is not fully known until binary encoding. Only after the binary encoding of this memory
  *    reference will a return value of `false` indicate that long displacement is not required. The offset may increase
- *    by some amount during code generation, however it will never decrease. This is why a return value of `true` 
+ *    by some amount during code generation, however it will never decrease. This is why a return value of `true`
  *    always implies long displacement will be required.
  */
 const bool isLongDisplacementRequired();
@@ -386,7 +386,7 @@ TR::S390ConstantDataSnippet* createLiteralPoolSnippet(TR::Node *rootNode, TR::Co
 void populateLoadAddrTree(TR::Node* subTree, TR::CodeGenerator* cg);
 void populateAloadTree(TR::Node* subTree, TR::CodeGenerator* cg, bool privateArea = false);
 void populateShiftLeftTree(TR::Node* subTree, TR::CodeGenerator* cg);
-void populateAddTree(TR::Node* subTree, TR::CodeGenerator* cg);
+void populateAddTree(TR::Node* subTree, TR::CodeGenerator* cg, TR::InstOpCode::Mnemonic *loadOp = NULL, bool allowLXA = false);
 
 void consolidateRegisters(TR::Node *subTree, TR::CodeGenerator *cg);
 
@@ -468,7 +468,7 @@ void setMemRefAndGetUnresolvedData(TR::Snippet *& snippet) {}
 
 /**
  * \brief
- *   Create a MemoryReference from a given node. 
+ *   Create a MemoryReference from a given node.
  *
  * \param[in] node
  *   The node which describes the memory reference.

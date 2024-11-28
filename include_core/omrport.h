@@ -1652,6 +1652,23 @@ typedef struct OMRProcessorDesc {
 /* STFLE bit 192 - Vector-Packed-Decimal-Enhancement Facility 2 */
 #define OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2 192
 
+/* zNext facilities */
+
+/* STFLE bit 84 - Miscellaneous-instruction-extensions facility 4 */
+#define OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_4 84
+
+/* STFLE bit 198 - Vector enhancements facility 3 */
+#define OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_3 198
+
+/* STFLE bit 87 - PLO-extension facility */
+#define OMR_FEATURE_S390_PLO_EXTENSION 87
+
+/* STFLE bit 199 - Vector-Packed-Decimal-Enhancement Facility 3 */
+#define OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_3 199
+
+/* STFLE bit 170 - Ineffective-nonconstrained-transaction facility */
+#define OMR_FEATURE_S390_INEFFECTIVE_NONCONSTRAINED_TRANSACTION_FACILITY 170
+
 /*  Linux on Z features
  *  Auxiliary Vector Hardware Capability (AT_HWCAP) features for Linux on Z.
  *  Obtained from: https://github.com/torvalds/linux/blob/050cdc6c9501abcd64720b8cc3e7941efee9547d/arch/s390/include/asm/elf.h#L94-L109.

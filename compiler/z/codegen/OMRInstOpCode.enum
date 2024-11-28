@@ -1161,7 +1161,7 @@
    VLBRREP,             // vector load byte reversed element and replicate
    VLEBRF,              // vector load byte reversed element (32)
    VLEBRG,              // vector load byte reversed element (64)
-   VLEBRH,              // vector load byte reversed element (16)   
+   VLEBRH,              // vector load byte reversed element (16)
    VLER,                // vector load elements reversed
    VLLEBRZ,             // vector load byte reversed element and zero
    VSTBR,               // vector store byte reversed elements
@@ -1179,4 +1179,28 @@
    VUPKZL,              // VECTOR UNPACK ZONED LOW
    VUPKZH,              // VECTOR UNPACK ZONED HIGH
 
-   S390LastOp = VUPKZH,
+   /* zNext Instructions */
+   BDEPG,               // BIT DEPOSIT
+   BEXTG,               // BIT EXTRACT
+   CLZG,                // COUNT LEADING ZEROS
+   CTZG,                // COUNT TRAILING ZEROS
+   LLXAB,               // LOAD LOGICAL INDEXED ADDRESS (8)
+   LLXAF,               // LOAD LOGICAL INDEXED ADDRESS (32)
+   LLXAG,               // LOAD LOGICAL INDEXED ADDRESS (64)
+   LLXAH,               // LOAD LOGICAL INDEXED ADDRESS (16)
+   LLXAQ,               // LOAD LOGICAL INDEXED ADDRESS (128)
+   LXAB,                // LOAD INDEXED ADDRESS (8)
+   LXAF,                // LOAD INDEXED ADDRESS (32)
+   LXAG,                // LOAD INDEXED ADDRESS (64)
+   LXAH,                // LOAD INDEXED ADDRESS (16)
+   LXAQ,                // LOAD INDEXED ADDRESS (128)
+   VBLEND,              // VECTOR BLEND
+   VEVAL,               // VECTOR EVALUATE
+   VD,                  // VECTOR DIVIDE
+   VDL,                 // VECTOR DIVIDE LOGICAL
+   VGEM,                // VECTOR GENERATE ELEMENT MASKS
+   VR,                  // VECTOR REMAINDER
+   VRL,                 // VECTOR REMAINDER LOGICAL
+   VTZ,                 // VECTOR TEST ZONED
+
+   S390LastOp = VTZ,

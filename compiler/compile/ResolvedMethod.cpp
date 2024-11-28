@@ -180,10 +180,23 @@ bool TR_ResolvedMethod::isDAAPackedDecimalWrapperMethod()
 #endif
    }
 
+bool TR_ResolvedMethod::isDAAExternalDecimalWrapperMethod()
+   {
+#ifdef J9_PROJECT_SPECIFIC
+   if ( // DAA External Decimal check method
+      getRecognizedMethod() == TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal
+      )
+      {
+      return true;
+      }
+#endif
+   return false;
+   }
+
 bool TR_ResolvedMethod::isDAAWrapperMethod()
    {
 #ifdef J9_PROJECT_SPECIFIC
-   return isDAAMarshallingWrapperMethod() || isDAAPackedDecimalWrapperMethod();
+   return isDAAMarshallingWrapperMethod() || isDAAPackedDecimalWrapperMethod() || isDAAExternalDecimalWrapperMethod();
 #else
    return false;
 #endif
@@ -282,10 +295,23 @@ bool TR_ResolvedMethod::isDAAPackedDecimalIntrinsicMethod()
 #endif
    }
 
+bool TR_ResolvedMethod::isDAAExternalDecimalIntrinsicMethod()
+   {
+#ifdef J9_PROJECT_SPECIFIC
+   if (// DAA External Decimal check method
+      getRecognizedMethod() == TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal_
+      )
+      {
+      return true;
+      }
+#endif
+   return false;
+   }
+
 bool TR_ResolvedMethod::isDAAIntrinsicMethod()
    {
 #ifdef J9_PROJECT_SPECIFIC
-   return isDAAMarshallingIntrinsicMethod() || isDAAPackedDecimalIntrinsicMethod();
+   return isDAAMarshallingIntrinsicMethod() || isDAAPackedDecimalIntrinsicMethod() || isDAAExternalDecimalIntrinsicMethod();
 #else
    return false;
 #endif

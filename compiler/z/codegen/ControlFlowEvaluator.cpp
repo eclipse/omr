@@ -2316,6 +2316,12 @@ void OMR::Z::TreeEvaluator::createDAACondDeps(TR::Node * node, TR::RegisterDepen
          TR::TreeEvaluator::addToRegDep(daaDeps, daaInstr->getRegisterOperand(2), false);
          break;
          }
+      case TR::Instruction::IsVRIl: // VTZ
+         {
+         TR::TreeEvaluator::addToRegDep(daaDeps, daaInstr->getRegisterOperand(1), false);
+         TR::TreeEvaluator::addToRegDep(daaDeps, daaInstr->getRegisterOperand(2), false);
+         break;
+         }
       case TR::Instruction::IsVRRg: // VTP
          {
          TR::TreeEvaluator::addToRegDep(daaDeps, daaInstr->getRegisterOperand(1), false);

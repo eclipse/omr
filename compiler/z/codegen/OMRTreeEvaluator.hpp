@@ -552,6 +552,16 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluator
     */
    static TR::Register *inlineNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg, int32_t subfconst);
 
+   /**
+    * Used when inlining Integer|Long.compress
+    */
+   static TR::Register *inlineBitCompress(TR::Node *node, TR::CodeGenerator * cg, bool isLong);
+
+   /**
+    * Used when inlining Integer|Long.expand
+    */
+   static TR::Register *inlineBitExpand(TR::Node *node, TR::CodeGenerator * cg, bool isLong);
+
    static TR::Register *aconstEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *iconstEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lconstEvaluator(TR::Node *node, TR::CodeGenerator *cg);

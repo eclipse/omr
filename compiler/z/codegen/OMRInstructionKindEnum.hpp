@@ -69,6 +69,8 @@ IsReg,             ///< Target is register
    IsVRIg,
    IsVRIh,
    IsVRIi,
+   IsVRIk,
+   IsVRIl,
    IsVRRa,         ///< Is VRR (Vector Register-and-Register) Operation and extended opCode field
    IsVRRb,
    IsVRRc,
