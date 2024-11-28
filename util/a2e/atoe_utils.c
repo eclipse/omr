@@ -555,23 +555,27 @@ next_char:
 					 * Add floating point support for dbl2str & flt2str
 					 */
 					char *tempPattern = a2e((char *)pattern, fmt - pattern);
-					size_t freeCap = (this.end > this.buffer) ? (this.end - this.buffer) : 0;
-
-					/* Extract a double from args, this works for both doubles
-					 * and floats,
-					 * NB if we use float for a single precision floating
-					 * point number the result is wrong.
-					 */
-					double argument = va_arg(args, double);
-					int requiredSpace = snprintf(this.buffer, freeCap, tempPattern, argument);
-					free(tempPattern);
-					CheckRet(requiredSpace);
-					if ((freeCap > 0) && (requiredSpace > 0)) {
-						char *tempAsciiValue = e2a_string(this.buffer);
-						strcpy(this.buffer, tempAsciiValue);
-						free(tempAsciiValue);
+					if (NULL != tempPattern) {
+						size_t freeCap = (this.end > this.buffer) ? (this.end - this.buffer) : 0;
+	
+						/* Extract a double from args, this works for both doubles
+						 * and floats,
+						 * NB if we use float for a single precision floating
+						 * point number the result is wrong.
+						 */
+						double argument = va_arg(args, double);
+						int requiredSpace = snprintf(this.buffer, freeCap, tempPattern, argument);
+						free(tempPattern);
+						CheckRet(requiredSpace);
+						if ((freeCap > 0) && (requiredSpace > 0)) {
+							char *tempAsciiValue = e2a_string(this.buffer);
+							if (NULL != tempAsciiValue) {
+								strcpy(this.buffer, tempAsciiValue);
+								free(tempAsciiValue);
+								this.buffer += requiredSpace;
+							}
+						}
 					}
-					this.buffer += requiredSpace;
 				}
 				break;
 			default:
