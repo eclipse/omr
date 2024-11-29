@@ -8230,6 +8230,134 @@ OPCODE_MACRO(\
    /* .description          = */ \
 )
 OPCODE_MACRO(\
+   /* .operation            = */ bcompressbits, \
+   /* .name                 = */ "bcompressbits", \
+   /* .properties1          = */ 0, \
+   /* .properties2          = */ ILProp2::SupportedForPRE, \
+   /* .properties3          = */ 0, \
+   /* .properties4          = */ 0, \
+   /* .dataType             = */ TR::Int8, \
+   /* .typeProperties       = */ ILTypeProp::Size_1 | ILTypeProp::Integer, \
+   /* .childProperties      = */ TWO_SAME_CHILD(TR::Int8), \
+   /* .swapChildrenOpCode   = */ TR::BadILOp, \
+   /* .reverseBranchOpCode  = */ TR::BadILOp, \
+   /* .booleanCompareOpCode = */ TR::BadILOp, \
+   /* .ifCompareOpCode      = */ TR::BadILOp, \
+   /* .description          = compress bits from child1 selected by 1 bits in child2 into low bits of result */
+)
+OPCODE_MACRO(\
+   /* .operation            = */ scompressbits, \
+   /* .name                 = */ "scompressbits", \
+   /* .properties1          = */ 0, \
+   /* .properties2          = */ ILProp2::SupportedForPRE, \
+   /* .properties3          = */ 0, \
+   /* .properties4          = */ 0, \
+   /* .dataType             = */ TR::Int16, \
+   /* .typeProperties       = */ ILTypeProp::Size_2 | ILTypeProp::Integer, \
+   /* .childProperties      = */ TWO_SAME_CHILD(TR::Int16), \
+   /* .swapChildrenOpCode   = */ TR::BadILOp, \
+   /* .reverseBranchOpCode  = */ TR::BadILOp, \
+   /* .booleanCompareOpCode = */ TR::BadILOp, \
+   /* .ifCompareOpCode      = */ TR::BadILOp, \
+   /* .description          = compress bits from child1 selected by 1 bits in child2 into low bits of result */
+)
+OPCODE_MACRO(\
+   /* .operation            = */ icompressbits, \
+   /* .name                 = */ "icompressbits", \
+   /* .properties1          = */ 0, \
+   /* .properties2          = */ ILProp2::SupportedForPRE, \
+   /* .properties3          = */ 0, \
+   /* .properties4          = */ 0, \
+   /* .dataType             = */ TR::Int32, \
+   /* .typeProperties       = */ ILTypeProp::Size_4 | ILTypeProp::Integer, \
+   /* .childProperties      = */ TWO_SAME_CHILD(TR::Int32), \
+   /* .swapChildrenOpCode   = */ TR::BadILOp, \
+   /* .reverseBranchOpCode  = */ TR::BadILOp, \
+   /* .booleanCompareOpCode = */ TR::BadILOp, \
+   /* .ifCompareOpCode      = */ TR::BadILOp, \
+   /* .description          = compress bits from child1 selected by 1 bits in child2 into low bits of result */
+)
+OPCODE_MACRO(\
+   /* .operation            = */ lcompressbits, \
+   /* .name                 = */ "lcompressbits", \
+   /* .properties1          = */ 0, \
+   /* .properties2          = */ ILProp2::SupportedForPRE, \
+   /* .properties3          = */ 0, \
+   /* .properties4          = */ 0, \
+   /* .dataType             = */ TR::Int64, \
+   /* .typeProperties       = */ ILTypeProp::Size_8 | ILTypeProp::Integer, \
+   /* .childProperties      = */ TWO_SAME_CHILD(TR::Int64), \
+   /* .swapChildrenOpCode   = */ TR::BadILOp, \
+   /* .reverseBranchOpCode  = */ TR::BadILOp, \
+   /* .booleanCompareOpCode = */ TR::BadILOp, \
+   /* .ifCompareOpCode      = */ TR::BadILOp, \
+   /* .description          = compress bits from child1 selected by 1 bits in child2 into low bits of result */
+)
+OPCODE_MACRO(\
+   /* .operation            = */ bexpandbits, \
+   /* .name                 = */ "bexpandbits", \
+   /* .properties1          = */ 0, \
+   /* .properties2          = */ ILProp2::SupportedForPRE, \
+   /* .properties3          = */ 0, \
+   /* .properties4          = */ 0, \
+   /* .dataType             = */ TR::Int8, \
+   /* .typeProperties       = */ ILTypeProp::Size_1 | ILTypeProp::Integer, \
+   /* .childProperties      = */ TWO_SAME_CHILD(TR::Int8), \
+   /* .swapChildrenOpCode   = */ TR::BadILOp, \
+   /* .reverseBranchOpCode  = */ TR::BadILOp, \
+   /* .booleanCompareOpCode = */ TR::BadILOp, \
+   /* .ifCompareOpCode      = */ TR::BadILOp, \
+   /* .description          = starting from lowest bit, deposit bits from child1 into bits of result selected by 1 bits in child2 */
+)
+OPCODE_MACRO(\
+   /* .operation            = */ sexpandbits, \
+   /* .name                 = */ "sexpandbits", \
+   /* .properties1          = */ 0, \
+   /* .properties2          = */ ILProp2::SupportedForPRE, \
+   /* .properties3          = */ 0, \
+   /* .properties4          = */ 0, \
+   /* .dataType             = */ TR::Int16, \
+   /* .typeProperties       = */ ILTypeProp::Size_2 | ILTypeProp::Integer, \
+   /* .childProperties      = */ TWO_SAME_CHILD(TR::Int16), \
+   /* .swapChildrenOpCode   = */ TR::BadILOp, \
+   /* .reverseBranchOpCode  = */ TR::BadILOp, \
+   /* .booleanCompareOpCode = */ TR::BadILOp, \
+   /* .ifCompareOpCode      = */ TR::BadILOp, \
+   /* .description          = starting from lowest bit, deposit bits from child1 into bits of result selected by 1 bits in child2 */
+)
+OPCODE_MACRO(\
+   /* .operation            = */ iexpandbits, \
+   /* .name                 = */ "iexpandbits", \
+   /* .properties1          = */ 0, \
+   /* .properties2          = */ ILProp2::SupportedForPRE, \
+   /* .properties3          = */ 0, \
+   /* .properties4          = */ 0, \
+   /* .dataType             = */ TR::Int32, \
+   /* .typeProperties       = */ ILTypeProp::Size_4 | ILTypeProp::Integer, \
+   /* .childProperties      = */ TWO_SAME_CHILD(TR::Int32), \
+   /* .swapChildrenOpCode   = */ TR::BadILOp, \
+   /* .reverseBranchOpCode  = */ TR::BadILOp, \
+   /* .booleanCompareOpCode = */ TR::BadILOp, \
+   /* .ifCompareOpCode      = */ TR::BadILOp, \
+   /* .description          = starting from lowest bit, deposit bits from child1 into bits of result selected by 1 bits in child2 */
+)
+OPCODE_MACRO(\
+   /* .operation            = */ lexpandbits, \
+   /* .name                 = */ "lexpandbits", \
+   /* .properties1          = */ 0, \
+   /* .properties2          = */ ILProp2::SupportedForPRE, \
+   /* .properties3          = */ 0, \
+   /* .properties4          = */ 0, \
+   /* .dataType             = */ TR::Int64, \
+   /* .typeProperties       = */ ILTypeProp::Size_8 | ILTypeProp::Integer, \
+   /* .childProperties      = */ TWO_SAME_CHILD(TR::Int64), \
+   /* .swapChildrenOpCode   = */ TR::BadILOp, \
+   /* .reverseBranchOpCode  = */ TR::BadILOp, \
+   /* .booleanCompareOpCode = */ TR::BadILOp, \
+   /* .ifCompareOpCode      = */ TR::BadILOp, \
+   /* .description          = starting from lowest bit, deposit bits from child1 into bits of result selected by 1 bits in child2 */
+)
+OPCODE_MACRO(\
    /* .opcode               = */ sbyteswap, \
    /* .name                 = */ "sbyteswap", \
    /* .properties1          = */ 0, \

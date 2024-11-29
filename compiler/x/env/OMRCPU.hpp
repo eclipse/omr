@@ -70,6 +70,8 @@ public:
    uint32_t getX86ProcessorFeatureFlags10();
 
    bool getSupportsHardwareSQRT();
+   bool hasBitCompressInstruction();
+   bool hasBitExpandInstruction();
 
    /** @brief Determines whether the popcnt instruction is available on the current processor.
     *

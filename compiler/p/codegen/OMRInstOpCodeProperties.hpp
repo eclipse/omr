@@ -13137,8 +13137,8 @@
    /* .name        = */ "pdepd",
    /* .description =    "Parallel Bits Deposit Doubleword", */
    /* .prefix      = */ 0x00000000,
-   /* .opcode      = */ 0x00000000,
-   /* .format      = */ FORMAT_UNKNOWN,
+   /* .opcode      = */ 0x7C000138,
+   /* .format      = */ FORMAT_RA_RS_RB,
    /* .minimumALS  = */ OMR_PROCESSOR_PPC_P10,
    /* .properties  = */ PPCOpProp_DWord |
                         PPCOpProp_SyncSideEffectFree,
@@ -13149,8 +13149,8 @@
    /* .name        = */ "pextd",
    /* .description =    "Parallel Bits Extract Doubleword", */
    /* .prefix      = */ 0x00000000,
-   /* .opcode      = */ 0x00000000,
-   /* .format      = */ FORMAT_UNKNOWN,
+   /* .opcode      = */ 0x7C000178,
+   /* .format      = */ FORMAT_RA_RS_RB,
    /* .minimumALS  = */ OMR_PROCESSOR_PPC_P10,
    /* .properties  = */ PPCOpProp_DWord |
                         PPCOpProp_SyncSideEffectFree,

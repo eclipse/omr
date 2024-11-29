@@ -421,6 +421,14 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::X86::TreeEvaluator
    static TR::Register *sbitpermuteEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ibitpermuteEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lbitpermuteEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *bcompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *scompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *icompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lcompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *bexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *sexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *iexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *landEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lorEvaluator(TR::Node *node, TR::CodeGenerator *cg);

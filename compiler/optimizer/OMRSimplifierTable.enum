@@ -682,6 +682,14 @@
 #define sbitpermuteSimplifierHandler dftSimplifier
 #define ibitpermuteSimplifierHandler dftSimplifier
 #define lbitpermuteSimplifierHandler dftSimplifier
+#define lcompressbitsSimplifierHandler dftSimplifier
+#define icompressbitsSimplifierHandler dftSimplifier
+#define scompressbitsSimplifierHandler dftSimplifier
+#define bcompressbitsSimplifierHandler dftSimplifier
+#define lexpandbitsSimplifierHandler dftSimplifier
+#define iexpandbitsSimplifierHandler dftSimplifier
+#define sexpandbitsSimplifierHandler dftSimplifier
+#define bexpandbitsSimplifierHandler dftSimplifier
 #define PrefetchSimplifierHandler dftSimplifier
 
 #endif
