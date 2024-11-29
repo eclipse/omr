@@ -170,13 +170,15 @@ static void checkForNonNegativeAndOverflowProperties(OMR::ValuePropagation *vp, 
 
          ///if ((node->getOpCode().isArithmetic() || node->getOpCode().isLoad()) &&
          ///      ((low > TR::getMinSigned<TR::Int64>()) || (high < TR::getMaxSigned<TR::Int64>())))
-         if ((node->getOpCode().isLoad() &&
-                  ((low > TR::getMinSigned<TR::Int64>()) || (high < TR::getMaxSigned<TR::Int64>()))) ||
-               (node->getOpCode().isArithmetic() &&
-                (range->canOverflow() != TR_yes)))
+         if (node->getOpCode().isLoad() &&
+                  ((low > TR::getMinSigned<TR::Int64>()) || (high < TR::getMaxSigned<TR::Int64>())))
             {
             node->setCannotOverflow(true);
             //dumpOptDetails(vp->comp(), "Node %p cannot overflow\n", node);
+            }
+         else if(node->getOpCode().isArithmetic())
+            {
+            node->setCannotOverflow(false);
             }
          }
       else if (constraint->asShortRange())
