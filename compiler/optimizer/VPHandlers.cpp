@@ -193,11 +193,14 @@ static void checkForNonNegativeAndOverflowProperties(OMR::ValuePropagation *vp, 
          if (high <= 0)
              node->setIsNonPositive(true);
 
-         if ((node->getOpCode().isLoad() && ((low > TR::getMinSigned<TR::Int16>()) || (high < TR::getMaxSigned<TR::Int16>()))) ||
-             (node->getOpCode().isArithmetic() && (range->canOverflow() != TR_yes)))
+         if ((node->getOpCode().isLoad() && ((low > TR::getMinSigned<TR::Int16>()) || (high < TR::getMaxSigned<TR::Int16>()))))
               {
               node->setCannotOverflow(true);
               }
+         else if (node->getOpCode().isArithmetic())
+            {
+            node->setCannotOverflow(false);
+            }
 
          }
       }
