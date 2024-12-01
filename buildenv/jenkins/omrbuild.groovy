@@ -419,6 +419,8 @@ def test() {
             switch (SPECS[buildSpec].buildSystem) {
                 case 'cmake':
                     dir("${cmakeBuildDir}") {
+                        sh "bash -c 'ulimit -a'"
+                        sh "bash -c 'ulimit -a -H'"
                         sh "ctest -V ${SPECS[buildSpec].testArgs} ${testAppend}"
                         if (SPECS[buildSpec].junitPublish) {
                             junit '**/*results.xml'
