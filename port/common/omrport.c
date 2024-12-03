@@ -336,6 +336,7 @@ static OMRPortLibrary MainPortLibraryTable = {
 	omrsysinfo_cgroup_subsystem_iterator_next, /* sysinfo_cgroup_subsystem_iterator_next */
 	omrsysinfo_cgroup_subsystem_iterator_destroy, /* sysinfo_cgroup_subsystem_iterator_destroy */
 	omrsysinfo_get_process_start_time, /* sysinfo_get_process_start_time */
+	omrsysinfo_get_number_context_switches, /* sysinfo_get_number_context_switches */
 	omrport_init_library, /* port_init_library */
 	omrport_startup_library, /* port_startup_library */
 	omrport_create_library, /* port_create_library */
