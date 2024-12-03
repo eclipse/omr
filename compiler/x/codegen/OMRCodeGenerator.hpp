@@ -404,6 +404,9 @@ class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGenerator
    static bool getSupportsOpCodeForAutoSIMD(TR::CPU *cpu, TR::ILOpCode opcode);
    bool getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode);
 
+   bool getSupportsEncodeUtf16LittleWithSurrogateTest();
+   bool getSupportsEncodeUtf16BigWithSurrogateTest();
+
    virtual bool getSupportsBitPermute();
 
    bool supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol);

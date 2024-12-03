@@ -2407,6 +2407,7 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
    bool isISO88591Decoder = (rm == TR::sun_nio_cs_ISO_8859_1_Decoder_decodeISO8859_1);
    bool isSBCSEncoder = (rm == TR::sun_nio_cs_ext_SBCS_Encoder_encodeSBCS)? true:false;
    bool isSBCSDecoder = (rm == TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS)? true:false;
+   bool isEncodeUtf16 = (rm == TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Big || rm == TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Little);
 
    int32_t childId = callNode->getFirstArgumentIndex();
    if (callNode->getChild(childId)->getType().isAddress() && callNode->getChild(childId+1)->getType().isAddress())
@@ -2469,7 +2470,7 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
    else
       strideNode = TR::Node::create(callNode, TR::iconst, 0, 2);
 
-   if ( isISO88591Encoder || isAsciiEncoder || isSBCSEncoder ||
+   if ( isISO88591Encoder || isAsciiEncoder || isSBCSEncoder || isEncodeUtf16 ||
        (rm == TR::sun_nio_cs_US_ASCII_Encoder_encodeASCII)         ||
        (rm == TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8))
        encode = true;
@@ -2624,12 +2625,36 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
 
    stoppingNode = TR::Node::create(callNode,TR::iconst, 0, stopIndex);
 
+   if (isEncodeUtf16)
+      {
+      TR::SymbolReference* transformedCallSymRef =
+         comp()->getSymRefTab()->methodSymRefFromName(
+            comp()->getMethodSymbol(),
+            "com/ibm/jit/JITHelpers",
+            TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Big == rm ?
+               "transformedEncodeUTF16Big" :
+               "transformedEncodeUTF16Little",
+            "(JJI)I",
+            TR::MethodSymbol::Static
+            );
+
+      arrayTranslateNode = TR::Node::createWithSymRef(callNode, callNode->getOpCodeValue(), 3, transformedCallSymRef);
+      }
+
    arrayTranslateNode->setAndIncChild(0, src);
    arrayTranslateNode->setAndIncChild(1, dst);
-   arrayTranslateNode->setAndIncChild(2, tableNode);
-   arrayTranslateNode->setAndIncChild(3, termCharNode);
-   arrayTranslateNode->setAndIncChild(4, len);
-   arrayTranslateNode->setAndIncChild(5, stoppingNode);
+
+   if (isEncodeUtf16)
+      {
+      arrayTranslateNode->setAndIncChild(2, len);
+      }
+   else
+      {
+      arrayTranslateNode->setAndIncChild(2, tableNode);
+      arrayTranslateNode->setAndIncChild(3, termCharNode);
+      arrayTranslateNode->setAndIncChild(4, len);
+      arrayTranslateNode->setAndIncChild(5, stoppingNode);
+      }
 
    //arrayTranslateNode->setChild(5, NULL);//* do I need this? what if there are more children?*/
 
@@ -3910,8 +3935,29 @@ slowBlock-> n39n      BBStart <block_10> (freq 0) (cold)
       cfg->addEdge(TR::CFGEdge::createEdge(prevBlock, slowBlock, trMemory()));
    cfg->addEdge(TR::CFGEdge::createEdge(slowBlock, nextBlock, trMemory()));
    }
+#endif /* J9_PROJECT_SPECIFIC */
 
+static
+const char* transformedTargetName (TR::RecognizedMethod rm)
+   {
+#ifdef J9_PROJECT_SPECIFIC
+   switch ( rm )
+      {
+      case TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Big:
+         return "icall  com/ibm/jit/JITHelpers.transformedEncodeUTF16Big(JJI)I";
 
+      case TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Little:
+         return "icall  com/ibm/jit/JITHelpers.transformedEncodeUTF16Little(JJI)I"  ;
+
+      default:
+         return "arraytranslate";
+      }
+#else /* J9_PROJECT_SPECIFIC */
+   return "arraytranslate";
+#endif /* J9_PROJECT_SPECIFIC */
+   }
+
+#ifdef J9_PROJECT_SPECIFIC
 /**
  * Can be called from doDelayedTransformations when nodes may have been removed from the tree. Issue 6623
  * https://github.com/eclipse-omr/omr/issues/6623
@@ -4196,7 +4242,7 @@ void OMR::ValuePropagation::transformConverterCall(TR::TreeTop *callTree)
 
 
 
-   if (!performTransformation(comp(), "%sChanging call %s [%p] to %s \n", OPT_DETAILS, callNode->getOpCode().getName(), callNode, "arraytranslate"))
+   if (!performTransformation(comp(), "%sChanging call %s [%p] to %s \n", OPT_DETAILS, callNode->getOpCode().getName(), callNode, transformedTargetName(rm)))
       return;
 
    TR::CFG *cfg = comp()->getFlowGraph();

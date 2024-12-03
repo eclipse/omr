@@ -1934,6 +1934,19 @@ bool OMR::Power::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode
    return TR::CodeGenerator::getSupportsOpCodeForAutoSIMD(&self()->comp()->target().cpu, opcode);
    }
 
+bool
+OMR::Power::CodeGenerator::getSupportsEncodeUtf16LittleWithSurrogateTest()
+   {
+   return self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
+          !self()->comp()->getOption(TR_DisableSIMDUTF16LEEncoder);
+   }
+
+bool
+OMR::Power::CodeGenerator::getSupportsEncodeUtf16BigWithSurrogateTest()
+   {
+   return self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
+          !self()->comp()->getOption(TR_DisableSIMDUTF16BEEncoder);
+   }
 
 void
 OMR::Power::CodeGenerator::addMetaDataForLoadAddressConstantFixed(

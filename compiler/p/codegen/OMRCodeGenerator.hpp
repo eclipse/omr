@@ -289,6 +289,10 @@ public:
    static bool getSupportsOpCodeForAutoSIMD(TR::CPU *cpu, TR::ILOpCode opcode);
    bool getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode);
 
+   bool getSupportsEncodeUtf16LittleWithSurrogateTest();
+
+   bool getSupportsEncodeUtf16BigWithSurrogateTest();
+
    int32_t arrayInitMinimumNumberOfBytes() {return 32;}
 
    TR::SymbolReference &getDouble2LongSymbolReference()  { return *_symRefTab->findOrCreateRuntimeHelper(TR_PPCdouble2Long); }

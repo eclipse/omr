@@ -3830,6 +3830,9 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_PPCP256addNoMod:                                  return "ECP256addNoMod_PPC";
          case TR_PPCP256subNoMod:                                  return "ECP256subNoMod_PPC";
 
+         case TR_PPCencodeUTF16Big:                                return "__encodeUTF16Big";
+         case TR_PPCencodeUTF16Little:                             return "__encodeUTF16Little";
+
          case TR_PPCreferenceArrayCopy:                            return "__referenceArrayCopy";
          case TR_PPCgeneralArrayCopy:                              return "__generalArrayCopy";
          case TR_PPCsamplingRecompileMethod:                       return "__samplingRecompileMethod";

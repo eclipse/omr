@@ -1190,6 +1190,22 @@ OMR::X86::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode)
    }
 
 bool
+OMR::X86::CodeGenerator::getSupportsEncodeUtf16LittleWithSurrogateTest()
+   {
+   TR_ASSERT_FATAL(self()->comp()->compileRelocatableCode() || self()->comp()->isOutOfProcessCompilation() || self()->comp()->compilePortableCode() || self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) == TR::CodeGenerator::getX86ProcessorInfo().supportsSSE4_1(), "supportsSSE4_1()");
+   return self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) &&
+          !self()->comp()->getOption(TR_DisableSIMDUTF16LEEncoder);
+   }
+
+bool
+OMR::X86::CodeGenerator::getSupportsEncodeUtf16BigWithSurrogateTest()
+   {
+   TR_ASSERT_FATAL(self()->comp()->compileRelocatableCode() || self()->comp()->isOutOfProcessCompilation() || self()->comp()->compilePortableCode() || self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) == TR::CodeGenerator::getX86ProcessorInfo().supportsSSE4_1(), "supportsSSE4_1()");
+   return self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) &&
+          !self()->comp()->getOption(TR_DisableSIMDUTF16BEEncoder);
+   }
+
+bool
 OMR::X86::CodeGenerator::getSupportsBitPermute()
    {
    return true;
