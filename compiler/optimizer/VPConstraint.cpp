@@ -1240,6 +1240,15 @@ TR::VPClassType *TR::VPClassType::create(OMR::ValuePropagation *vp, TR::SymbolRe
       TR_OpaqueClassBlock *classObject = (TR_OpaqueClassBlock*)symRef->getSymbol()->getStaticSymbol()->getStaticAddress();
       if (isPointerToClass)
          classObject = *((TR_OpaqueClassBlock**)classObject);
+#ifdef J9_PROJECT_SPECIFIC
+      int32_t numDims = 0;
+      TR_OpaqueClassBlock *klass = vp->comp()->fej9()->getBaseComponentClass(classObject, numDims);
+      // If null-restricted array is enabled and the class is an array class, the null-restricted array
+      // class and the nullable array class share the same signature. The null-restricted array can be viewed
+      // as a sub-type of the nullable array. Therefore, the constraint cannot be fixed class.
+      if (TR::Compiler->om.areFlattenableValueTypesEnabled() && (numDims > 0) && TR::Compiler->cls.isValueTypeClass(klass))
+         return TR::VPResolvedClass::create(vp, classObject);
+#endif
       if (isFixedClass)
          return TR::VPFixedClass::create(vp, classObject);
       return TR::VPResolvedClass::create(vp, classObject);
@@ -1287,7 +1296,15 @@ TR::VPResolvedClass *TR::VPResolvedClass::create(OMR::ValuePropagation *vp, TR_O
          //
          TR_OpaqueClassBlock * baseClass = vp->fe()->getLeafComponentClassFromArrayClass(klass);
          if (baseClass && TR::Compiler->cls.isClassFinal(vp->comp(), baseClass))
-            return TR::VPFixedClass::create(vp, klass);
+            {
+#ifdef J9_PROJECT_SPECIFIC
+            // If null-restricted array is enabled and the class is an array class, the null-restricted array
+            // class and the nullable array class share the same signature. The null-restricted array can be viewed
+            // as a sub-type of the nullable array. Therefore, the constraint cannot be fixed class.
+            if (!TR::Compiler->om.areFlattenableValueTypesEnabled() || !TR::Compiler->cls.isValueTypeClass(baseClass))
+#endif
+               return TR::VPFixedClass::create(vp, klass);
+            }
          }
       else
          return TR::VPFixedClass::create(vp, klass);
@@ -6078,7 +6095,7 @@ void TR::VPResolvedClass::print(TR::Compilation *comp, TR::FILE *outFile)
       len = static_cast<int32_t>(strlen(sig));
       }
 
-   trfprintf(outFile, "class %.*s", len, sig);
+   trfprintf(outFile, "class 0x%p %.*s", _class, len, sig);
    if (_typeHintClass)
       {
       trfprintf(outFile, " (hint 0x%p", _typeHintClass);
