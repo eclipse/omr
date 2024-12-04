@@ -51,7 +51,7 @@
 	#pragma linkage(BPX1GTH,OS)
 #endif /* _LP64 */
 
-#pragma pack(packed)
+#pragma pack(1)
 
 /*
 PGTHA                 DSECT ,        I N P U T - - - - - - - - - - -
@@ -553,6 +553,6 @@ struct j9pg_thread_data {
 	char padding[256];
 };
 
-#pragma pack(reset)
+#pragma pack(pop)
 
 #endif /* OMRGETTHENT_H */

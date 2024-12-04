@@ -42,7 +42,9 @@ typedef __sighandler_t sighandler_t;
 typedef void (*sighandler_t)(int sig);
 #elif defined(J9ZOS390) || defined(AIXPPC)
 typedef void (*sighandler_t)(int sig);
+#if !defined(__GNUC__)
 #define __THROW
+#endif
 #elif defined(OMR_OS_WINDOWS)
 typedef void (__cdecl *sighandler_t)(int sig);
 #define __THROW
