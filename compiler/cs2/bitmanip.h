@@ -29,7 +29,7 @@
 #ifndef CSBITMANIP_H
 #define CSBITMANIP_H
 
-#if defined(__IBMCPP__) && defined (__PPC__)
+#if (defined(__IBMCPP__) || defined(__open_xl__)) && defined (__PPC__)
 // to __cntlz4 and related routines
 # include "builtins.h"
 #endif
@@ -130,7 +130,7 @@ inline
       return uint32_t(u64);
   }
 
-#if (defined(__IBMCPP__) || defined(__ibmxl__)) && defined (__PPC__)
+#if (defined(__IBMCPP__) || defined(__ibmxl__) || defined(__open_xl__)) && defined (__PPC__)
 inline uint32_t BitManipulator::LeadingZeroes (uint32_t inputWord) {
   return __cntlz4 (inputWord);
 }

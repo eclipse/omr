@@ -2909,7 +2909,7 @@ OMR::CodeGenerator::shutdown(TR_FrontEnd *fe, TR::FILE *logFile)
 #endif
 
 
-#if !(defined(TR_HOST_POWER) && (defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__)))
+#if !(defined(TR_HOST_POWER) && (defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__) || defined(__open_xl__)))
 
 int32_t leadingZeroes (int32_t inputWord)
    {

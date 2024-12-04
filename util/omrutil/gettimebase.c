@@ -53,8 +53,12 @@ getTimebase(void)
 	/* PPC64 & XLC */
 	tsc = __mftb();
 #else /* !XLC */
-	/* PPC64 & !XLC */
-	asm volatile("mftb %0" : "=r" (tsc));
+	#if defined(__open_xl__)
+		__asm__ volatile("mftb %0" : "=r" (tsc));
+	#else /* defined(__open_xl__) */
+		/* PPC64 & !XLC & !OPENXL*/
+		asm volatile("mftb %0" : "=r" (tsc));
+	#endif /* defined(__open_xl__) */
 #endif /* __xlC__ */
 
 #else /* !OMR_ENV_DATA64 */
