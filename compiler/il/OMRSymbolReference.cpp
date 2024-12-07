@@ -183,9 +183,9 @@ OMR::SymbolReference::getOwningMethod(TR::Compilation * c)
    }
 
 bool
-OMR::SymbolReference::maybeVolatile()
+OMR::SymbolReference::maybeOpaque()
    {
-   if (_symbol->isVolatile())
+   if (_symbol->isOpaque())
       return true;
 
    if (self()->isUnresolved()

@@ -1966,13 +1966,13 @@ OMR::Node::hasUnresolvedSymbolReference()
    }
 
 /**
- * Does this node have a volatile symbol reference by any chance?
+ * Does this node have an opaque symbol reference by any chance?
  */
 bool
-OMR::Node::mightHaveVolatileSymbolReference()
+OMR::Node::mightHaveOpaqueSymbolReference()
    {
    if (self()->getOpCode().hasSymbolReference())
-      return self()->getSymbolReference()->maybeVolatile();
+      return self()->getSymbolReference()->maybeOpaque();
 
    return false;
    }
@@ -2662,7 +2662,7 @@ OMR::Node::mayModifyValue(TR::SymbolReference * symRef)
    TR::Symbol * symbol = symRef->getSymbol();
    if (node->getOpCode().isCall() ||
        node->getOpCodeValue() == TR::monexit ||
-       (node->getOpCode().hasSymbolReference() && node->getSymbol()->isVolatile()) ||
+       (node->getOpCode().hasSymbolReference() && node->getSymbol()->isOpaque()) ||
        symbolIsUnresolved)
       {
       // assume the call kills everything except for auto, parms and const statics
@@ -2723,27 +2723,27 @@ OMR::Node::mayModifyValue(TR::SymbolReference * symRef)
 
 
 bool
-OMR::Node::performsVolatileAccess(vcount_t visitCount)
+OMR::Node::performsOpaqueAccess(vcount_t visitCount)
    {
-   bool foundVolatile=false;
+   bool foundOpaque=false;
 
    self()->setVisitCount(visitCount);
 
    if (self()->getOpCode().hasSymbolReference())
       {
       TR::Symbol *sym = self()->getSymbol();
-      if (sym != NULL && sym->isVolatile())
-         foundVolatile=true;
+      if (sym != NULL && sym->isOpaque())
+         foundOpaque=true;
       }
 
    for (int32_t c = 0; c < self()->getNumChildren(); c++)
       {
       TR::Node * child = self()->getChild(c);
       if (child->getVisitCount() != visitCount)
-         foundVolatile |= child->performsVolatileAccess(visitCount);
+         foundOpaque |= child->performsOpaqueAccess(visitCount);
       }
 
-   return foundVolatile;
+   return foundOpaque;
    }
 
 

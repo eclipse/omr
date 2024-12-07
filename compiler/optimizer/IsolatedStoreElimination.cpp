@@ -507,7 +507,7 @@ bool TR_IsolatedStoreElimination::canRemoveStoreNode(TR::Node *node)
    // operation that we do not want to remove.
    //
 
-   if (node->getSymbolReference()->getSymbol()->isVolatile())
+   if (node->getSymbolReference()->getSymbol()->isOpaque())
       return false;
 
    if (node->dontEliminateStores())
@@ -1658,10 +1658,10 @@ TR_IsolatedStoreElimination::markNodesAndLocateSideEffectIn(TR::Node *node, vcou
        node->getOpCode().isReturn() ||
        node->getOpCode().isLoadReg() ||
        node->getOpCode().isStoreReg() ||
-       (node->getOpCode().hasSymbolReference() && node->getSymbolReference()->getSymbol()->isVolatile()) ||
+       (node->getOpCode().hasSymbolReference() && node->getSymbolReference()->getSymbol()->isOpaque()) ||
        ((node->getOpCode().isStore() ||
          (node->getOpCode().hasSymbolReference() &&
-          node->getSymbolReference()->getSymbol()->isVolatile())) &&
+          node->getSymbolReference()->getSymbol()->isOpaque())) &&
         (node->getSymbolReference()->getSymbol()->isShadow() ||
          node->getSymbolReference()->getSymbol()->isStatic()))
       )
