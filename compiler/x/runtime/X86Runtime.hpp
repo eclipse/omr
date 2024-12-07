@@ -87,15 +87,39 @@ inline bool jitGetCPUID(TR_X86CPUIDBuffer* pBuffer)
       pBuffer->_featureFlags8      = CPUInfo[EBX];
       pBuffer->_featureFlags10     = CPUInfo[ECX];
 
-      // Check for XSAVE
+      bool disableAVX = true;
+      bool disableAVX512 = true;
+
+      // Check XCRO register for OS support of xmm/ymm/zmm
       if(pBuffer->_featureFlags2 & TR_OSXSAVE)
          {
-         static const bool disableAVX = feGetEnv("TR_DisableAVX") != NULL;
-         if(((6 & _xgetbv(0)) != 6) || disableAVX) // '6' = mask for XCR0[2:1]='11b' (XMM state and YMM state are enabled)
-            {
-            // Unset OSXSAVE if not enabled via CR0
-            pBuffer->_featureFlags2 &= ~TR_OSXSAVE;
-            }
+         // '6' = mask for XCR0[2:1]='11b' (XMM state and YMM state are enabled)
+         disableAVX = ((6 & _xgetbv(0)) != 6);
+         // 'e6' = (mask for XCR0[7:5]='111b' (Opmask, ZMM_Hi256, Hi16_ZMM) + XCR0[2:1]='11b' (XMM/YMM))
+         disableAVX512 = ((0xe6 & _xgetbv(0)) != 0xe6);
+         }
+
+      if(disableAVX)
+         {
+         // Unset AVX/AVX2 if not enabled via CR0 or otherwise disabled
+         pBuffer->_featureFlags2 &= ~TR_AVX;
+         pBuffer->_featureFlags8 &= ~TR_AVX2;
+         }
+
+      if (disableAVX512)
+         {
+         // Unset AVX-512 if not enabled via CR0 or otherwise disabled
+         // If other AVX-512 extensions are supported in the old cpuid API, they need to be disabled here
+         pBuffer->_featureFlags8 &= ~TR_AVX512F;
+         pBuffer->_featureFlags8 &= ~TR_AVX512VL;
+         pBuffer->_featureFlags8 &= ~TR_AVX512BW;
+         pBuffer->_featureFlags8 &= ~TR_AVX512CD;
+         pBuffer->_featureFlags8 &= ~TR_AVX512DQ;
+         pBuffer->_featureFlags10 &= ~TR_AVX512_BITALG;
+         pBuffer->_featureFlags10 &= ~TR_AVX512_VBMI;
+         pBuffer->_featureFlags10 &= ~TR_AVX512_VBMI2;
+         pBuffer->_featureFlags10 &= ~TR_AVX512_VNNI;
+         pBuffer->_featureFlags10 &= ~TR_AVX512_VPOPCNTDQ;
          }
 
       /* Mask out the bits the compiler does not care about.

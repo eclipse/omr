@@ -5824,7 +5824,6 @@ TR::Register* OMR::X86::TreeEvaluator::floatingPointBinaryArithmeticEvaluator(TR
    TR::Node* operandNode0 = node->getChild(0);
    TR::Node* operandNode1 = node->getChild(1);
 
-   TR_ASSERT_FATAL(cg->comp()->compileRelocatableCode() || cg->comp()->isOutOfProcessCompilation() || cg->comp()->compilePortableCode() || cg->comp()->target().cpu.supportsAVX() == TR::CodeGenerator::getX86ProcessorInfo().supportsAVX(), "supportsAVX() failed\n");
    bool useRegMemForm = cg->comp()->target().cpu.supportsAVX();
 
    if (useRegMemForm)

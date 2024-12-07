@@ -269,6 +269,9 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableAsyncCheckVersioning",        "O\tdisable versioning of loops wrt async checks",   SET_OPTION_BIT(TR_DisableAsyncCheckVersioning), "F"},
    {"disableAsyncCompilation",            "M\tdisable asynchronous compilation",               SET_OPTION_BIT(TR_DisableAsyncCompilation), "F"},
    {"disableAutoSIMD",            "M\tdisable automatic vectorization of loops",               SET_OPTION_BIT(TR_DisableAutoSIMD), "F"},
+   {"disableAVX",                         "C\tdisable avx and newer on x86",                   TR::Options::disableCPUFeatures, TR_DisableAVX, 0, "F"},
+   {"disableAVX2",                        "C\tdisable avx2 and newer on x86",                  TR::Options::disableCPUFeatures, TR_DisableAVX2, 0, "F"},
+   {"disableAVX512",                      "C\tdisable avx512 on x86",                          TR::Options::disableCPUFeatures, TR_DisableAVX512, 0, "F"},
    {"disableBasicBlockExtension",         "O\tdisable basic block extension",                  TR::Options::disableOptimization, basicBlockExtension, 0, "P"},
    {"disableBasicBlockPeepHole",          "O\tdisable basic blocks peepHole",                  SET_OPTION_BIT(TR_DisableBasicBlockPeepHole), "F"},
    {"disableBCDArithChildOrdering",       "O\tstress testing option -- do not reorder children of BCD arithmetic nodes", SET_OPTION_BIT(TR_DisableBCDArithChildOrdering), "F" },
@@ -552,6 +555,9 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"disableSIMDDoubleMaxMin",             "O\tdisable SIMD instructions for double max min", SET_OPTION_BIT(TR_DisableSIMDDoubleMaxMin), "F"},
    {"disableSIMDStringHashCode",           "O\tdisable vectorized java/lang/String.hashCode implementation", SET_OPTION_BIT(TR_DisableSIMDStringHashCode), "F"},
    {"disableSmartPlacementOfCodeCaches",   "O\tdisable placement of code caches in memory so they are near each other and the DLLs",  SET_OPTION_BIT(TR_DisableSmartPlacementOfCodeCaches), "F", NOT_IN_SUBSET},
+   {"disableSSE3",                         "C\tdisable sse 3 and newer on x86",                   TR::Options::disableCPUFeatures, TR_DisableSSE3, 0, "F"},
+   {"disableSSE4_1",                       "C\tdisable sse 4.1 and newer on x86",                 TR::Options::disableCPUFeatures, TR_DisableSSE4_1, 0, "F"},
+   {"disableSSE4_2",                       "C\tdisable sse 4.2 and newer on x86",                 TR::Options::disableCPUFeatures, TR_DisableSSE4_2, 0, "F"},
    {"disableStableAnnotations",            "M\tdisable recognition of @Stable",               SET_OPTION_BIT(TR_DisableStableAnnotations), "F"},
    {"disableStaticFinalFieldFolding",      "O\tdisable generic static final field folding",                        TR::Options::disableOptimization, staticFinalFieldFolding, 0, "P"},
    {"disableStoreOnCondition",                 "O\tdisable store on condition (STOC) code gen",                         SET_OPTION_BIT(TR_DisableStoreOnCondition), "F"},
@@ -4928,6 +4934,35 @@ OMR::Options::configureOptReporting(const char *option, void *base, TR::OptionTa
    return option;
    }
 
+const char *
+OMR::Options::disableCPUFeatures(const char *option, void *base, TR::OptionTable *entry)
+   {
+   TR::Options *options = (TR::Options*)base;
+   TR_CompilationOptions co = (TR_CompilationOptions)entry->parm1;
+   options->setOption(co);
+
+   /* When disabling SIMD, disable newer features too  */
+
+   switch (co)
+      {
+      case TR_DisableSSE3:
+         options->setOption(TR_DisableSSE3);
+      case TR_DisableSSE4_1:
+         options->setOption(TR_DisableSSE4_1);
+      case TR_DisableSSE4_2:
+         options->setOption(TR_DisableSSE4_2);
+      case TR_DisableAVX:
+         options->setOption(TR_DisableAVX);
+      case TR_DisableAVX2:
+         options->setOption(TR_DisableAVX2);
+      case TR_DisableAVX512:
+         options->setOption(TR_DisableAVX512);
+      default:
+         break;
+      }
+
+   return option;
+   }
 
 const char *OMR::Options::_verboseOptionNames[TR_NumVerboseOptions] =
    {

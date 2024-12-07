@@ -146,6 +146,7 @@ public:
    bool supportsFeature(uint32_t feature);
    bool supports_feature_old_api(uint32_t feature);
    bool supports_feature_test(uint32_t feature);
+   bool is_feature_disabled(uint32_t feature);
 
    /**
     * @brief Returns name of the current processor

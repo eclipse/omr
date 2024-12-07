@@ -424,7 +424,6 @@ OMR::X86::CodeGenerator::initializeX86(TR::Compilation *comp)
       static bool disableX86TRTO = feGetEnv("TR_disableX86TRTO") != NULL;
       if (!disableX86TRTO)
          {
-         TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) == self()->getX86ProcessorInfo().supportsSSE4_1(), "supportsSSE4_1() failed\n");
          if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1))
             {
             self()->setSupportsArrayTranslateTRTO();
@@ -433,8 +432,6 @@ OMR::X86::CodeGenerator::initializeX86(TR::Compilation *comp)
       static bool disableX86TROT = feGetEnv("TR_disableX86TROT") != NULL;
       if (!disableX86TROT)
          {
-         TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) == self()->getX86ProcessorInfo().supportsSSE4_1(), "supportsSSE4_1() failed\n");
-         TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->compilePortableCode() || comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE2) == self()->getX86ProcessorInfo().supportsSSE2(), "supportsSSE4_1() failed\n");
          if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1))
             {
             self()->setSupportsArrayTranslateTROT();

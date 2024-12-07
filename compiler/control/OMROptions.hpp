@@ -400,13 +400,13 @@ enum TR_CompilationOptions
    TR_EnableVectorAPIBoxing               = 0x00010000 + 10,
    TR_EnableSequentialLoadStoreWarm       = 0x00020000 + 10,
    TR_EnableSequentialLoadStoreCold       = 0x00040000 + 10,
-   // Available                           = 0x00080000 + 10,
-   // Available                           = 0x00100000 + 10,
-   // Available                           = 0x00200000 + 10,
+   TR_DisableAVX                          = 0x00080000 + 10,
+   TR_DisableAVX2                         = 0x00100000 + 10,
+   TR_DisableAVX512                       = 0x00200000 + 10,
    TR_ConservativeCompilation             = 0x00400000 + 10,
-   // Available                           = 0x00800000 + 10,
-   // Available                           = 0x01000000 + 10,
-   // Available                           = 0x02000000 + 10,
+   TR_DisableSSE3                         = 0x00800000 + 10,
+   TR_DisableSSE4_1                       = 0x01000000 + 10,
+   TR_DisableSSE4_2                       = 0x02000000 + 10,
    TR_DisableNewX86VolatileSupport        = 0x04000000 + 10,
    // Available                           = 0x08000000 + 10,
    // Available                           = 0x10000000 + 10,
@@ -2291,6 +2291,7 @@ private:
    static const char *clearBitsFromStringSet(const char *option, void *base, TR::OptionTable *entry);
 
    static const char *configureOptReporting(const char *option, void *base, TR::OptionTable *entry);
+   static const char *disableCPUFeatures(const char *option, void *base, TR::OptionTable *entry);
 
    // Option processing helper functions
    //
