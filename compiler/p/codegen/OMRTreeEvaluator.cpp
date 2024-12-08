@@ -5989,6 +5989,11 @@ TR::Register *OMR::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::
       srcAddrNode = node->getChild(2);
       dstAddrNode = node->getChild(3);
       lengthNode = node->getChild(4);
+#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
+      if (TR::Compiler->om.isOffHeapAllocationEnabled())
+         // For correct card-marking calculation, the dstObjNode should be the baseObj not the dataAddrPointer
+         TR_ASSERT_FATAL(!dstObjNode->isDataAddrPointer(), "The dstObjNode child of arraycopy cannot be a dataAddrPointer");
+#endif /* defined(OMR_GC_SPARSE_HEAP_ALLOCATION) */
       }
 
    stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyReg(srcObjNode, srcObjReg, cg);
