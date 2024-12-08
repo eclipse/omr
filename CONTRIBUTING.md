@@ -178,12 +178,18 @@ Following these guidelines will help us to merge your pull requests smoothly:
 
 6. Follow the [commit guidelines](#commit-guidelines) described below.
 
-7. We encourage you to open a pull request early, and mark it as "Work In Progress"
+7. Contributions from generative artificial intelligence (GenAI) coding assistants
+   are permitted subject to the guidelines described in the
+   [Eclipse Foundation GenAI Usage Guidelines](https://www.eclipse.org/projects/guidelines/genai/)
+   as well as the [Eclipse OMR GenAI Usage Guidelines](doc/GenAIUsageGuidelines.md).
+   Both should be reviewed prior to making a GenAI-assisted contribution.
+
+8. We encourage you to open a pull request early, and mark it as "Work In Progress"
    (prefix the PR title with WIP). This allows feedback to start early, and helps
    create a better end product. Committers will wait until after you've removed
    the WIP prefix to merge your changes.
 
-8. If you are contributing a change to the compiler technology that involves modifications
+9. If you are contributing a change to the compiler technology that involves modifications
    to the Testarossa intermediate language (IL) (including, but not limited to,
    adding a new IL opcode, changing the properties of an opcode, or adding a new datatype)
    or, in the opinion of a committer,

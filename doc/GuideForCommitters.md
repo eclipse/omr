@@ -30,6 +30,11 @@ ensure are completed prior to merging a pull request.
 It also documents the minimum participation requirements that Eclipse OMR
 committers must meet to maintain their active committer status.
 
+Committers should be aware of the
+[Eclipse Foundation Generative Artificial Intelligence Usage Guidelines](https://www.eclipse.org/projects/guidelines/genai/)
+as well as the
+[Eclipse OMR Generative Artificial Intelligence Usage Guidelines](GenAIUsageGuidelines.md).
+
 ## Reviewing and Merging Pull Requests
 
 ### General Guidelines
