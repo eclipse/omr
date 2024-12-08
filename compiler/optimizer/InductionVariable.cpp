@@ -983,7 +983,12 @@ int32_t TR_LoopStrider::detectCanonicalizedPredictableLoops(TR_Structure *loopSt
                      {
                      TR::Node *constantNode  = TR::Node::create(byteCodeInfoNode, TR::lconst);
                      constantNode->setLongInt((int64_t)index);
-                     arrayRefNode = TR::Node::create(TR::aladd, 2, TR::Node::createWithSymRef(byteCodeInfoNode, TR::aload, 0, origAuto), constantNode);
+                     arrayRefNode = TR::Node::createWithSymRef(byteCodeInfoNode, TR::aload, 0, origAuto);
+#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
+                     if (TR::Compiler->om.isOffHeapAllocationEnabled())
+                        arrayRefNode = TR::TransformUtil::generateDataAddrLoadTrees(comp(), arrayRefNode);
+#endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
+                     arrayRefNode = TR::Node::create(TR::aladd, 2, arrayRefNode, constantNode);
                      }
                   else
                      arrayRefNode = TR::Node::create(TR::aiadd, 2, TR::Node::createWithSymRef(byteCodeInfoNode, TR::aload, 0, origAuto), TR::Node::create(byteCodeInfoNode, TR::iconst, 0, index));
@@ -992,7 +997,14 @@ int32_t TR_LoopStrider::detectCanonicalizedPredictableLoops(TR_Structure *loopSt
                   {
                   TR::SymbolReference *indexSymRef = symRefPair->_indexSymRef;
                   if (usingAladd)
-                     arrayRefNode = TR::Node::create(TR::aladd, 2, TR::Node::createWithSymRef(byteCodeInfoNode, TR::aload, 0, origAuto), TR::Node::createWithSymRef(byteCodeInfoNode, TR::lload, 0, indexSymRef));
+                     {
+                     arrayRefNode = TR::Node::createWithSymRef(byteCodeInfoNode, TR::aload, 0, origAuto);
+#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
+                     if (TR::Compiler->om.isOffHeapAllocationEnabled())
+                        arrayRefNode = TR::TransformUtil::generateDataAddrLoadTrees(comp(), arrayRefNode);
+#endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
+                     arrayRefNode = TR::Node::create(TR::aladd, 2, arrayRefNode, TR::Node::createWithSymRef(byteCodeInfoNode, TR::lload, 0, indexSymRef));
+                     }
                   else
                      arrayRefNode = TR::Node::create(TR::aiadd, 2, TR::Node::createWithSymRef(byteCodeInfoNode, TR::aload, 0, origAuto), TR::Node::createWithSymRef(byteCodeInfoNode, TR::iload, 0, indexSymRef));
                   }
@@ -3392,6 +3404,8 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
                index
                header_size/-header_size
 
+      OffHeap reassociation and hoisting is temporarily disabled
+      TODO enable storing dataAddrPtr in temps
       off-heap mode:
          aladd (internal pointer)
             contiguousArrayDataAddrFieldSymbol (dataAddrPointer, internal pointer)
@@ -3450,6 +3464,7 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
             //node->getSymbolReference()->getSymbol()->isAuto() &&
             node->getSymbolReference()->getSymbol()->isAutoOrParm() &&
             _neverWritten->get(node->getSymbolReference()->getReferenceNumber()))) &&
+           !originalNode->getFirstChild()->isDataAddrPointer() && // TODO enable storing dataAddrPtr in temps
            (!_registersScarce || (originalNode->getReferenceCount() > 1)) &&
            (comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers()) &&
            (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
@@ -3660,7 +3675,8 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
     * If first child of originalNode is not dataAddr pointer we have already
     * hoisted the array aload, no need to do it again.
     */
-   if (TR::Compiler->om.isOffHeapAllocationEnabled() && originalNode && originalNode->getFirstChild()->isDataAddrPointer())
+   if (false && // TODO enable storing dataAddrPtr in temps
+      TR::Compiler->om.isOffHeapAllocationEnabled() && originalNode && originalNode->getFirstChild()->isDataAddrPointer())
       {
       if ((isInternalPointer &&
             (comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers())) &&
