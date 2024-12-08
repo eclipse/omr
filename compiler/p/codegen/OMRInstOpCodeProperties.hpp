@@ -6884,6 +6884,18 @@
    /*                   PPCOpProp_SyncSideEffectFree, */
    /* }, */
 
+      {
+   /* .mnemonic    =  */  OMR::InstOpCode::vexpandbm,
+   /* .name        =  */  "vexpandbm",
+   /* .description =      "vector expand byte mask", */
+   /* .prefix      =  */  0x00000000,
+   /* .opcode      =  */  0x10000642,
+   /* .format      =  */  FORMAT_VRT_VRB,
+   /* .minimumALS  =  */  OMR_PROCESSOR_PPC_P10,
+   /* .properties  =  */  PPCOpProp_IsVMX |
+                          PPCOpProp_SyncSideEffectFree,
+      },
+
    /* { */
    /* .mnemonic    =    OMR::InstOpCode::vextractub, */
    /* .name        =    "vextractub", */

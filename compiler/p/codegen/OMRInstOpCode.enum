@@ -589,6 +589,7 @@
 // vctzh,            // vector count trailing zeros Hword
 // vctzw,            // vector count trailing zeros Word
 // vctzd,            // vector count trailing zeros Dword
+   vexpandbm,        // vector expand byte mask
 // vextractub,       // vector extract unsigned Byte
 // vextractuh,       // vector extract unsigned Hword
 // vextractuw,       // vector extract unsigned Word
