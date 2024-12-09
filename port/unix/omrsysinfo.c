@@ -7480,3 +7480,29 @@ done:
 	Trc_PRT_sysinfo_get_process_start_time_exit(pid, computedProcessStartTimeInNanoseconds, rc);
 	return rc;
 }
+
+int32_t
+omrsysinfo_get_number_context_switches(struct OMRPortLibrary *portLibrary, uint64_t *numSwitches)
+{
+#if defined(LINUX)
+	char buf[128];
+	int32_t rc = 0;
+	intptr_t fd = portLibrary->file_open(portLibrary, "/proc/stat", EsOpenRead, 0);
+	if (-1 == fd) {
+		return portLibrary->error_last_error_number(portLibrary);
+	}
+
+	while (NULL != portLibrary->file_read_text(portLibrary, fd, buf, sizeof(buf))) {
+		if (1 == sscanf(buf, "ctxt %" SCNu64, numSwitches)) {
+			goto done;
+		}
+	}
+
+	rc = OMRPORT_ERROR_SYSINFO_GET_STATS_FAILED;
+done:
+	portLibrary->file_close(portLibrary, fd);
+	return rc;
+#else /* defined(LINUX) */
+	return OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED;
+#endif /* defined(LINUX) */
+}

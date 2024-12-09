@@ -1191,3 +1191,15 @@ omrsysinfo_get_process_start_time(struct OMRPortLibrary *portLibrary, uintptr_t 
 {
 	return OMRPORT_ERROR_NOT_SUPPORTED_ON_THIS_PLATFORM;
 }
+
+/**
+ * Get the number of context switches of the OS.
+ * @param[in] portLibrary The port library
+ * @param[out] numSwitches Pointer to the number of context switches
+ * @return 0 on success, error code on failure
+ */
+int32_t
+omrsysinfo_get_number_context_switches(struct OMRPortLibrary *portLibrary, uint64_t *numSwitches)
+{
+	return OMRPORT_ERROR_NOT_SUPPORTED_ON_THIS_PLATFORM;
+}

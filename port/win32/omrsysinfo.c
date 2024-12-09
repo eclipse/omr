@@ -2058,3 +2058,9 @@ done:
 	Trc_PRT_sysinfo_get_process_start_time_exit(pid, computedProcessStartTimeInNanoseconds, rc);
 	return rc;
 }
+
+int32_t
+omrsysinfo_get_number_context_switches(struct OMRPortLibrary *portLibrary, uint64_t *numSwitches)
+{
+	return OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED;
+}

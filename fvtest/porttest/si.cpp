@@ -3191,3 +3191,22 @@ TEST(PortSysinfoTest, GetProcessorStartTimeOfExistingProcessTest)
 	ASSERT_LT(processStartTimeInNanoseconds, omrtime_current_time_nanos(&success));
 }
 #endif /* !defined(OMRZTPF) */
+
+TEST(PortSysinfoTest, NumberOfContextSwitchesIncreasesMonotonically)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portTestEnv->getPortLibrary());
+#if defined(LINUX)
+	uint64_t switches = 0;
+	uint64_t prevSwitches = 0;
+	ASSERT_EQ(omrsysinfo_get_number_context_switches(&prevSwitches), 0);
+
+	for (size_t i = 0; i < 500; i += 1) {
+		ASSERT_EQ(omrsysinfo_get_number_context_switches(&switches), 0);
+		ASSERT_GE(switches, prevSwitches);
+		prevSwitches = switches;
+	}
+#else /* defined(LINUX) */
+	uint64_t switches = 0;
+	ASSERT_EQ(omrsysinfo_get_number_context_switches(&switches), OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED);
+#endif /* defined(LINUX) */
+}
