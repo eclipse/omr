@@ -3066,12 +3066,18 @@ TR::Register *OMR::Power::TreeEvaluator::vloadEvaluator(TR::Node *node, TR::Code
 
    TR::InstOpCode::Mnemonic opcode;
    TR_RegisterKinds kind;
+   TR::InstOpCode::Mnemonic expandOpcode = TR::InstOpCode::bad;
+
+   TR_ASSERT_FATAL(!node->getDataType().isMask() || node->getDataType().getVectorElementType() == TR::Int8,
+                   "Only load of Byte masks is currently supported"); // TODO: support other mask types
 
    switch(node->getDataType().getVectorElementType())
      {
      case TR::Int8:
          opcode = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9) ? TR::InstOpCode::lxvb16x : TR::InstOpCode::lxvw4x;
          kind = TR_VRF;
+         if (node->getDataType().isMask())
+            expandOpcode = TR::InstOpCode::vexpandbm;
          break;
      case TR::Int16:
          opcode = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9) ? TR::InstOpCode::lxvh8x : TR::InstOpCode::lxvw4x;
@@ -3097,6 +3103,17 @@ TR::Register *OMR::Power::TreeEvaluator::vloadEvaluator(TR::Node *node, TR::Code
    TR::Register *dstReg = cg->allocateRegister(kind);
 
    TR::LoadStoreHandler::generateLoadNodeSequence(cg, dstReg, node, opcode, 16, true);
+
+   if (expandOpcode != TR::InstOpCode::bad &&
+       node->getDataType().getVectorElementType() == TR::Int8)
+      {
+      // Lower mask bit needs to be expanded to the whole mask element
+      TR::Register *tmpReg = cg->allocateRegister(TR_VRF);
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, tmpReg, 15);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vslb, node, dstReg, dstReg, tmpReg);
+      generateTrg1Src1Instruction(cg, expandOpcode, node, dstReg, dstReg);
+      cg->stopUsingRegister(tmpReg);
+      }
 
    node->setRegister(dstReg);
    return dstReg;
