@@ -38,7 +38,7 @@
 
 #include <stdint.h>
 #include "omrcfg.h"
-#if defined(__cplusplus) && (defined(__xlC__) || defined(J9ZOS390))
+#if defined(__cplusplus) && (defined(__xlC__) || defined(J9ZOS390) || defined(__open_xl__))
 #include <builtins.h>
 #endif
 
@@ -603,7 +603,7 @@ typedef struct U_128 {
 
 #if defined(_MSC_VER) && (1900 > _MSC_VER) /* MSVC versions prior to Visual Studio 2015 (14.0) */
 #define OMR_ALIGNOF(x) __alignof(x)
-#elif defined(__IBMC__) || defined(__IBMCPP__) /* XL C/C++ versions prior to xlclang/xlclang++ */
+#elif defined(__IBMC__) || defined(__IBMCPP__) || defined(__open_xl__) /* XL C/C++ versions prior to xlclang/xlclang++ */
 #define OMR_ALIGNOF(x) __alignof__(x)
 #else /* All other compilers that support C11 and C++11 */
 #define OMR_ALIGNOF(x) alignof(x)

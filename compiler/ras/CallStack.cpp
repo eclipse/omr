@@ -61,14 +61,23 @@ void TR_CallStackIterator::printStackBacktrace(TR::Compilation *comp)
    }                     \
    while (0)
 
-
-#define GET_CURR_TOS(dst) \
-   do                     \
-   {                      \
-   /*copy current stack pointer to dst*/ \
-   asm("la %0, 0(r1)" : "=r" (dst)); \
-   }                      \
-   while (0)
+#if defined(__open_xl__)
+   #define GET_CURR_TOS(dst) \
+      do                     \
+      {                      \
+      /*copy current stack pointer to dst*/ \
+      asm("la %0, 0(1)" : "=r" (dst)); \
+      }                      \
+      while (0)
+#else /* defined(__open_xl__) */
+   #define GET_CURR_TOS(dst) \
+      do                     \
+      {                      \
+      /*copy current stack pointer to dst*/ \
+      asm("la %0, 0(r1)" : "=r" (dst)); \
+      }                      \
+      while (0)
+#endif /* defined(__open_xl__) */
 
 void TR_PPCCallStackIterator::_set_tb_table()
    {

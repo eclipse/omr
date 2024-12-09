@@ -278,6 +278,10 @@ if(OMR_OS_WINDOWS)
 endif()
 
 if(OMR_OS_AIX)
+	if(CMAKE_C_COMPILER_IS_OPENXL)
+		list(APPEND OMR_C_WARNINGS_AS_ERROR_FLAG -Wno-implicit-function-declaration)
+		target_compile_options(omrport_obj PUBLIC -Wno-implicit-function-declaration)
+	endif()
 	#ifdef I5_VERSION
 		#ifeq (1,$(OMR_ENV_DATA64))
 			#vpath % $(PORT_SRCDIR)iseries64
