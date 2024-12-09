@@ -931,10 +931,12 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 	}
 
-	status = PdhAddCounter(statsHandle,
-						   MEMORY_COMMIT_LIMIT_COUNTER_PATH,
-						   (DWORD_PTR)NULL,
-						   &memoryCommitLimitCounter);
+	/* PdhAddEnglishCounter is used to support non-English language locales. */
+	status = PdhAddEnglishCounter(
+			statsHandle,
+			MEMORY_COMMIT_LIMIT_COUNTER_PATH,
+			(DWORD_PTR)NULL,
+			&memoryCommitLimitCounter);
 	if (ERROR_SUCCESS != status) {
 		Trc_PRT_sysinfo_get_memory_info_failedAddingCounter("Commit Limit", status);
 		Trc_PRT_sysinfo_get_memory_info_Exit(OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO);
@@ -942,7 +944,7 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 	}
 
-	status = PdhAddCounter(statsHandle,
+	status = PdhAddEnglishCounter(statsHandle,
 						   MEMORY_COMMITTED_BYTES_COUNTER_PATH,
 						   (DWORD_PTR)NULL,
 						   &memoryCommittedBytesCounter);
@@ -953,7 +955,7 @@ omrsysinfo_get_memory_info(struct OMRPortLibrary *portLibrary, struct J9MemoryIn
 		return OMRPORT_ERROR_SYSINFO_ERROR_READING_MEMORY_INFO;
 	}
 
-	status = PdhAddCounter(statsHandle,
+	status = PdhAddEnglishCounter(statsHandle,
 						   MEMORY_CACHE_BYTES_COUNTER_PATH,
 						   (DWORD_PTR)NULL,
 						   &memoryCacheBytesCounter);
