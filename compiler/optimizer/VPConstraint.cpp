@@ -1286,7 +1286,7 @@ TR::VPResolvedClass *TR::VPResolvedClass::create(OMR::ValuePropagation *vp, TR_O
          // An array class is fixed if the base class for the array is final
          //
          TR_OpaqueClassBlock * baseClass = vp->fe()->getLeafComponentClassFromArrayClass(klass);
-         if (baseClass && TR::Compiler->cls.isClassFinal(vp->comp(), baseClass))
+         if (baseClass && TR::Compiler->cls.isClassFinal(vp->comp(), baseClass) && vp->canArrayClassBeTrustedAsFixedClass(klass, baseClass))
             return TR::VPFixedClass::create(vp, klass);
          }
       else
@@ -6078,7 +6078,7 @@ void TR::VPResolvedClass::print(TR::Compilation *comp, TR::FILE *outFile)
       len = static_cast<int32_t>(strlen(sig));
       }
 
-   trfprintf(outFile, "class %.*s", len, sig);
+   trfprintf(outFile, "class 0x%p %.*s", _class, len, sig);
    if (_typeHintClass)
       {
       trfprintf(outFile, " (hint 0x%p", _typeHintClass);
