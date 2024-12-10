@@ -1275,6 +1275,15 @@ TR::VPClassType *TR::VPClassType::create(OMR::ValuePropagation *vp, const char *
    return TR::VPUnresolvedClass::create(vp, sig, len, method);
    }
 
+static bool canBaseClassBeTrusted(TR_OpaqueClassBlock *baseClass)
+   {
+#ifdef J9_PROJECT_SPECIFIC
+   if (TR::Compiler->om.areFlattenableValueTypesEnabled() && TR::Compiler->cls.isValueTypeClass(baseClass))
+      return false;
+ #endif
+   return true;
+   }
+
 TR::VPResolvedClass *TR::VPResolvedClass::create(OMR::ValuePropagation *vp, TR_OpaqueClassBlock *klass)
    {
    // If the class is final, we really want to make this a fixed class
@@ -1284,9 +1293,12 @@ TR::VPResolvedClass *TR::VPResolvedClass::create(OMR::ValuePropagation *vp, TR_O
       if (TR::Compiler->cls.isClassArray(vp->comp(), klass))
          {
          // An array class is fixed if the base class for the array is final
+         // But if null-restricted array is enabled and the class is an array class, the null-restricted array
+         // class and the nullable array class share the same signature. The null-restricted array can be viewed
+         // as a sub-type of the nullable array. Therefore, the constraint cannot be fixed class.
          //
          TR_OpaqueClassBlock * baseClass = vp->fe()->getLeafComponentClassFromArrayClass(klass);
-         if (baseClass && TR::Compiler->cls.isClassFinal(vp->comp(), baseClass))
+         if (baseClass && TR::Compiler->cls.isClassFinal(vp->comp(), baseClass) && canBaseClassBeTrusted(baseClass))
             return TR::VPFixedClass::create(vp, klass);
          }
       else
@@ -6078,7 +6090,7 @@ void TR::VPResolvedClass::print(TR::Compilation *comp, TR::FILE *outFile)
       len = static_cast<int32_t>(strlen(sig));
       }
 
-   trfprintf(outFile, "class %.*s", len, sig);
+   trfprintf(outFile, "class 0x%p %.*s", _class, len, sig);
    if (_typeHintClass)
       {
       trfprintf(outFile, " (hint 0x%p", _typeHintClass);
