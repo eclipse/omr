@@ -139,7 +139,7 @@ public:
    TR_ResolvedMethod *        getOwningMethod(TR::Compilation * c);
    TR::ResolvedMethodSymbol * getOwningMethodSymbol(TR::Compilation *c);
 
-   bool maybeVolatile();
+   bool maybeOpaque();
 
    // New CS2 Interface
    TR_UseOnlyAliasSetInterface getUseonlyAliases();

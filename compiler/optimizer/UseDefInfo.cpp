@@ -789,14 +789,6 @@ int32_t TR_UseDefInfo::getMemorySymbolIndex(TR::Node * node)
    return -1;
    }
 
-bool TR_UseDefInfo::shouldIndexVolatileSym(TR::SymbolReference*ref, AuxiliaryData &aux)
-   {
-   if (! ref->getSymbol()->isVolatile())        //index non-volatiles
-      return true;
-
-   return false;
-   }
-
 /**
  * Find all symbols whose uses and defs are to be tracked and give them a
  * local index. This index is used to index into the array of bit vectors
@@ -909,10 +901,10 @@ bool TR_UseDefInfo::indexSymbolsAndNodes(AuxiliaryData &aux)
             // Volatile symbols must not be considered since they don't have
             // any specifiable def points.
             //
-            if (!shouldIndexVolatileSym(symRef,aux))
+            if (sym->isOpaque())
                {
                if (trace())
-                  traceMsg(comp(), "Ignoring Symbol [%p] because it is volatile %d or aliased to a volatile %d\n",sym,sym->isVolatile(),aux._volatileOrAliasedToVolatileSymbols.get(symRefNumber));
+                  traceMsg(comp(), "Ignoring Symbol [%p] because it is opaque %d or aliased to an opaque %d\n",sym,sym->isOpaque(),aux._volatileOrAliasedToVolatileSymbols.get(symRefNumber));
                continue;
                }
 
@@ -970,7 +962,7 @@ bool TR_UseDefInfo::indexSymbolsAndNodes(AuxiliaryData &aux)
             }
          if (sym && sym->getLocalIndex() == NULL_USEDEF_SYMBOL_INDEX)
             {
-            if (!shouldIndexVolatileSym(symRef,aux))
+            if (sym->isOpaque())
                continue;
 
             if (sym->isStatic())
@@ -1019,7 +1011,7 @@ bool TR_UseDefInfo::indexSymbolsAndNodes(AuxiliaryData &aux)
          sym = symRef->getSymbol();
          if (sym && sym->getLocalIndex() == NULL_USEDEF_SYMBOL_INDEX)
             {
-            if (!shouldIndexVolatileSym(symRef,aux))
+            if (sym->isOpaque())
                continue;
 
             if (sym->isStatic())
@@ -2546,7 +2538,7 @@ TR::Node *TR_UseDefInfo::getSingleDefiningLoad(TR::Node *node)
           (n = getNode(firstDef)) &&
           (n->getUseDefIndex() > 0) &&
           (n->getOpCode().isLoadVar()) &&
-          (n->getOpCode().hasSymbolReference() && !n->getSymbol()->isVolatile()))
+          (n->getOpCode().hasSymbolReference() && !n->getSymbol()->isOpaque()))
          return n;
       }
    return NULL;

@@ -246,11 +246,6 @@ public:
    void setConst()                          { _flags.set(Const); }
    bool isConst()                           { return _flags.testAny(Const); }
 
-   void setVolatile()                       { _flags.set(Volatile); }
-   void resetVolatile()                     { _flags.reset(Volatile); }
-   bool isVolatile()                        { return _flags.testAny(Volatile); }
-   inline bool isSyncVolatile();
-
    void setInitializedReference()           { _flags.set(InitializedReference); }
    void setUninitializedReference()         { _flags.reset(InitializedReference); }
    bool isInitializedReference()            { return _flags.testAny(InitializedReference); }
@@ -398,8 +393,29 @@ public:
    inline void setMemoryTypeShadowSymbol();
    inline bool isMemoryTypeShadowSymbol();
 
-   void setOrdered() { _flags.set(Ordered); }
-   bool isOrdered()  { return _flags.testAny(Ordered); }
+   enum MemoryOrdering
+      {
+      TransparentSemantics,
+      OpaqueSemantics,
+      AcquireReleaseSemantics,
+      VolatileSemantics,
+
+      LastMemoryOrdering = VolatileSemantics
+      };
+
+   static inline const char *getMemoryOrderingName(MemoryOrdering ordering);
+
+   inline void setMemoryOrdering(MemoryOrdering ordering);
+   inline MemoryOrdering getMemoryOrdering();
+
+   inline void setOpaque();
+   inline bool isOpaque();
+
+   inline void setAcquireRelease();
+   inline bool isAcquireRelease();
+
+   inline void setVolatile();
+   inline bool isVolatile();
 
    // flag methods specific to labels
    //
@@ -494,17 +510,34 @@ public:
        */
       KindMask                  = 0x00000700,
 
-
       IsInGlobalRegister        = 0x00000800,
       Const                     = 0x00001000,
-      Volatile                  = 0x00002000,
-      InitializedReference      = 0x00004000,
+
+      /**
+       * Memory access ordering semantics flags
+       */
+      Transparent               = 0x00000000, ///< Access to this symbol is unsynchronized.
+      Opaque                    = 0x00002000, ///< Access to this symbol is performed in program order,
+                                              ///< but with no assurance of memory ordering effects with respect to other threads.
+      AcquireRelease            = 0x00004000, ///< For stores, ensure that prior loads/stores and not reordered after an access to this symbol.
+                                              ///< For loads, ensure that subsequent loads/stores are not reordered before an access to this symbol.
+                                              ///< An acquire/release operation is also an opaque operation.
+      Volatile                  = 0x00006000, ///< Ensure that prior loads/stores are not ordered after an access to this symbol,
+                                              ///< and subsequent loads/stores are not ordered before an access to this symbol.
+                                              ///< A volatile operation is also an acquire/release operation and an opaque operation.
+
+      /**
+       * Mask used to access memory ordering semantics
+       */
+      MemoryOrderingMask        = 0x00006000,
+
       ClassObject               = 0x00008000, ///< class object pointer
       NotCollected              = 0x00010000,
       Final                     = 0x00020000,
       InternalPointer           = 0x00040000,
       Private                   = 0x00080000,
       AddressOfClassObject      = 0x00100000, ///< address of a class object pointer
+      InitializedReference      = 0x00200000,
       SlotSharedByRefAndNonRef  = 0x00400000, ///< used in fsd to indicate that an reference symbol shares a slot with a nonreference symbol
 
       HoldsMonitoredObject      = 0x08000000,
@@ -555,9 +588,6 @@ public:
       RecognizedKnownObjectShadow = 0x10000000,
       GlobalFragmentShadow      = 0x08000000,
       MemoryTypeShadow          = 0x04000000,
-      Ordered                   = 0x02000000,
-      // Available              = 0x01000000,
-      // Available              = 0x00800000,
 
       // only use by Symbols for which isLabel is true
       //
