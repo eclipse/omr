@@ -104,7 +104,6 @@ static void checkForNonNegativeAndOverflowProperties(OMR::ValuePropagation *vp, 
    if (node->getOpCode().isLoad())
       {
       node->setCannotOverflow(true);
-      //dumpOptDetails(vp->comp(), "Load node %p cannot overflow\n", node);
       }
 
    if (constraint)
@@ -144,15 +143,14 @@ static void checkForNonNegativeAndOverflowProperties(OMR::ValuePropagation *vp, 
          if (high <= 0)
             node->setIsNonPositive(true);
 
-         ///if ((node->getOpCode().isArithmetic() || node->getOpCode().isLoad()) &&
-         ///      ((low > TR::getMinSigned<TR::Int32>()) || (high < TR::getMaxSigned<TR::Int32>())))
-         if ((node->getOpCode().isLoad() &&
-               ((low > TR::getMinSigned<TR::Int32>()) || (high < TR::getMaxSigned<TR::Int32>()))) ||
-               (node->getOpCode().isArithmetic() &&
-                (range->canOverflow() != TR_yes)))
+         if (node->getOpCode().isLoad() &&
+               ((low > TR::getMinSigned<TR::Int32>()) || (high < TR::getMaxSigned<TR::Int32>())))
             {
             node->setCannotOverflow(true);
-            //dumpOptDetails(vp->comp(), "Node %p cannot overflow\n", node);
+            }
+         else if (node->getOpCode().isArithmetic())
+            {
+            node->setCannotOverflow(false);
             }
          }
       else if (constraint->asLongRange())
@@ -166,15 +164,14 @@ static void checkForNonNegativeAndOverflowProperties(OMR::ValuePropagation *vp, 
          if (high <= 0)
             node->setIsNonPositive(true);
 
-         ///if ((node->getOpCode().isArithmetic() || node->getOpCode().isLoad()) &&
-         ///      ((low > TR::getMinSigned<TR::Int64>()) || (high < TR::getMaxSigned<TR::Int64>())))
-         if ((node->getOpCode().isLoad() &&
-                  ((low > TR::getMinSigned<TR::Int64>()) || (high < TR::getMaxSigned<TR::Int64>()))) ||
-               (node->getOpCode().isArithmetic() &&
-                (range->canOverflow() != TR_yes)))
+         if (node->getOpCode().isLoad() &&
+                  ((low > TR::getMinSigned<TR::Int64>()) || (high < TR::getMaxSigned<TR::Int64>())))
             {
             node->setCannotOverflow(true);
-            //dumpOptDetails(vp->comp(), "Node %p cannot overflow\n", node);
+            }
+         else if(node->getOpCode().isArithmetic())
+            {
+            node->setCannotOverflow(false);
             }
          }
       else if (constraint->asShortRange())
@@ -189,11 +186,14 @@ static void checkForNonNegativeAndOverflowProperties(OMR::ValuePropagation *vp, 
          if (high <= 0)
              node->setIsNonPositive(true);
 
-         if ((node->getOpCode().isLoad() && ((low > TR::getMinSigned<TR::Int16>()) || (high < TR::getMaxSigned<TR::Int16>()))) ||
-             (node->getOpCode().isArithmetic() && (range->canOverflow() != TR_yes)))
+         if ((node->getOpCode().isLoad() && ((low > TR::getMinSigned<TR::Int16>()) || (high < TR::getMaxSigned<TR::Int16>()))))
               {
               node->setCannotOverflow(true);
               }
+         else if (node->getOpCode().isArithmetic())
+            {
+            node->setCannotOverflow(false);
+            }
 
          }
       }
