@@ -161,7 +161,7 @@ SPECS = [
         'junitPublish' : true
     ],
     'linux_riscv64_cross' : [
-        'alias': 'riscv',
+        'alias': 'riscv_cross',
         'label' : 'compile:riscv64:cross',
         'reference' : defaultReference,
         'environment' : [
@@ -173,6 +173,32 @@ SPECS = [
             [
                 'buildDir' : cmakeBuildDir,
                 'configureArgs' : '-Wdev -C../cmake/caches/Travis.cmake -DOMR_DDR=OFF  -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/riscv64-linux-cross.cmake "-DOMR_EXE_LAUNCHER=qemu-riscv64-static;-L;${CROSS_SYSROOT_RISCV64}" "-DCMAKE_SYSROOT=${CROSS_SYSROOT_RISCV64}"',
+                'compile' : defaultCompile
+            ]
+        ],
+        'test' : true,
+        'testArgs' : '',
+        'junitPublish' : true
+    ],
+    'linux_riscv64' : [
+        'alias': 'riscv',
+        'label' : 'hw.arch.riscv64',
+        'reference' : defaultReference,
+        'environment' : [
+            'PATH+CCACHE=/usr/lib/ccache/',
+            /*
+             * As of now, native RISC-V build agents are running as a Docker containers
+             * so we need to set OMR_RUNNING_IN_DOCKER even though the build itself does not
+             * use Docker. Otherwise sysinfo_is_running_in_container would fail.
+             */
+            'OMR_RUNNING_IN_DOCKER=1'
+        ],
+        'ccache' : true,
+        'buildSystem' : 'cmake',
+        'builds' : [
+            [
+                'buildDir' : cmakeBuildDir,
+                'configureArgs' : '-Wdev -C../cmake/caches/Travis.cmake',
                 'compile' : defaultCompile
             ]
         ],
