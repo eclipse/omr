@@ -695,7 +695,7 @@ bool TR_LocalReordering::isAnySymInDefinedBy(TR::Node *node, vcount_t visitCount
       int32_t symRefNum = symReference->getReferenceNumber();
 
       if ((!node->getOpCode().isLoadVar() ||
-           node->mightHaveVolatileSymbolReference()) &&
+           node->mightHaveNonTransparentSymbolReference()) &&
           !node->getOpCode().isCheck())
          {
          if (_seenSymbols->get(symRefNum))

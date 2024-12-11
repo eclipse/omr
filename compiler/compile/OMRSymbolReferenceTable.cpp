@@ -102,8 +102,6 @@ OMR::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation
      _numInternalPointers(0),
      _ObjectNewInstanceImplSymRef(0),
      _knownObjectSymrefsByObjectIndex(comp->trMemory()),
-     _unsafeSymRefs(0),
-     _unsafeVolatileSymRefs(0),
      _availableAutos(comp->trMemory()),
      _vtableEntrySymbolRefs(comp->trMemory()),
      _classLoaderSymbolRefs(comp->trMemory()),

@@ -724,6 +724,9 @@ static bool refineUnsafeAccess(OMR::ValuePropagation *vp, TR::Node *node)
    if (disable)
       return refuseToConstrainUnsafe(vp, node, "unsafe shadow refinement is disabled");
 
+   if (!sym->isTransparent() && !sym->isVolatile())
+      return refuseToConstrainUnsafe(vp, node, "non-transparent non-volatile symbol");
+
    if (vp->trace())
       {
       traceMsg(
@@ -825,12 +828,12 @@ static bool refineUnsafeAccess(OMR::ValuePropagation *vp, TR::Node *node)
             return refuseToConstrainUnsafe(vp, node, "type-punned array access");
          }
 
-      if (sym->isVolatile())
+      if (sym->isAtLeastOrStrongerThanOpaque())
          {
-         // We don't have a representation for volatile array shadows, and it's
-         // not straightforward to add one because we'd have to move volatile
+         // We don't have a representation for opaque array shadows, and it's
+         // not straightforward to add one because we'd have to move opaque
          // status to SymbolReference from Symbol.
-         return refuseToConstrainUnsafe(vp, node, "volatile array access");
+         return refuseToConstrainUnsafe(vp, node, "opaque array access");
          }
 
       TR::SymbolReference *arrayShadow =

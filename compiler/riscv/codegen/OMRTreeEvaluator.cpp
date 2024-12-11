@@ -2798,8 +2798,6 @@ OMR::RV::TreeEvaluator::badILOpEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t memSize, TR::CodeGenerator *cg)
    {
    TR::Register *tempReg;
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
-
    if (op == TR::InstOpCode::_flw)
       {
       tempReg = cg->allocateSinglePrecisionRegister();
@@ -2818,6 +2816,7 @@ TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, i
 
    /*
     * Enable this part when dmb instruction becomes available
+   bool needSync = (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP());
    if (needSync)
       {
       generateInstruction(cg, TR::InstOpCode::dmb, node);
@@ -2875,7 +2874,7 @@ OMR::RV::TreeEvaluator::aloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    /*
     * Enable this part when dmb instruction becomes available
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
+   bool needSync = (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP());
    if (needSync)
       {
       generateInstruction(cg, TR::InstOpCode::dmb, node);
@@ -2917,7 +2916,6 @@ OMR::RV::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t memSize, TR::CodeGenerator *cg)
    {
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, memSize, cg);
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
    TR::Node *valueChild;
 
    if (node->getOpCode().isIndirect())
@@ -2931,7 +2929,7 @@ TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, 
 
    /*
     * Enable this part when dmb instruction becomes available
-   if (needSync)
+   if (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP())
       {
       generateInstruction(cg, TR::InstOpCode::dmb, node);
       }
@@ -2939,7 +2937,7 @@ TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, 
    generateSTORE(op, node, tempMR, cg->evaluate(valueChild), cg);
    /*
     * Enable this part when dmb instruction becomes available
-   if (needSync)
+   if (node->getSymbolReference()->getSymbol()->isVolatile() && cg->comp()->target().isSMP())
       {
       generateInstruction(cg, TR::InstOpCode::dmb, node);
       }

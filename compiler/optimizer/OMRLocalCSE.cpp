@@ -499,9 +499,9 @@ void OMR::LocalCSE::examineNode(TR::Node *node, TR_BitVector &seenAvailableLoade
    //
    TR_UseDefAliasSetInterface UseDefAliases = node->mayKill(true);
    bool hasAliases = !UseDefAliases.isZero(comp());
-   bool alreadyKilledAtVolatileLoad = false;
+   bool alreadyKilledAtNonTransparentLoad = false;
    if (hasAliases && !doneCommoning)
-      alreadyKilledAtVolatileLoad = killExpressionsIfVolatileLoad(node, seenAvailableLoadedSymbolReferences, UseDefAliases);
+      alreadyKilledAtNonTransparentLoad = killExpressionsIfNonTransparentLoad(node, seenAvailableLoadedSymbolReferences, UseDefAliases);
 
    // Step 1 : add this node to the data structures so that it can be considered for commoning
    //
@@ -622,7 +622,7 @@ void OMR::LocalCSE::examineNode(TR::Node *node, TR_BitVector &seenAvailableLoade
            {
            // we want to keep the last load of a particular sym ref alive but no earlier loads should survive
            // note that volatile processing already handles killing symbols when necessary hence the else
-           if (alreadyKilledAtVolatileLoad)
+           if (alreadyKilledAtNonTransparentLoad)
               seenAvailableLoadedSymbolReferences.set(symRef->getReferenceNumber());
            else
               {
@@ -633,7 +633,7 @@ void OMR::LocalCSE::examineNode(TR::Node *node, TR_BitVector &seenAvailableLoade
               seenAvailableLoadedSymbolReferences |= tmp;
               }
 
-           if (alreadyKilledAtVolatileLoad) // we want to keep the last load of a particular sym ref alive but no earlier loads should surivive
+           if (alreadyKilledAtNonTransparentLoad) // we want to keep the last load of a particular sym ref alive but no earlier loads should surivive
               seenAvailableLoadedSymbolReferences.set(symRef->getReferenceNumber());
            }
         }
@@ -768,7 +768,7 @@ void OMR::LocalCSE::doCommoningAgainIfPreviouslyCommoned(TR::Node *node, TR::Nod
  */
 bool OMR::LocalCSE::canCommonNodeInVolatilePass(TR::Node *node)
    {
-   return node->getOpCode().hasSymbolReference() && (node->getSymbol()->isVolatile() || node->getSymbol()->isAutoOrParm());
+   return node->getOpCode().hasSymbolReference() && (!node->getSymbol()->isTransparent() || node->getSymbol()->isAutoOrParm());
    }
 
 
@@ -917,7 +917,7 @@ bool OMR::LocalCSE::doCopyPropagationIfPossible(TR::Node *node, TR::Node *parent
        (!node->getOpCode().hasSymbolReference() ||
         node->getSymbolReference() != comp()->getSymRefTab()->findVftSymbolRef()) &&
        (symRef->storeCanBeRemoved() ||
-        (!symRef->getSymbol()->isVolatile() &&
+        (symRef->getSymbol()->isTransparent() &&
          rhsOfStoreDefNode->getDataType() == TR::Float &&
          (rhsOfStoreDefNode->getOpCode().isCall() ||
           (rhsOfStoreDefNode->getOpCode().isLoadConst()) ||
@@ -1371,16 +1371,16 @@ TR::Node* OMR::LocalCSE::getAvailableExpression(TR::Node *parent, TR::Node *node
 
 
 // We want to keep the last load of a particular sym ref alive but no earlier loads should surivive
-// This routine kills all prior volatile loads of the same (or aliased) sym ref before we add the current
-// volatile load to the available expressions
+// This routine kills all prior non-transparent loads of the same (or aliased) sym ref before we add the current
+// non-transparent load to the available expressions
 //
-bool OMR::LocalCSE::killExpressionsIfVolatileLoad(TR::Node *node, TR_BitVector &seenAvailableLoadedSymbolReferences, TR_UseDefAliasSetInterface &UseDefAliases)
+bool OMR::LocalCSE::killExpressionsIfNonTransparentLoad(TR::Node *node, TR_BitVector &seenAvailableLoadedSymbolReferences, TR_UseDefAliasSetInterface &UseDefAliases)
    {
-   bool isVolatileRead = false;
-   if (!node->getOpCode().isLikeDef() && node->mightHaveVolatileSymbolReference())
-      isVolatileRead = true;
+   bool isNonTransparentRead = false;
+   if (!node->getOpCode().isLikeDef() && node->mightHaveNonTransparentSymbolReference())
+      isNonTransparentRead = true;
 
-   if (isVolatileRead)
+   if (isNonTransparentRead)
       {
       TR_BitVector tmp(seenAvailableLoadedSymbolReferences);
       tmp -= _seenCallSymbolReferences;
@@ -1398,7 +1398,7 @@ bool OMR::LocalCSE::killExpressionsIfVolatileLoad(TR::Node *node, TR_BitVector &
          while (bvi.hasMoreElements())
             {
             int32_t c = bvi.getNextElement();
-            if (comp()->getSymRefTab()->getSymRef(c)->maybeVolatile())
+            if (comp()->getSymRefTab()->getSymRef(c)->maybeNonTransparent())
                processedAliases.set(c);
             }
          if (node->getOpCode().hasSymbolReference() && processedAliases.intersects(tmp))
@@ -1406,7 +1406,7 @@ bool OMR::LocalCSE::killExpressionsIfVolatileLoad(TR::Node *node, TR_BitVector &
          }
       }
 
-   return isVolatileRead;
+   return isNonTransparentRead;
    }
 
 
