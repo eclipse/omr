@@ -259,7 +259,7 @@ void TR::LocalDeadStoreElimination::transformBlock(TR::TreeTop * entryTree, TR::
             if (!nonRemovableStore &&
                 (seenIdentityStore ||                                 // 1)
                  (deadSymbolReferences.get(symRefNum) &&          // 2)
-                  !symRef->getSymbol()->isVolatile()  &&
+                  symRef->getSymbol()->isTransparent()  &&
                   ((_blockContainsReturn              &&              //   a)
                     (symRef->getSymbol()->isAuto() ||
                      symRef->getSymbol()->isParm())) ||
@@ -521,7 +521,7 @@ bool TR::LocalDeadStoreElimination::isIdentityStore(TR::Node *storeNode)
    if ((storeNode->getOpCode().isIndirect() && !storedValue->getOpCode().isIndirect()) ||
        (!storeNode->getOpCode().isIndirect() && storedValue->getOpCode().isIndirect()))
       return false;
-   if (storedValue->getSymbol()->isVolatile())
+   if (!storedValue->getSymbol()->isTransparent())
       return false;
    if (!storedValue->getOpCode().isLoadVar())
       return false;
@@ -611,7 +611,7 @@ void TR::LocalDeadStoreElimination::examineNode(TR::Node *parent, int32_t childN
        node->getOpCodeValue() == TR::instanceof ||
        node->getOpCodeValue() == TR::monent ||
        node->getOpCodeValue() == TR::monexit ||
-       node->mightHaveVolatileSymbolReference())
+       node->mightHaveNonTransparentSymbolReference())
       {
       int32_t symRefNum = symRef->getReferenceNumber();
       deadSymbolReferences.reset(symRefNum);
@@ -762,7 +762,7 @@ void TR::LocalDeadStoreElimination::adjustStoresInfo(TR::Node *node, TR_BitVecto
             node->getOpCodeValue() == TR::monent ||
             node->getOpCodeValue() == TR::monexit ||
             (node->isGCSafePointWithSymRef() && comp()->getOptions()->realTimeGC()) ||
-            node->mightHaveVolatileSymbolReference())
+            node->mightHaveNonTransparentSymbolReference())
       {
       bool isCallDirect = false;
       if (node->getOpCode().isCallDirect())

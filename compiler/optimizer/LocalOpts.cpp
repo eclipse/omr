@@ -5070,7 +5070,7 @@ bool TR_Rematerialization::examineNode(TR::TreeTop *treeTop, TR::Node *parent, T
         parent->getOpCode().isResolveCheck()) ||
        (node->getOpCodeValue() == TR::monent) ||
        (node->getOpCodeValue() == TR::monexit) ||
-       node->mightHaveVolatileSymbolReference())
+       node->mightHaveNonTransparentSymbolReference())
       isSimilarToCall = true;
 
    bool isCallDirect = false;

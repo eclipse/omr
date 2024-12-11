@@ -1202,7 +1202,8 @@ TR::Register *OMR::ARM::TreeEvaluator::floadEvaluator(TR::Node *node, TR::CodeGe
       trgReg = floatTrgReg;
       }
 
-   if (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
+   if (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() &&
+       cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
       generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? TR::InstOpCode::dmb_v6 : TR::InstOpCode::dmb, node);
       }
@@ -1249,7 +1250,8 @@ TR::Register *OMR::ARM::TreeEvaluator::dloadEvaluator(TR::Node *node, TR::CodeGe
       trgReg = doubleTrgReg;
       }
 
-   if (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
+   if (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() &&
+       cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
       generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? TR::InstOpCode::dmb_v6 : TR::InstOpCode::dmb, node);
       }
@@ -1264,7 +1266,8 @@ TR::Register *OMR::ARM::TreeEvaluator::fstoreEvaluator(TR::Node *node, TR::CodeG
    TR::Register *sourceReg = cg->evaluate(firstChild);
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, 4, cg);
 
-   if (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
+   if (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() &&
+       cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
       generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? TR::InstOpCode::dmb_v6 : TR::InstOpCode::dmb, node);
       }
@@ -1320,7 +1323,8 @@ TR::Register *OMR::ARM::TreeEvaluator::dstoreEvaluator(TR::Node *node, TR::CodeG
    TR::Register *sourceReg = cg->evaluate(firstChild);
    bool  isUnresolved = node->getSymbolReference()->isUnresolved();
 
-   if (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
+   if (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() &&
+       cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
       generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? TR::InstOpCode::dmb_v6 : TR::InstOpCode::dmb, node);
       }
@@ -1391,7 +1395,8 @@ TR::Register *OMR::ARM::TreeEvaluator::fstoreiEvaluator(TR::Node *node, TR::Code
    TR::Register *sourceReg = cg->evaluate(secondChild);
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, 4, cg);
 
-   if (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
+   if (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() &&
+       cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
       generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? TR::InstOpCode::dmb_v6 : TR::InstOpCode::dmb, node);
       }
@@ -1445,7 +1450,8 @@ TR::Register *OMR::ARM::TreeEvaluator::dstoreiEvaluator(TR::Node *node, TR::Code
    TR::Node *secondChild = node->getSecondChild();
    TR::Register *sourceReg = cg->evaluate(secondChild);
 
-   if (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
+   if (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() &&
+       cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
       generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? TR::InstOpCode::dmb_v6 : TR::InstOpCode::dmb, node);
       }
@@ -1882,7 +1888,7 @@ TR::Register *OMR::ARM::TreeEvaluator::i2fEvaluator(TR::Node *node, TR::CodeGene
       (firstChild->getOpCodeValue() == TR::iload || firstChild->getOpCodeValue() == TR::iloadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
-      !(firstChild->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP()))
+      !(firstChild->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP()))
       {
       // Coming from memory, last use. Use flds to save the move
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(firstChild, 4, cg);
@@ -1935,7 +1941,7 @@ TR::Register *OMR::ARM::TreeEvaluator::i2dEvaluator(TR::Node *node, TR::CodeGene
       (firstChild->getOpCodeValue() == TR::iload || firstChild->getOpCodeValue() == TR::iloadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
-      !(firstChild->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP()))
+      !(firstChild->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP()))
       {
       // Coming from memory, last use
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(firstChild, 4, cg);
@@ -2007,7 +2013,7 @@ TR::Register *OMR::ARM::TreeEvaluator::f2dEvaluator(TR::Node *node, TR::CodeGene
       (firstChild->getOpCodeValue() == TR::fload || firstChild->getOpCodeValue() == TR::floadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
-      !(firstChild->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP()))
+      !(firstChild->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP()))
       {
       // Coming from memory, last use
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(firstChild, 4, cg);
@@ -2062,7 +2068,7 @@ TR::Register *OMR::ARM::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGene
       (firstChild->getOpCodeValue() == TR::fload || firstChild->getOpCodeValue() == TR::floadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
-      !(firstChild->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP()))
+      !(firstChild->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP()))
       {
       // Coming from memory, last use
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(firstChild, 4, cg);
@@ -2102,7 +2108,7 @@ TR::Register *OMR::ARM::TreeEvaluator::d2iEvaluator(TR::Node *node, TR::CodeGene
       (firstChild->getOpCodeValue() == TR::dload || firstChild->getOpCodeValue() == TR::dloadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
-      !(firstChild->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP()))
+      !(firstChild->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP()))
       {
       // Coming from memory, last use
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(firstChild, 4, cg);
@@ -2175,7 +2181,7 @@ TR::Register *OMR::ARM::TreeEvaluator::d2fEvaluator(TR::Node *node, TR::CodeGene
       (firstChild->getOpCodeValue() == TR::dload || firstChild->getOpCodeValue() == TR::dloadi) &&
       (firstChild->getNumChildren() > 0) &&
       (firstChild->getFirstChild()->getNumChildren() == 1) &&
-      !(firstChild->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP()))
+      !(firstChild->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP()))
       {
       // Coming from memory, last use
       TR::Register *tempReg = cg->allocateRegister(TR_FPR);
@@ -3140,12 +3146,12 @@ TR::Register *OMR::ARM::TreeEvaluator::fRegStoreEvaluator(TR::Node *node, TR::Co
 
 TR::Register *OMR::ARM::TreeEvaluator::fmaxEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return NULL; 
+   return NULL;
    }
 
 TR::Register *OMR::ARM::TreeEvaluator::fminEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return NULL; 
+   return NULL;
    }
 
 #endif

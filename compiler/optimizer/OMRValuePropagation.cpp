@@ -6882,7 +6882,7 @@ void OMR::ValuePropagation::collectDefSymRefs(TR::Node *node, TR::Node *parent)
    if (opCode.hasSymbolReference())
       {
       TR::SymbolReference *symReference = node->getSymbolReference();
-      if (node->mightHaveVolatileSymbolReference())
+      if (node->mightHaveNonTransparentSymbolReference())
          {
          if (symReference->sharesSymbol())
             symReference->getUseDefAliases().getAliasesAndUnionWith(*_seenDefinedSymbolReferences);

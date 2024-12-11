@@ -22,6 +22,7 @@
 #ifndef OMR_SYMBOL_INLINES_INCL
 #define OMR_SYMBOL_INLINES_INCL
 
+#include "il/OMRSymbol.hpp"
 #include "il/Symbol.hpp"
 
 /**
@@ -513,16 +514,16 @@ OMR::Symbol::setMemoryOrdering(OMR::Symbol::MemoryOrdering ordering)
    switch (ordering)
       {
       case TransparentSemantics:
-         setTransparent();
+         _flags.setValue(MemoryOrderingMask, Transparent);
          break;
       case OpaqueSemantics:
-         setOpaque();
+         _flags.setValue(MemoryOrderingMask, Opaque);
          break;
       case AcquireReleaseSemantics:
-         setAcquireRelease();
+         _flags.setValue(MemoryOrderingMask, AcquireRelease);
          break;
       case VolatileSemantics:
-         setVolatile();
+         _flags.setValue(MemoryOrderingMask, VolatileSemantics);
          break;
 
       default:
@@ -543,7 +544,7 @@ OMR::Symbol::getMemoryOrdering()
 
       default:
          TR_ASSERT_FATAL(false, "This should be unreachable");
-         return 0;
+         return TransparentSemantics;
       }
    }
 

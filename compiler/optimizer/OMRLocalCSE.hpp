@@ -117,7 +117,7 @@ class LocalCSE : public TR::Optimization
    virtual bool canBeAvailable(TR::Node *, TR::Node *, TR_BitVector &, bool);
    bool isAvailableNullCheck(TR::Node *, TR_BitVector &);
    TR::Node *getAvailableExpression(TR::Node *parent, TR::Node *node);
-   bool killExpressionsIfVolatileLoad(TR::Node *node, TR_BitVector &seenAvailableLoadedSymbolReferences, TR_UseDefAliasSetInterface &UseDefAliases);
+   bool killExpressionsIfNonTransparentLoad(TR::Node *node, TR_BitVector &seenAvailableLoadedSymbolReferences, TR_UseDefAliasSetInterface &UseDefAliases);
    void killAvailableExpressionsAtGCSafePoints(TR::Node *, TR::Node *, TR_BitVector &);
    void killAllAvailableExpressions();
    void killAllDataStructures(TR_BitVector &);

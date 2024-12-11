@@ -127,7 +127,7 @@ bool OMR::Power::LoadStoreHandler::isSimpleLoad(TR::CodeGenerator *cg, TR::Node 
     if (node->getSymbolReference()->isUnresolved())
         return false;
 
-    if (node->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP())
+    if (node->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP())
         return false;
 #endif
 
@@ -159,7 +159,7 @@ void OMR::Power::LoadStoreHandlerImpl::generateLoadSequence(TR::CodeGenerator *c
     cg->insertPrefetchIfNecessary(node, trgReg);
 
 #ifdef J9_PROJECT_SPECIFIC
-    if (node->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP())
+    if (node->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && cg->comp()->target().isSMP())
         TR::TreeEvaluator::postSyncConditions(node, cg, trgReg, memRef, cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) ? TR::InstOpCode::lwsync : TR::InstOpCode::isync);
 #endif
     }
@@ -200,7 +200,7 @@ void OMR::Power::LoadStoreHandlerImpl::generatePairedLoadSequence(TR::CodeGenera
         }
     // Since non-volatiles are implemented as two separate loads, we must use a special sequence to perform the load in
     // a single instruction even when SMP is disabled.
-    else if (node->getSymbol()->isSyncVolatile())
+    else if (node->getSymbol()->isAtLeastOrStrongerThanAcquireRelease())
         {
         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX))
             {
@@ -262,7 +262,7 @@ enum class StoreSyncRequirements
 
 StoreSyncRequirements getStoreSyncRequirements(TR::CodeGenerator *cg, TR::Node *node)
     {
-    if (node->getSymbol()->isSyncVolatile())
+    if (node->getSymbol()->isAtLeastOrStrongerThanAcquireRelease())
         {
         // Even when SMP is disabled, we need to ensure that the write is performed in a single instruction to prevent
         // the current thread from being pre-empted during the store. This really only affects writes to longs on
@@ -271,19 +271,9 @@ StoreSyncRequirements getStoreSyncRequirements(TR::CodeGenerator *cg, TR::Node *
         if (!cg->comp()->target().isSMP())
             return StoreSyncRequirements::AtomicWrite;
 
-        TR_OpaqueMethodBlock *caller = node->getOwningMethod();
+        if (node->getSymbol()->isVolatile())
+            return StoreSyncRequirements::Full;
 
-        if (caller && !cg->comp()->compileRelocatableCode())
-            {
-            TR_ResolvedMethod *m = cg->comp()->fe()->createResolvedMethod(cg->trMemory(), caller, node->getSymbolReference()->getOwningMethod(cg->comp()));
-            if (m->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicInteger_lazySet)
-                return StoreSyncRequirements::LazySet;
-            }
-
-        return StoreSyncRequirements::Full;
-        }
-    else if (node->getSymbol()->isShadow() && node->getSymbol()->isAcquireRelease() && cg->comp()->target().isSMP())
-        {
         return StoreSyncRequirements::LazySet;
         }
 
