@@ -93,6 +93,42 @@
 extern TR::Node *constrainChildren(OMR::ValuePropagation *vp, TR::Node *node);
 extern TR::Node *constrainVcall(OMR::ValuePropagation *vp, TR::Node *node);
 
+static bool canTrustAsFixedClass(OMR::ValuePropagation *vp, TR::SymbolReference *symRef, TR_OpaqueClassBlock *classObject)
+   {
+#ifdef J9_PROJECT_SPECIFIC
+   if (!TR::Compiler->om.areFlattenableValueTypesEnabled())
+      return true;
+
+   if ((classObject == NULL) && symRef && symRef->getSymbol()->isClassObject())
+      {
+      if (!symRef->isUnresolved())
+         {
+         classObject = (TR_OpaqueClassBlock*)symRef->getSymbol()->getStaticSymbol()->getStaticAddress();
+         }
+      else
+         {
+         int32_t len;
+         const char *name = TR::Compiler->cls.classNameChars(vp->comp(), symRef, len);
+         char *sig = TR::Compiler->cls.classNameToSignature(name, len, vp->comp());
+         classObject = vp->fe()->getClassFromSignature(sig, len, symRef->getOwningMethod(vp->comp()));
+         }
+      }
+
+   if (classObject)
+      {
+      // If null-restricted array is enabled and the class is an array class, the null-restricted array
+      // class and the nullable array class share the same signature. The null-restricted array can be viewed
+      // as a sub-type of the nullable array. Therefore, the constraint cannot be fixed class.
+      int32_t numDims = 0;
+      TR_OpaqueClassBlock *klass = vp->comp()->fej9()->getBaseComponentClass(classObject, numDims);
+
+      if ((numDims > 0) && TR::Compiler->cls.isValueTypeClass(klass))
+         return false;
+      }
+#endif
+   return true;
+   }
+
 static void checkForNonNegativeAndOverflowProperties(OMR::ValuePropagation *vp, TR::Node *node, TR::VPConstraint *constraint = NULL)
    {
    if (!constraint)
@@ -1938,6 +1974,7 @@ TR::Node *constrainAload(OMR::ValuePropagation *vp, TR::Node *node)
                   {
                   if (classBlock != jlClass)
                      {
+                     isFixed = isFixed ? canTrustAsFixedClass(vp, NULL, classBlock) : isFixed;
                      constraint = TR::VPClassType::create(vp, sig, len, owningMethod, isFixed, classBlock);
                      if (*sig == '[' || sig[0] == 'L')
                         {
@@ -11207,9 +11244,11 @@ static void constrainClassObjectLoadaddr(
       "constrainClassObjectLoadaddr: n%un loadaddr is not for a class\n",
       node->getGlobalIndex());
 
+   bool isFixed = canTrustAsFixedClass(vp, symRef, NULL);
+
    TR::VPConstraint *constraint = TR::VPClass::create(
       vp,
-      TR::VPClassType::create(vp, symRef, true),
+      TR::VPClassType::create(vp, symRef, isFixed),
       TR::VPNonNullObject::create(vp),
       NULL,
       NULL,
