@@ -494,12 +494,13 @@ int32_t TR_PPCTableOfConstants::lookUp(TR::SymbolReference *symRef, TR::CodeGene
       }
 
    TR::StaticSymbol *sym = symRef->getSymbol()->castToStaticSymbol();
-   intptr_t        addr = (intptr_t)sym->getStaticAddress();
-   int32_t          nlen, tindex;
-   int8_t           local_buffer[1024];
-   int8_t          *name = local_buffer;
-   bool             isAddr = false;
-   intptr_t        myTag;
+   intptr_t          addr = (intptr_t)sym->getStaticAddress();
+   int32_t           nlen = 0;
+   int32_t           tindex = 0;
+   int8_t            local_buffer[1024];
+   int8_t           *name = local_buffer;
+   bool              isAddr = false;
+   intptr_t          myTag = 0;
 
    if (!symRef->isUnresolved() || symRef->getCPIndex()<0 || sym->isAddressOfClassObject() || sym->isConstObjectRef() || sym->isConst())
       {

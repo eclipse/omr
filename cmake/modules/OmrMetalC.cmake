@@ -58,7 +58,11 @@ function(omr_compile_metalc mfile ofile)
 	omr_assert(TEST AS_EXECUTABLE)
 
 	if(OMR_ENV_DATA64)
-		list(APPEND OMR_METALC_XLC_FLAGS "-q64")
+		if(CMAKE_C_COMPILER_IS_OPENXL)
+			list(APPEND OMR_METALC_XLC_FLAGS "-m64")
+		else()
+			list(APPEND OMR_METALC_XLC_FLAGS "-q64")
+		endif()
 	endif()
 
 	if(NOT IS_ABSOLUTE "${mfile}")

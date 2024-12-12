@@ -165,7 +165,7 @@
 /* Compiler macros */
 #if defined(__GNUC__)
 #  define HOST_COMPILER COMPILER_GCC
-#elif defined(__IBMC__) || defined(__IBMCPP__)
+#elif defined(__IBMC__) || defined(__IBMCPP__) || defined(__open_xl__)
 #  define HOST_COMPILER COMPILER_XLC
 #elif defined(_MSC_VER)
 #  define HOST_COMPILER COMPILER_MSVC

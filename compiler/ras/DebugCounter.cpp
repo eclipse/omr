@@ -497,7 +497,11 @@ TR::DebugCounter *TR::DebugCounterGroup::findCounter(const char *nameChars, int3
    {
    if (nameChars == NULL)
       return NULL;
+#if defined(__open_xl__)
+   char *name = (char*)__builtin_alloca(nameLength+1);
+#else /* defined(__open_xl__) */
    char *name = (char*)alloca(nameLength+1);
+#endif /* defined(__open_xl__) */
    strncpy(name, nameChars, nameLength);
    name[nameLength] = 0;
 
@@ -513,7 +517,11 @@ TR::DebugCounterAggregation *TR::DebugCounterGroup::findAggregation(const char *
    {
    if (nameChars == NULL)
       return NULL;
-   char *name = (char*)alloca(nameLength+1);
+#if defined(__open_xl__)
+      char *name = (char*)__builtin_alloca(nameLength+1);
+#else /* defined(__open_xl__) */
+      char *name = (char*)alloca(nameLength+1);
+#endif /* defined(__open_xl__) */
    strncpy(name, nameChars, nameLength);
    name[nameLength] = 0;
 

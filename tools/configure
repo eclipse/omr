@@ -3061,16 +3061,23 @@ return f (e, argv, 0) != argv[0]  ||  f (e, argv, 1) != argv[1];
   return 0;
 }
 _ACEOF
-for ac_arg in '' -qlanglvl=extc89 -qlanglvl=ansi -std \
-	-Ae "-Aa -D_HPUX_SOURCE" "-Xc -D__EXTENSIONS__"
-do
-  CC="$ac_save_CC $ac_arg"
-  if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_prog_cc_c89=$ac_arg
+if [ "$OMR_ENV_OPENXL" == "1" ]; then
+  options="-std=extc89 -std=ansi"
+else
+  options="-qlanglvl=extc89 -qlanglvl=ansi"
 fi
-rm -f core conftest.err conftest.$ac_objext
-  test "x$ac_cv_prog_cc_c89" != "xno" && break
-done
+
+for ac_arg in '' "$options" -std \
+    -Ae "-Aa -D_HPUX_SOURCE" "-Xc -D__EXTENSIONS__"
+  do
+    CC="$ac_save_CC $ac_arg"
+    if ac_fn_c_try_compile "$LINENO"; then :
+    ac_cv_prog_cc_c89=$ac_arg
+  fi
+  rm -f core conftest.err conftest.$ac_objext
+    test "x$ac_cv_prog_cc_c89" != "xno" && break
+  done
+
 rm -f conftest.$ac_ext
 CC=$ac_save_CC
 

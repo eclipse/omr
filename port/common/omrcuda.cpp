@@ -32,7 +32,7 @@
  * If we're using a version of xlC that doesn't define __GNUC__,
  * define it now so CUDA header files will be acceptable.
  */
-#if (defined(__xlC__) || defined(__ibmxl__)) && ! defined(__GNUC__)
+#if (defined(__xlC__) || defined(__ibmxl__) || defined(__open_xl__)) && ! defined(__GNUC__)
 #define __GNUC__ 4
 #define __GNUC_MINOR__ 8
 #define __GNUC_PATCHLEVEL__ 0

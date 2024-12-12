@@ -25,7 +25,7 @@
 extern "C" void *getCodeSync();
 
 #if defined(TR_HOST_POWER)
-#if defined(__IBMC__) || defined(__IBMCPP__)
+#if defined(__IBMC__) || defined(__IBMCPP__) || defined(__open_xl__)
 
 #if defined(__cplusplus)
 #include <builtins.h>
@@ -35,7 +35,7 @@ extern "C" void *getCodeSync();
 #define sync() __sync()
 #define isync() __isync()
 
-#else /* defined(__IBMC__) || defined(__IBMCPP__) */
+#else /* defined(__IBMC__) || defined(__IBMCPP__) || defined(__open_xl__) */
 
 static inline void dcbf(unsigned char *addr)
    {
@@ -55,7 +55,7 @@ static inline void isync()
    __asm__("isync");
    }
 
-#endif /* defined(__IBMC__) || defined(__IBMCPP__) */
+#endif /* defined(__IBMC__) || defined(__IBMCPP__) || defined(__open_xl__) */
 
 static inline void icbi(unsigned char *addr)
    {
