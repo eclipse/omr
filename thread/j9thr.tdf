@@ -73,3 +73,5 @@ TraceException=Trc_THR_omrthread_get_cpu_time_ex_clock_gettime_failed Overhead=1
 TraceException=Trc_THR_fixupThreadAccounting_omrthread_get_cpu_time_ex_error Overhead=1 Level=1 NoEnv Test Template="omrthread_get_cpu_time_ex returned error=%zd for thread=0x%p"
 
 TraceEvent=Trc_THR_EnableRawMonitorSpin_CustomSpinOption Overhead=1 Level=3 NoEnv Test Template="(ENABLE_RAW_MONITOR_SPIN) Using custom spin counts: %s, monitor: %p, threeTierSpinCount1: %zu, threeTierSpinCount2: %zu, threeTierSpinCount3: %zu, adaptSpin: %zu"
+
+TraceEvent=Trc_THR_Unpark Overhead=1 Level=5 NoEnv Test Template="Unpark slow path taken=%zu"
