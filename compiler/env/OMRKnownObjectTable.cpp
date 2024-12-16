@@ -164,7 +164,7 @@ OMR::KnownObjectTable::getPointer(Index index)
    }
 
 void
-OMR::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocation)
+OMR::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocation, bool isArrayWithConstantElements)
    {
    TR_UNIMPLEMENTED();
    }

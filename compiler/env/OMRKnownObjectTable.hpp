@@ -97,7 +97,7 @@ public:
 
    uintptr_t getPointer(Index index);
 
-   void updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocation);
+   void updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocation, bool isArrayWithConstantElements = false);
 
 protected:
    void addArrayWithConstantElements(Index index);
