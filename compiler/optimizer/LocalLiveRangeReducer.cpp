@@ -351,7 +351,7 @@ void TR_LocalLiveRangeReduction::populatePotentialDeps(TR_TreeRefInfo *treeRefIn
 
       //set defSym - all symbols that might be written
 
-      if (opCode.isCall() || opCode.isResolveCheck()|| opCode.isStore() || node->mightHaveVolatileSymbolReference())
+      if (opCode.isCall() || opCode.isResolveCheck()|| opCode.isStore() || node->mightHaveNonTransparentSymbolReference())
          {
 
          bool isCallDirect = false;

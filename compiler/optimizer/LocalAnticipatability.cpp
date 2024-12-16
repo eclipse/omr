@@ -892,7 +892,7 @@ void TR_LocalAnticipatability::updateUsesAndDefs(TR::Node *node, TR::Block *bloc
          }
 
       if ((opCode.isLoadVar() || (loadaddrAsLoad() && opCode.getOpCodeValue() == TR::loadaddr)) &&
-           !node->mightHaveVolatileSymbolReference())
+           !node->mightHaveNonTransparentSymbolReference())
          {
 #if FLEX_PRE
          node->mayKill(false, true).getAliasesAndUnionWith(*temp);
