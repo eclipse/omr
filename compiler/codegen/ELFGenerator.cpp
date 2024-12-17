@@ -339,9 +339,9 @@ void
 TR::ELFGenerator::writeELFSymbolsToFile(::FILE *fp)
 {
     
-    ELFSymbol * elfSym = static_cast<ELFSymbol*>(_rawAllocator.allocate(sizeof(ELFSymbol)));
-    char ELFSymbolNames[_totalELFSymbolNamesLength];
-    
+    ELFSymbol *elfSym = static_cast<ELFSymbol*>(_rawAllocator.allocate(sizeof(ELFSymbol)));
+    char *ELFSymbolNames = static_cast<char*>(_rawAllocator.allocate(_totalELFSymbolNamesLength));
+
     /* Writing the UNDEF symbol*/
     elfSym->st_name = 0;
     elfSym->st_info = 0;
@@ -387,6 +387,7 @@ TR::ELFGenerator::writeELFSymbolsToFile(::FILE *fp)
     /* Finally, write the symbol names to file */
     fwrite(ELFSymbolNames, sizeof(uint8_t), _totalELFSymbolNamesLength, fp);
 
+    _rawAllocator.deallocate(ELFSymbolNames);
     _rawAllocator.deallocate(elfSym);
 }
 
