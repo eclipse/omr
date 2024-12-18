@@ -162,9 +162,3 @@ OMR::KnownObjectTable::getPointer(Index index)
    else
       return *self()->getPointerLocation(index);
    }
-
-void
-OMR::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocation)
-   {
-   TR_UNIMPLEMENTED();
-   }
