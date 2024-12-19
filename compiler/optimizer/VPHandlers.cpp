@@ -1938,6 +1938,7 @@ TR::Node *constrainAload(OMR::ValuePropagation *vp, TR::Node *node)
                   {
                   if (classBlock != jlClass)
                      {
+                     isFixed = isFixed ? vp->canClassBeTrustedAsFixedClass(NULL, classBlock) : isFixed;
                      constraint = TR::VPClassType::create(vp, sig, len, owningMethod, isFixed, classBlock);
                      if (*sig == '[' || sig[0] == 'L')
                         {
@@ -11207,9 +11208,11 @@ static void constrainClassObjectLoadaddr(
       "constrainClassObjectLoadaddr: n%un loadaddr is not for a class\n",
       node->getGlobalIndex());
 
+   bool isFixed = vp->canClassBeTrustedAsFixedClass(symRef, NULL);
+
    TR::VPConstraint *constraint = TR::VPClass::create(
       vp,
-      TR::VPClassType::create(vp, symRef, true),
+      TR::VPClassType::create(vp, symRef, isFixed),
       TR::VPNonNullObject::create(vp),
       NULL,
       NULL,
