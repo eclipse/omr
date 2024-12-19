@@ -391,6 +391,8 @@ OMR::CodeGenPhase::performRegisterAssigningPhase(TR::CodeGenerator * cg, TR::Cod
       cg->jettisonAllSpills(); // Spill temps used before now may lead to conflicts if also used by register assignment
       cg->doRegisterAssignment(kindsToAssign);
 
+      TR_ASSERT_FATAL(cg->internalControlFlowNestingDepth() == 0, "The numbers of labels marked as Start or End of internal control flow were unequal:  internalControlFlowNestingDepth == %d\n", cg->internalControlFlowNestingDepth());
+
       if (comp->compilationShouldBeInterrupted(AFTER_REGISTER_ASSIGNMENT_CONTEXT))
          {
          comp->failCompilation<TR::CompilationInterrupted>("interrupted after RA");
