@@ -28,6 +28,16 @@ import unittest
 import genutils
 import cppgen
 
+# Method assertRegexpMatches has been deprecated in Python 3.2 and compatibility
+# alias was apparently removed in Python 3.12.
+#
+# However not all CI build agents have been upgraded to Python 3.2 while some
+# only have Python 3.12+ and cannot be easily downgraded (e.g., RISC-V agents).
+#
+# The code belows provides compatibility for Python < 3.2
+if not hasattr(unittest.TestCase, "assertRegex") and hasattr(unittest.TestCase, "assertRegexpMatches"):
+    setattr(unittest.TestCase, "assertRegex", unittest.TestCase.assertRegexpMatches)
+
 class CppGeneratorTest(unittest.TestCase):
     """Tests for CppGenerator class"""
 
@@ -37,10 +47,10 @@ class CppGeneratorTest(unittest.TestCase):
         self.generator = cppgen.CppGenerator(self.api, "", [])
 
     def test_generate_include_1(self):
-        self.assertRegexpMatches(self.generator.generate_include("foo.hpp"), '#include\s+"foo.hpp"')
+        self.assertRegex(self.generator.generate_include("foo.hpp"), '#include\s+"foo.hpp"')
 
     def test_generate_include_2(self):
-        self.assertRegexpMatches(self.generator.generate_include("bar"), '#include\s+"bar"')
+        self.assertRegex(self.generator.generate_include("bar"), '#include\s+"bar"')
 
     def test_get_client_class_name_1(self):
         class_desc = self.api.classes()[0].inner_classes()[0]
@@ -92,26 +102,26 @@ class CppGeneratorTest(unittest.TestCase):
         self.assertRaises(KeyError, self.generator.get_impl_type, type_desc)
 
     def test_generate_static_cast_1(self):
-        self.assertRegexpMatches(self.generator.generate_static_cast("void *", "foo"),
-                                "static_cast<\s*void \*\s*>\(\s*foo\s*\)")
+        self.assertRegex(self.generator.generate_static_cast("void *", "foo"),
+                        "static_cast<\s*void \*\s*>\(\s*foo\s*\)")
 
     def test_generate_static_cast_2(self):
-        self.assertRegexpMatches(self.generator.generate_static_cast("bar", "quux"),
-                                "static_cast<\s*bar\s*>\(\s*quux\s*\)")
+        self.assertRegex(self.generator.generate_static_cast("bar", "quux"),
+                        "static_cast<\s*bar\s*>\(\s*quux\s*\)")
 
     def test_generate_static_cast_3(self):
-        self.assertRegexpMatches(self.generator.generate_static_cast(" ", " "),
-                                "static_cast<\s*>\(\s*\)")
+        self.assertRegex(self.generator.generate_static_cast(" ", " "),
+                        "static_cast<\s*>\(\s*\)")
 
     def test_to_impl_cast_1(self):
         class_desc = self.api.get_class_by_name("class_1_inner_class_1")
-        self.assertRegexpMatches(self.generator.to_impl_cast(class_desc, "foo"),
-                                "static_cast<TR::class_1::class_1_inner_class_1\s*\*>\(\s*foo\s*\)")
+        self.assertRegex(self.generator.to_impl_cast(class_desc, "foo"),
+                        "static_cast<TR::class_1::class_1_inner_class_1\s*\*>\(\s*foo\s*\)")
 
     def test_to_impl_cast_2(self):
         class_desc = self.api.get_class_by_name("class_2")
-        self.assertRegexpMatches(self.generator.to_impl_cast(class_desc, "bar"),
-                                "static_cast<TR::class_2\s*\*>\(\s*static_cast<TR::class_1\s*\*>\(\s*bar\s*\)\s*\)")
+        self.assertRegex(self.generator.to_impl_cast(class_desc, "bar"),
+                        "static_cast<TR::class_2\s*\*>\(\s*static_cast<TR::class_1\s*\*>\(\s*bar\s*\)\s*\)")
 
     @unittest.skip("Instead of rasing an assert, to_impl_case raises an AttributeError: 'APIType' object has no attribute 'base', which is no good.")
     def test_to_impl_cast_3(self):
@@ -120,13 +130,13 @@ class CppGeneratorTest(unittest.TestCase):
 
     def test_to_opaque_cast_1(self):
         class_desc = self.api.get_class_by_name("class_1_inner_class_1")
-        self.assertRegexpMatches(self.generator.to_opaque_cast("foo", class_desc),
-                                "static_cast<void\s*\*>\(\s*foo\s*\)")
+        self.assertRegex(self.generator.to_opaque_cast("foo", class_desc),
+                        "static_cast<void\s*\*>\(\s*foo\s*\)")
 
     def test_to_opaque_cast_2(self):
         class_desc = self.api.get_class_by_name("class_2")
-        self.assertRegexpMatches(self.generator.to_opaque_cast("bar", class_desc),
-                                "static_cast<void\s*\*>\(\s*static_cast<TR::class_1\s*\*>\(\s*bar\s*\)\s*\)")
+        self.assertRegex(self.generator.to_opaque_cast("bar", class_desc),
+                        "static_cast<void\s*\*>\(\s*static_cast<TR::class_1\s*\*>\(\s*bar\s*\)\s*\)")
 
     @unittest.skip("Instead of rasing an assert, to_impl_case raises an AttributeError: 'APIType' object has no attribute 'base', which is no good.")
     def test_to_opaque_cast_3(self):
@@ -135,13 +145,13 @@ class CppGeneratorTest(unittest.TestCase):
 
     def test_to_client_cast_1(self):
         class_desc = self.api.get_class_by_name("class_1_inner_class_1")
-        self.assertRegexpMatches(self.generator.to_client_cast(class_desc, "foo"),
-                                "static_cast<class_1::class_1_inner_class_1\s*\*>\(\s*foo\s*\)")
+        self.assertRegex(self.generator.to_client_cast(class_desc, "foo"),
+                        "static_cast<class_1::class_1_inner_class_1\s*\*>\(\s*foo\s*\)")
 
     def test_to_client_cast_2(self):
         class_desc = self.api.get_class_by_name("class_2")
-        self.assertRegexpMatches(self.generator.to_client_cast(class_desc, "bar"),
-                                "static_cast<class_2\s*\*>\(\s*bar\s*\)")
+        self.assertRegex(self.generator.to_client_cast(class_desc, "bar"),
+                        "static_cast<class_2\s*\*>\(\s*bar\s*\)")
 
     @unittest.skip("Instead of rasing an assert, to_impl_case raises an AttributeError: 'APIType' object has no attribute 'base', which is no good.")
     def test_to_client_cast_3(self):
@@ -150,27 +160,27 @@ class CppGeneratorTest(unittest.TestCase):
 
     def test_grab_impl_1(self):
         type_desc = genutils.APIType("int32", self.api)
-        self.assertRegexpMatches(self.generator.grab_impl("foo", type_desc), "foo")
+        self.assertRegex(self.generator.grab_impl("foo", type_desc), "foo")
 
     def test_grab_impl_2(self):
         type_desc = self.api.get_class_by_name("class_1_inner_class_1").as_type()
-        self.assertRegexpMatches(self.generator.grab_impl("bar", type_desc),
-                                "static_cast<TR::class_1::class_1_inner_class_1\s*\*>\(\s*bar\s*!=\s*NULL\s*\?\s*bar->_impl\s*:\s*NULL\s*\)")
+        self.assertRegex(self.generator.grab_impl("bar", type_desc),
+                        "static_cast<TR::class_1::class_1_inner_class_1\s*\*>\(\s*bar\s*!=\s*NULL\s*\?\s*bar->_impl\s*:\s*NULL\s*\)")
 
     def test_generate_parm_1(self):
         parm_desc = self.api.services()[0].parameters()[0]
-        self.assertRegexpMatches(self.generator.generate_parm(parm_desc),
-                                "int16_t\s*Project_service_1_parm_1")
+        self.assertRegex(self.generator.generate_parm(parm_desc),
+                        "int16_t\s*Project_service_1_parm_1")
 
     def test_generate_parm_2(self):
         parm_desc = self.api.services()[0].parameters()[1]
-        self.assertRegexpMatches(self.generator.generate_parm(parm_desc),
-                                "void\s*\*\s*\*\s*Project_service_1_parm_2")
+        self.assertRegex(self.generator.generate_parm(parm_desc),
+                        "void\s*\*\s*\*\s*Project_service_1_parm_2")
 
     def test_generate_parm_3(self):
         parm_desc = self.api.services()[0].parameters()[2]
-        self.assertRegexpMatches(self.generator.generate_parm(parm_desc),
-                                "double\s*\*\s*Project_service_1_parm_3")
+        self.assertRegex(self.generator.generate_parm(parm_desc),
+                        "double\s*\*\s*Project_service_1_parm_3")
 
     def test_generate_arg_1(self):
         parm_desc = self.api.services()[0].parameters()[0]
@@ -202,45 +212,45 @@ class CppGeneratorTest(unittest.TestCase):
 
     def test_generate_field_decl_1(self):
         field = self.api.get_class_by_name("class_1").fields()[0]
-        self.assertRegexpMatches(self.generator.generate_field_decl(field),
-                                "public:\s*float\s+class_1_field_1\s*;")
+        self.assertRegex(self.generator.generate_field_decl(field),
+                        "public:\s*float\s+class_1_field_1\s*;")
 
     def test_generate_field_decl_2(self):
         field = self.api.get_class_by_name("class_1").fields()[1]
-        self.assertRegexpMatches(self.generator.generate_field_decl(field, False),
-                                "double\s+class_1_field_2\s*;")
+        self.assertRegex(self.generator.generate_field_decl(field, False),
+                        "double\s+class_1_field_2\s*;")
 
     def test_generate_class_service_decl_1(self):
         service = self.api.get_class_by_name("class_1").services()[0]
-        self.assertRegexpMatches(self.generator.generate_class_service_decl(service),
-                                "public:\s*const\s*char\s*\*\s*class_1_service_1\(\s*const\s*char\s*\*\s*class_1_service_1_parm\s*\);")
+        self.assertRegex(self.generator.generate_class_service_decl(service),
+                        "public:\s*const\s*char\s*\*\s*class_1_service_1\(\s*const\s*char\s*\*\s*class_1_service_1_parm\s*\);")
 
     def test_generate_class_service_decl_2(self):
         service = self.api.get_class_by_name("class_1").services()[1]
-        self.assertRegexpMatches(self.generator.generate_class_service_decl(service),
-                                "protected:\s*void\s*class_1_service_2\(\s*\);")
+        self.assertRegex(self.generator.generate_class_service_decl(service),
+                        "protected:\s*void\s*class_1_service_2\(\s*\);")
 
     def test_generate_ctor_decl_1(self):
         ctor = self.api.get_class_by_name("class_2").constructors()[0]
-        self.assertRegexpMatches(self.generator.generate_ctor_decl(ctor, "class_2"),
-                                "public:\s*class_2\(\)\s*;")
+        self.assertRegex(self.generator.generate_ctor_decl(ctor, "class_2"),
+                        "public:\s*class_2\(\)\s*;")
 
     def test_generate_ctor_decl_2(self):
         ctor = self.api.get_class_by_name("class_1_inner_class_1").constructors()[0]
-        self.assertRegexpMatches(self.generator.generate_ctor_decl(ctor, "class_1_inner_class_1"),
-                                "public:\s*class_1_inner_class_1\(\)\s*;")
+        self.assertRegex(self.generator.generate_ctor_decl(ctor, "class_1_inner_class_1"),
+                        "public:\s*class_1_inner_class_1\(\)\s*;")
 
     def test_generate_dtor_decl_1(self):
         class_desc = self.api.get_class_by_name("class_2")
-        self.assertRegexpMatches(self.generator.generate_dtor_decl(class_desc),
-                                "public:\s*~class_2\(\)\s*;")
+        self.assertRegex(self.generator.generate_dtor_decl(class_desc),
+                        "public:\s*~class_2\(\)\s*;")
 
     def test_generate_dtor_decl_2(self):
         class_desc = self.api.get_class_by_name("class_1_inner_class_1")
-        self.assertRegexpMatches(self.generator.generate_dtor_decl(class_desc),
-                                "public:\s*~class_1_inner_class_1\(\)\s*;")
+        self.assertRegex(self.generator.generate_dtor_decl(class_desc),
+                        "public:\s*~class_1_inner_class_1\(\)\s*;")
 
     def test_generate_allocator_decl_1(self):
         class_desc = self.api.get_class_by_name("class_1_inner_class_1")
-        self.assertRegexpMatches(self.generator.generate_allocator_decl(class_desc),
-                                'extern\s*"C"\s*void\s*\*\s*allocateclass_1class_1_inner_class_1\(void\s*\*\s*impl\);')
+        self.assertRegex(self.generator.generate_allocator_decl(class_desc),
+                        'extern\s*"C"\s*void\s*\*\s*allocateclass_1class_1_inner_class_1\(void\s*\*\s*impl\);')
