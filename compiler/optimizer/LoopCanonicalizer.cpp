@@ -3554,8 +3554,8 @@ void TR_LoopTransformer::updateInfo(TR::Node *node, vcount_t visitCount, updateI
 
    uinfo.currentlyWrittenOnce |= defAliases;
 
-   // use def aliases for volatiles to update reads and writes
-   if (node->mightHaveVolatileSymbolReference())
+   // use def aliases for non-transparents to update reads and writes
+   if (node->mightHaveNonTransparentSymbolReference())
       {
       *_neverRead -= defAliases;
       _readExactlyOnce -= defAliases;
@@ -3732,7 +3732,7 @@ bool TR_LoopTransformer::isSymbolReferenceWrittenNumberOfTimesInStructure(TR_Str
    {
    if (structure->asBlock() != NULL)
       {
-      if (comp()->getSymRefTab()->getSymRef(symRefNum)->getSymbol()->isVolatile())
+      if (!comp()->getSymRefTab()->getSymRef(symRefNum)->getSymbol()->isTransparent())
          return false;
 
       TR_BlockStructure *blockStructure = structure->asBlock();
@@ -4508,7 +4508,7 @@ bool TR_LoopInverter::isInvertibleLoop(int32_t symRefNum, TR_Structure *structur
    {
    if (structure->asBlock() != NULL)
       {
-      if (comp()->getSymRefTab()->getSymRef(symRefNum)->getSymbol()->isVolatile())
+      if (!comp()->getSymRefTab()->getSymRef(symRefNum)->getSymbol()->isTransparent())
          return false;
 
       TR_BlockStructure *blockStructure = structure->asBlock();

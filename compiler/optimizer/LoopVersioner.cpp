@@ -3386,7 +3386,7 @@ void TR_LoopVersioner::updateDefinitionsAndCollectProfiledExprs(TR::Node *parent
       if (symReference->getSymbol()->isArrayShadowSymbol())
          _arrayAccesses->add(node);
 
-      if (node->mightHaveVolatileSymbolReference())
+      if (node->mightHaveNonTransparentSymbolReference())
          {
          if (symReference->sharesSymbol())
            {

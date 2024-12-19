@@ -240,13 +240,6 @@ class TR_UseDefInfo
    bool    isTrivialUseDefNodeImpl(TR::Node *node, AuxiliaryData &aux);
    bool    isTrivialUseDefSymRef(TR::SymbolReference *symRef, AuxiliaryData &aux);
 
-   // For Languages where an auto can alias a volatile, extra care needs to be taken when setting up use-def
-   // The conservative answer is to not index autos that have volatile aliases.
-
-   bool shouldIndexVolatileSym(TR::SymbolReference *ref, AuxiliaryData &aux);
-
-
-
    public:
    int32_t getNumIrrelevantStores() { return _numIrrelevantStores; }
    int32_t getNumUseNodes() {return _numUseOnlyNodes+_numDefUseNodes;}

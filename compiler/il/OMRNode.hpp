@@ -411,8 +411,8 @@ public:
    /// Does this node have an unresolved symbol reference?
    bool                   hasUnresolvedSymbolReference();
 
-   /// Does this node have a volatile symbol reference?
-   bool                   mightHaveVolatileSymbolReference();
+   /// Does this node have a non-transparent symbol reference by any chance?
+   bool                   mightHaveNonTransparentSymbolReference();
 
    /// Is this node the 'this' pointer?
    bool                   isThisPointer();
@@ -506,7 +506,8 @@ public:
    /// Returns true if the node kills the symbol reference
    bool                   mayModifyValue(TR::SymbolReference *);
 
-   bool                   performsVolatileAccess(vcount_t visitCount);
+   /// Returns true if the node performs a memory access with non-transparent memory semantics
+   bool                   performsNonTransparentAccess(vcount_t visitCount);
 
    bool                   uses64BitGPRs();
 

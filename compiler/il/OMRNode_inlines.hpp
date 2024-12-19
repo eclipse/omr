@@ -165,7 +165,7 @@ OMR::Node::mayUse()
       TR_UseOnlyAliasSetInterface aliasSetInterface(self()->getSymbolReference());
       return aliasSetInterface;
       }
-   else 
+   else
       {
       //if there is no symbolreference, then return an empty aliseset
        TR_UseOnlyAliasSetInterface aliasSetInterface(NULL);
@@ -176,7 +176,7 @@ OMR::Node::mayUse()
 TR_UseDefAliasSetInterface
 OMR::Node::mayKill(bool gcSafe)
    {
-   if (self()->getOpCode().hasSymbolReference() && (self()->getOpCode().isLikeDef() || self()->mightHaveVolatileSymbolReference())) //we want the old behavior in these cases
+   if (self()->getOpCode().hasSymbolReference() && (self()->getOpCode().isLikeDef() || self()->mightHaveNonTransparentSymbolReference())) //we want the old behavior in these cases
       {
       bool shares_symbol = self()->getSymbolReference()->sharesSymbol(gcSafe);
       TR_UseDefAliasSetInterface aliasSetInterface(shares_symbol, self()->getSymbolReference(), self()->getOpCode().isCallDirect(), gcSafe);
