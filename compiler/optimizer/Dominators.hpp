@@ -53,11 +53,14 @@ class TR_Dominators
    TR_ALLOC(TR_Memory::Dominators)
 
    TR_Dominators(TR::Compilation *, bool post = false);
+   TR_Dominators(TR::Compilation *, TR::CFG* cfg, bool acceptUnreachableBlocks = true, bool post = false);
    TR::Block       *getDominator(TR::Block *);
    int             dominates(TR::Block *block, TR::Block *other);
 
    TR::Compilation * comp()         { return _compilation; }
    bool trace() { return _trace; }
+   bool isValid() { return _isValid; }
+   bool hasUnreachableBlocks() { return _hasUnreachableBlocks; }
 
    protected:
 
@@ -113,6 +116,8 @@ class TR_Dominators
       int32_t parent;
       };
 
+   void    construct(TR::CFG* cfg, bool post, bool acceptUnreachableBlocks = true);
+
    BBInfo& getInfo(int32_t index) {return _info[index];}
    int32_t blockNumber(int32_t index) {return _info[index]._block->getNumber();}
 
@@ -133,6 +138,7 @@ class TR_Dominators
    int32_t         _numNodes;
    int32_t         _topDfNum;
    vcount_t        _visitCount;
+   bool            _hasUnreachableBlocks;
 
    protected:
    TR::CFG *         _cfg;
