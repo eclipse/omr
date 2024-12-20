@@ -5553,7 +5553,7 @@ TR::Node *indirectLoadSimplifier(TR::Node * node, TR::Block * block, TR::Simplif
           (node->getSymbol()->getSize() == firstChild->getSymbol()->getSize()) &&
           (firstChild->getSymbolReference()->getSymbol()->isAutoOrParm() || localStatic) &&
           node->getSymbolReference()->getOffset() == 0 &&
-          (node->getSymbol()->isVolatile() == firstChild->getSymbol()->isVolatile()) &&
+          (node->getSymbol()->getMemoryOrdering() == firstChild->getSymbol()->getMemoryOrdering()) &&
           performTransformation(s->comp(), "%sReplace indirect load %s [" POINTER_PRINTF_FORMAT "] with ",
           s->optDetailString(), node->getOpCode().getName(),node))
          {
@@ -5677,7 +5677,7 @@ TR::Node *indirectStoreSimplifier(TR::Node * node, TR::Block * block, TR::Simpli
        if ((storeDataType == addrDataType && isSameType) &&
            (firstChild->getSymbolReference()->getSymbol()->isAutoOrParm()  || localStatic) &&
            node->getSymbolReference()->getOffset() == 0 &&
-           (node->getSymbol()->isVolatile() == firstChild->getSymbol()->isVolatile()) &&
+           (node->getSymbol()->getMemoryOrdering() == firstChild->getSymbol()->getMemoryOrdering()) &&
            performTransformation(s->comp(), "%sReplace indirect store %s [" POINTER_PRINTF_FORMAT "] with ",
             s->optDetailString(), node->getOpCode().getName(),node))
          {

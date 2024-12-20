@@ -990,9 +990,6 @@ TR_Debug::nodePrintAllFlags(TR::Node *node, TR_PrettyPrinterString &output)
    FLAG(chkCannotTrackLocalStringUses, "cannotTrackLocalStringUses");
    FLAG(chkCharArrayTRT, "charArrayTRT");
    FLAG(chkEscapesInColdBlock, "escapesInColdBlock");
-#ifdef J9_PROJECT_SPECIFIC
-   FLAG(chkDontInlineUnsafePutOrderedCall, "dontInlineUnsafePutOrderedCall");
-#endif
    FLAG(chkHeapificationStore, "HeapificationStore");
    FLAG(chkHeapificationAlloc, "HeapificationAlloc");
    FLAG(chkIdentityless, "Identityless");
@@ -1070,8 +1067,8 @@ TR_Debug::print(TR::SymbolReference * symRef, TR_PrettyPrinterString& output, bo
          }
       if (symRef->getSymbol()->isFinal())
          symRefKind.appends(" final");
-      if (symRef->getSymbol()->isVolatile())
-         symRefKind.appends(" volatile");
+      if (!symRef->getSymbol()->isTransparent())
+         symRefKind.appendf(" %s", TR::Symbol::getMemoryOrderingName(symRef->getSymbol()->getMemoryOrdering()));
       switch (sym->getKind())
          {
          case TR::Symbol::IsAutomatic:
@@ -1208,9 +1205,9 @@ TR_Debug::print(TR::SymbolReference * symRef, TR_PrettyPrinterString& output, bo
 
           output.appendf(")");
 
-          if (sym->isVolatile())
+          if (!sym->isTransparent())
              {
-             output.appends(" [volatile]");
+             output.appendf(" [%s]", TR::Symbol::getMemoryOrderingName(sym->getMemoryOrdering()));
              }
           }
       }

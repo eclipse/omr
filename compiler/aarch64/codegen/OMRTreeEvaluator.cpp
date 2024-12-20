@@ -6069,7 +6069,8 @@ TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, i
 
 TR::Register *commonLoadEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t size, TR::Register *targetReg, TR::CodeGenerator *cg)
    {
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
+   TR::Symbol *sym = node->getSymbolReference()->getSymbol();
+   bool needSync = cg->comp()->target().isSMP() && sym->isAtLeastOrStrongerThanAcquireRelease();
 
    node->setRegister(targetReg);
    TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node);
@@ -6142,7 +6143,8 @@ OMR::ARM64::TreeEvaluator::aloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tempReg);
       }
 
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
+   TR::Symbol *sym = node->getSymbolReference()->getSymbol();
+   bool needSync = cg->comp()->target().isSMP() && sym->isAtLeastOrStrongerThanAcquireRelease();
    if (needSync)
       {
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ishld);
@@ -6192,16 +6194,7 @@ TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, 
    {
    TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node);
    tempMR->validateImmediateOffsetAlignment(node, size, cg);
-
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
-   bool lazyVolatile = false;
-   if (node->getSymbolReference()->getSymbol()->isShadow() &&
-       node->getSymbolReference()->getSymbol()->isOrdered() && cg->comp()->target().isSMP())
-      {
-      needSync = true;
-      lazyVolatile = true;
-      }
-
+   TR::Symbol *sym = node->getSymbolReference()->getSymbol();
    TR::Node *valueChild;
 
    if (node->getOpCode().isIndirect())
@@ -6213,7 +6206,7 @@ TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, 
       valueChild = node->getFirstChild();
       }
 
-   if (needSync)
+   if (cg->comp()->target().isSMP() && sym->isAtLeastOrStrongerThanAcquireRelease())
       {
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ishst);
       }
@@ -6268,13 +6261,9 @@ TR::Register *commonStoreEvaluator(TR::Node *node, TR::InstOpCode::Mnemonic op, 
       generateMemSrc1Instruction(cg, op, node, tempMR, cg->evaluate(valueChild));
       }
 
-   if (needSync)
+   if (cg->comp()->target().isSMP() && sym->isVolatile())
       {
-      // ordered and lazySet operations will not generate a post-write sync
-      if (!lazyVolatile)
-         {
-         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
-         }
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
       }
 
    if (valueChildRoot != NULL)

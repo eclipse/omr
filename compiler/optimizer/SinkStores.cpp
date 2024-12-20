@@ -1997,13 +1997,13 @@ bool nodeContainsCall(TR::Node *node, vcount_t visitCount)
    // 3) a monexit
    // 4) a store to a static
    // 5) a symref that is unresolved
-   // 6) a symbol that is volatile
+   // 6) a symbol that is not transparent
    if (node->getOpCode().isCall() ||
          node->getOpCodeValue() == TR::monent ||
          node->getOpCodeValue() == TR::monexit ||
          (node->getOpCode().isStore() && node->getSymbolReference()->getSymbol()->isStatic()) ||
          (node->getOpCode().hasSymbolReference() && node->getSymbolReference()->isUnresolved()) ||
-         (node->getOpCode().hasSymbolReference() && node->getSymbol()->isVolatile()))
+         (node->getOpCode().hasSymbolReference() && !node->getSymbol()->isTransparent()))
       return true;
 
    int32_t i;

@@ -3305,7 +3305,7 @@ void TR_RegionStructure::updateInvariantSymbols(TR::Node *node, vcount_t visitCo
       {
       TR::SymbolReference *symReference = node->getSymbolReference();
 
-      if (symReference->getSymbol()->isVolatile())
+      if (!symReference->getSymbol()->isTransparent())
          _invariantSymbols->reset(symReference->getReferenceNumber());
 
       if (opCode.isResolveCheck())

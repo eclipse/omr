@@ -535,7 +535,7 @@ void TR_LocalTransparency::updateUsesAndDefs(TR::Node *node, ContainerType *glob
          isCallDirect = true;
 
       if ((opCode.isLoadVar() || (loadaddrAsLoad() && opCode.getOpCodeValue() == TR::loadaddr)) &&
-           !node->mightHaveVolatileSymbolReference())
+           !node->mightHaveNonTransparentSymbolReference())
          {
          if (seenDefinedSymbolReferences->get(symRefNum))
             {
@@ -640,7 +640,7 @@ void TR_LocalTransparency::updateUsesAndDefs(TR::Node *node, ContainerType *glob
                // when the volatile store is processed in local anticipatability, which causes
                // inconsistency between local transparency and local anticipatability.
                // This matches how a call node is processed earlier.
-               if (node->mightHaveVolatileSymbolReference())
+               if (node->mightHaveNonTransparentSymbolReference())
                   {
                   *tempContainer &= *seenStoredSymRefs;
                   *symRefsDefinedAfterStored |= *tempContainer;
