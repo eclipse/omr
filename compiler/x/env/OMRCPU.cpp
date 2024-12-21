@@ -43,7 +43,7 @@ OMR::X86::CPU::detect(OMRPortLibrary * const omrPortLib)
                                         OMR_FEATURE_X86_RTM, OMR_FEATURE_X86_AVX512F, OMR_FEATURE_X86_AVX512VL,
                                         OMR_FEATURE_X86_AVX512BW, OMR_FEATURE_X86_AVX512DQ, OMR_FEATURE_X86_AVX512CD,
                                         OMR_FEATURE_X86_AVX512_VBMI2, OMR_FEATURE_X86_AVX512_VPOPCNTDQ,
-                                        OMR_FEATURE_X86_AVX512_BITALG, OMR_FEATURE_X86_CLWB,
+                                        OMR_FEATURE_X86_AVX512_BITALG, OMR_FEATURE_X86_CLWB, OMR_FEATURE_X86_BMI2
                                         };
 
    OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
@@ -170,6 +170,24 @@ bool
 OMR::X86::CPU::supportsTransactionalMemoryInstructions()
    {
    return self()->supportsFeature(OMR_FEATURE_X86_RTM);
+   }
+
+bool
+OMR::X86::CPU::hasBitCompressInstruction()
+   {
+   if (TR::Compiler->omrPortLib == NULL)
+      return TR::CodeGenerator::getX86ProcessorInfo().supportsBMI2();
+
+   return self()->supportsFeature(OMR_FEATURE_X86_BMI2);
+   }
+
+bool
+OMR::X86::CPU::hasBitExpandInstruction()
+   {
+   if (TR::Compiler->omrPortLib == NULL)
+      return TR::CodeGenerator::getX86ProcessorInfo().supportsBMI2();
+
+   return self()->supportsFeature(OMR_FEATURE_X86_BMI2);
    }
 
 bool
@@ -407,6 +425,8 @@ OMR::X86::CPU::supports_feature_test(uint32_t feature)
          return TR::CodeGenerator::getX86ProcessorInfo().hasThermalMonitor() == ans;
       case OMR_FEATURE_X86_AVX:
          return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX() == ans;
+      case OMR_FEATURE_X86_BMI2:
+         return TR::CodeGenerator::getX86ProcessorInfo().supportsBMI2() == ans;
       case OMR_FEATURE_X86_AVX2:
          return TR::CodeGenerator::getX86ProcessorInfo().supportsAVX2();
       case OMR_FEATURE_X86_AVX512F:
@@ -656,6 +676,9 @@ OMR::X86::CPU::supports_feature_old_api(uint32_t feature)
          break;
       case OMR_FEATURE_X86_FMA:
          supported = TR::CodeGenerator::getX86ProcessorInfo().supportsFMA();
+         break;
+      case OMR_FEATURE_X86_BMI2:
+         supported = TR::CodeGenerator::getX86ProcessorInfo().supportsBMI2();
          break;
       default:
          TR_ASSERT_FATAL(false, "Unknown feature %d", feature);

@@ -2348,6 +2348,54 @@ OMR::X86::I386::TreeEvaluator::lbitpermuteEvaluator(TR::Node *node, TR::CodeGene
    return TR::TreeEvaluator::bitpermuteEvaluator(node, cg);
    }
 
+TR::Register*
+OMR::X86::I386::TreeEvaluator::bcompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::badILOpEvaluator(node, cg);
+   }
+
+TR::Register*
+OMR::X86::I386::TreeEvaluator::scompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::badILOpEvaluator(node, cg);
+   }
+
+TR::Register*
+OMR::X86::I386::TreeEvaluator::icompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::badILOpEvaluator(node, cg);
+   }
+
+TR::Register*
+OMR::X86::I386::TreeEvaluator::lcompressbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::badILOpEvaluator(node, cg);
+   }
+
+TR::Register*
+OMR::X86::I386::TreeEvaluator::bexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::badILOpEvaluator(node, cg);
+   }
+
+TR::Register*
+OMR::X86::I386::TreeEvaluator::sexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::badILOpEvaluator(node, cg);
+   }
+
+TR::Register*
+OMR::X86::I386::TreeEvaluator::iexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::badILOpEvaluator(node, cg);
+   }
+
+TR::Register*
+OMR::X86::I386::TreeEvaluator::lexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::badILOpEvaluator(node, cg);
+   }
+
 TR::Register *OMR::X86::I386::TreeEvaluator::aconstEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Register *reg = loadConstant(node, node->getInt(), TR_RematerializableAddress, cg);
