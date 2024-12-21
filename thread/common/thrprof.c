@@ -502,14 +502,8 @@ uintptr_t
 omrthread_get_handle(omrthread_t thread)
 {
 #if defined(J9ZOS390)
-	/* Hack!! - If we do the simple cast (in the #else case) we get the following
-		compiler error in z/OS:
-			"ERROR CBC3117 ./thrprof.c:79    Operand must be a scalar type."
-		In order to work around the compiler error, we have to reach inside
-		the structure do the dirty work. The handle may not even be correct! */
-	uintptr_t *tempHandle;
-	tempHandle = (uintptr_t *)&(thread->handle.__[0]);
-	return *tempHandle;
+	OSTHREAD tempHandle = thread->handle;
+	return (uintptr_t)*(unsigned long long *)&tempHandle;
 #else
 	return (uintptr_t)thread->handle;
 #endif
