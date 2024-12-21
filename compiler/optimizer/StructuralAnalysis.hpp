@@ -52,6 +52,7 @@ class TR_RegionAnalysis
 
    static TR_Structure *getRegions(TR::Compilation *);
    static TR_Structure *getRegions(TR::Compilation *, TR::ResolvedMethodSymbol *);
+   static TR_Structure *getRegions(TR::Compilation *, TR::CFG *, bool acceptUnreachableBlocks = true);
 
    friend class TR_Debug;
 
@@ -121,6 +122,8 @@ class TR_RegionAnalysis
    bool _trace;
    bool _useNew;
    void createLeafStructures(TR::CFG *cfg, TR::Region &region);
+
+   static TR_Structure *getRegionsImpl(TR::Compilation *comp, TR_Dominators& dominators, TR::CFG* cfg);
 
    TR_Structure       *findRegions(TR::Region &region);
    TR_RegionStructure *findNaturalLoop(StructInfo &node,

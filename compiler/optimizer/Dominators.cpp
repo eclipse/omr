@@ -45,17 +45,31 @@ TR_Dominators::TR_Dominators(TR::Compilation *c, bool post) :
    _dfNumbers(c->getFlowGraph()->getNextNodeNumber()+1, 0, _region),
    _dominators(c->getFlowGraph()->getNextNodeNumber()+1, static_cast<TR::Block *>(NULL), _region)
    {
+   construct(c->getFlowGraph(), post);
+   }
+
+TR_Dominators::TR_Dominators(TR::Compilation *c, TR::CFG* cfg, bool acceptUnreachableBlocks, bool post) :
+   _region(c->trMemory()->heapMemoryRegion()),
+   _compilation(c),
+   _info(cfg->getNextNodeNumber()+1, BBInfo(_region), _region),
+   _dfNumbers(cfg->getNextNodeNumber()+1, 0, _region),
+   _dominators(cfg->getNextNodeNumber()+1, static_cast<TR::Block *>(NULL), _region)
+   {
+   construct(cfg, post, acceptUnreachableBlocks);
+   }
+
+void TR_Dominators::construct(TR::CFG* cfg, bool post, bool acceptUnreachableBlocks)
+   {
    LexicalTimer tlex("TR_Dominators::TR_Dominators", _compilation->phaseTimer());
 
    _postDominators = post;
    _isValid = true;
+   _hasUnreachableBlocks = false;
    _topDfNum = 0;
-   _visitCount = c->incOrResetVisitCount();
+   _visitCount = _compilation->incOrResetVisitCount();
    _trace = comp()->getOption(TR_TraceDominators);
 
-   TR::CFG *cfg = c->getFlowGraph();
-
-   _cfg = c->getFlowGraph();
+   _cfg = cfg;
    _numNodes = cfg->getNumberOfNodes()+1;
 
    if (trace())
@@ -80,7 +94,7 @@ TR_Dominators::TR_Dominators(TR::Compilation *c, bool post) :
       _dominators[dominated->getNumber()] = dominator;
       if (trace())
          traceMsg(comp(), "   %sDominator of block_%d is block_%d\n", _postDominators ? "post-" : "",
-                                      dominated->getNumber(), dominator->getNumber());
+                                 dominated->getNumber(), dominator->getNumber());
       }
 
    // The exit block may not be reachable from the entry node. In this case just
@@ -110,15 +124,22 @@ TR_Dominators::TR_Dominators(TR::Compilation *c, bool post) :
             traceMsg(comp(), "Some blocks are not reachable from exit. Post-dominator info is invalid.\n");
          return;
          }
+      if (!acceptUnreachableBlocks)
+         {
+         _hasUnreachableBlocks = true;
+         if (trace())
+            traceMsg(comp(), "Unreachable block in the CFG %d %d\n", _topDfNum, _numNodes-1);
+         return;
+         }
       else
          TR_ASSERT(false, "Unreachable block in the CFG %d %d", _topDfNum, _numNodes-1);
       }
 
    #if DEBUG
       for (auto block = toBlock(cfg->getFirstNode()); block; block = toBlock(block->getNext()))
-         {
+      {
          TR_ASSERT(_dfNumbers[block->getNumber()] >= 0, "Unreachable block in the CFG");
-         }
+      }
    #endif
 
    if (trace())

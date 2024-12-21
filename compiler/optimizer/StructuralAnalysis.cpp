@@ -171,23 +171,17 @@ void TR_RegionAnalysis::createLeafStructures(TR::CFG *cfg, TR::Region &region)
 /**
  * Mainline for performing Region Analysis.
  */
-TR_Structure *TR_RegionAnalysis::getRegions(TR::Compilation *comp, TR::ResolvedMethodSymbol* methSym)
+TR_Structure *TR_RegionAnalysis::getRegionsImpl(TR::Compilation *comp, TR_Dominators& dominators, TR::CFG* cfg)
    {
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
 
-   // Calculate dominators
-   // This has the side-effect of renumbering the blocks in depth-first order
-   //
-   TR_Dominators dominators = TR_Dominators(comp);
-
    #if DEBUG
    if (debug("verifyDominator"))
-      {
+   {
       TR_DominatorVerifier verifyDominator(dominators);
-      }
+   }
    #endif
 
-   TR::CFG *cfg = methSym->getFlowGraph();
    TR_ASSERT(cfg, "cfg is NULL\n");
 
    TR_RegionAnalysis ra(comp, dominators, cfg, stackMemoryRegion);
@@ -195,10 +189,10 @@ TR_Structure *TR_RegionAnalysis::getRegions(TR::Compilation *comp, TR::ResolvedM
 
    ra._useNew = !comp->getOption(TR_DisableIterativeSA);
    if (ra.trace())
-      {
+   {
       traceMsg(comp, "Blocks before Region Analysis:\n");
       comp->getDebug()->print(comp->getOutFile(), cfg);
-      }
+   }
 
    ra.createLeafStructures(cfg, stackMemoryRegion);
 
@@ -210,48 +204,40 @@ TR_Structure *TR_RegionAnalysis::getRegions(TR::Compilation *comp, TR::ResolvedM
    return result;
    }
 
-
-
-
-/**
- * Mainline for performing Region Analysis.
- */
-TR_Structure *TR_RegionAnalysis::getRegions(TR::Compilation *comp)
+TR_Structure *TR_RegionAnalysis::getRegions(TR::Compilation *comp, TR::CFG* cfg, bool acceptUnreachableBlocks)
    {
-   TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
+   // Calculate dominators
+   // This has the side-effect of renumbering the blocks in depth-first order
+   //
+   // If acceptUnreachableBlocks is false, dominators constructor will early return
+   //
+   TR_Dominators dominators(comp, cfg, acceptUnreachableBlocks);
+   if (!acceptUnreachableBlocks && dominators.hasUnreachableBlocks())
+      return NULL;
 
+   return getRegionsImpl(comp, dominators, cfg);
+   }
+
+TR_Structure *TR_RegionAnalysis::getRegions(TR::Compilation *comp, TR::ResolvedMethodSymbol* methSym)
+   {
    // Calculate dominators
    // This has the side-effect of renumbering the blocks in depth-first order
    //
    TR_Dominators dominators(comp);
+   TR::CFG *cfg = methSym->getFlowGraph();
 
-   #if DEBUG
-   if (debug("verifyDominator"))
-      {
-      TR_DominatorVerifier verifyDominator(dominators);
-      }
-   #endif
+   return getRegionsImpl(comp, dominators, cfg);
+   }
 
+TR_Structure *TR_RegionAnalysis::getRegions(TR::Compilation *comp)
+   {
+   // Calculate dominators
+   // This has the side-effect of renumbering the blocks in depth-first order
+   //
+   TR_Dominators dominators(comp);
    TR::CFG *cfg = comp->getFlowGraph();
 
-   TR_RegionAnalysis ra(comp, dominators, cfg, stackMemoryRegion);
-   ra._trace = comp->getOption(TR_TraceSA);
-
-   ra._useNew = !comp->getOption(TR_DisableIterativeSA);
-   if (ra.trace())
-      {
-      traceMsg(comp, "Blocks before Region Analysis:\n");
-      comp->getDebug()->print(comp->getOutFile(), cfg);
-      }
-
-   ra.createLeafStructures(cfg, stackMemoryRegion);
-
-   // Loop through the node set until there is only one node left - this is the
-   // root of the control tree.
-   //
-   TR_Structure *result = ra.findRegions(stackMemoryRegion);
-
-   return result;
+   return getRegionsImpl(comp, dominators, cfg);
    }
 
 /**
