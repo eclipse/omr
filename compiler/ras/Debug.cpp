@@ -379,7 +379,7 @@ TR_Debug::newVariableSizeSymbol(TR::AutomaticSymbol *sym)
    }
 
 void
-TR_Debug::addInstructionComment(TR::Instruction *instr, char * comment, ...)
+TR_Debug::addInstructionComment(TR::Instruction *instr, const char * comment, ...)
    {
    TR_ASSERT(_comp, "Required compilation object is NULL.\n");
 
@@ -389,12 +389,12 @@ TR_Debug::addInstructionComment(TR::Instruction *instr, char * comment, ...)
    CS2::HashIndex hashIndex;
    if (_comp->getToCommentMap().Locate(instr, hashIndex))
       {
-      List<char> *comments = _comp->getToCommentMap().DataAt(hashIndex);
+      List<const char> *comments = _comp->getToCommentMap().DataAt(hashIndex);
       comments->add(comment);
       }
    else
       {
-      List<char> *comments = new (_comp->trHeapMemory()) List<char>(_comp->trMemory());
+      List<const char> *comments = new (_comp->trHeapMemory()) List<const char>(_comp->trMemory());
       comments->add(comment);
       _comp->getToCommentMap().Add(instr, comments);
       }

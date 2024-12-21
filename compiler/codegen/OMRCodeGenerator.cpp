@@ -1270,13 +1270,13 @@ bool OMR::CodeGenerator::traceBCDCodeGen()
    return self()->comp()->getOption(TR_TraceCG);
    }
 
-void OMR::CodeGenerator::traceBCDEntry(char *str, TR::Node *node)
+void OMR::CodeGenerator::traceBCDEntry(const char *str, TR::Node *node)
    {
    if (self()->traceBCDCodeGen())
       traceMsg(self()->comp(),"EVAL: %s 0x%p - start\n",str,node);
    }
 
-void OMR::CodeGenerator::traceBCDExit(char *str, TR::Node *node)
+void OMR::CodeGenerator::traceBCDExit(const char *str, TR::Node *node)
    {
    if (self()->traceBCDCodeGen())
       traceMsg(self()->comp(),"EVAL: %s 0x%p - end\n",str,node);

@@ -1021,7 +1021,7 @@ iDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision
    TR::Node * secondChild = node->getSecondChild();
    TR::Instruction * cursor = NULL;
 
-   char * REG_USER_DEF  = "LR=Reg_user_def";
+   const char * REG_USER_DEF  = "LR=Reg_user_def";
    TR_Debug * debugObj = cg->getDebug();
 
    // A/A, return 1 (div) or 0 (rem).

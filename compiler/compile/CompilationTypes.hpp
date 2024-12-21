@@ -105,7 +105,7 @@ typedef CS2::LexicalBlockTimer<TR::Allocator>  LexicalTimer;
 // for TR_Debug usage
 typedef CS2::HashTable<void*, intptr_t, TR::Allocator> ToNumberMap;
 typedef CS2::HashTable<void*, char*, TR::Allocator>    ToStringMap;
-typedef CS2::HashTable<void*, List<char>*, TR::Allocator> ToCommentMap;
+typedef CS2::HashTable<void*, List<const char>*, TR::Allocator> ToCommentMap;
 
 
 
