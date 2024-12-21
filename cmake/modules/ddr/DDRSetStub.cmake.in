@@ -145,7 +145,7 @@ function(process_source_files src_files)
 			# Adding this option to the command alleviates this issue.
 			list(APPEND pp_command "-xc++")
 		endif()
-		if("@OMR_OS_ZOS@" AND "@OMR_ENV_DATA64@")
+		if("@OMR_OS_ZOS@" AND "@OMR_ENV_DATA64@" AND NOT "@CMAKE_C_COMPILER_IS_OPENXL@")
 			# We need to set 64 bit code generation to ensure that limits.h macros are set correctly.
 			list(APPEND pp_command "-Wc,lp64")
 		endif()
