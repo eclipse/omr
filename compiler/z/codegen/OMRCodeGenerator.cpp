@@ -408,6 +408,69 @@ OMR::Z::CodeGenerator::lowerTreeIfNeeded(
          }
       }
 
+   static const bool canEmulateLXA = TR::InstOpCode(TR::InstOpCode::LXAB).canEmulate() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAH).canEmulate() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAF).canEmulate() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAG).canEmulate() &&
+                                     TR::InstOpCode(TR::InstOpCode::LXAQ).canEmulate();
+   static bool disableLXAUncommoning = feGetEnv("TR_disableLXAUncommoning") != NULL;
+
+   if (!disableLXAUncommoning &&
+       (node->getOpCodeValue() == TR::aiadd || node->getOpCodeValue() == TR::aladd) &&
+       !parent->getOpCode().isLoad() &&
+       (canEmulateLXA || self()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT)))
+      {
+      // To enable generating more LXAs, perform uncommoning on trees that look like this:
+      // axadd
+      //   <address>
+      //   sub/add
+      //     mul/shl
+      //       <index>
+      //       <constant stride>
+      //     <constant offset>
+
+      TR::Node *addChild = node->getSecondChild();
+      if (addChild->getOpCode().isAdd() || addChild->getOpCode().isSub())
+         {
+         TR::Node *offsetChild = addChild->getSecondChild();
+         TR::Node *mulChild = addChild->getFirstChild();
+         if (offsetChild->getOpCode().isLoadConst() &&
+               (mulChild->getOpCode().isMul() || mulChild->getOpCode().isLeftShift()))
+            {
+            TR::Node *indexChild = mulChild->getFirstChild();
+            TR::Node *strideChild = mulChild->getSecondChild();
+            if (strideChild->getOpCode().isLoadConst())
+               {
+               int64_t stride = strideChild->getConstValue();
+               if (mulChild->getOpCode().isLeftShift())
+                  stride = 1 << stride;
+
+               int64_t offset = offsetChild->getConstValue();
+               if ((stride == 1 || stride == 2 || stride == 4 || stride == 8 || stride == 16) &&
+                     offset % stride == 0 &&
+                     self()->isDispInRange(offset / stride))
+                  {
+                  // tree has correct shape, perform uncommoning
+                  if (addChild->getReferenceCount() > 1 &&
+                        performTransformation(self()->comp(), "%sFound LXA shaped axadd tree [%p]; performing uncommoning on add child [%p]\n", OPT_DETAILS, node, addChild))
+                     {
+                     node->setChild(1, addChild->uncommon());
+                     }
+                  if (mulChild->getReferenceCount() > 1 &&
+                        performTransformation(self()->comp(), "%sFound LXA shaped axadd tree [%p]; performing uncommoning on mul child [%p]\n", OPT_DETAILS, node, mulChild))
+                     {
+                     addChild->setChild(0, mulChild->uncommon());
+                     }
+                  if (indexChild->getOpCodeValue() == TR::i2l &&
+                        performTransformation(self()->comp(), "%sFound LXA shaped axadd tree [%p]; removing i2l on index child [%p]\n", OPT_DETAILS, node, indexChild))
+                     {
+                     mulChild->setChild(0, indexChild->uncommon());
+                     }
+                  }
+               }
+            }
+         }
+      }
    }
 
 bool OMR::Z::CodeGenerator::supportsInliningOfIsInstance()

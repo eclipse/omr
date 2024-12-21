@@ -243,7 +243,6 @@ class OMR_EXTENSIBLE Instruction : public OMR::Instruction
    void setWillBePatched() { _index |= WillBePatched; }
    virtual const char *description() { return "S390"; }
 
-
    private:
 
    TR::RegisterDependencyConditions *_conditions;

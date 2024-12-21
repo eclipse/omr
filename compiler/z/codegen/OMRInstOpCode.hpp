@@ -282,7 +282,7 @@ namespace Z
 #define   RSa_FORMAT    36
 #define   RSb_FORMAT    37
 #define   RSI_FORMAT    38
-#define   RSLa_FORMAT   40 
+#define   RSLa_FORMAT   40
 #define   RSLb_FORMAT   41
 #define   RSYa_FORMAT   43
 #define   RSYb_FORMAT   44
@@ -292,45 +292,48 @@ namespace Z
 #define   RXF_FORMAT    49
 #define   RXYa_FORMAT   51
 #define   RXYb_FORMAT   52
-#define   S_FORMAT      53
-#define   SI_FORMAT     54
-#define   SIL_FORMAT    55
-#define   SIY_FORMAT    56
-#define   SMI_FORMAT    57
-#define   SSa_FORMAT    60
-#define   SSb_FORMAT    61
-#define   SSc_FORMAT    62
-#define   SSd_FORMAT    63
-#define   SSe_FORMAT    64
-#define   SSf_FORMAT    65
-#define   SSE_FORMAT    66
-#define   SSF_FORMAT    67
-#define   VRIa_FORMAT   68
-#define   VRIb_FORMAT   69
-#define   VRIc_FORMAT   70
-#define   VRId_FORMAT   71
-#define   VRIe_FORMAT   72
-#define   VRIf_FORMAT   73
-#define   VRIg_FORMAT   74
-#define   VRIh_FORMAT   75
-#define   VRIi_FORMAT   76
-#define   VRRa_FORMAT   77
-#define   VRRb_FORMAT   78
-#define   VRRc_FORMAT   79
-#define   VRRd_FORMAT   80
-#define   VRRe_FORMAT   81
-#define   VRRf_FORMAT   82
-#define   VRRg_FORMAT   83
-#define   VRRh_FORMAT   84
-#define   VRRi_FORMAT   85
-#define   VRRk_FORMAT   86
-#define   VRSa_FORMAT   87
-#define   VRSb_FORMAT   88
-#define   VRSc_FORMAT   89
-#define   VRSd_FORMAT   90
-#define   VRV_FORMAT    91
-#define   VRX_FORMAT    92
-#define   VSI_FORMAT    93
+#define   RXYc_FORMAT   53
+#define   S_FORMAT      54
+#define   SI_FORMAT     55
+#define   SIL_FORMAT    56
+#define   SIY_FORMAT    57
+#define   SMI_FORMAT    60
+#define   SSa_FORMAT    61
+#define   SSb_FORMAT    62
+#define   SSc_FORMAT    63
+#define   SSd_FORMAT    64
+#define   SSe_FORMAT    65
+#define   SSf_FORMAT    66
+#define   SSE_FORMAT    67
+#define   SSF_FORMAT    68
+#define   VRIa_FORMAT   69
+#define   VRIb_FORMAT   70
+#define   VRIc_FORMAT   71
+#define   VRId_FORMAT   72
+#define   VRIe_FORMAT   73
+#define   VRIf_FORMAT   74
+#define   VRIg_FORMAT   75
+#define   VRIh_FORMAT   76
+#define   VRIi_FORMAT   77
+#define   VRIk_FORMAT   78
+#define   VRIl_FORMAT   79
+#define   VRRa_FORMAT   80
+#define   VRRb_FORMAT   81
+#define   VRRc_FORMAT   82
+#define   VRRd_FORMAT   83
+#define   VRRe_FORMAT   84
+#define   VRRf_FORMAT   85
+#define   VRRg_FORMAT   86
+#define   VRRh_FORMAT   87
+#define   VRRi_FORMAT   88
+#define   VRRk_FORMAT   89
+#define   VRSa_FORMAT   90
+#define   VRSb_FORMAT   91
+#define   VRSc_FORMAT   92
+#define   VRSd_FORMAT   93
+#define   VRV_FORMAT    94
+#define   VRX_FORMAT    95
+#define   VSI_FORMAT    96
 
 /* Instruction Properties (One hot encoding) */
 #define S390OpProp_None                   static_cast<uint64_t>(0x0000000000000000ull)
@@ -397,7 +400,7 @@ namespace Z
 #define S390OpProp_ImplicitlySetsGPR3     static_cast<uint64_t>(0x1000000000000000ull)
 #define S390OpProp_ImplicitlySetsGPR4     static_cast<uint64_t>(0x2000000000000000ull)
 #define S390OpProp_ImplicitlySetsGPR5     static_cast<uint64_t>(0x4000000000000000ull)
-// Available                              static_cast<uint64_t>(0x8000000000000000ull)
+#define S390OpProp_IsEmulatable           static_cast<uint64_t>(0x8000000000000000ull)
 
 class InstOpCode: public OMR::InstOpCode
    {
@@ -414,54 +417,54 @@ class InstOpCode: public OMR::InstOpCode
                            ----------------------------------------- */
       COND_NOPR,        // Conditional Branch     No operation (RR)
       COND_NOP,         // Conditional Branch     No Operation (RX)
-      COND_VGNOP,       // Virtual Guard          No Operation 
-      COND_BRO,         // Relative Branch        Branch Relative on Overflow 
+      COND_VGNOP,       // Virtual Guard          No Operation
+      COND_BRO,         // Relative Branch        Branch Relative on Overflow
       COND_BRH,         // Relative Branch        Branch Relative on High
-      COND_BRP,         // Relative Branch        Branch Relative on Plus 
+      COND_BRP,         // Relative Branch        Branch Relative on Plus
       COND_BRL,         // Relative Branch        Branch Relative on A Low
       COND_BRM,         // Relative Branch        Branch Relative on Minus
       COND_BRNE,        // Relative Branch        Branch Relative on A Not Equal B
       COND_BRNZ,        // Relative Branch        Branch Relative on Not Zero
-      COND_BRE,         // Relative Branch        Branch Relative on A Equal B 
-      COND_BRZ,         // Relative Branch        Branch Relative on Zero 
-      COND_BRNH,        // Relative Branch        Branch Relative on A Not High 
+      COND_BRE,         // Relative Branch        Branch Relative on A Equal B
+      COND_BRZ,         // Relative Branch        Branch Relative on Zero
+      COND_BRNH,        // Relative Branch        Branch Relative on A Not High
       COND_BRNL,        // Relative Branch        Branch Relative on A Not Low
-      COND_BRNM,        // Relative Branch        Branch Relative on Not Minus 
+      COND_BRNM,        // Relative Branch        Branch Relative on Not Minus
       COND_BRNP,        // Relative Branch        Branch Relative on Not Plus
-      COND_BRNO,        // Relative Branch        Branch Relative on No Overflow 
+      COND_BRNO,        // Relative Branch        Branch Relative on No Overflow
       COND_B,           // Conditional Branch     Unconditional Branch (RX)
       COND_BR,          // Branch on Condition    Unconditional Branch (RR)
-      COND_BRU,         // Relative Branch        Unconditional Branch Relative 
+      COND_BRU,         // Relative Branch        Unconditional Branch Relative
       COND_BRUL,        // Relative Branch        Unconditional Branch Relative
-      COND_BC,          // Conditional Branch     Branch on Condition (RX)  
+      COND_BC,          // Conditional Branch     Branch on Condition (RX)
       COND_BCR,         // Conditional Branch     Branch on Condition (RR)
       COND_BE,          // Conditional Branch     Branch on A Equal B (RX)
-      COND_BER,         // Conditional Branch     Branch on A Equal B (RR) 
+      COND_BER,         // Conditional Branch     Branch on A Equal B (RR)
       COND_BH,          // Conditional Branch     Branch on A High (RX)
       COND_BHR,         // Conditional Branch     Branch on A High (RR)
       COND_BL,          // Conditional Branch     Branch on A Low (RX)
-      COND_BLR,         // Conditional Branch     Branch on A Low (RR) 
+      COND_BLR,         // Conditional Branch     Branch on A Low (RR)
       COND_BM,          // Conditional Branch     Branch on Minus (RX)
       COND_BMR,         // Conditional Branch     Branch on Minus (RR)
       COND_BNE,         // Conditional Branch     Branch on A Not Equal B (RX)
       COND_BNER,        // Conditional Branch     Branch on A Not Equal B (RR)
       COND_BNH,         // Conditional Branch     Branch on A Not High (RX)
-      COND_BNHR,        // Conditional Branch     Branch on A Not High (RR) 
+      COND_BNHR,        // Conditional Branch     Branch on A Not High (RR)
       COND_BNL,         // Conditional Branch     Branch on A Not Low (RX)
-      COND_BNLR,        // Conditional Branch     Branch on A Not Low (RR) 
+      COND_BNLR,        // Conditional Branch     Branch on A Not Low (RR)
       COND_BNM,         // Conditional Branch     Branch on Not Minus (RX)
       COND_BNMR,        // Conditional Branch     Branch on Not Minus (RR)
       COND_BNO,         // Conditional Branch     Branch on No Overflow (RX)
-      COND_BNOR,        // Conditional Branch     Branch on No Overflow (RR) 
-      COND_BNP,         // Conditional Branch     Branch on Not Plus (RX) 
+      COND_BNOR,        // Conditional Branch     Branch on No Overflow (RR)
+      COND_BNP,         // Conditional Branch     Branch on Not Plus (RX)
       COND_BNPR,        // Conditional Branch     Branch on Not Plus (RR)
       COND_BNZ,         // Conditional Branch     Branch on Not Zero (RX)
       COND_BNZR,        // Conditional Branch     Branch on Not Zero (RR)
-      COND_BO,          // Conditional Branch     Branch on Overflow (RX) 
+      COND_BO,          // Conditional Branch     Branch on Overflow (RX)
       COND_BOR,         // Conditional Branch     Branch on Overflow (RR)
       COND_BP,          // Conditional Branch     Branch on Plus (RX)
       COND_BPR,         // Conditional Branch     Branch on Plus (RR)
-      COND_BRC,         // Relative Branch        Branch Relative on Condition               
+      COND_BRC,         // Relative Branch        Branch Relative on Condition
       COND_BZ,          // Conditional Branch     Branch on Zero (RX)
       COND_BZR,         // Conditional Branch     Branch on Zero (RR)
       COND_MASK0,
@@ -624,6 +627,15 @@ class InstOpCode: public OMR::InstOpCode
    uint64_t hasExtendedMnemonic() {return metadata[_mnemonic].properties & S390OpProp_HasExtendedMnemonic;}
    uint64_t isVectorStringOp() {return metadata[_mnemonic].properties & S390OpProp_VectorStringOp;}
    uint64_t isVectorFPOp() {return metadata[_mnemonic].properties & S390OpProp_VectorFPOp;}
+   uint64_t isEmulatable() {return metadata[_mnemonic].properties & S390OpProp_IsEmulatable;}
+   bool canEmulate()
+   {
+#ifdef EMULATE_ZNEXT
+      return isEmulatable();
+#else
+      return false;
+#endif
+   }
 
    /* Static */
    static void copyBinaryToBufferWithoutClear(uint8_t *cursor, Mnemonic i_opCode);

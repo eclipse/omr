@@ -352,11 +352,11 @@ TR::Instruction * generateRXInstruction(
                    TR::Instruction         *preced = 0);
 
 TR::Instruction * generateRXInstruction(
-                   TR::CodeGenerator* cg, 
-                   TR::InstOpCode::Mnemonic op, 
-                   TR::Node* n, 
-                   uint8_t mask, 
-                   TR::MemoryReference* mf, 
+                   TR::CodeGenerator* cg,
+                   TR::InstOpCode::Mnemonic op,
+                   TR::Node* n,
+                   uint8_t mask,
+                   TR::MemoryReference* mf,
                    TR::Instruction* preced = 0);
 
 TR::Instruction * generateRXEInstruction(
@@ -1059,6 +1059,24 @@ TR::Instruction * generateVRIiInstruction(
                       uint8_t                constantImm3,   /* 8 bits  */
                       uint8_t                 mask4);        /* 4 bits  */
 
+TR::Instruction * generateVRIkInstruction(
+                      TR::CodeGenerator    * cg,
+                      TR::InstOpCode::Mnemonic          op,
+                      TR::Node             * n,
+                      TR::Register           * targetReg,
+                      TR::Register           * sourceReg2,
+                      TR::Register           * sourceReg3,
+                      TR::Register           * sourceReg4,
+                      uint8_t                 constantImm5); /* 8 bits  */
+
+TR::Instruction * generateVRIlInstruction(
+                      TR::CodeGenerator    * cg,
+                      TR::InstOpCode::Mnemonic   op,
+                      TR::Node               * n,
+                      TR::Register           * sourceReg1,
+                      TR::Register           * sourceReg2,
+                      uint16_t                constantImm3);   /* 16 bits  */
+
 /****** VRR ******/
 TR::Instruction * generateVRRaInstruction(
                       TR::CodeGenerator     * cg         ,
@@ -1524,56 +1542,56 @@ generateReplicateNodeInVectorReg(TR::Node * node, TR::CodeGenerator *cg, TR::Reg
  *
  * \param cg
  *    The code generator used to generate the instructions.
- * 
+ *
  * \param targetRegister
- *    The register where the specific shifted bits from sourceRegister will be placed to the corresponding 
+ *    The register where the specific shifted bits from sourceRegister will be placed to the corresponding
  *    location. The remaining bits will be zeroed out.
- * 
+ *
  * \param sourceRegister
- *    The register which will be shifted. The selected shifted bits in sourceRegister will be placed to 
- *    targetRegister, and the sourceRegister itself will stay unchanged. 
- * 
+ *    The register which will be shifted. The selected shifted bits in sourceRegister will be placed to
+ *    targetRegister, and the sourceRegister itself will stay unchanged.
+ *
  * \param fromBit
- *    Indicates the starting bit position of the selected range of bits in targetRegister and in sourceRegister after shifting. 
- * 
+ *    Indicates the starting bit position of the selected range of bits in targetRegister and in sourceRegister after shifting.
+ *
  * \param toBit
- *    Indicates the ending bit position of the selected range of bits in targetRegister and in sourceRegister after shifting. 
- * 
+ *    Indicates the ending bit position of the selected range of bits in targetRegister and in sourceRegister after shifting.
+ *
  * \param shiftAmount
- *    Indicates the amount of bits that sourceRegister is shifted to the left. 
- * 
+ *    Indicates the amount of bits that sourceRegister is shifted to the left.
+ *
  * \example
  *    fromBit = 10;   toBit = 20;   shiftAmount = 15;
- * 
+ *
  *                              Bit 10    Bit 20
  *    Before:                     |          |
  *                     0          V          V                                               63
- *                    +--------+--------+--------+--------+--------+--------+--------+--------+     
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+
  *    sourceRegister: |10010000 00100011 01001000 11000100 00011010 00111000 00101011 00010000|
  *                    +--------+--------+--------+--------+--------+--------+--------+--------+
- *      
+ *
  *                     0                                                                     63
- *                    +--------+--------+--------+--------+--------+--------+--------+--------+     
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+
  *    targetRegister: |10000110 01101010 00111000 11011110 11000011 01111000 00100011 00000000|
  *                    +--------+--------+--------+--------+--------+--------+--------+--------+
- *    
+ *
  *    The function first makes a copy of sourceRegister into the targetRegister and then shifts the targetRegister left
  *    by the shiftAmount (15 bits):
- * 
+ *
  *                              Bit 10    Bit 20
  *                                |          |
  *                     0          V          V                                               63
- *                    +--------+--------+--------+--------+--------+--------+--------+--------+     
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+
  *    targetRegister: |10100100 01100010 00001101 00011100 00010101 10001000 00000000 00000000|
  *                    +--------+--------+--------+--------+--------+--------+--------+--------+
- * 
+ *
  *    The function then selects the bits in rage [fromBit, toBit] inclusive of the shifted value and all other non-
  *    selected bits are zeroed out:
- * 
+ *
  *                              Bit 10    Bit 20
  *    After:                      |          |
  *                     0          V          V                                               63
- *                    +--------+--------+--------+--------+--------+--------+--------+--------+     
+ *                    +--------+--------+--------+--------+--------+--------+--------+--------+
  *    targetRegister: |00000000 00100010 00001000 00000000 00000000 00000000 00000000 00000000|
  *                    +--------+--------+--------+--------+--------+--------+--------+--------+
  *

@@ -323,9 +323,61 @@ public:
     *     Sets Vector Packed Decimal facility 2 flag.
     *
     *  \param value
-    *     \c true if the Vector Packed Decimal facility is available, and \c false otherwise.
+    *     \c true if the Vector Packed Decimal facility 2 is available, and \c false otherwise.
     */
    void setSupportsVectorPackedDecimalEnhancementFacility2(bool value);
+
+   /** \brief
+    *     Determines whether the Miscellaneous Instruction Extensions facility 4 is available on the current processor.
+    */
+   bool getSupportsMiscellaneousInstructionExtensionsFacility4();
+
+   /** \brief
+    *     Sets Miscellaneous Instruction Extensions facility 4 flag.
+    *
+    *  \param value
+    *     \c true if the Miscellaneous Instruction Extensions facility 4 is available, and \c false otherwise.
+    */
+   void setSupportsMiscellaneousInstructionExtensionsFacility4(bool value);
+
+   /** \brief
+    *     Determines whether the Vector Enhancement 3 facility is available on the current processor.
+    */
+   bool getSupportsVectorFacilityEnhancement3();
+
+   /** \brief
+    *     Determines whether the Vector Enhancement 3 facility is available on the current processor.
+    *
+    *  \param value
+    *     Determines whether the Vector Enhancement 3 facility is available (if \c true) or not (if \c false).
+    */
+   void setSupportsVectorFacilityEnhancement3(bool value);
+
+   /** \brief
+    *     Determines whether the PLO Extension facility is available on the current processor.
+    */
+   bool getSupportsPLOExtensionFacility();
+
+   /** \brief
+    *     Sets Vector PLO Extension facility flag.
+    *
+    *  \param value
+    *     \c true if the PLO Extension facility is available, and \c false otherwise.
+    */
+   void setSupportsPLOExtensionFacility(bool value);
+
+   /** \brief
+    *     Determines whether the Vector Packed Decimal facility 3 is available on the current processor.
+    */
+   bool getSupportsVectorPackedDecimalEnhancementFacility3();
+
+   /** \brief
+    *     Sets Vector Packed Decimal facility 3 flag.
+    *
+    *  \param value
+    *     \c true if the Vector Packed Decimal 3 facility is available, and \c false otherwise.
+    */
+   void setSupportsVectorPackedDecimalEnhancementFacility3(bool value);
 
 private:
 
@@ -345,25 +397,29 @@ protected:
 
    enum
       {
-      S390SupportsVectorPDEnhancementFacility2 = 0x00000001,
-      HasResumableTrapHandler                  = 0x00000002,
-      HasFixedFrameC_CallingConvention         = 0x00000004,
-      SupportsScaledIndexAddressing            = 0x00000080,
-      S390SupportsDFP                          = 0x00000100,
-      S390SupportsFPE                          = 0x00000200,
-      S390SupportsHPR                          = 0x00001000,
-      IsInZOSSupervisorState                   = 0x00008000,
-      S390SupportsTM                           = 0x00010000,
-      S390SupportsRI                           = 0x00020000,
-      S390SupportsVectorFacility               = 0x00040000,
-      S390SupportsVectorPackedDecimalFacility  = 0x00080000,
-      S390SupportsGuardedStorageFacility       = 0x00100000,
-      S390SupportsSideEffectAccessFacility     = 0x00200000,
-      S390SupportsMIE2                         = 0x00400000,
-      S390SupportsMIE3                         = 0x00800000,
-      S390SupportsVectorFacilityEnhancement2   = 0x01000000,
-      S390SupportsVectorPDEnhancementFacility  = 0x02000000,
-      S390SupportsVectorFacilityEnhancement1   = 0x04000000,
+      S390SupportsVectorPDEnhancementFacility2  = 0x00000001,
+      HasResumableTrapHandler                   = 0x00000002,
+      HasFixedFrameC_CallingConvention          = 0x00000004,
+      SupportsScaledIndexAddressing             = 0x00000080,
+      S390SupportsDFP                           = 0x00000100,
+      S390SupportsFPE                           = 0x00000200,
+      S390SupportsHPR                           = 0x00001000,
+      IsInZOSSupervisorState                    = 0x00008000,
+      S390SupportsTM                            = 0x00010000,
+      S390SupportsRI                            = 0x00020000,
+      S390SupportsVectorFacility                = 0x00040000,
+      S390SupportsVectorPackedDecimalFacility   = 0x00080000,
+      S390SupportsGuardedStorageFacility        = 0x00100000,
+      S390SupportsSideEffectAccessFacility      = 0x00200000,
+      S390SupportsMIE2                          = 0x00400000,
+      S390SupportsMIE3                          = 0x00800000,
+      S390SupportsVectorFacilityEnhancement2    = 0x01000000,
+      S390SupportsVectorPDEnhancementFacility   = 0x02000000,
+      S390SupportsVectorFacilityEnhancement1    = 0x04000000,
+      S390SupportsMIE4                          = 0x08000000,
+      S390SupportsVectorFacilityEnhancement3    = 0x10000000,
+      S390SupportsPLO                           = 0x20000000,
+      S390SupportsVectorPDEnhancementFacility3  = 0x40000000,
       };
 
    Architecture _supportedArch;
