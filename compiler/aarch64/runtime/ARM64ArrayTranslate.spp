@@ -25,6 +25,7 @@
 
 	.globl	FUNC_LABEL(__arrayTranslateTRTO)
 	.globl	FUNC_LABEL(__arrayTranslateTRTO255)
+	.globl	FUNC_LABEL(__arrayTranslateTROTNoBreak)
 
 	.text
 	.align	2
@@ -239,4 +240,73 @@ atTRTO255_Fail:
 atTRTO255_Done:
 	// number of translated elements
 	sub	x0, x1, x6
+	ret
+
+// ----
+// arrayTranslateTROTNoBreak
+// ----
+// OT stands for One byte to Two bytes
+//
+// uint8  input[];
+// uint16 output[];
+// int32  len;
+//
+// int32 i = 0;
+// while (i < len) {
+//     output[i] = (uint16)input[i];
+//     i++;
+// }
+// return i;
+//
+// in:  x0: input
+//      x1: output
+//      x2: len
+// out: x0: num of translated elements
+// trash: x4-x5, v0-v1
+
+FUNC_LABEL(__arrayTranslateTROTNoBreak):
+	cmp	w2, #16
+	b.cc	atTROTNB_15
+	lsr	w4, w2, #4
+atTROTNB_16Loop:
+	// load 16 elements
+	ldr	q0, [x0], #16
+	// unsigned extension
+	uxtl	v1.8h, v0.8b
+	uxtl2	v0.8h, v0.16b
+	subs	w4, w4, #1
+	// store 16 elements
+	stp	q1, q0, [x1], #32
+	b.ne	atTROTNB_16Loop
+atTROTNB_15:
+	// 15 elements or less remaining
+	tst	w2, #8
+	b.eq	atTROTNB_7
+	// load 8 elements
+	ldr	d0, [x0], #8
+	// unsigned extension
+	uxtl	v1.8h, v0.8b
+	// store 8 elements
+	str	q1, [x1], #16
+atTROTNB_7:
+	// 7 elements or less remaining
+	tst	w2, #4
+	b.eq	atTROTNB_3
+	// load 4 elements
+	ldr	s0, [x0], #4
+	// unsigned extension
+	uxtl	v1.8h, v0.8b
+	// store 4 elements
+	str	d1, [x1], #8
+atTROTNB_3:
+	// 3 elements or less remaining
+	ands	w4, w2, #3
+atTROTNB_1Loop:
+	b.eq	atTROTNB_Done
+	ldrb	w5, [x0], #1
+	subs	w4, w4, #1
+	strh	w5, [x1], #2
+	b	atTROTNB_1Loop
+atTROTNB_Done:
+	mov	x0, x2
 	ret

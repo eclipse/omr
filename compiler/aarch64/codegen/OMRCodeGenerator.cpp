@@ -207,6 +207,12 @@ OMR::ARM64::CodeGenerator::initialize()
       {
       cg->setSupportsArrayTranslateTRTO255();
       }
+
+   static bool disableTROTNoBreak = (feGetEnv("TR_disableTROTNoBreak") != NULL);
+   if (!disableTROTNoBreak)
+      {
+      cg->setSupportsArrayTranslateTROTNoBreak();
+      }
    }
 
 void

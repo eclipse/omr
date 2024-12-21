@@ -4131,6 +4131,7 @@ TR_Debug::getRuntimeHelperName(int32_t index)
          case TR_ARM64PatchGCRHelper:                              return "_patchGCRHelper";
          case TR_ARM64arrayTranslateTRTO:                          return "__arrayTranslateTRTO";
          case TR_ARM64arrayTranslateTRTO255:                       return "__arrayTranslateTRTO255";
+         case TR_ARM64arrayTranslateTROTNoBreak:                   return "__arrayTranslateTROTNoBreak";
          }
       }
 #endif
