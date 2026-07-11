@@ -610,13 +610,10 @@ uint8_t *TR_Debug::printPrefix(OMR::Logger *log, TR::Instruction *instr, uint8_t
     return cursor;
 }
 
-void TR_Debug::printSnippetLabel(OMR::Logger *log, TR::LabelSymbol *label, uint8_t *cursor, const char *comment1,
-    const char *comment2)
+void TR_Debug::printSnippetLabel(OMR::Logger *log, TR::LabelSymbol *label, uint8_t *cursor)
 {
-    int addressFieldWidth = TR::Compiler->debug.hexAddressFieldWidthInChars();
-    int codeByteColumnWidth = TR::Compiler->debug.codeByteColumnWidth();
-    int prefixWidth = addressFieldWidth * 2 + codeByteColumnWidth
-        + 12; // 8 bytes of offsets, 2 spaces, and opening and closing brackets
+    int32_t addressFieldWidth = TR::Compiler->debug.hexAddressFieldWidthInChars();
+    int32_t codeByteColumnWidth = TR::Compiler->debug.codeByteColumnWidth();
 
     uint32_t offset = static_cast<uint32_t>(cursor - _comp->cg()->getCodeStart());
 
@@ -624,6 +621,22 @@ void TR_Debug::printSnippetLabel(OMR::Logger *log, TR::LabelSymbol *label, uint8
         " ");
 
     print(log, label);
+}
+
+void TR_Debug::printSnippetLabel(OMR::Logger *log, TR::Snippet *snippet, uint8_t *cursor)
+{
+    printSnippetLabel(log, snippet->getSnippetLabel(), cursor);
+
+    log->printc(':');
+    log->printf("\t\t%c ", (_comp->target().cpu.isX86() && _comp->target().isLinux()) ? '#' : ';');
+    snippet->printName(log);
+}
+
+void TR_Debug::printSnippetLabel(OMR::Logger *log, TR::LabelSymbol *label, uint8_t *cursor, const char *comment1,
+    const char *comment2)
+{
+    printSnippetLabel(log, label, cursor);
+
     log->printc(':');
     if (comment1) {
         log->printf("\t\t%c %s", (_comp->target().cpu.isX86() && _comp->target().isLinux()) ? '#' : ';', comment1);
@@ -2335,23 +2348,6 @@ void TR_Debug::print(OMR::Logger *log, TR::list<TR::Snippet *> &snippetList)
 
     if (_comp->cg()->hasDataSnippets())
         _comp->cg()->dumpDataSnippets(log);
-}
-
-const char *TR_Debug::getName(TR::Snippet *snippet)
-{
-#if defined(TR_TARGET_X86)
-    if (_comp->target().cpu.isX86())
-        return getNamex(snippet);
-#endif
-#if defined(TR_TARGET_ARM)
-    if (_comp->target().cpu.isARM())
-        return getNamea(snippet);
-#endif
-#if defined(TR_TARGET_ARM64)
-    if (_comp->target().cpu.isARM64())
-        return getNamea64(snippet);
-#endif
-    return "<unknown snippet>"; // TODO: Return a more informative name
 }
 
 void TR_Debug::print(OMR::Logger *log, TR::Snippet *snippet)

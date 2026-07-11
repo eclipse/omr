@@ -279,7 +279,12 @@ uint8_t *TR::X86HelperCallSnippet::genHelperCall(uint8_t *buffer)
 void TR_Debug::print(OMR::Logger *log, TR::X86HelperCallSnippet *snippet)
 {
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(snippet->getDestination()));
+
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(snippet->getDestination()));
+    log->printc(')');
+
     printBody(log, snippet, bufferPos);
 }
 

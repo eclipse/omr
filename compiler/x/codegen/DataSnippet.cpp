@@ -118,7 +118,7 @@ void TR::X86DataSnippet::print(OMR::Logger *log, TR_Debug *debug)
 {
     uint8_t *bufferPos = getSnippetLabel()->getCodeLocation();
 
-    debug->printSnippetLabel(log, getSnippetLabel(), bufferPos, debug->getName(this));
+    debug->printSnippetLabel(log, this, bufferPos);
     debug->printPrefix(log, NULL, bufferPos, static_cast<uint8_t>(getDataSize()));
 
     const char *toString;

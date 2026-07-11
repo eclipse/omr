@@ -290,8 +290,11 @@ void TR_Debug::print(OMR::Logger *log, TR::ARMLabelInstruction *instr)
     } else if (instr->getOpCodeValue() == TR::InstOpCode::b || instr->getOpCodeValue() == TR::InstOpCode::bl) {
         log->printf("%s\t", fullOpCodeName(instr));
         print(log, label);
-        if (snippet)
-            log->printf(" (%s)", getName(snippet));
+        if (snippet) {
+            log->prints(" (");
+            snippet->printName(log);
+            log->printc(')');
+        }
     } else {
         log->printf("%s\t", fullOpCodeName(instr));
         print(log, instr->getTarget1Register(), TR_WordReg);
@@ -399,9 +402,11 @@ void TR_Debug::print(OMR::Logger *log, TR::ARMImmSymInstruction *instr)
             log->printf("%s\t%-24s; ", fullOpCodeName(instr), name);
 
             TR::Snippet *snippet = sym->getLabelSymbol() ? sym->getLabelSymbol()->getSnippet() : NULL;
-            if (snippet)
-                log->printf("(%s)", getName(snippet));
-            else
+            if (snippet) {
+                log->printc('(');
+                snippet->printName(log);
+                log->printc(')');
+            } else
                 log->printf("(" POINTER_PRINTF_FORMAT ")", imm);
         } else {
             log->printf("%s\t" POINTER_PRINTF_FORMAT, fullOpCodeName(instr), imm);
@@ -967,44 +972,6 @@ const char *TR_Debug::getName(uint32_t realRegisterIndex, TR_RegisterSizes size)
     }
 }
 
-const char *TR_Debug::getNamea(TR::Snippet *snippet)
-{
-    switch (snippet->getKind()) {
-        case TR::Snippet::IsCall:
-            return "Call Snippet";
-            break;
-        case TR::Snippet::IsUnresolvedCall:
-            return "Unresolved Call Snippet";
-            break;
-        case TR::Snippet::IsVirtualUnresolved:
-            return "Unresolved Virtual Call Snippet";
-            break;
-        case TR::Snippet::IsInterfaceCall:
-            return "Interface Call Snippet";
-            break;
-        case TR::Snippet::IsStackCheckFailure:
-            return "Stack Check Failure Snippet";
-            break;
-        case TR::Snippet::IsUnresolvedData:
-            return "Unresolved Data Snippet";
-            break;
-        case TR::Snippet::IsRecompilation:
-            return "Recompilation Snippet";
-            break;
-        case TR::Snippet::IsHelperCall:
-            return "Helper Call Snippet";
-            break;
-        case TR::Snippet::IsMonitorEnter:
-            return "MonitorEnter Inc Counter";
-            break;
-        case TR::Snippet::IsMonitorExit:
-            return "MonitorExit Dec Counter";
-            break;
-        default:
-            return "<unknown snippet>";
-    }
-}
-
 void TR_Debug::printa(OMR::Logger *log, TR::Snippet *snippet)
 {
     switch (snippet->getKind()) {
@@ -1057,7 +1024,10 @@ void TR_Debug::print(OMR::Logger *log, TR::ARMCallSnippet *snippet)
     TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
 
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(methodSymRef));
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(methodSymRef));
+    log->printc(')');
 
     TR::Machine *machine = _cg->machine();
     TR::Linkage *linkage = _cg->getLinkage(methodSymbol->getLinkageConvention());
@@ -1209,7 +1179,10 @@ void TR_Debug::print(OMR::Logger *log, TR::ARMVirtualUnresolvedSnippet *snippet)
     TR::SymbolReference *callSymRef = snippet->getNode()->getSymbolReference();
 
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(callSymRef));
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(callSymRef));
+    log->printc(')');
 
     TR::SymbolReference *glueRef = _cg->getSymRef(TR_ARMvirtualUnresolvedHelper);
     printARMHelperBranch(log, glueRef, bufferPos);
@@ -1236,7 +1209,10 @@ void TR_Debug::print(OMR::Logger *log, TR::ARMInterfaceCallSnippet *snippet)
 
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
 
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(callSymRef));
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(callSymRef));
+    log->printc(')');
 
     printARMHelperBranch(log, glueRef, bufferPos);
     bufferPos += 4;
@@ -1299,7 +1275,7 @@ void TR_Debug::print(OMR::Logger *log, TR::ARMHelperCallSnippet *snippet)
 {
 #ifdef J9_PROJECT_SPECIFIC
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+    printSnippetLabel(log, snippet, bufferPos);
 
     TR::LabelSymbol *restartLabel = snippet->getRestartLabel();
     // int32_t          distance  = target - (uintptr_t)bufferPos;
@@ -1320,7 +1296,7 @@ void TR_Debug::print(OMR::Logger *log, TR::ARMHelperCallSnippet *snippet)
 void TR_Debug::print(OMR::Logger *log, TR::ARMStackCheckFailureSnippet *snippet)
 {
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+    printSnippetLabel(log, snippet, bufferPos);
 
     TR::ResolvedMethodSymbol *bodySymbol = _comp->getJittedMethodSymbol();
     TR::SymbolReference *sofRef = _comp->getSymRefTab()->element(TR_stackOverflow);
@@ -1390,7 +1366,10 @@ void TR_Debug::print(OMR::Logger *log, TR::UnresolvedDataSnippet *snippet)
     TR::SymbolReference *symRef = snippet->getDataSymbolReference();
 
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(symRef));
+    log->printc(')');
 
     printARMHelperBranch(log, _cg->getSymRef(snippet->getHelper()), bufferPos);
     bufferPos += 4;

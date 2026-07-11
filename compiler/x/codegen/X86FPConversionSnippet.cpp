@@ -166,7 +166,7 @@ void TR_Debug::print(OMR::Logger *log, TR::X86FPConvertToIntSnippet *snippet)
 {
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
 
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+    printSnippetLabel(log, snippet, bufferPos);
 
     TR::RealRegister *targetRegister = toRealRegister(snippet->getConvertInstruction()->getTargetRegister());
     uint8_t reg = targetRegister->getRegisterNumber();
@@ -322,7 +322,7 @@ void TR_Debug::print(OMR::Logger *log, TR::X86FPConvertToLongSnippet *snippet)
 
     uint8_t action = TR::X86FPConvertToLongSnippet::_registerActions[snippet->getAction() & 0x7f];
 
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+    printSnippetLabel(log, snippet, bufferPos);
 
     if (snippet->getAction() & snippet->kNeedFXCH) {
         printPrefix(log, NULL, bufferPos, 2);

@@ -93,7 +93,7 @@ void TR_Debug::print(OMR::Logger *log, TR::X86DivideCheckSnippet *snippet)
 {
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
 
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+    printSnippetLabel(log, snippet, bufferPos);
 
     TR::RealRegister *realDivisorReg = toRealRegister(snippet->getDivideInstruction()->getSourceRegister());
     TR::RealRegister *realDividendReg = toRealRegister(snippet->getDivideInstruction()->getTargetRegister());

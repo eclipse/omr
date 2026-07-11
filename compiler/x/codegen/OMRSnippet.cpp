@@ -59,74 +59,6 @@ OMR::X86::Snippet::Snippet(TR::CodeGenerator *cg, TR::Node *node, TR::LabelSymbo
     : OMR::Snippet(cg, node, label)
 {}
 
-const char *TR_Debug::getNamex(TR::Snippet *snippet)
-{
-    switch (snippet->getKind()) {
-#ifdef J9_PROJECT_SPECIFIC
-        case TR::Snippet::IsCall:
-            return "Call Snippet";
-            break;
-        case TR::Snippet::IsVPicData:
-            return "VPic Data";
-            break;
-        case TR::Snippet::IsIPicData:
-            return "IPic Data";
-            break;
-        case TR::Snippet::IsForceRecompilation:
-            return "Force Recompilation Snippet";
-            break;
-        case TR::Snippet::IsRecompilation:
-            return "Recompilation Snippet";
-            break;
-#endif
-        case TR::Snippet::IsCheckFailure:
-            return "Check Failure Snippet";
-            break;
-        case TR::Snippet::IsCheckFailureWithResolve:
-            return "Check Failure Snippet with Resolve Call";
-            break;
-        case TR::Snippet::IsBoundCheckWithSpineCheck:
-            return "Bound Check with Spine Check Snippet";
-            break;
-        case TR::Snippet::IsSpineCheck:
-            return "Spine Check Snippet";
-            break;
-        case TR::Snippet::IsConstantData:
-            return "Constant Data Snippet";
-            break;
-        case TR::Snippet::IsData:
-            return "Data Snippet";
-        case TR::Snippet::IsDivideCheck:
-            return "Divide Check Snippet";
-            break;
-#ifdef J9_PROJECT_SPECIFIC
-        case TR::Snippet::IsGuardedDevirtual:
-            return "Guarded Devirtual Snippet";
-            break;
-#endif
-        case TR::Snippet::IsHelperCall:
-            return "Helper Call Snippet";
-            break;
-        case TR::Snippet::IsFPConversion:
-            return "FP Conversion Snippet";
-            break;
-        case TR::Snippet::IsFPConvertToInt:
-            return "FP Convert To Int Snippet";
-            break;
-        case TR::Snippet::IsFPConvertToLong:
-            return "FP Convert To Long Snippet";
-            break;
-        case TR::Snippet::IsUnresolvedDataIA32:
-        case TR::Snippet::IsUnresolvedDataAMD64:
-            return "Unresolved Data Snippet";
-            break;
-        case TR::Snippet::IsRestart:
-        default:
-            TR_ASSERT(0, "unexpected snippet kind: %d", snippet->getKind());
-            return "Unknown snippet kind";
-    }
-}
-
 void TR_Debug::printx(OMR::Logger *log, TR::Snippet *snippet)
 {
     switch (snippet->getKind()) {
@@ -208,4 +140,57 @@ int32_t TR_Debug::printRestartJump(OMR::Logger *log, TR::X86RestartSnippet *snip
     printPrefix(log, NULL, bufferPos, size);
     printLabelInstruction(log, branchOpName, snippet->getRestartLabel());
     return size;
+}
+
+void OMR::X86::Snippet::printName(OMR::Logger *log)
+{
+    const char *name;
+
+    switch (getKind()) {
+        case TR::Snippet::IsCheckFailure:
+            name = "Check Failure Snippet";
+            break;
+        case TR::Snippet::IsCheckFailureWithResolve:
+            name = "Check Failure Snippet with Resolve Call";
+            break;
+        case TR::Snippet::IsBoundCheckWithSpineCheck:
+            name = "Bound Check with Spine Check Snippet";
+            break;
+        case TR::Snippet::IsSpineCheck:
+            name = "Spine Check Snippet";
+            break;
+        case TR::Snippet::IsConstantData:
+            name = "Constant Data Snippet";
+            break;
+        case TR::Snippet::IsData:
+            name = "Data Snippet";
+            break;
+        case TR::Snippet::IsDivideCheck:
+            name = "Divide Check Snippet";
+            break;
+        case TR::Snippet::IsHelperCall:
+            name = "Helper Call Snippet";
+            break;
+        case TR::Snippet::IsFPConversion:
+            name = "FP Conversion Snippet";
+            break;
+        case TR::Snippet::IsFPConvertToInt:
+            name = "FP Convert To Int Snippet";
+            break;
+        case TR::Snippet::IsFPConvertToLong:
+            name = "FP Convert To Long Snippet";
+            break;
+        case TR::Snippet::IsUnresolvedDataIA32:
+        case TR::Snippet::IsUnresolvedDataAMD64:
+            name = "Unresolved Data Snippet";
+            break;
+        case TR::Snippet::IsRestart:
+            name = "Restart Snippet";
+            break;
+        default:
+            name = "Unknown snippet kind";
+            break;
+    }
+
+    log->prints(name);
 }
