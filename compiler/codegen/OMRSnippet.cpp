@@ -93,3 +93,28 @@ void OMR::Snippet::print(OMR::Logger *log, TR_Debug *debug)
         debug->printPrefix(log, NULL, cursor, self()->getLength(0) % sizeof(uint64_t));
     }
 }
+
+void OMR::Snippet::printName(OMR::Logger *log) { log->prints("<unknown snippet>"); }
+
+const char *OMR::Snippet::getName(TR::Region &region)
+{
+    const int32_t maxNameLen = 64;
+    char buf[maxNameLen];
+
+    // Render the name into a local buffer
+    //
+    OMR::Logger *log = OMR::MemoryBufferLogger::create(region, buf, maxNameLen);
+    self()->printName(log);
+
+    size_t len = strlen(buf);
+
+    // Trim the buffer that will be returned to the exact length
+    //
+    char *name = (char *)region.allocate(len + 1); // +1 for NUL-terminator
+    if (name) {
+        // Include the NUL-terminator
+        memcpy(name, buf, len + 1);
+    }
+
+    return name;
+}

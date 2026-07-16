@@ -82,6 +82,27 @@ public:
 
     virtual void print(OMR::Logger *log, TR_Debug *debug);
 
+    /**
+     * @brief Print the name of this snippet to the provided Logger
+     *
+     * @details
+     *     Platforms and downstream projects are expected to specialize this function
+     *     to provide meaningful output.
+     *
+     * @param[in] log : the destination Logger
+     */
+    void printName(OMR::Logger *log);
+
+    /**
+     * @brief Retrieves a NUL-terminated `const char *` to the snippet name
+     *
+     * @param[in[ region : the memory `TR::Region` where storage for the string
+     *     is to be allocated
+     *
+     * @return A NUL-terminated string for the snippet name
+     */
+    const char *getName(TR::Region &region);
+
     void prepareSnippetForGCSafePoint();
 
     /////////////////////////////////////////////////////////////////////////////

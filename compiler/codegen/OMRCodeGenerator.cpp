@@ -39,6 +39,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "env/FrontEnd.hpp"
+#include "env/StackMemoryRegion.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
@@ -2150,6 +2151,8 @@ uint8_t *OMR::CodeGenerator::emitSnippets()
     uint8_t *codeOffset;
     uint8_t *retVal;
 
+    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
+
     omrthread_jit_write_protect_disable();
 
     for (auto iterator = _snippetList.begin(); iterator != _snippetList.end(); ++iterator) {
@@ -2161,7 +2164,7 @@ uint8_t *OMR::CodeGenerator::emitSnippets()
                     >= codeOffset,
                 "%s length estimate must be conservatively large (snippet @ " POINTER_PRINTF_FORMAT
                 ", estimate=%d, actual=%d)",
-                getDebug()->getName(*iterator), *iterator,
+                (*iterator)->getName(stackMemoryRegion), *iterator,
                 (*iterator)->getLength(
                     static_cast<int32_t>(self()->getBinaryBufferCursor() - self()->getBinaryBufferStart())),
                 codeOffset - self()->getBinaryBufferCursor());
