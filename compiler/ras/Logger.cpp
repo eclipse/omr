@@ -451,7 +451,13 @@ OMR::MemoryBufferLogger::MemoryBufferLogger(char *buf, size_t maxBufLen)
     , _bufCursor(buf)
     , _maxBufLen(maxBufLen)
     , _maxRemainingChars(maxBufLen)
-{}
+{
+    TR_ASSERT_FATAL(maxBufLen > 0, "Expecting a non-zero sized base buffer for MemoryBufferLogger");
+
+    // Initialize the backing array to an empty state
+    //
+    buf[0] = '\0';
+}
 
 int32_t OMR::MemoryBufferLogger::printf(const char *format, ...)
 {
@@ -516,3 +522,7 @@ template OMR::MemoryBufferLogger *OMR::MemoryBufferLogger::create(TR_HeapMemory 
 template OMR::MemoryBufferLogger *OMR::MemoryBufferLogger::create(PERSISTENT_NEW_DECLARE t, char *buf,
     size_t maxBufLen);
 
+OMR::MemoryBufferLogger *OMR::MemoryBufferLogger::create(TR::Region &region, char *buf, size_t maxBufLen)
+{
+    return new (region) OMR::MemoryBufferLogger(buf, maxBufLen);
+}
