@@ -455,15 +455,6 @@ TR::Instruction *MemInitConstLenMacroOp::generateLoop()
 
     TR::Instruction *cursor = _cg->getAppendInstruction();
 
-    if (len >= (uint64_t)1) {
-        if (_useByteVal)
-            cursor = generateSIInstruction(_cg, TR::InstOpCode::MVI, _rootNode, _dstMR, _byteVal, cursor);
-        else
-            cursor = generateRXInstruction(_cg, TR::InstOpCode::STC, _rootNode, _initReg, _dstMR, cursor);
-
-        --len;
-    }
-
     int64_t largeCopies = (len == 0) ? 0 : (len - 1) / 256;
 
     // if the length is small, just generate one instruction
@@ -471,6 +462,18 @@ TR::Instruction *MemInitConstLenMacroOp::generateLoop()
         _length = (int64_t)len;
         setDependencies(false); // Make sure we do not generate dependencies or internalControlFlow
         return cursor;
+    }
+
+    static bool disableMemInitMVCSeedOpt = (feGetEnv("TR_DisableMemInitMVCSeedOpt") != NULL);
+
+    // Pre-loop seed ONLY for the disabled (original) path.
+    if (disableMemInitMVCSeedOpt && len >= (uint64_t)1) {
+        if (_useByteVal)
+            cursor = generateSIInstruction(_cg, TR::InstOpCode::MVI, _rootNode, _dstMR, _byteVal, cursor);
+        else
+            cursor = generateRXInstruction(_cg, TR::InstOpCode::STC, _rootNode, _initReg, _dstMR, cursor);
+        --len;
+        largeCopies = (len == 0) ? 0 : (len - 1) / 256;
     }
 
     // if a series of instructions can be done instead of a loop of them, do so, but only if it will not exceed the 4K
@@ -486,23 +489,18 @@ TR::Instruction *MemInitConstLenMacroOp::generateLoop()
             _offset = 0;
         }
 
-        static bool disableMemInitMVCSeedOpt = (feGetEnv("TR_DisableMemInitMVCSeedOpt") != NULL);
         int32_t local_offset = 0;
         while (largeCopies > 0) {
             local_offset = _offset + (copies - largeCopies) * 256;
             if (!disableMemInitMVCSeedOpt) {
-                // Seed the first byte of the next 256-byte block before the MVC so the
-                // next iteration's MVC source byte is ready independently of this MVC,
-                // breaking the MVC-to-MVC dependency chain (same pattern as the loop path).
+                // Seed byte 0 of this block (from local_offset)
                 if (_useByteVal)
                     cursor = generateSIInstruction(_cg, TR::InstOpCode::MVI, _rootNode,
-                        new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, local_offset + 256, _cg), _byteVal,
-                        cursor);
+                        new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, local_offset, _cg), _byteVal, cursor);
                 else
                     cursor = generateRXInstruction(_cg, TR::InstOpCode::STC, _rootNode, _initReg,
-                        new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, local_offset + 256, _cg), cursor);
+                        new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, local_offset, _cg), cursor);
             }
-
             cursor = generateSS1Instruction(_cg, TR::InstOpCode::MVC, _rootNode, disableMemInitMVCSeedOpt ? 255 : 254,
                 new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, local_offset + 1, _cg),
                 new (_cg->trHeapMemory()) TR::MemoryReference(_srcReg, local_offset, _cg), cursor);
@@ -532,18 +530,14 @@ TR::Instruction *MemInitConstLenMacroOp::generateLoop()
 
     _startControlFlow = cursor = generateS390LabelInstruction(_cg, TR::InstOpCode::label, _rootNode, topOfLoop, cursor);
 
-    static bool disableMemInitMVCSeedOpt = (feGetEnv("TR_DisableMemInitMVCSeedOpt") != NULL);
-
     if (!disableMemInitMVCSeedOpt) {
-        // Seed the first byte of the next 256-byte before the MVC so ->
-        // iteration MVC source byte is ready independently of the current MVC
-        // previous MVC(n+1) wait of MVC(n) potentially, now just need STC complete
+        // Seed byte 0 of this block, MVC(254) then move bytes 1..255 for the curr block.
         if (_useByteVal)
             cursor = generateSIInstruction(_cg, TR::InstOpCode::MVI, _rootNode,
-                new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, _offset + 256, _cg), _byteVal, cursor);
+                new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, _offset, _cg), _byteVal, cursor);
         else
             cursor = generateRXInstruction(_cg, TR::InstOpCode::STC, _rootNode, _initReg,
-                new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, _offset + 256, _cg), cursor);
+                new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, _offset, _cg), cursor);
     }
 
     cursor = generateSS1Instruction(_cg, TR::InstOpCode::MVC, _rootNode, disableMemInitMVCSeedOpt ? 255 : 254,
@@ -1304,7 +1298,10 @@ TR::Instruction *MemInitVarLenMacroOp::generateInstruction(int32_t offset, int64
         return cursor;
     }
 
-    if (!_firstByteInitialized) {
+    if (!_firstByteInitialized || !disableMemInitMVCSeedOpt) {
+        // Seed the current block first byte.
+        // If Opt enabled:  every call needs its own seed
+        // Opt disabled: only seed on the very first call (legacy impl)
         if (_useByteVal)
             cursor = generateSIInstruction(_cg, TR::InstOpCode::MVI, _rootNode,
                 new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, offset, _cg), _byteVal);
@@ -1313,23 +1310,11 @@ TR::Instruction *MemInitVarLenMacroOp::generateInstruction(int32_t offset, int64
                 new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, offset, _cg));
 
         _firstByteInitialized = true;
-        length--;
-    } else if (length > 1) {
-        if (!disableMemInitMVCSeedOpt) {
-            // Seed the first byte of the next 256-byte block before the MVC
-            // so byte is ready independently of the current MVC
-            if (_useByteVal)
-                cursor = generateSIInstruction(_cg, TR::InstOpCode::MVI, _rootNode,
-                    new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, offset + (int32_t)length, _cg), _byteVal);
-            else
-                cursor = generateRXInstruction(_cg, TR::InstOpCode::STC, _rootNode, _initReg,
-                    new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, offset + (int32_t)length, _cg));
-        }
     }
 
-    if (length > 0) {
-        int64_t mvcLen = disableMemInitMVCSeedOpt ? length - 1 : length - 2;
-        cursor = generateSS1Instruction(_cg, TR::InstOpCode::MVC, _rootNode, mvcLen,
+    if (length > 1) {
+        int64_t mvcField = disableMemInitMVCSeedOpt ? length - 1 : length - 2;
+        cursor = generateSS1Instruction(_cg, TR::InstOpCode::MVC, _rootNode, mvcField,
             new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, 1 + offset, _cg),
             new (_cg->trHeapMemory()) TR::MemoryReference(_srcReg, offset, _cg), cursor);
     }
