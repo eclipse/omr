@@ -90,12 +90,6 @@ TR::Instruction *MemToMemVarLenMacroOp::generateLoop()
         generateSrcMemRef(0);
         generateDstMemRef(0);
 
-        // non-Java specialization
-        if (!_lengthMinusOne) {
-            generateRIInstruction(_cg, (needs64BitOpCode) ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, _rootNode,
-                _regLen, -1);
-        }
-
         if (_lengthMinusOne)
             generateRRInstruction(_cg, TR::InstOpCode::LTR, _rootNode, _regLen,
                 _regLen); // Because transformLengthMinusOneForMemoryOps uses TR::iadd
@@ -104,8 +98,12 @@ TR::Instruction *MemToMemVarLenMacroOp::generateLoop()
         _startControlFlow
             = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, _rootNode, _doneLabel);
     }
-    if (getKind() == MemToMemMacroOp::IsMemInit)
-        generateInstruction(0, 1);
+    // Don't seed on MemInitMVCSeedOpt path. MVC seed already happens within looping.
+    if (getKind() == MemToMemMacroOp::IsMemInit) {
+        static bool disableMemInitMVCSeedOpt = (feGetEnv("TR_DisableMemInitMVCSeedOpt") != NULL);
+        if (disableMemInitMVCSeedOpt)
+            generateInstruction(0, 1);
+    }
 
     TR::LabelSymbol *topOfLoop = generateLabelSymbol(_cg);
     TR::LabelSymbol *bottomOfLoop = generateLabelSymbol(_cg);
@@ -144,6 +142,17 @@ TR::Instruction *MemToMemVarLenMacroOp::generateLoop()
             generateRRInstruction(_cg, TR::InstOpCode::LR, _rootNode, _itersReg, _regLen);
             generateRSInstruction(_cg, TR::InstOpCode::SRA, _rootNode, _itersReg, 8);
         }
+    }
+
+    // _regLen is used by remainder handling for MVC(n) - move n+1 bytes
+    // The virtual methods generateRemainder for MemInit/MemClear already handle AGHI-1
+    // For base implementation like MemCpy, MemCmp.. _regLen = length-1 to properly
+    // move remainder of "length" bytes.
+    Kind kind = getKind();
+    bool remainderManagesRegLen = (kind == IsMemInit || kind == IsMemClear);
+    if (useEXForRemainder() && !_lengthMinusOne && !remainderManagesRegLen) {
+        generateRIInstruction(_cg, (needs64BitOpCode) ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, _rootNode, _regLen,
+            -1);
     }
 
     generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, _rootNode, bottomOfLoop);
