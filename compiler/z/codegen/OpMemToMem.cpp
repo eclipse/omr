@@ -82,6 +82,10 @@ TR::Instruction *MemToMemVarLenMacroOp::generateLoop()
     TR::Compilation *comp = _cg->comp();
     bool needs64BitOpCode = comp->target().is64Bit();
 
+    Kind kind = getKind();
+    static bool disableMemInitMVCSeedOpt = (feGetEnv("TR_DisableMemInitMVCSeedOpt") != NULL);
+    bool useOptimizedMemInit = (kind == MemToMemMacroOp::IsMemInit && !disableMemInitMVCSeedOpt);
+
     if (useEXForRemainder()) {
         // need to do this before the branch or some
         // instructions may not be executed. this is a problem
@@ -90,22 +94,36 @@ TR::Instruction *MemToMemVarLenMacroOp::generateLoop()
         generateSrcMemRef(0);
         generateDstMemRef(0);
 
-        // Set the condition code for the next BRC condition.
-        if (needs64BitOpCode)
-            generateRRInstruction(_cg, TR::InstOpCode::LTGR, _rootNode, _regLen, _regLen);
-        else
-            generateRRInstruction(_cg, TR::InstOpCode::LTR, _rootNode, _regLen, _regLen);
+        if (useOptimizedMemInit) {
+            // Set the condition code for the next BRC condition.
+            if (needs64BitOpCode)
+                generateRRInstruction(_cg, TR::InstOpCode::LTGR, _rootNode, _regLen, _regLen);
+            else
+                generateRRInstruction(_cg, TR::InstOpCode::LTR, _rootNode, _regLen, _regLen);
 
-        _doneLabel = generateLabelSymbol(_cg);
-        // Branch to "done" if length is not higher than 0.
-        _startControlFlow
-            = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, _rootNode, _doneLabel);
+            _doneLabel = generateLabelSymbol(_cg);
+            // Branch to "done" if length is not higher than 0.
+            _startControlFlow
+                = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, _rootNode, _doneLabel);
+        } else {
+            // non-Java specialization (initial / legacy implementation)
+            if (!_lengthMinusOne) {
+                generateRIInstruction(_cg, (needs64BitOpCode) ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, _rootNode,
+                    _regLen, -1);
+            }
+
+            if (_lengthMinusOne)
+                generateRRInstruction(_cg, TR::InstOpCode::LTR, _rootNode, _regLen,
+                    _regLen); // Because transformLengthMinusOneForMemoryOps uses TR::iadd
+
+            _doneLabel = generateLabelSymbol(_cg);
+            _startControlFlow
+                = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, _rootNode, _doneLabel);
+        }
     }
     // Don't seed on MemInitMVCSeedOpt path. MVC seed already happens within looping.
-    if (getKind() == MemToMemMacroOp::IsMemInit) {
-        static bool disableMemInitMVCSeedOpt = (feGetEnv("TR_DisableMemInitMVCSeedOpt") != NULL);
-        if (disableMemInitMVCSeedOpt)
-            generateInstruction(0, 1);
+    if (kind == MemToMemMacroOp::IsMemInit && disableMemInitMVCSeedOpt) {
+        generateInstruction(0, 1);
     }
 
     TR::LabelSymbol *topOfLoop = generateLabelSymbol(_cg);
@@ -147,16 +165,6 @@ TR::Instruction *MemToMemVarLenMacroOp::generateLoop()
         }
     }
 
-    // _regLen is used by remainder handling for MVC(n) - move n+1 bytes
-    // The virtual methods generateRemainder for MemInit/MemClear already handle AGHI-1
-    // For base implementation like MemCpy, MemCmp.. _regLen = length-1 to properly
-    // move remainder of "length" bytes.
-    Kind kind = getKind();
-    bool remainderManagesRegLen = (kind == IsMemInit || kind == IsMemClear);
-    if (useEXForRemainder() && !_lengthMinusOne && !remainderManagesRegLen) {
-        generateRIInstruction(_cg, (needs64BitOpCode) ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI, _rootNode, _regLen,
-            -1);
-    }
 
     generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, _rootNode, bottomOfLoop);
 
@@ -1049,9 +1057,34 @@ TR::Instruction *MemInitVarLenMacroOp::generateRemainder()
             generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _rootNode, _regLen, (int32_t)0,
                 TR::InstOpCode::COND_BNH, _doneLabel, false, false);
 
-        if (_firstByteInitialized)
-            generateRIInstruction(_cg, _cg->comp()->target().is64Bit() ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI,
-                _rootNode, _regLen, -1);
+        if (_firstByteInitialized) {
+            static bool disableMemInitMVCSeedOpt = (feGetEnv("TR_DisableMemInitMVCSeedOpt") != NULL);
+            if (!disableMemInitMVCSeedOpt) {
+                // SeedOpt path fills 256-byte blocks only. Seed the start of the remainder block.
+                if (_useByteVal)
+                    generateSIInstruction(_cg, TR::InstOpCode::MVI, _rootNode,
+                        new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, 0, _cg), _byteVal);
+                else
+                    generateRXInstruction(_cg, TR::InstOpCode::STC, _rootNode, _initReg,
+                        new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, 0, _cg));
+
+                // remainder == 1 -> work is done.
+                if (_cg->comp()->target().is64Bit())
+                    generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::CG, _rootNode, _regLen, (int32_t)1,
+                        TR::InstOpCode::COND_BE, _doneLabel, false, false);
+                else
+                    generateS390CompareAndBranchInstruction(_cg, TR::InstOpCode::C, _rootNode, _regLen, (int32_t)1,
+                        TR::InstOpCode::COND_BE, _doneLabel, false, false);
+
+                // Adjust to _regLen -2 (-1 byte seeded above, -1 EX field encoding)
+                generateRIInstruction(_cg, _cg->comp()->target().is64Bit() ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI,
+                    _rootNode, _regLen, -2);
+            } else {
+                // Legacy path: no seed here; only adjust for EX length-field encoding.
+                generateRIInstruction(_cg, _cg->comp()->target().is64Bit() ? TR::InstOpCode::AGHI : TR::InstOpCode::AHI,
+                    _rootNode, _regLen, -1);
+            }
+        }
 
         TR::Instruction *MVCInstr = generateSS1Instruction(_cg, TR::InstOpCode::MVC, _rootNode, 0,
             new (_cg->trHeapMemory()) TR::MemoryReference(_dstReg, 1, _cg),
