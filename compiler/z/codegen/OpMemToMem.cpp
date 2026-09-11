@@ -90,13 +90,16 @@ TR::Instruction *MemToMemVarLenMacroOp::generateLoop()
         generateSrcMemRef(0);
         generateDstMemRef(0);
 
-        if (_lengthMinusOne)
-            generateRRInstruction(_cg, TR::InstOpCode::LTR, _rootNode, _regLen,
-                _regLen); // Because transformLengthMinusOneForMemoryOps uses TR::iadd
+        // Set the condition code for the next BRC condition.
+        if (needs64BitOpCode)
+            generateRRInstruction(_cg, TR::InstOpCode::LTGR, _rootNode, _regLen, _regLen);
+        else
+            generateRRInstruction(_cg, TR::InstOpCode::LTR, _rootNode, _regLen, _regLen);
 
         _doneLabel = generateLabelSymbol(_cg);
+        // Branch to "done" if length is not higher than 0.
         _startControlFlow
-            = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, _rootNode, _doneLabel);
+            = generateS390BranchInstruction(_cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, _rootNode, _doneLabel);
     }
     // Don't seed on MemInitMVCSeedOpt path. MVC seed already happens within looping.
     if (getKind() == MemToMemMacroOp::IsMemInit) {
