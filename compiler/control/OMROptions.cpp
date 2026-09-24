@@ -1133,6 +1133,9 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
     { EnableAnnotations, "O\tenable annotation support", SET_OPTION_BIT(TR_EnableAnnotations), "F" },
     { "enableAOTCacheReclamation", "O\tenable AOT reclamation of code and data cache on AOT relocation failures",
      SET_OPTION_BIT(TR_EnableAOTCacheReclamation), "F" },
+    { "enableAOTCodeCacheDisclaiming",
+     "Store AOT loaded in code in a separate code cache to prevent fragmentation and facilitate memory disclaiming", SET_OPTION_BIT(TR_EnableAOTCodeCacheDisclaiming), "F", NOT_IN_SUBSET },
+
     { "enableAOTInlineSystemMethod", "O\tenable AOT inline methods from system classes",
      SET_OPTION_BIT(TR_EnableAOTInlineSystemMethod), "F" },
     { "enableAOTMethodEnter", "O\tenable AOT method enter", SET_OPTION_BIT(TR_EnableAOTMethodEnter), "F" },

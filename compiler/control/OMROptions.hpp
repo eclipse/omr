@@ -501,7 +501,7 @@ enum TR_CompilationOptions {
     // Option word 13
     // Available                                             = 0x00000020 + 13,
     TR_DisableRefArraycopyRT                                 = 0x00000040 + 13,
-    // Available                                             = 0x00000080 + 13,
+    TR_EnableAOTCodeCacheDisclaiming                         = 0x00000080 + 13,
     TR_StaticDebugCountersRequested                          = 0x00000100 + 13,
     TR_TraceNonLinearRegisterAssigner                        = 0x00000200 + 13,
     TR_TraceLookahead                                        = 0x00000400 + 13,

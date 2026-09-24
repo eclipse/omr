@@ -212,6 +212,7 @@ enum CodeCacheKind {
     TRANSIENT_CODE_CC, // To prevent fragmentation, we allow the user to indicate that certain classes are
                        // transient, this allows us to place the code for these classes in a distinct code
                        // cache which prevents fragmentation.
+    AOT, // Special code cache kind used for AOT loaded code. May or may not be file backed.
     FILE_BACKED_CC,
 };
 

@@ -60,6 +60,13 @@ TR::CodeCacheSymbolContainer *OMR::CodeCacheManager::_symbolContainer = NULL;
 
 #endif // HOST_OS == OMR_LINUX
 
+#if defined(LINUX)
+#if !defined(MADV_HUGEPAGE)
+#define MADV_HUGEPAGE 14
+#define MADV_NOHUGEPAGE 15
+#endif /* MADV_HUGEPAGE */
+#endif /* LINUX */
+
 OMR::CodeCacheManager::CodeCacheManager(TR::RawAllocator rawAllocator)
     : _rawAllocator(rawAllocator)
     , _config()
@@ -260,6 +267,53 @@ TR::CodeCache *OMR::CodeCacheManager::allocateCodeCacheObject(TR::CodeCacheMemor
     TR::CodeCache *codeCache = static_cast<TR::CodeCache *>(self()->getMemory(sizeof(TR::CodeCache)));
     if (codeCache) {
         new (codeCache) TR::CodeCache();
+
+#if defined(LINUX)
+        // Advise the kernel on huge page usage for the code segment backing memory.
+        // AOT-loaded code uses 4KB pages to avoid pinning large THP mappings for
+        // rarely-executed code. Similarly, code in file-backed code caches is also
+        // rarely executed. All other kinds request 2MB transparent huge pages (the
+        // default).
+
+        bool canAccessPort = (TR::Compiler->omrPortLib != NULL);
+        bool codeCacheKindCorrect = (kind == TR::CodeCacheKind::AOT || kind == TR::CodeCacheKind::FILE_BACKED_CC);
+        if (canAccessPort && codeCacheKindCorrect) {
+            // At the beginning of the memory region that all code caches are allocated in, a small amount of
+            // metadata is written. This results in codeCacheSegment sometimes not being small page aligned. As
+            // a result, the starting address and size may need to be adjusted.
+            OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+            uintptr_t round = omrvmem_supported_page_sizes()[0] - 1;
+            uint8_t *startAddr
+                = reinterpret_cast<uint8_t *>(reinterpret_cast<uintptr_t>(codeCacheSegment->segmentBase()) & ~round);
+            uint8_t *end_addr = reinterpret_cast<uint8_t *>(
+                reinterpret_cast<uintptr_t>((codeCacheSegment->segmentBase() + codeCacheSize)) & ~round);
+            size_t size = end_addr - startAddr;
+
+            if (0 != madvise(startAddr, size, MADV_NOHUGEPAGE)) {
+                if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache)) {
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,
+                        "Warning: madvise failed while providing hint to use non-huge pages for the code cache "
+                        "starting at "
+                        "%p",
+                        startAddr);
+                }
+            }
+
+            if (0 != madvise(startAddr, size, MADV_RANDOM)) {
+                if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache)) {
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,
+                        "Warning: madvise failed while providing hint to prevent prefetching for the code cache "
+                        "starting "
+                        "at %p",
+                        startAddr);
+                }
+            }
+        } else if (!canAccessPort) {
+            TR::Options::getCmdLineOptions()->setOption(TR_EnableAOTCodeCacheDisclaiming, false);
+        }
+
+#endif /* LINUX */
+
         if (!codeCache->initialize(self(), codeCacheSegment, codeCacheSize, kind)) {
             self()->freeMemory(codeCache);
             codeCache = NULL;

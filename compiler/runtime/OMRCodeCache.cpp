@@ -147,11 +147,12 @@ const char *OMR::CodeCache::getCodeCacheKindString()
             return "DEFAULT_CC";
         case TR::CodeCacheKind::TRANSIENT_CODE_CC:
             return "TRANSIENT_CODE_CC";
+        case TR::CodeCacheKind::AOT:
+            return "AOT";
         case TR::CodeCacheKind::FILE_BACKED_CC:
             return "FILE_BACKED_CC";
-        default:
-            return "UNKNOWN";
     }
+    return "UNKNOWN";
 }
 
 void OMR::CodeCache::reserve(int32_t reservingCompThreadID)
