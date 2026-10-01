@@ -5495,6 +5495,16 @@ TR::Register *OMR::X86::TreeEvaluator::vectorBinaryArithmeticEvaluator(TR::Node 
             // to perform these masked bitwise operations because of the element type mismatch.
             maskTypeMismatch = et != TR::Int32 && et != TR::Float;
             break;
+        case TR::vshl:
+        case TR::vmshl:
+        case TR::vshr:
+        case TR::vmshr:
+        case TR::vushr:
+        case TR::vmushr:
+        case TR::vrol:
+        case TR::vmrol:
+            useRegMemForm = false;
+            break;
         default:
             break;
     }
@@ -5542,6 +5552,42 @@ TR::Register *OMR::X86::TreeEvaluator::vectorBinaryArithmeticEvaluator(TR::Node 
     TR::Register *rhsReg = useRegMemForm ? NULL : cg->evaluate(rhs);
     TR::Register *maskReg = mask ? cg->evaluate(mask) : NULL;
 
+    // Java specification requires the shift amount to be taken modulo the
+    // element size in bits before shifting (e.g. count % 32 for Int32).
+    // x86 variable-shift instructions (VPSLLVD, VPSRLVD, VPSRAVD, etc.)
+    // saturate to zero when count >= element width instead of wrapping, so
+    // we AND every lane of the shift-count vector with (elementSizeInBits-1)
+    // here to enforce the correct range [0, N-1] before the shift executes.
+    TR::Register *shiftModReg = NULL;
+    switch (node->getOpCode().getVectorOperation()) {
+        case TR::vshl:
+        case TR::vmshl:
+        case TR::vshr:
+        case TR::vmshr:
+        case TR::vushr:
+        case TR::vmushr:
+        case TR::vrol:
+        case TR::vmrol: {
+            uint32_t shiftMask = TR::DataType::getSize(et) * 8 - 1;
+            TR::Register *tmpReg = cg->allocateRegister();
+            shiftModReg = cg->allocateRegister(TR_VRF);
+            TR::Register *maskVec = cg->allocateRegister(TR_VRF);
+            TR::TreeEvaluator::loadConstant(node, shiftMask, TR_RematerializableInt, cg, tmpReg);
+            OP::Mnemonic movOp = (et == TR::Int64) ? OP::MOVQRegReg8 : OP::MOVDRegReg4;
+            Inst_RegReg(movOp, node, maskVec, tmpReg, cg);
+            TR::TreeEvaluator::broadcastHelper(node, maskVec, type.getVectorLength(), et, cg);
+            cg->stopUsingRegister(tmpReg);
+            TR::InstOpCode andOp = OP::PANDRegReg;
+            Inst_RegRegReg(andOp.getMnemonic(), node, shiftModReg, rhsReg, maskVec, cg,
+                andOp.getSIMDEncoding(&cg->comp()->target().cpu, type.getVectorLength()));
+            cg->stopUsingRegister(maskVec);
+            rhsReg = shiftModReg;
+            break;
+        }
+        default:
+            break;
+    }
+
     TR_ASSERT_FATAL_WITH_NODE(lhs, lhsReg->getKind() == TR_VRF, "Left child of vector operation must be a vector");
     TR_ASSERT_FATAL_WITH_NODE(lhs, rhsReg == NULL || rhsReg->getKind() == TR_VRF,
         "Right child of vector operation must be a vector");
@@ -5575,6 +5621,9 @@ TR::Register *OMR::X86::TreeEvaluator::vectorBinaryArithmeticEvaluator(TR::Node 
 
     if (tmpNaNReg)
         cg->stopUsingRegister(tmpNaNReg);
+
+    if (shiftModReg)
+        cg->stopUsingRegister(shiftModReg);
 
     if (mask)
         cg->decReferenceCount(mask);
