@@ -26,6 +26,7 @@
 #include "codegen/RVSystemLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
+#include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/RegisterConstants.hpp"
@@ -171,6 +172,12 @@ void OMR::RV::CodeGenerator::doBinaryEncoding()
 
     getLinkage()->createPrologue(cursorInstruction);
 
+    TR::Instruction *prologueCursor = self()->getFirstInstruction();
+    for (TR::Instruction *gcMapCursor = prologueCursor; NULL != gcMapCursor; gcMapCursor = gcMapCursor->getNext()) {
+        if (gcMapCursor->needsGCMap())
+            gcMapCursor->setGCMap(self()->getStackAtlas()->getParameterMap()->clone(self()->trMemory()));
+    }
+
     bool skipOneReturn = false;
     while (cursorInstruction) {
         if (cursorInstruction->getOpCodeValue() == OP::retn) {
@@ -298,7 +305,33 @@ TR::Register *OMR::RV::CodeGenerator::gprClobberEvaluate(TR::Node *node)
     }
 }
 
-void OMR::RV::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap *map) { TR_UNIMPLEMENTED(); }
+uint32_t OMR::RV::CodeGenerator::registerBitMask(int32_t reg) { return 1 << (reg - 1); }
+
+void OMR::RV::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap *map)
+{
+    TR_InternalPointerMap *internalPtrMap = NULL;
+    TR::GCStackAtlas *atlas = self()->getStackAtlas();
+    //
+    // Build the register map
+    //
+    for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; ++i) {
+        TR::RealRegister *reg = self()->machine()->getRealRegister((TR::RealRegister::RegNum)i);
+        if (reg->getHasBeenAssignedInMethod()) {
+            TR::Register *virtReg = reg->getAssignedRegister();
+            if (virtReg) {
+                if (virtReg->containsInternalPointer()) {
+                    if (!internalPtrMap)
+                        internalPtrMap = new (self()->trHeapMemory()) TR_InternalPointerMap(self()->trMemory());
+                    internalPtrMap->addInternalPointerPair(virtReg->getPinningArrayPointer(), i);
+                    atlas->addPinningArrayPtrForInternalPtrReg(virtReg->getPinningArrayPointer());
+                } else if (virtReg->containsCollectedReference())
+                    map->setRegisterBits(self()->registerBitMask(i));
+            }
+        }
+    }
+
+    map->setInternalPointerMap(internalPtrMap);
+}
 
 bool OMR::RV::CodeGenerator::directCallRequiresTrampoline(intptr_t targetAddress, intptr_t sourceAddress)
 {

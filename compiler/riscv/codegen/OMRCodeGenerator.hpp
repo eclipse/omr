@@ -315,6 +315,8 @@ public:
      */
     int64_t getSmallestPosConstThatMustBeMaterialized();
 
+    uint32_t registerBitMask(int32_t reg);
+
     /**
      * @brief Builds register map
      * @param[in] map : GC stack map
