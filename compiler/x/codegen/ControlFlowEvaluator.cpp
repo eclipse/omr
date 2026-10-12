@@ -555,25 +555,7 @@ void OMR::X86::TreeEvaluator::setupProfiledGuardRelocation(TR::X86RegImmInstruct
     TR_ExternalRelocationTargetKind reloKind)
 {
 #ifdef J9_PROJECT_SPECIFIC
-    // The following makes sure that the TR_ProfiledInlinedMethod relocation for this inlined site will be created
-    // later in TR::CodeGenerator::processRelocations()
-    TR::Compilation *comp = TR::comp();
-    TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
-    TR_AOTGuardSite *site = comp->addAOTNOPSite();
-    site->setLocation(NULL);
-    site->setType(TR_ProfiledGuard);
-    site->setGuard(virtualGuard);
-    site->setNode(node);
-    site->setAconstNode(node->getSecondChild());
-
-    // If we've generated an instruction, then make sure it is marked to get the right kind of relocation
-    if (cmpInstruction) {
-        cmpInstruction->setReloKind(reloKind);
-        cmpInstruction->setNode(node->getSecondChild());
-    }
-
-    logprintf(comp->getOption(TR_TraceCG), comp->log(), "setupProfiledGuardRelocation: site %p type %d node %p\n", site,
-        site->getType(), node);
+    J9::X86::TreeEvaluator::setupProfiledGuardRelocation(cmpInstruction, node, reloKind);
 #endif
 }
 
