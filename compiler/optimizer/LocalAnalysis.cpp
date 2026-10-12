@@ -126,7 +126,7 @@ bool TR_LocalAnalysis::isSupportedNodeForFunctionality(TR::Node *node, TR::Compi
         return false;
 
     if (node->getOpCode().isCall() && !node->getSymbolReference()->isUnresolved()
-        && node->getSymbol()->castToMethodSymbol()->isPureFunction() && (node->getDataType() != TR::NoType))
+        && node->getSymbol()->castToMethodSymbol()->isPureFunction())
         return true;
 
     if (node->getOpCode().hasSymbolReference()
