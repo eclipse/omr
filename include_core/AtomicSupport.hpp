@@ -60,8 +60,11 @@
  *
  * [1]: https://inbox.sourceware.org/gcc-patches/20230427162301.1151333-1-patrick@rivosinc.com/
  */
+#define STRINGIZE_DETAIL(x) #x
+#define STRINGIZE(x) STRINGIZE_DETAIL(x)
 #if defined(OMR_ARCH_RISCV) && (!defined(__GNUC__) || (__GNUC__ <= 12))
-#error "GCC version 13 or higher is required on RISC-V"
+#pragma message "Version is " STRINGIZE(__GNUC__)
+#error "GCC version 13 or higher is required on RISC-V" __GNUC__
 #endif /* defined(OMR_ARCH_RISCV) && (!defined(__GNUC__) || (__GNUC__ <= 12)) */
 
 /*
