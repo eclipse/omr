@@ -135,6 +135,7 @@ SETVAL(TR_lastGPUHelper,TR_transactionExit+21)
 
 SETVAL(TR_FSRH, TR_lastGPUHelper+1)
 
+#if defined(TR_TARGET_X86)
 SETVAL(TR_X86resolveIPicClass,TR_FSRH+0)
 SETVAL(TR_X86populateIPicSlotClass,TR_FSRH+1)
 SETVAL(TR_X86populateIPicSlotCall,TR_FSRH+2)
@@ -245,7 +246,9 @@ SETVAL(TR_AMD64doAESENCEncrypt,TR_LXRH+32)
 SETVAL(TR_AMD64doAESENCDecrypt,TR_LXRH+33)
 SETVAL(TR_AMD64java_util_zip_CRC32C_updateBytes,TR_LXRH+34)
 SETVAL(TR_AMD64numRuntimeHelpers,TR_LXRH+35)
+#endif
 
+#if defined(TR_TARGET_POWER)
 SETVAL(TR_PPClongDivide,TR_FSRH)
 SETVAL(TR_PPCnativeStaticHelper,TR_FSRH+1)
 SETVAL(TR_PPCunsignedLongDivide,TR_FSRH+2)
@@ -342,7 +345,9 @@ SETVAL(TR_PPCcrc32_oneByte, TR_FSRH+92)
 SETVAL(TR_PPCpostPNextForwardCopy, TR_FSRH+93)
 SETVAL(TR_PPCpostPNextGenericCopy, TR_FSRH+94)
 SETVAL(TR_PPCnumRuntimeHelpers,TR_FSRH+95)
+#endif
 
+#if defined(TR_TARGET_ARM)
 SETVAL(TR_ARMdouble2Long,TR_FSRH)
 SETVAL(TR_ARMdoubleRemainder,TR_FSRH+1)
 SETVAL(TR_ARMdouble2Integer,TR_FSRH+2)
@@ -455,7 +460,9 @@ SETVAL(TR_ARMfloatRemainder,TR_FSRH+108)
 SETVAL(TR_ARMlong2Float,TR_FSRH+109)
 SETVAL(TR_ARMfloat2Long,TR_FSRH+110)
 SETVAL(TR_ARMnumRuntimeHelpers,TR_FSRH+111)
+#endif
 
+#if defined(TR_TARGET_ARM64)
 SETVAL(TR_ARM64interpreterUnresolvedStaticGlue,TR_FSRH)
 SETVAL(TR_ARM64interpreterUnresolvedSpecialGlue,TR_FSRH+1)
 SETVAL(TR_ARM64interpreterUnresolvedDirectVirtualGlue,TR_FSRH+2)
@@ -506,7 +513,9 @@ SETVAL(TR_ARM64arrayTranslateTRTO,TR_FSRH+46)
 SETVAL(TR_ARM64arrayTranslateTRTO255,TR_FSRH+47)
 SETVAL(TR_ARM64arrayTranslateTROTNoBreak,TR_FSRH+48)
 SETVAL(TR_ARM64numRuntimeHelpers,TR_FSRH+49)
+#endif
 
+#if defined(TR_TARGET_S390)
 SETVAL(TR_S390longDivide,TR_FSRH)
 SETVAL(TR_S390interfaceCallHelper,TR_FSRH+1)
 SETVAL(TR_S390nativeStaticHelper,TR_FSRH+2)
@@ -609,5 +618,8 @@ SETVAL(TR_S390jitResolveConstantDynamicGlue, TR_FSRH+98)
 SETVAL(TR_S390jitResolvedFieldIsVolatile, TR_FSRH+99)
 SETVAL(TR_S390interpreterStaticSpecialCallGlue, TR_FSRH+100)
 SETVAL(TR_S390numRuntimeHelpers,TR_FSRH+101)
+#endif
 
+#if defined(TR_TARGET_RISCV)
 SETVAL(TR_RISCVnumRuntimeHelpers,TR_FSRH+1)
+#endif
