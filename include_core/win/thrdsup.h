@@ -77,22 +77,32 @@ extern struct J9ThreadLibrary default_library;
 
 #define ADJUST_TIMEOUT(millis, nanos) (((nanos) && ((millis) != ((intptr_t) (((uintptr_t)-1) >> 1)))) ? ((millis) + 1) : (millis))
 
-#define COND_WAIT_IF_TIMEDOUT(cond, mutex, millis, nanos) 								\
-	do {																										\
+#define COND_WAIT_IF_TIMEDOUT(cond, mutex, millis, nanos) \
+	do { \
 		DWORD starttime_ = GetTickCount(); \
-		intptr_t initialtimeout_, timeout_, rc_;				\
-		initialtimeout_ = timeout_ = ADJUST_TIMEOUT(millis, nanos);														\
-		while (1) {																							\
-			ResetEvent((cond));																			\
-			MUTEX_EXIT(mutex);																		\
-			rc_ = WaitForSingleObject((cond), (DWORD)timeout_);										\
-			MUTEX_ENTER(mutex);																	\
-			if (rc_ == WAIT_TIMEOUT)
+		intptr_t rc_ = 0; \
+		intptr_t timeout_ = ADJUST_TIMEOUT(millis, nanos); \
+		intptr_t initialtimeout_ = timeout_; \
+		if (initialtimeout_ < 1000) { \
+			timeBeginPeriod(1L); \
+		} \
+		while (1) { \
+			ResetEvent(cond); \
+			MUTEX_EXIT(mutex); \
+			rc_ = WaitForSingleObject(cond, (DWORD)timeout_); \
+			MUTEX_ENTER(mutex); \
+			if (WAIT_TIMEOUT == rc_)
 
-#define COND_WAIT_TIMED_LOOP()																\
-			timeout_ = initialtimeout_ - (GetTickCount() - starttime_);										\
-			if (timeout_ < 0) { timeout_ = 0; } \
-		}	} while(0)
+#define COND_WAIT_TIMED_LOOP() \
+			timeout_ = initialtimeout_ - (GetTickCount() - starttime_); \
+			if (timeout_ < 0) { \
+				timeout_ = 0; \
+			} \
+		} \
+		if (initialtimeout_ < 1000) { \
+			timeEndPeriod(1L); \
+		} \
+	} while (0)
 
 /* COND_WAIT */
 

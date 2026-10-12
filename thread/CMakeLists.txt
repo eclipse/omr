@@ -153,3 +153,9 @@ target_link_libraries(j9thrstatic
 		omrutil
 		${OMR_PLATFORM_THREAD_LIBRARY}
 )
+
+if(OMR_OS_WINDOWS)
+	target_link_libraries(j9thrstatic
+		PRIVATE
+			winmm.lib)
+endif()

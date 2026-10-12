@@ -155,7 +155,7 @@ ifeq (1,$(DO_LINK))
     OMR_MK_DLLFLAGS+=-entry:_DllMainCRTStartup@12
   endif
   OMR_MK_DLLFLAGS+=-dll
-  OMR_MK_DLLLIBS+=kernel32.lib ws2_32.lib advapi32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib
+  OMR_MK_DLLLIBS += kernel32.lib ws2_32.lib advapi32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib
 
   # Delay Load Libraries
   # all windows system libraries are delayload
