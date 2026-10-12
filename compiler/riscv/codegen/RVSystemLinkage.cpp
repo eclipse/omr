@@ -698,31 +698,11 @@ TR::Register *TR::RVSystemLinkage::buildDispatch(TR::Node *callNode)
         Inst_ITYPE(OP::_jalr, callNode, ra, target, 0, dependencies, cg());
     } else {
         auto targetAddr = callNode->getSymbolReference()->getMethodAddress();
-
-        if (targetAddr == NULL) {
-            /*
-             * If the target address is not known yet, we generate `jal` and hope that the target address
-             * offset would fit into 20bit immediate.
-             *
-             * This is the case of recursive calls.
-             */
-            Inst_JTYPE(OP::_jal, callNode, ra, 0, dependencies, callNode->getSymbolReference(), NULL, cg());
-        } else {
-            /*
-             * If the target address is known, we load it into a register and generate `jalr`. This may be
-             * wasteful in cases the target address offset would fit into 20bit immediate of `jal`. However,
-             * more often than not, non-jitted functions (library / runtime functions) are too far to fit in
-             * the immediate value.
-             *
-             * So, until a trampolines are implemented, we pay the price and load the target address into
-             * register.
-             *
-             * Note, that here we load the target address into link register (`ra`). It's going to be clobbered
-             * anyways and this way we do not need to allocate another one.
-             */
-            loadConstant64(cg(), callNode, reinterpret_cast<int64_t>(targetAddr), ra);
-            Inst_ITYPE(OP::_jalr, callNode, ra, ra, 0, dependencies, cg());
-        }
+        /*
+         * For simplicuty, generate `jal` and hope that the target address offset would
+         * fit into 20bit immediate.
+         */
+        Inst_JTYPE(OP::_jal, callNode, ra, 0, dependencies, callNode->getSymbolReference(), NULL, cg());
     }
 
     cg()->machine()->setLinkRegisterKilled(true);

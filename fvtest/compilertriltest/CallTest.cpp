@@ -34,7 +34,6 @@ TEST_F(CallTest, icallOracle) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
     char inputTrees[200] = {0};
     const auto format_string = "(method return=Int32 args=[Int32] (block (ireturn (icall address=0x%jX args=[Int32] (iload parm=0)) )  ))";

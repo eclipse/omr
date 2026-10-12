@@ -92,6 +92,8 @@ public:
     virtual void reserveTrampolineIfNecessary(TR::Compilation *comp, TR::SymbolReference *symRef,
         bool inBinaryEncoding);
 
+    virtual intptr_t methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference *symRef, void *callSite);
+
     TR_ResolvedMethod *createResolvedMethod(TR_Memory *trMemory, TR_OpaqueMethodBlock *aMethod,
         TR_ResolvedMethod *owningMethod, TR_OpaqueClassBlock *classForNewInstance);
 

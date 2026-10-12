@@ -491,13 +491,16 @@ int32_t OMR::CodeCache::reserveResolvedTrampoline(TR_OpaqueMethodBlock *method, 
     if (!config.needsMethodTrampolines())
         return retValue;
 
-    // scope for cache critical section
     {
-        CacheCriticalSection reserveTrampoline(self());
+        CodeCacheHashEntry *entry = nullptr;
+        { // scope for cache critical section
+            CacheCriticalSection reserveTrampoline(self());
 
-        // see if a reservation for this method already exists, return corresponding
-        // code cache if thats the case
-        CodeCacheHashEntry *entry = _resolvedMethodHT->findResolvedMethod(method);
+            // see if a reservation for this method already exists, return corresponding
+            // code cache if thats the case
+            entry = _resolvedMethodHT->findResolvedMethod(method);
+        }
+
         if (!entry) {
             // Reserve a new trampoline since there is not an active reservation for given method
             //

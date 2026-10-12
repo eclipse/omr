@@ -163,20 +163,7 @@ TR::CodeCache *OMR::CodeCacheManager::initialize(bool allocateMonolithicCodeCach
     if (!(_usageMonitor = TR::Monitor::create("CodeCacheUsageMonitor")))
         return NULL;
 
-#if defined(TR_HOST_POWER)
-#define REACHEABLE_RANGE_KB (32 * 1024)
-#elif defined(TR_HOST_ARM64)
-#define REACHEABLE_RANGE_KB (128 * 1024)
-#else
-#define REACHEABLE_RANGE_KB (2048 * 1024)
-#endif
-
-    config._needsMethodTrampolines = !(config.trampolineCodeSize() == 0 || config.maxNumberOfCodeCaches() == 1
-#if !defined(TR_HOST_POWER)
-        || (!TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines) && self()->usingRepository()
-            && config.codeCacheTotalKB() <= REACHEABLE_RANGE_KB)
-#endif
-    );
+    config._needsMethodTrampolines = config.trampolineCodeSize() != 0;
 
     _lowCodeCacheSpaceThresholdReached = false;
 

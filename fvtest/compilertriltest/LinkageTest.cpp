@@ -88,7 +88,6 @@ TYPED_TEST(LinkageTest, InvalidLinkageTest) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
     char inputTrees[600] = { 0 };
     std::snprintf(inputTrees, sizeof(inputTrees),
@@ -117,7 +116,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing1Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
     char inputTrees[600] = { 0 };
     std::snprintf(inputTrees, sizeof(inputTrees),
@@ -161,7 +159,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing2Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -210,7 +207,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing3Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -263,7 +259,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing4Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -320,7 +315,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing5Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -381,7 +375,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing6Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -446,7 +439,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing7Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -515,7 +507,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing8Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -588,7 +579,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToNativeParameterPassing9Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -695,7 +685,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing2A
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -741,7 +730,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing3A
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -788,7 +776,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing4A
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -836,7 +823,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing5A
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -885,7 +871,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing6A
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -935,7 +920,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing7A
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -986,7 +970,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing8A
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -1038,7 +1021,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToNativeParameterPassing9A
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     char inputTrees[600] = { 0 };
@@ -1379,7 +1361,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing1Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
     auto callee_entry_point = getJitCompiledMethodReturning1stArgument<TypeParam>();
     ASSERT_NOTNULL(callee_entry_point) << "Compilation of the callee failed unexpectedly\n";
@@ -1426,7 +1407,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing2Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning2ndArgument<TypeParam>();
@@ -1478,7 +1458,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing3Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning3rdArgument<TypeParam>();
@@ -1534,7 +1513,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing4Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning4thArgument<TypeParam>();
@@ -1594,7 +1572,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing5Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning5thArgument<TypeParam>();
@@ -1658,7 +1635,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing6Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning6thArgument<TypeParam>();
@@ -1726,7 +1702,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing7Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning7thArgument<TypeParam>();
@@ -1798,7 +1773,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing8Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning8thArgument<TypeParam>();
@@ -1874,7 +1848,6 @@ TYPED_TEST(LinkageTest, SystemLinkageJitToJitParameterPassing9Arg) {
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning9thArgument<TypeParam>();
@@ -2178,7 +2151,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing2ArgW
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning2ndArgumentFromMixedTypes<TypeParam>();
@@ -2227,7 +2199,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing3ArgW
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning3rdArgumentFromMixedTypes<TypeParam>();
@@ -2277,7 +2248,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing4ArgW
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning4thArgumentFromMixedTypes<TypeParam>();
@@ -2328,7 +2298,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing5ArgW
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning5thArgumentFromMixedTypes<TypeParam>();
@@ -2380,7 +2349,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing6ArgW
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning6thArgumentFromMixedTypes<TypeParam>();
@@ -2433,7 +2401,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing7ArgW
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning7thArgumentFromMixedTypes<TypeParam>();
@@ -2487,7 +2454,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing8ArgW
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning8thArgumentFromMixedTypes<TypeParam>();
@@ -2542,7 +2508,6 @@ TYPED_TEST(LinkageWithMixedTypesTest, SystemLinkageJitToJitParameterPassing9ArgW
     SKIP_ON_S390_LINUX(MissingImplementation) << "Test is skipped on S390 Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_S390X_LINUX(MissingImplementation) << "Test is skipped on S390x Linux because calls are not currently supported (see issue #1645)";
     SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-    SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
     SKIP_ON_WINDOWS(KnownBug) << "The x86_64 code generator crashes (see issue #5324)";
 
     auto callee_entry_point = getJitCompiledMethodReturning9thArgumentFromMixedTypes<TypeParam>();

@@ -97,7 +97,14 @@ public:
 
     virtual uint8_t *code() { return NULL; }
 
-    virtual TR_OpaqueMethodBlock *getPersistentIdentifier() { return (TR_OpaqueMethodBlock *)getEntryPoint(); }
+    virtual TR_OpaqueMethodBlock *getPersistentIdentifier()
+    {
+        /*
+         * This has to be kept in sync with OMR::VMMethodEnv::startPC().
+         * If changed, startPC() has to be update accordingly.
+         */
+        return (TR_OpaqueMethodBlock *)getEntryPoint();
+    }
 
     virtual bool isInterpreted() { return startAddressForJittedMethod() == 0; }
 

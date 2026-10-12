@@ -39,7 +39,7 @@ omr_add_executable(jitbuildertest NOWARNINGS
 	GlobalTest.cpp
 )
 
-if(OMR_HOST_ARCH STREQUAL "x86")
+if((OMR_HOST_ARCH STREQUAL "x86") OR (OMR_HOST_ARCH STREQUAL "riscv") OR (OMR_HOST_ARCH STREQUAL "aarch64"))
 	if(OMR_OS_LINUX OR OMR_OS_OSX)
 		target_sources(jitbuildertest PRIVATE CallReturnTest.cpp)
 	endif()

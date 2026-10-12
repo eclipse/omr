@@ -336,7 +336,6 @@ TEST_F(MinimalTest, MeaningOfLife)
    SKIP_ON_S390(MissingImplementation) << "Test is skipped on S390 because calls are not currently supported (see issue #1645)";
    SKIP_ON_S390X(MissingImplementation) << "Test is skipped on S390x because calls are not currently supported (see issue #1645)";
    SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-   SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
    auto entry = compile<MeaningOfLifeMethod>();
 
@@ -351,7 +350,6 @@ TEST_F(MinimalTest, ReturnArgI32)
    SKIP_ON_S390(MissingImplementation) << "Test is skipped on S390 because calls are not currently supported (see issue #1645)";
    SKIP_ON_S390X(MissingImplementation) << "Test is skipped on S390x because calls are not currently supported (see issue #1645)";
    SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-   SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
    auto entry = compile<ReturnArgI32Method>();
 
@@ -368,7 +366,6 @@ TEST_F(MinimalTest, MaxIfThen)
    SKIP_ON_S390(MissingImplementation) << "Test is skipped on S390 because calls are not currently supported (see issue #1645)";
    SKIP_ON_S390X(MissingImplementation) << "Test is skipped on S390x because calls are not currently supported (see issue #1645)";
    SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-   SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
    auto entry = compile<MaxIfThenMethod>();
 
@@ -386,7 +383,6 @@ TEST_F(MinimalTest, AddArgConst)
    SKIP_ON_S390(MissingImplementation) << "Test is skipped on S390 because calls are not currently supported (see issue #1645)";
    SKIP_ON_S390X(MissingImplementation) << "Test is skipped on S390x because calls are not currently supported (see issue #1645)";
    SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-   SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
    auto entry = compile<AddArgConstMethod>();
 
@@ -402,7 +398,6 @@ TEST_F(MinimalTest, SubArgArg)
    SKIP_ON_S390(MissingImplementation) << "Test is skipped on S390 because calls are not currently supported (see issue #1645)";
    SKIP_ON_S390X(MissingImplementation) << "Test is skipped on S390x because calls are not currently supported (see issue #1645)";
    SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-   SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
    auto entry = compile<SubArgArgMethod>();
 
@@ -420,7 +415,6 @@ TEST_F(MinimalTest, Factorial)
    SKIP_ON_S390(MissingImplementation) << "Test is skipped on S390 because calls are not currently supported (see issue #1645)";
    SKIP_ON_S390X(MissingImplementation) << "Test is skipped on S390x because calls are not currently supported (see issue #1645)";
    SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-   SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
    auto entry = compile<FactorialMethod>();
 
@@ -443,7 +437,6 @@ TEST_F(MinimalTest, RecursiveFibonnaci)
    SKIP_ON_S390(MissingImplementation) << "Test is skipped on S390 because calls are not currently supported (see issue #1645)";
    SKIP_ON_S390X(MissingImplementation) << "Test is skipped on S390x because calls are not currently supported (see issue #1645)";
    SKIP_ON_ARM(MissingImplementation) << "Test is skipped on ARM because calls are not currently supported (see issue #1645)";
-   SKIP_ON_AARCH64(MissingImplementation) << "Test is skipped on AArch64 because calls are not currently supported (see issue #1645)";
 
    auto entry = compile<RecursiveFibonnaciMethod>();
 

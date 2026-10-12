@@ -58,7 +58,14 @@ public:
      * \brief  Ask for the start PC of the provided method
      * \return the start PC, or 0 if unknown or not compiled
      */
-    uintptr_t startPC(TR_OpaqueMethodBlock *method) { return 0; }
+    uintptr_t startPC(TR_OpaqueMethodBlock *method)
+    {
+        /*
+         * Implementation of this method needs to be kept in sync with
+         * OMR::ResolvedMethod::getPersistentIdentifier().
+         */
+        return reinterpret_cast<uintptr_t>(method);
+    }
 };
 
 } // namespace OMR

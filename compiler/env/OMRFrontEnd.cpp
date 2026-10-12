@@ -35,6 +35,8 @@
 #include "infra/Assert.hpp"
 #include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "il/SymbolReference.hpp"
 
 #if defined(OMR_OS_WINDOWS)
 #include <windows.h>
@@ -76,8 +78,28 @@ TR_Debug *OMR::FrontEnd::createDebug(TR::Compilation *comp) { return createDebug
 void OMR::FrontEnd::reserveTrampolineIfNecessary(TR::Compilation *comp, TR::SymbolReference *symRef,
     bool inBinaryEncoding)
 {
-    // Do we handle trampoline reservations? return here for now.
-    return;
+    TR_OpaqueMethodBlock *method
+        = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
+
+    auto err = comp->cg()->getCodeCache()->reserveResolvedTrampoline(method, inBinaryEncoding);
+
+    TR_ASSERT(err == CodeCacheErrorCode::ERRORCODE_SUCCESS, "Failed to reserve trampoline!");
+}
+
+intptr_t OMR::FrontEnd::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference *symRef, void *callSite)
+{
+    TR_ASSERT(!symRef->isUnresolved(), "No need to lookup trampolines for unresolved methods.\n");
+
+    reserveTrampolineIfNecessary(comp, symRef, false);
+
+    TR_OpaqueMethodBlock *method
+        = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
+
+    OMR::CodeCacheTrampolineCode *trampoline = TR::CodeCacheManager::instance()->findMethodTrampoline(method, callSite);
+
+    TR_ASSERT(trampoline != nullptr, "It should not fail since it is reserved first.\n");
+
+    return reinterpret_cast<intptr_t>(trampoline);
 }
 
 TR_ResolvedMethod *OMR::FrontEnd::createResolvedMethod(TR_Memory *trMemory, TR_OpaqueMethodBlock *aMethod,

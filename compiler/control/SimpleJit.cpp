@@ -84,7 +84,6 @@ static void initializeCodeCache(TR::CodeCacheManager &codeCacheManager)
     setupCodeCacheParameters(&codeCacheConfig._trampolineCodeSize, &codeCacheConfig._mccCallbacks,
         &codeCacheConfig._numOfRuntimeHelpers, &codeCacheConfig._CCPreLoadedCodeSize);
 
-    codeCacheConfig._needsMethodTrampolines = false;
     codeCacheConfig._trampolineSpacePercentage = 5;
     codeCacheConfig._allowedToGrowCache = true;
     codeCacheConfig._lowCodeCacheThreshold = 0;

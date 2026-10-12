@@ -468,13 +468,15 @@ uint8_t *TR::JtypeInstruction::generateBinaryEncoding()
         TR::ResolvedMethodSymbol *sym = getSymbolReference()->getSymbol()->getResolvedMethodSymbol();
         TR_ResolvedMethod *resolvedMethod = sym == NULL ? NULL : sym->getResolvedMethod();
 
-        if (comp()->isRecursiveMethodTarget(resolvedMethod)) {
-            intptr_t jitToJitStart = cg()->getLinkage()->entryPointFromCompiledMethod();
-            offset = jitToJitStart - reinterpret_cast<intptr_t>(cursor);
-        } else {
-            offset = reinterpret_cast<intptr_t>(getSymbolReference()->getMethodAddress())
-                - reinterpret_cast<intptr_t>(cursor);
+        intptr_t destination = comp()->isRecursiveMethodTarget(resolvedMethod)
+            ? cg()->getLinkage()->entryPointFromCompiledMethod()
+            : reinterpret_cast<intptr_t>(getSymbolReference()->getMethodAddress());
+
+        if (cg()->directCallRequiresTrampoline(destination, reinterpret_cast<intptr_t>(cursor))) {
+            destination
+                = cg()->fe()->methodTrampolineLookup(comp(), getSymbolReference(), reinterpret_cast<void *>(cursor));
         }
+        offset = destination - reinterpret_cast<intptr_t>(cursor);
     } else {
         intptr_t destination = reinterpret_cast<intptr_t>(getLabelSymbol()->getCodeLocation());
         if (destination != 0) {
