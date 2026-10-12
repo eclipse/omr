@@ -34,7 +34,7 @@
 #include "codegen/RegisterConstants.hpp" // for TR_RegisterKinds, etc
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/RegisterDependencyStruct.hpp" // for RegisterDependency
-#include "codegen/Relocation.hpp" // for TR::ExternalRelocation, etc
+#include "codegen/RVRelocation.hpp" // for R_RISCV_BRANCH and R_RISCV_JAL
 #include "compile/Compilation.hpp" // for Compilation
 #include "compile/ResolvedMethod.hpp" // for TR_ResolvedMethod
 #include "control/Options.hpp"
@@ -365,7 +365,7 @@ uint8_t *TR::BtypeInstruction::generateBinaryEncoding()
         int32_t delta = label->getCodeLocation() - cursor;
         *iPtr |= ENCODE_SBTYPE_IMM(delta);
     } else {
-        cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelRelative16BitRelocation(cursor, label));
+        cg()->addRelocation(new (cg()->trHeapMemory()) R_RISCV_BRANCH(cursor, label));
     }
 
     cursor += RISCV_INSTRUCTION_LENGTH;
@@ -464,23 +464,19 @@ uint8_t *TR::JtypeInstruction::generateBinaryEncoding()
     intptr_t offset = 0;
 
     if (getSymbolReference() != nullptr) {
+        TR_ASSERT_FATAL(getOpCode().getMnemonic() == OP::_auipc, "Instruction is not AUIPC");
+        TR_ASSERT_FATAL(getNext()->getOpCode().getMnemonic() == OP::_jalr, "AUIPC is not followed by JALR");
         TR_ASSERT_FATAL(getLabelSymbol() == nullptr, "Both symbol reference and symbol set in J-type instruction");
-        TR::ResolvedMethodSymbol *sym = getSymbolReference()->getSymbol()->getResolvedMethodSymbol();
-        TR_ResolvedMethod *resolvedMethod = sym == NULL ? NULL : sym->getResolvedMethod();
 
-        if (comp()->isRecursiveMethodTarget(resolvedMethod)) {
-            intptr_t jitToJitStart = cg()->getLinkage()->entryPointFromCompiledMethod();
-            offset = jitToJitStart - reinterpret_cast<intptr_t>(cursor);
-        } else {
-            offset = reinterpret_cast<intptr_t>(getSymbolReference()->getMethodAddress())
-                - reinterpret_cast<intptr_t>(cursor);
-        }
+        cg()->addRelocation(new (cg()->trHeapMemory()) TR::R_RISCV_CALL_PLT(cursor, getSymbolReference()));
     } else {
+        TR_ASSERT_FATAL(getOpCode().getMnemonic() == OP::_jal, "Instruction is not JAL");
+
         intptr_t destination = reinterpret_cast<intptr_t>(getLabelSymbol()->getCodeLocation());
         if (destination != 0) {
             offset = destination - reinterpret_cast<intptr_t>(cursor);
         } else {
-            cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelRelative32BitRelocation(cursor, getLabelSymbol()));
+            cg()->addRelocation(new (cg()->trHeapMemory()) TR::R_RISCV_JAL(cursor, getLabelSymbol()));
         }
     }
 

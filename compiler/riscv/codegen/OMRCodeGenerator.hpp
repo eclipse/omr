@@ -220,6 +220,28 @@ public:
     void apply32BitLabelRelativeRelocation(int32_t *cursor, TR::LabelSymbol *label);
 
     /**
+     * @brief Applies R_BRANCH label-relative relocation
+     * @param[in] cursor : instruction cursor
+     * @param[in] label : label
+     */
+    void applyR_BRANCH(int32_t *cursor, TR::LabelSymbol *label);
+
+    /**
+     * @brief Applies R_JAL label-relative relocation
+     * @param[in] cursor : instruction cursor
+     * @param[in] label : label
+     */
+    void applyR_JAL(int32_t *cursor, TR::LabelSymbol *label);
+
+    /**
+     * @brief Applies R_CALL_PLT PC-relative relocation. Passed cursor must point to
+     * AUIPC + JALR pair.
+     * @param[in] cursor : instruction cursor
+     * @param[in] label : label
+     */
+    void applyR_CALL_PLT(int32_t *cursor, TR::SymbolReference *symRef);
+
+    /**
      * @brief Status of IsOutOfLineHotPath flag
      * @return IsOutOfLineHotPath flag
      */

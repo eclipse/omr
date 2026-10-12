@@ -102,9 +102,13 @@ public:
     /**
      * @brief Builds method arguments
      * @param[in] node : caller node
-     * @param[in] dependencies : register dependency conditions
+     * @param[in] preDependencies : register dependency conditions to be associated with first instruction of calling
+     * sequence
+     * @param[in] postDependencies : register dependency conditions to be associated with last instruction of calling
+     * sequence, may be the same as preDependencies.
      */
-    virtual int32_t buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *dependencies);
+    virtual int32_t buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *preDependencies,
+        TR::RegisterDependencyConditions *postDependencies);
 
     /**
      * @brief Builds dispatch to method (either direct or indirect)

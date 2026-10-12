@@ -40,10 +40,6 @@
 #include "ras/Logger.hpp"
 #include "runtime/Runtime.hpp"
 
-void TR::Relocation::apply(TR::CodeGenerator *cg) { TR_ASSERT(0, "Should never get here"); }
-
-void TR::Relocation::trace(TR::Compilation *comp) { TR_ASSERT(0, "Should never get here"); }
-
 void TR::Relocation::setDebugInfo(TR::RelocationDebugInfo *info) { this->_genData = info; }
 
 TR::RelocationDebugInfo *TR::Relocation::getDebugInfo() { return this->_genData; }

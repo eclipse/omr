@@ -391,6 +391,50 @@ void OMR::RV::CodeGenerator::apply32BitLabelRelativeRelocation(int32_t *cursor, 
     *cursor |= ENCODE_UJTYPE_IMM(distance);
 }
 
+void OMR::RV::CodeGenerator::applyR_BRANCH(int32_t *cursor, TR::LabelSymbol *label)
+{
+    TR_ASSERT(label->getCodeLocation(), "Attempt to relocate to a NULL label address!");
+
+    intptr_t distance = (uintptr_t)label->getCodeLocation() - (uintptr_t)cursor;
+
+    TR_ASSERT(VALID_SBTYPE_IMM(distance), "Invalid Branch offset out of range");
+    *cursor |= ENCODE_SBTYPE_IMM(distance);
+}
+
+void OMR::RV::CodeGenerator::applyR_JAL(int32_t *cursor, TR::LabelSymbol *label)
+{
+    TR_ASSERT(label->getCodeLocation(), "Attempt to relocate to a NULL label address!");
+
+    intptr_t distance = (uintptr_t)label->getCodeLocation() - (uintptr_t)cursor;
+
+    TR_ASSERT(VALID_UJTYPE_IMM(distance), "Invalid JAL offset out of range");
+    *cursor |= ENCODE_UJTYPE_IMM(distance);
+}
+
+void OMR::RV::CodeGenerator::applyR_CALL_PLT(int32_t *cursor, TR::SymbolReference *symRef)
+{
+    TR_ASSERT(symRef->getMethodAddress() != 0 || comp()->isRecursiveMethodTarget(symRef->getSymbol()),
+        "Attempt to relocate to a unresolved symbol!");
+
+    intptr_t target = comp()->isRecursiveMethodTarget(symRef->getSymbol())
+        ? getLinkage()->entryPointFromCompiledMethod()
+        : reinterpret_cast<intptr_t>(symRef->getMethodAddress());
+
+    ptrdiff_t distance = target - reinterpret_cast<intptr_t>(cursor);
+
+    TR_ASSERT(INT32_MIN <= distance && distance <= INT32_MAX, "Call target out of range.");
+
+    uint32_t lo = (uint32_t)distance & ~(0xFFFFFFFF << RISCV_IMM_BITS);
+    uint32_t hi = (uint32_t)distance & (0xFFFFFFFF << RISCV_IMM_BITS);
+
+    if (lo & (1 << (RISCV_IMM_BITS - 1))) {
+        hi += 1 << RISCV_IMM_BITS;
+    }
+
+    *(cursor + 0) |= ENCODE_UTYPE_IMM(hi);
+    *(cursor + 1) |= ENCODE_ITYPE_IMM(lo);
+}
+
 int64_t OMR::RV::CodeGenerator::getLargestNegConstThatMustBeMaterialized()
 {
     TR_ASSERT(0, "Not Implemented on AArch64");
