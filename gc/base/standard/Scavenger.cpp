@@ -3845,6 +3845,8 @@ MM_Scavenger::setBackOutFlag(MM_EnvironmentBase *env, BackOutState backOutState)
 		/* Ensure that other CPUs see correct _backOutDoneIndex, by the time they see _backOutFlag is set */
 		MM_AtomicOperations::writeBarrier();
 		_extensions->setScavengerBackOutState(backOutState);
+		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+		omrtty_printf("{SHAD: setBackOutFlag: %d\n", backOutState);
 		if (backOutStarted > backOutState) {
 			Trc_MM_ScavengerBackout(env->getLanguageVMThread(), backOutFlagCleared < backOutState ? "true" : "false");
 			TRIGGER_J9HOOK_MM_PRIVATE_SCAVENGER_BACK_OUT(_extensions->privateHookInterface, env->getOmrVM(), backOutFlagCleared < backOutState);
