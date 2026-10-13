@@ -811,6 +811,7 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 	 * Guard restored. */
 	// DEV: unifying this once again. We expect STW to follow the CS abort path completely, meaning STW will not leave nursery in a clean state
 	if ((_extensions->enableUnifiedAbort || _extensions->isConcurrentScavengerEnabled()) && _extensions->isScavengerBackOutFlagRaised()) {
+		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 		omrtty_printf("{SHAD: shouldCompactThisCycle: COMPACT_ABORTED_SCAVENGE\n");
 		compactReason = COMPACT_ABORTED_SCAVENGE;
 		goto compactionReqd;
