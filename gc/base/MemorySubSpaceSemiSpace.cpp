@@ -703,6 +703,20 @@ MM_MemorySubSpaceSemiSpace::mainTeardownForAbortedGC(MM_EnvironmentBase *env)
 		/* There might be live objects in Survivor (newly allocated since the start of Concurrent Scavenge cycle).
 		 * Sweep in percolate global will rebuild the free list, so we can skip it here.
 		 */
+		/* DEV: flip(backout) assumes set_allocate has already been performed (Allocate == Survivor, distinct from Evacuate).
+		 * 1) Why: CS does set_allocate at concurrent_phase_roots (Scavenger.cpp scavengeIncremental), but STW only does it
+		 *    in mainTeardownForSuccessfulGC, which an aborted scavenge never reaches. Without it, STW enters backout with
+		 *    Allocate == Evacuate, so backout's "forced flip" branch aliases Allocate and Survivor to the same subspace,
+		 *    the 100% tilt is recorded against the wrong subspaces, and restore_tilt_after_percolate later trips
+		 *    Assert_MM_true(extensions->concurrentScavenger) in PhysicalSubArenaVirtualMemorySemiSpace::tilt.
+		 * 2) Why here: doing it at the CS-equivalent point (after roots) would change every STW scavenge, including
+		 *    successful ones. Doing it only on the abort path, immediately before backout, gives backout the same
+		 *    subspace roles as CS while leaving the successful STW path untouched. The isAllocatable(true) side effect
+		 *    of set_allocate is immediately undone by backout.
+		 */
+		if (!_extensions->isConcurrentScavengerEnabled()) {
+			flip(env, set_allocate);
+		}
 		omrtty_printf("{SHAD: CS: flip backout\n");
 		flip(env, backout);
 	} else {
