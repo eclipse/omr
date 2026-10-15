@@ -574,65 +574,111 @@ void TR_LoopTransformer::detectWhileLoops(ListAppender<TR_Structure> &whileLoops
                     bool succ2Internal = region->contains(toStructureSubGraphNode(succ2->getTo())->getStructure(),
                         region->getParent());
                     if (succ1Internal ^ succ2Internal) {
-                        TR::TreeTop *firstTree = hdrBlock->getFirstRealTreeTop();
-                        static const bool skipTt = feGetEnv("TR_canonicalizerStopAtTreetop") == NULL;
-                        static const bool skipCRAnchor = feGetEnv("TR_canonicalizerStopAtCompressedRefsAnchor") == NULL;
-                        while ((firstTree
-                            && (firstTree->getNode()->getOpCodeValue() == TR::asynccheck
-                                || (skipTt && firstTree->getNode()->getOpCodeValue() == TR::treetop)
-                                || (skipCRAnchor && firstTree->getNode()->getOpCodeValue() == TR::compressedRefs)
-                                || firstTree->getNode()->getOpCode().isCheck())))
-                            firstTree = firstTree->getNextTreeTop();
+                        // The header's exit target must match the backedge's exit
+                        // If they differ the header branch is not the real while-condition.
+                        // Find the header's exit target
+                        TR::Block *hdrExitBlock = nullptr;
+                        for (auto succEdge = hdrBlock->getSuccessors().begin();
+                             succEdge != hdrBlock->getSuccessors().end(); ++succEdge) {
+                            TR::Block *s = toBlock((*succEdge)->getTo());
+                            if (s->getStructureOf() && !region->contains(s->getStructureOf(), region->getParent())) {
+                                hdrExitBlock = s;
+                                break;
+                            }
+                        }
+                        // If the backedge block unconditionally jumps back (goto),
+                        // allow the existing while-classification logic to proceed.
+                        bool headerExitMatchesBackedge = true;
+                        if (hdrExitBlock) {
+                            for (auto predEdge = hdrBlock->getPredecessors().begin();
+                                 predEdge != hdrBlock->getPredecessors().end(); ++predEdge) {
+                                TR::Block *pred = toBlock((*predEdge)->getFrom());
+                                if (!region->contains(pred->getStructureOf(), region->getParent()))
+                                    continue; // skip entry predecessors, only backedge preds
 
-                        if (firstTree == hdrBlock->getLastRealTreeTop()
-                            || firstTree->getNextTreeTop() == hdrBlock->getLastRealTreeTop()) {
-                            TR_ScratchList<TR::Block> exitBlocks(trMemory());
-                            region->collectExitBlocks(&exitBlocks);
+                                // Walk the backedge block's successors looking for an exit.
+                                // If it has one, the header's exit must go to the same place.
+                                // If it has none (unconditional back-branch), leave
+                                // headerExitMatchesBackedge = true.
+                                for (auto succEdge = pred->getSuccessors().begin();
+                                     succEdge != pred->getSuccessors().end(); ++succEdge) {
+                                    TR::Block *s = toBlock((*succEdge)->getTo());
+                                    if (s->getStructureOf()
+                                        && !region->contains(s->getStructureOf(), region->getParent())) {
+                                        headerExitMatchesBackedge = (s == hdrExitBlock);
+                                        break;
+                                    }
+                                }
+                                break; // one backedge predecessor is sufficient
+                            }
+                        }
+                        if (headerExitMatchesBackedge) {
+                            TR::TreeTop *firstTree = hdrBlock->getFirstRealTreeTop();
+                            static const bool skipTt = feGetEnv("TR_canonicalizerStopAtTreetop") == NULL;
+                            static const bool skipCRAnchor
+                                = feGetEnv("TR_canonicalizerStopAtCompressedRefsAnchor") == NULL;
+                            while ((firstTree
+                                && (firstTree->getNode()->getOpCodeValue() == TR::asynccheck
+                                    || (skipTt && firstTree->getNode()->getOpCodeValue() == TR::treetop)
+                                    || (skipCRAnchor && firstTree->getNode()->getOpCodeValue() == TR::compressedRefs)
+                                    || firstTree->getNode()->getOpCode().isCheck())))
+                                firstTree = firstTree->getNextTreeTop();
 
-                            bool doNotConsiderAsWhile = false;
-                            if (!exitBlocks.isSingleton()) {
-                                TR::TreeTop *hdrBlockLoopTestTree = hdrBlock->getLastRealTreeTop();
-                                bool foundInductionVariable = findMatchingIVInRegion(hdrBlockLoopTestTree, region);
-                                if (!foundInductionVariable) {
-                                    ListIterator<TR::Block> blocksIt(&exitBlocks);
-                                    TR::Block *exitBlock;
-                                    for (exitBlock = blocksIt.getCurrent(); exitBlock; exitBlock = blocksIt.getNext()) {
-                                        if (exitBlock != hdrBlock) {
-                                            if (exitBlock->getSuccessors().size() == 2) {
-                                                auto it = exitBlock->getSuccessors().begin();
-                                                TR::CFGEdge *exitSucc1 = *it;
-                                                ++it;
-                                                TR::CFGEdge *exitSucc2 = *it;
-                                                bool successor1Internal = region->contains(
-                                                    toBlock(exitSucc1->getTo())->getStructureOf(), region->getParent());
-                                                bool successor2Internal = region->contains(
-                                                    toBlock(exitSucc2->getTo())->getStructureOf(), region->getParent());
-                                                if (successor1Internal ^ successor2Internal) {
-                                                    TR::TreeTop *exitBlockLoopTestTree
-                                                        = exitBlock->getLastRealTreeTop();
-                                                    if (exitBlockLoopTestTree->getNode()->getOpCode().isCompBranchOnly()
-                                                        || exitBlockLoopTestTree->getNode()
-                                                               ->getOpCode()
-                                                               .isJumpWithMultipleTargets())
-                                                        continue;
+                            if (firstTree == hdrBlock->getLastRealTreeTop()
+                                || firstTree->getNextTreeTop() == hdrBlock->getLastRealTreeTop()) {
+                                TR_ScratchList<TR::Block> exitBlocks(trMemory());
+                                region->collectExitBlocks(&exitBlocks);
 
-                                                    foundInductionVariable
-                                                        = findMatchingIVInRegion(exitBlockLoopTestTree, region);
+                                bool doNotConsiderAsWhile = false;
+                                if (!exitBlocks.isSingleton()) {
+                                    TR::TreeTop *hdrBlockLoopTestTree = hdrBlock->getLastRealTreeTop();
+                                    bool foundInductionVariable = findMatchingIVInRegion(hdrBlockLoopTestTree, region);
+                                    if (!foundInductionVariable) {
+                                        ListIterator<TR::Block> blocksIt(&exitBlocks);
+                                        TR::Block *exitBlock;
+                                        for (exitBlock = blocksIt.getCurrent(); exitBlock;
+                                             exitBlock = blocksIt.getNext()) {
+                                            if (exitBlock != hdrBlock) {
+                                                if (exitBlock->getSuccessors().size() == 2) {
+                                                    auto it = exitBlock->getSuccessors().begin();
+                                                    TR::CFGEdge *exitSucc1 = *it;
+                                                    ++it;
+                                                    TR::CFGEdge *exitSucc2 = *it;
+                                                    bool successor1Internal = region->contains(
+                                                        toBlock(exitSucc1->getTo())->getStructureOf(),
+                                                        region->getParent());
+                                                    bool successor2Internal = region->contains(
+                                                        toBlock(exitSucc2->getTo())->getStructureOf(),
+                                                        region->getParent());
+                                                    if (successor1Internal ^ successor2Internal) {
+                                                        TR::TreeTop *exitBlockLoopTestTree
+                                                            = exitBlock->getLastRealTreeTop();
+                                                        if (exitBlockLoopTestTree->getNode()
+                                                                ->getOpCode()
+                                                                .isCompBranchOnly()
+                                                            || exitBlockLoopTestTree->getNode()
+                                                                   ->getOpCode()
+                                                                   .isJumpWithMultipleTargets())
+                                                            continue;
+
+                                                        foundInductionVariable
+                                                            = findMatchingIVInRegion(exitBlockLoopTestTree, region);
+                                                    }
                                                 }
                                             }
-                                        }
 
-                                        if (foundInductionVariable) {
-                                            doNotConsiderAsWhile = true;
-                                            break;
+                                            if (foundInductionVariable) {
+                                                doNotConsiderAsWhile = true;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            if (!doNotConsiderAsWhile)
-                                isWhileLoop = true;
-                        }
+                                if (!doNotConsiderAsWhile)
+                                    isWhileLoop = true;
+                            }
+                        } // if (headerExitMatchesBackedge)
                     }
                 }
             }
