@@ -222,6 +222,6 @@
 // once const refs are sufficiently well established that the old way can be
 // removed.
 //
-#define TR_ALLOW_NON_CONST_KNOWN_OBJECTS
+//#define TR_ALLOW_NON_CONST_KNOWN_OBJECTS
 
 #endif /* OMR_DEFINES_H */
