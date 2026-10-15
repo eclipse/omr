@@ -983,11 +983,11 @@ bool OMR::CodeGenerator::isRegisterClobberable(TR::Register *reg, uint16_t count
 bool OMR::CodeGenerator::canClobberNodesRegister(TR::Node *node, uint16_t count, TR_ClobberEvalData *data,
     bool ignoreRefCount)
 {
-    if (!ignoreRefCount && node->getReferenceCount() > count)
+    if (self()->comp()->getOption(TR_DisableEnhancedClobberEval))
         return false;
 
-    if (self()->useClobberEvaluate())
-        return true;
+    if (!ignoreRefCount && node->getReferenceCount() > count)
+        return false;
 
     TR::Register *reg = node->getRegister();
     TR::RegisterPair *regPair = reg->getRegisterPair();
