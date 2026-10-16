@@ -437,6 +437,43 @@ if ((logLevelValue >= 0) && (logLevelValue <= 4)) {
 * C order of operation rules are complicated; avoid confusion and mistakes by using parentheses to make the order explicit.
 * Combining assignment and tests violates the "Try to do only one thing on each line of code" principle.
 
+### Constructor member-initializer lists
+* Each member should be initialized on a separate line.
+* Each member initialization should be preceded by the colon or comma and a space.
+* Each member initialization should be indented at least one tab.
+* The `:` and `,` should be aligned.
+
+Correct
+```c
+MyClass::MyClass(uint32_t foo, uint32_t bar, uint32_t baz)
+	: foo(foo)
+	, bar(bar)
+	, baz(baz)
+{
+	...
+}
+```
+Wrong
+```c
+MyClass::MyClass(uint32_t foo, uint32_t bar, uint32_t baz) : foo(foo), bar(bar), baz(baz)
+{
+	...
+}
+```
+Wrong
+```c
+MyClass::MyClass(uint32_t foo, uint32_t bar, uint32_t baz) :
+	foo(foo),
+	bar(bar),
+	baz(baz)
+{
+	...
+}
+```
+#### Rationale
+* Requires only a single-line change when adding and removing members.
+* Reduces overly long constructor declaration lines.
+* Improves readability.
 
 ### Parameter passing
 
@@ -845,6 +882,8 @@ helper (0, count);
 * The preferred idiom for infinite loops is ```for (;;)```.
 
 ### Operators
+
+#### Increment and decrement
 * The increment and decrement operators (++ and --) are discouraged. Use += or -= instead.
 
 Correct
@@ -871,6 +910,7 @@ for (index = 0; index < size; index++) {
 }
 ```
 
+#### Order of operations
 * Use parentheses to specify order of operation, unless the order is completely unambiguous.
 * If in doubt, use more parentheses.
 
@@ -886,6 +926,39 @@ Wrong
 result = size * count + offset;
 if (0 == a && 0 != b) { ...
 end = (uint8_t*)start + size;
+```
+
+#### Continuing expessions containing binary operators
+* When folding overly long lines, begin the next line with the binary operator.
+* Ensure the second and subsequent lines are consistently indented.
+
+Correct
+```c
+uint32_t result = longVariableNameOrCalculation1
+            + longVariableNameOrCalculation2
+            + longVariableNameOrCalculation3;
+```
+Wrong
+```c
+uint32_t result = longVariableNameOrCalculation1 +
+            longVariableNameOrCalculation2 +
+            longVariableNameOrCalculation3;
+```
+
+#### Conditional (ternary) operator
+* When folding overly long lines, align the `?` and the `:`.
+
+Correct
+```c
+uint32_t result = someCondition
+                    ? trueCase
+                    : falseCase;
+```
+Wrong
+```c
+uint32_t result = someCondition ?
+                    trueCase :
+                    falseCase;
 ```
 
 ### Enums
