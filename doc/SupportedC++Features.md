@@ -62,45 +62,45 @@ OMR is written in a pre-standardization dialect of C++11.
 The supported language and library features are set by the minimum compiler versions we support.
 
 * Strongly-typed/scoped enums: `enum class`
-* Rvalue references and move semantics: `template <typename T> T Fn(T&& t);` (V2.0--MSVC 2010)
+* Rvalue references and move semantics: `template <typename T> T Fn(T&& t);`
 * Static assertions: `static_assert`
-* auto-typed variables `auto i = 1;` (V1.0--MSVC 2010)
+* auto-typed variables `auto i = 1;`
 * Trailing function return types: `auto f() -> int`
-* Declared type of an expression: `decltype(expr)` (V1.0--MSVC 2010)
+* Declared type of an expression: `decltype(expr)`
 * Right angle brackets: `template <typename T = std::vector<int>>`
 * Delegating constructors: `MyStruct() : MyStruct(NULL) {}`
 * Extern templates
 * Variadic macros: `#define m(p, ...)`, `__VA_ARGS__`
 * `__func__` macro
 * `long long`
+* Generalized constant expressions: `constexpr`
+* Defaulted and deleted functions
+* Inline namespaces: `inline namespace inner {}`
+* Extended friend declarations
+* New character types: `char16_t`, `char32_t`
+* Extended sizeof (sizeof nested structures)
 
 ## Unsupported C++11 Features
 
-* SFINAE (MSVC 2010)
-* Generalized constant expressions: `constexpr` (MSVC 2010)
-* Initializer lists: `std::vector<int> v = { 1, 2, 3 };` (MSVC 2010)
-* Type and template aliases: `using MyAlias = MyType;` (MSVC 2010)
-* Variadic templates: `template <class... Ts>`, `sizeof...` (MSVC 2010)
-* Defaulted and deleted functions (MSVC 2010, XLC 12.1)
-* Range based for loops: `for (auto& x : container) { ... }` (MSVC 2010)
-* Non throwing exception specifier: `noexcept` (MSVC 2010)
-* Inline namespaces: `inline namespace inner {}` (MSVC 2010)
-* Inheriting constructors (MSVC 2010)
-* Forward declarations for enums (MSVC 2010)
-* Extensible literals: `12_km` (MSVC 2010)
+* Initializer lists: `std::vector<int> v = { 1, 2, 3 };`
+* Type and template aliases: `using MyAlias = MyType;`
+* Variadic templates: `template <class... Ts>`, `sizeof...`
+* Range based for loops: `for (auto& x : container) { ... }`
+* Non throwing exception specifier: `noexcept`
+* Inheriting constructors
+* Forward declarations for enums
+* Extensible literals: `12_km`
 * Thread-local storage
 * Standard Layout Types: `is_standard_layout<T>::value`
-* Extended friend declarations
-* Unrestricted unions (MSVC 2010)
+* Unrestricted unions
 * Unicode string literals
-* Extended integral types: `<cstdint>` (use `<stdint.h>` instead) (XLC)
+* Extended integral types: `<cstdint>` (use `<stdint.h>` instead)
 * Raw string literals
 * Universal character name literals
-* New character types: `char16_t`, `char32_t` (MSVC 2010)
-* Extended sizeof (sizeof nested structures) (XLC 12.1)
 * ref qualifiers on member functions: `int my_member() &&;` (MSVC 2010)
-* Lambda expressions and closures: `[](int i) -> int { return i + 1; }` (XLC v2r1)
-* Generalized attributes: `[[attribute]]` (XLC v2r1)
-* Null pointer constant: `nullptr` (XLC v2r1)
-* Alignment support: `alignas`, `alignof` (XLC v2r1)
-* Explicit conversion operators (XLC v2r1)
+* Lambda expressions and closures: `[](int i) -> int { return i + 1; }`
+* Generalized attributes: `[[attribute]]`
+* Null pointer constant: `nullptr`
+* Alignment support: `alignas`, `alignof`
+* Explicit conversion operators
+###### Note: The XLC compilers are the culprits here; the other compilers specified above support these features.
