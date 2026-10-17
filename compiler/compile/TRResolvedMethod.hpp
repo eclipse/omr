@@ -162,6 +162,7 @@ public:
     virtual void *stringConstant(int32_t cpIndex);
     virtual void *getConstantDynamicTypeFromCP(int32_t cpIndex);
     virtual bool isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
+    virtual bool isUnresolvedString(int32_t cpIndex, void **stringAddress);
     virtual bool isConstantDynamic(int32_t cpIndex);
     virtual bool isUnresolvedConstantDynamic(int32_t cpIndex);
     virtual void *dynamicConstant(int32_t cpIndex, uintptr_t *obj);

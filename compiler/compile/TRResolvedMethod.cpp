@@ -471,6 +471,12 @@ bool TR_ResolvedMethod::isUnresolvedString(int32_t, bool optimizeForAOT)
     return false;
 }
 
+bool TR_ResolvedMethod::isUnresolvedString(int32_t cpIndex, void **stringAddress)
+{
+    *stringAddress = stringConstant(cpIndex);
+    return isUnresolvedString(cpIndex);
+}
+
 void *TR_ResolvedMethod::getConstantDynamicTypeFromCP(int32_t cpIndex)
 {
     TR_UNIMPLEMENTED();
