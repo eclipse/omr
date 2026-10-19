@@ -2844,7 +2844,7 @@ MM_Scavenger::shouldRememberSlot(omrobjectptr_t *slotPtr)
 		if (isObjectInNewSpace(slotObjectPtr)) {
 			Assert_MM_true(!isObjectInEvacuateMemory(slotObjectPtr));
 			return true;
-		} else if (IS_CONCURRENT_ENABLED && isBackOutFlagRaised() && isObjectInEvacuateMemory(slotObjectPtr)) {
+		} else if ((_extensions->enableUnifiedAbort || IS_CONCURRENT_ENABLED) && isBackOutFlagRaised() && isObjectInEvacuateMemory(slotObjectPtr)) {
 			/* Could happen if we aborted before completing RS scan */
 			return true;
 		}
