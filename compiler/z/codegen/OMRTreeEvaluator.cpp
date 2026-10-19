@@ -2436,53 +2436,88 @@ TR::Register *OMR::Z::TreeEvaluator::vcompressbitsEvaluator(TR::Node *node, TR::
     TR_ASSERT_FATAL_WITH_NODE(node, node->getDataType().getVectorLength() == TR::VectorLength128,
         "Only 128-bit vectors are supported %s", node->getDataType().toString());
     const uint8_t elementSizeMask = getVectorElementSizeMask(node);
-    const uint32_t elementBitNum = getVectorElementSize(node) * 8;
     TR::Register *resultReg = cg->allocateRegister(TR_VRF);
     TR::Register *loopCountReg = cg->allocateRegister();
     TR::Register *scratchReg = cg->allocateRegister(TR_VRF);
     TR::Register *sourceReg = cg->evaluate(node->getFirstChild());
     TR::Register *maskReg = cg->evaluate(node->getSecondChild());
-    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0, 5, cg);
-
-    // Initialize the result register to zero.
-    generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, resultReg, 0, 0);
-
-    // Set up loop counter to process all bits in vector elements.
-    generateRIInstruction(cg, TR::InstOpCode::LHI, node, loopCountReg, elementBitNum);
+    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0, 7, cg);
     TR::LabelSymbol *controlFlowStartLabel = generateLabelSymbol(cg);
     controlFlowStartLabel->setStartInternalControlFlow();
+    TR::Instruction *branchInstruction = NULL;
 
-    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, controlFlowStartLabel);
+    if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z17)) {
+        // On Z17 hardware, BEXTG instruction was added to compress bits in GPRs.
+        // Compress vector lanes element by element using BEXTG on supported hardware.
+        TR::Register *sourceGpr = cg->allocateRegister();
+        TR::Register *maskGPR = cg->allocateRegister();
+        generateRIInstruction(cg, TR::InstOpCode::LHI, node, loopCountReg, 16 / getVectorElementSize(node));
+        generateS390LabelInstruction(cg, TR::InstOpCode::label, node, controlFlowStartLabel);
+        // Move vector elements to GPRs.
+        generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, sourceGpr, sourceReg,
+            generateS390MemoryReference(loopCountReg, 0xfff, cg), elementSizeMask);
+        generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, maskGPR, maskReg,
+            generateS390MemoryReference(loopCountReg, 0xfff, cg), elementSizeMask);
+        // Compress the value.
+        generateRRFInstruction(cg, TR::InstOpCode::BEXTG, node, sourceGpr, sourceGpr, maskGPR, static_cast<uint8_t>(0));
+        // Compressed bits are in the left of the GPR. Move them to appropriate index.
+        const uint32_t shiftAmount = 64 - (getVectorElementSize(node) * 8);
+        if (shiftAmount > 0) {
+            generateRSInstruction(cg, TR::InstOpCode::SRLG, node, sourceGpr, sourceGpr, shiftAmount);
+        }
+        // Copy the compressed result to vector result register.
+        generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, resultReg, sourceGpr,
+            generateS390MemoryReference(loopCountReg, 0xfff, cg), elementSizeMask);
+        branchInstruction
+            = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCountReg, controlFlowStartLabel);
+        // Compressed bits are aligned to the left. Move them to the right.
+        generateVRRaInstruction(cg, TR::InstOpCode::VPOPCT, node, scratchReg, maskReg, 0, 0, elementSizeMask);
+        generateVRRcInstruction(cg, TR::InstOpCode::VERLLV, node, resultReg, resultReg, scratchReg, elementSizeMask);
+        dependencies->addPostCondition(sourceGpr, TR::RealRegister::AssignAny);
+        dependencies->addPostCondition(maskGPR, TR::RealRegister::AssignAny);
+        cg->stopUsingRegister(sourceGpr);
+        cg->stopUsingRegister(maskGPR);
+    } else {
+        const uint32_t elementBitNum = getVectorElementSize(node) * 8;
+        // Initialize the result register to zero.
+        generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, resultReg, 0, 0);
 
-    const uint32_t msbPosition = elementBitNum - 1;
-    // Step 1: Extract current mask bit by shifting it to LSB position
-    generateVRSaInstruction(cg, TR::InstOpCode::VESRL, node, scratchReg, maskReg,
-        generateS390MemoryReference(msbPosition, cg), elementSizeMask);
-    // Step 2: Rotate source left by 1 to position next bit at MSB
-    generateVRSaInstruction(cg, TR::InstOpCode::VERLL, node, sourceReg, sourceReg, generateS390MemoryReference(1, cg),
-        elementSizeMask);
-    // Step 3: Conditionally copy source MSB to result if mask bit is set.
-    // VSEL: result = (scratchReg[bit0] == 1) ? workingSource : resultReg
-    generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, resultReg, sourceReg, resultReg, scratchReg, 0, 0);
-    // Step 4: Rotate result left by 1 if mask bit was set (scratchReg controls rotation amount: 0 or 1)
-    generateVRRcInstruction(cg, TR::InstOpCode::VERLLV, node, resultReg, resultReg, scratchReg, elementSizeMask);
-    // Step 5: Rotate mask left by 1 to advance to next bit position
-    generateVRSaInstruction(cg, TR::InstOpCode::VERLL, node, maskReg, maskReg, generateS390MemoryReference(1, cg),
-        elementSizeMask);
+        // Set up loop counter to process all bits in vector elements.
+        generateRIInstruction(cg, TR::InstOpCode::LHI, node, loopCountReg, elementBitNum);
 
-    generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCountReg, controlFlowStartLabel);
+        generateS390LabelInstruction(cg, TR::InstOpCode::label, node, controlFlowStartLabel);
 
-    // Correct the bit order in the result register by rotating left (compensates for the extra rotation from the loop).
-    generateVRSaInstruction(cg, TR::InstOpCode::VERLL, node, resultReg, resultReg,
-        generateS390MemoryReference(msbPosition, cg), elementSizeMask);
+        const uint32_t msbPosition = elementBitNum - 1;
+        // Step 1: Extract current mask bit by shifting it to LSB position
+        generateVRSaInstruction(cg, TR::InstOpCode::VESRL, node, scratchReg, maskReg,
+            generateS390MemoryReference(msbPosition, cg), elementSizeMask);
+        // Step 2: Rotate source left by 1 to position next bit at MSB
+        generateVRSaInstruction(cg, TR::InstOpCode::VERLL, node, sourceReg, sourceReg,
+            generateS390MemoryReference(1, cg), elementSizeMask);
+        // Step 3: Conditionally copy source MSB to result if mask bit is set.
+        // VSEL: result = (scratchReg[bit0] == 1) ? workingSource : resultReg
+        generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, resultReg, sourceReg, resultReg, scratchReg, 0, 0);
+        // Step 4: Rotate result left by 1 if mask bit was set (scratchReg controls rotation amount: 0 or 1)
+        generateVRRcInstruction(cg, TR::InstOpCode::VERLLV, node, resultReg, resultReg, scratchReg, elementSizeMask);
+        // Step 5: Rotate mask left by 1 to advance to next bit position
+        generateVRSaInstruction(cg, TR::InstOpCode::VERLL, node, maskReg, maskReg, generateS390MemoryReference(1, cg),
+            elementSizeMask);
 
+        branchInstruction
+            = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCountReg, controlFlowStartLabel);
+
+        // Correct the bit order in the result register by rotating left (compensates for the extra rotation from the
+        // loop).
+        generateVRSaInstruction(cg, TR::InstOpCode::VERLL, node, resultReg, resultReg,
+            generateS390MemoryReference(msbPosition, cg), elementSizeMask);
+    }
     dependencies->addPostCondition(sourceReg, TR::RealRegister::AssignAny);
     dependencies->addPostCondition(resultReg, TR::RealRegister::AssignAny);
     dependencies->addPostCondition(maskReg, TR::RealRegister::AssignAny);
     dependencies->addPostCondition(scratchReg, TR::RealRegister::AssignAny);
     dependencies->addPostCondition(loopCountReg, TR::RealRegister::AssignAny);
     TR::LabelSymbol *controlFlowEndLabel = generateLabelSymbol(cg);
-    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, controlFlowEndLabel, dependencies);
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, controlFlowEndLabel, dependencies, branchInstruction);
     controlFlowEndLabel->setEndInternalControlFlow();
 
     cg->stopUsingRegister(scratchReg);
@@ -2528,56 +2563,94 @@ TR::Register *OMR::Z::TreeEvaluator::vmcompressbitsEvaluator(TR::Node *node, TR:
  * The code generator.
  *
  * \return
- * TR::Register with the compressed values.
+ * TR::Register with the expanded values.
  */
 TR::Register *OMR::Z::TreeEvaluator::vexpandbitsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
     TR_ASSERT_FATAL_WITH_NODE(node, node->getDataType().getVectorLength() == TR::VectorLength128,
         "Only 128-bit vectors are supported %s", node->getDataType().toString());
     const uint8_t elementSizeMask = getVectorElementSizeMask(node);
-    const uint32_t elementBitNum = getVectorElementSize(node) * 8;
     TR::Register *resultReg = cg->allocateRegister(TR_VRF);
     TR::Register *loopCountReg = cg->allocateRegister();
     TR::Register *scratchReg = cg->allocateRegister(TR_VRF);
     const bool isMasked = node->getOpCode().isVectorMasked();
     TR::Register *sourceReg;
     TR::Register *sourceCopyReg;
-    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0, 6, cg);
-    if (isMasked) {
-        // For masked operations, preserve the original source register by creating a copy.
-        sourceCopyReg = cg->evaluate(node->getFirstChild());
-        dependencies->addPostCondition(sourceCopyReg, TR::RealRegister::AssignAny);
-        sourceReg = cg->allocateRegister(TR_VRF);
-        generateVRRaInstruction(cg, TR::InstOpCode::VLR, node, sourceReg, sourceCopyReg);
-    } else {
-        sourceReg = cg->gprClobberEvaluate(node->getFirstChild());
-    }
+    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0, 8, cg);
+    TR::LabelSymbol *controlFlowStartLabel = generateLabelSymbol(cg);
+    controlFlowStartLabel->setStartInternalControlFlow();
     TR::Register *maskReg = cg->evaluate(node->getSecondChild());
 
-    // Initialize the result register to zero.
-    generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, resultReg, 0, 0);
+    if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z17)) {
+        // On Z17 hardware, BDEPG instruction was added to expand bits in GPRs.
+        // Expand vector lanes element by element using BDEPG on supported hardware.
+        TR::Register *sourceGpr = cg->allocateRegister();
+        TR::Register *maskGPR = cg->allocateRegister();
+        // BDEPG instruction expands bits from the left side, moving the target bits from the right side of the lanes to
+        // the left side.
+        generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, scratchReg, -1, 0);
+        generateVRRcInstruction(cg, TR::InstOpCode::VX, node, scratchReg, maskReg, scratchReg, 0);
+        generateVRRaInstruction(cg, TR::InstOpCode::VPOPCT, node, scratchReg, scratchReg, 0, 0, elementSizeMask);
+        sourceReg = cg->evaluate(node->getFirstChild());
+        sourceCopyReg = sourceReg;
+        generateVRRcInstruction(cg, TR::InstOpCode::VESLV, node, scratchReg, sourceReg, scratchReg, elementSizeMask);
+        // Set up a loop to iterate through elements of the vector register.
+        generateRIInstruction(cg, TR::InstOpCode::LHI, node, loopCountReg, 16 / getVectorElementSize(node));
+        generateS390LabelInstruction(cg, TR::InstOpCode::label, node, controlFlowStartLabel);
+        // Copy target mask and source elements to GPRs.
+        generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, sourceGpr, scratchReg,
+            generateS390MemoryReference(loopCountReg, 0xfff, cg), elementSizeMask);
+        generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, maskGPR, maskReg,
+            generateS390MemoryReference(loopCountReg, 0xfff, cg), elementSizeMask);
+        // BDEPG instruction expands bits from the left side, moving the target bits from the right side of the lanes to
+        // the left side.
+        const uint32_t shiftAmount = 64 - (getVectorElementSize(node) * 8);
+        if (shiftAmount > 0) {
+            generateRSInstruction(cg, TR::InstOpCode::SLLG, node, sourceGpr, sourceGpr, shiftAmount);
+        }
+        generateRRFInstruction(cg, TR::InstOpCode::BDEPG, node, sourceGpr, sourceGpr, maskGPR, static_cast<uint8_t>(0));
+        // Copy the expanded value to vector result register.
+        generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, resultReg, sourceGpr,
+            generateS390MemoryReference(loopCountReg, 0xfff, cg), elementSizeMask);
+        dependencies->addPostCondition(sourceGpr, TR::RealRegister::AssignAny);
+        dependencies->addPostCondition(maskGPR, TR::RealRegister::AssignAny);
+        cg->stopUsingRegister(sourceGpr);
+        cg->stopUsingRegister(maskGPR);
+    } else {
+        const uint32_t elementBitNum = getVectorElementSize(node) * 8;
+        if (isMasked) {
+            // For masked operations, preserve the original source register by creating a copy.
+            sourceCopyReg = cg->evaluate(node->getFirstChild());
+            dependencies->addPostCondition(sourceCopyReg, TR::RealRegister::AssignAny);
+            sourceReg = cg->allocateRegister(TR_VRF);
+            generateVRRaInstruction(cg, TR::InstOpCode::VLR, node, sourceReg, sourceCopyReg);
+        } else {
+            sourceReg = cg->gprClobberEvaluate(node->getFirstChild());
+        }
+        // Initialize the result register to zero.
+        generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, resultReg, 0, 0);
 
-    // Set up loop counter to process all bits in each vector element.
-    generateRIInstruction(cg, TR::InstOpCode::LHI, node, loopCountReg, elementBitNum);
-    TR::LabelSymbol *controlFlowStartLabel = generateLabelSymbol(cg);
-    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, controlFlowStartLabel);
-    controlFlowStartLabel->setStartInternalControlFlow();
+        // Set up loop counter to process all bits in each vector element.
+        generateRIInstruction(cg, TR::InstOpCode::LHI, node, loopCountReg, elementBitNum);
 
-    const uint32_t msbPosition = elementBitNum - 1;
-    // Step 1: Rotate the mask to move LSB to the MSB position.
-    generateVRSaInstruction(cg, TR::InstOpCode::VERLL, node, maskReg, maskReg,
-        generateS390MemoryReference(msbPosition, cg), elementSizeMask);
-    // Step 2: Extract the LSB into the scratch register.
-    generateVRSaInstruction(cg, TR::InstOpCode::VESRL, node, scratchReg, maskReg,
-        generateS390MemoryReference(msbPosition, cg), elementSizeMask);
-    // Step 3: Conditionally copy the least significant bit (LSB) from the source to the result if the mask bit is set.
-    generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, resultReg, sourceReg, resultReg, scratchReg, 0, 0);
-    // Step 4: Rotate the result register right by 1 bit to position the extracted bit correctly.
-    generateVRSaInstruction(cg, TR::InstOpCode::VERLL, node, resultReg, resultReg,
-        generateS390MemoryReference(msbPosition, cg), elementSizeMask);
-    // Step 5: Advance to the next source bit position only if the current mask bit was set.
-    generateVRRcInstruction(cg, TR::InstOpCode::VESRLV, node, sourceReg, sourceReg, scratchReg, elementSizeMask);
+        generateS390LabelInstruction(cg, TR::InstOpCode::label, node, controlFlowStartLabel);
 
+        const uint32_t msbPosition = elementBitNum - 1;
+        // Step 1: Rotate the mask to move LSB to the MSB position.
+        generateVRSaInstruction(cg, TR::InstOpCode::VERLL, node, maskReg, maskReg,
+            generateS390MemoryReference(msbPosition, cg), elementSizeMask);
+        // Step 2: Extract the LSB into the scratch register.
+        generateVRSaInstruction(cg, TR::InstOpCode::VESRL, node, scratchReg, maskReg,
+            generateS390MemoryReference(msbPosition, cg), elementSizeMask);
+        // Step 3: Conditionally copy the least significant bit (LSB) from the source to the result if the mask bit is
+        // set.
+        generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, resultReg, sourceReg, resultReg, scratchReg, 0, 0);
+        // Step 4: Rotate the result register right by 1 bit to position the extracted bit correctly.
+        generateVRSaInstruction(cg, TR::InstOpCode::VERLL, node, resultReg, resultReg,
+            generateS390MemoryReference(msbPosition, cg), elementSizeMask);
+        // Step 5: Advance to the next source bit position only if the current mask bit was set.
+        generateVRRcInstruction(cg, TR::InstOpCode::VESRLV, node, sourceReg, sourceReg, scratchReg, elementSizeMask);
+    }
     generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCountReg, controlFlowStartLabel);
     dependencies->addPostCondition(sourceReg, TR::RealRegister::AssignAny);
     dependencies->addPostCondition(resultReg, TR::RealRegister::AssignAny);
@@ -2593,7 +2666,9 @@ TR::Register *OMR::Z::TreeEvaluator::vexpandbitsEvaluator(TR::Node *node, TR::Co
 
     if (isMasked) {
         TR::Node *maskChild = node->getThirdChild();
-        cg->stopUsingRegister(sourceReg);
+        if (sourceReg != sourceCopyReg) {
+            cg->stopUsingRegister(sourceReg);
+        }
         // Apply the lane mask: the result reflects the expanded operation only for lanes where the mask is true;
         // for false mask lanes, the original source value is preserved in the result register.
         generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, resultReg, resultReg, sourceCopyReg,
@@ -3138,7 +3213,7 @@ static inline TR::Register *inlineBitCompress(TR::Node *node, TR::CodeGenerator 
                 break;
 
             default:
-                TR_ASSERT_FATAL_WITH_NODE(node, false, "Unrecognized expandbits type %s\n", type.toString());
+                TR_ASSERT_FATAL_WITH_NODE(node, false, "Unrecognized compressbits type %s\n", type.toString());
                 break;
         }
 
