@@ -2879,6 +2879,7 @@ void TR_ExceptionCheckMotion::initializeGenAndKillSetInfo()
             _nullCheckKilled->set(blockNum);
             _boundCheckKilled->set(blockNum);
             _divCheckKilled->set(blockNum);
+            _dividesKilled->set(blockNum);
             _arrayStoreCheckKilled->set(blockNum);
             _arrayCheckKilled->set(blockNum);
             _checkCastKilled->set(blockNum);
@@ -2900,6 +2901,7 @@ void TR_ExceptionCheckMotion::initializeGenAndKillSetInfo()
                     _nullCheckKilled->set(blockNum);
                     _boundCheckKilled->set(blockNum);
                     _divCheckKilled->set(blockNum);
+                    _dividesKilled->set(blockNum);
                     _arrayStoreCheckKilled->set(blockNum);
                     _arrayCheckKilled->set(blockNum);
                     _checkCastKilled->set(blockNum);
@@ -2917,6 +2919,7 @@ void TR_ExceptionCheckMotion::initializeGenAndKillSetInfo()
             _nullCheckKilled->set(blockNum);
             _boundCheckKilled->set(blockNum);
             _divCheckKilled->set(blockNum);
+            _dividesKilled->set(blockNum);
             _arrayStoreCheckKilled->set(blockNum);
             _arrayCheckKilled->set(blockNum);
             _checkCastKilled->set(blockNum);
