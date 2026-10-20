@@ -867,10 +867,6 @@ public:
     //
     bool getSupportsNewObjectAlignment() { return false; }
 
-    bool getSupportsTenuredObjectAlignment() { return false; }
-
-    bool isObjectOfSizeWorthAligning(uint32_t size) { return false; }
-
     uint32_t getMaxObjectSizeGuaranteedNotToOverflow() { return _maxObjectSizeGuaranteedNotToOverflow; }
 
     // --------------------------------------------------------------------------

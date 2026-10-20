@@ -297,12 +297,11 @@ public:
 	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
 	 * @param[out] objectCopySizeInBytes actual object size
 	 * @param[out] objectReserveSizeInBytes size adjusted to object alignment
-	 * @param[out] hotFieldAlignmentDescriptor pointer to hot field alignment descriptor for class (or NULL)
 	 */
 	MMINLINE void
-	calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, uintptr_t *hotFieldAlignmentDescriptor)
+	calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes)
 	{
-		_delegate.calculateObjectDetailsForCopy(env, forwardedHeader, objectCopySizeInBytes, objectReserveSizeInBytes, hotFieldAlignmentDescriptor);
+		_delegate.calculateObjectDetailsForCopy(env, forwardedHeader, objectCopySizeInBytes, objectReserveSizeInBytes);
 	}
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 

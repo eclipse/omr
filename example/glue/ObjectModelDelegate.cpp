@@ -40,11 +40,10 @@ GC_ObjectModelDelegate::initializeAllocation(MM_EnvironmentBase *env, void *allo
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 void
-GC_ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *reservedObjectSizeInBytes, uintptr_t *hotFieldAlignmentDescriptor)
+GC_ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *reservedObjectSizeInBytes)
 {
 	*objectCopySizeInBytes = getForwardedObjectSizeInBytes(forwardedHeader);
 	*reservedObjectSizeInBytes = env->getExtensions()->objectModel.adjustSizeInBytes(*objectCopySizeInBytes);
-	*hotFieldAlignmentDescriptor = 0;
 }
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 

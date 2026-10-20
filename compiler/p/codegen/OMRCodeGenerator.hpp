@@ -555,14 +555,6 @@ public:
 
     bool supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol);
 
-    bool getSupportsTenuredObjectAlignment() { return true; }
-
-    bool isObjectOfSizeWorthAligning(uint32_t size)
-    {
-        uint32_t lineSize = 64;
-        return ((size < (lineSize << 1)) && (size > (lineSize >> 2)));
-    }
-
     uint32_t getJitMethodEntryAlignmentBoundary();
 
     using OMR::CodeGenerator::getSupportsConstantOffsetInAddressing;

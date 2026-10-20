@@ -406,12 +406,6 @@ public:
 
     void setDebugCounters(TR::DebugCounterAggregation *debugCounters) { _debugCounters = debugCounters; }
 
-    // getNormalizedFrequency returns a value between 0 and 100.  getGlobalNormalizedFrequency multiplies the
-    // normalizedfrequency by 10 for hot methods and by 100 for scorching methods.
-    //
-    int32_t getNormalizedFrequency(TR::CFG *);
-    int32_t getGlobalNormalizedFrequency(TR::CFG *);
-
     bool verifyOSRInduceBlock(TR::Compilation *);
 
     /**

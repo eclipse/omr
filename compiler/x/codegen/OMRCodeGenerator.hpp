@@ -693,15 +693,6 @@ public:
 
     bool getSupportsNewObjectAlignment() { return true; }
 
-    bool getSupportsTenuredObjectAlignment() { return true; }
-
-    bool isObjectOfSizeWorthAligning(uint32_t size)
-    {
-        uint32_t lineSize = 64; // getX86ProcessorInfo().getL1DataCacheLineSize();
-                                // the query doesn't seem to work on AMD processors;
-        return ((size < (lineSize << 1)) && (size > (lineSize >> 2)));
-    }
-
     int32_t getMaximumNumbersOfAssignableGPRs();
     int32_t getMaximumNumbersOfAssignableFPRs();
     int32_t getMaximumNumbersOfAssignableVRs();
