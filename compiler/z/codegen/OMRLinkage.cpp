@@ -1560,44 +1560,25 @@ void OMR::Z::Linkage::doNotKillSpecialRegsForBuildArgs(TR::Linkage *linkage, boo
     }
 }
 
-/**
- * Build arguments for System routines
- */
 int32_t OMR::Z::Linkage::buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *dependencies, bool isFastJNI,
-    int64_t killMask, TR::Register *&vftReg, bool PassReceiver)
+    int64_t killMask, TR::Register *&vftReg, bool passReceiver, bool isRightToLeft)
 {
     TR::SystemLinkage *systemLinkage = (TR::SystemLinkage *)self()->cg()->getLinkage(TR_System);
 
-    int8_t gprSize = self()->machine()->getGPRSize();
-    TR::Register *tempRegister;
-    int32_t argIndex = 0, i, from, to, step, numChildren;
-    int32_t argSize = 0;
-    int32_t stackOffset = 0;
-    uint32_t numIntegerArgs = 0;
-    uint32_t numFloatArgs = 0;
-    uint32_t numVectorArgs = 0;
-    TR::Node *child;
-    void *smark;
-    uint32_t firstArgumentChild = callNode->getFirstArgumentIndex();
-    TR::DataType resType = callNode->getType();
-    TR::DataType resDataType = resType.getDataType();
-
-    const bool enableVectorLinkage = self()->cg()->getSupportsVectorRegisters();
-
-    // Not kill special registers
     self()->doNotKillSpecialRegsForBuildArgs(self(), isFastJNI, killMask);
 
     // For the generated classObject argument, we didn't use them in the dispatch sequence.
     // Simply evaluating them would be enough. Care must be taken when we begin to use them,
     // in order not to spill in the dispatch sequence.
-    for (i = 0; i < firstArgumentChild; i++) {
+    uint32_t firstArgumentChild = callNode->getFirstArgumentIndex();
+    for (int i = 0; i < firstArgumentChild; i++) {
         TR::Node *child = callNode->getChild(i);
         vftReg = self()->cg()->evaluate(child);
         self()->cg()->decReferenceCount(child);
     }
 
     // Skip the first receiver argument if instructed.
-    if (!PassReceiver) {
+    if (!passReceiver) {
         // Force evaluation of child if necessary
         TR::Node *receiverChild = callNode->getChild(firstArgumentChild);
         if (receiverChild->getReferenceCount() > 1) {
@@ -1610,29 +1591,34 @@ int32_t OMR::Z::Linkage::buildArgs(TR::Node *callNode, TR::RegisterDependencyCon
         firstArgumentChild++;
     }
 
-    numChildren = callNode->getNumChildren() - 1;
-    if ((callNode->getNumChildren() >= 1) && (callNode->getChild(numChildren)->getOpCodeValue() == TR::GlRegDeps))
-        numChildren--;
+    int lastChildIndex = callNode->getNumChildren() - 1;
+    if ((callNode->getNumChildren() >= 1) && (callNode->getChild(lastChildIndex)->getOpCodeValue() == TR::GlRegDeps))
+        lastChildIndex--;
 
     // setup helper routine arguments in reverse order
-    bool rightToLeft = self()->isParmsInReverseOrder() &&
-        // we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
-        !callNode->getSymbolReference()->isOSRInductionHelper();
+    // we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
+    bool rightToLeft
+        = self()->isParmsInReverseOrder() && !callNode->getSymbolReference()->isOSRInductionHelper() && isRightToLeft;
+
+    int from = 0, to = 0, step = 0;
     if (rightToLeft) {
-        from = numChildren;
+        from = lastChildIndex;
         to = firstArgumentChild;
         step = -1;
     } else {
         from = firstArgumentChild;
-        to = numChildren;
+        to = lastChildIndex;
         step = 1;
     }
 
     // Add special argument register dependency
     self()->addSpecialRegDepsForBuildArgs(callNode, dependencies, from, step);
 
-    for (i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step) {
-        child = callNode->getChild(i);
+    int32_t argSize = 0;
+    int8_t gprSize = self()->machine()->getGPRSize();
+    const bool enableVectorLinkage = self()->cg()->getSupportsVectorRegisters();
+    for (int i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step) {
+        TR::Node *child = callNode->getChild(i);
         TR::DataType argType = child->getType();
         TR::DataType argDataType = argType.getDataType();
 
@@ -1644,9 +1630,10 @@ int32_t OMR::Z::Linkage::buildArgs(TR::Node *callNode, TR::RegisterDependencyCon
             argSize += gprSize;
     }
 
-    stackOffset = self()->isFirstParmAtFixedOffset() ? self()->getOffsetToFirstParm() : argSize;
+    int32_t stackOffset = self()->isFirstParmAtFixedOffset() ? self()->getOffsetToFirstParm() : argSize;
 
     // store env register
+    uint32_t numIntegerArgs = 0;
     stackOffset = self()->storeExtraEnvRegForBuildArgs(callNode, self(), dependencies, isFastJNI, stackOffset, gprSize,
         numIntegerArgs);
 
@@ -1655,10 +1642,12 @@ int32_t OMR::Z::Linkage::buildArgs(TR::Node *callNode, TR::RegisterDependencyCon
     //
 
     // Push args onto stack
-    for (i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step) {
+    uint32_t numFloatArgs = 0;
+    uint32_t numVectorArgs = 0;
+    for (int i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step) {
         TR::MemoryReference *mref = NULL;
         TR::Register *argRegister = NULL;
-        child = callNode->getChild(i);
+        TR::Node *child = callNode->getChild(i);
 
         switch (child->getDataType()) {
             case TR::Address:
@@ -1757,6 +1746,8 @@ int32_t OMR::Z::Linkage::buildArgs(TR::Node *callNode, TR::RegisterDependencyCon
     // Setup return register dependency
     TR::Register *resultReg = NULL;
     TR::Register *javaResultReg = NULL;
+    TR::DataType resType = callNode->getType();
+    TR::DataType resDataType = resType.getDataType();
     switch (resDataType) {
         case TR::NoType:
             break;
@@ -1828,7 +1819,7 @@ int32_t OMR::Z::Linkage::buildArgs(TR::Node *callNode, TR::RegisterDependencyCon
     TR::Register *dummyReg;
     TR::RealRegister::RegNum last = TR::RealRegister::LastFPR;
 
-    for (i = TR::RealRegister::FirstGPR; i <= last; i++) {
+    for (int i = TR::RealRegister::FirstGPR; i <= last; i++) {
         if ((killMask & (0x1L << REGINDEX(i)))) {
             dummyReg = NULL;
             self()->killAndAssignRegister(killMask, dependencies, &dummyReg, REGNUM(i), self()->cg(), true, true);

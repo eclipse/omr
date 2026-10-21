@@ -78,7 +78,13 @@ public:
 
     virtual uint8_t *emitSnippetBody();
 
+    uint8_t *emitSnippetBodyInner(uint8_t *cursor, TR::SymbolReference *helperSymRef);
+
     virtual uint32_t getLength(int32_t);
+
+    virtual void print(OMR::Logger *log, TR_Debug *);
+
+    void printInner(OMR::Logger *log, TR_Debug *, uint8_t *);
 };
 
 } // namespace TR

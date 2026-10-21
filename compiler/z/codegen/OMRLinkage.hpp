@@ -323,8 +323,20 @@ public:
         return killMask;
     }
 
+    /**
+     * @brief sets up registers and stack for a call
+     * @param callNode: the tree node representing the call
+     * @param dependencies: the register dependencies created in linkage. This will be modified
+     * @param isFastJNI: indicates if this is a JNI call
+     * @param killMask: a bit mask of the registers killed by the call
+     * @param vftReg: the register holdin the class object, for virtual calls
+     * @param passReceiver: default is true. When true, receiver object is passed as a paramter for the target method,
+     * and is not evaluted here
+     * @param isRightToLeft: to override the paramter order in special calls
+     * @return The total size (in bytes) of the arguments
+     */
     virtual int32_t buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *dependencies, bool isFastJNI,
-        int64_t killMask, TR::Register *&vftReg, bool PassReceiver = true);
+        int64_t killMask, TR::Register *&vftReg, bool passReceiver = true, bool isRightToLeft = true);
     TR::Instruction *storeArgumentOnStack(TR::Node *callNode, TR::InstOpCode::Mnemonic opCode, TR::Register *argReg,
         int32_t *stackOffsetPtr, TR::Register *stackRegister);
     TR::Instruction *storeLongDoubleArgumentOnStack(TR::Node *callNode, TR::DataType argType,

@@ -50,6 +50,9 @@ class S390CallSnippet : public TR::Snippet {
 protected:
     TR::SymbolReference *_realMethodSymbolReference;
 
+    static uint8_t *S390FlushArgumentsToStackHelper(uint8_t *buffer, TR::Node *callNode, int32_t argSize,
+        TR::CodeGenerator *cg, int argStart, bool rightToLeft, TR::Linkage *linkage);
+
 public:
     S390CallSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s)
         : TR::Snippet(cg, c, lab, false)
@@ -88,9 +91,10 @@ public:
 
     static uint8_t *storeArgumentItem(TR::InstOpCode::Mnemonic op, uint8_t *buffer, TR::RealRegister *reg,
         int32_t offset, TR::CodeGenerator *cg);
-    static uint8_t *S390flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize,
+    static uint8_t *S390FlushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize,
         TR::CodeGenerator *cg);
     static int32_t instructionCountForArguments(TR::Node *callNode, TR::CodeGenerator *cg);
+    static int32_t instructionCountForArgumentsInner(TR::Node *callNode, TR::CodeGenerator *cg, int32_t argStart);
 
     /**
      * @brief For a given call from snippet (Usually helper calls) calculate the
@@ -105,6 +109,22 @@ public:
      */
     static int32_t adjustCallOffsetWithTrampoline(uintptr_t targetAddr, uint8_t *currentInst,
         TR::SymbolReference *callSymRef, TR::Snippet *snippet);
+
+    static uint8_t *printS390ArgumentsFlush(OMR::Logger *log, TR::Node *node, uint8_t *bufferPos, int32_t argSize,
+        TR_Debug *debug, int32_t argStart, TR::Machine *machine, TR::Linkage *privateLinkage);
+
+    /*
+     * prints a RX instruction given (for snippet debug logging).
+     */
+    static uint8_t *printRXInstruction(OMR::Logger *log, TR_Debug *debug, TR::InstOpCode::Mnemonic opcode,
+        TR::RealRegister *targetReg, TR::RealRegister *baseReg, int32_t offset, uint8_t *cursor, uint8_t instrSize);
+
+    static uint8_t *printRRInstruction(OMR::Logger *log, TR_Debug *debug, TR::InstOpCode::Mnemonic opcode,
+        TR::RealRegister *targetReg, TR::RealRegister *srcReg, uint8_t *cursor, uint8_t instrSize);
+
+private:
+    inline static void printOpcode(OMR::Logger *log, TR_Debug *debug, TR::InstOpCode::Mnemonic opcode, uint8_t *cursor,
+        uint8_t instrSize);
 };
 
 } // namespace TR

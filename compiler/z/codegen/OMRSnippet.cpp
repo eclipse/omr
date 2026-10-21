@@ -120,7 +120,7 @@ void TR_Debug::printz(OMR::Logger *log, TR::Snippet *snippet)
 {
     switch (snippet->getKind()) {
         case TR::Snippet::IsHelperCall:
-            print(log, (TR::S390HelperCallSnippet *)snippet);
+            snippet->print(log, this);
             break;
 #if J9_PROJECT_SPECIFIC
         case TR::Snippet::IsCall:

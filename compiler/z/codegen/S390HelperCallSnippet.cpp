@@ -47,19 +47,8 @@ namespace TR {
 class Node;
 }
 
-uint8_t *TR::S390HelperCallSnippet::emitSnippetBody()
+uint8_t *TR::S390HelperCallSnippet::emitSnippetBodyInner(uint8_t *cursor, TR::SymbolReference *helperSymRef)
 {
-    uint8_t *cursor = cg()->getBinaryBufferCursor();
-    getSnippetLabel()->setCodeLocation(cursor);
-
-    TR::Node *callNode = getNode();
-    TR::SymbolReference *helperSymRef = getHelperSymRef();
-    bool jitInduceOSR = helperSymRef->isOSRInductionHelper();
-    if (jitInduceOSR) {
-        // Flush in-register arguments back to the stack for interpreter
-        cursor = TR::S390CallSnippet::S390flushArgumentsToStack(cursor, callNode, getSizeOfArguments(), cg());
-    }
-
     uint32_t rEP = (uint32_t)cg()->getEntryPointRegister() - 1;
 
     // load vm thread into gpr13
@@ -108,7 +97,6 @@ uint8_t *TR::S390HelperCallSnippet::emitSnippetBody()
     // If MCC is supported, we will look up the appropriate trampoline, if
     //     necessary.
     intptr_t destAddr = (intptr_t)(helperSymRef->getSymbol()->castToMethodSymbol()->getMethodAddress());
-
 #if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
     if (cg()->comp()->getOption(TR_EnableRMODE64))
@@ -143,6 +131,22 @@ uint8_t *TR::S390HelperCallSnippet::emitSnippetBody()
     return cursor;
 }
 
+uint8_t *TR::S390HelperCallSnippet::emitSnippetBody()
+{
+    uint8_t *cursor = cg()->getBinaryBufferCursor();
+    getSnippetLabel()->setCodeLocation(cursor);
+
+    TR::Node *callNode = getNode();
+    TR::SymbolReference *helperSymRef = getHelperSymRef();
+    bool jitInduceOSR = helperSymRef->isOSRInductionHelper();
+    if (jitInduceOSR) {
+        // Flush in-register arguments back to the stack for interpreter
+        cursor = TR::S390CallSnippet::S390FlushArgumentsToStack(cursor, callNode, getSizeOfArguments(), cg());
+    }
+
+    return emitSnippetBodyInner(cursor, helperSymRef);
+}
+
 uint32_t TR::S390HelperCallSnippet::getLength(int32_t)
 {
     uint32_t length;
@@ -162,30 +166,46 @@ uint32_t TR::S390HelperCallSnippet::getLength(int32_t)
     return length;
 }
 
-void TR_Debug::print(OMR::Logger *log, TR::S390HelperCallSnippet *snippet)
+void TR::S390HelperCallSnippet::print(OMR::Logger *log, TR_Debug *debug)
 {
-    TR::SymbolReference *helperSymRef = snippet->getHelperSymRef();
+    if (log == NULL) {
+        return;
+    }
 
-    uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, "Helper Call Snippet", getName(helperSymRef));
+    TR::SymbolReference *helperSymRef = getHelperSymRef();
 
-    bufferPos = printLoadVMThreadInstruction(log, bufferPos);
+    uint8_t *bufferPos = getSnippetLabel()->getCodeLocation();
+    bool jitInduceOSR = helperSymRef->isOSRInductionHelper();
+    TR::Node *callNode = getNode();
+    TR::MethodSymbol *methodSymbol = helperSymRef->getSymbol()->castToMethodSymbol();
+    if (jitInduceOSR) {
+        // Flush in-register arguments back to the stack for interpreter
+        TR::S390CallSnippet::printS390ArgumentsFlush(log, callNode, bufferPos, getSizeOfArguments(), debug,
+            getNode()->getFirstArgumentIndex(), cg()->machine(),
+            cg()->getLinkage(methodSymbol->getLinkageConvention()));
+    }
+    debug->printSnippetLabel(log, getSnippetLabel(), bufferPos, "Helper Call Snippet", debug->getName(helperSymRef));
+    printInner(log, debug, bufferPos);
+}
 
-    bufferPos = printRuntimeInstrumentationOnOffInstruction(log, bufferPos, false); // RIOFF
+void TR::S390HelperCallSnippet::printInner(OMR::Logger *log, TR_Debug *debug, uint8_t *bufferPos)
+{
+    bufferPos = debug->printLoadVMThreadInstruction(log, bufferPos);
 
-    if (snippet->alwaysExcept()) {
-        printPrefix(log, NULL, bufferPos, 6);
-        log->printf("BRASL \tGPR14, <%p>\t# Branch to Helper Method %s", snippet->getSnippetDestAddr(),
-            snippet->usedTrampoline() ? "- Trampoline Used." : "");
+    bufferPos = debug->printRuntimeInstrumentationOnOffInstruction(log, bufferPos, false); // RIOFF
+
+    if (alwaysExcept()) {
+        debug->printPrefix(log, NULL, bufferPos, 6);
+        log->printf("BRASL \tGPR14, <%p>\t# Branch to Helper Method %s", getSnippetDestAddr(),
+            usedTrampoline() ? "- Trampoline Used." : "");
         bufferPos += 6;
     } else {
-        printPrefix(log, NULL, bufferPos, 6);
-        log->printf("LARL \tGPR14, <%p>\t# Return Addr of Main Line.",
-            (intptr_t)snippet->getReStartLabel()->getCodeLocation());
+        debug->printPrefix(log, NULL, bufferPos, 6);
+        log->printf("LARL \tGPR14, <%p>\t# Return Addr of Main Line.", (intptr_t)getReStartLabel()->getCodeLocation());
         bufferPos += 6;
-        printPrefix(log, NULL, bufferPos, 6);
-        log->printf("BRCL \t<%p>\t# Branch to Helper Method %s", snippet->getSnippetDestAddr(),
-            snippet->usedTrampoline() ? "- Trampoline Used." : "");
+        debug->printPrefix(log, NULL, bufferPos, 6);
+        log->printf("BRCL \t<%p>\t# Branch to Helper Method %s", getSnippetDestAddr(),
+            usedTrampoline() ? "- Trampoline Used." : "");
         bufferPos += 6;
     }
 }
