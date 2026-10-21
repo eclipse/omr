@@ -2487,6 +2487,8 @@ TR::X86NoOperandInstruction *Inst0(OP::Mnemonic op, TR::Node *node, TR::CodeGene
 TR::X86NoOperandInstruction *Inst0(TR::Instruction *prev, OP::Mnemonic op, TR::CodeGenerator *cg);
 TR::X86NoOperandInstruction *Inst0(OP::Mnemonic op, TR::Node *node, TR::RegisterDependencyConditions *cond,
     TR::CodeGenerator *cg);
+TR::X86NoOperandInstruction *Inst0(TR::Instruction *prev, OP::Mnemonic op, TR::RegisterDependencyConditions *cond,
+    TR::CodeGenerator *cg);
 
 // X86AlignmentInstruction
 //
@@ -2644,6 +2646,8 @@ TR::X86MemTableInstruction *Inst_MemTable(OP::Mnemonic op, TR::Node *node, TR::M
 //
 TR::X86PaddingInstruction *Inst_Padding(uint8_t length, TR::Node *node, TR::CodeGenerator *cg);
 TR::X86PaddingInstruction *Inst_Padding(TR::Instruction *precedingInstruction, uint8_t length, TR::CodeGenerator *cg);
+TR::X86PaddingInstruction *Inst_Padding(TR::Instruction *precedingInstruction, uint8_t length,
+    TR_PaddingProperties properties, TR::CodeGenerator *cg);
 
 // X86PaddingSnippetInstruction
 //
