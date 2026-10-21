@@ -236,7 +236,9 @@ hookGlobalGcSweepEndRsoSafetyFixHeap(J9HookInterface** hook, uintptr_t eventNum,
 	}
 }
 
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+// DEV: specifying this path to unify abort for concurrent and non-concurrent
+//#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER)
 static void
 hookGlobalGcSweepEndAbortedCSFixHeap(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
@@ -372,8 +374,10 @@ MM_ParallelGlobalGC::initialize(MM_EnvironmentBase *env)
 		 * we will only get one Hook registered no matter how many scavengers are created/initialized
 		 */
 		(*mmPrivateHooks)->J9HookRegisterWithCallSite(mmPrivateHooks, J9HOOK_MM_PRIVATE_SWEEP_END, hookGlobalGcSweepEndRsoSafetyFixHeap, OMR_GET_CALLSITE(), this);
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-		if (_extensions->isConcurrentScavengerEnabled()) {
+// DEV: specifying this path to unify abort for concurrent and non-concurrent
+//#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER)
+		if (_extensions->enableUnifiedAbort || _extensions->isConcurrentScavengerEnabled()) {
 			(*mmPrivateHooks)->J9HookRegisterWithCallSite(mmPrivateHooks, J9HOOK_MM_PRIVATE_SWEEP_END, hookGlobalGcSweepEndAbortedCSFixHeap, OMR_GET_CALLSITE(), this);
 		}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
@@ -514,6 +518,7 @@ MM_ParallelGlobalGC::mainThreadGarbageCollect(MM_EnvironmentBase *env, MM_Alloca
 		 * the clearFreeEntry callback asserts that everything that is not cleared is a marked
 		 * object. So the mark map is also rebuilt before calling the clearFreeEntry callback.
 		 */
+
 		mainThreadCompact(env, allocDescription, rebuildMarkBits || gcCode.shouldClearHeap());
 		_collectionStatistics._tenureFragmentation = NO_FRAGMENTATION;
 		if (_extensions->processLargeAllocateStats) {
@@ -799,7 +804,15 @@ MM_ParallelGlobalGC::shouldCompactThisCycle(MM_EnvironmentBase *env, MM_Allocate
 	 * compact can trigger before it. Still, it should not be prevented by compactToSatisfyAllocate,
 	 * whose main goal is to avoid expensive not-very-necessary compacts.
 	 */
-	if (_extensions->isConcurrentScavengerEnabled() && _extensions->isScavengerBackOutFlagRaised()) {
+	/* DEV: Attempted to unify by removing isConcurrentScavengerEnabled() guard. This caused a compact
+	 * to fire on every STW abort percolate, increasing mean global GC time from ~200ms to ~440ms.
+	 * In CS, the compact is necessary to clean up partially-copied objects on both sides of the nursery.
+	 * In STW, backout already restores the nursery to a clean state — the forced compact is unnecessary.
+	 * Guard restored. */
+	// DEV: unifying this once again. We expect STW to follow the CS abort path completely, meaning STW will not leave nursery in a clean state
+	if ((_extensions->enableUnifiedAbort || _extensions->isConcurrentScavengerEnabled()) && _extensions->isScavengerBackOutFlagRaised()) {
+		OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+		omrtty_printf("{SHAD: shouldCompactThisCycle: COMPACT_ABORTED_SCAVENGE\n");
 		compactReason = COMPACT_ABORTED_SCAVENGE;
 		goto compactionReqd;
 	}
@@ -1041,6 +1054,7 @@ MM_ParallelGlobalGC::mainThreadCompact(MM_EnvironmentBase *env, MM_AllocateDescr
 	reportCompactStart(env);
 	compactStats->_startTime = omrtime_hires_clock();
 	bool nurseryOnly = (CompactReason::COMPACT_ABORTED_SCAVENGE == compactStats->_compactReason);
+	omrtty_printf("{SHAD: mainThreadCompact: nurseryOnly=%s\n", nurseryOnly ? "true" : "false");
 
 	MM_ParallelCompactTask compactTask(env, _dispatcher, _compactScheme, rebuildMarkBits, env->_cycleState->_gcCode.shouldAggressivelyCompact(), nurseryOnly);
 	_dispatcher->run(env, &compactTask);

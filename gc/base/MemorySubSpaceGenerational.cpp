@@ -273,7 +273,7 @@ void
 MM_MemorySubSpaceGenerational::checkResize(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, bool _systemGC)
 {
 	getMemorySubSpaceOld()->checkResize(env, allocDescription, _systemGC);
-	if (_extensions->isConcurrentScavengerEnabled()) {
+	if (_extensions->enableUnifiedAbort || _extensions->isConcurrentScavengerEnabled()) {
 		/* restore Nursery tilt */
 		getMemorySubSpaceNew()->checkResize(env, allocDescription, _systemGC);
 	}

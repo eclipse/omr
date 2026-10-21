@@ -2070,6 +2070,16 @@ MM_ConcurrentGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *
 			MM_ConcurrentClearNewMarkBitsTask clearNewMarkBitsTask(env, _dispatcher, this);
 			_dispatcher->run(env, &clearNewMarkBitsTask);
 
+			/* DEV: Under the unified STW abort path the scavenge can abort while concurrent
+			 * tracing is at CONCURRENT_TRACE_ONLY or beyond, meaning work packets may already
+			 * contain nursery addresses that now have forward pointer headers. clearNewMarkBits
+			 * zeroed the nursery mark bits but did not purge the packets. Flush them so the
+			 * STW mark phase restarts cleanly from roots and RS scan.
+			 * Under CS this situation cannot arise — CS aborts before CONCURRENT_TRACE_ONLY. */
+			if (_extensions->enableUnifiedAbort && _extensions->isScavengerBackOutFlagRaised()) {
+			 _markingScheme->getWorkPackets()->resetAllPackets(env);
+			}
+
 			/* If remembered set if not empty then re-scan any objects in the remembered set */
 			if (!(_extensions->rememberedSet.isEmpty())) {
 				MM_ConcurrentScanRememberedSetTask scanRememberedSetTask(env, _dispatcher, this, env->_cycleState);

@@ -183,7 +183,8 @@ private:
 		bool shouldAbort = false;
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-		if (IS_CONCURRENT_ENABLED) {
+		// DEV: unify
+		if (_extensions->enableUnifiedAbort || IS_CONCURRENT_ENABLED) {
 			/* Concurrent Scavenger needs to drain the scan queue in last scan loop before aborted handling starts.
 			 * It is however fine to leave it populated, if we want to yield in a middle of concurrent phase which aborted,
 			 * since there will be at least one scan loop afterwards in complete phase that will drain it. Bottom line,

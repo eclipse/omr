@@ -412,9 +412,11 @@ MM_MarkingScheme::createWorkPackets(MM_EnvironmentBase *env)
 
 bool
 MM_MarkingScheme::fixupForwardedSlot(omrobjectptr_t *slotPtr) {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER)
 	bool const compressed = _extensions->compressObjectReferences();
-	if (_extensions->getGlobalCollector()->isStwCollectionInProgress()) {
+	// DEV: when unified, we have forwarded pointers that need to be fixed up during percolate even in STW
+	if (_extensions->getGlobalCollector()->isStwCollectionInProgress()
+		|| (_extensions->enableUnifiedAbort && _extensions->isScavengerBackOutFlagRaised())) {
 		MM_ForwardedHeader forwardHeader(*slotPtr, compressed);
 		omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 
