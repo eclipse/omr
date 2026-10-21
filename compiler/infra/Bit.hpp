@@ -421,6 +421,20 @@ static inline bool isPowerOf2(intptr_t input)
 }
 #endif
 
+/**
+ * @return floor log2(x) if x > 0
+ *                    -1 if x == 0
+ *             undefined if x < 0
+ */
+static inline int32_t log2(int64_t input) { return 63 - leadingZeroes(input); }
+
+/**
+ * @return floor log2(x) if x > 0
+ *                    -1 if x == 0
+ *             undefined if x < 0
+ */
+static inline int32_t log2(int32_t input) { return 31 - leadingZeroes(input); }
+
 #undef IN_BITMANIP_H
 
 #endif // BITMANIP_H
