@@ -21,41 +21,46 @@
 
 #include "codegen/RealRegister.hpp"
 
-const OMR::X86::RealRegister::TR_RegisterBinaryEncoding
+const OMR::X86::RealRegister::RegisterBinaryEncoding
     OMR::X86::I386::RealRegister::_fullRegisterBinaryEncodings[TR::RealRegister::NumRegisters]
     = {
-          // -----------id
-          // |   --------needsRexPlusRXB
-          // |   |  ------needsRexForByte
-          // |   |  |  ----needsDisp
-          // |   |  |  |  --needsSib
-          // |   |  |  |  |
-          // V   V  V  V  V
-          { 0x00, 0, 0 }, // NoReg
-          { 0x00, 0, 0 }, // eax
-          { 0x03, 0, 0 }, // ebx
-          { 0x01, 0, 0 }, // ecx
-          { 0x02, 0, 0 }, // edx
-          { 0x07, 0, 1 }, // edi
-          { 0x06, 0, 1 }, // esi
-          { 0x05, 0, 1, 1, 0 }, // ebp
-          { 0x04, 0, 1, 0, 1 }, // esp
-          { 0x00 }, // vfp
-          { 0x00 }, // st0Return
-          { 0x00, 0, 0 }, // xmm0
-          { 0x01, 0, 0 }, // xmm1
-          { 0x02, 0, 0 }, // xmm2
-          { 0x03, 0, 0 }, // xmm3
-          { 0x04, 0, 0 }, // xmm4
-          { 0x05, 0, 0 }, // xmm6
-          { 0x06, 0, 0 }, // xmm6
-          { 0x07, 0, 0 }, // xmm7
-          { 0x00 }, // k0
-          { 0x01 }, // k1
-          { 0x02 }, // k2
-          { 0x03 }, // k3
-          { 0x04 }, // k4
-          { 0x05 }, // k5
-          { 0x06 }, // k6
-          { 0x07 }, // k7
+          // clang-format off
+          // ----------- id[3]
+          // |    --------- vvvv[4] (1's complement)
+          // |    |   -------- needsRXBV4[1]
+          // |    |   |  ------- needsRexPlusRXB[1]
+          // |    |   |  |  ------ needsRexForByte[1]
+          // |    |   |  |  |  ----- needsDisp[1]
+          // |    |   |  |  |  |  ---- needsSIB[1]
+          // |    |   |  |  |  |  |
+          // |    |   |  |  |  |  |
+          // V    V   V  V  V  V  V
+          { 0x0                     }, // NoReg
+          { 0x0, 0x0, 0, 0, 0, 0, 0 }, // eax
+          { 0x3, 0x0, 0, 0, 0       }, // ebx
+          { 0x1, 0x0, 0, 0, 0       }, // ecx
+          { 0x2, 0x0, 0, 0, 0       }, // edx
+          { 0x7, 0x0, 0, 0, 1       }, // edi
+          { 0x6, 0x0, 0, 0, 1       }, // esi
+          { 0x5, 0x0, 0, 0, 1, 1, 0 }, // ebp
+          { 0x4, 0x0, 0, 0, 1, 0, 1 }, // esp
+          { 0x0                     }, // vfp
+          { 0x0                     }, // st0Return
+          { 0x0, 0x0, 0, 0, 0       }, // xmm0
+          { 0x1, 0x0, 0, 0, 0       }, // xmm1
+          { 0x2, 0x0, 0, 0, 0       }, // xmm2
+          { 0x3, 0x0, 0, 0, 0       }, // xmm3
+          { 0x4, 0x0, 0, 0, 0       }, // xmm4
+          { 0x5, 0x0, 0, 0, 0       }, // xmm5
+          { 0x6, 0x0, 0, 0, 0       }, // xmm6
+          { 0x7, 0x0, 0, 0, 0       }, // xmm7
+          { 0x0                     }, // k0
+          { 0x1                     }, // k1
+          { 0x2                     }, // k2
+          { 0x3                     }, // k3
+          { 0x4                     }, // k4
+          { 0x5                     }, // k5
+          { 0x6                     }, // k6
+          { 0x7                     }, // k7
+                 // clang-format on
 };

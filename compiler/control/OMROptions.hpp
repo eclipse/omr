@@ -477,8 +477,8 @@ enum TR_CompilationOptions {
     // Available                                             = 0x00000200 + 12,
     TR_DisableAOTBytesCompression                            = 0x00000400 + 12,
     TR_X86UseMFENCE                                          = 0x00000800 + 12,
-    // Available                                             = 0x00001000 + 12,
-    // Available                                             = 0x00002000 + 12,
+    TR_EnableAVX512ExtendedRegs                              = 0x00001000 + 12, // Allow xmm15-xmm31 (Intel AVX512F)
+    TR_EnableAPXExtendedGPRs                                 = 0x00002000 + 12, // Allow r16-r31 (Intel APX)
     TR_DisableHPRSpill                                       = 0x00004000 + 12, // zGryphon
     TR_DisableHPRUpgrade                                     = 0x00008000 + 12, // zGryphon
     TR_AggressiveOpts                                        = 0x00010000 + 12,

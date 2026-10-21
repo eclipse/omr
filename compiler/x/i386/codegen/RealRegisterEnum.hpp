@@ -35,6 +35,8 @@ NoReg = 0,
     eax = 1, FirstGPR = eax, ebx = 2, ecx = 3, edx = 4, Last8BitGPR = edx, edi = 5, esi = 6, ebp = 7,
     LastAssignableGPR = ebp, esp = 8, LastGPR = esp,
 
+    NumGPRs = LastGPR - FirstGPR + 1,
+
     // Virtual frame pointer used as a placeholder for frame references before
     // their offsets are known for rsp mapping
     //
@@ -49,6 +51,8 @@ NoReg = 0,
     xmm0 = 11, FirstXMMR = xmm0, xmm1 = 12, xmm2 = 13, xmm3 = 14, xmm4 = 15, xmm5 = 16, xmm6 = 17, xmm7 = 18,
     LastXMMR = xmm7,
 
+    NumXMMRs = LastXMMR - FirstXMMR + 1,
+
     // Alias ymm registers with xmm registers as they architecturally overlap
     //
     ymm0 = xmm0, ymm1 = xmm1, ymm2 = xmm2, ymm3 = xmm3, ymm4 = xmm4, ymm5 = xmm5, ymm6 = xmm6, ymm7 = xmm7,
@@ -59,7 +63,9 @@ NoReg = 0,
 
     // AVX-512 write mask registers
     //
-    k0 = 19, k1 = 20, k2 = 21, k3 = 22, k4 = 23, k5 = 24, k6 = 25, k7 = 26,
+    k0 = 19, FirstVMR = k0, k1 = 20, k2 = 21, k3 = 22, k4 = 23, k5 = 24, k6 = 25, k7 = 26, LastVMR = k7,
+
+    NumVMRs = LastVMR - FirstVMR + 1,
 
     // Pseudo register indicating any byte register
     //

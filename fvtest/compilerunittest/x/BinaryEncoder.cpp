@@ -31,7 +31,7 @@ TR::RealRegister *getRealRegister(TR::RealRegister::RegNum regNum, TR::CodeGener
         && regNum <= TR::RealRegister::k7) {
         // Without AVX-512 the machine class will not initialize mask registers
         rr = new (cg->trHeapMemory())
-            TR::RealRegister(TR_VMR, 0, TR::RealRegister::Free, regNum, TR::RealRegister::vectorMaskMask(regNum), cg);
+            TR::RealRegister(TR_VMR, 0, TR::RealRegister::Free, regNum, TR::RealRegister::vmrMask(regNum), cg);
     }
 
     return rr;

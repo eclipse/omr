@@ -42,6 +42,7 @@ typedef OMR::X86::AMD64::RealRegister RealRegisterConnector;
 #include "x/codegen/OMRRealRegister.hpp"
 
 #include <stdint.h>
+#include "omrformatconsts.h"
 #include "codegen/RegisterConstants.hpp"
 
 namespace TR {
@@ -63,146 +64,61 @@ protected:
 public:
     static RegNum rIndex(uint8_t r)
     {
-        switch (r) {
-            case 8:
-                return OMR::RealRegister::r8;
-            case 9:
-                return OMR::RealRegister::r9;
-            case 10:
-                return OMR::RealRegister::r10;
-            case 11:
-                return OMR::RealRegister::r11;
-            case 12:
-                return OMR::RealRegister::r12;
-            case 13:
-                return OMR::RealRegister::r13;
-            case 14:
-                return OMR::RealRegister::r14;
-            case 15:
-                return OMR::RealRegister::r15;
-            default:
-                TR_ASSERT(false, "rIndex is only valid for registers r8 to r15");
-                return OMR::RealRegister::NoReg;
-        }
+        TR_ASSERT_FATAL(r >= 8 && r <= OMR::RealRegister::NumGPRs, "GPR index %" OMR_PRIu8 " out of range", r);
+        return static_cast<RegNum>(OMR::RealRegister::FirstGPR + r);
     }
 
     static RegNum xmmIndex(uint8_t r)
     {
-        TR_ASSERT_FATAL(r >= 0 && r <= 15, "xmm index is ony valid for xmm 0 to 15");
+        TR_ASSERT_FATAL(r >= 0 && r <= OMR::RealRegister::NumXMMRs, "xmm index %" OMR_PRIu8 " out of range", r);
         return static_cast<RegNum>(OMR::RealRegister::xmm0 + r);
     }
 
+    typedef uint32_t RegMaskUInt;
+
     static RegMask gprMask(RegNum idx)
     {
-        switch (idx) {
-            case OMR::RealRegister::NoReg:
-                return OMR::RealRegister::noRegMask;
-            case OMR::RealRegister::eax:
-                return OMR::RealRegister::eaxMask;
-            case OMR::RealRegister::ebx:
-                return OMR::RealRegister::ebxMask;
-            case OMR::RealRegister::ecx:
-                return OMR::RealRegister::ecxMask;
-            case OMR::RealRegister::edx:
-                return OMR::RealRegister::edxMask;
-            case OMR::RealRegister::edi:
-                return OMR::RealRegister::ediMask;
-            case OMR::RealRegister::esi:
-                return OMR::RealRegister::esiMask;
-            case OMR::RealRegister::ebp:
-                return OMR::RealRegister::ebpMask;
-            case OMR::RealRegister::esp:
-                return OMR::RealRegister::espMask;
-            case OMR::RealRegister::r8:
-                return OMR::RealRegister::r8Mask;
-            case OMR::RealRegister::r9:
-                return OMR::RealRegister::r9Mask;
-            case OMR::RealRegister::r10:
-                return OMR::RealRegister::r10Mask;
-            case OMR::RealRegister::r11:
-                return OMR::RealRegister::r11Mask;
-            case OMR::RealRegister::r12:
-                return OMR::RealRegister::r12Mask;
-            case OMR::RealRegister::r13:
-                return OMR::RealRegister::r13Mask;
-            case OMR::RealRegister::r14:
-                return OMR::RealRegister::r14Mask;
-            case OMR::RealRegister::r15:
-                return OMR::RealRegister::r15Mask;
-            default:
-                TR_ASSERT(false, "gprMask is only valid for registers eax to r15");
-                return OMR::RealRegister::noRegMask;
+        if (idx == OMR::RealRegister::NoReg) {
+            return OMR::RealRegister::noRegMask;
         }
-    }
 
-    static RegMask vectorMaskMask(RegNum idx)
-    {
-        switch (idx) {
-            case OMR::RealRegister::NoReg:
-                return OMR::RealRegister::noRegMask;
-            case OMR::RealRegister::k0:
-                return OMR::RealRegister::k0Mask;
-            case OMR::RealRegister::k1:
-                return OMR::RealRegister::k1Mask;
-            case OMR::RealRegister::k2:
-                return OMR::RealRegister::k2Mask;
-            case OMR::RealRegister::k3:
-                return OMR::RealRegister::k3Mask;
-            case OMR::RealRegister::k4:
-                return OMR::RealRegister::k4Mask;
-            case OMR::RealRegister::k5:
-                return OMR::RealRegister::k5Mask;
-            case OMR::RealRegister::k6:
-                return OMR::RealRegister::k6Mask;
-            case OMR::RealRegister::k7:
-                return OMR::RealRegister::k7Mask;
-            default:
-                TR_ASSERT_FATAL(0, "vector mask mask valid for k0-k7 only");
-                return OMR::RealRegister::noRegMask;
-        }
+        static_assert((static_cast<RegMaskUInt>(OMR::RealRegister::LastGPR)
+                          - static_cast<RegMaskUInt>(OMR::RealRegister::FirstGPR) + 1)
+                == OMR::RealRegister::NumGPRs,
+            "Expected contiguous range for GPR enum values");
+
+        return static_cast<RegMask>(
+            1 << (static_cast<RegMaskUInt>(idx) - static_cast<RegMaskUInt>(OMR::RealRegister::FirstGPR)));
     }
 
     static RegMask xmmrMask(RegNum idx)
     {
-        switch (idx) {
-            case OMR::RealRegister::NoReg:
-                return OMR::RealRegister::noRegMask;
-            case OMR::RealRegister::xmm0:
-                return OMR::RealRegister::xmm0Mask;
-            case OMR::RealRegister::xmm1:
-                return OMR::RealRegister::xmm1Mask;
-            case OMR::RealRegister::xmm2:
-                return OMR::RealRegister::xmm2Mask;
-            case OMR::RealRegister::xmm3:
-                return OMR::RealRegister::xmm3Mask;
-            case OMR::RealRegister::xmm4:
-                return OMR::RealRegister::xmm4Mask;
-            case OMR::RealRegister::xmm5:
-                return OMR::RealRegister::xmm5Mask;
-            case OMR::RealRegister::xmm6:
-                return OMR::RealRegister::xmm6Mask;
-            case OMR::RealRegister::xmm7:
-                return OMR::RealRegister::xmm7Mask;
-            case OMR::RealRegister::xmm8:
-                return OMR::RealRegister::xmm8Mask;
-            case OMR::RealRegister::xmm9:
-                return OMR::RealRegister::xmm9Mask;
-            case OMR::RealRegister::xmm10:
-                return OMR::RealRegister::xmm10Mask;
-            case OMR::RealRegister::xmm11:
-                return OMR::RealRegister::xmm11Mask;
-            case OMR::RealRegister::xmm12:
-                return OMR::RealRegister::xmm12Mask;
-            case OMR::RealRegister::xmm13:
-                return OMR::RealRegister::xmm13Mask;
-            case OMR::RealRegister::xmm14:
-                return OMR::RealRegister::xmm14Mask;
-            case OMR::RealRegister::xmm15:
-                return OMR::RealRegister::xmm15Mask;
-            default:
-                TR_ASSERT(false, "xmmrMask is only valid for registers xmm0 to xmm15");
-                return OMR::RealRegister::noRegMask;
+        if (idx == OMR::RealRegister::NoReg) {
+            return OMR::RealRegister::noRegMask;
         }
+
+        static_assert((static_cast<RegMaskUInt>(OMR::RealRegister::LastXMMR)
+                          - static_cast<RegMaskUInt>(OMR::RealRegister::FirstXMMR) + 1)
+                == OMR::RealRegister::NumXMMRs,
+            "Expected contiguous range for XMMR enum values");
+
+        return static_cast<RegMask>(
+            1 << (static_cast<RegMaskUInt>(idx) - static_cast<RegMaskUInt>(OMR::RealRegister::FirstXMMR)));
+    }
+
+    static RegMask vmrMask(RegNum idx)
+    {
+        if (idx == OMR::RealRegister::NoReg) {
+            return OMR::RealRegister::noRegMask;
+        }
+
+        static_assert((static_cast<RegMaskUInt>(OMR::RealRegister::LastVMR)
+                          - static_cast<RegMaskUInt>(OMR::RealRegister::FirstVMR) + 1)
+                == OMR::RealRegister::NumVMRs,
+            "Expected contiguous range for VMR enum values");
+
+        return static_cast<RegMask>(
+            1 << (static_cast<RegMaskUInt>(idx) - static_cast<RegMaskUInt>(OMR::RealRegister::FirstVMR)));
     }
 
     void setRegisterNumber() { TR_ASSERT(0, "X86 RealRegister doesn't have setRegisterNumber() implementation"); }
@@ -306,7 +222,7 @@ public:
     uint8_t rexBits(uint8_t rxbBits, bool isByteOperand)
     {
         uint8_t result;
-        TR_RegisterBinaryEncoding be = _fullRegisterBinaryEncodings[_registerNumber];
+        RegisterBinaryEncoding be = _fullRegisterBinaryEncodings[_registerNumber];
         if (be.needsRexPlusRXB)
             // Basic Rex computation
             result = REX | rxbBits;
@@ -331,8 +247,7 @@ public:
     }
 
 private:
-    // TODO: Consider making this back into a plain old byte for consistency with other platforms.
-    static const struct TR_RegisterBinaryEncoding _fullRegisterBinaryEncodings[NumRegisters];
+    static const struct RegisterBinaryEncoding _fullRegisterBinaryEncodings[NumRegisters];
 };
 
 }}} // namespace OMR::X86::AMD64

@@ -40,7 +40,7 @@ TR::RealRegister::RegMask OMR::X86::RealRegister::getRealRegisterMask(TR_Registe
     else if (rk == TR_FPR || rk == TR_VRF)
         return TR::RealRegister::xmmrMask(idx);
     else if (rk == TR_VMR)
-        return TR::RealRegister::vectorMaskMask(idx);
+        return TR::RealRegister::vmrMask(idx);
     else
         TR_ASSERT_FATAL(false, "Unknown register kind");
 }

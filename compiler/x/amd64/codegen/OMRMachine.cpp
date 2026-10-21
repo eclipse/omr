@@ -41,19 +41,26 @@ OMR::X86::AMD64::Machine::Machine(TR::CodeGenerator *cg)
     // Initialize register limits
     //
     _firstGPR = TR::RealRegister::eax;
-    _lastGPR = TR::RealRegister::r15;
-    _lastAssignableGPR = TR::RealRegister::r15;
-    _last8BitGPR = TR::RealRegister::r15;
-    _numAssignableGPRs = AMD64_NUM_GPR;
+
+    if (cg->enableExtendedGPRs()) {
+        _lastGPR = TR::RealRegister::r31;
+        _lastAssignableGPR = TR::RealRegister::r31;
+        _last8BitGPR = TR::RealRegister::r31;
+    } else {
+        _lastGPR = TR::RealRegister::r15;
+        _lastAssignableGPR = TR::RealRegister::r15;
+        _last8BitGPR = TR::RealRegister::r15;
+    }
+
+    // Note: this total does not include RSP, nor should it
+    //
+    _numAssignableGPRs = static_cast<uint8_t>(_lastAssignableGPR - _firstGPR);
 
     _firstXMMR = TR::RealRegister::xmm0;
 
-    static const char *enableAVX512ExtendedRegisters = feGetEnv("TR_EnableAVX512ExtendedRegisters");
-    if (enableAVX512ExtendedRegisters && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F)) {
-        // AVX-512 extended registers have not been created yet.  Use xmm15 until then.
-        //
-        _lastXMMR = TR::RealRegister::xmm15;
-        _lastAssignableXMMR = TR::RealRegister::xmm15;
+    if (cg->enableAVX512ExtendedRegs()) {
+        _lastXMMR = TR::RealRegister::xmm31;
+        _lastAssignableXMMR = TR::RealRegister::xmm31;
     } else {
         _lastXMMR = TR::RealRegister::xmm15;
         _lastAssignableXMMR = TR::RealRegister::xmm15;

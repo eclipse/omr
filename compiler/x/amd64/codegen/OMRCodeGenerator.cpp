@@ -46,7 +46,34 @@
 
 OMR::X86::AMD64::CodeGenerator::CodeGenerator(TR::Compilation *comp)
     : OMR::X86::CodeGenerator(comp)
-{}
+{
+    /**
+     * EnableAVX512ExtendedRegs and EnableExtendedGPRs flags must be initalized
+     * here in the constructor because they are consulted during the
+     * initialization of the TR::Machine instance later in the initialize()
+     * chain of functions.
+     */
+
+    /**
+     * Enable the use of AVX512 extended registers (xmm16 - xmm31) if
+     * requested and the target processor supports them.
+     */
+    static const char *enableAVX512ExtendedRegs = feGetEnv("TR_EnableAVX512ExtendedRegs");
+    if ((comp->getOption(TR_EnableAVX512ExtendedRegs) || enableAVX512ExtendedRegs)
+        && comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F)) {
+        setEnableAVX512ExtendedRegs();
+    }
+
+    /**
+     * Permit the use of APX extended GPRs (r16 - r31) if requested and the
+     * target processor supports them.
+     */
+    static const char *enableAPXExtendedGPRs = feGetEnv("TR_EnableAPXExtendedGPRs");
+    if ((comp->getOption(TR_EnableAPXExtendedGPRs) || enableAPXExtendedGPRs)
+        && comp->target().cpu.supportsFeature(OMR_FEATURE_X86_APX)) {
+        setEnableExtendedGPRs();
+    }
+}
 
 void OMR::X86::AMD64::CodeGenerator::initialize()
 {

@@ -960,26 +960,26 @@ private:
     int32_t _numReservedIPICTrampolines; ///< number of reserved IPIC trampolines
 
     enum TR_X86CodeGeneratorFlags {
-        EnableBetterSpillPlacements = 0x00000001, ///< use better spill placements
-        EnableRematerialisation = 0x00000002, ///< use register rematerialisation
-        EnableRegisterAssociations = 0x00000004, ///< use register associations for register assignment
-        EnableSinglePrecisionMethods = 0x00000008, ///< support changing FPCW to single precision for individual methods
-        EnableRegisterInterferences = 0x00000010, ///< consider register interferences during register assignment
-        EnableRegisterWeights = 0x00000020, ///< use register weights in choosing a best register candidate
-        // Available                             = 0x00000040,
-        // Available                             = 0x00000080,
-        EnableImplicitDivideCheck
-            = 0x00000100, ///< platform can catch hardware exceptions for divide overflow and divide by zero
-        GenerateMasmListingSyntax = 0x00000200, ///< generate Masm-style syntax in the debug listings
-        MapAutosTo8ByteSlots
-            = 0x00000400, ///< don't round up sizes of autos to an 8-byte slot size when the stack is mapped
-        EnableTLHPrefetching = 0x00000800, ///< enable software prefetches on TLH allocates
-        // Available                             = 0x00001000,
-        // Available                             = 0x00002000,
-        // Available                             = 0x00004000,
+        // clang-format off
+        EnableBetterSpillPlacements   = 0x00000001, ///< use better spill placements
+        EnableRematerialisation       = 0x00000002, ///< use register rematerialisation
+        EnableRegisterAssociations    = 0x00000004, ///< use register associations for register assignment
+        EnableSinglePrecisionMethods  = 0x00000008, ///< support changing FPCW to single precision for individual methods
+        EnableRegisterInterferences   = 0x00000010, ///< consider register interferences during register assignment
+        EnableRegisterWeights         = 0x00000020, ///< use register weights in choosing a best register candidate
+        EnableAVX512ExtendedRegs      = 0x00000040, ///< allow use of xmm16-xmm31 (AVX512F)
+        EnableExtendedGPRs            = 0x00000080, ///< allow use of r16-r31 (APX)
+        EnableImplicitDivideCheck     = 0x00000100, ///< platform can catch hardware exceptions for divide overflow and divide by zero
+        GenerateMasmListingSyntax     = 0x00000200, ///< generate Masm-style syntax in the debug listings
+        MapAutosTo8ByteSlots          = 0x00000400, ///< don't round up sizes of autos to an 8-byte slot size when the stack is mapped
+        EnableTLHPrefetching          = 0x00000800, ///< enable software prefetches on TLH allocates
+        // Available                  = 0x00001000,
+        // Available                  = 0x00002000,
+        // Available                  = 0x00004000,
         MethodEnterExitTracingEnabled = 0x00008000, ///< trace method enter/exits
-        // Available                             = 0x00010000,
-        // Available                             = 0x00020000
+        // Available                  = 0x00010000,
+        // Available                  = 0x00020000
+        // clang-format on
     };
 
     flags32_t _flags;
@@ -1000,6 +1000,14 @@ public:
     bool enableSinglePrecisionMethods() { return _flags.testAny(EnableSinglePrecisionMethods); }
 
     void setEnableSinglePrecisionMethods() { _flags.set(EnableSinglePrecisionMethods); }
+
+    bool enableAVX512ExtendedRegs() { return _flags.testAny(EnableAVX512ExtendedRegs); }
+
+    void setEnableAVX512ExtendedRegs() { _flags.set(EnableAVX512ExtendedRegs); }
+
+    bool enableExtendedGPRs() { return _flags.testAny(EnableExtendedGPRs); }
+
+    void setEnableExtendedGPRs() { _flags.set(EnableExtendedGPRs); }
 
     bool enableRegisterWeights() { return _flags.testAny(EnableRegisterWeights); }
 

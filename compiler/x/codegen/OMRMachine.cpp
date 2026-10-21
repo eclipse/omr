@@ -1527,7 +1527,7 @@ void OMR::X86::Machine::initializeRegisterFile(const struct TR::X86LinkageProper
             _registerFile[reg] = new (cg()->trHeapMemory()) TR::RealRegister(TR_VMR,
                 properties.isPreservedRegister((TR::RealRegister::RegNum)reg) ? PRESERVED_WEIGHT : NONPRESERVED_WEIGHT,
                 TR::RealRegister::Free, (TR::RealRegister::RegNum)reg,
-                TR::RealRegister::vectorMaskMask((TR::RealRegister::RegNum)reg), cg());
+                TR::RealRegister::vmrMask((TR::RealRegister::RegNum)reg), cg());
         }
     }
 }

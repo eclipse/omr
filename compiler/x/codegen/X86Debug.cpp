@@ -1804,6 +1804,230 @@ const char *TR_Debug::getName(uint32_t realRegisterIndex, TR_RegisterSizes size)
                 default:
                     return "r15?";
             }
+        case TR::RealRegister::r16:
+            switch (size) {
+                case 0:
+                    return "r16b";
+                case 1:
+                    return "r16w";
+                case 2:
+                    return "r16d";
+                case 3:
+                case -1:
+                    return "r16";
+                default:
+                    return "r16?";
+            }
+        case TR::RealRegister::r17:
+            switch (size) {
+                case 0:
+                    return "r17b";
+                case 1:
+                    return "r17w";
+                case 2:
+                    return "r17d";
+                case 3:
+                case -1:
+                    return "r17";
+                default:
+                    return "r17?";
+            }
+        case TR::RealRegister::r18:
+            switch (size) {
+                case 0:
+                    return "r18b";
+                case 1:
+                    return "r18w";
+                case 2:
+                    return "r18d";
+                case 3:
+                case -1:
+                    return "r18";
+                default:
+                    return "r18?";
+            }
+        case TR::RealRegister::r19:
+            switch (size) {
+                case 0:
+                    return "r19b";
+                case 1:
+                    return "r19w";
+                case 2:
+                    return "r19d";
+                case 3:
+                case -1:
+                    return "r19";
+                default:
+                    return "r19?";
+            }
+        case TR::RealRegister::r20:
+            switch (size) {
+                case 0:
+                    return "r20b";
+                case 1:
+                    return "r20w";
+                case 2:
+                    return "r20d";
+                case 3:
+                case -1:
+                    return "r20";
+                default:
+                    return "r20?";
+            }
+        case TR::RealRegister::r21:
+            switch (size) {
+                case 0:
+                    return "r21b";
+                case 1:
+                    return "r21w";
+                case 2:
+                    return "r21d";
+                case 3:
+                case -1:
+                    return "r21";
+                default:
+                    return "r21?";
+            }
+        case TR::RealRegister::r22:
+            switch (size) {
+                case 0:
+                    return "r22b";
+                case 1:
+                    return "r22w";
+                case 2:
+                    return "r22d";
+                case 3:
+                case -1:
+                    return "r22";
+                default:
+                    return "r22?";
+            }
+        case TR::RealRegister::r23:
+            switch (size) {
+                case 0:
+                    return "r23b";
+                case 1:
+                    return "r23w";
+                case 2:
+                    return "r23d";
+                case 3:
+                case -1:
+                    return "r23";
+                default:
+                    return "r23?";
+            }
+        case TR::RealRegister::r24:
+            switch (size) {
+                case 0:
+                    return "r24b";
+                case 1:
+                    return "r24w";
+                case 2:
+                    return "r24d";
+                case 3:
+                case -1:
+                    return "r24";
+                default:
+                    return "r24?";
+            }
+        case TR::RealRegister::r25:
+            switch (size) {
+                case 0:
+                    return "r25b";
+                case 1:
+                    return "r25w";
+                case 2:
+                    return "r25d";
+                case 3:
+                case -1:
+                    return "r25";
+                default:
+                    return "r25?";
+            }
+        case TR::RealRegister::r26:
+            switch (size) {
+                case 0:
+                    return "r26b";
+                case 1:
+                    return "r26w";
+                case 2:
+                    return "r26d";
+                case 3:
+                case -1:
+                    return "r26";
+                default:
+                    return "r26?";
+            }
+        case TR::RealRegister::r27:
+            switch (size) {
+                case 0:
+                    return "r27b";
+                case 1:
+                    return "r27w";
+                case 2:
+                    return "r27d";
+                case 3:
+                case -1:
+                    return "r27";
+                default:
+                    return "r27?";
+            }
+        case TR::RealRegister::r28:
+            switch (size) {
+                case 0:
+                    return "r28b";
+                case 1:
+                    return "r28w";
+                case 2:
+                    return "r28d";
+                case 3:
+                case -1:
+                    return "r28";
+                default:
+                    return "r28?";
+            }
+        case TR::RealRegister::r29:
+            switch (size) {
+                case 0:
+                    return "r29b";
+                case 1:
+                    return "r29w";
+                case 2:
+                    return "r29d";
+                case 3:
+                case -1:
+                    return "r29";
+                default:
+                    return "r29?";
+            }
+        case TR::RealRegister::r30:
+            switch (size) {
+                case 0:
+                    return "r30b";
+                case 1:
+                    return "r30w";
+                case 2:
+                    return "r30d";
+                case 3:
+                case -1:
+                    return "r30";
+                default:
+                    return "r30?";
+            }
+        case TR::RealRegister::r31:
+            switch (size) {
+                case 0:
+                    return "r31b";
+                case 1:
+                    return "r31w";
+                case 2:
+                    return "r31d";
+                case 3:
+                case -1:
+                    return "r31";
+                default:
+                    return "r31?";
+            }
 #endif
         case TR::RealRegister::vfp:
             switch (size) {
@@ -2056,6 +2280,246 @@ const char *TR_Debug::getName(uint32_t realRegisterIndex, TR_RegisterSizes size)
                     return "zmm15";
                 default:
                     return "?mm15";
+            }
+        case TR::RealRegister::xmm16:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm16";
+                case TR_VectorReg256:
+                    return "ymm16";
+                case TR_VectorReg512:
+                    return "zmm16";
+                default:
+                    return "?mm16";
+            }
+        case TR::RealRegister::xmm17:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm17";
+                case TR_VectorReg256:
+                    return "ymm17";
+                case TR_VectorReg512:
+                    return "zmm17";
+                default:
+                    return "?mm17";
+            }
+        case TR::RealRegister::xmm18:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm18";
+                case TR_VectorReg256:
+                    return "ymm18";
+                case TR_VectorReg512:
+                    return "zmm18";
+                default:
+                    return "?mm18";
+            }
+        case TR::RealRegister::xmm19:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm19";
+                case TR_VectorReg256:
+                    return "ymm19";
+                case TR_VectorReg512:
+                    return "zmm19";
+                default:
+                    return "?mm19";
+            }
+        case TR::RealRegister::xmm20:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm20";
+                case TR_VectorReg256:
+                    return "ymm20";
+                case TR_VectorReg512:
+                    return "zmm20";
+                default:
+                    return "?mm20";
+            }
+        case TR::RealRegister::xmm21:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm21";
+                case TR_VectorReg256:
+                    return "ymm21";
+                case TR_VectorReg512:
+                    return "zmm21";
+                default:
+                    return "?mm21";
+            }
+        case TR::RealRegister::xmm22:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm22";
+                case TR_VectorReg256:
+                    return "ymm22";
+                case TR_VectorReg512:
+                    return "zmm22";
+                default:
+                    return "?mm22";
+            }
+        case TR::RealRegister::xmm23:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm23";
+                case TR_VectorReg256:
+                    return "ymm23";
+                case TR_VectorReg512:
+                    return "zmm23";
+                default:
+                    return "?mm23";
+            }
+        case TR::RealRegister::xmm24:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm24";
+                case TR_VectorReg256:
+                    return "ymm24";
+                case TR_VectorReg512:
+                    return "zmm24";
+                default:
+                    return "?mm24";
+            }
+        case TR::RealRegister::xmm25:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm25";
+                case TR_VectorReg256:
+                    return "ymm25";
+                case TR_VectorReg512:
+                    return "zmm25";
+                default:
+                    return "?mm25";
+            }
+        case TR::RealRegister::xmm26:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm26";
+                case TR_VectorReg256:
+                    return "ymm26";
+                case TR_VectorReg512:
+                    return "zmm26";
+                default:
+                    return "?mm26";
+            }
+        case TR::RealRegister::xmm27:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm27";
+                case TR_VectorReg256:
+                    return "ymm27";
+                case TR_VectorReg512:
+                    return "zmm27";
+                default:
+                    return "?mm27";
+            }
+        case TR::RealRegister::xmm28:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm28";
+                case TR_VectorReg256:
+                    return "ymm28";
+                case TR_VectorReg512:
+                    return "zmm28";
+                default:
+                    return "?mm28";
+            }
+        case TR::RealRegister::xmm29:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm29";
+                case TR_VectorReg256:
+                    return "ymm29";
+                case TR_VectorReg512:
+                    return "zmm29";
+                default:
+                    return "?mm29";
+            }
+        case TR::RealRegister::xmm30:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm30";
+                case TR_VectorReg256:
+                    return "ymm30";
+                case TR_VectorReg512:
+                    return "zmm30";
+                default:
+                    return "?mm30";
+            }
+        case TR::RealRegister::xmm31:
+            switch (size) {
+                case TR_QuadWordReg:
+                case TR_FloatReg:
+                case TR_DoubleReg:
+                case TR_VectorReg128:
+                case -1:
+                    return "xmm31";
+                case TR_VectorReg256:
+                    return "ymm31";
+                case TR_VectorReg512:
+                    return "zmm31";
+                default:
+                    return "?mm31";
             }
 #endif
         case TR::RealRegister::k0:

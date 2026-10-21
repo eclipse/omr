@@ -74,13 +74,14 @@ public:
     using OMR::RealRegister::getRealRegisterMask; // for getting the _registerMask member
 
 protected:
-    // TODO:AMD64: Consider making this back into a plain old byte for consistency with other platforms.
-    struct TR_RegisterBinaryEncoding {
-        unsigned char id: 3; // 3-bit register identifier used in ModRM and SIB bytes
-        unsigned char needsRexPlusRXB: 1; // Always need a Rex prefix with the R, X, or B bit set
-        unsigned char needsRexForByte: 1; // Needs a Rex prefix when used as a byte register
-        unsigned char needsDisp: 1; // Needs a displacement field (even if zero) when used as a base reg (ie. ebp/r13)
-        unsigned char needsSIB: 1; // Needs a SIB byte when used as a base reg (ie. esp/r12)
+    struct RegisterBinaryEncoding {
+        uint16_t id: 3; // 3-bit register identifier used in ModRM and SIB bytes
+        uint16_t vvvv: 4; // 4-bit register encoding for VEX.vvvv (1's complemented)
+        uint16_t needsRXBV4: 1; // A 5th bit required for R, X, B, or V4 to encode
+        uint16_t needsRexPlusRXB: 1; // Always need a Rex prefix with the R, X, or B bit set
+        uint16_t needsRexForByte: 1; // Needs a Rex prefix when used as a byte register
+        uint16_t needsDisp: 1; // Needs a displacement field (even if zero) when used as a base reg (ie. ebp/r13)
+        uint16_t needsSIB: 1; // Needs a SIB byte when used as a base reg (ie. esp/r12)
     };
 };
 

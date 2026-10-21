@@ -42,6 +42,7 @@ typedef OMR::X86::I386::RealRegister RealRegisterConnector;
 #include "x/codegen/OMRRealRegister.hpp"
 
 #include <stdint.h>
+#include "omrformatconsts.h"
 #include "codegen/RegisterConstants.hpp"
 
 namespace TR {
@@ -63,108 +64,55 @@ protected:
 public:
     static RegNum xmmIndex(uint8_t r)
     {
-        switch (r) {
-            case 0:
-                return OMR::RealRegister::xmm0;
-            case 1:
-                return OMR::RealRegister::xmm1;
-            case 2:
-                return OMR::RealRegister::xmm2;
-            case 3:
-                return OMR::RealRegister::xmm3;
-            case 4:
-                return OMR::RealRegister::xmm4;
-            case 5:
-                return OMR::RealRegister::xmm5;
-            case 6:
-                return OMR::RealRegister::xmm6;
-            case 7:
-                return OMR::RealRegister::xmm7;
-            default:
-                TR_ASSERT(false, "xmmIndex is only valid for registers xmm0 to xmm7");
-                return OMR::RealRegister::NoReg;
-        }
+        TR_ASSERT_FATAL(r >= 0 && r <= OMR::RealRegister::NumXMMRs, "xmm index %" OMR_PRIu8 " out of range", r);
+        return static_cast<RegNum>(OMR::RealRegister::xmm0 + r);
     }
+
+    typedef uint32_t RegMaskUInt;
 
     static RegMask gprMask(RegNum idx)
     {
-        switch (idx) {
-            case OMR::RealRegister::NoReg:
-                return OMR::RealRegister::noRegMask;
-            case OMR::RealRegister::eax:
-                return OMR::RealRegister::eaxMask;
-            case OMR::RealRegister::ebx:
-                return OMR::RealRegister::ebxMask;
-            case OMR::RealRegister::ecx:
-                return OMR::RealRegister::ecxMask;
-            case OMR::RealRegister::edx:
-                return OMR::RealRegister::edxMask;
-            case OMR::RealRegister::edi:
-                return OMR::RealRegister::ediMask;
-            case OMR::RealRegister::esi:
-                return OMR::RealRegister::esiMask;
-            case OMR::RealRegister::ebp:
-                return OMR::RealRegister::ebpMask;
-            case OMR::RealRegister::esp:
-                return OMR::RealRegister::espMask;
-            default:
-                TR_ASSERT(false, "gprMask is only valid for registers eax to esp");
-                return OMR::RealRegister::noRegMask;
+        if (idx == OMR::RealRegister::NoReg) {
+            return OMR::RealRegister::noRegMask;
         }
-    }
 
-    static RegMask vectorMaskMask(RegNum idx)
-    {
-        switch (idx) {
-            case OMR::RealRegister::NoReg:
-                return OMR::RealRegister::noRegMask;
-            case OMR::RealRegister::k0:
-                return OMR::RealRegister::k0Mask;
-            case OMR::RealRegister::k1:
-                return OMR::RealRegister::k1Mask;
-            case OMR::RealRegister::k2:
-                return OMR::RealRegister::k2Mask;
-            case OMR::RealRegister::k3:
-                return OMR::RealRegister::k3Mask;
-            case OMR::RealRegister::k4:
-                return OMR::RealRegister::k4Mask;
-            case OMR::RealRegister::k5:
-                return OMR::RealRegister::k5Mask;
-            case OMR::RealRegister::k6:
-                return OMR::RealRegister::k6Mask;
-            case OMR::RealRegister::k7:
-                return OMR::RealRegister::k7Mask;
-            default:
-                TR_ASSERT_FATAL(0, "vector mask mask valid for k0-k7 only");
-                return OMR::RealRegister::noRegMask;
-        }
+        static_assert((static_cast<RegMaskUInt>(OMR::RealRegister::LastGPR)
+                          - static_cast<RegMaskUInt>(OMR::RealRegister::FirstGPR) + 1)
+                == OMR::RealRegister::NumGPRs,
+            "Expected contiguous range for GPR enum values");
+
+        return static_cast<RegMask>(
+            1 << (static_cast<RegMaskUInt>(idx) - static_cast<RegMaskUInt>(OMR::RealRegister::FirstGPR)));
     }
 
     static RegMask xmmrMask(RegNum idx)
     {
-        switch (idx) {
-            case OMR::RealRegister::NoReg:
-                return OMR::RealRegister::noRegMask;
-            case OMR::RealRegister::xmm0:
-                return OMR::RealRegister::xmm0Mask;
-            case OMR::RealRegister::xmm1:
-                return OMR::RealRegister::xmm1Mask;
-            case OMR::RealRegister::xmm2:
-                return OMR::RealRegister::xmm2Mask;
-            case OMR::RealRegister::xmm3:
-                return OMR::RealRegister::xmm3Mask;
-            case OMR::RealRegister::xmm4:
-                return OMR::RealRegister::xmm4Mask;
-            case OMR::RealRegister::xmm5:
-                return OMR::RealRegister::xmm5Mask;
-            case OMR::RealRegister::xmm6:
-                return OMR::RealRegister::xmm6Mask;
-            case OMR::RealRegister::xmm7:
-                return OMR::RealRegister::xmm7Mask;
-            default:
-                TR_ASSERT(false, "xmmrMask is only valid for registers xmm0 to xmm7");
-                return OMR::RealRegister::noRegMask;
+        if (idx == OMR::RealRegister::NoReg) {
+            return OMR::RealRegister::noRegMask;
         }
+
+        static_assert((static_cast<RegMaskUInt>(OMR::RealRegister::LastXMMR)
+                          - static_cast<RegMaskUInt>(OMR::RealRegister::FirstXMMR) + 1)
+                == OMR::RealRegister::NumXMMRs,
+            "Expected contiguous range for XMMR enum values");
+
+        return static_cast<RegMask>(
+            1 << (static_cast<RegMaskUInt>(idx) - static_cast<RegMaskUInt>(OMR::RealRegister::FirstXMMR)));
+    }
+
+    static RegMask vmrMask(RegNum idx)
+    {
+        if (idx == OMR::RealRegister::NoReg) {
+            return OMR::RealRegister::noRegMask;
+        }
+
+        static_assert((static_cast<RegMaskUInt>(OMR::RealRegister::LastVMR)
+                          - static_cast<RegMaskUInt>(OMR::RealRegister::FirstVMR) + 1)
+                == OMR::RealRegister::NumVMRs,
+            "Expected contiguous range for VMR enum values");
+
+        return static_cast<RegMask>(
+            1 << (static_cast<RegMaskUInt>(idx) - static_cast<RegMaskUInt>(OMR::RealRegister::FirstVMR)));
     }
 
     void setRegisterNumber() { TR_ASSERT(0, "X86 RealRegister doesn't have setRegisterNumber() implementation"); }
@@ -273,8 +221,7 @@ public:
     bool needsSIB() { return _fullRegisterBinaryEncodings[_registerNumber].needsSIB; }
 
 private:
-    // TODO: Consider making this back into a plain old byte for consistency with other platforms.
-    static const struct TR_RegisterBinaryEncoding _fullRegisterBinaryEncodings[NumRegisters];
+    static const struct RegisterBinaryEncoding _fullRegisterBinaryEncodings[NumRegisters];
 };
 
 }}} // namespace OMR::X86::I386
