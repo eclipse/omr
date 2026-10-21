@@ -719,17 +719,26 @@ TR::RealRegister *OMR::Power::Machine::freeBestRegister(TR::Instruction *current
                 currentInstruction);
             break;
         case TR_VSX_VECTOR:
-            tempIndexRegister = self()->findBestFreeRegister(currentInstruction, TR_GPR);
-            if (tempIndexRegister == NULL)
-                tempIndexRegister = self()->freeBestRegister(currentInstruction, NULL);
-            tmemref->setUsingDelayedIndexedForm();
-            tmemref->setIndexRegister(tempIndexRegister);
-            tmemref->setIndexModifiable();
-            opCode = TR::InstOpCode::lxvd2x;
+            if (!cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9)) {
+                tempIndexRegister = self()->findBestFreeRegister(currentInstruction, TR_GPR);
+                if (tempIndexRegister == NULL)
+                    tempIndexRegister = self()->freeBestRegister(currentInstruction, NULL);
+                tmemref->setUsingDelayedIndexedForm();
+                tmemref->setIndexRegister(tempIndexRegister);
+                tmemref->setIndexModifiable();
+
+                opCode = TR::InstOpCode::lxvd2x;
+            } else {
+                opCode = TR::InstOpCode::lxv;
+            }
+
             tmemref->setLength(16);
             reloadInstr = generateTrg1MemInstruction(cg(), opCode, currentNode, best, tmemref, currentInstruction);
-            tempIndexRegister->setHasBeenAssignedInMethod(true);
-            cg()->stopUsingRegister(tempIndexRegister);
+
+            if (!cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9)) {
+                tempIndexRegister->setHasBeenAssignedInMethod(true);
+                cg()->stopUsingRegister(tempIndexRegister);
+            }
             break;
         case TR_VRF:
             // Until stack frame is 16-byte aligned, we cannot use VMX load/store here
@@ -737,17 +746,26 @@ TR::RealRegister *OMR::Power::Machine::freeBestRegister(TR::Instruction *current
 
             TR_ASSERT(comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX), "VSX support not enabled");
 
-            tempIndexRegister = self()->findBestFreeRegister(currentInstruction, TR_GPR);
-            if (tempIndexRegister == NULL)
-                tempIndexRegister = self()->freeBestRegister(currentInstruction, NULL);
-            tmemref->setUsingDelayedIndexedForm();
-            tmemref->setIndexRegister(tempIndexRegister);
-            tmemref->setIndexModifiable();
-            opCode = TR::InstOpCode::lxvd2x;
+            if (!cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9)) {
+                tempIndexRegister = self()->findBestFreeRegister(currentInstruction, TR_GPR);
+                if (tempIndexRegister == NULL)
+                    tempIndexRegister = self()->freeBestRegister(currentInstruction, NULL);
+                tmemref->setUsingDelayedIndexedForm();
+                tmemref->setIndexRegister(tempIndexRegister);
+                tmemref->setIndexModifiable();
+
+                opCode = TR::InstOpCode::lxvd2x;
+            } else {
+                opCode = TR::InstOpCode::lxv;
+            }
+
             tmemref->setLength(16);
             reloadInstr = generateTrg1MemInstruction(cg(), opCode, currentNode, best, tmemref, currentInstruction);
-            tempIndexRegister->setHasBeenAssignedInMethod(true);
-            cg()->stopUsingRegister(tempIndexRegister);
+
+            if (!cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9)) {
+                tempIndexRegister->setHasBeenAssignedInMethod(true);
+                cg()->stopUsingRegister(tempIndexRegister);
+            }
             break;
         default:
             break;
@@ -944,18 +962,27 @@ TR::RealRegister *OMR::Power::Machine::reverseSpillState(TR::Instruction *curren
                 currentInstruction);
             break;
         case TR_VSX_VECTOR:
-            tempIndexRegister = self()->findBestFreeRegister(currentInstruction, TR_GPR);
-            if (tempIndexRegister == NULL)
-                tempIndexRegister = self()->freeBestRegister(currentInstruction, NULL);
-            tmemref->setUsingDelayedIndexedForm();
-            tmemref->setIndexRegister(tempIndexRegister);
-            tmemref->setIndexModifiable();
-            opCode = TR::InstOpCode::stxvd2x;
+            if (!cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9)) {
+                tempIndexRegister = self()->findBestFreeRegister(currentInstruction, TR_GPR);
+                if (tempIndexRegister == NULL)
+                    tempIndexRegister = self()->freeBestRegister(currentInstruction, NULL);
+                tmemref->setUsingDelayedIndexedForm();
+                tmemref->setIndexRegister(tempIndexRegister);
+                tmemref->setIndexModifiable();
+
+                opCode = TR::InstOpCode::stxvd2x;
+            } else {
+                opCode = TR::InstOpCode::stxv;
+            }
+
             tmemref->setLength(16);
             spillInstr
                 = generateMemSrc1Instruction(cg(), opCode, currentNode, tmemref, targetRegister, currentInstruction);
-            tempIndexRegister->setHasBeenAssignedInMethod(true);
-            cg()->stopUsingRegister(tempIndexRegister);
+
+            if (!cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9)) {
+                tempIndexRegister->setHasBeenAssignedInMethod(true);
+                cg()->stopUsingRegister(tempIndexRegister);
+            }
             break;
         case TR_VRF:
             // Until stack frame is 16-byte aligned, we cannot use VMX load/store here
@@ -963,18 +990,27 @@ TR::RealRegister *OMR::Power::Machine::reverseSpillState(TR::Instruction *curren
 
             TR_ASSERT(comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX), "VSX support not enabled");
 
-            tempIndexRegister = self()->findBestFreeRegister(currentInstruction, TR_GPR);
-            if (tempIndexRegister == NULL)
-                tempIndexRegister = self()->freeBestRegister(currentInstruction, NULL);
-            tmemref->setUsingDelayedIndexedForm();
-            tmemref->setIndexRegister(tempIndexRegister);
-            tmemref->setIndexModifiable();
-            opCode = TR::InstOpCode::stxvd2x;
+            if (!cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9)) {
+                tempIndexRegister = self()->findBestFreeRegister(currentInstruction, TR_GPR);
+                if (tempIndexRegister == NULL)
+                    tempIndexRegister = self()->freeBestRegister(currentInstruction, NULL);
+                tmemref->setUsingDelayedIndexedForm();
+                tmemref->setIndexRegister(tempIndexRegister);
+                tmemref->setIndexModifiable();
+
+                opCode = TR::InstOpCode::stxvd2x;
+            } else {
+                opCode = TR::InstOpCode::stxv;
+            }
+
             tmemref->setLength(16);
             spillInstr
                 = generateMemSrc1Instruction(cg(), opCode, currentNode, tmemref, targetRegister, currentInstruction);
-            tempIndexRegister->setHasBeenAssignedInMethod(true);
-            cg()->stopUsingRegister(tempIndexRegister);
+
+            if (!cg()->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9)) {
+                tempIndexRegister->setHasBeenAssignedInMethod(true);
+                cg()->stopUsingRegister(tempIndexRegister);
+            }
             break;
         default:
             break;
