@@ -4100,15 +4100,18 @@ MM_Scavenger::processRememberedSetInBackout(MM_EnvironmentStandard *env)
 				if (NULL == objectPtr) {
 					remSetSlotIterator.removeSlot();
 				} else {
+					omrtty_printf("{SHAD: processRememberedSetInBackout: objectPtr=%zu", objectPtr);
 					if((uintptr_t)objectPtr & DEFERRED_RS_REMOVE_FLAG) {
 						/* Is slot flagged for deferred removal ? */
 						/* Yes..so first remove tag bit from object address */
+						omrtty_printf(", has defer flag");
 						objectPtr = (omrobjectptr_t)((uintptr_t)objectPtr & ~(uintptr_t)DEFERRED_RS_REMOVE_FLAG);
 						Assert_MM_false(MM_ForwardedHeader(objectPtr, compressed).isForwardedPointer());
 
 						/* The object did not have Nursery references at initial RS scan, but one could have been added during CS cycle by a mutator. */
 						if (!shouldRememberObject(env, objectPtr)) {
 							/* A simple mask out can be used - we are guaranteed to be the only manipulator of the object */
+							omrtty_printf(", should remove from RS\n");
 							_extensions->objectModel.clearRemembered(objectPtr);
 							remSetSlotIterator.removeSlot();
 
@@ -4117,10 +4120,12 @@ MM_Scavenger::processRememberedSetInBackout(MM_EnvironmentStandard *env)
 							 */
 						} else {
 							/* We are not removing it after all, since the object has Nursery references => reset the deferred flag. */
+							omrtty_printf(", should not remove from RS\n");
 							*slotPtr = objectPtr;
 						}
 					} else {
 						/* Fixup newly remembered object */
+						omrtty_printf(", no defer flag\n");
 						fixupObjectScan(env, objectPtr);
 					}
 				}
