@@ -16270,73 +16270,48 @@ TR::Register *OMR::Z::TreeEvaluator::vmulEvaluator(TR::Node *node, TR::CodeGener
     TR_ASSERT_FATAL_WITH_NODE(node, node->getDataType().getVectorLength() == TR::VectorLength128,
         "Only 128-bit vectors are supported %s", node->getDataType().toString());
 
-    switch (node->getDataType().getVectorElementType()) {
-        case TR::Int8:
-        case TR::Int16:
-        case TR::Int32:
-            return TR::TreeEvaluator::inlineVectorBinaryOp(node, cg, TR::InstOpCode::VML);
-        case TR::Int64: {
-            // emulated, no Z instruction available
+    TR::DataType dataType = node->getDataType();
 
-            // a * b
-            // ah = high 32 of a, al = low 32 of a
-            // bh = high 32 of b, bl = low 32 of b
+    if (dataType.isFloatingPoint()) {
+        return TR::TreeEvaluator::inlineVectorBinaryOp(node, cg, TR::InstOpCode::VFM);
+    } else if (dataType.getVectorElementType() != TR::Int64
+        || cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_3)) {
+        return TR::TreeEvaluator::inlineVectorBinaryOp(node, cg, TR::InstOpCode::VML);
+    } else {
+        /* int64 multiplication and vector facility enhancement 3 is not installed */
+        TR::Register *gpr1 = cg->allocateRegister();
+        TR::Register *gpr2 = cg->allocateRegister();
+        TR::Register *resultReg = cg->allocateRegister(TR_VRF);
+        TR::Register *source1Reg = cg->evaluate(node->getFirstChild());
+        TR::Register *source2Reg = cg->evaluate(node->getSecondChild());
+        const int numberOfLanes = 2; // There are 2 int64 lanes in each vector register.
+        const uint8_t elementSizeMask = 3; // int64
 
-            // low 32 = low 32 of (al * bl)
-            // high 32 = (high 32 of al*bl) + (ah*bl)<<32 + (al*bh)<<32
-
-            TR::Register *firstChildReg = cg->evaluate(node->getChild(0));
-            TR::Register *secondChildReg = cg->evaluate(node->getChild(1));
-
-            TR::Register *multLow = cg->allocateRegister(TR_VRF);
-            TR::Register *multHigh = cg->allocateRegister(TR_VRF);
-            TR::Register *tempReg = cg->allocateRegister(TR_VRF);
-            TR::Register *returnReg = cg->allocateRegister(TR_VRF);
-
-            generateVRRcInstruction(cg, TR::InstOpCode::VML, node, multLow, firstChildReg, secondChildReg, 2);
-            generateVRRcInstruction(cg, TR::InstOpCode::VMLH, node, multHigh, firstChildReg, secondChildReg, 2);
-
-            generateVRIbInstruction(cg, TR::InstOpCode::VGM, node, tempReg, 32, 64, 3);
-            generateVRRcInstruction(cg, TR::InstOpCode::VN, node, multLow, multLow, tempReg, 0);
-
-            generateVRSaInstruction(cg, TR::InstOpCode::VESL, node, multHigh, multHigh,
-                generateS390MemoryReference(32, cg), 3);
-            generateVRRcInstruction(cg, TR::InstOpCode::VA, node, returnReg, multLow, multHigh, 3);
-
-            generateVRSaInstruction(cg, TR::InstOpCode::VESL, node, tempReg, firstChildReg,
-                generateS390MemoryReference(32, cg), 3);
-            generateVRRcInstruction(cg, TR::InstOpCode::VML, node, multLow, tempReg, secondChildReg, 2);
-            generateVRRcInstruction(cg, TR::InstOpCode::VA, node, returnReg, multLow, returnReg, 3);
-
-            generateVRSaInstruction(cg, TR::InstOpCode::VESL, node, tempReg, secondChildReg,
-                generateS390MemoryReference(32, cg), 3);
-            generateVRRcInstruction(cg, TR::InstOpCode::VML, node, multLow, tempReg, firstChildReg, 2);
-            generateVRRcInstruction(cg, TR::InstOpCode::VA, node, returnReg, multLow, returnReg, 3);
-
-            if (node->getOpCode().isVectorMasked()) {
-                TR::Node *maskChild = node->getThirdChild();
-                // Copy the source 1 to the result if the lane is unmasked.
-                generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, returnReg, returnReg, firstChildReg,
-                    cg->evaluate(maskChild), 0, 0);
-                cg->decReferenceCount(maskChild);
-            }
-
-            node->setRegister(returnReg);
-
-            cg->stopUsingRegister(multHigh);
-            cg->stopUsingRegister(multLow);
-            cg->stopUsingRegister(tempReg);
-
-            cg->decReferenceCount(node->getChild(0));
-            cg->decReferenceCount(node->getChild(1));
-            return returnReg;
+        for (int i = 0; i <= numberOfLanes; i++) {
+            generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, gpr1, source1Reg,
+                generateS390MemoryReference(i, cg), elementSizeMask);
+            generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, gpr2, source2Reg,
+                generateS390MemoryReference(i, cg), elementSizeMask);
+            generateRREInstruction(cg, TR::InstOpCode::MSGR, node, gpr1, gpr2);
+            generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, resultReg, gpr1, generateS390MemoryReference(i, cg),
+                elementSizeMask);
         }
-        case TR::Float:
-        case TR::Double:
-            return TR::TreeEvaluator::inlineVectorBinaryOp(node, cg, TR::InstOpCode::VFM);
-        default:
-            TR_ASSERT(false, "unrecognized vector type %s\n", node->getDataType().toString());
-            return NULL;
+
+        if (node->getOpCode().isVectorMasked()) {
+            TR::Node *maskChild = node->getThirdChild();
+            // Copy the source 1 to the result if the lane is unmasked.
+            generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, resultReg, resultReg, source1Reg,
+                cg->evaluate(maskChild), 0, 0);
+            cg->decReferenceCount(maskChild);
+        }
+
+        cg->stopUsingRegister(gpr1);
+        cg->stopUsingRegister(gpr2);
+        cg->decReferenceCount(node->getFirstChild());
+        cg->decReferenceCount(node->getSecondChild());
+        node->setRegister(resultReg);
+
+        return resultReg;
     }
 }
 

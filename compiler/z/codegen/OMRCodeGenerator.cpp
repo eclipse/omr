@@ -4367,13 +4367,9 @@ bool OMR::Z::CodeGenerator::getSupportsOpCodeForAutoSIMD(TR::CPU *cpu, TR::ILOpC
         case TR::vmexpandbits:
         case TR::vbitswap:
         case TR::vmbitswap:
-            return true;
         case TR::vmul:
         case TR::vmmul:
-            if (et == TR::Int8 || et == TR::Int16 || et == TR::Int32 || et == TR::Float || et == TR::Double)
-                return true;
-            else
-                return false;
+            return true;
         case TR::vdiv:
         case TR::vmdiv:
         case TR::vfma:
