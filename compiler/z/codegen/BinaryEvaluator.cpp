@@ -2689,7 +2689,7 @@ TR::Register *OMR::Z::TreeEvaluator::inegEvaluator(TR::Node *node, TR::CodeGener
         cg->decReferenceCount(firstChild->getFirstChild());
 
         // Load Negative
-        if (cg->comp()->target().is64Bit() && targetRegister->alreadySignExtended())
+        if (cg->comp()->target().is64Bit())
             generateRRInstruction(cg, TR::InstOpCode::LNGR, node, targetRegister, sourceRegister);
         else
             generateRRInstruction(cg, TR::InstOpCode::LNR, node, targetRegister, sourceRegister);
@@ -2708,7 +2708,7 @@ TR::Register *OMR::Z::TreeEvaluator::inegEvaluator(TR::Node *node, TR::CodeGener
         sourceRegister = cg->evaluate(firstChild);
 
         // Do complement
-        if (cg->comp()->target().is64Bit() && targetRegister->alreadySignExtended())
+        if (cg->comp()->target().is64Bit())
             generateRRInstruction(cg, TR::InstOpCode::LCGR, node, targetRegister, sourceRegister);
         else
             generateRRInstruction(cg, TR::InstOpCode::LCR, node, targetRegister, sourceRegister);
