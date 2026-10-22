@@ -22,8 +22,8 @@
 #include "codegen/InstOpCode.hpp"
 
 const char *BranchConditionToNameMap[TR::InstOpCode::S390NumBranchConditions]
-    = { "NOPR", "BRO", "BRH", "BRP", "BRL", "BRM", "BRNE", "BRNZ", "BRE", "BRZ", "BRNH", "BRNL", "BRNM", "BRNP", "BRNO",
-          "B", "BR", "BRU", "BRUL", "BC", "BCR", "BE", "BER", "BH", "BHR", "BL", "BLR", "BM", "BMR", "BNE", "BNER",
-          "BNH", "BNHR", "BNL", "BNLR", "BNM", "BNMR", "BNO", "BNOR", "BNP", "BNPR", "BNZ", "BNZR", "BO", "BOR", "BP",
-          "BPR", "BZ", "BZR", "NOP", "VGNOP", "MASK0", "MASK1", "MASK2", "MASK3", "MASK4", "MASK5", "MASK6", "MASK7",
-          "MASK8", "MASK9", "MASK10", "MASK11", "MASK12", "MASK13", "MASK14", "MASK15" };
+    = { "NOPR", "NOP", "VGNOP", "BRO", "BRH", "BRP", "BRL", "BRM", "BRNE", "BRNZ", "BRE", "BRZ", "BRNH", "BRNL", "BRNM",
+          "BRNP", "BRNO", "B", "BR", "BRU", "BRUL", "BC", "BCR", "BE", "BER", "BH", "BHR", "BL", "BLR", "BM", "BMR",
+          "BNE", "BNER", "BNH", "BNHR", "BNL", "BNLR", "BNM", "BNMR", "BNO", "BNOR", "BNP", "BNPR", "BNZ", "BNZR", "BO",
+          "BOR", "BP", "BPR", "BRC", "BZ", "BZR", "MASK0", "MASK1", "MASK2", "MASK3", "MASK4", "MASK5", "MASK6",
+          "MASK7", "MASK8", "MASK9", "MASK10", "MASK11", "MASK12", "MASK13", "MASK14", "MASK15" };
