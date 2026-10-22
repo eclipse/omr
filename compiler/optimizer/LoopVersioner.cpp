@@ -6028,8 +6028,7 @@ void TR_LoopVersioner::buildBoundCheckComparisonsTree(List<TR::TreeTop> *boundCh
                         isLoopDrivingAddition = true;
 
                     if (indexSymRefNum == *(versionableInductionVar->getData())) {
-                        if (_additionInfo->get(indexSymRefNum))
-                            isAddition = true;
+                        isAddition = isLoopDrivingAddition;
                         foundInductionVariable = true;
                         isLoopDrivingInductionVariable = true;
                         break;
@@ -6272,6 +6271,20 @@ void TR_LoopVersioner::buildBoundCheckComparisonsTree(List<TR::TreeTop> *boundCh
             prep = createLoopEntryPrep(LoopEntryPrep::TEST, nextComparisonNode);
             dumpOptDetails(comp(), "1: Prep %p has been created for testing if exceed bounds\n", prep);
 
+            if (isAddition == indVarOccursAsSecondChildOfSub) {
+                TR::Node *lowerBoundCheck = TR::Node::createif(TR::ificmplt,
+                    boundCheckNode->getChild(indexChildIndex)->duplicateTreeForCodeMotion(),
+                    TR::Node::create(boundCheckNode, TR::iconst, 0, 0), _exitGotoTarget);
+                lowerBoundCheck->setIsVersionableIfWithMinExpr(comp());
+                logprintf(trace(), log,
+                    "Induction variable subed in each iter, also checking lower bound -> Creating %p (%s)\n",
+                    lowerBoundCheck, lowerBoundCheck->getOpCode().getName());
+                if (comp()->requiresSpineChecks())
+                    findAndReplaceContigArrayLen(NULL, lowerBoundCheck, comp()->incVisitCount());
+                prep = createChainedLoopEntryPrep(LoopEntryPrep::TEST, lowerBoundCheck, prep);
+                dumpOptDetails(comp(), "1b: Prep %p chained for lower bound check\n", prep);
+            }
+
             TR::Node *loopLimit = NULL;
             if (isLoopDrivingInductionVariable || isDerivedInductionVariable)
                 loopLimit = _loopTestTree->getNode()->getSecondChild()->duplicateTree();
@@ -6368,6 +6381,7 @@ void TR_LoopVersioner::buildBoundCheckComparisonsTree(List<TR::TreeTop> *boundCh
             //            ==>INCR
             //       iconst adjustmentFactor
             //
+            bool strict = false;
             if (isLoopDrivingInductionVariable || isDerivedInductionVariable) {
                 TR::SymbolReference *loopDrivingSymRef = indexSymRef;
                 if (isDerivedInductionVariable)
@@ -6427,7 +6441,7 @@ void TR_LoopVersioner::buildBoundCheckComparisonsTree(List<TR::TreeTop> *boundCh
                     continue;
                 }
 
-                bool strict = !stayInLoopOp.isCompareTrueIfEqual();
+                strict = !stayInLoopOp.isCompareTrueIfEqual();
                 if (strict) {
                     TR::Node *remNode = TR::Node::create(TR::irem, 2, range, incrNode);
                     TR::Node *ceilingNode = TR::Node::create(TR::icmpne, 2, remNode, zeroNode);
@@ -6608,8 +6622,7 @@ void TR_LoopVersioner::buildBoundCheckComparisonsTree(List<TR::TreeTop> *boundCh
                     }
 
                     if (isAddition) {
-                        if ((_loopTestTree->getNode()->getOpCodeValue() == TR::ificmple)
-                            || (_loopTestTree->getNode()->getOpCodeValue() == TR::ificmpgt))
+                        if (strict)
                             nextComparisonNode
                                 = TR::Node::createif(TR::ificmpgt, firstChild, secondChild, _exitGotoTarget);
                         else
@@ -6618,8 +6631,7 @@ void TR_LoopVersioner::buildBoundCheckComparisonsTree(List<TR::TreeTop> *boundCh
 
                         nextComparisonNode->setIsVersionableIfWithMaxExpr(comp());
                     } else {
-                        if ((_loopTestTree->getNode()->getOpCodeValue() == TR::ificmpge)
-                            || (_loopTestTree->getNode()->getOpCodeValue() == TR::ificmplt))
+                        if (strict)
                             nextComparisonNode
                                 = TR::Node::createif(TR::ificmplt, firstChild, secondChild, _exitGotoTarget);
                         else
