@@ -142,3 +142,90 @@ void TR::PatchSites::reclaim(PatchSites *sites)
         TR_PersistentMemory::jitPersistentFree(sites);
     }
 }
+
+TR::JProfBFPatchSites::JProfBFPatchSites(TR_PersistentMemory *pm, size_t maxSize, size_t counterBumpInstructionLength)
+    : _maxSize(maxSize)
+    , _size(0)
+    , _refCount(0)
+    , _patchPoints(NULL)
+    , _firstLocation(NULL)
+    , _lastLocation(NULL)
+    , _counterBumpInstructionLength(counterBumpInstructionLength)
+    , _bumpInstructions(NULL)
+{
+    size_t bytes = sizeof(uint8_t *) * maxSize;
+    _patchPoints = (uint8_t **)pm->jitPersistentAlloc(bytes);
+    size_t bumpInstructionListSize = sizeof(uint8_t) * (1 + _counterBumpInstructionLength) * maxSize;
+    _bumpInstructions = (uint8_t *)pm->jitPersistentAlloc(bumpInstructionListSize);
+}
+
+void TR::JProfBFPatchSites::add(uint8_t *location, uint8_t instrLength)
+{
+    TR_ASSERT_FATAL(_size < _maxSize, "Cannot add more patch sites, max size is %d", _maxSize);
+    _patchPoints[_size] = location;
+    size_t bumpInstrIndex = _size * (1 + _counterBumpInstructionLength);
+#if defined(TR_TARGET_X86)
+    TR_ASSERT_FATAL(instrLength == 2 || instrLength == 3 || instrLength == 4, "Unexpected instruction length %d\n",
+        instrLength);
+#elif defined(TR_TARGET_S390)
+    TR_ASSERT_FATAL(instrLength == 6, "Unexpected instruction length %d\n", instrLength);
+#endif
+    *(uint8_t *)(_bumpInstructions + bumpInstrIndex) = (uint8_t)instrLength;
+    bumpInstrIndex += sizeof(uint8_t);
+
+    for (uint8_t index = 0; index < instrLength; index += sizeof(uint8_t)) {
+        *(uint8_t *)(_bumpInstructions + bumpInstrIndex + index) = *(uint8_t *)(location + index);
+    }
+
+    _size++;
+
+    if (_firstLocation == NULL || location < _firstLocation)
+        _firstLocation = location;
+    if (_lastLocation == NULL || location > _lastLocation)
+        _lastLocation = location;
+}
+
+uint8_t *TR::JProfBFPatchSites::getLocation(size_t index)
+{
+    TR_ASSERT_FATAL(index < _size, "Invalid index %d for patchSite with size %d", index, _size);
+    return _patchPoints[index];
+}
+
+uint8_t *TR::JProfBFPatchSites::getBumpInstructionPointer(size_t index)
+{
+    TR_ASSERT_FATAL(index < _size, "Invalid index %d for patchSite with size %d", index, _size);
+    return (uint8_t *)(_bumpInstructions + (index * (1 + _counterBumpInstructionLength)));
+}
+
+void TR::JProfBFPatchSites::reclaim(JProfBFPatchSites *sites)
+{
+    TR_ASSERT(sites->_refCount > 0, "Attempt to reclaim patch sites without a reference");
+    sites->_refCount--;
+
+    if (sites->_refCount == 0) {
+        TR_PersistentMemory::jitPersistentFree(sites->_patchPoints);
+        TR_PersistentMemory::jitPersistentFree(sites->_bumpInstructions);
+        TR_PersistentMemory::jitPersistentFree(sites);
+    }
+}
+
+void TR::JProfBFPatchSites::addReference()
+{
+    _refCount++;
+    TR_ASSERT(_refCount > 0, "Reference count overflow");
+}
+
+bool TR::JProfBFPatchSites::equals(JProfBFPatchSites *other)
+{
+    if (other->getSize() != _size)
+        return false;
+
+    if (_firstLocation != other->getFirstLocation() || _lastLocation != other->getLastLocation())
+        return false;
+
+    for (size_t i = 0; i < _size; ++i) {
+        if (getLocation(i) != other->getLocation(i))
+            return false;
+    }
+    return true;
+}

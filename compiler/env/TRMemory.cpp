@@ -107,7 +107,7 @@ const char *objectName[] = { "Array", "Instruction", "ListElement", "Node", "Bit
 
     "TR_IPMethodTable", "TR_IPCCNode", "IPHashedCallSite", "Assumptions", "PatchSites",
 
-    "TR_ZHWProfiler", "TR_PPCHWProfiler", "TR_ZGuardedStorage", "TR_JProfiler",
+    "JProfBFPatchSites", "TR_ZHWProfiler", "TR_PPCHWProfiler", "TR_ZGuardedStorage", "TR_JProfiler",
 
     "CatchTable",
 

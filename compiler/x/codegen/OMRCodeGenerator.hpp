@@ -501,6 +501,8 @@ public:
 
     bool getSupportsBitOpCodes() { return true; }
 
+    int32_t getMaxLengthOfIncMemoryInstruction() { return 4; }
+
     static bool getSupportsOpCodeForAutoSIMD(TR::CPU *cpu, TR::ILOpCode opcode, bool supportsOpMaskRegs = false);
     bool getSupportsOpCodeForAutoSIMD(TR::ILOpCode opcode);
 

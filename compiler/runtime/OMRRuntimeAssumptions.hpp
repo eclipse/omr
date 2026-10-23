@@ -472,6 +472,48 @@ private:
     PatchSites *_patchSites;
 }; // TR::PatchMultipleNOPedGuardSites
 
+class JProfBFPatchSites {
+private:
+    size_t _refCount;
+    size_t _size;
+    size_t _maxSize;
+    size_t _counterBumpInstructionLength;
+
+    /**
+     * For each JProfiling body with the capability of patching, would contain this runtime assumption.
+     * Runtime Assumption for the JProfiling method contains the pointers to the
+     * instruction that increments counters for block frequency and the
+     * instruction value.
+     * Instruction at each location is cached in this assumption to allow
+     * patching the points back to enable JProfiling.
+     */
+    uint8_t **_patchPoints;
+    uint8_t *_bumpInstructions;
+
+    // Cache lower and upper bounds
+    uint8_t *_firstLocation;
+    uint8_t *_lastLocation;
+
+public:
+    TR_PERSISTENT_ALLOC_THROW(TR_Memory::JProfBFPatchSites);
+    JProfBFPatchSites(TR_PersistentMemory *pm, size_t maxSize, size_t counterBumpInstructionLength);
+
+    size_t getSize() { return _size; }
+
+    uint8_t *getFirstLocation() { return _firstLocation; }
+
+    uint8_t *getLastLocation() { return _lastLocation; }
+
+    uint8_t *getLocation(size_t index);
+    uint8_t *getBumpInstructionPointer(size_t index);
+
+    void add(uint8_t *location, uint8_t instrLength);
+
+    void addReference();
+    bool equals(JProfBFPatchSites *other);
+    static void reclaim(JProfBFPatchSites *sites);
+};
+
 } // namespace TR
 
 #endif

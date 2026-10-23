@@ -407,6 +407,7 @@ public:
         Assumption,
         PatchSites,
 
+        JProfBFPatchSites,
         ZHWProfiler,
         PPCHWProfiler,
         ZGuardedStorage,
