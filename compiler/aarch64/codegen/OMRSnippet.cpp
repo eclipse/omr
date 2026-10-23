@@ -21,6 +21,7 @@
 
 #include "codegen/Snippet.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "ras/Logger.hpp"
 
 OMR::ARM64::Snippet::Snippet(TR::CodeGenerator *cg, TR::Node *node, TR::LabelSymbol *label, bool isGCSafePoint)
     : OMR::Snippet(cg, node, label, isGCSafePoint)
@@ -29,3 +30,55 @@ OMR::ARM64::Snippet::Snippet(TR::CodeGenerator *cg, TR::Node *node, TR::LabelSym
 OMR::ARM64::Snippet::Snippet(TR::CodeGenerator *cg, TR::Node *node, TR::LabelSymbol *label)
     : OMR::Snippet(cg, node, label)
 {}
+
+void OMR::ARM64::Snippet::printName(OMR::Logger *log)
+{
+    const char *name;
+
+    switch (getKind()) {
+        case TR::Snippet::IsCall:
+            name = "Call Snippet";
+            break;
+        case TR::Snippet::IsUnresolvedCall:
+            name = "Unresolved Call Snippet";
+            break;
+        case TR::Snippet::IsVirtualUnresolved:
+            name = "Unresolved Virtual Call Snippet";
+            break;
+        case TR::Snippet::IsInterfaceCall:
+            name = "Interface Call Snippet";
+            break;
+        case TR::Snippet::IsStackCheckFailure:
+            name = "Stack Check Failure Snippet";
+            break;
+        case TR::Snippet::IsForceRecompilation:
+            name = "Force Recompilation Snippet";
+            break;
+        case TR::Snippet::IsUnresolvedData:
+            name = "Unresolved Data Snippet";
+            break;
+        case TR::Snippet::IsConstantData:
+            name = "Constant Data Snippet";
+            break;
+        case TR::Snippet::IsRecompilation:
+            name = "Recompilation Snippet";
+            break;
+        case TR::Snippet::IsHelperCall:
+            name = "Helper Call Snippet";
+            break;
+        case TR::Snippet::IsMonitorEnter:
+            name = "MonitorEnter Inc Counter";
+            break;
+        case TR::Snippet::IsMonitorExit:
+            name = "MonitorExit Dec Counter";
+            break;
+        case TR::Snippet::IsHeapAlloc:
+            name = "Heap Alloc Snippet";
+            break;
+        default:
+            name = "<unknown snippet>";
+            break;
+    }
+
+    log->prints(name);
+}

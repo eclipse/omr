@@ -71,7 +71,7 @@ void TR_Debug::print(OMR::Logger *log, TR::RVHelperCallSnippet *snippet)
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
     auto restartLabel = snippet->getRestartLabel();
 
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+    printSnippetLabel(log, snippet, bufferPos);
 
     char *info = "";
     intptr_t target = (intptr_t)(snippet->getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress());

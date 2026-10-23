@@ -67,7 +67,7 @@ TR::UnresolvedDataSnippet *OMR::UnresolvedDataSnippet::create(TR::CodeGenerator 
 void TR_Debug::print(OMR::Logger *log, TR::UnresolvedDataSnippet *snippet)
 {
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+    printSnippetLabel(log, snippet, bufferPos);
 }
 
 #endif

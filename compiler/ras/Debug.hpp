@@ -583,7 +583,6 @@ public:
      * @return a const char * string for the name of the register
      */
     virtual const char *getGlobalRegisterName(TR_GlobalRegisterNumber regNum, TR::DataType dt);
-    virtual const char *getName(TR::Snippet *);
     virtual const char *getName(TR::Node *);
     virtual const char *getName(TR::Symbol *);
     virtual const char *getName(TR::Instruction *);
@@ -715,7 +714,6 @@ public:
     virtual void dumpInstructionWithVFPState(OMR::Logger *log, TR::Instruction *instr, const TR_VFPState *prevState);
 
     void print(OMR::Logger *log, TR::RealRegister *, TR_RegisterSizes size = TR_WordReg);
-    const char *getNamex(TR::Snippet *);
     void printRegMemInstruction(OMR::Logger *log, const char *, TR::RealRegister *reg, TR::RealRegister *base = 0,
         int32_t = 0);
     void printRegRegInstruction(OMR::Logger *log, const char *, TR::RealRegister *reg1, TR::RealRegister *reg2 = 0);
@@ -818,8 +816,39 @@ public:
         int32_t *offsetInfo, bool nummaps = false);
     void printJ9JITExceptionTableDetails(OMR::Logger *log, J9JITExceptionTable *data,
         J9JITExceptionTable *dbgextRemotePtr = NULL);
+
+    /**
+     * @brief Print a label and label offset in the code buffer in a format
+     *     suitable for showing Snippet labels
+     *
+     * @param[in] log : \c OMR::Logger
+     * @param[in] label : the \c LabelSymbol to print
+     * @param[in] cursor : the code address of the label
+     */
+    void printSnippetLabel(OMR::Logger *log, TR::LabelSymbol *label, uint8_t *cursor);
+
+    /**
+     * @brief Print a snippet label and the label offset in the code buffer
+     *
+     * @param[in] log : \c OMR::Logger
+     * @param[in] snippet : the snippet whose label to print
+     * @param[in] cursor : the code address of the label
+     */
+    void printSnippetLabel(OMR::Logger *log, TR::Snippet *snippet, uint8_t *cursor);
+
+    /**
+     * @brief Print a label, label offset in the code buffer, and one or more
+     *     comments in a a format suitable for showing Snippet labels
+     *
+     * @param[in] log : \c OMR::Logger
+     * @param[in] label : the \c LabelSymbol to print
+     * @param[in] cursor : the code address of the label
+     * @param[in] comment1 : a comment to print after the label
+     * @param[in] comment2 : a second, optional comment to print after comment1
+     */
     void printSnippetLabel(OMR::Logger *log, TR::LabelSymbol *label, uint8_t *cursor, const char *comment1,
         const char *comment2 = 0);
+
     uint8_t *printPrefix(OMR::Logger *log, TR::Instruction *, uint8_t *cursor, uint8_t size);
 
     void printLabelInstruction(OMR::Logger *log, const char *, TR::LabelSymbol *label);
@@ -1100,8 +1129,6 @@ public:
 
     void print(OMR::Logger *log, TR_ARMOperand2 *op, TR_RegisterSizes size = TR_WordReg);
 
-    const char *getNamea(TR::Snippet *);
-
     void print(OMR::Logger *log, TR::RealRegister *, TR_RegisterSizes size = TR_WordReg);
     void printARMGCRegisterMap(OMR::Logger *log, TR::GCRegisterMap *);
     void printInstructionComment(OMR::Logger *log, int32_t tabStops, TR::Instruction *instr);
@@ -1292,7 +1319,6 @@ public:
     const char *getName(uint32_t regNum, TR_RegisterSizes size);
 
     void printa64(OMR::Logger *log, TR::Snippet *);
-    const char *getNamea64(TR::Snippet *);
 
 #ifdef J9_PROJECT_SPECIFIC
     void print(OMR::Logger *log, TR::ARM64CallSnippet *);

@@ -47,6 +47,10 @@ class LabelSymbol;
 class Node;
 } // namespace TR
 
+namespace OMR {
+class Logger;
+} // namespace OMR
+
 namespace OMR { namespace ARM {
 
 class OMR_EXTENSIBLE Snippet : public OMR::Snippet {
@@ -72,6 +76,11 @@ public:
     };
 
     virtual Kind getKind() { return IsUnknown; }
+
+    /**
+     * @copydoc OMR::Snippet::printName(OMR::Logger *)
+     */
+    void printName(OMR::Logger *log);
 };
 
 }} // namespace OMR::ARM

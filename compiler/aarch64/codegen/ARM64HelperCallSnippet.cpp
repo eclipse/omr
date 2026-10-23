@@ -72,7 +72,7 @@ void TR::ARM64HelperCallSnippet::print(OMR::Logger *log, TR_Debug *debug)
 {
     uint8_t *bufferPos = getSnippetLabel()->getCodeLocation();
 
-    debug->printSnippetLabel(log, getSnippetLabel(), bufferPos, debug->getName(this));
+    debug->printSnippetLabel(log, this, bufferPos);
     printInner(log, debug, bufferPos);
 }
 
