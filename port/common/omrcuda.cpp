@@ -1217,7 +1217,8 @@ notFound:
 const uint32_t runtimeFileVersions[] = {
 #define OMRCUDA_LIBRARY_VERSION(major, minor) (((major) * 1000) + ((minor) * 10))
 
-	OMRCUDA_LIBRARY_VERSION(12, 0), /* 12.0.0 (Dec 2022) - 12.2.1 (Jul 2023) */
+	OMRCUDA_LIBRARY_VERSION(13, 0), /* 13.0.0 (Aug 2025) - 13.4.2 (Sep 2026) */
+	OMRCUDA_LIBRARY_VERSION(12, 0), /* 12.0.0 (Dec 2022) - 12.9.2 (May 2026) */
 	OMRCUDA_LIBRARY_VERSION(11, 0), /* 11.0.0 (Mar 2020) - 11.8.0 (Oct 2022) */
 	OMRCUDA_LIBRARY_VERSION(10, 2), /* 10.2.0 (Nov 2019) */
 	OMRCUDA_LIBRARY_VERSION(10, 1), /* 10.1.0 (Feb 2019) */
