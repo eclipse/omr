@@ -883,6 +883,9 @@ const OMR::ARM64::InstOpCode::OpCodeBinaryEntry OMR::ARM64::InstOpCode::binaryEn
     0x4E209400, /* MLA       	vmla16b	 */
     0x4E609400, /* MLA       	vmla8h	 */
     0x4EA09400, /* MLA       	vmla4s	 */
+    0x6E209400, /* MLS       	vmls16b	 */
+    0x6E609400, /* MLS       	vmls8h	 */
+    0x6EA09400, /* MLS       	vmls4s	 */
     0x4E20CC00, /* FMLA      	vfmla4s	 */
     0x4E60CC00, /* FMLA      	vfmla2d	 */
     0x4E206C00, /* SMIN      	vsmin16b */

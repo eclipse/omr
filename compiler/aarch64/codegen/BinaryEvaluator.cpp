@@ -466,13 +466,76 @@ TR::Register *OMR::ARM64::TreeEvaluator::inlineVectorBinaryOp(TR::Node *node, TR
     return resReg;
 }
 
+static TR::Register *vFusedMulHelper(TR::Node *node, TR::CodeGenerator *cg, OP::Mnemonic fusedMulOp, TR::Node *mulNode,
+    TR::Node *addOrSubFromNode)
+{
+    TR::Register *mulReg1 = cg->evaluate(mulNode->getFirstChild());
+    TR::Register *mulReg2 = cg->evaluate(mulNode->getSecondChild());
+    TR::Register *addOrSubFromReg = cg->evaluate(addOrSubFromNode);
+
+    // vmla/vmls instructions reuse one of the source registers as the destination register
+    TR::Register *resReg;
+    if (addOrSubFromNode->getReferenceCount() == 1) {
+        resReg = addOrSubFromReg;
+    } else {
+        resReg = cg->allocateRegister(TR_VRF);
+        Inst_Trg1Src2(cg, OP::vorr16b, node, resReg, addOrSubFromReg, addOrSubFromReg);
+    }
+    Inst_Trg1Src2(cg, fusedMulOp, node, resReg, mulReg1, mulReg2);
+
+    node->setRegister(resReg);
+    cg->decReferenceCount(mulNode->getFirstChild());
+    cg->decReferenceCount(mulNode->getSecondChild());
+    cg->decReferenceCount(mulNode);
+    cg->decReferenceCount(addOrSubFromNode);
+
+    return resReg;
+}
+
 TR::Register *OMR::ARM64::TreeEvaluator::vaddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
     TR_ASSERT_FATAL_WITH_NODE(node, node->getDataType().getVectorLength() == TR::VectorLength128,
         "Only 128-bit vectors are supported %s", node->getDataType().toString());
 
+    TR::DataType et = node->getDataType().getVectorElementType();
+
+    // check if we can convert to fused mul/add operation
+    TR::Node *firstChild = node->getFirstChild();
+    TR::Node *secondChild = node->getSecondChild();
+
+    static const bool disableVectorAddToFMA = (feGetEnv("TR_disableVectorAddToFMA") != NULL);
+
+    if (!disableVectorAddToFMA && !node->getOpCode().isVectorMasked()
+        && ((firstChild->getOpCode().isMul() && !firstChild->getOpCode().isVectorMasked()
+                && firstChild->getReferenceCount() == 1 && firstChild->getRegister() == NULL)
+            || (secondChild->getOpCode().isMul() && !secondChild->getOpCode().isVectorMasked()
+                && secondChild->getReferenceCount() == 1 && secondChild->getRegister() == NULL))) {
+        OP::Mnemonic fusedMulOp = OP::bad;
+        switch (et) {
+            case TR::Int8:
+                fusedMulOp = OP::vmla16b;
+                break;
+            case TR::Int16:
+                fusedMulOp = OP::vmla8h;
+                break;
+            case TR::Int32:
+                fusedMulOp = OP::vmla4s;
+                break;
+            case TR::Int64:
+            case TR::Float:
+            case TR::Double:
+                // not supported
+                break;
+        }
+        if (fusedMulOp != OP::bad) {
+            TR::Node *mulNode = firstChild->getOpCode().isMul() ? firstChild : secondChild;
+            TR::Node *addNode = (mulNode == firstChild) ? secondChild : firstChild;
+            return vFusedMulHelper(node, cg, fusedMulOp, mulNode, addNode);
+        }
+    }
+
     OP::Mnemonic addOp;
-    switch (node->getDataType().getVectorElementType()) {
+    switch (et) {
         case TR::Int8:
             addOp = OP::vadd16b;
             break;
@@ -503,8 +566,43 @@ TR::Register *OMR::ARM64::TreeEvaluator::vsubEvaluator(TR::Node *node, TR::CodeG
     TR_ASSERT_FATAL_WITH_NODE(node, node->getDataType().getVectorLength() == TR::VectorLength128,
         "Only 128-bit vectors are supported %s", node->getDataType().toString());
 
+    TR::DataType et = node->getDataType().getVectorElementType();
+
+    // check if we can convert to fused mul/sub operation
+    TR::Node *firstChild = node->getFirstChild();
+    TR::Node *secondChild = node->getSecondChild();
+
+    static const bool disableVectorSubToFMS = (feGetEnv("TR_disableVectorSubToFMS") != NULL);
+
+    if (!disableVectorSubToFMS && !node->getOpCode().isVectorMasked() && secondChild->getOpCode().isMul()
+        && !secondChild->getOpCode().isVectorMasked() && secondChild->getReferenceCount() == 1
+        && secondChild->getRegister() == NULL) {
+        OP::Mnemonic fusedMulOp = OP::bad;
+        switch (et) {
+            case TR::Int8:
+                fusedMulOp = OP::vmls16b;
+                break;
+            case TR::Int16:
+                fusedMulOp = OP::vmls8h;
+                break;
+            case TR::Int32:
+                fusedMulOp = OP::vmls4s;
+                break;
+            case TR::Int64:
+            case TR::Float:
+            case TR::Double:
+                // not supported
+                break;
+        }
+        if (fusedMulOp != OP::bad) {
+            TR::Node *mulNode = secondChild;
+            TR::Node *subFromNode = firstChild;
+            return vFusedMulHelper(node, cg, fusedMulOp, mulNode, subFromNode);
+        }
+    }
+
     OP::Mnemonic subOp;
-    switch (node->getDataType().getVectorElementType()) {
+    switch (et) {
         case TR::Int8:
             subOp = OP::vsub16b;
             break;
