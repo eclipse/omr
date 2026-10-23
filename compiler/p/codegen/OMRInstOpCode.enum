@@ -320,7 +320,7 @@
    mtvsrd,           // Move To VSR Doubleword
    mtvsrwz,          // Move To VSR Word and Zero
    mtvsrwa,          // Move To VSR Word and Zero Sign-Extend
-// mtvsrdd,          // Move to VSR double Dword
+   mtvsrdd,          // Move to VSR double Dword
 // mtvsrws,          // Move to VSR word & wplat
    mulhd,            // Multiply high dword
    mulhd_r,          // Multiply high dword Rc=1

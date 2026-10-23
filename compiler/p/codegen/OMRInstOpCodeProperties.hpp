@@ -3473,16 +3473,16 @@
         /* .properties  = */ PPCOpProp_IsVSX | PPCOpProp_SyncSideEffectFree,
     },
 
-    /* { */
-    /* .mnemonic    =    OMR::InstOpCode::mtvsrdd, */
-    /* .name        =    "mtvsrdd", */
-    /* .description =    "Move to VSR double Dword", */
-    /* .prefix      =    0x00000000, */
-    /* .opcode      =    0x7C000366, */
-    /* .format      =    FORMAT_UNKNOWN, */
-    /* .minimumALS  =    OMR_PROCESSOR_PPC_P9, */
-    /* .properties  =    PPCOpProp_SyncSideEffectFree, */
-    /* }, */
+    {
+        /* .mnemonic    = */ OMR::InstOpCode::mtvsrdd,
+        /* .name        = */ "mtvsrdd",
+        /* .description =    "Move to VSR double Dword", */
+        /* .prefix      = */ 0x00000000,
+        /* .opcode      = */ 0x7C000366,
+        /* .format      = */ FORMAT_XT_RA_RB,
+        /* .minimumALS  = */ OMR_PROCESSOR_PPC_P9,
+        /* .properties  = */ PPCOpProp_IsVSX | PPCOpProp_SyncSideEffectFree,
+    },
 
     /* { */
     /* .mnemonic    =    OMR::InstOpCode::mtvsrws, */
@@ -8582,7 +8582,7 @@
     /* .name        =    "vcmpbfp.", */
     /* .description =    "Vector Compare Bounds Floating-Point Rc=1", */
     /* .prefix      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpbfp].prefix, */
-    /* .opcode      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpbfp].opcode + 1, */
+    /* .opcode      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpbfp].opcode | 0x400, */
     /* .format      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpbfp].format, */
     /* .minimumALS  =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpbfp].minimumALS, */
     /* .properties  =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpbfp].properties &
@@ -8608,7 +8608,7 @@
     /* .name        =    "vcmpeqfp.", */
     /* .description =    "Vector Compare Equal To Floating-Point Rc=1", */
     /* .prefix      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpeqfp].prefix, */
-    /* .opcode      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpeqfp].opcode + 1, */
+    /* .opcode      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpeqfp].opcode | 0x400, */
     /* .format      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpeqfp].format, */
     /* .minimumALS  =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpeqfp].minimumALS, */
     /* .properties  =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpeqfp].properties &
@@ -8657,7 +8657,7 @@
         /* .name        = */ "vcmpequd.",
         /* .description =    "Vector Compare Equal Unsigned Dword Rc=1", */
         /* .prefix      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequd].prefix,
-        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequd].opcode + 1,
+        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequd].opcode | 0x400,
         /* .format      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequd].format,
         /* .minimumALS  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequd].minimumALS,
         /* .properties  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequd].properties
@@ -8757,7 +8757,7 @@
         /* .name        = */ "vcmpgtsd.",
         /* .description =    "Vector Compare Greater Than Signed Dword Rc=1", */
         /* .prefix      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsd].prefix,
-        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsd].opcode + 1,
+        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsd].opcode | 0x400,
         /* .format      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsd].format,
         /* .minimumALS  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsd].minimumALS,
         /* .properties  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsd].properties
@@ -8907,7 +8907,7 @@
         /* .name        = */ "vcmpneb.",
         /* .description =    "vector compare not equal Byte Rc=1", */
         /* .prefix      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneb].prefix,
-        /* .opcode      = */ 0x10000407,
+        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneb].opcode | 0x400,
         /* .format      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneb].format,
         /* .minimumALS  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneb].minimumALS,
         /* .properties  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneb].properties
@@ -8932,7 +8932,7 @@
         /* .name        = */ "vcmpneh.",
         /* .description =    "vector compare not equal Hword Rc=1", */
         /* .prefix      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneh].prefix,
-        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneh].opcode + 1,
+        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneh].opcode | 0x400,
         /* .format      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneh].format,
         /* .minimumALS  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneh].minimumALS,
         /* .properties  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpneh].properties
@@ -8957,7 +8957,7 @@
         /* .name        = */ "vcmpnew.",
         /* .description =    "vector compare not equal Word Rc=1", */
         /* .prefix      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnew].prefix,
-        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnew].opcode + 1,
+        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnew].opcode | 0x400,
         /* .format      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnew].format,
         /* .minimumALS  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnew].minimumALS,
         /* .properties  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnew].properties
@@ -8984,7 +8984,7 @@
     /* .name        =    "vcmpnezb.", */
     /* .description =    "vector compare not equal or zero Byte Rc=1", */
     /* .prefix      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezb].prefix, */
-    /* .opcode      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezb].opcode + 1, */
+    /* .opcode      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezb].opcode | 0x400, */
     /* .format      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezb].format, */
     /* .minimumALS  =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezb].minimumALS, */
     /* .properties  =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezb].properties &
@@ -9010,7 +9010,7 @@
     /* .name        =    "vcmpnezh.", */
     /* .description =    "vector compare not equal or zero Hword Rc=1", */
     /* .prefix      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezh].prefix, */
-    /* .opcode      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezh].opcode + 1, */
+    /* .opcode      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezh].opcode | 0x400, */
     /* .format      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezh].format, */
     /* .minimumALS  =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezh].minimumALS, */
     /* .properties  =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezh].properties &
@@ -9036,7 +9036,7 @@
     /* .name        =    "vcmpnezw.", */
     /* .description =    "vector compare not equal or zero Word Rc=1", */
     /* .prefix      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezw].prefix, */
-    /* .opcode      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezw].opcode + 1, */
+    /* .opcode      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezw].opcode | 0x400, */
     /* .format      =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezw].format, */
     /* .minimumALS  =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezw].minimumALS, */
     /* .properties  =    OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpnezw].properties &
@@ -13102,10 +13102,10 @@
 
     {
         /* .mnemonic    = */ OMR::InstOpCode::vcmpequq_r,
-        /* .name        = */ "vcmpequq_r",
+        /* .name        = */ "vcmpequq.",
         /* .description =    "Vector Compare Equal Quadword Rc=1", */
         /* .prefix      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequq].prefix,
-        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequq].opcode | 0xbad,
+        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequq].opcode | 0x400,
         /* .format      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequq].format,
         /* .minimumALS  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequq].minimumALS,
         /* .properties  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpequq].properties
@@ -13127,10 +13127,10 @@
 
     {
         /* .mnemonic    = */ OMR::InstOpCode::vcmpgtsq_r,
-        /* .name        = */ "vcmpgtsq_r",
+        /* .name        = */ "vcmpgtsq.",
         /* .description =    "Vector Compare Greater Than Signed Quadword Rc=1", */
         /* .prefix      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsq].prefix,
-        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsq].opcode | 0xbad,
+        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsq].opcode | 0x400,
         /* .format      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsq].format,
         /* .minimumALS  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsq].minimumALS,
         /* .properties  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtsq].properties
@@ -13152,10 +13152,10 @@
 
     {
         /* .mnemonic    = */ OMR::InstOpCode::vcmpgtuq_r,
-        /* .name        = */ "vcmpgtuq_r",
+        /* .name        = */ "vcmpgtuq.",
         /* .description =    "Vector Compare Greater Than Unsigned Quadword Rc=1", */
         /* .prefix      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtuq].prefix,
-        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtuq].opcode | 0xbad,
+        /* .opcode      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtuq].opcode | 0x400,
         /* .format      = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtuq].format,
         /* .minimumALS  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtuq].minimumALS,
         /* .properties  = */ OMR::Power::InstOpCode::metadata[OMR::InstOpCode::vcmpgtuq].properties
