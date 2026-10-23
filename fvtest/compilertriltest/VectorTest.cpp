@@ -27,11 +27,11 @@
 #define MAX(x, y) (x > y) ? x : y
 #define ABS(x) (x < 0) ? -x : x
 
-#ifdef TR_TARGET_S390
+#if defined(TR_TARGET_S390) || defined(TR_TARGET_X86)
 class VectorTest : public TRTest::JitWithPortTest {};
 #else
 class VectorTest : public TRTest::JitTest {};
-#endif // TR_TARGET_S390
+#endif // TR_TARGET_S390 || TR_TARGET_X86
 
 class ParameterizedBinaryVectorArithmeticTest : public VectorTest, public ::testing::WithParamInterface<std::tuple<TR::ILOpCode, TR::VectorLength>> {};
 
@@ -509,7 +509,6 @@ typedef TernaryTestData<double, 8> TernaryDoubleTest;
 
 void dataDrivenTestEvaluator(TR::VectorOperation operation, TR::VectorLength vl, TR::DataType dt, TR::CPU *cpu, void *expected, void *inputA, void* inputB, void* inputC) {
     SKIP_IF(vl > TR::NumVectorLengths, MissingImplementation) << "Vector length is not supported by the target platform";
-    SKIP_IF(cpu->isX86(), KnownBug) << "Shift left test is faling on X86 (issue #8216)";
 
     TR::DataType vectorType = TR::DataType::createVectorType(dt.getDataType(), vl);
     TR::ILOpCode vectorOpcode = OMR::ILOpCode::createVectorOpCode(operation, vectorType);
@@ -576,6 +575,24 @@ TEST_P(TernaryDataDriven##type##Test, TernaryVector256##type##Test) {           
     dataDrivenTestEvaluator(std::get<0>(GetParam()), TR::VectorLength256, TR::type, &cpu, data.expected, data.inputA, data.inputB, data.inputC);\
 }                                                                                                                                               \
 TEST_P(TernaryDataDriven##type##Test, TernaryVector512##type##Test) {                                                                           \
+    testType data = std::get<1>(GetParam());                                                                                                    \
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);                                                                                       \
+    dataDrivenTestEvaluator(std::get<0>(GetParam()), TR::VectorLength512, TR::type, &cpu, data.expected, data.inputA, data.inputB, data.inputC);\
+}                                                                                                                                               \
+class TernaryDataDriven128##type##Test : public VectorTest, public ::testing::WithParamInterface<std::tuple<TR::VectorOperation, testType>> {}; \
+TEST_P(TernaryDataDriven128##type##Test, TernaryVector128##type##Test) {                                                                        \
+    testType data = std::get<1>(GetParam());                                                                                                    \
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);                                                                                       \
+    dataDrivenTestEvaluator(std::get<0>(GetParam()), TR::VectorLength128, TR::type, &cpu, data.expected, data.inputA, data.inputB, data.inputC);\
+}                                                                                                                                               \
+class TernaryDataDriven256##type##Test : public VectorTest, public ::testing::WithParamInterface<std::tuple<TR::VectorOperation, testType>> {}; \
+TEST_P(TernaryDataDriven256##type##Test, TernaryVector256##type##Test) {                                                                        \
+    testType data = std::get<1>(GetParam());                                                                                                    \
+    TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);                                                                                       \
+    dataDrivenTestEvaluator(std::get<0>(GetParam()), TR::VectorLength256, TR::type, &cpu, data.expected, data.inputA, data.inputB, data.inputC);\
+}                                                                                                                                               \
+class TernaryDataDriven512##type##Test : public VectorTest, public ::testing::WithParamInterface<std::tuple<TR::VectorOperation, testType>> {}; \
+TEST_P(TernaryDataDriven512##type##Test, TernaryVector512##type##Test) {                                                                        \
     testType data = std::get<1>(GetParam());                                                                                                    \
     TR::CPU cpu = TR::CPU::detect(privateOmrPortLibrary);                                                                                       \
     dataDrivenTestEvaluator(std::get<0>(GetParam()), TR::VectorLength512, TR::type, &cpu, data.expected, data.inputA, data.inputB, data.inputC);\
@@ -977,23 +994,74 @@ INSTANTIATE_TEST_CASE_P(Long128ReductionTest, BinaryDataDriven128Int64Test, ::te
     std::make_tuple(TR::vreductionMax, BinaryLongTest { { 9223372036854775804 }, { 9223372036854775801, 9223372036854775804}, {}, })
 )));
 
-INSTANTIATE_TEST_CASE_P(Short128ShiftRotateTest, BinaryDataDriven128Int16Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, BinaryShortTest>>(
-    std::make_tuple(TR::vshl, BinaryShortTest { { 2, 2, 16, 320 }, { 1, 2, 4, 5}, { 1, 0, 2, 70}, }),
-    std::make_tuple(TR::vshr, BinaryShortTest { { 1, 4, 0, 4 },  { 2, 4, 8, 9}, { 1, 0, 10, 1 }, }),
-    std::make_tuple(TR::vrol, BinaryShortTest { { 7, 4, 8, 8193 },  { 0x7000, 4, 8, 9}, { 4, 0, 16, -3 }, })
+INSTANTIATE_TEST_CASE_P(Short128ShiftTest, BinaryDataDriven128Int16Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, BinaryShortTest>>(
+    std::make_tuple(TR::vshl,  BinaryShortTest { { 2, 2, 16, 320  }, { 1, 2, 4, 5 }, { 1, 0, 2, 70  }, }),
+    std::make_tuple(TR::vshl,  BinaryShortTest { { 1, 2, 4, 5     }, { 1, 2, 4, 5 }, { 0, 0, 0, 16  }, }),
+    std::make_tuple(TR::vshr,  BinaryShortTest { { 1, 4, 0, 4     }, { 2, 4, 8, 9 }, { 1, 0, 10, 1  }, }),
+    std::make_tuple(TR::vshr,  BinaryShortTest { { 2, 4, 8, 9     }, { 2, 4, 8, 9 }, { 0, 0, 16, 0  }, }),
+    std::make_tuple(TR::vshr,  BinaryShortTest { { 2, 2, 4, -1    }, { 2, 4, 8, -1}, { 0, 1, 17, 17 }, }),
+    std::make_tuple(TR::vushr, BinaryShortTest { { 2, 2, 2, 4     }, { 2, 4, 8, 9 }, { 0, 1, 2, 1   }, }),
+    std::make_tuple(TR::vushr, BinaryShortTest { { 2, 4, 8, 9     }, { 2, 4, 8, 9 }, { 0, 0, 16, 0  }, }),
+    std::make_tuple(TR::vushr, BinaryShortTest { { 2, 2, 4, 4     }, { 2, 4, 8, 9 }, { 0, 1, 17, 1  }, })
 )));
 
-INSTANTIATE_TEST_CASE_P(Int128ShiftRotateTest, BinaryDataDriven128Int32Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, BinaryIntTest>>(
-    std::make_tuple(TR::vshl, BinaryIntTest { { 2, 2, 16, 320 }, { 1, 2, 4, 5}, { 1, 0, 2, 70}, }),
-    std::make_tuple(TR::vshr, BinaryIntTest { { 1, 4, 0, 4 },  { 2, 4, 8, 9}, { 1, 0, 10, 1 }, }),
-    std::make_tuple(TR::vrol, BinaryIntTest { { 7, 4, 8, 536870913 }, { 0x70000000, 4, 8, 9}, { 4, 0, 32, -3 }, })
+INSTANTIATE_TEST_CASE_P(Short128RotateTest, BinaryDataDriven128Int16Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, BinaryShortTest>>(
+    std::make_tuple(TR::vrol,  BinaryShortTest { { 7, 4, 8, 8193  }, { 0x7000, 4, 8, 9 }, { 4, 0, 16, -3 }, }),
+    std::make_tuple(TR::vrol,  BinaryShortTest { { 1, 2, 4, 5     }, { 1, 2, 4, 5 },      { 0, 0, 0, 16  }, }),
+    std::make_tuple(TR::vrol,  BinaryShortTest { { 2, 4, 8, 10    }, { 1, 2, 4, 5 },      { 1, 1, 1, 17  }, })
 )));
 
-INSTANTIATE_TEST_CASE_P(Long128ShiftRotateTest, BinaryDataDriven128Int64Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, BinaryLongTest>>(
-    std::make_tuple(TR::vshl, BinaryLongTest { { 2, 2, 16, 320 }, { 1, 2, 4, 5}, { 1, 0, 2, 70}, }),
-    std::make_tuple(TR::vshr, BinaryLongTest { { 1, 4, 0, 4 },  { 2, 4, 8, 9}, { 1, 0, 10, 1 }, }),
-    std::make_tuple(TR::vrol, BinaryLongTest { { 30064771072, 4 }, { 0x70000000, 4}, { 4, 0 }, }),
-    std::make_tuple(TR::vrol, BinaryLongTest { { 8, 2305843009213693953 }, { 8, 9}, { 64, -3 }, })
+INSTANTIATE_TEST_CASE_P(Short128MaskedRotateTest, TernaryDataDriven128Int16Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, TernaryShortTest>>(
+    std::make_tuple(TR::vmrol, TernaryShortTest { { 7, 4, 8, 9 }, { 0x7000, 4, 8, 9 }, { 4, 0, 16, -3 }, { -1, 0, -1, 0 }, }),
+    std::make_tuple(TR::vmrol, TernaryShortTest { { 2, 2, 8, 5 }, { 1, 2, 4, 5 },      { 17, 17, 17, 17 }, { -1, 0, -1, 0 }, })
+)));
+
+INSTANTIATE_TEST_CASE_P(Int128ShiftTest, BinaryDataDriven128Int32Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, BinaryIntTest>>(
+    std::make_tuple(TR::vshl,  BinaryIntTest  { { 2, 2, 16, 320   }, { 1, 2, 4, 5 }, { 1, 0, 2, 70  }, }),
+    std::make_tuple(TR::vshl,  BinaryIntTest  { { 1, 2, 4, 5      }, { 1, 2, 4, 5 }, { 0, 0, 0, 32  }, }),
+    std::make_tuple(TR::vshl,  BinaryIntTest  { { 2, 4, 8, 10     }, { 1, 2, 4, 5 }, { 1, 1, 1, 33  }, }),
+    std::make_tuple(TR::vshr,  BinaryIntTest  { { 1, 4, 0, 4      }, { 2, 4, 8, 9 }, { 1, 0, 10, 1  }, }),
+    std::make_tuple(TR::vshr,  BinaryIntTest  { { 2, 4, 8, 9      }, { 2, 4, 8, 9 }, { 0, 0, 32, 0  }, }),
+    std::make_tuple(TR::vshr,  BinaryIntTest  { { 2, 2, 4, -1     }, { 2, 4, 8, -1}, { 0, 1, 33, 33 }, }),
+    std::make_tuple(TR::vushr, BinaryIntTest  { { 2, 2, 2, 4      }, { 2, 4, 8, 9 }, { 0, 1, 2, 1   }, }),
+    std::make_tuple(TR::vushr, BinaryIntTest  { { 2, 4, 8, 9      }, { 2, 4, 8, 9 }, { 0, 0, 32, 0  }, }),
+    std::make_tuple(TR::vushr, BinaryIntTest  { { 2, 2, 4, 4      }, { 2, 4, 8, 9 }, { 0, 1, 33, 1  }, })
+)));
+
+INSTANTIATE_TEST_CASE_P(Int128RotateTest, BinaryDataDriven128Int32Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, BinaryIntTest>>(
+    std::make_tuple(TR::vrol,  BinaryIntTest  { { 7, 4, 8, 536870913 }, { 0x70000000, 4, 8, 9 }, { 4, 0, 32, -3 }, }),
+    std::make_tuple(TR::vrol,  BinaryIntTest  { { 1, 2, 4, 5         }, { 1, 2, 4, 5 },          { 0, 0, 0, 32 }, }),
+    std::make_tuple(TR::vrol,  BinaryIntTest  { { 2, 4, 8, 10        }, { 1, 2, 4, 5 },          { 1, 1, 1, 33 }, }),
+    std::make_tuple(TR::vrol,  BinaryIntTest  { { 1, 4, 8, -1        }, { 1, 2, 4, -1 },         { 0, 1, 33, 33 }, })
+)));
+
+INSTANTIATE_TEST_CASE_P(Int128MaskedRotateTest, TernaryDataDriven128Int32Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, TernaryIntTest>>(
+    std::make_tuple(TR::vmrol, TernaryIntTest { { 7, 4, 8, 9 }, { 0x70000000, 4, 8, 9 }, { 4, 0, 32, -3 }, { -1, 0, -1, 0 }, }),
+    std::make_tuple(TR::vmrol, TernaryIntTest { { 2, 2, 8, 5 }, { 1, 2, 4, 5 },          { 33, 33, 33, 33 }, { -1, 0, -1, 0 }, })
+)));
+
+INSTANTIATE_TEST_CASE_P(Long128ShiftTest, BinaryDataDriven128Int64Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, BinaryLongTest>>(
+    std::make_tuple(TR::vshl,  BinaryLongTest { { 2, 8 },   { 1, 2 },  { 1, 2 }, }),
+    std::make_tuple(TR::vshl,  BinaryLongTest { { 1, 2 },   { 1, 2 },  { 64, 64 }, }),
+    std::make_tuple(TR::vshl,  BinaryLongTest { { 2, 128 }, { 1, 2 },  { 65, 70 }, }),
+    std::make_tuple(TR::vshr,  BinaryLongTest { { 1, 2 },   { 2, 8 },  { 1, 2 }, }),
+    std::make_tuple(TR::vshr,  BinaryLongTest { { 2, 8 },   { 2, 8 },  { 64, 64 }, }),
+    std::make_tuple(TR::vshr,  BinaryLongTest { { 4, -1 },  { 8, -1 }, { 65, 66 }, }),
+    std::make_tuple(TR::vushr, BinaryLongTest { { 1, 2 },   { 2, 8 },  { 1, 2 }, }),
+    std::make_tuple(TR::vushr, BinaryLongTest { { 2, 8 },   { 2, 8 },  { 64, 64 }, }),
+    std::make_tuple(TR::vushr, BinaryLongTest { { 4, 2 },   { 8, 9 },  { 65, 66 }, })
+)));
+
+INSTANTIATE_TEST_CASE_P(Long128RotateTest, BinaryDataDriven128Int64Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, BinaryLongTest>>(
+    std::make_tuple(TR::vrol,  BinaryLongTest { { 30064771072, 4  }, { 0x70000000, 4 }, { 4, 0 }, }),
+    std::make_tuple(TR::vrol,  BinaryLongTest { { 8, 2305843009213693953 }, { 8, 9 }, { 64, -3 }, }),
+    std::make_tuple(TR::vrol,  BinaryLongTest { { 1, 2 }, { 1, 2 }, { 0, 64 }, }),
+    std::make_tuple(TR::vrol,  BinaryLongTest { { 2, 4 }, { 1, 2 }, { 1, 65 }, })
+)));
+
+INSTANTIATE_TEST_CASE_P(Long128MaskedRotateTest, TernaryDataDriven128Int64Test, ::testing::ValuesIn(*TRTest::MakeVector<std::tuple<TR::VectorOperation, TernaryLongTest>>(
+    std::make_tuple(TR::vmrol, TernaryLongTest { { 30064771072, 9 }, { 0x70000000, 9 }, { 4, -3 },   { -1, 0 }, }),
+    std::make_tuple(TR::vmrol, TernaryLongTest { { 2, 2 },            { 1, 2 },           { 65, 65 },  { -1, 0 }, })
 )));
 
 typedef bool (*vconvEqFunc)(void *, void *);
